@@ -17,10 +17,10 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/baz"
-	_ "gno.land/r/onbloc/foo"
-	_ "gno.land/r/onbloc/qux"
+	_ "gno.land/r/gnoswap/test_token/atom"
+	_ "gno.land/r/gnoswap/test_token/atone"
+	_ "gno.land/r/gnoswap/test_token/btc"
+	_ "gno.land/r/gnoswap/test_token/sol"
 )
 
 const poolCreationFee int64 = 100_000_000
@@ -32,10 +32,10 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 const (
@@ -59,7 +59,7 @@ func main() {
 	println("[INFO] tick_math tick:", tickAtMin)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, 500, MIN_SQRT_RATIO)
+	pool.CreatePool(cross, atomPath, btcPath, 500, MIN_SQRT_RATIO)
 	println("[INFO] pool.CreatePool accepted")
 	println()
 
@@ -68,7 +68,7 @@ func main() {
 	println("[INFO] tick_math tick:", tickAtMaxMinusOne)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, quxPath, 3000, maxMinusOne.ToString())
+	pool.CreatePool(cross, atonePath, solPath, 3000, maxMinusOne.ToString())
 	println("[INFO] pool.CreatePool accepted")
 	println()
 

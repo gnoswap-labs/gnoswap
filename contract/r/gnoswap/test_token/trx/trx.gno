@@ -1,4 +1,4 @@
-package baz
+package trx
 
 import (
 	"strings"
@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	token, privateLedger = grc20.NewToken("Baz", "BAZ", 6)
+	token, privateLedger = grc20.NewToken("Tron", "TRX", 6)
 	owner                = ownable.NewWithAddressByPrevious("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
 )
 
 func init() {
-	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
+	privateLedger.Mint(owner.Owner(), 100_000_000_000_000_000)
 	grc20reg.Register(cross, token, "")
 }
 

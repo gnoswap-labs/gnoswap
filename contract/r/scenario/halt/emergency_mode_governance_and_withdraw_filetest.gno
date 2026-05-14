@@ -61,8 +61,8 @@ import (
 	gs "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -83,8 +83,8 @@ var (
 	bobAddr  = testutils.TestAddress("bob")
 	bobRealm = testing.NewUserRealm(bobAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(3000)
 
 	textProposalId            int64
@@ -163,10 +163,10 @@ func initGovernancePoolAndTokens() {
 
 	// Distribute tokens to alice and bob
 	defaultTokenAmount := int64(100000000)
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
-	bar.Transfer(cross, bobAddr, defaultTokenAmount)
-	foo.Transfer(cross, bobAddr, defaultTokenAmount)
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atom.Transfer(cross, bobAddr, defaultTokenAmount)
+	btc.Transfer(cross, bobAddr, defaultTokenAmount)
 
 	// Distribute GNS tokens for governance
 	gnsAmount := int64(2000000000)
@@ -196,23 +196,23 @@ func createPoolAndPosition() {
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	ufmt.Println("[INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000")
 
 	// Mint position
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, _, _ := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -255,8 +255,8 @@ func testPoolCreationBlocked() {
 	uassert.AbortsContains(t, "halted: pool", func() {
 		pool.CreatePool(
 			cross,
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			uint32(500), // different fee tier
 			common.TickMathGetSqrtRatioAtTick(0).ToString(),
 		)
@@ -274,8 +274,8 @@ func testPositionMintBlocked() {
 		testing.SetOriginSend(chain.Coins{})
 		position.Mint(
 			cross,
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			fee,
 			-1920,
 			1920,
@@ -294,8 +294,8 @@ func testPositionMintBlocked() {
 
 func testRouterSwapBlocked() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Attempting router swap in Emergency Mode (should abort)...")
 
@@ -303,10 +303,10 @@ func testRouterSwapBlocked() {
 		testing.SetOriginSend(chain.Coins{})
 		router.ExactInSwapRoute(
 			cross,
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			"100000",
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			"100",
 			"0",
 			time.Now().Unix()+3600,
@@ -481,7 +481,7 @@ func verifyHaltStatusSummary() {
 // [INFO] Governance and tokens initialized
 //
 // [STEP 2] Create pool and position before Emergency Mode
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 // [INFO] Position minted with ID: 1, Liquidity: 213383746
 //
 // [STEP 3] Set halt level to Emergency Mode

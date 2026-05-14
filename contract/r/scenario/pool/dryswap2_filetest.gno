@@ -11,8 +11,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/pool"
 
@@ -44,8 +44,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 // Test variables
@@ -68,8 +68,8 @@ func main() {
 func testDrySwapVsActualSwap(t *testing.T) {
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for comparison test")
-	println("[INFO] Token0:", barPath)
-	println("[INFO] Token1:", fooPath)
+	println("[INFO] Token0:", atomPath)
+	println("[INFO] Token1:", btcPath)
 	println("[INFO] Fee tier:", FeeTier500)
 	println("[INFO] Initial liquidity amount:", liquidityExpect)
 	println("[INFO] Tick range:", -tickUpper, "to", -tickLower)
@@ -79,22 +79,22 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		-tickUpper,
 		-tickLower,
@@ -112,8 +112,8 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	println("[INFO] Amount specified:", amountSpecified)
 
 	dryPoolIn, dryPoolOut, _ := pool.DrySwap(
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		true, // zeroForOne
 		amountSpecified,
@@ -129,7 +129,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	// Approve tokens for swapping
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	atom.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -137,8 +137,8 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		adminAddr,
 		true, // zeroForOne
@@ -146,7 +146,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -182,8 +182,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 
 // Output:
 // [INFO] Setting up pool and position for comparison test
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/foo
+// [INFO] Token0: gno.land/r/gnoswap/test_token/atom
+// [INFO] Token1: gno.land/r/gnoswap/test_token/btc
 // [INFO] Fee tier: 500
 // [INFO] Initial liquidity amount: 100000000000
 // [INFO] Tick range: -11000 to -9000

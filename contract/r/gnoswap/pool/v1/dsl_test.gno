@@ -237,8 +237,8 @@ type LiquidityParams struct {
 func NewLiquidityBuilder() *LiquidityBuilder {
 	return &LiquidityBuilder{
 		params: LiquidityParams{
-			token0:    barPath,
-			token1:    bazPath,
+			token0:    atomPath,
+			token1:    atonePath,
 			fee:       3000,
 			tickLower: -887220,
 			tickUpper: 887220,
@@ -292,8 +292,8 @@ type SwapParams struct {
 func NewSwapBuilder() *SwapBuilder {
 	return &SwapBuilder{
 		params: SwapParams{
-			token0:            barPath,
-			token1:            bazPath,
+			token0:            atomPath,
+			token1:            atonePath,
 			fee:               3000,
 			zeroForOne:        true,
 			amountSpecified:   i256.Zero(),
@@ -363,8 +363,8 @@ type PoolBuilder struct {
 // NewPoolBuilder creates a new pool builder
 func NewPoolBuilder() *PoolBuilder {
 	return &PoolBuilder{
-		token0:       barPath,
-		token1:       bazPath,
+		token0:       atomPath,
+		token1:       atonePath,
 		fee:          3000,
 		sqrtPriceX96: "79228162514264337593543950336", // 1:1 ratio
 	}

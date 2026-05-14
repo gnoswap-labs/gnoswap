@@ -18,8 +18,8 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -30,8 +30,8 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -43,7 +43,7 @@ const (
 
 func main() {
 	println("[SCENARIO] #6 ExactOut Router Test")
-	println("[INFO] Starting scenario: Single pool ExactOut swap test (baz → bar)")
+	println("[INFO] Starting scenario: Single pool ExactOut swap test (atone → atom)")
 
 	println("[INFO] Setting up pool and position")
 	testing.SetRealm(adminRealm)
@@ -51,34 +51,34 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
-	println("[INFO] Creating bar-baz pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
+	println("[INFO] Creating atom-atone pool (fee: 3000)")
+	pl.CreatePool(cross, atomPath, atonePath, 3000, "79228162514264337593543950336")
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	atone.Approve(cross, poolAddr, max_approve)
 
-	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	println("[INFO] Minting position in atom-atone pool")
+	pn.Mint(cross, atomPath, atonePath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, 1000000)
-	baz.Approve(cross, routerAddr, 1000000)
+	atom.Approve(cross, routerAddr, 1000000)
+	atone.Approve(cross, routerAddr, 1000000)
 
 	println("[INFO] Checking balances before swap")
-	token0Before := bar.BalanceOf(adminAddr)
-	token1Before := baz.BalanceOf(adminAddr)
+	token0Before := atom.BalanceOf(adminAddr)
+	token1Before := atone.BalanceOf(adminAddr)
 
-	println("[INFO] admin bar balance:", token0Before)
-	println("[INFO] admin baz balance:", token1Before)
+	println("[INFO] admin atom balance:", token0Before)
+	println("[INFO] admin atone balance:", token1Before)
 
-	println("[INFO] Executing ExactOut swap (baz → 1 bar)")
+	println("[INFO] Executing ExactOut swap (atone → 1 atom)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
-		bazPath,
-		barPath,
+		atonePath,
+		atomPath,
 		"1",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000",
 		"100",
 		"3",
 		time.Now().Add(time.Hour).Unix(),
@@ -86,34 +86,34 @@ func main() {
 	)
 
 	println("[INFO] Checking balances after swap")
-	token0After := bar.BalanceOf(adminAddr)
-	token1After := baz.BalanceOf(adminAddr)
+	token0After := atom.BalanceOf(adminAddr)
+	token1After := atone.BalanceOf(adminAddr)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 3")
 	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
 
-	println("[EXPECTED] admin bar balance change:", token0After, "expected:", token0Before+1)
-	println("[EXPECTED] admin baz balance change:", token1After, "expected:", token1Before-3)
+	println("[EXPECTED] admin atom balance change:", token0After, "expected:", token0Before+1)
+	println("[EXPECTED] admin atone balance change:", token1After, "expected:", token1Before-3)
 
 	println("[INFO] Scenario completed")
 }
 
 // Output:
 // [SCENARIO] #6 ExactOut Router Test
-// [INFO] Starting scenario: Single pool ExactOut swap test (baz → bar)
+// [INFO] Starting scenario: Single pool ExactOut swap test (atone → atom)
 // [INFO] Setting up pool and position
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-baz pool (fee: 3000)
+// [INFO] Creating atom-atone pool (fee: 3000)
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting position in bar-baz pool
+// [INFO] Minting position in atom-atone pool
 // [INFO] Approving tokens for swap
 // [INFO] Checking balances before swap
-// [INFO] admin bar balance: 99999999000000
-// [INFO] admin baz balance: 99999999000000
-// [INFO] Executing ExactOut swap (baz → 1 bar)
+// [INFO] admin atom balance: 299999999000000
+// [INFO] admin atone balance: 139999999000000
+// [INFO] Executing ExactOut swap (atone → 1 atom)
 // [INFO] Checking balances after swap
 // [EXPECTED] amountIn: 3 expected: 3
 // [EXPECTED] amountOut: -1 expected: -1
-// [EXPECTED] admin bar balance change: 99999999000001 expected: 99999999000001
-// [EXPECTED] admin baz balance change: 99999998999997 expected: 99999998999997
+// [EXPECTED] admin atom balance change: 299999999000001 expected: 299999999000001
+// [EXPECTED] admin atone balance change: 139999998999997 expected: 139999998999997
 // [INFO] Scenario completed

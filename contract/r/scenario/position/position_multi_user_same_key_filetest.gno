@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -45,9 +45,9 @@ var (
 	user2Addr  = testutils.TestAddress("user2")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath  = "gno.land/r/onbloc/bar"
-	bazPath  = "gno.land/r/onbloc/baz"
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	atomPath  = "gno.land/r/gnoswap/test_token/atom"
+	atonePath  = "gno.land/r/gnoswap/test_token/atone"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000"
 )
 
 func main() {
@@ -71,31 +71,31 @@ func initPoolAndUsers() {
 	ufmt.Println("[INFO] Creating pool at tick 0")
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Transfer initial tokens to users")
-	bar.Transfer(cross, user1Addr, 100_000_000)
-	baz.Transfer(cross, user1Addr, 100_000_000)
-	bar.Transfer(cross, user2Addr, 100_000_000)
-	baz.Transfer(cross, user2Addr, 100_000_000)
+	atom.Transfer(cross, user1Addr, 100_000_000)
+	atone.Transfer(cross, user1Addr, 100_000_000)
+	atom.Transfer(cross, user2Addr, 100_000_000)
+	atone.Transfer(cross, user2Addr, 100_000_000)
 }
 
 func mintUser1Position() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	atone.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user1 (minTick: -6960, maxTick: 6960)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		-6960,
 		6960,
@@ -119,16 +119,16 @@ func mintUser1Position() {
 
 func mintUser2Position() {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	atone.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user2 (minTick: -6960, maxTick: 6960)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		-6960,
 		6960,

@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 // Constants for addresses and approvals
@@ -44,9 +44,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -64,19 +64,19 @@ var (
 func main() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, atomPath, btcPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee100)
 
-	println("[SCENARIO] 1. Initialize Pool (Create pool with bar/foo tokens, fee 100)")
+	println("[SCENARIO] 1. Initialize Pool (Create pool with atom/btc tokens, fee 100)")
 	testing.SetRealm(posRealm)
 	mint0, mint1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		0,
 		120,
@@ -93,8 +93,8 @@ func main() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swap0, swap1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		adminAddr,
 		false,
@@ -102,7 +102,7 @@ func main() {
 		maxPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -116,8 +116,8 @@ func main() {
 	testing.SetRealm(posRealm)
 	burn0, burn1 := pool.Burn(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		0,
 		120,
@@ -132,8 +132,8 @@ func main() {
 	println("[SCENARIO] 4. Collect Fees (Collect all fees from position)")
 	collect0, collect1 := pool.Collect(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		adminAddr,
 		0,
@@ -147,7 +147,7 @@ func main() {
 
 	println("[SCENARIO] 5. Verify Final State (Check slot tick >= 120)")
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[INFO] slot tick should be >= 120")
 	println("[INFO] Slot tick:", slotTick)
@@ -172,7 +172,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 }
 
 // Output:
-// [SCENARIO] 1. Initialize Pool (Create pool with bar/foo tokens, fee 100)
+// [SCENARIO] 1. Initialize Pool (Create pool with atom/btc tokens, fee 100)
 // [INFO] Mint 0: 59817378
 // [INFO] Mint 1: 0
 //

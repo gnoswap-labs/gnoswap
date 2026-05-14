@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -42,8 +42,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee500 uint32 = 500
 
@@ -140,25 +140,25 @@ func createPoolWithTier() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
 	// Create pool
-	pl.CreatePool(cross, barPath, bazPath, fee500, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, fee500, "79228162514264337593543950337")
 
 	// Set pool to tier 2
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500", 2)
 
-	ufmt.Printf("[EXPECTED] pool created: bar:baz:500 with tier 2\n")
+	ufmt.Printf("[EXPECTED] pool created: atom:atone:500 with tier 2\n")
 	testing.SkipHeights(1)
 }
 
 func mintPosition() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		int32(-1000),
 		int32(1000),
@@ -180,7 +180,7 @@ func mintPosition() {
 		panic("unexpected owner")
 	}
 
-	ufmt.Printf("[EXPECTED] position minted on bar:baz:500: id=%d\n", positionId)
+	ufmt.Printf("[EXPECTED] position minted on atom:atone:500: id=%d\n", positionId)
 	testing.SkipHeights(1)
 }
 
@@ -235,7 +235,7 @@ func removePoolTier() {
 	testing.SetRealm(adminRealm)
 
 	// Remove the pool from tier system
-	sr.RemovePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
+	sr.RemovePoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500")
 
 	ufmt.Printf("[EXPECTED] pool tier removed - pool is now de-tiered\n")
 	testing.SkipHeights(1)
@@ -302,10 +302,10 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] GNS minted and distributed
 //
 // [SCENARIO] 3. Create pool and set tier
-// [EXPECTED] pool created: bar:baz:500 with tier 2
+// [EXPECTED] pool created: atom:atone:500 with tier 2
 //
 // [SCENARIO] 4. Mint position on incentivized pool
-// [EXPECTED] position minted on bar:baz:500: id=1
+// [EXPECTED] position minted on atom:atone:500: id=1
 //
 // [SCENARIO] 5. Stake position while pool has tier
 // [EXPECTED] position staked successfully while pool has tier 2

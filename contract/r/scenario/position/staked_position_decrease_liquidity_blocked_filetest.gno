@@ -31,8 +31,8 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/staker"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -46,8 +46,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	token0Path = "gno.land/r/onbloc/bar"
-	token1Path = "gno.land/r/onbloc/foo"
+	token0Path = "gno.land/r/gnoswap/test_token/atom"
+	token1Path = "gno.land/r/gnoswap/test_token/btc"
 	fee        = uint32(3000)
 
 	maxInt64    int64 = 9223372036854775807
@@ -84,15 +84,15 @@ func initPoolAndCreatePosition() {
 
 	defaultTokenAmount := int64(100000000)
 
-	println("[INFO] Distributing Bar tokens to alice")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	println("[INFO] Distributing Atom tokens to alice")
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	println("[INFO] Distributing Foo tokens to alice")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	println("[INFO] Distributing Btc tokens to alice")
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] Creating pool")
 	pool.CreatePool(
@@ -202,8 +202,8 @@ func positionIdToTokenId(id uint64) grc721.TokenID {
 
 // Output:
 // [SCENARIO] 1. Initialize pool and create position
-// [INFO] Distributing Bar tokens to alice
-// [INFO] Distributing Foo tokens to alice
+// [INFO] Distributing Atom tokens to alice
+// [INFO] Distributing Btc tokens to alice
 // [INFO] Creating pool
 // [INFO] Pool tier set for staking
 // [INFO] Minting position for alice
@@ -235,4 +235,4 @@ func positionIdToTokenId(id uint64) grc721.TokenID {
 // [EXPECTED] CollectFee succeeded for staked position via operator
 // [EXPECTED] Fee0 collected: 0
 // [EXPECTED] Fee1 collected: 0
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] Pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000

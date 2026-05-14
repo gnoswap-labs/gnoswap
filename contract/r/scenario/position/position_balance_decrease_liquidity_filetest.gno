@@ -23,8 +23,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -38,8 +38,8 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 )
 
 func main() {
@@ -67,8 +67,8 @@ func initPool() {
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		"130621891405341611593710811006",
 	)
@@ -76,14 +76,14 @@ func initPool() {
 
 func mintAndIncreasePosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, _, _ := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		8000,
 		12000,
@@ -118,14 +118,14 @@ func mintAndIncreasePosition() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -133,7 +133,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -144,13 +144,13 @@ func executeSwap() {
 func testDecreaseLiquidityAndBalance() {
 	testing.SetRealm(adminRealm)
 
-	barBalanceBefore := bar.BalanceOf(adminAddr)
-	fooBalanceBefore := foo.BalanceOf(adminAddr)
+	atomBalanceBefore := atom.BalanceOf(adminAddr)
+	btcBalanceBefore := btc.BalanceOf(adminAddr)
 	pos, _ := position.GetPosition(1)
 	liquidityBefore := pos.Liquidity()
 
-	ufmt.Printf("[EXPECTED] User BAR balance before operations should be %d\n", barBalanceBefore)
-	ufmt.Printf("[EXPECTED] User FOO balance before operations should be %d\n", fooBalanceBefore)
+	ufmt.Printf("[EXPECTED] User ATOM balance before operations should be %d\n", atomBalanceBefore)
+	ufmt.Printf("[EXPECTED] User BTC balance before operations should be %d\n", btcBalanceBefore)
 	ufmt.Printf("[EXPECTED] Position liquidity before decrease should be %s\n", liquidityBefore)
 
 	ufmt.Println("[INFO] Collecting fees")
@@ -158,11 +158,11 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
-	barBalanceAfterFee := bar.BalanceOf(adminAddr)
-	fooBalanceAfterFee := foo.BalanceOf(adminAddr)
+	atomBalanceAfterFee := atom.BalanceOf(adminAddr)
+	btcBalanceAfterFee := btc.BalanceOf(adminAddr)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity by 100000000")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
@@ -178,48 +178,48 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Amount0 withdrawn should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 withdrawn should be %s\n", amount1)
 
-	barBalanceAfter := bar.BalanceOf(adminAddr)
-	fooBalanceAfter := foo.BalanceOf(adminAddr)
+	atomBalanceAfter := atom.BalanceOf(adminAddr)
+	btcBalanceAfter := btc.BalanceOf(adminAddr)
 	pos, _ = position.GetPosition(1)
 	liquidityAfter := pos.Liquidity()
 
-	ufmt.Printf("[EXPECTED] User BAR balance after decrease should be %d\n", barBalanceAfter)
-	ufmt.Printf("[EXPECTED] User FOO balance after decrease should be %d\n", fooBalanceAfter)
+	ufmt.Printf("[EXPECTED] User ATOM balance after decrease should be %d\n", atomBalanceAfter)
+	ufmt.Printf("[EXPECTED] User BTC balance after decrease should be %d\n", btcBalanceAfter)
 	ufmt.Printf("[EXPECTED] Position liquidity after decrease should be %s\n", liquidityAfter)
 
-	barChange := barBalanceAfter - barBalanceAfterFee
-	fooChange := fooBalanceAfter - fooBalanceAfterFee
+	atomChange := atomBalanceAfter - atomBalanceAfterFee
+	btcChange := btcBalanceAfter - btcBalanceAfterFee
 
-	ufmt.Printf("[EXPECTED] BAR balance increased by %d from decrease\n", barChange)
-	ufmt.Printf("[EXPECTED] FOO balance increased by %d from decrease\n", fooChange)
+	ufmt.Printf("[EXPECTED] ATOM balance increased by %d from decrease\n", atomChange)
+	ufmt.Printf("[EXPECTED] BTC balance increased by %d from decrease\n", btcChange)
 
 	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
 	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 
 	// Validate token conservation and correctness
-	validateDecreaseLiquidityBalances(barChange, fooChange, barBalanceAfterFee, barBalanceAfter, fooBalanceAfterFee, fooBalanceAfter)
+	validateDecreaseLiquidityBalances(atomChange, btcChange, atomBalanceAfterFee, atomBalanceAfter, btcBalanceAfterFee, btcBalanceAfter)
 }
 
-func validateDecreaseLiquidityBalances(barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
+func validateDecreaseLiquidityBalances(atomChange, btcChange, atomBefore, atomAfter, btcBefore, btcAfter int64) {
 	// User should gain tokens when decreasing liquidity
-	if barChange <= 0 {
-		panic(ufmt.Sprintf("[ERROR] BAR balance should increase (change: %d)", barChange))
+	if atomChange <= 0 {
+		panic(ufmt.Sprintf("[ERROR] ATOM balance should increase (change: %d)", atomChange))
 	}
-	if fooChange <= 0 {
-		panic(ufmt.Sprintf("[ERROR] FOO balance should increase (change: %d)", fooChange))
+	if btcChange <= 0 {
+		panic(ufmt.Sprintf("[ERROR] BTC balance should increase (change: %d)", btcChange))
 	}
 
 	// Verify arithmetic consistency
-	if barBefore+barChange != barAfter {
-		panic(ufmt.Sprintf("[ERROR] BAR balance arithmetic inconsistent: %d + %d != %d", barBefore, barChange, barAfter))
+	if atomBefore+atomChange != atomAfter {
+		panic(ufmt.Sprintf("[ERROR] ATOM balance arithmetic inconsistent: %d + %d != %d", atomBefore, atomChange, atomAfter))
 	}
-	if fooBefore+fooChange != fooAfter {
-		panic(ufmt.Sprintf("[ERROR] FOO balance arithmetic inconsistent: %d + %d != %d", fooBefore, fooChange, fooAfter))
+	if btcBefore+btcChange != btcAfter {
+		panic(ufmt.Sprintf("[ERROR] BTC balance arithmetic inconsistent: %d + %d != %d", btcBefore, btcChange, btcAfter))
 	}
 
 	ufmt.Println("[EXPECTED] Decrease liquidity balance validation passed")
@@ -257,8 +257,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Swap amount1 should be -51664436
 //
 // [SCENARIO] 4. Decrease liquidity and check balances
-// [EXPECTED] User BAR balance before operations should be 99999943210216
-// [EXPECTED] User FOO balance before operations should be 99999951664436
+// [EXPECTED] User ATOM balance before operations should be 299999943210216
+// [EXPECTED] User BTC balance before operations should be 2099999951664436
 // [EXPECTED] Position liquidity before decrease should be 637408784
 // [INFO] Collecting fees
 // [EXPECTED] Collected fee0 should be 9900
@@ -267,11 +267,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Removed liquidity should be 100000000
 // [EXPECTED] Amount0 withdrawn should be 8907907
 // [EXPECTED] Amount1 withdrawn should be 7583134
-// [EXPECTED] User BAR balance after decrease should be 99999952128023
-// [EXPECTED] User FOO balance after decrease should be 99999959247570
+// [EXPECTED] User ATOM balance after decrease should be 299999952128023
+// [EXPECTED] User BTC balance after decrease should be 2099999959247570
 // [EXPECTED] Position liquidity after decrease should be 537408784
-// [EXPECTED] BAR balance increased by 8907907 from decrease
-// [EXPECTED] FOO balance increased by 7583134 from decrease
+// [EXPECTED] ATOM balance increased by 8907907 from decrease
+// [EXPECTED] BTC balance increased by 7583134 from decrease
 // [EXPECTED] Position token0 balance should be 47871876
 // [EXPECTED] Position token1 balance should be 40752429
 // [EXPECTED] Pool token0 balance should be 47871878

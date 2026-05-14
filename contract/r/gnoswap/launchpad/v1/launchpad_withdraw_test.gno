@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/launchpad"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -394,7 +394,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 			depositAmount: 1000000,
 			tier30Ratio:   30,
 			tier90Ratio:   30,
@@ -603,7 +603,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 
 			project, _ := lp.createProject(&createProjectParams{
 				name:          "Test Project",
-				tokenPath:     "gno.land/r/onbloc/obl",
+				tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 				depositAmount: 1000000,
 				tier30Ratio:   30,
 				tier90Ratio:   30,
@@ -707,7 +707,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		gns.Transfer(cross, launchpadAddr, 2000000000) // Extra for second attempt
-		obl.Transfer(cross, launchpadAddr, 2000000000)
+		eth.Transfer(cross, launchpadAddr, 2000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
@@ -740,7 +740,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		gns.Transfer(cross, launchpadAddr, 1000000000)
-		obl.Transfer(cross, launchpadAddr, 1000000000)
+		eth.Transfer(cross, launchpadAddr, 1000000000)
 
 		// Don't skip heights - tier hasn't ended yet
 		testing.SkipHeights(60*60*24*3/5 + 2)
@@ -936,7 +936,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			gns.Transfer(cross, launchpadAddr, 1000000000)
-			obl.Transfer(cross, launchpadAddr, 1000000000)
+			eth.Transfer(cross, launchpadAddr, 1000000000)
 
 			if tt.skipHeight > 0 {
 				testing.SkipHeights(tt.skipHeight)
@@ -1015,7 +1015,7 @@ func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDura
 	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 			depositAmount: 1000000,
 			tier30Ratio:   34,
 			tier90Ratio:   33,

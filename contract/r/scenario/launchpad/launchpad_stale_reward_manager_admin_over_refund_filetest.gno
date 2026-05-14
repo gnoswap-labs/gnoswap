@@ -35,7 +35,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -59,15 +59,15 @@ func main() {
 	println("[INFO] calculateTierClaimableRewards updates AccumulatedRewardPerDepositX128 before reading.")
 	println()
 
-	println("[SCENARIO] 1. Create OBL launchpad project (1B OBL total)")
-	createOBLProject()
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project (1B ETH total)")
+	createETHProject()
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println()
 
 	println("[SCENARIO] 2. Alice deposits 1,000,000 GNS to tier 30 (sole depositor)")
 	println("[INFO] Alice is the only depositor in tier 30")
-	println("[INFO] She is entitled to ALL of tier 30 rewards (~100,000,000 OBL)")
+	println("[INFO] She is entitled to ALL of tier 30 rewards (~100,000,000 ETH)")
 	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
 	println()
 
@@ -79,38 +79,38 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Verify launchpad balance before admin refund")
-	launchpadBalanceBefore := obl.BalanceOf(launchpadAddr)
-	recipientBalanceBefore := obl.BalanceOf(projectAddr)
-	aliceOblBefore := obl.BalanceOf(aliceAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance: %d\n", launchpadBalanceBefore)
-	ufmt.Printf("[INFO] Project recipient OBL balance: %d\n", recipientBalanceBefore)
-	ufmt.Printf("[INFO] Alice OBL balance: %d\n", aliceOblBefore)
+	launchpadBalanceBefore := eth.BalanceOf(launchpadAddr)
+	recipientBalanceBefore := eth.BalanceOf(projectAddr)
+	aliceEthBefore := eth.BalanceOf(aliceAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance: %d\n", launchpadBalanceBefore)
+	ufmt.Printf("[INFO] Project recipient ETH balance: %d\n", recipientBalanceBefore)
+	ufmt.Printf("[INFO] Alice ETH balance: %d\n", aliceEthBefore)
 	println()
 
 	println("[SCENARIO] 5. Admin calls TransferLeftFromProjectByAdmin")
 	println("[INFO] calculateTierClaimableRewards updates reward manager before reading")
-	println("[INFO] Correctly computes Alice's claimable rewards (~99,999,999 OBL)")
+	println("[INFO] Correctly computes Alice's claimable rewards (~99,999,999 ETH)")
 	println("[INFO] refundableAmount = leftReward - claimable (only tiers 90+180 with no depositors)")
 	transferRemainingRewards(projectId)
 	println()
 
 	println("[SCENARIO] 6. Verify balances after admin refund")
-	launchpadBalanceAfter := obl.BalanceOf(launchpadAddr)
-	recipientBalanceAfter := obl.BalanceOf(projectAddr)
-	aliceOblAfter := obl.BalanceOf(aliceAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance: %d\n", launchpadBalanceAfter)
-	ufmt.Printf("[INFO] Project recipient OBL balance: %d\n", recipientBalanceAfter)
-	ufmt.Printf("[INFO] Alice OBL balance: %d\n", aliceOblAfter)
+	launchpadBalanceAfter := eth.BalanceOf(launchpadAddr)
+	recipientBalanceAfter := eth.BalanceOf(projectAddr)
+	aliceEthAfter := eth.BalanceOf(aliceAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance: %d\n", launchpadBalanceAfter)
+	ufmt.Printf("[INFO] Project recipient ETH balance: %d\n", recipientBalanceAfter)
+	ufmt.Printf("[INFO] Alice ETH balance: %d\n", aliceEthAfter)
 	println()
 
 	println("[SCENARIO] 7. Accounting verification")
 	adminRefunded := recipientBalanceAfter - recipientBalanceBefore
-	ufmt.Printf("[INFO] Admin refunded: %d OBL\n", adminRefunded)
-	ufmt.Printf("[INFO] Launchpad remaining: %d OBL\n", launchpadBalanceAfter)
+	ufmt.Printf("[INFO] Admin refunded: %d ETH\n", adminRefunded)
+	ufmt.Printf("[INFO] Launchpad remaining: %d ETH\n", launchpadBalanceAfter)
 	println()
-	println("[EXPECTED] Alice (sole tier 30 depositor for full 30 days) is entitled to ~100,000,000 OBL")
-	println("[EXPECTED] Admin refunds ~900,000,000 OBL (tiers 90+180 with no depositors)")
-	ufmt.Printf("[EXPECTED] Admin refunded %d OBL, launchpad retains %d OBL for Alice\n", adminRefunded, launchpadBalanceAfter)
+	println("[EXPECTED] Alice (sole tier 30 depositor for full 30 days) is entitled to ~100,000,000 ETH")
+	println("[EXPECTED] Admin refunds ~900,000,000 ETH (tiers 90+180 with no depositors)")
+	ufmt.Printf("[EXPECTED] Admin refunded %d ETH, launchpad retains %d ETH for Alice\n", adminRefunded, launchpadBalanceAfter)
 	println("[EXPECTED] Depositor rewards are correctly preserved in the launchpad")
 	println()
 
@@ -119,23 +119,23 @@ func main() {
 	println()
 }
 
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)                       // 100,000,000 OBL
-	tier90Ratio := int64(20)                       // 200,000,000 OBL
-	tier180Ratio := int64(70)                      // 700,000,000 OBL
+	tier30Ratio := int64(10)                       // 100,000,000 ETH
+	tier90Ratio := int64(20)                       // 200,000,000 ETH
+	tier180Ratio := int64(70)                      // 700,000,000 ETH
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -154,9 +154,9 @@ func createOBLProject() {
 	testing.SkipHeights(120960)
 
 	println("[INFO] Project created with ID:", projectId)
-	println("[INFO] Tier 30 reward: 100,000,000 OBL (10%)")
-	println("[INFO] Tier 90 reward: 200,000,000 OBL (20%)")
-	println("[INFO] Tier 180 reward: 700,000,000 OBL (70%)")
+	println("[INFO] Tier 30 reward: 100,000,000 ETH (10%)")
+	println("[INFO] Tier 90 reward: 200,000,000 ETH (20%)")
+	println("[INFO] Tier 180 reward: 700,000,000 ETH (70%)")
 }
 
 func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
@@ -184,18 +184,18 @@ func transferRemainingRewards(projectId string) {
 	println("[INFO] Admin transferring remaining rewards to project recipient")
 	testing.SetRealm(adminRealm)
 
-	launchpadBalanceBefore := obl.BalanceOf(launchpadAddr)
-	recipientBalanceBefore := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance before: %d\n", launchpadBalanceBefore)
-	ufmt.Printf("[INFO] Recipient OBL balance before: %d\n", recipientBalanceBefore)
+	launchpadBalanceBefore := eth.BalanceOf(launchpadAddr)
+	recipientBalanceBefore := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance before: %d\n", launchpadBalanceBefore)
+	ufmt.Printf("[INFO] Recipient ETH balance before: %d\n", recipientBalanceBefore)
 
 	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
 
-	launchpadBalanceAfter := obl.BalanceOf(launchpadAddr)
-	recipientBalanceAfter := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance after: %d\n", launchpadBalanceAfter)
-	ufmt.Printf("[INFO] Recipient OBL balance after: %d\n", recipientBalanceAfter)
-	ufmt.Printf("[INFO] OBL transferred to recipient: %d\n", recipientBalanceAfter-recipientBalanceBefore)
+	launchpadBalanceAfter := eth.BalanceOf(launchpadAddr)
+	recipientBalanceAfter := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance after: %d\n", launchpadBalanceAfter)
+	ufmt.Printf("[INFO] Recipient ETH balance after: %d\n", recipientBalanceAfter)
+	ufmt.Printf("[INFO] ETH transferred to recipient: %d\n", recipientBalanceAfter-recipientBalanceBefore)
 }
 
 func collectReward(addr address) {
@@ -204,12 +204,12 @@ func collectReward(addr address) {
 
 	depositId := "1"
 
-	beforeOblBalance := obl.BalanceOf(addr)
-	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
+	beforeEthBalance := eth.BalanceOf(addr)
+	ufmt.Printf("[INFO] ETH balance before: %d\n", beforeEthBalance)
 
 	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
-	afterOblBalance := obl.BalanceOf(addr)
-	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
+	afterEthBalance := eth.BalanceOf(addr)
+	ufmt.Printf("[INFO] ETH balance after: %d\n", afterEthBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
@@ -218,18 +218,18 @@ func collectReward(addr address) {
 // [INFO] When TransferLeftFromProjectByAdmin is called,
 // [INFO] calculateTierClaimableRewards updates AccumulatedRewardPerDepositX128 before reading.
 //
-// [SCENARIO] 1. Create OBL launchpad project (1B OBL total)
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project (1B ETH total)
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks (7 days) to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
-// [INFO] Tier 30 reward: 100,000,000 OBL (10%)
-// [INFO] Tier 90 reward: 200,000,000 OBL (20%)
-// [INFO] Tier 180 reward: 700,000,000 OBL (70%)
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [INFO] Tier 30 reward: 100,000,000 ETH (10%)
+// [INFO] Tier 90 reward: 200,000,000 ETH (20%)
+// [INFO] Tier 180 reward: 700,000,000 ETH (70%)
 //
 // [SCENARIO] 2. Alice deposits 1,000,000 GNS to tier 30 (sole depositor)
 // [INFO] Alice is the only depositor in tier 30
-// [INFO] She is entitled to ALL of tier 30 rewards (~100,000,000 OBL)
+// [INFO] She is entitled to ALL of tier 30 rewards (~100,000,000 ETH)
 // [INFO] Admin transferring 1000000 GNS to Alice
 // [INFO] Alice approving launchpad to spend GNS
 // [INFO] Deposit created with ID: 1
@@ -240,37 +240,37 @@ func collectReward(addr address) {
 // [INFO] Reward manager will be updated during admin refund calculation
 //
 // [SCENARIO] 4. Verify launchpad balance before admin refund
-// [INFO] Launchpad OBL balance: 1000000000
-// [INFO] Project recipient OBL balance: 0
-// [INFO] Alice OBL balance: 0
+// [INFO] Launchpad ETH balance: 1000000000
+// [INFO] Project recipient ETH balance: 0
+// [INFO] Alice ETH balance: 0
 //
 // [SCENARIO] 5. Admin calls TransferLeftFromProjectByAdmin
 // [INFO] calculateTierClaimableRewards updates reward manager before reading
-// [INFO] Correctly computes Alice's claimable rewards (~99,999,999 OBL)
+// [INFO] Correctly computes Alice's claimable rewards (~99,999,999 ETH)
 // [INFO] refundableAmount = leftReward - claimable (only tiers 90+180 with no depositors)
 // [INFO] Admin transferring remaining rewards to project recipient
-// [INFO] Launchpad OBL balance before: 1000000000
-// [INFO] Recipient OBL balance before: 0
-// [INFO] Launchpad OBL balance after: 99999999
-// [INFO] Recipient OBL balance after: 900000001
-// [INFO] OBL transferred to recipient: 900000001
+// [INFO] Launchpad ETH balance before: 1000000000
+// [INFO] Recipient ETH balance before: 0
+// [INFO] Launchpad ETH balance after: 99999999
+// [INFO] Recipient ETH balance after: 900000001
+// [INFO] ETH transferred to recipient: 900000001
 //
 // [SCENARIO] 6. Verify balances after admin refund
-// [INFO] Launchpad OBL balance: 99999999
-// [INFO] Project recipient OBL balance: 900000001
-// [INFO] Alice OBL balance: 0
+// [INFO] Launchpad ETH balance: 99999999
+// [INFO] Project recipient ETH balance: 900000001
+// [INFO] Alice ETH balance: 0
 //
 // [SCENARIO] 7. Accounting verification
-// [INFO] Admin refunded: 900000001 OBL
-// [INFO] Launchpad remaining: 99999999 OBL
+// [INFO] Admin refunded: 900000001 ETH
+// [INFO] Launchpad remaining: 99999999 ETH
 //
-// [EXPECTED] Alice (sole tier 30 depositor for full 30 days) is entitled to ~100,000,000 OBL
-// [EXPECTED] Admin refunds ~900,000,000 OBL (tiers 90+180 with no depositors)
-// [EXPECTED] Admin refunded 900000001 OBL, launchpad retains 99999999 OBL for Alice
+// [EXPECTED] Alice (sole tier 30 depositor for full 30 days) is entitled to ~100,000,000 ETH
+// [EXPECTED] Admin refunds ~900,000,000 ETH (tiers 90+180 with no depositors)
+// [EXPECTED] Admin refunded 900000001 ETH, launchpad retains 99999999 ETH for Alice
 // [EXPECTED] Depositor rewards are correctly preserved in the launchpad
 //
 // [SCENARIO] 8. Collect reward for Alice
 // [INFO] Collecting reward for address: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 99999999
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 99999999
 // [INFO] Reward collected: 99999999

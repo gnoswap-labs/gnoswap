@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 )
 
 var testConfig = governance.Config{
@@ -910,13 +910,13 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 			expectedHasAbort:     true,
 		},
 		{
-			name:                 "success - bar token transfer",
-			tokenPath:            "gno.land/r/onbloc/bar",
+			name:                 "success - atom token transfer",
+			tokenPath:            "gno.land/r/gnoswap/test_token/atom",
 			amount:               1_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 5_000_000_000,
 			expectedHasAbort:     false,
-			description:          "GRC20 bar token transfer",
+			description:          "GRC20 atom token transfer",
 		},
 		{
 			name:                 "success - large amount transfer",
@@ -1477,6 +1477,6 @@ func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, communityPoolAddr, amount)
 
-	// Transfer GRC20 token(bar) directly to communityPool instead of wugnot deposit
-	bar.Transfer(cross, communityPoolAddr, amount*10)
+	// Transfer GRC20 token(atom) directly to communityPool instead of wugnot deposit
+	atom.Transfer(cross, communityPoolAddr, amount*10)
 }

@@ -1,7 +1,7 @@
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
 // POOLs:
-// 1. bar:qux:100
+// 1. atom:sol:100
 
 // POSITIONs:
 // 1. User1 position (staked before incentive creation)
@@ -43,8 +43,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -71,8 +71,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
 	fee100 uint32 = 100
@@ -143,12 +143,12 @@ func initialize() {
 	testing.SkipHeights(1)
 
 	// Transfer tokens to users for minting positions
-	bar.Transfer(cross, user1User, 10000)
-	qux.Transfer(cross, user1User, 10000)
-	bar.Transfer(cross, user2User, 10000)
-	qux.Transfer(cross, user2User, 10000)
-	bar.Transfer(cross, user3User, 10000)
-	qux.Transfer(cross, user3User, 10000)
+	atom.Transfer(cross, user1User, 10000)
+	sol.Transfer(cross, user1User, 10000)
+	atom.Transfer(cross, user2User, 10000)
+	sol.Transfer(cross, user2User, 10000)
+	atom.Transfer(cross, user3User, 10000)
+	sol.Transfer(cross, user3User, 10000)
 
 	// Transfer GNS to external creator
 	gns.Transfer(cross, externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
@@ -162,27 +162,27 @@ func createPoolAndSetTier() {
 	testing.SkipHeights(1)
 	pl.CreatePool(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
 func user1MintThenStake() {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -204,14 +204,14 @@ func user1MintThenStake() {
 func user2MintThenStake() {
 	testing.SetRealm(user2Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -242,7 +242,7 @@ func createAndStartIncentive() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		gnsPath,
 		REWARD_AMOUNT,
 		startTime,
@@ -261,14 +261,14 @@ func createAndStartIncentive() {
 func user3MintThenStake() {
 	testing.SetRealm(user3Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),

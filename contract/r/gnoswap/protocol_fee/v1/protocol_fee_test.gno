@@ -15,9 +15,9 @@ import (
 
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -54,12 +54,12 @@ func transferTokenTo(t *testing.T, tokenPath string, to address, amount int64) {
 	testing.SetRealm(adminRealm)
 
 	switch tokenPath {
-	case "gno.land/r/onbloc/bar":
-		bar.Transfer(cross, to, amount)
-	case "gno.land/r/onbloc/obl":
-		obl.Transfer(cross, to, amount)
-	case "gno.land/r/onbloc/qux":
-		qux.Transfer(cross, to, amount)
+	case "gno.land/r/gnoswap/test_token/atom":
+		atom.Transfer(cross, to, amount)
+	case "gno.land/r/gnoswap/test_token/eth":
+		eth.Transfer(cross, to, amount)
+	case "gno.land/r/gnoswap/test_token/sol":
+		sol.Transfer(cross, to, amount)
 	default:
 		panic(ufmt.Sprintf("unsupported token path: %s", tokenPath))
 	}
@@ -72,15 +72,15 @@ func approveProtocolFeeSpender(t *testing.T, ownerRealm runtime.Realm, tokenPath
 	protocolFeeV1Realm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 
 	switch tokenPath {
-	case "gno.land/r/onbloc/bar":
-		bar.Approve(cross, protocolFeeAddr, amount)
-		bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
-	case "gno.land/r/onbloc/obl":
-		obl.Approve(cross, protocolFeeAddr, amount)
-		obl.Approve(cross, protocolFeeV1Realm.Address(), amount)
-	case "gno.land/r/onbloc/qux":
-		qux.Approve(cross, protocolFeeAddr, amount)
-		qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	case "gno.land/r/gnoswap/test_token/atom":
+		atom.Approve(cross, protocolFeeAddr, amount)
+		atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	case "gno.land/r/gnoswap/test_token/eth":
+		eth.Approve(cross, protocolFeeAddr, amount)
+		eth.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	case "gno.land/r/gnoswap/test_token/sol":
+		sol.Approve(cross, protocolFeeAddr, amount)
+		sol.Approve(cross, protocolFeeV1Realm.Address(), amount)
 	default:
 		panic(ufmt.Sprintf("unsupported token path: %s", tokenPath))
 	}
@@ -135,16 +135,16 @@ func TestDistributeProtocolFee(t *testing.T) {
 			prevRealm: govStakerRealm,
 			devOpsPct: 1_000, // 10%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 100,
-				"gno.land/r/onbloc/qux": 200,
+				"gno.land/r/gnoswap/test_token/atom": 100,
+				"gno.land/r/gnoswap/test_token/sol": 200,
 			},
 			devOpsBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 10,
-				"gno.land/r/onbloc/qux": 20,
+				"gno.land/r/gnoswap/test_token/atom": 10,
+				"gno.land/r/gnoswap/test_token/sol": 20,
 			},
 			govStakerBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 90,
-				"gno.land/r/onbloc/qux": 180,
+				"gno.land/r/gnoswap/test_token/atom": 90,
+				"gno.land/r/gnoswap/test_token/sol": 180,
 			},
 		},
 		{
@@ -152,16 +152,16 @@ func TestDistributeProtocolFee(t *testing.T) {
 			prevRealm: govStakerRealm,
 			devOpsPct: 5_000, // 50%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 100,
-				"gno.land/r/onbloc/qux": 200,
+				"gno.land/r/gnoswap/test_token/atom": 100,
+				"gno.land/r/gnoswap/test_token/sol": 200,
 			},
 			devOpsBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 50,
-				"gno.land/r/onbloc/qux": 100,
+				"gno.land/r/gnoswap/test_token/atom": 50,
+				"gno.land/r/gnoswap/test_token/sol": 100,
 			},
 			govStakerBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 50,
-				"gno.land/r/onbloc/qux": 100,
+				"gno.land/r/gnoswap/test_token/atom": 50,
+				"gno.land/r/gnoswap/test_token/sol": 100,
 			},
 		},
 		{
@@ -169,16 +169,16 @@ func TestDistributeProtocolFee(t *testing.T) {
 			prevRealm: govStakerRealm,
 			devOpsPct: 5_000, // 50%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 1,
-				"gno.land/r/onbloc/qux": 3,
+				"gno.land/r/gnoswap/test_token/atom": 1,
+				"gno.land/r/gnoswap/test_token/sol": 3,
 			},
 			devOpsBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 0,
-				"gno.land/r/onbloc/qux": 1,
+				"gno.land/r/gnoswap/test_token/atom": 0,
+				"gno.land/r/gnoswap/test_token/sol": 1,
 			},
 			govStakerBalanceChanges: map[string]int64{
-				"gno.land/r/onbloc/bar": 1,
-				"gno.land/r/onbloc/qux": 2,
+				"gno.land/r/gnoswap/test_token/atom": 1,
+				"gno.land/r/gnoswap/test_token/sol": 2,
 			},
 		},
 		{
@@ -266,20 +266,20 @@ func TestAddToProtocolFee(t *testing.T) {
 		wantReservedGovStaker int64
 	}{
 		{
-			name:                  "add bar to protocol fee",
-			tokenPath:             "gno.land/r/onbloc/bar",
+			name:                  "add atom to protocol fee",
+			tokenPath:             "gno.land/r/gnoswap/test_token/atom",
 			amount:                100,
 			wantReservedGovStaker: 100,
 		},
 		{
-			name:                  "add qux to protocol fee",
-			tokenPath:             "gno.land/r/onbloc/qux",
+			name:                  "add sol to protocol fee",
+			tokenPath:             "gno.land/r/gnoswap/test_token/sol",
 			amount:                50,
 			wantReservedGovStaker: 50,
 		},
 		{
-			name:                  "reserve more qux immediately",
-			tokenPath:             "gno.land/r/onbloc/qux",
+			name:                  "reserve more sol immediately",
+			tokenPath:             "gno.land/r/gnoswap/test_token/sol",
 			initialAmount:         50,
 			amount:                10,
 			wantReservedGovStaker: 60,
@@ -329,31 +329,31 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(t *testing.T) {
 	}{
 		{
 			name:        "error - negative amount",
-			tokenPath:   "gno.land/r/onbloc/bar",
+			tokenPath:   "gno.land/r/gnoswap/test_token/atom",
 			amount:      -1,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid amount || amount(-1) should not be negative",
 		},
 		{
 			name:        "error - negative large amount",
-			tokenPath:   "gno.land/r/onbloc/bar",
+			tokenPath:   "gno.land/r/gnoswap/test_token/atom",
 			amount:      -999999,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid amount || amount(-999999) should not be negative",
 		},
 		{
 			name:      "success - zero amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/gnoswap/test_token/atom",
 			amount:    0,
 		},
 		{
 			name:      "success - minimum positive amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/gnoswap/test_token/atom",
 			amount:    1,
 		},
 		{
 			name:      "success - large amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/gnoswap/test_token/atom",
 			// Keep this within the test token supply now that AddToProtocolFee
 			// performs a real TransferFrom from the caller realm.
 			amount:    1_000_000,
@@ -404,7 +404,7 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 	}{
 		{
 			name:         "error - overflow at boundary",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/gnoswap/test_token/atom",
 			initialValue: 9223372036854775806, // MAX_INT64 - 1
 			addAmount:    2,
 			shouldPanic:  true,
@@ -412,7 +412,7 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 		},
 		{
 			name:         "error - overflow with large values",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/gnoswap/test_token/atom",
 			initialValue: 9223372036854775800,
 			addAmount:    10,
 			shouldPanic:  true,
@@ -420,14 +420,14 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 		},
 		{
 			name:         "success - at exact boundary",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/gnoswap/test_token/atom",
 			initialValue: 9223372036854775806, // MAX_INT64 - 1
 			addAmount:    1,
 			shouldPanic:  false,
 		},
 		{
 			name:         "success - normal addition",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/gnoswap/test_token/atom",
 			initialValue: 1000,
 			addAmount:    500,
 			shouldPanic:  false,
@@ -515,7 +515,7 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(t *testing.T) {
 			pf := createTestProtocolFee(t)
 			protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
 			if !tt.shouldPanic {
-				fundRealmAndApproveProtocolFee(t, tt.prevRealm, "gno.land/r/onbloc/bar", 100)
+				fundRealmAndApproveProtocolFee(t, tt.prevRealm, "gno.land/r/gnoswap/test_token/atom", 100)
 			}
 			testing.SetRealm(tt.prevRealm)
 
@@ -524,14 +524,14 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(t *testing.T) {
 					uassert.AbortsContains(t, tt.panicMsg, func() {
 						func(cur realm) {
 							testing.SetRealm(protocolFeeRealm)
-							pf.AddToProtocolFee("gno.land/r/onbloc/bar", 100)
+							pf.AddToProtocolFee("gno.land/r/gnoswap/test_token/atom", 100)
 						}(cross)
 					})
 				} else {
 					uassert.NotPanics(t, func() {
 						func(cur realm) {
 							testing.SetRealm(protocolFeeRealm)
-							pf.AddToProtocolFee("gno.land/r/onbloc/bar", 100)
+							pf.AddToProtocolFee("gno.land/r/gnoswap/test_token/atom", 100)
 						}(cross)
 					})
 				}
@@ -986,17 +986,17 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 			shouldPanic: false,
 			panicMsg:    "",
 			prepare: func(pf *protocolFeeV1) {
-				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/onbloc/bar", 100); err != nil {
+				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/gnoswap/test_token/atom", 100); err != nil {
 					panic(err)
 				}
-				if err := pf.store.AddReservedToken("gno.land/r/onbloc/bar"); err != nil {
+				if err := pf.store.AddReservedToken("gno.land/r/gnoswap/test_token/atom"); err != nil {
 					panic(err)
 				}
 				testing.SetRealm(adminRealm)
-				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
+				common.SafeGRC20Transfer(cross, "gno.land/r/gnoswap/test_token/atom", protocolFeeAddr, 100)
 			},
 			assertState: func(t *testing.T, pf *protocolFeeV1) {
-				uassert.Equal(t, int64(100), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+				uassert.Equal(t, int64(100), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/gnoswap/test_token/atom"))
 			},
 		},
 		{
@@ -1012,20 +1012,20 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 			shouldPanic: false,
 			panicMsg:    "",
 			prepare: func(pf *protocolFeeV1) {
-				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/onbloc/bar", 100); err != nil {
+				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/gnoswap/test_token/atom", 100); err != nil {
 					panic(err)
 				}
-				if err := pf.store.AddReservedToken("gno.land/r/onbloc/bar"); err != nil {
+				if err := pf.store.AddReservedToken("gno.land/r/gnoswap/test_token/atom"); err != nil {
 					panic(err)
 				}
 				testing.SetRealm(adminRealm)
-				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
+				common.SafeGRC20Transfer(cross, "gno.land/r/gnoswap/test_token/atom", protocolFeeAddr, 100)
 			},
 			assertState: func(t *testing.T, pf *protocolFeeV1) {
-				uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
-				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+				uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/gnoswap/test_token/atom"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/gnoswap/test_token/atom"))
 				uassert.Equal(t, 1, len(pf.getProtocolFeeState().ReservedTokens()))
-				uassert.Equal(t, "gno.land/r/onbloc/bar", pf.getProtocolFeeState().ReservedTokens()[0])
+				uassert.Equal(t, "gno.land/r/gnoswap/test_token/atom", pf.getProtocolFeeState().ReservedTokens()[0])
 			},
 		},
 	}
@@ -1111,20 +1111,20 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 			}()
 
 			holderRealm := testing.NewCodeRealm(poolPath)
-			fundAndApproveProtocolFee(holderRealm, "gno.land/r/onbloc/bar", 100)
+			fundAndApproveProtocolFee(holderRealm, "gno.land/r/gnoswap/test_token/atom", 100)
 			testing.SetRealm(holderRealm)
 
 			// When - Then
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					func(cur realm) {
-						pf.AddToProtocolFee("gno.land/r/foo", 100)
+						pf.AddToProtocolFee("gno.land/r/btc", 100)
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
-						err := pf.AddToProtocolFee("gno.land/r/onbloc/bar", 100)
+						err := pf.AddToProtocolFee("gno.land/r/gnoswap/test_token/atom", 100)
 						uassert.NotNil(t, err)
 					}(cross)
 				})

@@ -24,7 +24,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -51,20 +51,20 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println("[INFO] Project tier 30 Total Distribute Amount: 100,000,000")
 	println("[INFO] Project tier 30 Distribute Amount Per Second: 38.5802469136")
 	println()
 
-	println("[SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1")
+	println("[SCENARIO] 2. Deposit GNS to ETH project tier 30 by user1")
 	depositGnsTo(aliceAddr, projectId, projectTier30Id, int64(1_000_000))
 	println("[INFO] Alice second distribute amount: 38.5802469136")
 	println()
 
-	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2")
+	println("[SCENARIO] 3. Deposit GNS to ETH project tier 30 by user2")
 	println("[INFO] Alice second distribute amount: 19.2901234568")
 	println("[INFO] Bob second distribute amount: 19.2901234568")
 	depositGnsTo(bobAddr, projectId, projectTier30Id, int64(1_000_000))
@@ -90,13 +90,13 @@ func main() {
 	println()
 }
 
-// Create OBL launchpad project
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+// Create ETH launchpad project
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := testutils.TestAddress("project-owner")
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -105,9 +105,9 @@ func createOBLProject() {
 	tier180Ratio := int64(70)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -149,11 +149,11 @@ func createOBLProject() {
 	println("[EXPECTED] Tier 180 amount:", tier180.TotalDistributeAmount())
 }
 
-// Deposit GNS to OBL project tier 30
+// Deposit GNS to ETH project tier 30
 func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
-	println("[INFO] Depositing GNS to OBL project tier 30")
+	println("[INFO] Depositing GNS to ETH project tier 30")
 
 	println("[INFO] Admin transferring GNS to depositor for deposit")
 	testing.SetRealm(adminRealm)
@@ -185,22 +185,22 @@ func collectLaunchpadReward(ownerAddress address, depositId string) {
 	println("[INFO] Collecting launchpad reward for Deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddress))
 
-	beforeOblBalance := obl.BalanceOf(ownerAddress)
+	beforeEthBalance := eth.BalanceOf(ownerAddress)
 
 	launchpad.CollectRewardByDepositId(cross, depositId)
 
-	afterOblBalance := obl.BalanceOf(ownerAddress)
-	println("[EXPECTED] Obl balance after collection:", afterOblBalance-beforeOblBalance)
+	afterEthBalance := eth.BalanceOf(ownerAddress)
+	println("[EXPECTED] Eth balance after collection:", afterEthBalance-beforeEthBalance)
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] Project name: ETH Launchpad Project
+// [EXPECTED] Project token path: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20
@@ -211,8 +211,8 @@ func collectLaunchpadReward(ownerAddress address, depositId string) {
 // [INFO] Project tier 30 Total Distribute Amount: 100,000,000
 // [INFO] Project tier 30 Distribute Amount Per Second: 38.5802469136
 //
-// [SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1
-// [INFO] Depositing GNS to OBL project tier 30
+// [SCENARIO] 2. Deposit GNS to ETH project tier 30 by user1
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor approving launchpad to spend GNS
 // [EXPECTED] Deposit created with ID: 1
@@ -221,10 +221,10 @@ func collectLaunchpadReward(ownerAddress address, depositId string) {
 // [EXPECTED] Deposit depositor: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 // [INFO] Alice second distribute amount: 38.5802469136
 //
-// [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2
+// [SCENARIO] 3. Deposit GNS to ETH project tier 30 by user2
 // [INFO] Alice second distribute amount: 19.2901234568
 // [INFO] Bob second distribute amount: 19.2901234568
-// [INFO] Depositing GNS to OBL project tier 30
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor approving launchpad to spend GNS
 // [EXPECTED] Deposit created with ID: 2
@@ -237,14 +237,14 @@ func collectLaunchpadReward(ownerAddress address, depositId string) {
 //
 // [SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward
 // [INFO] Collecting launchpad reward for Deposit ID: 1
-// [EXPECTED] Obl balance after collection: 5000289
+// [EXPECTED] Eth balance after collection: 5000289
 //
 // [SCENARIO] 6. Collect launchpad reward for second Deposit
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 5000096
+// [EXPECTED] Eth balance after collection: 5000096
 //
 // [SCENARIO] 7. Skip blocks after reward collection
 // [INFO] Collecting launchpad reward for Deposit ID: 1
-// [EXPECTED] Obl balance after collection: 96
+// [EXPECTED] Eth balance after collection: 96
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 96
+// [EXPECTED] Eth balance after collection: 96

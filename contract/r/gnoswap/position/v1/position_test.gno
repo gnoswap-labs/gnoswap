@@ -52,21 +52,21 @@ func setupPoolAndApprovals(t *testing.T, faucet bool) {
 	CreatePoolWithoutFee(t)
 
 	if faucet {
-		TokenFaucet(t, barPath, alice)
-		TokenFaucet(t, fooPath, alice)
+		TokenFaucet(t, atomPath, alice)
+		TokenFaucet(t, btcPath, alice)
 	}
 
 	testing.SetRealm(posRealm)
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, atomPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, btcPath, adminAddr, poolAddr, maxApprove)
 }
 
 // seedPosition mints a simple position owned by admin and returns its id.
 func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 	t.Helper()
 	positionId, _, _, _ := mockInstance.Mint(
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,
@@ -425,8 +425,8 @@ func TestIsValidTokenPath(t *testing.T) {
 			expected:  true,
 		},
 		{
-			name:      "Valid registered token - bar",
-			tokenPath: barPath,
+			name:      "Valid registered token - atom",
+			tokenPath: atomPath,
 			expected:  true,
 		},
 		{
@@ -624,8 +624,8 @@ func TestMint(t *testing.T) {
 	}{
 		{
 			name:               "success: valid referral",
-			token0:             barPath,
-			token1:             fooPath,
+			token0:             atomPath,
+			token1:             btcPath,
 			fee:                fee500,
 			tickLower:          -500,
 			tickUpper:          500,
@@ -643,8 +643,8 @@ func TestMint(t *testing.T) {
 		},
 		{
 			name:             "abort: deadline exceeded",
-			token0:           barPath,
-			token1:           fooPath,
+			token0:           atomPath,
+			token1:           btcPath,
 			fee:              fee500,
 			tickLower:        -500,
 			tickUpper:        500,
@@ -662,8 +662,8 @@ func TestMint(t *testing.T) {
 		},
 		{
 			name:             "abort: invalid tick range",
-			token0:           barPath,
-			token1:           fooPath,
+			token0:           atomPath,
+			token1:           btcPath,
 			fee:              fee500,
 			tickLower:        600,
 			tickUpper:        500,
@@ -789,7 +789,7 @@ func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			caller := tt.caller
 			mintTo := tt.mintTo
@@ -802,21 +802,21 @@ func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
 			}
 
 			testing.SetRealm(adminRealm)
-			common.SafeGRC20Transfer(cross, barPath, caller, 1000000)
-			common.SafeGRC20Transfer(cross, fooPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross, atomPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross, btcPath, caller, 1000000)
 
 			if tt.callerCodePath != "" {
 				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
 			} else {
 				testing.SetRealm(testing.NewUserRealm(caller))
 			}
-			common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-			common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross, atomPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross, btcPath, poolAddr, 1000000)
 
 			mint := func(cur realm) (uint64, string, string, string) {
 				testing.SetRealm(posRealm)
 				return mockInstance.Mint(
-					barPath, fooPath, fee500,
+					atomPath, btcPath, fee500,
 					-500, 500,
 					"1000000", "1000000",
 					"0", "0",
@@ -914,12 +914,12 @@ func TestIncreaseLiquidity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
 			_, _, _, _ = mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1053,12 +1053,12 @@ func TestDecreaseLiquidity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
 			mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1142,12 +1142,12 @@ func TestCollectFees(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
 			mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1200,12 +1200,12 @@ func TestCollectFees(t *testing.T) {
 
 func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
 	initPositionTest(t)
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 	testing.SetRealm(adminRealm)
 	mockInstanceMint(
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,
@@ -1234,12 +1234,12 @@ func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
 
 func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
 	initPositionTest(t)
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 	testing.SetOriginCaller(adminAddr)
 	mockInstanceMint(
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,
@@ -1324,12 +1324,12 @@ func TestReposition(t *testing.T) {
 			initPositionTest(t)
 
 			// no need to faucet tokens here.
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
 			mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1405,13 +1405,13 @@ func TestValidateTokenPath(t *testing.T) {
 		{
 			name:        "Valid different tokens",
 			token0:      gnsPath,
-			token1:      barPath,
+			token1:      atomPath,
 			expectError: false,
 		},
 		{
-			name:        "Valid different GRC20 tokens (bar/baz)",
-			token0:      barPath,
-			token1:      bazPath,
+			name:        "Valid different GRC20 tokens (atom/atone)",
+			token0:      atomPath,
+			token1:      atonePath,
 			expectError: false,
 		},
 		{
@@ -1499,9 +1499,9 @@ func TestComputePoolPath(t *testing.T) {
 		{
 			name:         "Normal pool path",
 			token0:       gnsPath,
-			token1:       barPath,
+			token1:       atomPath,
 			fee:          fee3000,
-			expectedPath: pl.GetPoolPath(gnsPath, barPath, fee3000),
+			expectedPath: pl.GetPoolPath(gnsPath, atomPath, fee3000),
 		},
 		{
 			name:         "Pool path with fee 500",
@@ -1512,24 +1512,24 @@ func TestComputePoolPath(t *testing.T) {
 		},
 		{
 			name:         "Pool path with fee 100",
-			token0:       barPath,
-			token1:       bazPath,
+			token0:       atomPath,
+			token1:       atonePath,
 			fee:          fee100,
-			expectedPath: pl.GetPoolPath(barPath, bazPath, fee100),
+			expectedPath: pl.GetPoolPath(atomPath, atonePath, fee100),
 		},
 		{
 			name:         "Pool path with fee 10000",
 			token0:       gnsPath,
-			token1:       oblPath,
+			token1:       ethPath,
 			fee:          fee10000,
-			expectedPath: pl.GetPoolPath(gnsPath, oblPath, fee10000),
+			expectedPath: pl.GetPoolPath(gnsPath, ethPath, fee10000),
 		},
 		{
 			name:         "Pool path with reversed token order",
-			token0:       barPath,
+			token0:       atomPath,
 			token1:       gnsPath,
 			fee:          fee3000,
-			expectedPath: pl.GetPoolPath(barPath, gnsPath, fee3000),
+			expectedPath: pl.GetPoolPath(atomPath, gnsPath, fee3000),
 		},
 	}
 
@@ -1595,12 +1595,12 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
 			mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1650,13 +1650,13 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	initPositionTest(t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 	testing.SetRealm(adminRealm)
 	// Step 1: Mint position to add liquidity
 	mockInstanceMint(
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,
@@ -1666,7 +1666,7 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	)
 
 	// Step 2: Manually reduce pool balance to simulate insufficient balance
-	pool := mustGetStoredTestPool(pl.GetPoolPath(barPath, fooPath, fee500))
+	pool := mustGetStoredTestPool(pl.GetPoolPath(atomPath, btcPath, fee500))
 	currentBalance0 := pool.BalanceToken0()
 	currentBalance1 := pool.BalanceToken1()
 
@@ -1749,13 +1749,13 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
 			// Step 1: Mint initial position
 			mockInstanceMint(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				-10000,
 				10000,
@@ -1830,12 +1830,12 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 	initPositionTest(t)
 
 	// Setup pool and position owned by admin
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 	testing.SetOriginCaller(adminAddr)
 	mockInstanceMint(
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,

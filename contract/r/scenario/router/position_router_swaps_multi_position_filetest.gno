@@ -26,8 +26,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var t *testing.T
@@ -49,8 +49,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(500)
 )
 
@@ -86,23 +86,23 @@ func initPool() {
 
 	defaultTokenAmount := int64(100_000_000_000_000)
 
-	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Atom tokens")
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Btc tokens")
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
-	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
-	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Initial Atom balance of Alice: %d\n", atom.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Initial Btc balance of Alice: %d\n", btc.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -110,14 +110,14 @@ func initPool() {
 
 func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		tickLower,
 		tickUpper,
@@ -138,21 +138,21 @@ func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) 
 
 func executeExactInRouterSwaps() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	ufmt.Printf("[INFO] Pool balance of BAR: %d\n", pool.GetBalanceToken0(poolPath))
-	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", pool.GetBalanceToken1(poolPath))
+	ufmt.Println("[INFO] Executing first swap BTC -> ATOM")
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
+	ufmt.Printf("[INFO] Pool balance of ATOM: %d\n", pool.GetBalanceToken0(poolPath))
+	ufmt.Printf("[INFO] Pool balance of BTC: %d\n", pool.GetBalanceToken1(poolPath))
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,         // inputToken
-		barPath,         // outputToken
+		btcPath,         // inputToken
+		atomPath,         // outputToken
 		"1000000000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -165,17 +165,17 @@ func executeExactInRouterSwaps() {
 
 func executeExactOutRouterSwaps() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
+	ufmt.Println("[INFO] Executing first swap BTC -> ATOM")
 	dryAmountIn, dryAmountOut, success := router.DrySwapRoute(
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		"10983000000",
 		"EXACT_OUT",
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500",
 		"100",
 		"1",
 	)
@@ -187,10 +187,10 @@ func executeExactOutRouterSwaps() {
 	uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-020] overflow", func() {
 		router.ExactOutSwapRoute(
 			cross,
-			fooPath,       // outputToken
-			barPath,       // inputToken
+			btcPath,       // outputToken
+			atomPath,       // inputToken
 			"10982000000", // amountSpecified
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", // strRouteArr
+			"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 			"100", // quoteArr
 			"1",   // tokenAmountLimit
 			time.Now().Add(time.Hour).Unix(),
@@ -201,10 +201,10 @@ func executeExactOutRouterSwaps() {
 
 // Output:
 // [SCENARIO] 1. Initialize pool
-// [INFO] Distributing Bar tokens
-// [INFO] Distributing Foo tokens
-// [INFO] Initial Bar balance of Alice: 100000000000000
-// [INFO] Initial Foo balance of Alice: 100000000000000
+// [INFO] Distributing Atom tokens
+// [INFO] Distributing Btc tokens
+// [INFO] Initial Atom balance of Alice: 100000000000000
+// [INFO] Initial Btc balance of Alice: 100000000000000
 // [INFO] Creating pool
 //
 // [SCENARIO] 2. Mint initial position
@@ -240,13 +240,13 @@ func executeExactOutRouterSwaps() {
 // [EXPECTED] Amount1 should be 0
 //
 // [SCENARIO] 3. Execute exact in swap with almost all
-// [INFO] Executing first swap FOO -> BAR
-// [INFO] Pool balance of BAR: 10907007633
-// [INFO] Pool balance of FOO: 11000000000
+// [INFO] Executing first swap BTC -> ATOM
+// [INFO] Pool balance of ATOM: 10907007633
+// [INFO] Pool balance of BTC: 11000000000
 // [EXPECTED] Swap amountIn should be 1000000000000
 // [EXPECTED] Swap amountOut should be -10804908355
 // [SCENARIO] 4. Execute exact out swap with almost all
-// [INFO] Executing first swap FOO -> BAR
+// [INFO] Executing first swap BTC -> ATOM
 // [EXPECTED] Dry swap amountIn should be 0
 // [EXPECTED] Dry swap amountOut should be 0
 // [EXPECTED] Dry swap success should be bool

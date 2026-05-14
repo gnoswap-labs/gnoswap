@@ -180,7 +180,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    fooPath,
+			tokenPath:    btcPath,
 			amount:       i256.NewInt(500),
 			isToken0:     true,
 			expectedBal0: 1500, // 1000 + 500
@@ -191,7 +191,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    fooPath,
+			tokenPath:    btcPath,
 			amount:       i256.NewInt(800),
 			isToken0:     false,
 			expectedBal0: 1000, // unchanged
@@ -202,7 +202,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    fooPath,
+			tokenPath:    btcPath,
 			amount:       i256.NewInt(0),
 			isToken0:     true,
 			expectedBal0: 1000, // unchanged
@@ -236,9 +236,9 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 		negativeAmount := i256.NewInt(-500)
 
-		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
-		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
-		mockInstanceSafeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
+		TokenFaucet(t, btcPath, testutils.TestAddress("from_addr"))
+		TokenApprove(t, btcPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
+		mockInstanceSafeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), btcPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
 
 		expectedBal := int64(1500) // 1000 + 500 (absolute value)
 		if pool.BalanceToken0() != expectedBal {

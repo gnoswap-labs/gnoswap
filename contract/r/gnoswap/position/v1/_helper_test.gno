@@ -18,12 +18,12 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
-	"gno.land/r/onbloc/usdc"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
+	"gno.land/r/gnoswap/test_token/usdc"
 
 	"gno.land/r/gnoswap/rbac"
 
@@ -34,11 +34,11 @@ const (
 	gnotDenom  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
+	atomPath    string = "gno.land/r/gnoswap/test_token/atom"
+	atonePath    string = "gno.land/r/gnoswap/test_token/atone"
+	btcPath    string = "gno.land/r/gnoswap/test_token/btc"
+	ethPath    string = "gno.land/r/gnoswap/test_token/eth"
+	solPath    string = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100               uint32 = 100
 	fee500               uint32 = 500
@@ -106,16 +106,16 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 		wugnotTransfer(t, to, defaultAmount)
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
-	case barPath:
-		barTransfer(t, to, defaultAmount)
-	case bazPath:
-		bazTransfer(t, to, defaultAmount)
-	case fooPath:
-		fooTransfer(t, to, defaultAmount)
-	case oblPath:
-		oblTransfer(t, to, defaultAmount)
-	case quxPath:
-		quxTransfer(t, to, defaultAmount)
+	case atomPath:
+		atomTransfer(t, to, defaultAmount)
+	case atonePath:
+		atoneTransfer(t, to, defaultAmount)
+	case btcPath:
+		btcTransfer(t, to, defaultAmount)
+	case ethPath:
+		ethTransfer(t, to, defaultAmount)
+	case solPath:
+		solTransfer(t, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -128,16 +128,16 @@ func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
-	case barPath:
-		return bar.BalanceOf(owner)
-	case bazPath:
-		return baz.BalanceOf(owner)
-	case fooPath:
-		return foo.BalanceOf(owner)
-	case oblPath:
-		return obl.BalanceOf(owner)
-	case quxPath:
-		return qux.BalanceOf(owner)
+	case atomPath:
+		return atom.BalanceOf(owner)
+	case atonePath:
+		return atone.BalanceOf(owner)
+	case btcPath:
+		return btc.BalanceOf(owner)
+	case ethPath:
+		return eth.BalanceOf(owner)
+	case solPath:
+		return sol.BalanceOf(owner)
 	default:
 		panic("token not found")
 	}
@@ -150,16 +150,16 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
-	case barPath:
-		return bar.Allowance(owner, spender)
-	case bazPath:
-		return baz.Allowance(owner, spender)
-	case fooPath:
-		return foo.Allowance(owner, spender)
-	case oblPath:
-		return obl.Allowance(owner, spender)
-	case quxPath:
-		return qux.Allowance(owner, spender)
+	case atomPath:
+		return atom.Allowance(owner, spender)
+	case atonePath:
+		return atone.Allowance(owner, spender)
+	case btcPath:
+		return btc.Allowance(owner, spender)
+	case ethPath:
+		return eth.Allowance(owner, spender)
+	case solPath:
+		return sol.Allowance(owner, spender)
 	default:
 		panic("token not found")
 	}
@@ -172,16 +172,16 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount
 		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
-	case barPath:
-		barApprove(t, owner, spender, amount)
-	case bazPath:
-		bazApprove(t, owner, spender, amount)
-	case fooPath:
-		fooApprove(t, owner, spender, amount)
-	case oblPath:
-		oblApprove(t, owner, spender, amount)
-	case quxPath:
-		quxApprove(t, owner, spender, amount)
+	case atomPath:
+		atomApprove(t, owner, spender, amount)
+	case atonePath:
+		atoneApprove(t, owner, spender, amount)
+	case btcPath:
+		btcApprove(t, owner, spender, amount)
+	case ethPath:
+		ethApprove(t, owner, spender, amount)
+	case solPath:
+		solApprove(t, owner, spender, amount)
 	default:
 		panic("token not found")
 	}
@@ -208,14 +208,14 @@ func CreatePoolWithoutFee(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	CreatePool(t, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, atomPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, btcPath, adminAddr, poolAddr, maxApprove)
 
 	testing.SetRealm(adminRealm)
 
@@ -223,8 +223,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	return func(cur realm) (uint64, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
 		return mockInstance.Mint(
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			fee500,
 			-887270,
 			887270,
@@ -269,34 +269,34 @@ func gnsApprove(t *testing.T, owner, spender address, amount int64) {
 	gns.Approve(cross, spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func atomApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	atom.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func atoneApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	atone.Approve(cross, spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender address, amount int64) {
+func btcApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	foo.Approve(cross, spender, amount)
+	btc.Approve(cross, spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender address, amount int64) {
+func ethApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	obl.Approve(cross, spender, amount)
+	eth.Approve(cross, spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender address, amount int64) {
+func solApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	qux.Approve(cross, spender, amount)
+	sol.Approve(cross, spender, amount)
 }
 
 func wugnotTransfer(t *testing.T, to address, amount int64) {
@@ -311,34 +311,34 @@ func gnsTransfer(t *testing.T, to address, amount int64) {
 	gns.Transfer(cross, to, amount)
 }
 
-func barTransfer(t *testing.T, to address, amount int64) {
+func atomTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	bar.Transfer(cross, to, amount)
+	atom.Transfer(cross, to, amount)
 }
 
-func bazTransfer(t *testing.T, to address, amount int64) {
+func atoneTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	baz.Transfer(cross, to, amount)
+	atone.Transfer(cross, to, amount)
 }
 
-func fooTransfer(t *testing.T, to address, amount int64) {
+func btcTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	foo.Transfer(cross, to, amount)
+	btc.Transfer(cross, to, amount)
 }
 
-func oblTransfer(t *testing.T, to address, amount int64) {
+func ethTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Transfer(cross, to, amount)
+	eth.Transfer(cross, to, amount)
 }
 
-func quxTransfer(t *testing.T, to address, amount int64) {
+func solTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	qux.Transfer(cross, to, amount)
+	sol.Transfer(cross, to, amount)
 }
 
 // ----------------------------------------------------------------------------
@@ -394,38 +394,38 @@ func burnTokens(t *testing.T) {
 
 	// burn tokens
 	for _, addr := range addrUsedInTest {
-		burnFoo(addr)
-		burnBar(addr)
-		burnBaz(addr)
-		burnQux(addr)
-		burnObl(addr)
+		burnBtc(addr)
+		burnAtom(addr)
+		burnAtone(addr)
+		burnSol(addr)
+		burnEth(addr)
 		burnUsdc(addr)
 	}
 }
 
-func burnFoo(addr address) {
+func burnBtc(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	foo.Burn(cross, addr, foo.BalanceOf(addr))
+	btc.Burn(cross, addr, btc.BalanceOf(addr))
 }
 
-func burnBar(addr address) {
+func burnAtom(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	bar.Burn(cross, addr, bar.BalanceOf(addr))
+	atom.Burn(cross, addr, atom.BalanceOf(addr))
 }
 
-func burnBaz(addr address) {
+func burnAtone(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	baz.Burn(cross, addr, baz.BalanceOf(addr))
+	atone.Burn(cross, addr, atone.BalanceOf(addr))
 }
 
-func burnQux(addr address) {
+func burnSol(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	qux.Burn(cross, addr, qux.BalanceOf(addr))
+	sol.Burn(cross, addr, sol.BalanceOf(addr))
 }
 
-func burnObl(addr address) {
+func burnEth(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Burn(cross, addr, obl.BalanceOf(addr))
+	eth.Burn(cross, addr, eth.BalanceOf(addr))
 }
 
 func burnUsdc(addr address) {
@@ -536,8 +536,8 @@ func mockInstanceIncreaseLiquidity(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross, fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(cross, atomPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(cross, btcPath, poolAddr, amount1Int)
 
 	return func(cur realm) (uint64, string, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
@@ -586,8 +586,8 @@ func mockInstanceReposition(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross, fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(cross, atomPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(cross, btcPath, poolAddr, amount1Int)
 
 	return func(cur realm) (uint64, string, int32, int32, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))

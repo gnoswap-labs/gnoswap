@@ -35,7 +35,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -57,10 +57,10 @@ func main() {
 	println("[INFO] calculateTierClaimableRewards updates AccumulatedRewardPerDepositX128 before reading.")
 	println()
 
-	println("[SCENARIO] 1. Create OBL launchpad project (1B OBL total)")
-	createOBLProject()
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project (1B ETH total)")
+	createETHProject()
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println()
 
 	println("[SCENARIO] 2. Alice deposits 1,000,000 GNS to tier 30 (sole depositor)")
@@ -88,16 +88,16 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Verify launchpad balance before admin refund")
-	launchpadBalanceBefore := obl.BalanceOf(launchpadAddr)
-	recipientBalanceBefore := obl.BalanceOf(projectAddr)
-	aliceOblBefore := obl.BalanceOf(aliceAddr)
-	bobOblBefore := obl.BalanceOf(bobAddr)
-	charlieOblBefore := obl.BalanceOf(charlieAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance: %d\n", launchpadBalanceBefore)
-	ufmt.Printf("[INFO] Project recipient OBL balance: %d\n", recipientBalanceBefore)
-	ufmt.Printf("[INFO] Alice OBL balance: %d\n", aliceOblBefore)
-	ufmt.Printf("[INFO] Bob OBL balance: %d\n", bobOblBefore)
-	ufmt.Printf("[INFO] Charlie OBL balance: %d\n", charlieOblBefore)
+	launchpadBalanceBefore := eth.BalanceOf(launchpadAddr)
+	recipientBalanceBefore := eth.BalanceOf(projectAddr)
+	aliceEthBefore := eth.BalanceOf(aliceAddr)
+	bobEthBefore := eth.BalanceOf(bobAddr)
+	charlieEthBefore := eth.BalanceOf(charlieAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance: %d\n", launchpadBalanceBefore)
+	ufmt.Printf("[INFO] Project recipient ETH balance: %d\n", recipientBalanceBefore)
+	ufmt.Printf("[INFO] Alice ETH balance: %d\n", aliceEthBefore)
+	ufmt.Printf("[INFO] Bob ETH balance: %d\n", bobEthBefore)
+	ufmt.Printf("[INFO] Charlie ETH balance: %d\n", charlieEthBefore)
 	println()
 
 	println("[SCENARIO] 8. Admin calls TransferLeftFromProjectByAdmin")
@@ -117,23 +117,23 @@ func main() {
 	println()
 }
 
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)                       // 100,000,000 OBL
-	tier90Ratio := int64(20)                       // 200,000,000 OBL
-	tier180Ratio := int64(70)                      // 700,000,000 OBL
+	tier30Ratio := int64(10)                       // 100,000,000 ETH
+	tier90Ratio := int64(20)                       // 200,000,000 ETH
+	tier180Ratio := int64(70)                      // 700,000,000 ETH
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -152,9 +152,9 @@ func createOBLProject() {
 	testing.SkipHeights(604800 / 5) // 5 seconds per block
 
 	println("[INFO] Project created with ID:", projectId)
-	println("[INFO] Tier 30 reward: 100,000,000 OBL (10%)")
-	println("[INFO] Tier 90 reward: 200,000,000 OBL (20%)")
-	println("[INFO] Tier 180 reward: 700,000,000 OBL (70%)")
+	println("[INFO] Tier 30 reward: 100,000,000 ETH (10%)")
+	println("[INFO] Tier 90 reward: 200,000,000 ETH (20%)")
+	println("[INFO] Tier 180 reward: 700,000,000 ETH (70%)")
 }
 
 func depositGns(username string, depositorAddr address, projectTierId string, depositAmount int64) {
@@ -178,25 +178,25 @@ func transferRemainingRewards(projectId string) {
 	println("[INFO] Admin transferring remaining rewards to project recipient")
 	testing.SetRealm(adminRealm)
 
-	launchpadBalanceBefore := obl.BalanceOf(launchpadAddr)
-	recipientBalanceBefore := obl.BalanceOf(projectAddr)
+	launchpadBalanceBefore := eth.BalanceOf(launchpadAddr)
+	recipientBalanceBefore := eth.BalanceOf(projectAddr)
 
 	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
 
-	launchpadBalanceAfter := obl.BalanceOf(launchpadAddr)
-	recipientBalanceAfter := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Launchpad OBL changed: %d\n", launchpadBalanceAfter-launchpadBalanceBefore)
-	ufmt.Printf("[INFO] Recipient OBL changed: %d\n", recipientBalanceAfter-recipientBalanceBefore)
+	launchpadBalanceAfter := eth.BalanceOf(launchpadAddr)
+	recipientBalanceAfter := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Launchpad ETH changed: %d\n", launchpadBalanceAfter-launchpadBalanceBefore)
+	ufmt.Printf("[INFO] Recipient ETH changed: %d\n", recipientBalanceAfter-recipientBalanceBefore)
 }
 
 func collectReward(username string, depositId string, addr address) {
 	ufmt.Printf("[INFO] Collecting reward for %s address: %s\n", username, addr)
 	testing.SetRealm(testing.NewUserRealm(addr))
 
-	beforeOblBalance := obl.BalanceOf(addr)
+	beforeEthBalance := eth.BalanceOf(addr)
 	launchpad.CollectRewardByDepositId(cross, depositId)
-	afterOblBalance := obl.BalanceOf(addr)
-	ufmt.Printf("[INFO] %s OBL balance changed: %d\n", username, afterOblBalance-beforeOblBalance)
+	afterEthBalance := eth.BalanceOf(addr)
+	ufmt.Printf("[INFO] %s ETH balance changed: %d\n", username, afterEthBalance-beforeEthBalance)
 }
 
 // Output:
@@ -204,14 +204,14 @@ func collectReward(username string, depositId string, addr address) {
 // [INFO] When TransferLeftFromProjectByAdmin is called,
 // [INFO] calculateTierClaimableRewards updates AccumulatedRewardPerDepositX128 before reading.
 //
-// [SCENARIO] 1. Create OBL launchpad project (1B OBL total)
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project (1B ETH total)
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 604800 / 5 blocks (7 days) to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
-// [INFO] Tier 30 reward: 100,000,000 OBL (10%)
-// [INFO] Tier 90 reward: 200,000,000 OBL (20%)
-// [INFO] Tier 180 reward: 700,000,000 OBL (70%)
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [INFO] Tier 30 reward: 100,000,000 ETH (10%)
+// [INFO] Tier 90 reward: 200,000,000 ETH (20%)
+// [INFO] Tier 180 reward: 700,000,000 ETH (70%)
 //
 // [SCENARIO] 2. Alice deposits 1,000,000 GNS to tier 30 (sole depositor)
 // [INFO] %s deposit created with ID: %s
@@ -233,25 +233,25 @@ func collectReward(username string, depositId string, addr address) {
 // [INFO] Reward manager will be updated during admin refund calculation
 //
 // [SCENARIO] 7. Verify launchpad balance before admin refund
-// [INFO] Launchpad OBL balance: 1000000000
-// [INFO] Project recipient OBL balance: 0
-// [INFO] Alice OBL balance: 0
-// [INFO] Bob OBL balance: 0
-// [INFO] Charlie OBL balance: 0
+// [INFO] Launchpad ETH balance: 1000000000
+// [INFO] Project recipient ETH balance: 0
+// [INFO] Alice ETH balance: 0
+// [INFO] Bob ETH balance: 0
+// [INFO] Charlie ETH balance: 0
 //
 // [SCENARIO] 8. Admin calls TransferLeftFromProjectByAdmin
 // [INFO] Admin transferring remaining rewards to project recipient
-// [INFO] Launchpad OBL changed: -900000002
-// [INFO] Recipient OBL changed: 900000002
+// [INFO] Launchpad ETH changed: -900000002
+// [INFO] Recipient ETH changed: 900000002
 //
 // [SCENARIO] 9. Collect reward for Alice
 // [INFO] Collecting reward for Alice address: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [INFO] Alice OBL balance changed: 66666859
+// [INFO] Alice ETH balance changed: 66666859
 //
 // [SCENARIO] 10. Collect reward for Bob
 // [INFO] Collecting reward for Bob address: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
-// [INFO] Bob OBL balance changed: 16666666
+// [INFO] Bob ETH balance changed: 16666666
 //
 // [SCENARIO] 11. Collect reward for Charlie
 // [INFO] Collecting reward for Charlie address: g1vd5xzunvd9j47h6lta047h6lta047h6l6a3cm8
-// [INFO] Charlie OBL balance changed: 16666473
+// [INFO] Charlie ETH balance changed: 16666473

@@ -1,4 +1,4 @@
-package obl
+package atom
 
 import (
 	"strings"
@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	token, privateLedger = grc20.NewToken("Obl", "OBL", 6)
+	token, privateLedger = grc20.NewToken("Cosmos", "ATOM", 6)
 	owner                = ownable.NewWithAddressByPrevious("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
 )
 
 func init() {
-	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
+	privateLedger.Mint(owner.Owner(), 300_000_000_000_000)
 	grc20reg.Register(cross, token, "")
 }
 

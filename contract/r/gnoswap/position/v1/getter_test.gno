@@ -7,27 +7,27 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+var poolKey = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
 func setupPositionGetter(t *testing.T) {
 	t.Helper()
 	initPositionTest(t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
-	mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(atomPath, btcPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
 
 func setupMultiplePositions(t *testing.T) {
 	t.Helper()
 	initPositionTest(t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 	// Create 3 positions with different tick ranges
-	mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	mockInstanceMint(barPath, fooPath, fee500, -5000, 5000, "500000", "500000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	mockInstanceMint(barPath, fooPath, fee500, -2000, 2000, "200000", "200000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(atomPath, btcPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(atomPath, btcPath, fee500, -5000, 5000, "500000", "500000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(atomPath, btcPath, fee500, -2000, 2000, "200000", "200000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
 
 func TestPositionGetter(t *testing.T) {
@@ -421,7 +421,7 @@ func TestGetPositionDetailsGetter(t *testing.T) {
 			testFunc: func() any {
 				return mockInstance.GetPositionPoolKey(positionId)
 			},
-			expected: "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			expected: "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500",
 		},
 		{
 			name: "GetPositionTickLower returns correct tick lower",

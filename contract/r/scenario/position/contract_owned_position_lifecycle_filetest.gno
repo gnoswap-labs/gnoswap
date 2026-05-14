@@ -27,8 +27,8 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/staker"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -50,8 +50,8 @@ var (
 	vaultRealm = testing.NewCodeRealm(vaultPath)
 	vaultAddr  = vaultRealm.Address()
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(3000)
 
 	positionID uint64
@@ -110,31 +110,31 @@ func main() {
 func setupPoolAndFundVault() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
+	poolPath := pool.GetPoolPath(atomPath, btcPath, fee)
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	staker.SetPoolTier(cross, poolPath, 1)
 
-	bar.Transfer(cross, vaultAddr, 150000000)
-	foo.Transfer(cross, vaultAddr, 150000000)
+	atom.Transfer(cross, vaultAddr, 150000000)
+	btc.Transfer(cross, vaultAddr, 150000000)
 
 	ufmt.Printf("[EXPECTED] pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] pool tier after setup: %d\n", staker.GetPoolTier(poolPath))
-	ufmt.Printf("[EXPECTED] vault bar balance after funding: %d\n", bar.BalanceOf(vaultAddr))
-	ufmt.Printf("[EXPECTED] vault foo balance after funding: %d\n", foo.BalanceOf(vaultAddr))
+	ufmt.Printf("[EXPECTED] vault atom balance after funding: %d\n", atom.BalanceOf(vaultAddr))
+	ufmt.Printf("[EXPECTED] vault btc balance after funding: %d\n", btc.BalanceOf(vaultAddr))
 }
 
 func vaultMintPosition() {
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -144,8 +144,8 @@ func vaultMintPosition() {
 		testing.SetRealm(vaultRealm)
 		positionID, liquidity, _, _ = position.Mint(
 			cross,
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			fee,
 			-960,
 			960,
@@ -161,8 +161,8 @@ func vaultMintPosition() {
 
 	ufmt.Printf("[EXPECTED] position ID: %d\n", positionID)
 	ufmt.Printf("[EXPECTED] minted liquidity: %s\n", liquidity)
-	ufmt.Printf("[EXPECTED] vault bar balance after mint: %d\n", bar.BalanceOf(vaultAddr))
-	ufmt.Printf("[EXPECTED] vault foo balance after mint: %d\n", foo.BalanceOf(vaultAddr))
+	ufmt.Printf("[EXPECTED] vault atom balance after mint: %d\n", atom.BalanceOf(vaultAddr))
+	ufmt.Printf("[EXPECTED] vault btc balance after mint: %d\n", btc.BalanceOf(vaultAddr))
 }
 
 func verifyVaultOwnership() {
@@ -178,8 +178,8 @@ func generateFees() {
 
 	pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		adminAddr,
 		true,
@@ -187,14 +187,14 @@ func generateFees() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		adminAddr,
 		false,
@@ -202,19 +202,19 @@ func generateFees() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
+	poolPath := pool.GetPoolPath(atomPath, btcPath, fee)
 	ufmt.Printf("[EXPECTED] pool tick after swaps: %d\n", pool.GetSlot0Tick(poolPath))
 	ufmt.Printf("[EXPECTED] pool token0 balance after swaps: %d\n", pool.GetBalanceToken0(poolPath))
 	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", pool.GetBalanceToken1(poolPath))
 }
 
 func vaultCollectFees() {
-	barBefore := bar.BalanceOf(vaultAddr)
-	fooBefore := foo.BalanceOf(vaultAddr)
+	atomBefore := atom.BalanceOf(vaultAddr)
+	btcBefore := btc.BalanceOf(vaultAddr)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -226,23 +226,23 @@ func vaultCollectFees() {
 		_, fee0, fee1, _, _, _ = position.CollectFee(cross, positionID)
 	}(cross)
 
-	barAfter := bar.BalanceOf(vaultAddr)
-	fooAfter := foo.BalanceOf(vaultAddr)
+	atomAfter := atom.BalanceOf(vaultAddr)
+	btcAfter := btc.BalanceOf(vaultAddr)
 
 	ufmt.Printf("[EXPECTED] collected fee0: %s\n", fee0)
 	ufmt.Printf("[EXPECTED] collected fee1: %s\n", fee1)
-	ufmt.Printf("[EXPECTED] vault bar balance before collect: %d\n", barBefore)
-	ufmt.Printf("[EXPECTED] vault bar balance after collect: %d\n", barAfter)
-	ufmt.Printf("[EXPECTED] vault foo balance before collect: %d\n", fooBefore)
-	ufmt.Printf("[EXPECTED] vault foo balance after collect: %d\n", fooAfter)
+	ufmt.Printf("[EXPECTED] vault atom balance before collect: %d\n", atomBefore)
+	ufmt.Printf("[EXPECTED] vault atom balance after collect: %d\n", atomAfter)
+	ufmt.Printf("[EXPECTED] vault btc balance before collect: %d\n", btcBefore)
+	ufmt.Printf("[EXPECTED] vault btc balance after collect: %d\n", btcAfter)
 }
 
 func vaultIncreaseLiquidity() {
 	liquidityBefore := position.GetPositionLiquidity(positionID)
 
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -296,8 +296,8 @@ func vaultDecreaseAllLiquidity() {
 
 func vaultReposition() {
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -412,16 +412,16 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 
 // Output:
 // [SCENARIO] 1. Setup pool and fund vault contract
-// [EXPECTED] pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 // [EXPECTED] pool tier after setup: 1
-// [EXPECTED] vault bar balance after funding: 150000000
-// [EXPECTED] vault foo balance after funding: 150000000
+// [EXPECTED] vault atom balance after funding: 150000000
+// [EXPECTED] vault btc balance after funding: 150000000
 //
 // [SCENARIO] 2. Vault contract mints a position
 // [EXPECTED] position ID: 1
 // [EXPECTED] minted liquidity: 1066918731
-// [EXPECTED] vault bar balance after mint: 100000000
-// [EXPECTED] vault foo balance after mint: 100000000
+// [EXPECTED] vault atom balance after mint: 100000000
+// [EXPECTED] vault btc balance after mint: 100000000
 //
 // [SCENARIO] 3. Verify vault contract owns the position
 // [EXPECTED] position owner: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v
@@ -436,10 +436,10 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [SCENARIO] 5. Vault contract collects fees
 // [EXPECTED] collected fee0: 29700
 // [EXPECTED] collected fee1: 29700
-// [EXPECTED] vault bar balance before collect: 100000000
-// [EXPECTED] vault bar balance after collect: 100029700
-// [EXPECTED] vault foo balance before collect: 100000000
-// [EXPECTED] vault foo balance after collect: 100029700
+// [EXPECTED] vault atom balance before collect: 100000000
+// [EXPECTED] vault atom balance after collect: 100029700
+// [EXPECTED] vault btc balance before collect: 100000000
+// [EXPECTED] vault btc balance after collect: 100029700
 //
 // [SCENARIO] 6. Vault contract increases liquidity
 // [EXPECTED] liquidity before increase: 1066918731
@@ -458,13 +458,13 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] owner after reposition: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v
 //
 // [SCENARIO] 9. Vault contract stakes the position
-// [EXPECTED] staked pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] staked pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 // [EXPECTED] position owner after stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [EXPECTED] staker contract address: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [EXPECTED] deposit owner after stake: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v
 //
 // [SCENARIO] 10. Vault contract collects fees while staked
-// [EXPECTED] staked collect fee pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] staked collect fee pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 //
 // [SCENARIO] 11. Vault contract collects staking rewards
 // [EXPECTED] staking reward to user: 0
@@ -473,5 +473,5 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] staking external penalty entries: 0
 //
 // [SCENARIO] 12. Vault contract unstakes the position
-// [EXPECTED] unstaked pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] unstaked pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 // [EXPECTED] position owner after unstake: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v

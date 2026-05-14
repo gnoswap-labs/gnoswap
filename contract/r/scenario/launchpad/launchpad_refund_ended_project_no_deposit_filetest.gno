@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -38,8 +38,8 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
 	println()
 
 	// [SCENARIO] 2. Skip blocks to end project
@@ -54,13 +54,13 @@ func main() {
 	println()
 }
 
-// Create OBL launchpad project
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+// Create ETH launchpad project
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
@@ -69,9 +69,9 @@ func createOBLProject() {
 	tier180Ratio := int64(70)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -115,7 +115,7 @@ func createOBLProject() {
 
 // Refund ended project without deposit
 func refundEndedProjectWithoutDeposit() {
-	projectId := "gno.land/r/onbloc/obl:123"
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
 
 	testing.SetRealm(launchpadRealm)
 	println("[INFO] Checking project status before refund")
@@ -127,28 +127,28 @@ func refundEndedProjectWithoutDeposit() {
 	}
 
 	testing.SetRealm(adminRealm)
-	println("[INFO] Checking OBL balance before refund")
-	oblBalanceBefore := obl.BalanceOf(projectAddr)
-	println("[INFO] Project OBL balance before refund:", oblBalanceBefore)
+	println("[INFO] Checking ETH balance before refund")
+	ethBalanceBefore := eth.BalanceOf(projectAddr)
+	println("[INFO] Project ETH balance before refund:", ethBalanceBefore)
 
 	println("[INFO] Project recipient attempting refund")
 	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
 
-	println("[INFO] Checking OBL balance after refund")
-	oblBalanceAfter := obl.BalanceOf(projectAddr)
-	println("[INFO] Project OBL balance after refund:", oblBalanceAfter)
+	println("[INFO] Checking ETH balance after refund")
+	ethBalanceAfter := eth.BalanceOf(projectAddr)
+	println("[INFO] Project ETH balance after refund:", ethBalanceAfter)
 
-	println("[EXPECTED] OBL balance after refund:", oblBalanceAfter)
+	println("[EXPECTED] ETH balance after refund:", ethBalanceAfter)
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] Project name: ETH Launchpad Project
+// [EXPECTED] Project token path: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20
@@ -163,9 +163,9 @@ func refundEndedProjectWithoutDeposit() {
 // [SCENARIO] 3. Refund ended project without deposit
 // [INFO] Checking project status before refund
 // [INFO] Project status: ended
-// [INFO] Checking OBL balance before refund
-// [INFO] Project OBL balance before refund: 0
+// [INFO] Checking ETH balance before refund
+// [INFO] Project ETH balance before refund: 0
 // [INFO] Project recipient attempting refund
-// [INFO] Checking OBL balance after refund
-// [INFO] Project OBL balance after refund: 1000000000
-// [EXPECTED] OBL balance after refund: 1000000000
+// [INFO] Checking ETH balance after refund
+// [INFO] Project ETH balance after refund: 1000000000
+// [EXPECTED] ETH balance after refund: 1000000000

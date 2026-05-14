@@ -28,7 +28,7 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -105,10 +105,10 @@ func createPool() {
 	// Deposit already done in main()
 
 	wugnot.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] create wugnot:bar:100 pool")
-	pl.CreatePool(cross, wugnotPath, barPath, fee100, "79228162514264337593543950336") // sqrt(1) * 2^96
+	println("[INFO] create wugnot:atom:100 pool")
+	pl.CreatePool(cross, wugnotPath, atomPath, fee100, "79228162514264337593543950336") // sqrt(1) * 2^96
 
 	testing.SkipHeights(1)
 }
@@ -117,13 +117,13 @@ func mintPosition() {
 	testing.SetRealm(adminRealm)
 
 	wugnot.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position with liquidity")
 	tokenId, liquidity, _, _ := pn.Mint(
 		cross,
 		wugnotPath,
-		barPath,
+		atomPath,
 		fee100,
 		int32(-20),
 		int32(20),
@@ -161,7 +161,7 @@ func createExternalIncentiveWithWUGNOT() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:100",
 		wugnotPath, // Use WUGNOT directly, not "ugnot"
 		1_000_000_000,
 		1234569600,
@@ -197,7 +197,7 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 	ufmt.Printf("[INFO] ending incentive with ID: %s\n", createdIncentiveID)
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:100",
 		createdIncentiveID,
 		adminUser,
 	)
@@ -239,7 +239,7 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] set pool creation fee to 0
 //
 // [STEP 2] Create pool
-// [INFO] create wugnot:bar:100 pool
+// [INFO] create wugnot:atom:100 pool
 //
 // [STEP 3] Mint position
 // [INFO] mint position with liquidity

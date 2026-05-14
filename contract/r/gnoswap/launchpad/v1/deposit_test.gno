@@ -394,7 +394,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 
 func TestDeposit_NewDeposit(t *testing.T) {
 	testAddr := testutils.TestAddress("test")
-	projectID := "gno.land/r/onbloc/obl:123"
+	projectID := "gno.land/r/gnoswap/test_token/eth:123"
 
 	tests := []struct {
 		name               string

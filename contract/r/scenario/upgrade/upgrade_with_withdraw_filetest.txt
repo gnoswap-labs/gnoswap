@@ -29,8 +29,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var t *testing.T
@@ -89,8 +89,8 @@ var (
 	devOpsV2Addr = testutils.TestAddress("devops2")
 
 	// paths
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 )
 
 func main() {
@@ -177,8 +177,8 @@ func initEmission() {
 
 	defaultTokenAmount := int64(10000000000)
 
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 	gns.Transfer(cross, aliceAddr, defaultTokenAmount)
 }
 
@@ -234,19 +234,19 @@ func createPool() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		uint32(3000),
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	poolPath := pool.GetPoolPath(barPath, fooPath, uint32(3000))
+	poolPath := pool.GetPoolPath(atomPath, btcPath, uint32(3000))
 	ufmt.Printf("[INFO] Pool created: %s\n", poolPath)
 
 	testing.SetRealm(adminRealm)
@@ -258,14 +258,14 @@ func createPool() {
 
 func mintPositionAndStake() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		uint32(3000),
 		-960,
 		960,
@@ -293,16 +293,16 @@ func mintPositionAndStake() {
 
 func swap() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 
 	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		"10000000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -324,12 +324,12 @@ func delegation() {
 
 func createLaunchpadProject() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, launchpadAddr, 10000000)
+	atom.Approve(cross, launchpadAddr, 10000000)
 
 	projectID := launchpad.CreateProject(
 		cross,
 		"Test Project",
-		"gno.land/r/onbloc/bar",
+		"gno.land/r/gnoswap/test_token/atom",
 		aliceAddr,
 		10000000,
 		"",
@@ -346,7 +346,7 @@ func createLaunchpadProject() {
 func depositToLaunchpadProject() {
 	testing.SetRealm(aliceRealm)
 
-	projectPoolID := "gno.land/r/onbloc/bar:124:30"
+	projectPoolID := "gno.land/r/gnoswap/test_token/atom:124:30"
 	gns.Approve(cross, launchpadAddr, 10000000)
 	depositID := launchpad.DepositGns(cross, projectPoolID, 10000000, "")
 
@@ -415,16 +415,16 @@ func updateRoleAddresses() {
 func withdrawCollectFee() {
 	testing.SetRealm(aliceRealm)
 
-	beforeBarBalance := bar.BalanceOf(aliceAddr)
-	beforeFooBalance := foo.BalanceOf(aliceAddr)
+	beforeAtomBalance := atom.BalanceOf(aliceAddr)
+	beforeBtcBalance := btc.BalanceOf(aliceAddr)
 
 	position.CollectFee(cross, uint64(1))
 
-	afterBarBalance := bar.BalanceOf(aliceAddr)
-	afterFooBalance := foo.BalanceOf(aliceAddr)
+	afterAtomBalance := atom.BalanceOf(aliceAddr)
+	afterBtcBalance := btc.BalanceOf(aliceAddr)
 
-	ufmt.Printf("[EXPECTED] alice bar balance changes should be %d\n", afterBarBalance-beforeBarBalance)
-	ufmt.Printf("[EXPECTED] alice foo balance changes should be %d\n", afterFooBalance-beforeFooBalance)
+	ufmt.Printf("[EXPECTED] alice atom balance changes should be %d\n", afterAtomBalance-beforeAtomBalance)
+	ufmt.Printf("[EXPECTED] alice btc balance changes should be %d\n", afterBtcBalance-beforeBtcBalance)
 }
 
 func withdrawCollectReward() {
@@ -459,15 +459,15 @@ func unStakeTokenAndRemovePosition() {
 func unDelegateAndCollectGovernanceReward() {
 	testing.SetRealm(aliceRealm)
 
-	beforeBarBalance := bar.BalanceOf(aliceAddr)
-	beforeFooBalance := foo.BalanceOf(aliceAddr)
+	beforeAtomBalance := atom.BalanceOf(aliceAddr)
+	beforeBtcBalance := btc.BalanceOf(aliceAddr)
 
 	gov_staker.CollectReward(cross)
-	afterBarBalance := bar.BalanceOf(aliceAddr)
-	afterFooBalance := foo.BalanceOf(aliceAddr)
+	afterAtomBalance := atom.BalanceOf(aliceAddr)
+	afterBtcBalance := btc.BalanceOf(aliceAddr)
 
-	ufmt.Printf("[EXPECTED] Governance reward alice bar balance changes should be %d\n", afterBarBalance-beforeBarBalance)
-	ufmt.Printf("[EXPECTED] Governance reward alice foo balance changes should be %d\n", afterFooBalance-beforeFooBalance)
+	ufmt.Printf("[EXPECTED] Governance reward alice atom balance changes should be %d\n", afterAtomBalance-beforeAtomBalance)
+	ufmt.Printf("[EXPECTED] Governance reward alice btc balance changes should be %d\n", afterBtcBalance-beforeBtcBalance)
 
 	beforeGnsBalance := gns.BalanceOf(aliceAddr)
 
@@ -515,8 +515,8 @@ func collectLaunchpadDeposit() {
 //
 // [SCENARIO] 3. Mint position
 // [INFO] Creating pool
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
-// [INFO]  gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 pool tier set: Tier1
+// [INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
+// [INFO]  gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000 pool tier set: Tier1
 // [INFO] Minting position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Liquidity should be 1066918731
@@ -532,12 +532,12 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] AmountOut should be -9862880
 //
 // [SCENARIO] 6. Create launchpad project
-// [EXPECTED] Project created: gno.land/r/onbloc/bar:124
+// [EXPECTED] Project created: gno.land/r/gnoswap/test_token/atom:124
 //
 // [SCENARIO] 6.1. Skip 720 heights to start launchpad project
 //
 // [SCENARIO] 7. Deposit to launchpad project
-// [EXPECTED] Deposited to project pool: gno.land/r/onbloc/bar:124:30, Deposit ID: 1
+// [EXPECTED] Deposited to project pool: gno.land/r/gnoswap/test_token/atom:124:30, Deposit ID: 1
 //
 // [SCENARIO] 6. Upgrade role addresses
 // [EXPECTED] community_pool should be changed g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 to g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w
@@ -568,8 +568,8 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] (v2) community pool balance change should be 1783675
 //
 // [SCENARIO] 8. Withdraw collect fee of previous contract
-// [EXPECTED] alice bar balance changes should be 29700
-// [EXPECTED] alice foo balance changes should be 0
+// [EXPECTED] alice atom balance changes should be 29700
+// [EXPECTED] alice btc balance changes should be 0
 //
 // [SCENARIO] 9. Withdraw collect reward of previous contract
 // [EXPECTED] alice gns balance changes should be 2860658499
@@ -581,8 +581,8 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] Decreased liquidity position is burned should be true
 //
 // [SCENARIO] 11. Undelegate and collect governance reward of previous contract
-// [EXPECTED] Governance reward alice bar balance changes should be 149
-// [EXPECTED] Governance reward alice foo balance changes should be 14815
+// [EXPECTED] Governance reward alice atom balance changes should be 149
+// [EXPECTED] Governance reward alice btc balance changes should be 14815
 // [EXPECTED] Undelegated amount should be 10000000
 // [EXPECTED] Undelegated gns balance changes should be 10000000
 //

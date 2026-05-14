@@ -19,8 +19,8 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gns"
 	pf "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -38,8 +38,8 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 	bobAddr   = testutils.TestAddress("bob")
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 func main() {
@@ -48,18 +48,18 @@ func main() {
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 2. Deposit bar before bob delegation")
-	depositProtocolFee(barPath, 1000)
+	println("[SCENARIO] 2. Deposit atom before bob delegation")
+	depositProtocolFee(atomPath, 1000)
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 3. Bob delegates after bar already exists")
+	println("[SCENARIO] 3. Bob delegates after atom already exists")
 	delegateWithMint(bobAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 4. Deposit qux after both delegations exist")
-	depositProtocolFee(quxPath, 500)
+	println("[SCENARIO] 4. Deposit sol after both delegations exist")
+	depositProtocolFee(solPath, 500)
 	testing.SkipHeights(1)
 	println()
 
@@ -96,20 +96,20 @@ func delegateWithMint(user address, amount int64) {
 func depositProtocolFee(tokenPath string, amount int64) {
 	testing.SetRealm(adminRealm)
 	switch tokenPath {
-	case barPath:
-		bar.Transfer(cross, stakerAddr, amount)
-	case quxPath:
-		qux.Transfer(cross, stakerAddr, amount)
+	case atomPath:
+		atom.Transfer(cross, stakerAddr, amount)
+	case solPath:
+		sol.Transfer(cross, stakerAddr, amount)
 	default:
 		panic("unsupported token path")
 	}
 
 	testing.SetRealm(stakerRealm)
 	switch tokenPath {
-	case barPath:
-		bar.Approve(cross, protocolFeeAddr, amount)
-	case quxPath:
-		qux.Approve(cross, protocolFeeAddr, amount)
+	case atomPath:
+		atom.Approve(cross, protocolFeeAddr, amount)
+	case solPath:
+		sol.Approve(cross, protocolFeeAddr, amount)
 	}
 	pf.AddToProtocolFee(cross, tokenPath, amount)
 
@@ -125,43 +125,43 @@ func checkClaimableRewards() {
 
 	assertInt64Equal(aliceEmission, 0, "alice emission reward")
 	assertInt64Equal(bobEmission, 0, "bob emission reward")
-	assertInt64Equal(aliceProtocolFees[barPath], 999, "alice claimable bar")
-	assertInt64Equal(aliceProtocolFees[quxPath], 249, "alice claimable qux")
-	assertInt64Equal(bobProtocolFees[barPath], 0, "bob claimable bar")
-	assertInt64Equal(bobProtocolFees[quxPath], 249, "bob claimable qux")
+	assertInt64Equal(aliceProtocolFees[atomPath], 999, "alice claimable atom")
+	assertInt64Equal(aliceProtocolFees[solPath], 249, "alice claimable sol")
+	assertInt64Equal(bobProtocolFees[atomPath], 0, "bob claimable atom")
+	assertInt64Equal(bobProtocolFees[solPath], 249, "bob claimable sol")
 
-	ufmt.Printf("[EXPECTED] alice claimable bar: %d\n", aliceProtocolFees[barPath])
-	ufmt.Printf("[EXPECTED] alice claimable qux: %d\n", aliceProtocolFees[quxPath])
-	ufmt.Printf("[EXPECTED] bob claimable bar: %d\n", bobProtocolFees[barPath])
-	ufmt.Printf("[EXPECTED] bob claimable qux: %d\n", bobProtocolFees[quxPath])
+	ufmt.Printf("[EXPECTED] alice claimable atom: %d\n", aliceProtocolFees[atomPath])
+	ufmt.Printf("[EXPECTED] alice claimable sol: %d\n", aliceProtocolFees[solPath])
+	ufmt.Printf("[EXPECTED] bob claimable atom: %d\n", bobProtocolFees[atomPath])
+	ufmt.Printf("[EXPECTED] bob claimable sol: %d\n", bobProtocolFees[solPath])
 }
 
-func collectAndCheck(user address, expectedBar, expectedQux int64) {
+func collectAndCheck(user address, expectedAtom, expectedSol int64) {
 	testing.SetRealm(testing.NewUserRealm(user))
-	barBefore := common.BalanceOf(barPath, user)
-	quxBefore := common.BalanceOf(quxPath, user)
+	atomBefore := common.BalanceOf(atomPath, user)
+	solBefore := common.BalanceOf(solPath, user)
 
 	staker.CollectReward(cross)
 
-	barCollected := common.BalanceOf(barPath, user) - barBefore
-	quxCollected := common.BalanceOf(quxPath, user) - quxBefore
+	atomCollected := common.BalanceOf(atomPath, user) - atomBefore
+	solCollected := common.BalanceOf(solPath, user) - solBefore
 
-	assertInt64Equal(barCollected, expectedBar, user.String()+" collected bar")
-	assertInt64Equal(quxCollected, expectedQux, user.String()+" collected qux")
+	assertInt64Equal(atomCollected, expectedAtom, user.String()+" collected atom")
+	assertInt64Equal(solCollected, expectedSol, user.String()+" collected sol")
 
-	ufmt.Printf("[EXPECTED] %s collected bar: %d\n", user, barCollected)
-	ufmt.Printf("[EXPECTED] %s collected qux: %d\n", user, quxCollected)
+	ufmt.Printf("[EXPECTED] %s collected atom: %d\n", user, atomCollected)
+	ufmt.Printf("[EXPECTED] %s collected sol: %d\n", user, solCollected)
 }
 
 func checkRemainingRewards() {
-	remainingBar := common.BalanceOf(barPath, gnoStakerAddr)
-	remainingQux := common.BalanceOf(quxPath, gnoStakerAddr)
+	remainingAtom := common.BalanceOf(atomPath, gnoStakerAddr)
+	remainingSol := common.BalanceOf(solPath, gnoStakerAddr)
 
-	assertInt64Equal(remainingBar, 1, "remaining bar reward")
-	assertInt64Equal(remainingQux, 2, "remaining qux reward")
+	assertInt64Equal(remainingAtom, 1, "remaining atom reward")
+	assertInt64Equal(remainingSol, 2, "remaining sol reward")
 
-	ufmt.Printf("[EXPECTED] remaining bar reward: %d\n", remainingBar)
-	ufmt.Printf("[EXPECTED] remaining qux reward: %d\n", remainingQux)
+	ufmt.Printf("[EXPECTED] remaining atom reward: %d\n", remainingAtom)
+	ufmt.Printf("[EXPECTED] remaining sol reward: %d\n", remainingSol)
 }
 
 func assertInt64Equal(actual, expected int64, label string) {
@@ -174,29 +174,29 @@ func assertInt64Equal(actual, expected int64, label string) {
 // [SCENARIO] 1. Alice delegates before any protocol fee token exists
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 //
-// [SCENARIO] 2. Deposit bar before bob delegation
-// [INFO] protocol fee deposited: gno.land/r/onbloc/bar(1000)
+// [SCENARIO] 2. Deposit atom before bob delegation
+// [INFO] protocol fee deposited: gno.land/r/gnoswap/test_token/atom(1000)
 //
-// [SCENARIO] 3. Bob delegates after bar already exists
+// [SCENARIO] 3. Bob delegates after atom already exists
 // [INFO] delegated 1000000 GNS from g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu to g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
 //
-// [SCENARIO] 4. Deposit qux after both delegations exist
-// [INFO] protocol fee deposited: gno.land/r/onbloc/qux(500)
+// [SCENARIO] 4. Deposit sol after both delegations exist
+// [INFO] protocol fee deposited: gno.land/r/gnoswap/test_token/sol(500)
 //
 // [SCENARIO] 5. Distribute protocol fee and check claimable rewards
-// [EXPECTED] alice claimable bar: 999
-// [EXPECTED] alice claimable qux: 249
-// [EXPECTED] bob claimable bar: 0
-// [EXPECTED] bob claimable qux: 249
+// [EXPECTED] alice claimable atom: 999
+// [EXPECTED] alice claimable sol: 249
+// [EXPECTED] bob claimable atom: 0
+// [EXPECTED] bob claimable sol: 249
 //
 // [SCENARIO] 6. Collect protocol fee reward for alice
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 999
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected qux: 249
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected atom: 999
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected sol: 249
 //
 // [SCENARIO] 7. Collect protocol fee reward for bob
-// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected bar: 0
-// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected qux: 249
+// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected atom: 0
+// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected sol: 249
 //
 // [SCENARIO] 8. Check remaining gov/staker balances
-// [EXPECTED] remaining bar reward: 1
-// [EXPECTED] remaining qux reward: 2
+// [EXPECTED] remaining atom reward: 1
+// [EXPECTED] remaining sol reward: 2

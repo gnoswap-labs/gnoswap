@@ -16,10 +16,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 func TestFinalizeSwap(t *testing.T) {
@@ -38,8 +38,8 @@ func TestFinalizeSwap(t *testing.T) {
 	}{
 		{
 			name:             "Pass: ExactIn",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   100,
 			resultAmountOut:  90,
 			swapType:         ExactIn,
@@ -50,8 +50,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "Pass: ExactOut",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   110,
 			resultAmountOut:  100,
 			swapType:         ExactOut,
@@ -62,8 +62,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "ExactOut: exactOutAmount slippage error",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   100,
 			resultAmountOut:  90,
 			swapType:         ExactOut,
@@ -75,8 +75,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "ExactIn: Slippage error - too few received",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   100,
 			resultAmountOut:  80,
 			swapType:         ExactIn,
@@ -88,8 +88,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "ExactOut: Real world amounts pass",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   843455035,
 			resultAmountOut:  600901351,
 			swapType:         ExactOut,
@@ -100,8 +100,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "ExactOut: Slippage error - spent too much",
-			inputToken:       fooPath,
-			outputToken:      quxPath,
+			inputToken:       btcPath,
+			outputToken:      solPath,
 			resultAmountIn:   150,
 			resultAmountOut:  100,
 			swapType:         ExactOut,
@@ -113,8 +113,8 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:             "ExactIn: Large amounts pass",
-			inputToken:       barPath,
-			outputToken:      bazPath,
+			inputToken:       atomPath,
+			outputToken:      atonePath,
 			resultAmountIn:   1000000000,
 			resultAmountOut:  999000000,
 			swapType:         ExactIn,
@@ -170,10 +170,10 @@ func TestFinalizeSwap(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
-	const barTokenPath = "gno.land/r/onbloc/bar"
+	const atomTokenPath = "gno.land/r/gnoswap/test_token/atom"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
+	const atomGnsPoolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -204,8 +204,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - bar -> gns",
-			tokenPath0:       barTokenPath,
+			name:             "success - atom -> gns",
+			tokenPath0:       atomTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -215,10 +215,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       barTokenPath,
+			inputToken:       atomTokenPath,
 			outputToken:      gnsTokenPath,
 			amountIn:         "100000000",
-			routeArr:         barGnsPoolPath,
+			routeArr:         atomGnsPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "85000000",
 			expectedAmount0:  "100000000",
@@ -245,13 +245,13 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				atom.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
 			// Position Creation
@@ -274,14 +274,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
+			atom.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
+			atom.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
-			beforeBarBalance := bar.BalanceOf(tt.recipient)
+			beforeAtomBalance := atom.BalanceOf(tt.recipient)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -312,7 +312,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				)
 
 				testing.SkipHeights(1)
-				afterBarBalance := bar.BalanceOf(tt.recipient)
+				afterAtomBalance := atom.BalanceOf(tt.recipient)
 
 				drySwapAmountOutInt := safeParseInt64(drySwapAmountOut)
 				amountOutInt := safeParseInt64(amountOut)
@@ -326,17 +326,17 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				uassert.Equal(t, strconv.FormatInt(drySwapAmountOutInt, 10), strconv.FormatInt(amountOutInt, 10), "amountOut is not equal to drySwapAmountOut")
 				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
 				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
-				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeBarBalance-afterBarBalance), 10), "amountIn is not equal to expectedAmount0")
+				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeAtomBalance-afterAtomBalance), 10), "amountIn is not equal to expectedAmount0")
 			}(cross)
 		})
 	}
 }
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
-	const barTokenPath = "gno.land/r/onbloc/bar"
+	const atomTokenPath = "gno.land/r/gnoswap/test_token/atom"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
+	const atomGnsPoolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -367,8 +367,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - bar -> gns",
-			tokenPath0:       barTokenPath,
+			name:             "success - atom -> gns",
+			tokenPath0:       atomTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -378,10 +378,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       barTokenPath,
+			inputToken:       atomTokenPath,
 			outputToken:      gnsTokenPath,
 			amountIn:         "50000000",
-			routeArr:         barGnsPoolPath,
+			routeArr:         atomGnsPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "20000000",
 			expectedAmount0:  "50000000",
@@ -390,8 +390,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		},
 	}
 
-	// Fund alice with bar tokens for IncreaseLiquidity
-	TokenFaucet(t, barPath, alice)
+	// Fund alice with atom tokens for IncreaseLiquidity
+	TokenFaucet(t, atomPath, alice)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -411,13 +411,13 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				atom.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
 			// Position Creation
@@ -441,8 +441,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			// Add Liquidity
 			testing.SetOriginCaller(tt.recipient)
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
-			bar.Approve(cross, positionAddr, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, positionAddr, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
 			pn.IncreaseLiquidity(
@@ -457,12 +457,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
+			atom.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
+			atom.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -499,10 +499,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
-	const barTokenPath = "gno.land/r/onbloc/bar"
+	const atomTokenPath = "gno.land/r/gnoswap/test_token/atom"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const gnsBarPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:10000"
+	const gnsAtomPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:10000"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -533,8 +533,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> bar",
-			tokenPath0:       barTokenPath,
+			name:             "success - gns -> atom",
+			tokenPath0:       atomTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(10000),
 			recipient:        alice,
@@ -545,9 +545,9 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsTokenPath,
-			outputToken:      barTokenPath,
+			outputToken:      atomTokenPath,
 			amountIn:         "10000000",
-			routeArr:         gnsBarPoolPath,
+			routeArr:         gnsAtomPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
@@ -574,13 +574,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				atom.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
 			// Position Creation
@@ -603,13 +603,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
+			atom.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
+			atom.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			atom.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -747,10 +747,10 @@ func TestHandleMultiSwap(t *testing.T) {
 	}{
 		{
 			name:              "ExactIn - 2 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/gnoswap/test_token/atom",
+			outputToken:       "gno.land/r/gnoswap/test_token/sol",
 			swapType:          ExactIn,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			numHops:           2,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "1000",
@@ -758,10 +758,10 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:              "ExactOut - 2 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/gnoswap/test_token/atom",
+			outputToken:       "gno.land/r/gnoswap/test_token/sol",
 			swapType:          ExactOut,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			numHops:           2,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "370",
@@ -769,10 +769,10 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:              "ExactIn - 3 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/gnoswap/test_token/atom",
+			outputToken:       "gno.land/r/gnoswap/test_token/sol",
 			swapType:          ExactIn,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500*POOL*gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/btc:500",
 			numHops:           3,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "1000",
@@ -780,10 +780,10 @@ func TestHandleMultiSwap(t *testing.T) {
 		},
 		{
 			name:            "Invalid SwapType",
-			inputToken:      "gno.land/r/onbloc/bar",
-			outputToken:     "gno.land/r/onbloc/qux",
+			inputToken:      "gno.land/r/gnoswap/test_token/atom",
+			outputToken:     "gno.land/r/gnoswap/test_token/sol",
 			swapType:        SwapType(99),
-			route:           "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			route:           "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			numHops:         2,
 			amountSpecified: "1000",
 			shouldPanic:     true,
@@ -840,7 +840,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 	}{
 		{
 			name:              "Single hop route - ExactIn",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -849,7 +849,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (2 hops) - ExactIn - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -858,7 +858,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (3 hops) - ExactIn - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500*POOL*gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/btc:500",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -867,7 +867,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (2 hops) - ExactOut - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			route:             "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			toSwap:            "1000",
 			swapType:          ExactOut,
 			expectedAmountIn:  "370",
@@ -908,7 +908,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			toSwapAmount := safeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(cross, atomPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
@@ -936,18 +936,18 @@ func createMultiHopPools(t *testing.T) {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, quxPath, fooPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross, atomPath, atonePath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross, atonePath, solPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross, solPath, btcPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
+	sol.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
-	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross, atomPath, atonePath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross, atonePath, solPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross, solPath, btcPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 }
 
 // Test GetSwapFee

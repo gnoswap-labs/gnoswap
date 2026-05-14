@@ -14,8 +14,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/pool/v2_invalid"
@@ -31,11 +31,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	atomBtc500PoolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	positionId        = uint64(1)
 )
 
@@ -51,15 +51,15 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create pool with v1")
-	createPool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position with v1")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(atomPath, btcPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(btcPath, atomPath, "1000000", "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Collect fee from position before upgrade")
@@ -72,7 +72,7 @@ func main() {
 
 	println("[SCENARIO] 7. Perform swap to generate fees (should panic)")
 	withAbortsWithMessage(func() {
-		exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+		exactInSwapRouteBy(btcPath, atomPath, "1000000", "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", "100", "1")
 	},
 		"[EXPECTED] Perform swap to generate fees panics correctly with v2_invalid",
 	)
@@ -90,7 +90,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 10. Perform swap to generate fees (should panic)")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(btcPath, atomPath, "1000000", "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 11. Collect fee from position:", positionId)
@@ -107,24 +107,24 @@ func initialize() {
 	println("[EXPECTED] Set fee protocol to 6/6")
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(atomPath, btcPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
+	pool.CreatePool(cross, atomPath, btcPath, fee, sqrtPriceX96)
+	poolPath := pool.GetPoolPath(atomPath, btcPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(atomPath, btcPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	atom.Approve(cross, poolAddr, math.MaxInt64)
+	btc.Approve(cross, poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross, atomPath, btcPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
@@ -135,8 +135,8 @@ func exactInSwapRouteBy(inputToken string, outputToken string, specifiedAmount s
 	println("[INFO] Exact-In Swap Route")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, math.MaxInt64)
-	foo.Approve(cross, routerAddr, math.MaxInt64)
+	atom.Approve(cross, routerAddr, math.MaxInt64)
+	btc.Approve(cross, routerAddr, math.MaxInt64)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross, inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
 
@@ -195,7 +195,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 //
 // [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
@@ -213,7 +213,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Collected protocol fee amount0: 0
 // [EXPECTED] Collected protocol fee amount1: 412
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416
 //
@@ -240,6 +240,6 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Collected protocol fee amount0: 0
 // [EXPECTED] Collected protocol fee amount1: 412
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416

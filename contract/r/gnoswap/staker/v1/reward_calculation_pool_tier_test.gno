@@ -109,8 +109,8 @@ func TestTierRatioGet(t *testing.T) {
 func TestPoolTierChangeTier(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
-	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
-	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/qux", 3000)
+	testPool1 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/atom", "gno.land/r/gnoswap/test_token/atone", 3000)
+	testPool2 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/btc", "gno.land/r/gnoswap/test_token/sol", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
 		func() int64 { return 1000000 },
@@ -144,9 +144,9 @@ func TestPoolTierChangeTier(t *testing.T) {
 func TestCurrentAllTierCounts(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
-	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
-	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/qux", 3000)
-	testPool3 := pl.GetPoolPath("gno.land/r/gnoland/wugnot", "gno.land/r/onbloc/bar", 3000)
+	testPool1 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/atom", "gno.land/r/gnoswap/test_token/atone", 3000)
+	testPool2 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/btc", "gno.land/r/gnoswap/test_token/sol", 3000)
+	testPool3 := pl.GetPoolPath("gno.land/r/gnoland/wugnot", "gno.land/r/gnoswap/test_token/atom", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
 		func() int64 { return 1000000 },
@@ -173,8 +173,8 @@ func TestCurrentAllTierCounts(t *testing.T) {
 func TestIsInternallyIncentivizedPool(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
-	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
-	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/qux", 3000)
+	testPool1 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/atom", "gno.land/r/gnoswap/test_token/atone", 3000)
+	testPool2 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/btc", "gno.land/r/gnoswap/test_token/sol", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
 		func() int64 { return 1000000 },
@@ -195,8 +195,8 @@ func TestCurrentRewardPerPool(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
 	emission := int64(1000000)
-	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
-	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/qux", 3000)
+	testPool1 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/atom", "gno.land/r/gnoswap/test_token/atone", 3000)
+	testPool2 := pl.GetPoolPath("gno.land/r/gnoswap/test_token/btc", "gno.land/r/gnoswap/test_token/sol", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
 		func() int64 { return emission },

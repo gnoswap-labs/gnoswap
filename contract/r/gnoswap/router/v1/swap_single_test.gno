@@ -15,9 +15,9 @@ import (
 
 func defaultSetupFn(env *TestEnv) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-	env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+	env.GivenPoolCreated(atomPath, atonePath, 3000, "79228162514264337593543950336").
 		AndPositionMinted().
-		AndUserFundedAndApproved(user1Addr, routerAddr, barPath)
+		AndUserFundedAndApproved(user1Addr, routerAddr, atomPath)
 }
 
 func TestSingleSwap(t *testing.T) {
@@ -30,13 +30,13 @@ func TestSingleSwap(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name: "exact input swap BAR -> BAZ",
+			name: "exact input swap ATOM -> ATONE",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactInput("100").
 				Build(),
@@ -45,13 +45,13 @@ func TestSingleSwap(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "exact output swap BAR -> BAZ",
+			name: "exact output swap ATOM -> ATONE",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactOutput("98").
 				Build(),
@@ -103,8 +103,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(barPath).
+				TokenIn(atomPath).
+				TokenOut(atomPath).
 				Fee(3000).
 				ExactInput("100").
 				Build(),
@@ -115,12 +115,12 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		{
 			name: "Fail: Unregistered input token",
 			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+				env.GivenPoolCreated(atomPath, atonePath, 3000, "79228162514264337593543950336").
 					AndPositionMinted()
 			},
 			params: NewSingleSwapParams().
 				TokenIn(invalidTokenPath).
-				TokenOut(bazPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactInput("100").
 				Build(),
@@ -134,7 +134,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
+				TokenIn(atomPath).
 				TokenOut(invalidTokenPath).
 				Fee(3000).
 				ExactInput("100").
@@ -149,8 +149,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(0).
 				ExactInput("100").
 				Build(),
@@ -164,8 +164,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(1000000).
 				ExactInput("100").
 				Build(),
@@ -179,8 +179,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactInput("0").
 				Build(),
@@ -194,8 +194,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactInput("100").
 				Build(),
@@ -247,8 +247,8 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -302,8 +302,8 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 				uassert.AbortsContains(t, tt.errorMsg, func() {
 					func(cur realm) {
 						router.ExactInSingleSwapRoute(
-							barPath,
-							bazPath,
+							atomPath,
+							atonePath,
 							"100000",
 							singlePoolPath,
 							"0",
@@ -325,8 +325,8 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -342,8 +342,8 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactOutSingleSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"50000",
 				singlePoolPath,
 				"1000000",

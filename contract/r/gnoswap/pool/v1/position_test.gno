@@ -97,7 +97,7 @@ func setupPoolAtPrice(t *testing.T, tick int32) *pl.Pool {
 	t.Helper()
 
 	sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick).ToString()
-	return setupTestPool(t, barPath, fooPath, FeeTier500, sqrtPrice)
+	return setupTestPool(t, atomPath, btcPath, FeeTier500, sqrtPrice)
 }
 
 // createPositionWithValidation creates a position and validates the output
@@ -647,8 +647,8 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 
 	t.Run("liquidityDelta is zero", func(t *testing.T) {
 		poolParams := newPoolParams(
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			FeeTier500,
 			sqrtPrice,
 			getMockInstance().GetFeeAmountTickSpacing(fee500),
@@ -668,8 +668,8 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 
 	t.Run("liquidityDelta is negative", func(t *testing.T) {
 		poolParams := newPoolParams(
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			FeeTier500,
 			sqrtPrice,
 			getMockInstance().GetFeeAmountTickSpacing(fee500),

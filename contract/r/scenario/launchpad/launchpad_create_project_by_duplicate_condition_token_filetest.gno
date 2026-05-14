@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -48,8 +48,8 @@ func initEnvironment() {}
 func createProjectByDuplicateConditionToken() {
 	testing.SetOriginCaller(adminAddr)
 
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/gov/xgns"
@@ -72,7 +72,7 @@ func createProjectByDuplicateConditionToken() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/gnoswap/gov/xgns) is duplicated"
 
@@ -100,8 +100,8 @@ func createProjectByDuplicateConditionToken() {
 //
 // [SCENARIO] 2. Admin attempts to create project with duplicate condition token
 // [INFO] non-admin attempting to create project
-// [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with project name: ETH Launchpad Project
+// [INFO] create project with reward token path: gno.land/r/gnoswap/test_token/eth
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/gov/xgns

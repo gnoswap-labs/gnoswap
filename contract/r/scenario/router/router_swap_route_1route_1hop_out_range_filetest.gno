@@ -21,8 +21,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -35,8 +35,8 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -60,20 +60,20 @@ func main() {
 
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-	println("[INFO] Creating bar-baz pool (fee: 500, tick: 10000)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
+	println("[INFO] Creating atom-atone pool (fee: 500, tick: 10000)")
+	pl.CreatePool(cross, atomPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	println("[INFO] Checking pool creation")
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	atone.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	atone.Approve(cross, routerAddr, max_approve)
 
 	// Mint
-	println("[INFO] Minting position in bar-baz pool (tick range: 8000-12000)")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	println("[INFO] Minting position in atom-atone pool (tick range: 8000-12000)")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, atomPath, atonePath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[EXPECTED] positionId:", positionId, "expected: 1")
 	println("[EXPECTED] liquidity:", liquidity, "expected: 637408")
@@ -81,16 +81,16 @@ func main() {
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
 	// check pool liquidity
-	poolLiquidity := pl.GetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
+	poolLiquidity := pl.GetLiquidity("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500")
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")
 	_, dryResult, _ := router.DrySwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
+		atonePath,    // inputToken
+		atomPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 	)
@@ -107,10 +107,10 @@ func main() {
 		func() {
 			router.ExactInSwapRoute(
 				cross,
-				bazPath, // inputToken
-				barPath, // outputToken
+				atonePath, // inputToken
+				atomPath, // outputToken
 				"1000",  // amountSpecified
-				"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+				"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 				"100",  // quoteArr
 				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
 				time.Now().Add(time.Hour).Unix(),
@@ -127,10 +127,10 @@ func main() {
 // [INFO] Starting scenario: Out of range swap with slippage check failure
 // [INFO] Setting up pool and position
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-baz pool (fee: 500, tick: 10000)
+// [INFO] Creating atom-atone pool (fee: 500, tick: 10000)
 // [INFO] Checking pool creation
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting position in bar-baz pool (tick range: 8000-12000)
+// [INFO] Minting position in atom-atone pool (tick range: 8000-12000)
 // [EXPECTED] positionId: 1 expected: 1
 // [EXPECTED] liquidity: 637408 expected: 637408
 // [EXPECTED] amount0: 36790 expected: 36790

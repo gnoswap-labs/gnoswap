@@ -26,10 +26,10 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -42,10 +42,10 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee500 uint32 = 500
 
@@ -56,24 +56,24 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userBaz          int64
-	userFoo          int64
-	userQux          int64
-	poolBarFooBar    int64
-	poolBarFooFoo    int64
-	poolFooBazFoo    int64
-	poolFooBazBaz    int64
-	poolBazQuxBaz    int64
-	poolBazQuxQux    int64
-	routerBar        int64
-	routerBaz        int64
-	routerFoo        int64
-	routerQux        int64
-	protocolFeeBar   int64
-	protocolFeeBaz   int64
-	protocolFeeFoo   int64
-	protocolFeeQux   int64
+	userAtom          int64
+	userAtone          int64
+	userBtc          int64
+	userSol          int64
+	poolAtomBtcAtom    int64
+	poolAtomBtcBtc    int64
+	poolBtcAtoneBtc    int64
+	poolBtcAtoneAtone    int64
+	poolAtoneSolAtone    int64
+	poolAtoneSolSol    int64
+	routerAtom        int64
+	routerAtone        int64
+	routerBtc        int64
+	routerSol        int64
+	protocolFeeAtom   int64
+	protocolFeeAtone   int64
+	protocolFeeBtc   int64
+	protocolFeeSol   int64
 }
 
 func main() {
@@ -87,32 +87,32 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create Pools & Mint Positions")
-	println("  Creating 3 pools: BAR-FOO, FOO-BAZ, BAZ-QUX")
+	println("  Creating 3 pools: ATOM-BTC, BTC-ATONE, ATONE-SOL")
 	afterSetup := setupPoolsAndPositions()
 	printBalanceSnapshot("After Setup", afterSetup)
 	println()
 
-	println("[SCENARIO] 3. Single Hop Swap (BAR -> FOO)")
+	println("[SCENARIO] 3. Single Hop Swap (ATOM -> BTC)")
 	afterSingleHop := performSingleHopSwap()
 	printBalanceSnapshot("After Single Hop", afterSingleHop)
 	validateBalanceChange(afterSetup, afterSingleHop, "SingleHop")
 	println()
 
-	println("[SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)")
+	println("[SCENARIO] 4. Two Hop Swap (ATOM -> BTC -> ATONE)")
 	afterTwoHop := performTwoHopSwap()
 	printBalanceSnapshot("After Two Hop", afterTwoHop)
 	validateBalanceChange(afterSingleHop, afterTwoHop, "TwoHop")
 	validateNoIntermediateBalance(afterTwoHop)
 	println()
 
-	println("[SCENARIO] 5. Three Hop Swap (BAR -> FOO -> BAZ -> QUX)")
+	println("[SCENARIO] 5. Three Hop Swap (ATOM -> BTC -> ATONE -> SOL)")
 	afterThreeHop := performThreeHopSwap()
 	printBalanceSnapshot("After Three Hop", afterThreeHop)
 	validateBalanceChange(afterTwoHop, afterThreeHop, "ThreeHop")
 	validateNoIntermediateBalance(afterThreeHop)
 	println()
 
-	println("[SCENARIO] 6. Reverse Three Hop Swap (QUX -> BAZ -> FOO -> BAR)")
+	println("[SCENARIO] 6. Reverse Three Hop Swap (SOL -> ATONE -> BTC -> ATOM)")
 	afterReverse := performReverseThreeHopSwap()
 	printBalanceSnapshot("After Reverse Three Hop", afterReverse)
 	validateBalanceChange(afterThreeHop, afterReverse, "ReverseThreeHop")
@@ -128,24 +128,24 @@ func main() {
 
 func getBalanceSnapshot() BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:        bar.BalanceOf(userAddr),
-		userBaz:        baz.BalanceOf(userAddr),
-		userFoo:        foo.BalanceOf(userAddr),
-		userQux:        qux.BalanceOf(userAddr),
-		poolBarFooBar:  bar.BalanceOf(poolAddr),
-		poolBarFooFoo:  foo.BalanceOf(poolAddr),
-		poolFooBazFoo:  foo.BalanceOf(poolAddr),
-		poolFooBazBaz:  baz.BalanceOf(poolAddr),
-		poolBazQuxBaz:  baz.BalanceOf(poolAddr),
-		poolBazQuxQux:  qux.BalanceOf(poolAddr),
-		routerBar:      bar.BalanceOf(routerAddr),
-		routerBaz:      baz.BalanceOf(routerAddr),
-		routerFoo:      foo.BalanceOf(routerAddr),
-		routerQux:      qux.BalanceOf(routerAddr),
-		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
-		protocolFeeBaz: baz.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
-		protocolFeeQux: qux.BalanceOf(protocolFeeAddr),
+		userAtom:        atom.BalanceOf(userAddr),
+		userAtone:        atone.BalanceOf(userAddr),
+		userBtc:        btc.BalanceOf(userAddr),
+		userSol:        sol.BalanceOf(userAddr),
+		poolAtomBtcAtom:  atom.BalanceOf(poolAddr),
+		poolAtomBtcBtc:  btc.BalanceOf(poolAddr),
+		poolBtcAtoneBtc:  btc.BalanceOf(poolAddr),
+		poolBtcAtoneAtone:  atone.BalanceOf(poolAddr),
+		poolAtoneSolAtone:  atone.BalanceOf(poolAddr),
+		poolAtoneSolSol:  sol.BalanceOf(poolAddr),
+		routerAtom:      atom.BalanceOf(routerAddr),
+		routerAtone:      atone.BalanceOf(routerAddr),
+		routerBtc:      btc.BalanceOf(routerAddr),
+		routerSol:      sol.BalanceOf(routerAddr),
+		protocolFeeAtom: atom.BalanceOf(protocolFeeAddr),
+		protocolFeeAtone: atone.BalanceOf(protocolFeeAddr),
+		protocolFeeBtc: btc.BalanceOf(protocolFeeAddr),
+		protocolFeeSol: sol.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot
@@ -153,19 +153,19 @@ func getBalanceSnapshot() BalanceSnapshot {
 
 func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[BALANCE]", step)
-	println("  User - BAR:", snapshot.userBar, "FOO:", snapshot.userFoo, "BAZ:", snapshot.userBaz, "QUX:", snapshot.userQux)
-	println("  Pools - BAR:", snapshot.poolBarFooBar, "FOO:", snapshot.poolFooBazFoo, "BAZ:", snapshot.poolBazQuxBaz, "QUX:", snapshot.poolBazQuxQux)
-	println("  Router - BAR:", snapshot.routerBar, "FOO:", snapshot.routerFoo, "BAZ:", snapshot.routerBaz, "QUX:", snapshot.routerQux)
+	println("  User - ATOM:", snapshot.userAtom, "BTC:", snapshot.userBtc, "ATONE:", snapshot.userAtone, "SOL:", snapshot.userSol)
+	println("  Pools - ATOM:", snapshot.poolAtomBtcAtom, "BTC:", snapshot.poolBtcAtoneBtc, "ATONE:", snapshot.poolAtoneSolAtone, "SOL:", snapshot.poolAtoneSolSol)
+	println("  Router - ATOM:", snapshot.routerAtom, "BTC:", snapshot.routerBtc, "ATONE:", snapshot.routerAtone, "SOL:", snapshot.routerSol)
 }
 
 func setupEnvironment() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	baz.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
-	qux.Transfer(cross, userAddr, initialBalance)
+	atom.Transfer(cross, userAddr, initialBalance)
+	atone.Transfer(cross, userAddr, initialBalance)
+	btc.Transfer(cross, userAddr, initialBalance)
+	sol.Transfer(cross, userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
 	return getBalanceSnapshot()
@@ -174,25 +174,25 @@ func setupEnvironment() BalanceSnapshot {
 func setupPoolsAndPositions() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
-	qux.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	atone.Approve(cross, poolAddr, max_approve)
+	btc.Approve(cross, poolAddr, max_approve)
+	sol.Approve(cross, poolAddr, max_approve)
 
-	// Create Pool 1: BAR-FOO
-	println("[INFO] Creating BAR-FOO pool")
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, barPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	// Create Pool 1: ATOM-BTC
+	println("[INFO] Creating ATOM-BTC pool")
+	pl.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross, atomPath, btcPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
-	// Create Pool 2: FOO-BAZ
-	println("[INFO] Creating FOO-BAZ pool")
-	pl.CreatePool(cross, bazPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	// Create Pool 2: BTC-ATONE
+	println("[INFO] Creating BTC-ATONE pool")
+	pl.CreatePool(cross, atonePath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross, atonePath, btcPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
-	// Create Pool 3: BAZ-QUX
-	println("[INFO] Creating BAZ-QUX pool")
-	pl.CreatePool(cross, bazPath, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, quxPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	// Create Pool 3: ATONE-SOL
+	println("[INFO] Creating ATONE-SOL pool")
+	pl.CreatePool(cross, atonePath, solPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross, atonePath, solPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
 	println("[INFO] All pools and positions created")
 
@@ -202,18 +202,18 @@ func setupPoolsAndPositions() BalanceSnapshot {
 func performSingleHopSwap() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
 
 	swapAmount := int64(10_000_000_000)
-	println("[INFO] Single Hop: Swapping", swapAmount, "BAR -> FOO")
+	println("[INFO] Single Hop: Swapping", swapAmount, "ATOM -> BTC")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -230,18 +230,18 @@ func performSingleHopSwap() BalanceSnapshot {
 func performTwoHopSwap() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	atone.Approve(cross, routerAddr, max_approve)
 
 	swapAmount := int64(5_000_000_000)
-	println("[INFO] Two Hop: Swapping", swapAmount, "BAR -> FOO -> BAZ")
+	println("[INFO] Two Hop: Swapping", swapAmount, "ATOM -> BTC -> ATONE")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500*POOL*gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atone:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -249,7 +249,7 @@ func performTwoHopSwap() BalanceSnapshot {
 	)
 
 	println("[INFO] Two Hop - In:", amountIn, "Out:", amountOut)
-	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)")
+	println("[INFO] Route: ATOM -> BTC (pool 1) -> ATONE (pool 2)")
 
 	snapshot := getBalanceSnapshot()
 	assertRouterIsEmpty(snapshot)
@@ -259,18 +259,18 @@ func performTwoHopSwap() BalanceSnapshot {
 func performThreeHopSwap() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	qux.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	sol.Approve(cross, routerAddr, max_approve)
 
 	swapAmount := int64(3_000_000_000)
-	println("[INFO] Three Hop: Swapping", swapAmount, "BAR -> FOO -> BAZ -> QUX")
+	println("[INFO] Three Hop: Swapping", swapAmount, "ATOM -> BTC -> ATONE -> SOL")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500*POOL*gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -278,7 +278,7 @@ func performThreeHopSwap() BalanceSnapshot {
 	)
 
 	println("[INFO] Three Hop - In:", amountIn, "Out:", amountOut)
-	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)")
+	println("[INFO] Route: ATOM -> BTC (pool 1) -> ATONE (pool 2) -> SOL (pool 3)")
 
 	snapshot := getBalanceSnapshot()
 	assertRouterIsEmpty(snapshot)
@@ -288,18 +288,18 @@ func performThreeHopSwap() BalanceSnapshot {
 func performReverseThreeHopSwap() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	qux.Approve(cross, routerAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
+	sol.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
 
 	swapAmount := int64(2_000_000_000)
-	println("[INFO] Reverse Three Hop: Swapping", swapAmount, "QUX -> BAZ -> FOO -> BAR")
+	println("[INFO] Reverse Three Hop: Swapping", swapAmount, "SOL -> ATONE -> BTC -> ATOM")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		quxPath,
-		barPath,
+		solPath,
+		atomPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/btc:500*POOL*gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -307,7 +307,7 @@ func performReverseThreeHopSwap() BalanceSnapshot {
 	)
 
 	println("[INFO] Reverse Three Hop - In:", amountIn, "Out:", amountOut)
-	println("[INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)")
+	println("[INFO] Route: SOL -> ATONE (pool 3) -> BTC (pool 2) -> ATOM (pool 1)")
 
 	snapshot := getBalanceSnapshot()
 	assertRouterIsEmpty(snapshot)
@@ -317,40 +317,40 @@ func performReverseThreeHopSwap() BalanceSnapshot {
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[VALIDATION] Balance Change Check for", swapType)
 
-	userBarDiff := after.userBar - before.userBar
-	userBazDiff := after.userBaz - before.userBaz
-	userFooDiff := after.userFoo - before.userFoo
-	userQuxDiff := after.userQux - before.userQux
+	userAtomDiff := after.userAtom - before.userAtom
+	userAtoneDiff := after.userAtone - before.userAtone
+	userBtcDiff := after.userBtc - before.userBtc
+	userSolDiff := after.userSol - before.userSol
 
-	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
-	protocolFeeBazDiff := after.protocolFeeBaz - before.protocolFeeBaz
-	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
-	protocolFeeQuxDiff := after.protocolFeeQux - before.protocolFeeQux
+	protocolFeeAtomDiff := after.protocolFeeAtom - before.protocolFeeAtom
+	protocolFeeAtoneDiff := after.protocolFeeAtone - before.protocolFeeAtone
+	protocolFeeBtcDiff := after.protocolFeeBtc - before.protocolFeeBtc
+	protocolFeeSolDiff := after.protocolFeeSol - before.protocolFeeSol
 
-	println("  User BAR change:", userBarDiff)
-	println("  User FOO change:", userFooDiff)
-	println("  User BAZ change:", userBazDiff)
-	println("  User QUX change:", userQuxDiff)
-	println("  Protocol Fee BAR change:", protocolFeeBarDiff)
-	println("  Protocol Fee FOO change:", protocolFeeFooDiff)
-	println("  Protocol Fee BAZ change:", protocolFeeBazDiff)
-	println("  Protocol Fee QUX change:", protocolFeeQuxDiff)
+	println("  User ATOM change:", userAtomDiff)
+	println("  User BTC change:", userBtcDiff)
+	println("  User ATONE change:", userAtoneDiff)
+	println("  User SOL change:", userSolDiff)
+	println("  Protocol Fee ATOM change:", protocolFeeAtomDiff)
+	println("  Protocol Fee BTC change:", protocolFeeBtcDiff)
+	println("  Protocol Fee ATONE change:", protocolFeeAtoneDiff)
+	println("  Protocol Fee SOL change:", protocolFeeSolDiff)
 
 	// Router must be empty
 	assertRouterIsEmpty(after)
 
 	// At least one token must decrease (input) and one must increase (output)
 	changedTokens := 0
-	if userBarDiff != 0 {
+	if userAtomDiff != 0 {
 		changedTokens++
 	}
-	if userFooDiff != 0 {
+	if userBtcDiff != 0 {
 		changedTokens++
 	}
-	if userBazDiff != 0 {
+	if userAtoneDiff != 0 {
 		changedTokens++
 	}
-	if userQuxDiff != 0 {
+	if userSolDiff != 0 {
 		changedTokens++
 	}
 
@@ -360,39 +360,39 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 
 	// Exact conservation for each token: user + pools + protocol fee + router changes must sum to 0
 	// Note: pools share same address so we can't separate them, but the total should still be conserved
-	totalBarChange := userBarDiff + (after.poolBarFooBar - before.poolBarFooBar) + protocolFeeBarDiff + (after.routerBar - before.routerBar)
-	totalFooChange := userFooDiff + (after.poolFooBazFoo - before.poolFooBazFoo) + protocolFeeFooDiff + (after.routerFoo - before.routerFoo)
-	totalBazChange := userBazDiff + (after.poolBazQuxBaz - before.poolBazQuxBaz) + protocolFeeBazDiff + (after.routerBaz - before.routerBaz)
-	totalQuxChange := userQuxDiff + (after.poolBazQuxQux - before.poolBazQuxQux) + protocolFeeQuxDiff + (after.routerQux - before.routerQux)
+	totalAtomChange := userAtomDiff + (after.poolAtomBtcAtom - before.poolAtomBtcAtom) + protocolFeeAtomDiff + (after.routerAtom - before.routerAtom)
+	totalBtcChange := userBtcDiff + (after.poolBtcAtoneBtc - before.poolBtcAtoneBtc) + protocolFeeBtcDiff + (after.routerBtc - before.routerBtc)
+	totalAtoneChange := userAtoneDiff + (after.poolAtoneSolAtone - before.poolAtoneSolAtone) + protocolFeeAtoneDiff + (after.routerAtone - before.routerAtone)
+	totalSolChange := userSolDiff + (after.poolAtoneSolSol - before.poolAtoneSolSol) + protocolFeeSolDiff + (after.routerSol - before.routerSol)
 
-	if totalBarChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] BAR not conserved! Total change: %d", totalBarChange))
+	if totalAtomChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] ATOM not conserved! Total change: %d", totalAtomChange))
 	}
-	if totalFooChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] FOO not conserved! Total change: %d", totalFooChange))
+	if totalBtcChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BTC not conserved! Total change: %d", totalBtcChange))
 	}
-	if totalBazChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] BAZ not conserved! Total change: %d", totalBazChange))
+	if totalAtoneChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] ATONE not conserved! Total change: %d", totalAtoneChange))
 	}
-	if totalQuxChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] QUX not conserved! Total change: %d", totalQuxChange))
+	if totalSolChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] SOL not conserved! Total change: %d", totalSolChange))
 	}
 
 	println("[VALIDATION] Exact balance conservation verified for multi-hop swap")
 }
 
 func assertRouterIsEmpty(snapshot BalanceSnapshot) {
-	if snapshot.routerBar != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
+	if snapshot.routerAtom != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has ATOM balance: %d - funds stuck!", snapshot.routerAtom))
 	}
-	if snapshot.routerFoo != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has FOO balance: %d - funds stuck!", snapshot.routerFoo))
+	if snapshot.routerBtc != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BTC balance: %d - funds stuck!", snapshot.routerBtc))
 	}
-	if snapshot.routerBaz != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has BAZ balance: %d - funds stuck!", snapshot.routerBaz))
+	if snapshot.routerAtone != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has ATONE balance: %d - funds stuck!", snapshot.routerAtone))
 	}
-	if snapshot.routerQux != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has QUX balance: %d - funds stuck!", snapshot.routerQux))
+	if snapshot.routerSol != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has SOL balance: %d - funds stuck!", snapshot.routerSol))
 	}
 }
 
@@ -400,17 +400,17 @@ func validateNoIntermediateBalance(snapshot BalanceSnapshot) {
 	println("[VALIDATION] Checking for stuck intermediate tokens")
 
 	// Router should never hold any tokens after swap completes
-	if snapshot.routerBar != 0 {
-		panic("[ERROR] Router has BAR balance - tokens stuck in intermediate hop!")
+	if snapshot.routerAtom != 0 {
+		panic("[ERROR] Router has ATOM balance - tokens stuck in intermediate hop!")
 	}
-	if snapshot.routerFoo != 0 {
-		panic("[ERROR] Router has FOO balance - tokens stuck in intermediate hop!")
+	if snapshot.routerBtc != 0 {
+		panic("[ERROR] Router has BTC balance - tokens stuck in intermediate hop!")
 	}
-	if snapshot.routerBaz != 0 {
-		panic("[ERROR] Router has BAZ balance - tokens stuck in intermediate hop!")
+	if snapshot.routerAtone != 0 {
+		panic("[ERROR] Router has ATONE balance - tokens stuck in intermediate hop!")
 	}
-	if snapshot.routerQux != 0 {
-		panic("[ERROR] Router has QUX balance - tokens stuck in intermediate hop!")
+	if snapshot.routerSol != 0 {
+		panic("[ERROR] Router has SOL balance - tokens stuck in intermediate hop!")
 	}
 
 	println("[VALIDATION] No intermediate tokens stuck - clean multi-hop execution")
@@ -420,34 +420,34 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 	println("[VALIDATION] System-Wide Balance Conservation Across All Hops")
 
 	// Calculate total for each token (including protocol fees)
-	totalBarInitial := initial.userBar + initial.poolBarFooBar + initial.routerBar + initial.protocolFeeBar
-	totalBarFinal := final.userBar + final.poolBarFooBar + final.routerBar + final.protocolFeeBar
+	totalAtomInitial := initial.userAtom + initial.poolAtomBtcAtom + initial.routerAtom + initial.protocolFeeAtom
+	totalAtomFinal := final.userAtom + final.poolAtomBtcAtom + final.routerAtom + final.protocolFeeAtom
 
-	totalFooInitial := initial.userFoo + initial.poolFooBazFoo + initial.routerFoo + initial.protocolFeeFoo
-	totalFooFinal := final.userFoo + final.poolFooBazFoo + final.routerFoo + final.protocolFeeFoo
+	totalBtcInitial := initial.userBtc + initial.poolBtcAtoneBtc + initial.routerBtc + initial.protocolFeeBtc
+	totalBtcFinal := final.userBtc + final.poolBtcAtoneBtc + final.routerBtc + final.protocolFeeBtc
 
-	totalBazInitial := initial.userBaz + initial.poolBazQuxBaz + initial.routerBaz + initial.protocolFeeBaz
-	totalBazFinal := final.userBaz + final.poolBazQuxBaz + final.routerBaz + final.protocolFeeBaz
+	totalAtoneInitial := initial.userAtone + initial.poolAtoneSolAtone + initial.routerAtone + initial.protocolFeeAtone
+	totalAtoneFinal := final.userAtone + final.poolAtoneSolAtone + final.routerAtone + final.protocolFeeAtone
 
-	totalQuxInitial := initial.userQux + initial.poolBazQuxQux + initial.routerQux + initial.protocolFeeQux
-	totalQuxFinal := final.userQux + final.poolBazQuxQux + final.routerQux + final.protocolFeeQux
+	totalSolInitial := initial.userSol + initial.poolAtoneSolSol + initial.routerSol + initial.protocolFeeSol
+	totalSolFinal := final.userSol + final.poolAtoneSolSol + final.routerSol + final.protocolFeeSol
 
-	println("  Total BAR - Initial:", totalBarInitial, "Final:", totalBarFinal)
-	println("  Total FOO - Initial:", totalFooInitial, "Final:", totalFooFinal)
-	println("  Total BAZ - Initial:", totalBazInitial, "Final:", totalBazFinal)
-	println("  Total QUX - Initial:", totalQuxInitial, "Final:", totalQuxFinal)
+	println("  Total ATOM - Initial:", totalAtomInitial, "Final:", totalAtomFinal)
+	println("  Total BTC - Initial:", totalBtcInitial, "Final:", totalBtcFinal)
+	println("  Total ATONE - Initial:", totalAtoneInitial, "Final:", totalAtoneFinal)
+	println("  Total SOL - Initial:", totalSolInitial, "Final:", totalSolFinal)
 
-	if totalBarInitial != totalBarFinal {
-		panic("[ERROR] BAR tokens not conserved across multi-hop swaps!")
+	if totalAtomInitial != totalAtomFinal {
+		panic("[ERROR] ATOM tokens not conserved across multi-hop swaps!")
 	}
-	if totalFooInitial != totalFooFinal {
-		panic("[ERROR] FOO tokens not conserved across multi-hop swaps!")
+	if totalBtcInitial != totalBtcFinal {
+		panic("[ERROR] BTC tokens not conserved across multi-hop swaps!")
 	}
-	if totalBazInitial != totalBazFinal {
-		panic("[ERROR] BAZ tokens not conserved across multi-hop swaps!")
+	if totalAtoneInitial != totalAtoneFinal {
+		panic("[ERROR] ATONE tokens not conserved across multi-hop swaps!")
 	}
-	if totalQuxInitial != totalQuxFinal {
-		panic("[ERROR] QUX tokens not conserved across multi-hop swaps!")
+	if totalSolInitial != totalSolFinal {
+		panic("[ERROR] SOL tokens not conserved across multi-hop swaps!")
 	}
 
 	println("[VALIDATION] All tokens perfectly conserved across multi-hop swaps")
@@ -460,108 +460,108 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 1. Initial Setup
 // [BALANCE] Initial State
-//   User - BAR: 500000000000 FOO: 500000000000 BAZ: 500000000000 QUX: 500000000000
-//   Pools - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 500000000000 BTC: 500000000000 ATONE: 500000000000 SOL: 500000000000
+//   Pools - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 //
 // [SCENARIO] 2. Create Pools & Mint Positions
-//   Creating 3 pools: BAR-FOO, FOO-BAZ, BAZ-QUX
-// [INFO] Creating BAR-FOO pool
-// [INFO] Creating FOO-BAZ pool
-// [INFO] Creating BAZ-QUX pool
+//   Creating 3 pools: ATOM-BTC, BTC-ATONE, ATONE-SOL
+// [INFO] Creating ATOM-BTC pool
+// [INFO] Creating BTC-ATONE pool
+// [INFO] Creating ATONE-SOL pool
 // [INFO] All pools and positions created
 // [BALANCE] After Setup
-//   User - BAR: 400000000000 FOO: 300000000000 BAZ: 300000000000 QUX: 400000000000
-//   Pools - BAR: 100000000000 FOO: 200000000000 BAZ: 200000000000 QUX: 100000000000
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 400000000000 BTC: 300000000000 ATONE: 300000000000 SOL: 400000000000
+//   Pools - ATOM: 100000000000 BTC: 200000000000 ATONE: 200000000000 SOL: 100000000000
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 //
-// [SCENARIO] 3. Single Hop Swap (BAR -> FOO)
-// [INFO] Single Hop: Swapping 10000000000 BAR -> FOO
+// [SCENARIO] 3. Single Hop Swap (ATOM -> BTC)
+// [INFO] Single Hop: Swapping 10000000000 ATOM -> BTC
 // [INFO] Single Hop - In: 10000000000 Out: -9602386497
 // [BALANCE] After Single Hop
-//   User - BAR: 390000000000 FOO: 309602386497 BAZ: 300000000000 QUX: 400000000000
-//   Pools - BAR: 110000000000 FOO: 190383188286 BAZ: 200000000000 QUX: 100000000000
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 390000000000 BTC: 309602386497 ATONE: 300000000000 SOL: 400000000000
+//   Pools - ATOM: 110000000000 BTC: 190383188286 ATONE: 200000000000 SOL: 100000000000
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 // [VALIDATION] Balance Change Check for SingleHop
-//   User BAR change: -10000000000
-//   User FOO change: 9602386497
-//   User BAZ change: 0
-//   User QUX change: 0
-//   Protocol Fee BAR change: 0
-//   Protocol Fee FOO change: 14425217
-//   Protocol Fee BAZ change: 0
-//   Protocol Fee QUX change: 0
+//   User ATOM change: -10000000000
+//   User BTC change: 9602386497
+//   User ATONE change: 0
+//   User SOL change: 0
+//   Protocol Fee ATOM change: 0
+//   Protocol Fee BTC change: 14425217
+//   Protocol Fee ATONE change: 0
+//   Protocol Fee SOL change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 //
-// [SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)
-// [INFO] Two Hop: Swapping 5000000000 BAR -> FOO -> BAZ
+// [SCENARIO] 4. Two Hop Swap (ATOM -> BTC -> ATONE)
+// [INFO] Two Hop: Swapping 5000000000 ATOM -> BTC -> ATONE
 // [INFO] Two Hop - In: 5000000000 Out: -4451991291
-// [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)
+// [INFO] Route: ATOM -> BTC (pool 1) -> ATONE (pool 2)
 // [BALANCE] After Two Hop
-//   User - BAR: 385000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 400000000000
-//   Pools - BAR: 115000000000 FOO: 190383188286 BAZ: 195541320691 QUX: 100000000000
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 385000000000 BTC: 309602386497 ATONE: 304451991291 SOL: 400000000000
+//   Pools - ATOM: 115000000000 BTC: 190383188286 ATONE: 195541320691 SOL: 100000000000
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 // [VALIDATION] Balance Change Check for TwoHop
-//   User BAR change: -5000000000
-//   User FOO change: 0
-//   User BAZ change: 4451991291
-//   User QUX change: 0
-//   Protocol Fee BAR change: 0
-//   Protocol Fee FOO change: 0
-//   Protocol Fee BAZ change: 6688018
-//   Protocol Fee QUX change: 0
+//   User ATOM change: -5000000000
+//   User BTC change: 0
+//   User ATONE change: 4451991291
+//   User SOL change: 0
+//   Protocol Fee ATOM change: 0
+//   Protocol Fee BTC change: 0
+//   Protocol Fee ATONE change: 6688018
+//   Protocol Fee SOL change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
-// [SCENARIO] 5. Three Hop Swap (BAR -> FOO -> BAZ -> QUX)
-// [INFO] Three Hop: Swapping 3000000000 BAR -> FOO -> BAZ -> QUX
+// [SCENARIO] 5. Three Hop Swap (ATOM -> BTC -> ATONE -> SOL)
+// [INFO] Three Hop: Swapping 3000000000 ATOM -> BTC -> ATONE -> SOL
 // [INFO] Three Hop - In: 3000000000 Out: -2495426539
-// [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)
+// [INFO] Route: ATOM -> BTC (pool 1) -> ATONE (pool 2) -> SOL (pool 3)
 // [BALANCE] After Three Hop
-//   User - BAR: 382000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 402495426539
-//   Pools - BAR: 118000000000 FOO: 190383188286 BAZ: 195541320691 QUX: 97500824699
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 382000000000 BTC: 309602386497 ATONE: 304451991291 SOL: 402495426539
+//   Pools - ATOM: 118000000000 BTC: 190383188286 ATONE: 195541320691 SOL: 97500824699
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 // [VALIDATION] Balance Change Check for ThreeHop
-//   User BAR change: -3000000000
-//   User FOO change: 0
-//   User BAZ change: 0
-//   User QUX change: 2495426539
-//   Protocol Fee BAR change: 0
-//   Protocol Fee FOO change: 0
-//   Protocol Fee BAZ change: 0
-//   Protocol Fee QUX change: 3748762
+//   User ATOM change: -3000000000
+//   User BTC change: 0
+//   User ATONE change: 0
+//   User SOL change: 2495426539
+//   Protocol Fee ATOM change: 0
+//   Protocol Fee BTC change: 0
+//   Protocol Fee ATONE change: 0
+//   Protocol Fee SOL change: 3748762
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
-// [SCENARIO] 6. Reverse Three Hop Swap (QUX -> BAZ -> FOO -> BAR)
-// [INFO] Reverse Three Hop: Swapping 2000000000 QUX -> BAZ -> FOO -> BAR
+// [SCENARIO] 6. Reverse Three Hop Swap (SOL -> ATONE -> BTC -> ATOM)
+// [INFO] Reverse Three Hop: Swapping 2000000000 SOL -> ATONE -> BTC -> ATOM
 // [INFO] Reverse Three Hop - In: 2000000000 Out: -2404819407
-// [INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)
+// [INFO] Route: SOL -> ATONE (pool 3) -> BTC (pool 2) -> ATOM (pool 1)
 // [BALANCE] After Reverse Three Hop
-//   User - BAR: 384404819407 FOO: 309602386497 BAZ: 304451991291 QUX: 400495426539
-//   Pools - BAR: 115591567945 FOO: 190383188286 BAZ: 195541320691 QUX: 99500824699
-//   Router - BAR: 0 FOO: 0 BAZ: 0 QUX: 0
+//   User - ATOM: 384404819407 BTC: 309602386497 ATONE: 304451991291 SOL: 400495426539
+//   Pools - ATOM: 115591567945 BTC: 190383188286 ATONE: 195541320691 SOL: 99500824699
+//   Router - ATOM: 0 BTC: 0 ATONE: 0 SOL: 0
 // [VALIDATION] Balance Change Check for ReverseThreeHop
-//   User BAR change: 2404819407
-//   User FOO change: 0
-//   User BAZ change: 0
-//   User QUX change: -2000000000
-//   Protocol Fee BAR change: 3612648
-//   Protocol Fee FOO change: 0
-//   Protocol Fee BAZ change: 0
-//   Protocol Fee QUX change: 0
+//   User ATOM change: 2404819407
+//   User BTC change: 0
+//   User ATONE change: 0
+//   User SOL change: -2000000000
+//   Protocol Fee ATOM change: 3612648
+//   Protocol Fee BTC change: 0
+//   Protocol Fee ATONE change: 0
+//   Protocol Fee SOL change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
 // [SCENARIO] 7. System Balance Conservation
 // [VALIDATION] System-Wide Balance Conservation Across All Hops
-//   Total BAR - Initial: 500000000000 Final: 500000000000
-//   Total FOO - Initial: 500000000000 Final: 500000000000
-//   Total BAZ - Initial: 500000000000 Final: 500000000000
-//   Total QUX - Initial: 500000000000 Final: 500000000000
+//   Total ATOM - Initial: 500000000000 Final: 500000000000
+//   Total BTC - Initial: 500000000000 Final: 500000000000
+//   Total ATONE - Initial: 500000000000 Final: 500000000000
+//   Total SOL - Initial: 500000000000 Final: 500000000000
 // [VALIDATION] All tokens perfectly conserved across multi-hop swaps
 // [SUCCESS] No leakage in any intermediate pool or router
 //

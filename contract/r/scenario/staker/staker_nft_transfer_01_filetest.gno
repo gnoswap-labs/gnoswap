@@ -35,8 +35,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -53,8 +53,8 @@ var (
 	dummyAddr  = testutils.TestAddress("dummy")
 	dummyRealm = testing.NewUserRealm(dummyAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee500 uint32 = 500
 
@@ -69,7 +69,7 @@ func main() {
 	initAccountAndEmission()
 	println()
 
-	println("[SCENARIO] 2. Create bar:qux:500 pool")
+	println("[SCENARIO] 2. Create atom:sol:500 pool")
 	createPool()
 	println()
 
@@ -102,11 +102,11 @@ func initAccountAndEmission() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:qux:500 pool")
-	pl.CreatePool(cross, barPath, quxPath, 500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
+	println("[INFO] create atom:sol:500 pool")
+	pl.CreatePool(cross, atomPath, solPath, 500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500", 1)
 
 	testing.SkipHeights(1)
 }
@@ -115,15 +115,15 @@ func mintPosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: 9000 ~ 11000)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -209,8 +209,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:qux:500 pool
-// [INFO] create bar:qux:500 pool
+// [SCENARIO] 2. Create atom:sol:500 pool
+// [INFO] create atom:sol:500 pool
 // [INFO] set pool to tier 1
 //
 // [SCENARIO] 3. Mint position 01

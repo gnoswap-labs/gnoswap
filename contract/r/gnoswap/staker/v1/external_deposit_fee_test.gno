@@ -160,16 +160,16 @@ func TestGetMinimumRewardAmountForToken(t *testing.T) {
 	}{
 		{
 			name:      "token with specific minimum",
-			tokenPath: "gno.land/r/onbloc/foo",
+			tokenPath: "gno.land/r/gnoswap/test_token/btc",
 			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/foo"] = int64(5000000)
+				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/gnoswap/test_token/btc"] = int64(5000000)
 			},
 			expectedAmount: 5000000,
 			expectsDefault: false,
 		},
 		{
 			name:      "token without specific minimum - returns default",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/gnoswap/test_token/atom",
 			setupFunc: func(s *stakerV1) {
 				// Don't set any specific minimum
 			},
@@ -178,9 +178,9 @@ func TestGetMinimumRewardAmountForToken(t *testing.T) {
 		},
 		{
 			name:      "different token with specific minimum",
-			tokenPath: "gno.land/r/onbloc/baz",
+			tokenPath: "gno.land/r/gnoswap/test_token/atone",
 			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/baz"] = int64(10000000)
+				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/gnoswap/test_token/atone"] = int64(10000000)
 			},
 			expectedAmount: 10000000,
 			expectsDefault: false,
@@ -215,16 +215,16 @@ func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
 	}{
 		{
 			name:      "token with specific amount",
-			tokenPath: "gno.land/r/onbloc/foo",
+			tokenPath: "gno.land/r/gnoswap/test_token/btc",
 			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/foo"] = int64(3000000)
+				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/gnoswap/test_token/btc"] = int64(3000000)
 			},
 			expectedFound: true,
 			expectedValue: 3000000,
 		},
 		{
 			name:      "token without specific amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/gnoswap/test_token/atom",
 			setupFunc: func(s *stakerV1) {
 				// Don't set anything
 			},
@@ -233,9 +233,9 @@ func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
 		},
 		{
 			name:      "zero value set explicitly",
-			tokenPath: "gno.land/r/onbloc/baz",
+			tokenPath: "gno.land/r/gnoswap/test_token/atone",
 			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/baz"] = int64(0)
+				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/gnoswap/test_token/atone"] = int64(0)
 			},
 			expectedFound: true,
 			expectedValue: 0,

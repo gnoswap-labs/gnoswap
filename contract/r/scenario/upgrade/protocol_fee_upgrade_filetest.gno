@@ -106,7 +106,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing AddToProtocolFee function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: AddToProtocolFee not supported", func() {
-		protocolFee.AddToProtocolFee(cross, "gno.land/r/onbloc/foo", 100)
+		protocolFee.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/btc", 100)
 	})
 	ufmt.Println("[EXPECTED] AddToProtocolFee panics correctly")
 

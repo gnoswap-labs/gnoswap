@@ -36,8 +36,8 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/staker"
 
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
+	_ "gno.land/r/gnoswap/test_token/atom"
+	_ "gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -54,8 +54,8 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -172,8 +172,8 @@ func createPools() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 	testing.SkipHeights(1)
 
-	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:btc:500 pool")
+	pl.CreatePool(cross, atomPath, btcPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
@@ -185,7 +185,7 @@ func createPools() {
 	)
 
 	println("[INFO] set pool tiers")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500", 1)
 	sr.SetPoolTier(cross, "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", 2)
 
 	testing.SkipHeights(18)
@@ -304,7 +304,7 @@ func createExternalIncentiveNativePre() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
 
 	println("[INFO] add token and approve gns")
-	sr.AddToken(cross, "gno.land/r/onbloc/obl")
+	sr.AddToken(cross, "gno.land/r/gnoswap/test_token/eth")
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with native coin")
@@ -530,7 +530,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pools
 // [INFO] approve gns for pool creation
-// [INFO] create bar:foo:500 pool
+// [INFO] create atom:btc:500 pool
 // [INFO] create wugnot:gns:500 pool
 // [INFO] set pool tiers
 //

@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -40,7 +40,7 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	barPath    = "gno.land/r/onbloc/bar"
+	atomPath    = "gno.land/r/gnoswap/test_token/atom"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -61,55 +61,55 @@ func main() {
 	mintPosition(wugnotPath, gnsPath, 3000, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:3000) with unbalance position balance")
-	createPool(wugnotPath, barPath, 3000, 0)
-	mintPosition(wugnotPath, barPath, 3000, -6960, 6960, "100000000", "100000000")
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:3000) with unbalance position balance")
+	createPool(wugnotPath, atomPath, 3000, 0)
+	mintPosition(wugnotPath, atomPath, 3000, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000) with unbalance position balance")
-	createPool(gnsPath, barPath, 3000, 0)
-	mintPosition(gnsPath, barPath, 3000, -6960, 6960, "100000000", "100000000")
+	println("[SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:3000) with unbalance position balance")
+	createPool(gnsPath, atomPath, 3000, 0)
+	mintPosition(gnsPath, atomPath, 3000, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 5. ExactInSwapRoute BAR -> GNS -> WUGNOT")
+	println("[SCENARIO] 5. ExactInSwapRoute ATOM -> GNS -> WUGNOT")
 	exactInSwapRouteBy(
-		barPath,
+		atomPath,
 		wugnotPath,
 		"1000000",
-		"gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
 		"100",
 		"1",
 	)
 	println()
 
-	println("[SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT")
+	println("[SCENARIO] 6. ExactInSwapRoute ATOM -> GNS -> GNOT")
 	exactInSwapRouteBy(
-		barPath,
+		atomPath,
 		wugnotPath,
 		"1000000",
-		"gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
 		"100",
 		"1",
 	)
 	println()
 
-	println("[SCENARIO] 7. ExactInSwapRoute BAR -> WUGNOT -> GNS")
+	println("[SCENARIO] 7. ExactInSwapRoute ATOM -> WUGNOT -> GNS")
 	exactInSwapRouteBy(
-		barPath,
+		atomPath,
 		gnsPath,
 		"1000000",
-		"gno.land/r/onbloc/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"100",
 		"1",
 	)
 	println()
 
-	println("[SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR")
+	println("[SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> ATOM")
 	exactInSwapRouteBy(
 		wugnotPath,
-		barPath,
+		atomPath,
 		"1000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:3000",
 		"100",
 		"1",
 	)
@@ -198,7 +198,7 @@ func exactInSwapRouteBy(
 	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
-	beforeBARBalance := bar.BalanceOf(adminAddr)
+	beforeATOMBalance := atom.BalanceOf(adminAddr)
 	specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
 	if inputToken == wugnotPath {
@@ -221,14 +221,14 @@ func exactInSwapRouteBy(
 	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
-	afterBARBalance := bar.BalanceOf(adminAddr)
+	afterATOMBalance := atom.BalanceOf(adminAddr)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
 	ufmt.Printf("[EXPECTED] WUGNOT balance changed: %d\n", afterWUGNOTBalance-beforeWUGNOTBalance)
 	ufmt.Printf("[EXPECTED] GNOT balance changed: %d\n", afterGNOTBalance-beforeGNOTBalance)
 	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)
-	ufmt.Printf("[EXPECTED] BAR balance changed: %d\n", afterBARBalance-beforeBARBalance)
+	ufmt.Printf("[EXPECTED] ATOM balance changed: %d\n", afterATOMBalance-beforeATOMBalance)
 }
 
 // Output:
@@ -244,28 +244,28 @@ func exactInSwapRouteBy(
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:3000) with unbalance position balance
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:3000 pool at tick 0
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:3000) with unbalance position balance
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:3000 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 2
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000) with unbalance position balance
-// [EXPECTED] created gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000 pool at tick 0
+// [SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:3000) with unbalance position balance
+// [EXPECTED] created gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:3000 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 3
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 5. ExactInSwapRoute BAR -> GNS -> WUGNOT
+// [SCENARIO] 5. ExactInSwapRoute ATOM -> GNS -> WUGNOT
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] outputToken: gno.land/r/gnoland/wugnot
 // [INFO] specifiedAmount: 1000000
-// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
+// [INFO] routeQueryString: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
@@ -273,14 +273,14 @@ func exactInSwapRouteBy(
 // [EXPECTED] WUGNOT balance changed: 986743
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] ATOM balance changed: -1000000
 //
-// [SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT
+// [SCENARIO] 6. ExactInSwapRoute ATOM -> GNS -> GNOT
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] outputToken: gno.land/r/gnoland/wugnot
 // [INFO] specifiedAmount: 1000000
-// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
+// [INFO] routeQueryString: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
@@ -288,14 +288,14 @@ func exactInSwapRouteBy(
 // [EXPECTED] WUGNOT balance changed: 975329
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] ATOM balance changed: -1000000
 //
-// [SCENARIO] 7. ExactInSwapRoute BAR -> WUGNOT -> GNS
+// [SCENARIO] 7. ExactInSwapRoute ATOM -> WUGNOT -> GNS
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1000000
-// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
+// [INFO] routeQueryString: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
@@ -303,14 +303,14 @@ func exactInSwapRouteBy(
 // [EXPECTED] WUGNOT balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 998223
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] ATOM balance changed: -1000000
 //
-// [SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR
+// [SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> ATOM
 // [INFO] ExactInSwapRoute
 // [INFO] inputToken: gno.land/r/gnoland/wugnot
-// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] outputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] specifiedAmount: 1000000
-// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:3000
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
@@ -318,4 +318,4 @@ func exactInSwapRouteBy(
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: 1004036
+// [EXPECTED] ATOM balance changed: 1004036

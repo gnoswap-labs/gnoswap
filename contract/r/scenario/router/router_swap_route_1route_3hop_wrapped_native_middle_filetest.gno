@@ -21,7 +21,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 )
 
 var (
@@ -31,9 +31,9 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
 	wrappedWugnot = "gno.land/r/gnoland/wugnot"
@@ -57,10 +57,10 @@ func main() {
 	println("[INFO] Creating gns-wugnot pool (fee: 100, tick: -10000)")
 	pl.CreatePool(cross, wrappedWugnot, gnsPath, fee100, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	println("[INFO] Creating wugnot-bar pool (fee: 100)")
-	pl.CreatePool(cross, wrappedWugnot, barPath, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	println("[INFO] Creating wugnot-atom pool (fee: 100)")
+	pl.CreatePool(cross, wrappedWugnot, atomPath, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
-	println("[INFO] Note: 1 gns ≈ 7.29 bar")
+	println("[INFO] Note: 1 gns ≈ 7.29 atom")
 	println()
 
 	println("[INFO] Executing test scenarios")
@@ -73,9 +73,9 @@ func main() {
 	testing.SetOriginSend(chain.Coins{})
 
 	testPositionMintGnsGnot()
-	testPositionMintGnotBar()
-	testDrySwapRouteGnsBarExactIn()
-	testSwapRouteGnsBarExactIn()
+	testPositionMintGnotAtom()
+	testDrySwapRouteGnsAtomExactIn()
+	testSwapRouteGnsAtomExactIn()
 
 	println("[INFO] Scenario completed")
 }
@@ -105,19 +105,19 @@ func testPositionMintGnsGnot() {
 	println()
 }
 
-func testPositionMintGnotBar() {
-	println("[SCENARIO] Given: Position minting preparation for wugnot-bar pool")
+func testPositionMintGnotAtom() {
+	println("[SCENARIO] Given: Position minting preparation for wugnot-atom pool")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Deposit already done in main()")
 
 	println("[INFO] Approving tokens for pool operations")
 	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
 
-	println("[INFO] Minting position in wugnot-bar pool")
+	println("[INFO] Minting position in wugnot-atom pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, atomPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -130,17 +130,17 @@ func testPositionMintGnotBar() {
 	println()
 }
 
-func testDrySwapRouteGnsBarExactIn() {
-	println("[SCENARIO] Given: Dry swap route gns to bar exact in preparation")
+func testDrySwapRouteGnsAtomExactIn() {
+	println("[SCENARIO] Given: Dry swap route gns to atom exact in preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
+	println("[INFO] Executing dry swap route (gns → wugnot → atom)")
 	_, dryResult, _ := router.DrySwapRoute(
 		gnsPath,    // inputToken
-		barPath,    // outputToken
+		atomPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:100", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -148,21 +148,21 @@ func testDrySwapRouteGnsBarExactIn() {
 	println()
 }
 
-func testSwapRouteGnsBarExactIn() {
-	println("[SCENARIO] Given: Swap route gns to bar exact in preparation")
+func testSwapRouteGnsAtomExactIn() {
+	println("[SCENARIO] Given: Swap route gns to atom exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
 	gns.Approve(cross, routerAddr, 1000) // swap input amount
 
-	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
+	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → atom)")
 	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnsPath, // inputToken
-		barPath, // outputToken
+		atomPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/atom:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -183,8 +183,8 @@ func testSwapRouteGnsBarExactIn() {
 // [INFO] Setting up pools and positions
 // [INFO] Approving pool creation fees
 // [INFO] Creating gns-wugnot pool (fee: 100, tick: -10000)
-// [INFO] Creating wugnot-bar pool (fee: 100)
-// [INFO] Note: 1 gns ≈ 7.29 bar
+// [INFO] Creating wugnot-atom pool (fee: 100)
+// [INFO] Note: 1 gns ≈ 7.29 atom
 //
 // [INFO] Executing test scenarios
 // [SCENARIO] Given: Position minting preparation for gns-wugnot pool
@@ -199,10 +199,10 @@ func testSwapRouteGnsBarExactIn() {
 // [EXPECTED] amount0: 100000 expected: 100000
 // [EXPECTED] amount1: 36790 expected: 36790
 //
-// [SCENARIO] Given: Position minting preparation for wugnot-bar pool
+// [SCENARIO] Given: Position minting preparation for wugnot-atom pool
 // [INFO] Deposit already done in main()
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting position in wugnot-bar pool
+// [INFO] Minting position in wugnot-atom pool
 // [INFO] positionId: 2
 // [INFO] amount0: 36790
 // [INFO] amount1: 100000
@@ -211,13 +211,13 @@ func testSwapRouteGnsBarExactIn() {
 // [EXPECTED] amount0: 36790 expected: 36790
 // [EXPECTED] amount1: 100000 expected: 100000
 //
-// [SCENARIO] Given: Dry swap route gns to bar exact in preparation
-// [INFO] Executing dry swap route (gns → wugnot → bar)
+// [SCENARIO] Given: Dry swap route gns to atom exact in preparation
+// [INFO] Executing dry swap route (gns → wugnot → atom)
 // [EXPECTED] dry swap result: 7317 expected: 7317
 //
-// [SCENARIO] Given: Swap route gns to bar exact in preparation
+// [SCENARIO] Given: Swap route gns to atom exact in preparation
 // [INFO] Approving tokens for swap
-// [INFO] Executing ExactIn swap (1000 gns → wugnot → bar)
+// [INFO] Executing ExactIn swap (1000 gns → wugnot → atom)
 // [INFO] amountIn: 1000
 // [INFO] amountOut: -7317
 // [EXPECTED] amountIn: 1000 expected: 1000

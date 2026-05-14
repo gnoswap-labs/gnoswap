@@ -23,7 +23,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -46,7 +46,7 @@ var t *testing.T
 
 func main() {
 	println("[SCENARIO] 1. Create launchpad project")
-	projectId := createOBLProject()
+	projectId := createETHProject()
 	projectTier30 := projectId + ":30"
 	println()
 
@@ -65,13 +65,13 @@ func main() {
 	println()
 }
 
-// Create OBL launchpad project
-func createOBLProject() string {
-	println("[INFO] Creating OBL launchpad project")
+// Create ETH launchpad project
+func createETHProject() string {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "Test ETH Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -81,9 +81,9 @@ func createOBLProject() string {
 	secondsOf7Days := int64(60 * 60 * 24 * 7)
 	startTime := time.Now().Unix() + secondsOf7Days // 7 days from now
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -120,28 +120,28 @@ func depositGns(projectTierId string, depositAmount int64) {
 func collectDepositGns(depositId string) {
 	testing.SetRealm(userRealm)
 
-	beforeOblBalance := obl.BalanceOf(userAddr)
+	beforeEthBalance := eth.BalanceOf(userAddr)
 	beforeGnsBalance := gns.BalanceOf(userAddr)
 	launchpad.CollectDepositGns(cross, depositId)
-	afterOblBalance := obl.BalanceOf(userAddr)
+	afterEthBalance := eth.BalanceOf(userAddr)
 	afterGnsBalance := gns.BalanceOf(userAddr)
 
-	ufmt.Printf("[EXPECTED] OBL balance after collect: %d\n", afterOblBalance-beforeOblBalance)
+	ufmt.Printf("[EXPECTED] ETH balance after collect: %d\n", afterEthBalance-beforeEthBalance)
 	ufmt.Printf("[EXPECTED] GNS balance after collect: %d\n", afterGnsBalance-beforeGnsBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Create launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 //
 // [SCENARIO] 2. Deposit GNS in project tier30 with skip 3 days
-// [EXPECTED] Deposit GNS in project tier gno.land/r/onbloc/obl:123:30 (ID: 1)
+// [EXPECTED] Deposit GNS in project tier gno.land/r/gnoswap/test_token/eth:123:30 (ID: 1)
 //
 // [SCENARIO] 3. Skip blocks to end project (27 days)
 //
 // [SCENARIO] 4. Withdraw GNS
-// [EXPECTED] OBL balance after collect: 2999999
+// [EXPECTED] ETH balance after collect: 2999999
 // [EXPECTED] GNS balance after collect: 1000000

@@ -11,8 +11,8 @@ import (
 	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -26,9 +26,9 @@ func TestExactOutSwapOperation(t *testing.T) {
 
 		op := NewExactOutSwapOperation(router, ExactOutParams{
 			BaseSwapParams: BaseSwapParams{
-				InputToken:  barPath,
-				OutputToken: fooPath,
-				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				InputToken:  atomPath,
+				OutputToken: btcPath,
+				RouteArr:    "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000",
 				QuoteArr:    "100",
 			},
 			AmountOut:   100,
@@ -41,9 +41,9 @@ func TestExactOutSwapOperation(t *testing.T) {
 		// Invalid amount out
 		invalidOp := NewExactOutSwapOperation(router, ExactOutParams{
 			BaseSwapParams: BaseSwapParams{
-				InputToken:  barPath,
-				OutputToken: fooPath,
-				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				InputToken:  atomPath,
+				OutputToken: btcPath,
+				RouteArr:    "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000",
 				QuoteArr:    "100",
 			},
 			AmountOut:   -100, // negative amount
@@ -59,8 +59,8 @@ func TestExactOutSwapOperation(t *testing.T) {
 
 		uassert.PanicsContains(t, "invalid fee: format", func() {
 			router.ExactOutSwapRoute(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				"3",
 				"invalid:route:format", // invalid route format
 				"100",
@@ -76,10 +76,10 @@ func TestExactOutSwapOperation(t *testing.T) {
 
 		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
 			router.ExactOutSwapRoute(
-				fooPath,
-				barPath,
+				btcPath,
+				atomPath,
 				"3",
-				"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000",
 				"100",
 				"5",
 				time.Now().Add(-time.Hour).Unix(), // expired deadline
@@ -95,19 +95,19 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	setupTestPool(t)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	TokenFaucet2(t, fooPath, routerAddr)
-	TokenFaucet2(t, barPath, routerAddr)
+	TokenFaucet2(t, btcPath, routerAddr)
+	TokenFaucet2(t, atomPath, routerAddr)
 
 	testing.SetRealm(testing.NewUserRealm(routerAddr))
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	// create position
 	// a. Position 1: (-50%+50%)
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		-6960,
 		6960,
@@ -123,8 +123,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	// b. Position 2: (-10%+10%)
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		-1080,
 		960,
@@ -140,8 +140,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	// c. Position 3: (full range)
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		-887220,
 		887220,
@@ -157,8 +157,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	// d. Position 4: (lower out-range)
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		-44280,
 		-19080,
@@ -174,8 +174,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	// e. Position 5: (upper out-range)
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		62160,
 		69060,
@@ -192,10 +192,10 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		router := mockRouter()
 
 		amountIn, amountOut := router.ExactOutSwapRoute(
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			"1000000",
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+			"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000",
 			"100",
 			"1100000",
 			time.Now().Add(time.Hour).Unix(),
@@ -207,7 +207,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	})
 
 	t.Run("failed exact out swap at boundary", func(t *testing.T) {
-		poolPath := pl.GetPoolPath(barPath, fooPath, 3000)
+		poolPath := pl.GetPoolPath(atomPath, btcPath, 3000)
 		balance0 := pl.GetBalanceToken0(poolPath)
 		balance1 := pl.GetBalanceToken1(poolPath)
 
@@ -229,10 +229,10 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		router := mockRouter()
 
 		router.ExactOutSwapRoute(
-			barPath,
-			fooPath,
+			atomPath,
+			btcPath,
 			overflowAmount,
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+			"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000",
 			"100",
 			"50101690",
 			time.Now().Add(time.Hour).Unix(),
@@ -246,15 +246,15 @@ func setupTestPool(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross, atomPath, btcPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	_, _, _, _ = pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		3000,
 		minTick,
 		maxTick,
@@ -267,7 +267,7 @@ func setupTestPool(t *testing.T) {
 		"",
 	)
 
-	pool := pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)
+	pool := pl.GetPoolPath(atomPath, btcPath, FEE_MEDIUM)
 	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")
 }
 

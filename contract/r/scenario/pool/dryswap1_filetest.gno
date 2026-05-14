@@ -10,8 +10,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/pool"
 
@@ -41,8 +41,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 // Test variables
@@ -65,8 +65,8 @@ func main() {
 func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for DrySwap test")
-	println("[INFO] Token0:", barPath)
-	println("[INFO] Token1:", fooPath)
+	println("[INFO] Token0:", atomPath)
+	println("[INFO] Token1:", btcPath)
 	println("[INFO] Fee tier:", FeeTier500)
 	println("[INFO] Initial liquidity amount:", liquidityExpect)
 	println("[INFO] Tick range:", -tickUpper, "to", -tickLower)
@@ -76,22 +76,22 @@ func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		-tickUpper,
 		-tickLower,
@@ -110,8 +110,8 @@ func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 	println("[INFO] Note: Negative amount means exact output amount is specified")
 
 	poolIn, poolOut, _ := pool.DrySwap(
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		true, // zeroForOne
 		amountSpecified,
@@ -132,8 +132,8 @@ func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 
 // Output:
 // [INFO] Setting up pool and position for DrySwap test
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/foo
+// [INFO] Token0: gno.land/r/gnoswap/test_token/atom
+// [INFO] Token1: gno.land/r/gnoswap/test_token/btc
 // [INFO] Fee tier: 500
 // [INFO] Initial liquidity amount: 100000000000
 // [INFO] Tick range: -11000 to -9000

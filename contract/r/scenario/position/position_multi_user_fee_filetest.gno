@@ -25,8 +25,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const (
@@ -48,8 +48,8 @@ var (
 	user2Addr  = testutils.TestAddress("user2")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -89,31 +89,31 @@ func initPoolAndUsers() {
 	ufmt.Println("[INFO] Creating pool at tick -23028")
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		"25054144837504793118641380156", // encodePriceSqrt(1, 10)
 	)
 
 	ufmt.Println("[INFO] Transfer initial tokens to users")
-	bar.Transfer(cross, user1Addr, 100_000_000)
-	baz.Transfer(cross, user1Addr, 100_000_000)
-	bar.Transfer(cross, user2Addr, 100_000_000)
-	baz.Transfer(cross, user2Addr, 100_000_000)
+	atom.Transfer(cross, user1Addr, 100_000_000)
+	atone.Transfer(cross, user1Addr, 100_000_000)
+	atom.Transfer(cross, user2Addr, 100_000_000)
+	atone.Transfer(cross, user2Addr, 100_000_000)
 }
 
 func mintUser1Position() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	atone.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user1")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		-43020,
 		0,
@@ -134,16 +134,16 @@ func mintUser1Position() {
 
 func mintUser2Position() {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	atone.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user2")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		-43020,
 		0,
@@ -164,19 +164,19 @@ func mintUser2Position() {
 
 func executeSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	atone.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
-	ufmt.Println("[INFO] Executing swap BAR -> BAZ")
+	ufmt.Println("[INFO] Executing swap ATOM -> ATONE")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		adminAddr,
 		true,
@@ -184,17 +184,17 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, atonePath, amount0Delta, amount1Delta, true)
 		},
 	)
 	ufmt.Printf("[EXPECTED] Swap1 amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap1 amount1 should be %s\n", amount1)
 
-	ufmt.Println("[INFO] Executing swap BAZ -> BAR")
+	ufmt.Println("[INFO] Executing swap ATONE -> ATOM")
 	amount0, amount1 = pool.Swap(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		adminAddr,
 		false,
@@ -202,7 +202,7 @@ func executeSwaps() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(atomPath, atonePath, amount0Delta, amount1Delta, false)
 		},
 	)
 	ufmt.Printf("[EXPECTED] Swap2 amount0 should be %s\n", amount0)
@@ -211,8 +211,8 @@ func executeSwaps() {
 
 func collectUser1Fees() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user1")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
@@ -222,8 +222,8 @@ func collectUser1Fees() {
 
 func collectUser2Fees() {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user2")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 2)
@@ -235,15 +235,15 @@ func compareCollectedFees() {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing collected fees between users")
-	user1BarBalance := bar.BalanceOf(user1Addr)
-	user1BazBalance := baz.BalanceOf(user1Addr)
-	user2BarBalance := bar.BalanceOf(user2Addr)
-	user2BazBalance := baz.BalanceOf(user2Addr)
+	user1AtomBalance := atom.BalanceOf(user1Addr)
+	user1AtoneBalance := atone.BalanceOf(user1Addr)
+	user2AtomBalance := atom.BalanceOf(user2Addr)
+	user2AtoneBalance := atone.BalanceOf(user2Addr)
 
-	ufmt.Printf("[EXPECTED] User1 final BAR balance should be %d\n", user1BarBalance)
-	ufmt.Printf("[EXPECTED] User1 final BAZ balance should be %d\n", user1BazBalance)
-	ufmt.Printf("[EXPECTED] User2 final BAR balance should be %d\n", user2BarBalance)
-	ufmt.Printf("[EXPECTED] User2 final BAZ balance should be %d\n", user2BazBalance)
+	ufmt.Printf("[EXPECTED] User1 final ATOM balance should be %d\n", user1AtomBalance)
+	ufmt.Printf("[EXPECTED] User1 final ATONE balance should be %d\n", user1AtoneBalance)
+	ufmt.Printf("[EXPECTED] User2 final ATOM balance should be %d\n", user2AtomBalance)
+	ufmt.Printf("[EXPECTED] User2 final ATONE balance should be %d\n", user2AtoneBalance)
 	ufmt.Printf("[EXPECTED] Users should have equal fee distribution\n")
 }
 
@@ -281,10 +281,10 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Amount1 should be 924246
 //
 // [SCENARIO] 4. Execute swaps to generate fees
-// [INFO] Executing swap BAR -> BAZ
+// [INFO] Executing swap ATOM -> ATONE
 // [EXPECTED] Swap1 amount0 should be 10000000
 // [EXPECTED] Swap1 amount1 should be -743552
-// [INFO] Executing swap BAZ -> BAR
+// [INFO] Executing swap ATONE -> ATOM
 // [EXPECTED] Swap2 amount0 should be -29969994
 // [EXPECTED] Swap2 amount1 should be 7089378
 //
@@ -300,8 +300,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 7. Compare collected fees between users
 // [INFO] Comparing collected fees between users
-// [EXPECTED] User1 final BAR balance should be 90014852
-// [EXPECTED] User1 final BAZ balance should be 99086282
-// [EXPECTED] User2 final BAR balance should be 90014852
-// [EXPECTED] User2 final BAZ balance should be 99086282
+// [EXPECTED] User1 final ATOM balance should be 90014852
+// [EXPECTED] User1 final ATONE balance should be 99086282
+// [EXPECTED] User2 final ATOM balance should be 90014852
+// [EXPECTED] User2 final ATONE balance should be 99086282
 // [EXPECTED] Users should have equal fee distribution

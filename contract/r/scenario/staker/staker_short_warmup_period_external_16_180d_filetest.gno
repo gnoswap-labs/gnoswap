@@ -27,9 +27,9 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -42,9 +42,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee3000 uint32 = 3000
 
@@ -65,12 +65,12 @@ func main() {
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint 4 positions on bar:baz:3000")
-	mintBarBaz3000_1_4()
+	println("[SCENARIO] 3. Mint 4 positions on atom:atone:3000")
+	mintAtomAtone3000_1_4()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with QUX for 180 days")
-	createExternalIncentiveQux180()
+	println("[SCENARIO] 4. Create external incentive with SOL for 180 days")
+	createExternalIncentiveSol180()
 	println()
 
 	println("[SCENARIO] 5. Stake positions 1-4")
@@ -106,22 +106,22 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, 3000, "79228162514264337593543950337")
 
-	ufmt.Printf("[EXPECTED] bar:baz:3000 pool created successfully\n")
+	ufmt.Printf("[EXPECTED] atom:atone:3000 pool created successfully\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarBaz3000_1_4() {
+func mintAtomAtone3000_1_4() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross, atomPath, atonePath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross, atomPath, atonePath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross, atomPath, atonePath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross, atomPath, atonePath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
 	testing.SkipHeights(1)
 
 	t1Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(1))
@@ -148,23 +148,23 @@ func mintBarBaz3000_1_4() {
 		t1pct.ToString(), t2pct.ToString(), t3pct.ToString(), t4pct.ToString())
 }
 
-func createExternalIncentiveQux180() {
+func createExternalIncentiveSol180() {
 	testing.SetRealm(adminRealm)
 
-	qux.Approve(cross, stakerAddr, maxInt64)
+	sol.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	sr.AddToken(cross, quxPath)
+	sr.AddToken(cross, solPath)
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000",
-		quxPath,
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000",
+		solPath,
 		100_000_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_180DAYS,
 	)
 
-	ufmt.Printf("[EXPECTED] external incentive QUX created for 180 days\n")
+	ufmt.Printf("[EXPECTED] external incentive SOL created for 180 days\n")
 	testing.SkipHeights(1)
 }
 
@@ -220,11 +220,11 @@ func rewardFor1Block() {
 	println("[INFO] collecting reward for position 01")
 	testing.SetRealm(adminRealm)
 
-	oldQux := qux.BalanceOf(adminUser)
+	oldSol := sol.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	newQux := qux.BalanceOf(adminUser)
-	diff := newQux - oldQux
-	ufmt.Printf("[EXPECTED] position 01 reward: %d QUX\n", diff)
+	newSol := sol.BalanceOf(adminUser)
+	diff := newSol - oldSol
+	ufmt.Printf("[EXPECTED] position 01 reward: %d SOL\n", diff)
 	// reward 122713
 	// penalty 52592
 	// total 175305
@@ -233,11 +233,11 @@ func rewardFor1Block() {
 	println("[INFO] collecting reward for position 02")
 	testing.SetRealm(adminRealm)
 
-	oldQux = qux.BalanceOf(adminUser)
+	oldSol = sol.BalanceOf(adminUser)
 	sr.CollectReward(cross, 2)
-	newQux = qux.BalanceOf(adminUser)
-	diff = newQux - oldQux
-	ufmt.Printf("[EXPECTED] position 02 reward: %d QUX\n", diff)
+	newSol = sol.BalanceOf(adminUser)
+	diff = newSol - oldSol
+	ufmt.Printf("[EXPECTED] position 02 reward: %d SOL\n", diff)
 	// reward 759511
 	// penalty 325506
 	// total 1085017
@@ -246,11 +246,11 @@ func rewardFor1Block() {
 	println("[INFO] collecting reward for position 03")
 	testing.SetRealm(adminRealm)
 
-	oldQux = qux.BalanceOf(adminUser)
+	oldSol = sol.BalanceOf(adminUser)
 	sr.CollectReward(cross, 3)
-	newQux = qux.BalanceOf(adminUser)
-	diff = newQux - oldQux
-	ufmt.Printf("[EXPECTED] position 03 reward: %d QUX\n", diff)
+	newSol = sol.BalanceOf(adminUser)
+	diff = newSol - oldSol
+	ufmt.Printf("[EXPECTED] position 03 reward: %d SOL\n", diff)
 	// reward 17915
 	// penalty 7679
 	// total 25594
@@ -259,11 +259,11 @@ func rewardFor1Block() {
 	println("[INFO] collecting reward for position 04")
 	testing.SetRealm(adminRealm)
 
-	oldQux = qux.BalanceOf(adminUser)
+	oldSol = sol.BalanceOf(adminUser)
 	sr.CollectReward(cross, 4)
-	newQux = qux.BalanceOf(adminUser)
-	diff = newQux - oldQux
-	ufmt.Printf("[EXPECTED] position 04 reward: %d QUX\n", diff)
+	newSol = sol.BalanceOf(adminUser)
+	diff = newSol - oldSol
+	ufmt.Printf("[EXPECTED] position 04 reward: %d SOL\n", diff)
 	// reward 62
 	// penalty 27
 	// total 89
@@ -289,13 +289,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 1. Initialize and setup
 //
 // [SCENARIO] 2. Create pool
-// [EXPECTED] bar:baz:3000 pool created successfully
+// [EXPECTED] atom:atone:3000 pool created successfully
 //
-// [SCENARIO] 3. Mint 4 positions on bar:baz:3000
+// [SCENARIO] 3. Mint 4 positions on atom:atone:3000
 // [EXPECTED] positions minted with liquidity ratios - pos1: 13%, pos2: 84%, pos3: 1%, pos4: 0%
 //
-// [SCENARIO] 4. Create external incentive with QUX for 180 days
-// [EXPECTED] external incentive QUX created for 180 days
+// [SCENARIO] 4. Create external incentive with SOL for 180 days
+// [EXPECTED] external incentive SOL created for 180 days
 //
 // [SCENARIO] 5. Stake positions 1-4
 // [EXPECTED] all 4 positions staked successfully
@@ -305,10 +305,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Check rewards for 1 block of 180 days external
 // [INFO] skipping 1 block to check rewards
 // [INFO] collecting reward for position 01
-// [EXPECTED] position 01 reward: 4382643 QUX
+// [EXPECTED] position 01 reward: 4382643 SOL
 // [INFO] collecting reward for position 02
-// [EXPECTED] position 02 reward: 27125450 QUX
+// [EXPECTED] position 02 reward: 27125450 SOL
 // [INFO] collecting reward for position 03
-// [EXPECTED] position 03 reward: 639872 QUX
+// [EXPECTED] position 03 reward: 639872 SOL
 // [INFO] collecting reward for position 04
-// [EXPECTED] position 04 reward: 2238 QUX
+// [EXPECTED] position 04 reward: 2238 SOL

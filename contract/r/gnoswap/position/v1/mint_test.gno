@@ -10,8 +10,8 @@ import (
 
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 // Note: Keep helpers minimal and explicit. The goal is to centralize
@@ -46,9 +46,9 @@ func (e *Env) AndUserFundedAndApproved(addr address, tokens ...string) *Env {
 		TokenFaucet(e.t, tk, addr)
 		TokenApprove(e.t, tk, addr, poolAddr, maxApprove)
 	}
-	// native module approvals (bar/baz) once per test case
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	// native module approvals (atom/atone) once per test case
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 	return e
 }
 
@@ -58,8 +58,8 @@ type MintBuilder struct{ p MintParams }
 func MintParamsBuilder() *MintBuilder {
 	return &MintBuilder{
 		p: MintParams{
-			token0:         "gno.land/r/onbloc/bar",
-			token1:         "gno.land/r/onbloc/baz",
+			token0:         "gno.land/r/gnoswap/test_token/atom",
+			token1:         "gno.land/r/gnoswap/test_token/atone",
 			fee:            3000,
 			tickLower:      -120,
 			tickUpper:      120,
@@ -263,8 +263,8 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
 
 			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
-			bar.Approve(cross, poolAddr, amount0Int)
-			baz.Approve(cross, poolAddr, amount1Int)
+			atom.Approve(cross, poolAddr, amount0Int)
+			atone.Approve(cross, poolAddr, amount1Int)
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
 					func(cur realm) {
@@ -274,8 +274,8 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				bar.Transfer(cross, tt.params.caller, amount0Int)
-				baz.Transfer(cross, tt.params.caller, amount1Int)
+				atom.Transfer(cross, tt.params.caller, amount0Int)
+				atone.Transfer(cross, tt.params.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
 				func(cur realm) {
@@ -341,8 +341,8 @@ func TestMintInternal_PanicCases(t *testing.T) {
 			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
 
 			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
-			bar.Approve(cross, poolAddr, amount0Int)
-			baz.Approve(cross, poolAddr, amount1Int)
+			atom.Approve(cross, poolAddr, amount0Int)
+			atone.Approve(cross, poolAddr, amount1Int)
 
 			uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
 				func(cur realm) {
@@ -528,8 +528,8 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
 
 			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
-			bar.Approve(cross, poolAddr, amount0Int)
-			baz.Approve(cross, poolAddr, amount1Int)
+			atom.Approve(cross, poolAddr, amount0Int)
+			atone.Approve(cross, poolAddr, amount1Int)
 
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
@@ -540,8 +540,8 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				bar.Transfer(cross, tt.params.caller, amount0Int)
-				baz.Transfer(cross, tt.params.caller, amount1Int)
+				atom.Transfer(cross, tt.params.caller, amount0Int)
+				atone.Transfer(cross, tt.params.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
 				func(cur realm) {
@@ -741,8 +741,8 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				bar.Transfer(cross, tt.params.caller, amount0Int)
-				baz.Transfer(cross, tt.params.caller, amount1Int)
+				atom.Transfer(cross, tt.params.caller, amount0Int)
+				atone.Transfer(cross, tt.params.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
 				func(cur realm) {

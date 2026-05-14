@@ -36,7 +36,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -117,11 +117,11 @@ func createAndDepositLaunchpad() string {
 	// Create launchpad project
 	println("[INFO] Creating launchpad project")
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Approve(cross, launchpadAddr, int64(10_000_000))
+	eth.Approve(cross, launchpadAddr, int64(10_000_000))
 	projectId := launchpad.CreateProject(
 		cross,
-		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"Test ETH Project",
+		"gno.land/r/gnoswap/test_token/eth",
 		projectAddr,
 		int64(10_000_000),
 		"",
@@ -214,7 +214,7 @@ func verifyVotingWeight(proposalId int64, projectTierId string) {
 //
 // [SCENARIO] 3. Create Launchpad Project and Deposit GNS
 // [INFO] Creating launchpad project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 // [INFO] GNS deposited to launchpad (depositId: %!d(string=1), amount: 5000000000)
 // [INFO] Launchpad xGNS balance: 5000000000
 //

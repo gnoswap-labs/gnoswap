@@ -30,8 +30,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
@@ -58,7 +58,7 @@ var (
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 )
 
 func main() {
@@ -66,7 +66,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -110,8 +110,8 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -120,15 +120,15 @@ func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] create external incentive with bar token")
+	println("[INFO] create external incentive with atom token")
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		barPath,
-		90_000_000_000, // 90 billion bar tokens for 90 days
+		atomPath,
+		90_000_000_000, // 90 billion atom tokens for 90 days
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
@@ -146,16 +146,16 @@ func mintAndStakePosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -169,7 +169,7 @@ func mintAndStakePosition01() {
 	)
 
 	ufmt.Printf("[EXPECTED] position 01 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
-	ufmt.Printf("[EXPECTED] amounts - bar: %s, baz: %s\n", amount0, amount1)
+	ufmt.Printf("[EXPECTED] amounts - atom: %s, atone: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 01")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
@@ -182,16 +182,16 @@ func mintAndStakePosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 02 (tick range: -100 ~ 100)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -205,7 +205,7 @@ func mintAndStakePosition02() {
 	)
 
 	ufmt.Printf("[EXPECTED] position 02 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
-	ufmt.Printf("[EXPECTED] amounts - bar: %s, baz: %s\n", amount0, amount1)
+	ufmt.Printf("[EXPECTED] amounts - atom: %s, atone: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 02")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
@@ -225,10 +225,10 @@ func collectExternalRewardsBothPositions() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect external reward for position 01")
-	beforeBar := bar.BalanceOf(adminUser)
+	beforeAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBar := bar.BalanceOf(adminUser)
-	reward1 := afterBar - beforeBar
+	afterAtom := atom.BalanceOf(adminUser)
+	reward1 := afterAtom - beforeAtom
 
 	ufmt.Printf("[EXPECTED] position 01 external reward: %d\n", reward1)
 
@@ -239,10 +239,10 @@ func collectExternalRewardsBothPositions() {
 	}
 
 	println("[INFO] collect external reward for position 02")
-	beforeBar = bar.BalanceOf(adminUser)
+	beforeAtom = atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 2)
-	afterBar = bar.BalanceOf(adminUser)
-	reward2 := afterBar - beforeBar
+	afterAtom = atom.BalanceOf(adminUser)
+	reward2 := afterAtom - beforeAtom
 
 	ufmt.Printf("[EXPECTED] position 02 external reward: %d\n", reward2)
 
@@ -270,11 +270,11 @@ func collectExternalRewardsAfterUnstaking() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect external reward for position 01 after position 02 unstaked")
-	beforeBar := bar.BalanceOf(adminUser)
+	beforeAtom := atom.BalanceOf(adminUser)
 	testing.SkipHeights(1)
 	sr.CollectReward(cross, 1)
-	afterBar := bar.BalanceOf(adminUser)
-	reward := afterBar - beforeBar
+	afterAtom := atom.BalanceOf(adminUser)
+	reward := afterAtom - beforeAtom
 
 	ufmt.Printf("[EXPECTED] position 01 external reward after unstaking pos 02: %d\n", reward)
 
@@ -329,19 +329,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [SCENARIO] 3. Create external incentive
 // [INFO] approve tokens for external incentive
-// [INFO] create external incentive with bar token
+// [INFO] create external incentive with atom token
 // [INFO] external incentive created - reward per block: ~1000000000
 //
 // [SCENARIO] 4. Mint and stake position 01
 // [INFO] approve tokens for position 01
 // [INFO] mint position 01 (tick range: -100 ~ 100)
 // [EXPECTED] position 01 - ID: 1, liquidity: 200510
-// [EXPECTED] amounts - bar: 1000, baz: 1000
+// [EXPECTED] amounts - atom: 1000, atone: 1000
 // [INFO] approve NFT to staker and stake position 01
 // [EXPECTED] position 01 staked
 //
@@ -349,7 +349,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] approve tokens for position 02
 // [INFO] mint position 02 (tick range: -100 ~ 100)
 // [EXPECTED] position 02 - ID: 2, liquidity: 200510
-// [EXPECTED] amounts - bar: 1000, baz: 1000
+// [EXPECTED] amounts - atom: 1000, atone: 1000
 // [INFO] approve NFT to staker and stake position 02
 // [EXPECTED] position 02 staked
 //

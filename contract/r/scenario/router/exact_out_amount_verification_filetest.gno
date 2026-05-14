@@ -36,10 +36,10 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -50,10 +50,10 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -69,31 +69,31 @@ func main() {
 	setup()
 	println()
 
-	println("[SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 bar (baz→bar:3000)")
+	println("[SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 atom (atone→atom:3000)")
 	singleRouteSingleHop()
 	println()
 
-	println("[SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 foo (bar→baz→foo)")
+	println("[SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 btc (atom→atone→btc)")
 	singleRoute2Hop()
 	println()
 
-	println("[SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 qux (bar→baz→foo→qux)")
+	println("[SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 sol (atom→atone→btc→sol)")
 	singleRoute3Hop()
 	println()
 
-	println("[SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 bar (baz→bar:3000, baz→bar:500)")
+	println("[SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 atom (atone→atom:3000, atone→atom:500)")
 	twoRouteSplit()
 	println()
 
-	println("[SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 bar")
+	println("[SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 atom")
 	singleHopMinimum()
 	println()
 
-	println("[SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 bar")
+	println("[SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 atom")
 	singleHopLarge()
 	println()
 
-	println("[SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 bar")
+	println("[SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 atom")
 	singleHopLowFeePool()
 	println()
 }
@@ -102,39 +102,39 @@ func setup() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
-	qux.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	atone.Approve(cross, poolAddr, max_approve)
+	btc.Approve(cross, poolAddr, max_approve)
+	sol.Approve(cross, poolAddr, max_approve)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
-	qux.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	atone.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
+	sol.Approve(cross, routerAddr, max_approve)
 
 	sqrtPrice1to1 := "79228162514264337593543950336" // encodePriceSqrt(1, 1)
 
-	// Pool 1: bar:baz fee 3000 (0.3%)
-	pl.CreatePool(cross, barPath, bazPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick,
+	// Pool 1: atom:atone fee 3000 (0.3%)
+	pl.CreatePool(cross, atomPath, atonePath, 3000, sqrtPrice1to1)
+	pn.Mint(cross, atomPath, atonePath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
-	// Pool 2: baz:foo fee 3000 (0.3%)
-	pl.CreatePool(cross, bazPath, fooPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick,
+	// Pool 2: atone:btc fee 3000 (0.3%)
+	pl.CreatePool(cross, atonePath, btcPath, 3000, sqrtPrice1to1)
+	pn.Mint(cross, atonePath, btcPath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
-	// Pool 3: foo:qux fee 3000 (0.3%)
-	pl.CreatePool(cross, fooPath, quxPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, fooPath, quxPath, 3000, min_tick, max_tick,
+	// Pool 3: btc:sol fee 3000 (0.3%)
+	pl.CreatePool(cross, btcPath, solPath, 3000, sqrtPrice1to1)
+	pn.Mint(cross, btcPath, solPath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
-	// Pool 4: bar:baz fee 500 (0.05%) — second pool for split route
-	pl.CreatePool(cross, barPath, bazPath, 500, sqrtPrice1to1)
-	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick,
+	// Pool 4: atom:atone fee 500 (0.05%) — second pool for split route
+	pl.CreatePool(cross, atomPath, atonePath, 500, sqrtPrice1to1)
+	pn.Mint(cross, atomPath, atonePath, 500, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
-	println("[INFO] created 4 pools: bar:baz:3000, baz:foo:3000, foo:qux:3000, bar:baz:500")
+	println("[INFO] created 4 pools: atom:atone:3000, atone:btc:3000, btc:sol:3000, atom:atone:500")
 	println("[INFO] all pools at 1:1 price with 20T liquidity each")
 }
 
@@ -142,103 +142,103 @@ func setup() {
 func singleRouteSingleHop() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := bar.BalanceOf(adminAddr)
-	feeBefore := bar.BalanceOf(protocolFeeAddr)
-	poolBefore := bar.BalanceOf(poolAddr)
+	userBefore := atom.BalanceOf(adminAddr)
+	feeBefore := atom.BalanceOf(protocolFeeAddr)
+	poolBefore := atom.BalanceOf(poolAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		cross, atonePath, atomPath, "1000000",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := bar.BalanceOf(adminAddr) - userBefore
-	poolChange := poolBefore - bar.BalanceOf(poolAddr)
-	feeChange := bar.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := atom.BalanceOf(adminAddr) - userBefore
+	poolChange := poolBefore - atom.BalanceOf(poolAddr)
+	feeChange := atom.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 1000000)\n", userChange)
 	ufmt.Printf("[EXPECTED] protocol fee: %d = pool(%d) - user(%d)\n", feeChange, poolChange, userChange)
 }
 
-// Case 3: 1-route 2-hop (bar → baz → foo)
+// Case 3: 1-route 2-hop (atom → atone → btc)
 func singleRoute2Hop() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := foo.BalanceOf(adminAddr)
-	feeBefore := foo.BalanceOf(protocolFeeAddr)
+	userBefore := btc.BalanceOf(adminAddr)
+	feeBefore := btc.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, barPath, fooPath, "1000000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000",
+		cross, atomPath, btcPath, "1000000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/btc:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := foo.BalanceOf(adminAddr) - userBefore
-	feeChange := foo.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := btc.BalanceOf(adminAddr) - userBefore
+	feeChange := btc.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 1000000)\n", userChange)
-	ufmt.Printf("[EXPECTED] protocol fee (foo): %d\n", feeChange)
+	ufmt.Printf("[EXPECTED] protocol fee (btc): %d\n", feeChange)
 }
 
-// Case 4: 1-route 3-hop (bar → baz → foo → qux)
+// Case 4: 1-route 3-hop (atom → atone → btc → sol)
 func singleRoute3Hop() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := qux.BalanceOf(adminAddr)
-	feeBefore := qux.BalanceOf(protocolFeeAddr)
+	userBefore := sol.BalanceOf(adminAddr)
+	feeBefore := sol.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, barPath, quxPath, "100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000",
+		cross, atomPath, solPath, "100000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/btc:3000*POOL*gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/sol:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := qux.BalanceOf(adminAddr) - userBefore
-	feeChange := qux.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := sol.BalanceOf(adminAddr) - userBefore
+	feeChange := sol.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 100000)\n", userChange)
-	ufmt.Printf("[EXPECTED] protocol fee (qux): %d\n", feeChange)
+	ufmt.Printf("[EXPECTED] protocol fee (sol): %d\n", feeChange)
 }
 
-// Case 5: 2-route split 50/50 (baz→bar via fee3000 and fee500)
+// Case 5: 2-route split 50/50 (atone→atom via fee3000 and fee500)
 func twoRouteSplit() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := bar.BalanceOf(adminAddr)
-	feeBefore := bar.BalanceOf(protocolFeeAddr)
+	userBefore := atom.BalanceOf(adminAddr)
+	feeBefore := atom.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000,gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
+		cross, atonePath, atomPath, "1000000",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000,gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500",
 		"50,50", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := bar.BalanceOf(adminAddr) - userBefore
-	feeChange := bar.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := atom.BalanceOf(adminAddr) - userBefore
+	feeChange := atom.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 1000000)\n", userChange)
-	ufmt.Printf("[EXPECTED] protocol fee (bar): %d\n", feeChange)
+	ufmt.Printf("[EXPECTED] protocol fee (atom): %d\n", feeChange)
 }
 
 // Case 6: minimum amount (1 token)
 func singleHopMinimum() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := bar.BalanceOf(adminAddr)
-	feeBefore := bar.BalanceOf(protocolFeeAddr)
+	userBefore := atom.BalanceOf(adminAddr)
+	feeBefore := atom.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		cross, atonePath, atomPath, "1",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := bar.BalanceOf(adminAddr) - userBefore
-	feeChange := bar.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := atom.BalanceOf(adminAddr) - userBefore
+	feeChange := atom.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 1)\n", userChange)
@@ -249,19 +249,19 @@ func singleHopMinimum() {
 func singleHopLarge() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := bar.BalanceOf(adminAddr)
-	feeBefore := bar.BalanceOf(protocolFeeAddr)
-	poolBefore := bar.BalanceOf(poolAddr)
+	userBefore := atom.BalanceOf(adminAddr)
+	feeBefore := atom.BalanceOf(protocolFeeAddr)
+	poolBefore := atom.BalanceOf(poolAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "9000000000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		cross, atonePath, atomPath, "9000000000000",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := bar.BalanceOf(adminAddr) - userBefore
-	poolChange := poolBefore - bar.BalanceOf(poolAddr)
-	feeChange := bar.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := atom.BalanceOf(adminAddr) - userBefore
+	poolChange := poolBefore - atom.BalanceOf(poolAddr)
+	feeChange := atom.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 9000000000000)\n", userChange)
@@ -272,62 +272,62 @@ func singleHopLarge() {
 func singleHopLowFeePool() {
 	testing.SetRealm(adminRealm)
 
-	userBefore := bar.BalanceOf(adminAddr)
-	feeBefore := bar.BalanceOf(protocolFeeAddr)
+	userBefore := atom.BalanceOf(adminAddr)
+	feeBefore := atom.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", "100",
+		cross, atonePath, atomPath, "1000000",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	userChange := bar.BalanceOf(adminAddr) - userBefore
-	feeChange := bar.BalanceOf(protocolFeeAddr) - feeBefore
+	userChange := atom.BalanceOf(adminAddr) - userBefore
+	feeChange := atom.BalanceOf(protocolFeeAddr) - feeBefore
 
 	ufmt.Printf("[INFO] amountIn=%s amountOut=%s\n", amountIn, amountOut)
 	ufmt.Printf("[EXPECTED] user received: %d (want: 1000000)\n", userChange)
-	ufmt.Printf("[EXPECTED] protocol fee (bar): %d\n", feeChange)
+	ufmt.Printf("[EXPECTED] protocol fee (atom): %d\n", feeChange)
 }
 
 // Output:
 // [SCENARIO] Comprehensive ExactOut Amount Verification
 //
 // [SCENARIO] 1. Setup pools
-// [INFO] created 4 pools: bar:baz:3000, baz:foo:3000, foo:qux:3000, bar:baz:500
+// [INFO] created 4 pools: atom:atone:3000, atone:btc:3000, btc:sol:3000, atom:atone:500
 // [INFO] all pools at 1:1 price with 20T liquidity each
 //
-// [SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 bar (baz→bar:3000)
+// [SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 atom (atone→atom:3000)
 // [INFO] amountIn=1004517 amountOut=-1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee: 1502 = pool(1001502) - user(1000000)
 //
-// [SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 foo (bar→baz→foo)
+// [SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 btc (atom→atone→btc)
 // [INFO] amountIn=1007543 amountOut=-1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
-// [EXPECTED] protocol fee (foo): 1502
+// [EXPECTED] protocol fee (btc): 1502
 //
-// [SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 qux (bar→baz→foo→qux)
+// [SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 sol (atom→atone→btc→sol)
 // [INFO] amountIn=101062 amountOut=-100000
 // [EXPECTED] user received: 100000 (want: 100000)
-// [EXPECTED] protocol fee (qux): 150
+// [EXPECTED] protocol fee (sol): 150
 //
-// [SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 bar (baz→bar:3000, baz→bar:500)
+// [SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 atom (atone→atom:3000, atone→atom:500)
 // [INFO] amountIn=1003262 amountOut=-1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
-// [EXPECTED] protocol fee (bar): 1502
+// [EXPECTED] protocol fee (atom): 1502
 //
-// [SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 bar
+// [SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 atom
 // [INFO] amountIn=3 amountOut=-1
 // [EXPECTED] user received: 1 (want: 1)
 // [EXPECTED] protocol fee: 0 (want: 0, truncated)
 //
-// [SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 bar
+// [SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 atom
 // [INFO] amountIn=16457760709370 amountOut=-9000000000000
 // [EXPECTED] user received: 9000000000000 (want: 9000000000000)
 // [EXPECTED] protocol fee: 13520280420 = pool(9013520280420) - user(9000000000000)
 //
-// [SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 bar
+// [SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 atom
 // [INFO] amountIn=1002005 amountOut=-1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
-// [EXPECTED] protocol fee (bar): 1502
+// [EXPECTED] protocol fee (atom): 1502
 

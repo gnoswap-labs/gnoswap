@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -38,8 +38,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 var fee500 = uint32(500)
@@ -56,15 +56,15 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
-	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] Creating atom-btc pool (fee: 500, initial tick: 0)")
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Increasing observation cardinality to 100")
-	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 100)
+	pool.IncreaseObservationCardinalityNext(cross, atomPath, btcPath, fee500, 100)
 	println()
 
 	// Add liquidity - wide range to allow crossing multiple times
@@ -73,8 +73,8 @@ func main() {
 	println("[INFO] Minting position: tick range [-1000, 1000] for wide liquidity coverage")
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-1000,
 		1000,
@@ -84,7 +84,7 @@ func main() {
 	println("[EXPECTED] Position created with amounts:", amount0, amount1)
 
 	// Check initial pool state
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println()
@@ -92,7 +92,7 @@ func main() {
 	// Get initial tick state before swap
 	// Note: With fee500, tick spacing is 10, so we test tick -1000 (lower bound of liquidity)
 	println("[SCENARIO] 3. Check Initial Tick State")
-	poolPath := barPath + ":" + fooPath + ":" + ufmt.Sprintf("%d", fee500)
+	poolPath := atomPath + ":" + btcPath + ":" + ufmt.Sprintf("%d", fee500)
 	testTick := int32(-1000) // Lower bound of liquidity position
 	tickInfo, _ := pool.GetTickInfo(poolPath, testTick)
 	ufmt.Printf("[INFO] Tick %d initial state:\n", testTick)
@@ -119,14 +119,14 @@ func main() {
 
 	// Need to approve tokens for swap
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	// Perform swap - zeroForOne (true) to decrease tick past testTick
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0Out, amount1Out := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,       // zeroForOne - tick decreases (0 -> past testTick)
@@ -134,13 +134,13 @@ func main() {
 		common.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 	println("[EXPECTED] Swap completed with amounts:", amount0Out, amount1Out)
 
 	// Check current pool tick to confirm we crossed testTick
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 
@@ -177,8 +177,8 @@ func main() {
 	println("[INFO] Adding position [-2000, 2000] to provide liquidity for reverse swap")
 	pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-2000,
 		2000,
@@ -192,15 +192,15 @@ func main() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Printf("[INFO] Swapping oneForZero to cross back above tick %d\n", testTick)
 
-	// Approve foo tokens for reverse swap
+	// Approve btc tokens for reverse swap
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0Out2, amount1Out2 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,      // oneForZero - tick increases (back above testTick)
@@ -208,13 +208,13 @@ func main() {
 		common.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 	println("[EXPECTED] Reverse swap completed:", amount0Out2, amount1Out2)
 
 	// Check current pool tick after reverse swap
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Pool tick after reverse swap:", thisPool.Slot0Tick())
 	println()
 
@@ -257,7 +257,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 1. Pool Creation and Setup
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-foo pool (fee: 500, initial tick: 0)
+// [INFO] Creating atom-btc pool (fee: 500, initial tick: 0)
 // [INFO] Approving tokens for pool operations
 // [INFO] Increasing observation cardinality to 100
 //

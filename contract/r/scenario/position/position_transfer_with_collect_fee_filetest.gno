@@ -28,8 +28,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -51,8 +51,8 @@ var (
 	user2Addr  = testutils.TestAddress("user2")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(3000)
 )
 
@@ -108,22 +108,22 @@ func initPool() {
 
 	defaultTokenAmount := int64(10000000000)
 
-	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, user1Addr, defaultTokenAmount)
-	bar.Transfer(cross, user2Addr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Atom tokens")
+	atom.Transfer(cross, user1Addr, defaultTokenAmount)
+	atom.Transfer(cross, user2Addr, defaultTokenAmount)
 
-	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, user1Addr, defaultTokenAmount)
-	foo.Transfer(cross, user2Addr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Btc tokens")
+	btc.Transfer(cross, user1Addr, defaultTokenAmount)
+	btc.Transfer(cross, user2Addr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -131,14 +131,14 @@ func initPool() {
 
 func mintPositions() {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position 01 (minTick: -960, maxTick: 960)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -154,8 +154,8 @@ func mintPositions() {
 	ufmt.Println("[INFO] Minting position 02 (minTick: -960, maxTick: 960)")
 	positionId2, liquidity2, amount20, amount21 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -189,16 +189,16 @@ func transferPositions(name string, from address, to address, id int64) {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	ufmt.Println("[INFO] Executing swap BAR -> FOO")
+	ufmt.Println("[INFO] Executing swap ATOM -> BTC")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		adminAddr,
 		true,
@@ -206,7 +206,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -217,17 +217,17 @@ func executeSwap() {
 func CollectFee(userName string, userAddr address, positionID string) {
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 
-	beforeBarBalance := bar.BalanceOf(userAddr)
-	beforeFooBalance := foo.BalanceOf(userAddr)
+	beforeAtomBalance := atom.BalanceOf(userAddr)
+	beforeBtcBalance := btc.BalanceOf(userAddr)
 
 	positionIDInt, _ := strconv.ParseInt(positionID, 10, 64)
 	position.CollectFee(cross, uint64(positionIDInt))
 
-	afterBarBalance := bar.BalanceOf(userAddr)
-	afterFooBalance := foo.BalanceOf(userAddr)
+	afterAtomBalance := atom.BalanceOf(userAddr)
+	afterBtcBalance := btc.BalanceOf(userAddr)
 
-	ufmt.Printf("[EXPECTED] %s's position %s collect fee BAR changes: %d\n", userName, positionID, afterBarBalance-beforeBarBalance)
-	ufmt.Printf("[EXPECTED] %s's position %s collect fee FOO changes: %d\n", userName, positionID, afterFooBalance-beforeFooBalance)
+	ufmt.Printf("[EXPECTED] %s's position %s collect fee ATOM changes: %d\n", userName, positionID, afterAtomBalance-beforeAtomBalance)
+	ufmt.Printf("[EXPECTED] %s's position %s collect fee BTC changes: %d\n", userName, positionID, afterBtcBalance-beforeBtcBalance)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
@@ -267,8 +267,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 
 // Output:
 // [SCENARIO] 1. Initialize pool
-// [INFO] Distributing Bar tokens
-// [INFO] Distributing Foo tokens
+// [INFO] Distributing Atom tokens
+// [INFO] Distributing Btc tokens
 // [INFO] Creating pool
 //
 // [SCENARIO] 2. Mint same positions
@@ -284,7 +284,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] Amount1 should be 50000000
 //
 // [SCENARIO] 3. Execute swaps for swap fee
-// [INFO] Executing swap BAR -> FOO
+// [INFO] Executing swap ATOM -> BTC
 // [EXPECTED] Swap amount0 should be 5000000
 // [EXPECTED] Swap amount1 should be -4973381
 //
@@ -292,13 +292,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] Transferring position to user2 (positionID: 2)
 //
 // [SCENARIO] 5. Collect fees for user1 and user2
-// [EXPECTED] user1's position 1 collect fee BAR changes: 7425
-// [EXPECTED] user1's position 1 collect fee FOO changes: 0
-// [EXPECTED] user2's position 2 collect fee BAR changes: 7425
-// [EXPECTED] user2's position 2 collect fee FOO changes: 0
+// [EXPECTED] user1's position 1 collect fee ATOM changes: 7425
+// [EXPECTED] user1's position 1 collect fee BTC changes: 0
+// [EXPECTED] user2's position 2 collect fee ATOM changes: 7425
+// [EXPECTED] user2's position 2 collect fee BTC changes: 0
 //
 // [SCENARIO] 6. Swap positions
-// [INFO] Executing swap BAR -> FOO
+// [INFO] Executing swap ATOM -> BTC
 // [EXPECTED] Swap amount0 should be 5000000
 // [EXPECTED] Swap amount1 should be -4950252
 //
@@ -306,7 +306,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] Transferring position to user1 (positionID: 2)
 //
 // [SCENARIO] 8. Collect fees for user1
-// [EXPECTED] user1's position 1 collect fee BAR changes: 7425
-// [EXPECTED] user1's position 1 collect fee FOO changes: 0
-// [EXPECTED] user1's position 2 collect fee BAR changes: 7425
-// [EXPECTED] user1's position 2 collect fee FOO changes: 0
+// [EXPECTED] user1's position 1 collect fee ATOM changes: 7425
+// [EXPECTED] user1's position 1 collect fee BTC changes: 0
+// [EXPECTED] user1's position 2 collect fee ATOM changes: 7425
+// [EXPECTED] user1's position 2 collect fee BTC changes: 0

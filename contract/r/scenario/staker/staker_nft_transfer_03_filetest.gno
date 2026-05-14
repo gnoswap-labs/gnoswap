@@ -31,8 +31,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -50,8 +50,8 @@ var (
 	user2Addr  = address("g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	fee500 uint32 = 500
 
@@ -66,7 +66,7 @@ func main() {
 	initAccountAndEmission()
 	println()
 
-	println("[SCENARIO] 2. Create bar:foo:500 pool")
+	println("[SCENARIO] 2. Create atom:btc:500 pool")
 	createPool()
 	println()
 
@@ -103,11 +103,11 @@ func initAccountAndEmission() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:btc:500 pool")
+	pl.CreatePool(cross, atomPath, btcPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500", 1)
 
 	testing.SkipHeights(1)
 }
@@ -117,15 +117,15 @@ func mintPositionsForUsers() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] admin: approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] admin: mint position 01 (tick range: -1000 ~ 1000)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		int32(-1000),
 		int32(1000),
@@ -144,22 +144,22 @@ func mintPositionsForUsers() {
 	owner1 := gnft.MustOwnerOf(positionIdFrom(1))
 	ufmt.Printf("[EXPECTED] position 01 owner: %s\n", owner1)
 
-	bar.Transfer(cross, user2Addr, 1000)
-	foo.Transfer(cross, user2Addr, 1000)
+	atom.Transfer(cross, user2Addr, 1000)
+	btc.Transfer(cross, user2Addr, 1000)
 
 	// Mint position 2 for user2
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] user2: approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] user2: mint position 02 (tick range: -1000 ~ 1000)")
 	positionId2, liquidity2, amount0_2, amount1_2 := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		int32(-1000),
 		int32(1000),
@@ -296,8 +296,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:foo:500 pool
-// [INFO] create bar:foo:500 pool
+// [SCENARIO] 2. Create atom:btc:500 pool
+// [INFO] create atom:btc:500 pool
 // [INFO] set pool to tier 1
 //
 // [SCENARIO] 3. Mint positions for multiple users

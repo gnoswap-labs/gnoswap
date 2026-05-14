@@ -74,7 +74,7 @@ func TestAssertIsValidRewardAmountFormat(t *testing.T) {
 		},
 		{
 			name:          "valid format with large amount",
-			rewardAmtStr:  "gno.land/r/onbloc/bar:999999999",
+			rewardAmtStr:  "gno.land/r/gnoswap/test_token/atom:999999999",
 			expectPanic:   false,
 			expectedError: "",
 		},

@@ -24,7 +24,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -77,8 +77,8 @@ func setupTestData() (string, string, string, string, string, string) {
 
 	// Create project
 	recipientAddr := projectAddr
-	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "Test ETH Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -87,9 +87,9 @@ func setupTestData() (string, string, string, string, string, string) {
 	tier180Ratio := int64(40)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days from now
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -540,9 +540,9 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // Output:
 // [SCENARIO] 1. Setup test data
 // [INFO] Setting up test data
-// [INFO] Admin creating OBL project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 // [INFO] Creating deposits for testing
 // [INFO] Admin transferring GNS to user1
 // [INFO] User1 approving and depositing to 30 day tier
@@ -555,15 +555,15 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing project getters
 // [EXPECTED] Project count: 1
 // [EXPECTED] Project IDs (offset=0, limit=10): 1 projects
-// [EXPECTED] - Project 1: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project 1: gno.land/r/gnoswap/test_token/eth:123
 // [EXPECTED] Project details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] - Name: Test OBL Project
-// [EXPECTED] - Token Path: gno.land/r/onbloc/obl
+// [EXPECTED] - ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] - Name: Test ETH Project
+// [EXPECTED] - Token Path: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] - Recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
 // [EXPECTED] - Deposit Amount: 10000000
-// [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project name: Test ETH Project
+// [EXPECTED] Project token path: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
 // [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns) not found
@@ -579,7 +579,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing project tier getters
 // [INFO] Testing tier 30
 // [EXPECTED] Tier 30 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] - ID: gno.land/r/gnoswap/test_token/eth:123:30
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1237764690
 // [EXPECTED] Tier 30 distribute amount per second X128: 393845332084419517897424314157139133629
@@ -594,7 +594,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 //
 // [INFO] Testing tier 90
 // [EXPECTED] Tier 90 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:90
+// [EXPECTED] - ID: gno.land/r/gnoswap/test_token/eth:123:90
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1242948690
 // [EXPECTED] Tier 90 distribute amount per second X128: 131281777361473172632474771385713044543
@@ -609,7 +609,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 //
 // [INFO] Testing tier 180
 // [EXPECTED] Tier 180 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:180
+// [EXPECTED] - ID: gno.land/r/gnoswap/test_token/eth:123:180
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1250724690
 // [EXPECTED] Tier 180 distribute amount per second X128: 87521184907648781754983180923808696362
@@ -629,12 +629,12 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing deposit 1 getters
 // [EXPECTED] Deposit 1 details:
 // [EXPECTED] - ID: 1
-// [EXPECTED] - Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project ID: gno.land/r/gnoswap/test_token/eth:123
 // [EXPECTED] - Tier: 30
 // [EXPECTED] - Amount: 2000000
-// [EXPECTED] Deposit 1 project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Deposit 1 project ID: gno.land/r/gnoswap/test_token/eth:123
 // [EXPECTED] Deposit 1 tier: 30
-// [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] Deposit 1 project tier ID: gno.land/r/gnoswap/test_token/eth:123:30
 // [EXPECTED] Deposit 1 amount: 2000000
 // [EXPECTED] Deposit 1 withdrawn height: 0
 // [EXPECTED] Deposit 1 withdrawn time: 0

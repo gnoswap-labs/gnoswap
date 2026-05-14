@@ -35,10 +35,10 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	_ "gno.land/r/onbloc/foo"
-	_ "gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	_ "gno.land/r/gnoswap/test_token/btc"
+	_ "gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -52,10 +52,10 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	oblPath = "gno.land/r/onbloc/obl"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	ethPath = "gno.land/r/gnoswap/test_token/eth"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -63,8 +63,8 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath  = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	pool2Path = "gno.land/r/onbloc/foo:gno.land/r/onbloc/obl:500"
+	poolPath  = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
+	pool2Path = "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/eth:500"
 
 	// Variables to track rewards during each phase
 	firstTierRewards     int64
@@ -128,10 +128,10 @@ func createPoolsAndMintPosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create main test pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create additional pool for tier system")
-	pl.CreatePool(cross, fooPath, oblPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, btcPath, ethPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 
@@ -147,15 +147,15 @@ func createPoolsAndMintPosition() {
 	}
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position (tick range: -200 ~ 200)")
 	tokenId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-200),
 		int32(200),

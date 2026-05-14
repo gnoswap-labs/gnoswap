@@ -27,8 +27,8 @@ import (
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 // Constants for addresses and approvals
@@ -56,8 +56,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 // Pool setup flag to prevent duplicate creation
@@ -107,7 +107,7 @@ func setupPool() {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross, 0)
 		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }
@@ -117,10 +117,10 @@ func tokenFaucet(tokenPath string, to address) {
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
-	case barPath:
-		bar.Transfer(cross, to, defaultAmount)
-	case fooPath:
-		foo.Transfer(cross, to, defaultAmount)
+	case atomPath:
+		atom.Transfer(cross, to, defaultAmount)
+	case btcPath:
+		btc.Transfer(cross, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -133,18 +133,18 @@ func testAddLiquiditySuccess() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-600,
 		600,
@@ -185,18 +185,18 @@ func testAddLiquidityWithInvalidSlippage() {
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(atomPath, bobAddr)
+	tokenFaucet(btcPath, bobAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-600,
 		600,
@@ -225,18 +225,18 @@ func testAddLiquidityWithZeroLiquidity() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-100,
 		100,
@@ -265,18 +265,18 @@ func testAddLiquidityWithInvalidTickRange() {
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(atomPath, bobAddr)
+	tokenFaucet(btcPath, bobAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-600,
 		600,
@@ -305,12 +305,12 @@ func testAddLiquidityToNonExistentPool() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Attempting to add liquidity to non-existent pool")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -343,18 +343,18 @@ func testDecreaseLiquiditySuccess() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating position for decrease test")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-3000,
 		3000,
@@ -406,18 +406,18 @@ func testDecreaseLiquidityWithOverRemoval() {
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(atomPath, bobAddr)
+	tokenFaucet(btcPath, bobAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating position for over-removal test")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-2000,
 		2000,
@@ -448,18 +448,18 @@ func testDecreaseLiquidityWithZeroLiquidity() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating position for zero liquidity test")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-1000,
 		1000,
@@ -500,7 +500,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] New liquidity added: 16918749
 // [EXPECTED] Additional amount0: 500000
 // [EXPECTED] Additional amount1: 500000
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Total liquidity after addition: 50756248
 //
 // [SCENARIO] 2. Add Liquidity with Invalid Slippage

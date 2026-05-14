@@ -21,8 +21,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var t *testing.T
@@ -40,8 +40,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	fee100   = uint32(100)   // 0.01%
 	fee500   = uint32(500)   // 0.05%
@@ -83,29 +83,29 @@ func initPoolsWithDifferentFees() {
 	defaultTokenAmount := int64(100_000_000_000_000)
 
 	ufmt.Println("[INFO] Distributing tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pools with different fee tiers")
-	pl.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee10000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, btcPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, btcPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, btcPath, fee10000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Add liquidity to all pools
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// Add same liquidity to all pools for fair comparison
 	liquidityAmount := "100000000000"
-	pn.Mint(cross, barPath, fooPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross, atomPath, btcPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross, atomPath, btcPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross, atomPath, btcPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross, atomPath, btcPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 }
 
 func testFeeCalculation100() {
@@ -113,12 +113,12 @@ func testFeeCalculation100() {
 
 	ufmt.Println("[INFO] Testing 0.01% fee tier")
 	amount := "1000000000" // 1 billion units
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:100"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	atom.Approve(cross, routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -135,12 +135,12 @@ func testFeeCalculation500() {
 
 	ufmt.Println("[INFO] Testing 0.05% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	atom.Approve(cross, routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -156,12 +156,12 @@ func testFeeCalculation3000() {
 
 	ufmt.Println("[INFO] Testing 0.30% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	atom.Approve(cross, routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -177,12 +177,12 @@ func testFeeCalculation10000() {
 
 	ufmt.Println("[INFO] Testing 1.00% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:10000"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:10000"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	atom.Approve(cross, routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -199,13 +199,13 @@ func testFeeAccumulation() {
 	ufmt.Println("[INFO] Testing fee accumulation over multiple swaps")
 
 	amount := "100000000" // Smaller amount for multiple swaps
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
 	// Execute multiple swaps
 	for i := 0; i < 3; i++ {
-		bar.Approve(cross, routerAddr, 100000000)
+		atom.Approve(cross, routerAddr, 100000000)
 		amountIn, amountOut := router.ExactInSwapRoute(
-			cross, barPath, fooPath, amount, route, "100", "1",
+			cross, atomPath, btcPath, amount, route, "100", "1",
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[INFO] SWAP %d - In: %s, Out: %s\n", i+1, amountIn, amountOut)
@@ -221,12 +221,12 @@ func testSmallAmountFeePrecision() {
 
 	// Test with amount that might cause rounding issues
 	smallAmount := "1337" // Prime number for edge case
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
-	bar.Approve(cross, routerAddr, 1337)
+	atom.Approve(cross, routerAddr, 1337)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, smallAmount, route, "100", "1",
+		cross, atomPath, btcPath, smallAmount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -243,13 +243,13 @@ func testExactOutFeeCalculation() {
 	ufmt.Println("[INFO] Testing fee calculation in exact out swaps")
 
 	desiredOutput := "1000000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500"
 
-	foo.Approve(cross, routerAddr, 1000000000)
+	btc.Approve(cross, routerAddr, 1000000000)
 
 	// For exact out, fee is calculated on the input amount
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, fooPath, barPath, desiredOutput, route, "100", "999999999999",
+		cross, btcPath, atomPath, desiredOutput, route, "100", "999999999999",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 

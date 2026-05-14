@@ -24,8 +24,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -40,10 +40,10 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath         = "gno.land/r/onbloc/bar"
-	fooPath         = "gno.land/r/onbloc/foo"
+	atomPath         = "gno.land/r/gnoswap/test_token/atom"
+	btcPath         = "gno.land/r/gnoswap/test_token/btc"
 	fee500   uint32 = 500
-	poolPath        = barPath + ":" + fooPath + ":500"
+	poolPath        = atomPath + ":" + btcPath + ":500"
 )
 
 func main() {
@@ -79,27 +79,27 @@ func initPool() {
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		"130621891405341611593710811006",
 	)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool tick should be %d\n", p.Slot0Tick())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", p.Liquidity().ToString())
 }
 
 func mintPosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting Position with range [9000, 13000]")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		9000,
 		13000,
@@ -134,8 +134,8 @@ func checkTick9000AsLower() {
 
 func repositionToNewRange() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity to clear position")
 	_, _, _, _, amount0Decreased, amount1Decreased, _ := position.DecreaseLiquidity(
@@ -172,17 +172,17 @@ func repositionToNewRange() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[INFO] Pool tick before swap: %d\n", p.Slot0Tick())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -190,12 +190,12 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	p, _ = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[EXPECTED] Swap amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap amount1: %s\n", amount1)
 	ufmt.Printf("[EXPECTED] Pool tick after swap: %d\n", p.Slot0Tick())

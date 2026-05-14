@@ -28,10 +28,10 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -47,10 +47,10 @@ var (
 	emissionAddr, _      = access.GetAddress(prabc.ROLE_EMISSION.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -58,9 +58,9 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath1 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	poolPath2 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100"
-	poolPath3 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath1 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
+	poolPath2 = "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/sol:100"
+	poolPath3 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 )
 
 func main() {
@@ -68,15 +68,15 @@ func main() {
 	initSystem()
 
 	println()
-	println("[SCENARIO] 2. Pool initialization and first collection (bar:baz:100)")
+	println("[SCENARIO] 2. Pool initialization and first collection (atom:atone:100)")
 	testPoolInitializationBehavior()
 
 	println()
-	println("[SCENARIO] 3. Unclaimable period reward distribution (foo:qux:100)")
+	println("[SCENARIO] 3. Unclaimable period reward distribution (btc:sol:100)")
 	testUnclaimablePeriodRewardDistribution()
 
 	println()
-	println("[SCENARIO] 4. Claimable period collection behavior (bar:foo:500)")
+	println("[SCENARIO] 4. Claimable period collection behavior (atom:btc:500)")
 	testClaimablePeriodCollection()
 }
 
@@ -98,8 +98,8 @@ func initSystem() {
 func testPoolInitializationBehavior() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create pool atom:atone:100")
+	pl.CreatePool(cross, atomPath, atonePath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
@@ -107,15 +107,15 @@ func testPoolInitializationBehavior() {
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		-100,
 		100,
@@ -145,8 +145,8 @@ func testPoolInitializationBehavior() {
 func testUnclaimablePeriodRewardDistribution() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create pool btc:sol:100")
+	pl.CreatePool(cross, btcPath, solPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
@@ -154,15 +154,15 @@ func testUnclaimablePeriodRewardDistribution() {
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	foo.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		fooPath,
-		quxPath,
+		btcPath,
+		solPath,
 		fee100,
 		-200,
 		200,
@@ -242,8 +242,8 @@ func testUnclaimablePeriodRewardDistribution() {
 func testClaimablePeriodCollection() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create pool bar:foo:500")
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create pool atom:btc:500")
+	pl.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
@@ -251,15 +251,15 @@ func testClaimablePeriodCollection() {
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-300,
 		300,
@@ -343,8 +343,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] set pool creation fee to 0
 //
-// [SCENARIO] 2. Pool initialization and first collection (bar:baz:100)
-// [INFO] create pool bar:baz:100
+// [SCENARIO] 2. Pool initialization and first collection (atom:atone:100)
+// [INFO] create pool atom:atone:100
 // [INFO] set pool tier to 1
 // [INFO] approve tokens for pool
 // [INFO] mint and stake position
@@ -352,8 +352,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] no unclaimable rewards sent to community pool
 // [INFO] unstake position for cleanup
 //
-// [SCENARIO] 3. Unclaimable period reward distribution (foo:qux:100)
-// [INFO] create pool foo:qux:100
+// [SCENARIO] 3. Unclaimable period reward distribution (btc:sol:100)
+// [INFO] create pool btc:sol:100
 // [INFO] set pool tier to 1
 // [INFO] approve tokens for pool
 // [INFO] mint and stake position
@@ -372,8 +372,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] rewards distributed proportionally - BUG FIXED
 // [INFO] unstake position for cleanup
 //
-// [SCENARIO] 4. Claimable period collection behavior (bar:foo:500)
-// [INFO] create pool bar:foo:500
+// [SCENARIO] 4. Claimable period collection behavior (atom:btc:500)
+// [INFO] create pool atom:btc:500
 // [INFO] set pool tier to 1
 // [INFO] approve tokens for pool
 // [INFO] mint and stake position

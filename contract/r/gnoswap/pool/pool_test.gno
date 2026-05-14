@@ -9,8 +9,8 @@ import (
 
 func makeTestPool() *Pool {
 	return &Pool{
-		token0Path:  "gno.land/r/onbloc/bar",
-		token1Path:  "gno.land/r/onbloc/foo",
+		token0Path:  "gno.land/r/gnoswap/test_token/atom",
+		token1Path:  "gno.land/r/gnoswap/test_token/btc",
 		fee:         500,
 		tickSpacing: 10,
 		ticks:       bptree.NewBPTreeN(32),

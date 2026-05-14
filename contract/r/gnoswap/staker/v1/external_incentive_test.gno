@@ -15,7 +15,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 )
 
 func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
@@ -164,14 +164,14 @@ func TestEndExternalIncentive(t *testing.T) {
 			testing.SetRealm(adminRealm)
 			gns.Approve(cross, poolAddr, math.MaxInt)
 			CreatePool(
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee3000,
 				"79228162514264337593543950336",
 				adminAddr,
 			)
 
-			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+			poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 			rewardAmount := int64(10_000_000_000)
 			depositGnsAmount := int64(100_000_000)
 
@@ -184,7 +184,7 @@ func TestEndExternalIncentive(t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				incentiveId,
 				poolPath,
-				barPath,
+				atomPath,
 				rewardAmount,
 				startTime,
 				endTime,
@@ -215,7 +215,7 @@ func TestEndExternalIncentive(t *testing.T) {
 				// Fund staker so transfers during successful end do not fail.
 				testing.SetRealm(adminRealm)
 				gns.Transfer(cross, stakerAddr, depositGnsAmount)
-				bar.Transfer(cross, stakerAddr, rewardAmount)
+				atom.Transfer(cross, stakerAddr, rewardAmount)
 
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
 				mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
@@ -275,7 +275,7 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 			initStakerTest(t)
 			instance := getMockInstance()
 
-			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+			poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 			rewardAmount := int64(10_000_000_000)
 
 			// Create pool
@@ -361,7 +361,7 @@ func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
 // TestDoubleClaimPrevention tests that the "last collect time"
 // mechanism prevents double claiming even with finished incentives.
 func TestDoubleClaimPrevention(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker1 := testutils.TestAddress("staker1")
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10
@@ -592,7 +592,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	creator := testutils.TestAddress("creator")
 	currentTime := time.Now().Unix()
 
@@ -720,7 +720,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	creator := testutils.TestAddress("creator")
 	baseTime := time.Now().Unix()
 
@@ -851,9 +851,9 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	pool2Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
-	pool3Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"
+	pool1Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
+	pool2Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000"
+	pool3Path := "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/sol:3000"
 	creator := testutils.TestAddress("creator")
 	currentTime := time.Now().Unix()
 
@@ -982,7 +982,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 // TestLazySync_DuplicatePrevention tests that the same incentive
 // is not added multiple times to deposit even if lazy sync runs multiple times.
 func TestLazySync_DuplicatePrevention(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1031,7 +1031,7 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	creator := testutils.TestAddress("creator")
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1042,7 +1042,7 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 	poolResolver := NewPoolResolver(pool)
 
 	// Create 3 concurrent incentives with different tokens
-	tokens := []string{WUGNOT_PATH, GNS_PATH, "gno.land/r/onbloc/bar"}
+	tokens := []string{WUGNOT_PATH, GNS_PATH, "gno.land/r/gnoswap/test_token/atom"}
 	incentiveIds := make([]string, 3)
 
 	for i := 0; i < 3; i++ {
@@ -1113,8 +1113,8 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 // TestLazySync_PoolFilteringPreventsWrongPool tests that incentives
 // from different pools are not added to deposit during lazy sync.
 func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
-	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	pool2Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
+	pool1Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
+	pool2Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000"
 	creator := testutils.TestAddress("creator")
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1579,7 +1579,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			name: "new time new pool - basic case",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "test-incentive-1",
 					creationTime: 1000,
 				},
@@ -1587,7 +1587,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 1000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"test-incentive-1"},
 				},
 			},
@@ -1596,17 +1596,17 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			name: "same time same pool - multiple incentives",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-a",
 					creationTime: 2000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-b",
 					creationTime: 2000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-c",
 					creationTime: 2000,
 				},
@@ -1614,7 +1614,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 2000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"incentive-a", "incentive-b", "incentive-c"},
 				},
 			},
@@ -1623,12 +1623,12 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			name: "same time different pools - pool isolation",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "pool1-incentive",
 					creationTime: 3000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500",
 					incentiveId:  "pool2-incentive",
 					creationTime: 3000,
 				},
@@ -1636,12 +1636,12 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"pool1-incentive"},
 				},
 				{
 					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500",
 					incentiveIds: []string{"pool2-incentive"},
 				},
 			},
@@ -1650,17 +1650,17 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			name: "different times same pool - time isolation",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-0",
 					creationTime: 4000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-1",
 					creationTime: 5000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveId:  "incentive-2",
 					creationTime: 6000,
 				},
@@ -1668,17 +1668,17 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 4000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"incentive-0"},
 				},
 				{
 					creationTime: 5000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"incentive-1"},
 				},
 				{
 					creationTime: 6000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 					incentiveIds: []string{"incentive-2"},
 				},
 			},
@@ -2534,7 +2534,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 		},
 		{
 			name:             "incentive not found",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			incentiveId:      "nonexistent-id",
 			caller:           creator,
 			refundAddress:    creator,
@@ -2547,7 +2547,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 		},
 		{
 			name:             "incentive not ended yet (refunded=false)",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			incentiveId:      "test-id",
 			caller:           creator,
 			refundAddress:    creator,
@@ -2560,7 +2560,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 		},
 		{
 			name:             "caller is not creator",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			incentiveId:      "test-id",
 			caller:           stranger,
 			refundAddress:    stranger,
@@ -2573,7 +2573,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 		},
 		{
 			name:           "zero accumulated penalty returns 0",
-			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:       "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			incentiveId:    "test-id",
 			caller:         creator,
 			refundAddress:  creator,
@@ -2586,7 +2586,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 		},
 		{
 			name:           "successfully collect accumulated penalty",
-			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:       "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 			incentiveId:    "test-id",
 			caller:         creator,
 			refundAddress:  creator,
@@ -2613,14 +2613,14 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 			if tt.setupPool {
 				testing.SetRealm(adminRealm)
 				gns.Approve(cross, poolAddr, math.MaxInt)
-				CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+				CreatePool(atomPath, btcPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 				pool := sr.NewPool(poolPath, currentTime)
 				instance.getPools().set(poolPath, pool)
 
 				if tt.setupIncentive {
 					incentive := sr.NewExternalIncentive(
-						tt.incentiveId, poolPath, barPath, 10_000_000_000,
+						tt.incentiveId, poolPath, atomPath, 10_000_000_000,
 						startTime, endTime, creator, 100_000_000,
 						runtime.ChainHeight(), currentTime,
 					)
@@ -2654,7 +2654,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 
 			// fund staker with reward token so transfer succeeds
 			testing.SetRealm(adminRealm)
-			bar.Transfer(cross, stakerAddr, 10_000_000_000)
+			atom.Transfer(cross, stakerAddr, 10_000_000_000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 			result := mockInstanceCollectExternalIncentivePenalty(poolPath, tt.incentiveId, tt.refundAddress)
@@ -2768,7 +2768,7 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	refundAddress := testutils.TestAddress("refundee")
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	incentiveId := "test-id"
 
 	setupPenaltyFixture := func(t *testing.T) {
@@ -2783,7 +2783,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 
 		testing.SetRealm(adminRealm)
 		gns.Approve(cross, poolAddr, math.MaxInt)
-		CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+		CreatePool(atomPath, btcPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 		pool := sr.NewPool(poolPath, currentTime)
 		instance.getPools().set(poolPath, pool)
@@ -2791,7 +2791,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			barPath,
+			atomPath,
 			10_000_000_000,
 			startTime,
 			endTime,
@@ -2811,7 +2811,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 		skipBlocks := (endTime-startTime)/5 + 86400
 		testing.SkipHeights(skipBlocks)
 
-		bar.Transfer(cross, stakerAddr, 10_000_000_000)
+		atom.Transfer(cross, stakerAddr, 10_000_000_000)
 	}
 
 	t.Run("safe mode blocks penalty collection", func(t *testing.T) {

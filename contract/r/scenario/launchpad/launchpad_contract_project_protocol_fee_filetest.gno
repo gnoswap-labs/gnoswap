@@ -27,9 +27,9 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 const contractProjectPackagePath = "gno.land/r/test/contract"
@@ -73,7 +73,7 @@ func main() {
 }
 
 func createContractRecipientProject() string {
-	println("[INFO] Creating OBL launchpad project")
+	println("[INFO] Creating ETH launchpad project")
 
 	rewardAmount := int64(10_000_000)
 	secondsOf7Days := int64(60 * 60 * 24 * 7)
@@ -81,11 +81,11 @@ func createContractRecipientProject() string {
 
 	println("[INFO] Admin creating project with contract recipient")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
-		"Contract Recipient OBL Project",
-		"gno.land/r/onbloc/obl",
+		"Contract Recipient ETH Project",
+		"gno.land/r/gnoswap/test_token/eth",
 		contractProjectAddr,
 		rewardAmount,
 		"",
@@ -125,18 +125,18 @@ func depositGnsForContractProject(projectTierId string, depositAmount int64) {
 	testing.SkipHeights(1)
 }
 
-func addProtocolFeesForContractProject(barAmount, quxAmount int64) {
+func addProtocolFeesForContractProject(atomAmount, solAmount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	atom.Transfer(cross, stakerAddr, atomAmount)
+	sol.Transfer(cross, stakerAddr, solAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	atom.Approve(cross, protocolFeeAddr, atomAmount)
+	sol.Approve(cross, protocolFeeAddr, solAmount)
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/atom", atomAmount)
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/sol", solAmount)
 
-	ufmt.Printf("[INFO] Protocol fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
+	ufmt.Printf("[INFO] Protocol fee added - ATOM: %d, SOL: %d\n", atomAmount, solAmount)
 	testing.SkipHeights(1)
 }
 
@@ -154,21 +154,21 @@ func collectProtocolFeesAsContractProjectRecipient() {
 	ufmt.Printf("[INFO] claimable reward (contract recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatContractProjectProtocolFees(protocolFeeRewards))
 
 	testing.SetRealm(contractProjectRealm)
-	prevBarBalance := bar.BalanceOf(contractProjectAddr)
-	prevQuxBalance := qux.BalanceOf(contractProjectAddr)
+	prevAtomBalance := atom.BalanceOf(contractProjectAddr)
+	prevSolBalance := sol.BalanceOf(contractProjectAddr)
 	launchpad.CollectProtocolFee(cross)
-	afterBarBalance := bar.BalanceOf(contractProjectAddr)
-	afterQuxBalance := qux.BalanceOf(contractProjectAddr)
+	afterAtomBalance := atom.BalanceOf(contractProjectAddr)
+	afterSolBalance := sol.BalanceOf(contractProjectAddr)
 
-	if afterBarBalance <= prevBarBalance {
-		panic("contract BAR balance did not increase")
+	if afterAtomBalance <= prevAtomBalance {
+		panic("contract ATOM balance did not increase")
 	}
-	if afterQuxBalance <= prevQuxBalance {
-		panic("contract QUX balance did not increase")
+	if afterSolBalance <= prevSolBalance {
+		panic("contract SOL balance did not increase")
 	}
 
-	ufmt.Printf("[EXPECTED] Contract BAR balance delta: %d\n", afterBarBalance-prevBarBalance)
-	ufmt.Printf("[EXPECTED] Contract QUX balance delta: %d\n", afterQuxBalance-prevQuxBalance)
+	ufmt.Printf("[EXPECTED] Contract ATOM balance delta: %d\n", afterAtomBalance-prevAtomBalance)
+	ufmt.Printf("[EXPECTED] Contract SOL balance delta: %d\n", afterSolBalance-prevSolBalance)
 }
 
 func formatContractProjectProtocolFees(fees map[string]int64) string {
@@ -191,10 +191,10 @@ func formatContractProjectProtocolFees(fees map[string]int64) string {
 
 // Output:
 // [SCENARIO] 1. Create launchpad project for contract recipient
-// [INFO] Creating OBL launchpad project
+// [INFO] Creating ETH launchpad project
 // [INFO] Admin creating project with contract recipient
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 // [EXPECTED] Project recipient is contract: true
 //
 // [SCENARIO] 2. Alice deposits GNS into contract-owned project
@@ -202,10 +202,10 @@ func formatContractProjectProtocolFees(fees map[string]int64) string {
 // [EXPECTED] Deposit amount: 1000000
 //
 // [SCENARIO] 3. Add and distribute protocol fees
-// [INFO] Protocol fee added - BAR: 500, QUX: 1000
+// [INFO] Protocol fee added - ATOM: 500, SOL: 1000
 // [INFO] Protocol fee distributed
 //
 // [SCENARIO] 4. Contract project recipient collects protocol fee
-// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:499 gno.land/r/onbloc/qux:999]
-// [EXPECTED] Contract BAR balance delta: 499
-// [EXPECTED] Contract QUX balance delta: 999
+// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/gnoswap/test_token/atom:499 gno.land/r/gnoswap/test_token/sol:999]
+// [EXPECTED] Contract ATOM balance delta: 499
+// [EXPECTED] Contract SOL balance delta: 999

@@ -495,8 +495,8 @@ func createTestPoolWithLiquidity() *pl.Pool {
 	baseTime := int64(1700000000)
 
 	mockPool := makeMockPool(createMockPoolParams{
-		token0Path: "gno.land/r/onbloc/foo",
-		token1Path: "gno.land/r/onbloc/bar",
+		token0Path: "gno.land/r/gnoswap/test_token/btc",
+		token1Path: "gno.land/r/gnoswap/test_token/atom",
 		fee:        500,
 		slot0: struct {
 			sqrtPriceX96 *u256.Uint

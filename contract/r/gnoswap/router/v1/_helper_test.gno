@@ -15,11 +15,11 @@ import (
 	position_v1 "gno.land/r/gnoswap/position/v1"
 	sr "gno.land/r/gnoswap/staker"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -30,11 +30,11 @@ import (
 
 const (
 	gnsPath string = "gno.land/r/gnoswap/gns"
-	barPath string = "gno.land/r/onbloc/bar"
-	bazPath string = "gno.land/r/onbloc/baz"
-	fooPath string = "gno.land/r/onbloc/foo"
-	oblPath string = "gno.land/r/onbloc/obl"
-	quxPath string = "gno.land/r/onbloc/qux"
+	atomPath string = "gno.land/r/gnoswap/test_token/atom"
+	atonePath string = "gno.land/r/gnoswap/test_token/atone"
+	btcPath string = "gno.land/r/gnoswap/test_token/btc"
+	ethPath string = "gno.land/r/gnoswap/test_token/eth"
+	solPath string = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -65,8 +65,8 @@ var (
 var (
 	user1Addr       address = testutils.TestAddress("user1")
 	user2Addr       address = testutils.TestAddress("user2")
-	singlePoolPath          = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
-	singlePoolPath2         = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
+	singlePoolPath          = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000"
+	singlePoolPath2         = "gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:3000"
 )
 
 var (
@@ -111,16 +111,16 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	switch tokenPath {
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
-	case barPath:
-		barTransfer(t, to, defaultAmount)
-	case bazPath:
-		bazTransfer(t, to, defaultAmount)
-	case fooPath:
-		fooTransfer(t, to, defaultAmount)
-	case oblPath:
-		oblTransfer(t, to, defaultAmount)
-	case quxPath:
-		quxTransfer(t, to, defaultAmount)
+	case atomPath:
+		atomTransfer(t, to, defaultAmount)
+	case atonePath:
+		atoneTransfer(t, to, defaultAmount)
+	case btcPath:
+		btcTransfer(t, to, defaultAmount)
+	case ethPath:
+		ethTransfer(t, to, defaultAmount)
+	case solPath:
+		solTransfer(t, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -134,16 +134,16 @@ func TokenFaucet2(t *testing.T, tokenPath string, to address) {
 	switch tokenPath {
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
-	case barPath:
-		barTransfer(t, to, defaultAmount)
-	case bazPath:
-		bazTransfer(t, to, defaultAmount)
-	case fooPath:
-		fooTransfer(t, to, defaultAmount)
-	case oblPath:
-		oblTransfer(t, to, defaultAmount)
-	case quxPath:
-		quxTransfer(t, to, defaultAmount)
+	case atomPath:
+		atomTransfer(t, to, defaultAmount)
+	case atonePath:
+		atoneTransfer(t, to, defaultAmount)
+	case btcPath:
+		btcTransfer(t, to, defaultAmount)
+	case ethPath:
+		ethTransfer(t, to, defaultAmount)
+	case solPath:
+		solTransfer(t, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -154,16 +154,16 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount
 	switch tokenPath {
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
-	case barPath:
-		barApprove(t, owner, spender, amount)
-	case bazPath:
-		bazApprove(t, owner, spender, amount)
-	case fooPath:
-		fooApprove(t, owner, spender, amount)
-	case oblPath:
-		oblApprove(t, owner, spender, amount)
-	case quxPath:
-		quxApprove(t, owner, spender, amount)
+	case atomPath:
+		atomApprove(t, owner, spender, amount)
+	case atonePath:
+		atoneApprove(t, owner, spender, amount)
+	case btcPath:
+		btcApprove(t, owner, spender, amount)
+	case ethPath:
+		ethApprove(t, owner, spender, amount)
+	case solPath:
+		solApprove(t, owner, spender, amount)
 	default:
 		panic("token not found")
 	}
@@ -192,34 +192,34 @@ func gnsApprove(t *testing.T, owner, spender address, amount int64) {
 	gns.Approve(cross, spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func atomApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	atom.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func atoneApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	atone.Approve(cross, spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender address, amount int64) {
+func btcApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	foo.Approve(cross, spender, amount)
+	btc.Approve(cross, spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender address, amount int64) {
+func ethApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	obl.Approve(cross, spender, amount)
+	eth.Approve(cross, spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender address, amount int64) {
+func solApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	qux.Approve(cross, spender, amount)
+	sol.Approve(cross, spender, amount)
 }
 
 func gnsTransfer(t *testing.T, to address, amount int64) {
@@ -228,34 +228,34 @@ func gnsTransfer(t *testing.T, to address, amount int64) {
 	gns.Transfer(cross, to, amount)
 }
 
-func barTransfer(t *testing.T, to address, amount int64) {
+func atomTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(admin))
-	bar.Transfer(cross, to, amount)
+	atom.Transfer(cross, to, amount)
 }
 
-func bazTransfer(t *testing.T, to address, amount int64) {
+func atoneTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(admin))
-	baz.Transfer(cross, to, amount)
+	atone.Transfer(cross, to, amount)
 }
 
-func fooTransfer(t *testing.T, to address, amount int64) {
+func btcTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(admin))
-	foo.Transfer(cross, to, amount)
+	btc.Transfer(cross, to, amount)
 }
 
-func oblTransfer(t *testing.T, to address, amount int64) {
+func ethTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(admin))
-	obl.Transfer(cross, to, amount)
+	eth.Transfer(cross, to, amount)
 }
 
-func quxTransfer(t *testing.T, to address, amount int64) {
+func solTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(admin))
-	qux.Transfer(cross, to, amount)
+	sol.Transfer(cross, to, amount)
 }
 
 
@@ -263,10 +263,10 @@ func CreatePoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
 	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, atonePath, btcPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, atomPath, atonePath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(t, atomPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 }
 
 func CreateSecondPoolWithoutFee(t *testing.T) {
@@ -274,8 +274,8 @@ func CreateSecondPoolWithoutFee(t *testing.T) {
 	pl.SetPoolCreationFee(cross, 0)
 
 	CreatePool(t,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 		admin,
@@ -288,14 +288,14 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atomPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atonePath, admin, poolAddr, maxApprove)
 
 	// mint position
 	return pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		-887220,
 		887220,
@@ -314,13 +314,13 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
-	TokenApprove(t, quxPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atonePath, admin, poolAddr, maxApprove)
+	TokenApprove(t, solPath, admin, poolAddr, maxApprove)
 
 	return pn.Mint(
 		cross,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee3000,
 		-887220,
 		887220,
@@ -339,13 +339,13 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atomPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, btcPath, admin, poolAddr, maxApprove)
 
 	return pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-887220,
 		887220,
@@ -365,14 +365,14 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atomPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, atonePath, admin, poolAddr, maxApprove)
 
 	// mint position
 	return pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		-887220,
 		887220,

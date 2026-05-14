@@ -25,8 +25,8 @@ func TestSwapCallback(t *testing.T) {
 				initRouterTest(t)
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
-				TokenFaucet(t, barPath, routerAddr)
-				TokenFaucet(t, bazPath, routerAddr)
+				TokenFaucet(t, atomPath, routerAddr)
+				TokenFaucet(t, atonePath, routerAddr)
 				return routerAddr
 			},
 			amount0Delta:    "1000",
@@ -40,8 +40,8 @@ func TestSwapCallback(t *testing.T) {
 				initRouterTest(t)
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
-				TokenFaucet(t, barPath, routerAddr)
-				TokenFaucet(t, bazPath, routerAddr)
+				TokenFaucet(t, atomPath, routerAddr)
+				TokenFaucet(t, atonePath, routerAddr)
 				return routerAddr
 			},
 			amount0Delta:    "0",
@@ -68,10 +68,10 @@ func TestSwapCallback(t *testing.T) {
 				CreatePoolWithoutFee(t)
 				MakeMintPositionWithoutFee(t)
 				testUser := testutils.TestAddress("testUser")
-				TokenFaucet(t, barPath, testUser)
-				TokenFaucet(t, bazPath, testUser)
-				TokenApprove(t, barPath, testUser, routerAddr, maxApprove)
-				TokenApprove(t, bazPath, testUser, routerAddr, maxApprove)
+				TokenFaucet(t, atomPath, testUser)
+				TokenFaucet(t, atonePath, testUser)
+				TokenApprove(t, atomPath, testUser, routerAddr, maxApprove)
+				TokenApprove(t, atonePath, testUser, routerAddr, maxApprove)
 				return testUser
 			},
 			amount0Delta:    "1000",
@@ -121,8 +121,8 @@ func TestSwapCallback(t *testing.T) {
 			if tt.shouldError {
 				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
 					mockInstanceSwapCallback(
-						barPath,
-						bazPath,
+						atomPath,
+						atonePath,
 						tt.amount0Delta,
 						tt.amount1Delta,
 						payer,
@@ -130,8 +130,8 @@ func TestSwapCallback(t *testing.T) {
 				})
 			} else {
 				err := mockInstanceSwapCallback(
-					barPath,
-					bazPath,
+					atomPath,
+					atonePath,
 					tt.amount0Delta,
 					tt.amount1Delta,
 					payer,

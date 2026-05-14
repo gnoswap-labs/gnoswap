@@ -48,8 +48,8 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 
 	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 func main() {
@@ -59,8 +59,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create pool and mint position")
-	createPoolByAdmin(barPath, quxPath, 3000)
-	mintPositionByAdmin(barPath, quxPath, 3000)
+	createPoolByAdmin(atomPath, solPath, 3000)
+	mintPositionByAdmin(atomPath, solPath, 3000)
 	testing.SkipHeights(1)
 	println()
 
@@ -107,8 +107,8 @@ func initEmission() {
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
-	staker.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", 1)
-	ufmt.Printf("[EXPECTED] %s pool tier is 1\n", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000")
+	staker.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000", 1)
+	ufmt.Printf("[EXPECTED] %s pool tier is 1\n", "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000")
 }
 
 func delegateWithMint(from, to address, amount int64) {
@@ -196,13 +196,13 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Create pool and mint position
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 0)
+// [INFO] created gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000 pool (poolCreationFee: 0)
 // [EXPECTED] Position minted successfully with ID: 1
 // [EXPECTED] Liquidity: 21338374
 // [EXPECTED] Amount0: 1000000, Amount1: 1000000
 //
 // [SCENARIO] 3. Initialize emission and set pool tier
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool tier is 1
+// [EXPECTED] gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000 pool tier is 1
 //
 // [SCENARIO] 4. Stake position
 // [EXPECTED] Position staked successfully with ID: 1

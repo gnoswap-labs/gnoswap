@@ -10,8 +10,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	"gno.land/r/gnoswap/pool"
 
@@ -46,16 +46,16 @@ func main() {
 // testSuccessfulBurn tests successful burning of all liquidity from a position
 func testSuccessfulBurn(t *testing.T) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	atomTokenPath := "gno.land/r/gnoswap/test_token/atom"
+	atoneTokenPath := "gno.land/r/gnoswap/test_token/atone"
 	fee := FeeTier100
 	liquidityAmount := "10000000000"
 	tickLower := int32(-100)
 	tickUpper := int32(100)
 
 	println("[INFO] Creating pool with fee tier:", fee)
-	println("[INFO] Token0:", barTokenPath)
-	println("[INFO] Token1:", bazTokenPath)
+	println("[INFO] Token0:", atomTokenPath)
+	println("[INFO] Token1:", atoneTokenPath)
 	println("[INFO] Initial liquidity amount:", liquidityAmount)
 	println("[INFO] Tick range:", tickLower, "to", tickUpper)
 
@@ -64,22 +64,22 @@ func testSuccessfulBurn(t *testing.T) {
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barTokenPath,
-		bazTokenPath,
+		atomTokenPath,
+		atoneTokenPath,
 		fee,
 		"79228162514264337593543950336",
 	)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
 		cross,
-		barTokenPath,
-		bazTokenPath,
+		atomTokenPath,
+		atoneTokenPath,
 		fee,
 		tickLower,
 		tickUpper,
@@ -97,8 +97,8 @@ func testSuccessfulBurn(t *testing.T) {
 
 	amount0, amount1 := pool.Burn(
 		cross,
-		barTokenPath,
-		bazTokenPath,
+		atomTokenPath,
+		atoneTokenPath,
 		fee,
 		tickLower,
 		tickUpper,
@@ -120,8 +120,8 @@ func testSuccessfulBurn(t *testing.T) {
 
 // Output:
 // [INFO] Creating pool with fee tier: 100
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/baz
+// [INFO] Token0: gno.land/r/gnoswap/test_token/atom
+// [INFO] Token1: gno.land/r/gnoswap/test_token/atone
 // [INFO] Initial liquidity amount: 10000000000
 // [INFO] Tick range: -100 to 100
 // [INFO] Position minted successfully

@@ -13,8 +13,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	mock "gno.land/r/gnoswap/router/mock"
 
@@ -30,11 +30,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	atomBtc500PoolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	positionId        = uint64(1)
 )
 
@@ -49,19 +49,19 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create pool with v1")
-	createPool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position with v1")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(atomPath, btcPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(btcPath, atomPath, "1000000", "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Check pool data by v1 version")
-	checkPoolData(barFoo500PoolPath)
+	checkPoolData(atomBtc500PoolPath)
 	println()
 
 	println("[SCENARIO] 6. Check position data by v1 version")
@@ -73,11 +73,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Perform swap to generate fees (check swap by v2_mock)")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(btcPath, atomPath, "1000000", "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 8. Check pool data by v2_mock version")
-	checkPoolData(barFoo500PoolPath)
+	checkPoolData(atomBtc500PoolPath)
 	println()
 
 	println("[SCENARIO] 9. Check position data by v2_mock version")
@@ -109,24 +109,24 @@ func initializeV2Mock() {
 	})
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(atomPath, btcPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
+	pool.CreatePool(cross, atomPath, btcPath, fee, sqrtPriceX96)
+	poolPath := pool.GetPoolPath(atomPath, btcPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(atomPath, btcPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	atom.Approve(cross, poolAddr, math.MaxInt64)
+	btc.Approve(cross, poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross, atomPath, btcPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
@@ -137,8 +137,8 @@ func exactInSwapRouteBy(inputToken string, outputToken string, specifiedAmount s
 	println("[INFO] Exact-In Swap Route")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, math.MaxInt64)
-	foo.Approve(cross, routerAddr, math.MaxInt64)
+	atom.Approve(cross, routerAddr, math.MaxInt64)
+	btc.Approve(cross, routerAddr, math.MaxInt64)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross, inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
 
@@ -150,7 +150,7 @@ func checkPoolData(poolPath string) {
 	println("[INFO] Check pool data")
 	testing.SetRealm(adminRealm)
 
-	poolData, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolData, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[EXPECTED] Pool data:", poolData.PoolPath())
 }
 
@@ -180,7 +180,7 @@ func upgradeRouterContractToV2Mock() {
 //
 // [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
@@ -196,12 +196,12 @@ func upgradeRouterContractToV2Mock() {
 //
 // [SCENARIO] 5. Check pool data by v1 version
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool data: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 6. Check position data by v1 version
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Position key: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
@@ -218,12 +218,12 @@ func upgradeRouterContractToV2Mock() {
 //
 // [SCENARIO] 8. Check pool data by v2_mock version
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool data: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 9. Check position data by v2_mock version
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Position key: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960

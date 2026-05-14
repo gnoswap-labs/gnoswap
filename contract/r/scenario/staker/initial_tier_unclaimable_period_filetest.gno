@@ -28,10 +28,10 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -43,18 +43,18 @@ var (
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath1 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	poolPath2 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100"
+	poolPath1 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
+	poolPath2 = "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/sol:100"
 )
 
 func main() {
@@ -92,8 +92,8 @@ func initSystem() {
 func testInitialTierInternalRewards() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create pool atom:atone:100")
+	pl.CreatePool(cross, atomPath, atonePath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1 (rewards start here)")
@@ -119,16 +119,16 @@ func testInitialTierInternalRewards() {
 	// Expected unclaimable reward calculation
 	// Assuming emission rate, we can calculate expected unclaimable rewards
 	println("[INFO] prepare to stake first position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake first position (liquidity becomes positive)")
 	stakeTime := time.Now().Unix()
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		-100,
 		100,
@@ -181,13 +181,13 @@ func testInitialTierInternalRewards() {
 func testInitialTierExternalRewards() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create pool btc:sol:100")
+	pl.CreatePool(cross, btcPath, solPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for external incentive")
 	gns.Approve(cross, stakerAddr, 100_000_000_000) // deposit 100 GNS
-	foo.Approve(cross, stakerAddr, maxInt64)        // reward token
+	btc.Approve(cross, stakerAddr, maxInt64)        // reward token
 	testing.SkipHeights(1)
 
 	println("[INFO] create external incentive (starts next day midnight)")
@@ -206,7 +206,7 @@ func testInitialTierExternalRewards() {
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath2,
-		fooPath,
+		btcPath,
 		incentiveRewardAmount, // rewardAmount
 		incentiveStartTime,
 		incentiveEndTime,
@@ -233,16 +233,16 @@ func testInitialTierExternalRewards() {
 	}
 
 	println("[INFO] prepare to stake first position")
-	foo.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake first position (liquidity becomes positive)")
 	stakeTime := time.Now().Unix()
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		fooPath,
-		quxPath,
+		btcPath,
+		solPath,
 		fee100,
 		-200,
 		200,
@@ -286,7 +286,7 @@ func testInitialTierExternalRewards() {
 // [INFO] set pool creation fee to 0
 //
 // [SCENARIO] 2. Test Internal Rewards (GNS emission)
-// [INFO] create pool bar:baz:100
+// [INFO] create pool atom:atone:100
 // [INFO] set pool tier to 1 (rewards start here)
 // [VERIFY] tier assigned: 1, reward per second: 2675513
 // [EXPECTED] tier assigned at: 1234567905, pool has zero liquidity
@@ -303,7 +303,7 @@ func testInitialTierExternalRewards() {
 // [INFO] unstake position for cleanup
 //
 // [SCENARIO] 3. Test External Rewards
-// [INFO] create pool foo:qux:100
+// [INFO] create pool btc:sol:100
 // [INFO] approve tokens for external incentive
 // [INFO] create external incentive (starts next day midnight)
 // [VERIFY] external incentive created, reward per second: 128

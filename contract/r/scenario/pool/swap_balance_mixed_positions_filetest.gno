@@ -21,8 +21,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 const (
@@ -42,8 +42,8 @@ var (
 )
 
 var (
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 const (
@@ -58,12 +58,12 @@ func init() {
 }
 
 type BalanceSnapshot struct {
-	userBaz         int64
-	userQux         int64
-	poolBaz         int64
-	poolQux         int64
-	protocolFeeBaz  int64
-	protocolFeeQux  int64
+	userAtone         int64
+	userSol         int64
+	poolAtone         int64
+	poolSol         int64
+	protocolFeeAtone  int64
+	protocolFeeSol  int64
 }
 
 func main() {
@@ -93,39 +93,39 @@ func main() {
 
 func getBalanceSnapshot() BalanceSnapshot {
 	return BalanceSnapshot{
-		userBaz:        baz.BalanceOf(adminAddr),
-		userQux:        qux.BalanceOf(adminAddr),
-		poolBaz:        baz.BalanceOf(poolAddr),
-		poolQux:        qux.BalanceOf(poolAddr),
-		protocolFeeBaz: baz.BalanceOf(protocolFeeAddr),
-		protocolFeeQux: qux.BalanceOf(protocolFeeAddr),
+		userAtone:        atone.BalanceOf(adminAddr),
+		userSol:        sol.BalanceOf(adminAddr),
+		poolAtone:        atone.BalanceOf(poolAddr),
+		poolSol:        sol.BalanceOf(poolAddr),
+		protocolFeeAtone: atone.BalanceOf(protocolFeeAddr),
+		protocolFeeSol: sol.BalanceOf(protocolFeeAddr),
 	}
 }
 
 func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
-	println("[EXPECTED] User BAZ balance:", snapshot.userBaz)
-	println("[EXPECTED] User QUX balance:", snapshot.userQux)
-	println("[EXPECTED] Pool BAZ balance:", snapshot.poolBaz)
-	println("[EXPECTED] Pool QUX balance:", snapshot.poolQux)
-	println("[EXPECTED] Protocol fee BAZ balance:", snapshot.protocolFeeBaz)
-	println("[EXPECTED] Protocol fee QUX balance:", snapshot.protocolFeeQux)
+	println("[EXPECTED] User ATONE balance:", snapshot.userAtone)
+	println("[EXPECTED] User SOL balance:", snapshot.userSol)
+	println("[EXPECTED] Pool ATONE balance:", snapshot.poolAtone)
+	println("[EXPECTED] Pool SOL balance:", snapshot.poolSol)
+	println("[EXPECTED] Protocol fee ATONE balance:", snapshot.protocolFeeAtone)
+	println("[EXPECTED] Protocol fee SOL balance:", snapshot.protocolFeeSol)
 }
 
 func setupPoolWithMixedPositions() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, quxPath, fee500, "79228162514264337593543950336")
+	pool.CreatePool(cross, atonePath, solPath, fee500, "79228162514264337593543950336")
 
-	qux.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	sol.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	inRangeAmount0, inRangeAmount1 := pool.Mint(
 		cross,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee500,
 		-1000,
 		1000,
@@ -135,8 +135,8 @@ func setupPoolWithMixedPositions() BalanceSnapshot {
 
 	outOfRangeAmount0, outOfRangeAmount1 := pool.Mint(
 		cross,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee500,
 		2000,
 		4000,
@@ -144,7 +144,7 @@ func setupPoolWithMixedPositions() BalanceSnapshot {
 		adminAddr,
 	)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPool(atonePath, solPath, fee500)
 	currentLiquidity := pools.Liquidity().ToString()
 
 	println("[INFO] In-range position (-1000 to 1000):", inRangeAmount0, inRangeAmount1)
@@ -157,19 +157,19 @@ func setupPoolWithMixedPositions() BalanceSnapshot {
 func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPool(atonePath, solPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	println("[INFO] Swapping 200000 BAZ -> QUX (exact input)")
+	println("[INFO] Swapping 200000 ATONE -> SOL (exact input)")
 
-	baz.Approve(cross, poolAddr, 200000)
+	atone.Approve(cross, poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee500,
 		adminAddr,
 		true,
@@ -177,11 +177,11 @@ func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(bazPath, quxPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atonePath, solPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPool(atonePath, solPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -195,19 +195,19 @@ func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPool(atonePath, solPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	println("[INFO] Swapping QUX -> 80000 BAZ (exact output)")
+	println("[INFO] Swapping SOL -> 80000 ATONE (exact output)")
 
-	qux.Approve(cross, poolAddr, 300000)
+	sol.Approve(cross, poolAddr, 300000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		bazPath,
-		quxPath,
+		atonePath,
+		solPath,
 		fee500,
 		adminAddr,
 		false,
@@ -215,11 +215,11 @@ func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(bazPath, quxPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atonePath, solPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPool(atonePath, solPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -233,29 +233,29 @@ func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
-	userBazDiff := after.userBaz - before.userBaz
-	userQuxDiff := after.userQux - before.userQux
-	poolBazDiff := after.poolBaz - before.poolBaz
-	poolQuxDiff := after.poolQux - before.poolQux
-	protocolFeeBazDiff := after.protocolFeeBaz - before.protocolFeeBaz
-	protocolFeeQuxDiff := after.protocolFeeQux - before.protocolFeeQux
+	userAtoneDiff := after.userAtone - before.userAtone
+	userSolDiff := after.userSol - before.userSol
+	poolAtoneDiff := after.poolAtone - before.poolAtone
+	poolSolDiff := after.poolSol - before.poolSol
+	protocolFeeAtoneDiff := after.protocolFeeAtone - before.protocolFeeAtone
+	protocolFeeSolDiff := after.protocolFeeSol - before.protocolFeeSol
 
-	println("[EXPECTED] User BAZ change:", userBazDiff)
-	println("[EXPECTED] User QUX change:", userQuxDiff)
-	println("[EXPECTED] Pool BAZ change:", poolBazDiff)
-	println("[EXPECTED] Pool QUX change:", poolQuxDiff)
-	println("[EXPECTED] Protocol Fee BAZ change:", protocolFeeBazDiff)
-	println("[EXPECTED] Protocol Fee QUX change:", protocolFeeQuxDiff)
+	println("[EXPECTED] User ATONE change:", userAtoneDiff)
+	println("[EXPECTED] User SOL change:", userSolDiff)
+	println("[EXPECTED] Pool ATONE change:", poolAtoneDiff)
+	println("[EXPECTED] Pool SOL change:", poolSolDiff)
+	println("[EXPECTED] Protocol Fee ATONE change:", protocolFeeAtoneDiff)
+	println("[EXPECTED] Protocol Fee SOL change:", protocolFeeSolDiff)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
-	totalBazChange := userBazDiff + poolBazDiff + protocolFeeBazDiff
-	totalQuxChange := userQuxDiff + poolQuxDiff + protocolFeeQuxDiff
+	totalAtoneChange := userAtoneDiff + poolAtoneDiff + protocolFeeAtoneDiff
+	totalSolChange := userSolDiff + poolSolDiff + protocolFeeSolDiff
 
-	if totalBazChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] BAZ not conserved! Total change: %d", totalBazChange))
+	if totalAtoneChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] ATONE not conserved! Total change: %d", totalAtoneChange))
 	}
-	if totalQuxChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] QUX not conserved! Total change: %d", totalQuxChange))
+	if totalSolChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] SOL not conserved! Total change: %d", totalSolChange))
 	}
 
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
@@ -283,53 +283,53 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Out-of-range position (2000 to 4000): 43051502 0
 // [INFO] Active liquidity: 1000000000
 // [INFO] After Pool Setup
-// [EXPECTED] User BAZ balance: 99999908180300
-// [EXPECTED] User QUX balance: 99999951231802
-// [EXPECTED] Pool BAZ balance: 91819700
-// [EXPECTED] Pool QUX balance: 48768198
-// [EXPECTED] Protocol fee BAZ balance: 0
-// [EXPECTED] Protocol fee QUX balance: 0
+// [EXPECTED] User ATONE balance: 139999908180300
+// [EXPECTED] User SOL balance: 599999999951231802
+// [EXPECTED] Pool ATONE balance: 91819700
+// [EXPECTED] Pool SOL balance: 48768198
+// [EXPECTED] Protocol fee ATONE balance: 0
+// [EXPECTED] Protocol fee SOL balance: 0
 //
 // [SCENARIO] 2. ExactInput Swap with Mixed Positions
-// [INFO] Swapping 200000 BAZ -> QUX (exact input)
+// [INFO] Swapping 200000 ATONE -> SOL (exact input)
 // [INFO] Swap - In: 200000 Out: -199860
 // [INFO] Tick: 0 -> -4
 // [INFO] Liquidity: before: 1000000000 after: 1000000000
 // [INFO] After ExactInput Swap
-// [EXPECTED] User BAZ balance: 99999907980300
-// [EXPECTED] User QUX balance: 99999951431662
-// [EXPECTED] Pool BAZ balance: 92019700
-// [EXPECTED] Pool QUX balance: 48568338
-// [EXPECTED] Protocol fee BAZ balance: 0
-// [EXPECTED] Protocol fee QUX balance: 0
+// [EXPECTED] User ATONE balance: 139999907980300
+// [EXPECTED] User SOL balance: 599999999951431662
+// [EXPECTED] Pool ATONE balance: 92019700
+// [EXPECTED] Pool SOL balance: 48568338
+// [EXPECTED] Protocol fee ATONE balance: 0
+// [EXPECTED] Protocol fee SOL balance: 0
 // [INFO] Validating balance changes for ExactInput
-// [EXPECTED] User BAZ change: -200000
-// [EXPECTED] User QUX change: 199860
-// [EXPECTED] Pool BAZ change: 200000
-// [EXPECTED] Pool QUX change: -199860
-// [EXPECTED] Protocol Fee BAZ change: 0
-// [EXPECTED] Protocol Fee QUX change: 0
+// [EXPECTED] User ATONE change: -200000
+// [EXPECTED] User SOL change: 199860
+// [EXPECTED] Pool ATONE change: 200000
+// [EXPECTED] Pool SOL change: -199860
+// [EXPECTED] Protocol Fee ATONE change: 0
+// [EXPECTED] Protocol Fee SOL change: 0
 // [EXPECTED] Exact balance conservation verified for ExactInput
 //
 // [SCENARIO] 3. ExactOutput Swap with Mixed Positions
-// [INFO] Swapping QUX -> 80000 BAZ (exact output)
+// [INFO] Swapping SOL -> 80000 ATONE (exact output)
 // [INFO] Swap - In: -80000 Out: 80016
 // [INFO] Tick: -4 -> -3
 // [INFO] Liquidity: before: 1000000000 after: 1000000000
 // [INFO] After ExactOutput Swap
-// [EXPECTED] User BAZ balance: 99999908060300
-// [EXPECTED] User QUX balance: 99999951351646
-// [EXPECTED] Pool BAZ balance: 91939700
-// [EXPECTED] Pool QUX balance: 48648354
-// [EXPECTED] Protocol fee BAZ balance: 0
-// [EXPECTED] Protocol fee QUX balance: 0
+// [EXPECTED] User ATONE balance: 139999908060300
+// [EXPECTED] User SOL balance: 599999999951351646
+// [EXPECTED] Pool ATONE balance: 91939700
+// [EXPECTED] Pool SOL balance: 48648354
+// [EXPECTED] Protocol fee ATONE balance: 0
+// [EXPECTED] Protocol fee SOL balance: 0
 // [INFO] Validating balance changes for ExactOutput
-// [EXPECTED] User BAZ change: 80000
-// [EXPECTED] User QUX change: -80016
-// [EXPECTED] Pool BAZ change: -80000
-// [EXPECTED] Pool QUX change: 80016
-// [EXPECTED] Protocol Fee BAZ change: 0
-// [EXPECTED] Protocol Fee QUX change: 0
+// [EXPECTED] User ATONE change: 80000
+// [EXPECTED] User SOL change: -80016
+// [EXPECTED] Pool ATONE change: -80000
+// [EXPECTED] Pool SOL change: 80016
+// [EXPECTED] Protocol Fee ATONE change: 0
+// [EXPECTED] Protocol Fee SOL change: 0
 // [EXPECTED] Exact balance conservation verified for ExactOutput
 //
 // [SCENARIO] Complete - All mixed position validations passed

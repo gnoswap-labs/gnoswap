@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -106,11 +106,11 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, fee100, "70710695859404174631") // sqrt(2500) * 2^96
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, fee100, "70710695859404174631") // sqrt(2500) * 2^96
 
 	testing.SkipHeights(1)
 }
@@ -118,14 +118,14 @@ func createPool() {
 func mintPosition() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position with liquidity")
 	tokenId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-20),
 		int32(20),
@@ -168,7 +168,7 @@ func createExternalIncentiveWithGNOT() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100",
 		wugnotPath,
 		1_000_000_000,
 		1234569600,
@@ -202,7 +202,7 @@ func endIncentiveAndVerifyGNOTRefund() {
 	ufmt.Printf("[INFO] ending incentive with ID: %s\n", createdIncentiveID)
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100",
 		createdIncentiveID,
 		adminUser,
 	)
@@ -244,7 +244,7 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] set pool creation fee to 0
 //
 // [STEP 2] Create pool
-// [INFO] create bar:baz:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [STEP 3] Mint position
 // [INFO] mint position with liquidity

@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 
 	_ "gno.land/r/gnoswap/launchpad/v1"
 	_ "gno.land/r/gnoswap/launchpad/v3_valid"
@@ -61,11 +61,11 @@ func initializeV1() {
 func createProject() string {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Creating OBL launchpad project")
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := adminAddr
-	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "Test ETH Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -74,10 +74,10 @@ func createProject() string {
 	tier180Ratio := int64(40)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days from now
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -123,14 +123,14 @@ func verifyProjectInfo(projectId string) {
 // [EXPECTED] launchpad upgraded to: gno.land/r/gnoswap/launchpad/v1
 //
 // [SCENARIO] 2. Create project with v1
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 //
 // [SCENARIO] 3. Verify project info with v1
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] Project name: Test ETH Project
+// [EXPECTED] Project info: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123
@@ -141,9 +141,9 @@ func verifyProjectInfo(projectId string) {
 // [EXPECTED] launchpad upgraded to: gno.land/r/gnoswap/launchpad/v3_valid
 //
 // [SCENARIO] 5. Verify project info with v3 valid
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] Project name: Test ETH Project
+// [EXPECTED] Project info: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123

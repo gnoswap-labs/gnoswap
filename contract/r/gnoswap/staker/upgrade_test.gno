@@ -612,7 +612,7 @@ func TestGetAllowedTokens(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
 			},
-			expected: []string{"gno.land/r/gnoswap/gns", "gno.land/r/onbloc/bar"},
+			expected: []string{"gno.land/r/gnoswap/gns", "gno.land/r/gnoswap/test_token/atom"},
 		},
 	}
 

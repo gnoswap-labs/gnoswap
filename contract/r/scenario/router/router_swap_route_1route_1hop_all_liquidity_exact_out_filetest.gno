@@ -22,8 +22,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -36,9 +36,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -62,16 +62,16 @@ func main() {
 
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-	println("[INFO] Creating bar-baz pool (fee: 500)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
+	println("[INFO] Creating atom-atone pool (fee: 500)")
+	pl.CreatePool(cross, atomPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, 100000)
-	baz.Approve(cross, poolAddr, 100000)
+	atom.Approve(cross, poolAddr, 100000)
+	atone.Approve(cross, poolAddr, 100000)
 
 	// Mint
-	println("[INFO] Minting position in bar-baz pool")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	println("[INFO] Minting position in atom-atone pool")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, atomPath, atonePath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -82,11 +82,11 @@ func main() {
 	println("[EXPECTED] amount0:", amount0, "expected: 99962")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
-	pool, _ := pl.GetPool(barPath, bazPath, fee500)
+	pool, _ := pl.GetPool(atomPath, atonePath, fee500)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500"
 	poolTick := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
@@ -98,12 +98,12 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
+	atom.Approve(cross, routerAddr, max_approve)
+	atone.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	expectedAmountSpecified := "119820"
 
-	println("[INFO] Attempting ExactOut swap (bar →", expectedAmountSpecified, "baz) with fee is almost 120000")
+	println("[INFO] Attempting ExactOut swap (atom →", expectedAmountSpecified, "atone) with fee is almost 120000")
 	println("[INFO] Expected to fail due to insufficient liquidity")
 
 	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
@@ -114,8 +114,8 @@ func main() {
 		func() {
 			router.ExactOutSwapRoute(
 				cross,
-				barPath,                 // inputToken
-				bazPath,                 // outputToken
+				atomPath,                 // inputToken
+				atonePath,                 // outputToken
 				expectedAmountSpecified, // amountSpecified
 				poolPath,                // strRouteArr
 				"100",                   // quoteArr
@@ -131,10 +131,10 @@ func createPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
 	pl.SetPoolCreationFee(cross, 0)
-	createPool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, atonePath, btcPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, atomPath, atonePath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, atomPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
 func createPool(t *testing.T,
@@ -160,14 +160,14 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	barApprove(t, adminAddr, poolAddr, max_approve)
-	bazApprove(t, adminAddr, poolAddr, max_approve)
+	atomApprove(t, adminAddr, poolAddr, max_approve)
+	atoneApprove(t, adminAddr, poolAddr, max_approve)
 
 	// mint position
 	return pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		-887220,
 		887220,
@@ -181,16 +181,16 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func atomApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	atom.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func atoneApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	atone.Approve(cross, spender, amount)
 }
 
 // Output:
@@ -198,9 +198,9 @@ func bazApprove(t *testing.T, owner, spender address, amount int64) {
 // [INFO] Starting scenario: All liquidity exact out 1route 1hop
 // [INFO] Setting up pool and position
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-baz pool (fee: 500)
+// [INFO] Creating atom-atone pool (fee: 500)
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting position in bar-baz pool
+// [INFO] Minting position in atom-atone pool
 // [INFO] positionId: 1
 // [INFO] amount0: 99962
 // [INFO] amount1: 100000
@@ -213,7 +213,7 @@ func bazApprove(t *testing.T, owner, spender address, amount int64) {
 // [INFO] Setting up additional pools and positions
 // [INFO] Setting swap permissions
 // [INFO] Approving tokens for swap
-// [INFO] Attempting ExactOut swap (bar → 119820 baz) with fee is almost 120000
+// [INFO] Attempting ExactOut swap (atom → 119820 atone) with fee is almost 120000
 // [INFO] Expected to fail due to insufficient liquidity
 // [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)
 // [INFO] Scenario completed

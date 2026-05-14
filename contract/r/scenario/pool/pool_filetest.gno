@@ -16,9 +16,9 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 // Constants for fee tiers
@@ -41,9 +41,9 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -54,42 +54,42 @@ var (
 	poolCreationFee = int64(100_000_000)
 )
 
-// 1. Create Foo:Bar Pool
+// 1. Create Btc:Atom Pool
 func main() {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Create Foo:Bar Pool")
+	println("[INFO] Create Btc:Atom Pool")
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	testing.SkipHeights(1)
 
-	println("[INFO] Create Bar:Baz Pool")
+	println("[INFO] Create Atom:Atone Pool")
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, bazPath, fee500, "130621891405341611593710811006")
+	pool.CreatePool(cross, atomPath, atonePath, fee500, "130621891405341611593710811006")
 	testing.SkipHeights(1)
 
-	println("[SCENARIO] 1. Mint Foo:Bar Liquidity by admin")
-	TestMintFooBarLiquidity()
+	println("[SCENARIO] 1. Mint Btc:Atom Liquidity by admin")
+	TestMintBtcAtomLiquidity()
 
-	println("[SCENARIO] 2. Mint Bar:Baz Liquidity by admin")
-	TestMintBarBazLiquidity()
+	println("[SCENARIO] 2. Mint Atom:Atone Liquidity by admin")
+	TestMintAtomAtoneLiquidity()
 
 	println("[INFO] Passed all tests")
 }
 
-// 3. Mint Foo:Bar Liquidity by admin
-func TestMintFooBarLiquidity() {
+// 3. Mint Btc:Atom Liquidity by admin
+func TestMintBtcAtomLiquidity() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 	testing.SkipHeights(4)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-11000,
 		-9000,
@@ -102,18 +102,18 @@ func TestMintFooBarLiquidity() {
 	testing.SkipHeights(1)
 }
 
-// 4. Mint Bar:Baz Liquidity by admin
-func TestMintBarBazLiquidity() {
+// 4. Mint Atom:Atone Liquidity by admin
+func TestMintAtomAtoneLiquidity() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 	testing.SkipHeights(2)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		tickLower,
 		tickUpper,
@@ -127,13 +127,13 @@ func TestMintBarBazLiquidity() {
 }
 
 // Output:
-// [INFO] Create Foo:Bar Pool
-// [INFO] Create Bar:Baz Pool
-// [SCENARIO] 1. Mint Foo:Bar Liquidity by admin
+// [INFO] Create Btc:Atom Pool
+// [INFO] Create Atom:Atone Pool
+// [SCENARIO] 1. Mint Btc:Atom Liquidity by admin
 // [EXPECTED] amount0: 8040316 expected: should be 8040316
 // [EXPECTED] amount1: 2958015 expected: should be 2958015
 //
-// [SCENARIO] 2. Mint Bar:Baz Liquidity by admin
+// [SCENARIO] 2. Mint Atom:Atone Liquidity by admin
 // [EXPECTED] amount0: 2958015 expected: should be 2958015
 // [EXPECTED] amount1: 8040316 expected: should be 8040316
 //

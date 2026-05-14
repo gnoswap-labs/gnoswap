@@ -5,8 +5,8 @@ package main
 import (
 	"testing"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -41,8 +41,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 var (
@@ -60,7 +60,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[SCENARIO] 1. DrySwap ZeroForOne True AmountSpecified Positive 16000")
 	TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()
@@ -77,27 +77,27 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	testing.SetRealm(posRealm)
 
 	// no mint == no liquidity => swap will fail
-	pool.DrySwap(fooPath, barPath, fee500, true, "16000", MIN_PRICE)
+	pool.DrySwap(btcPath, atomPath, fee500, true, "16000", MIN_PRICE)
 
 	// not enough mint == swap will fail
 	testing.SetRealm(adminRealm)
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
-	pool.DrySwap(fooPath, barPath, fee500, true, "16000", MIN_PRICE)
+	pool.DrySwap(btcPath, atomPath, fee500, true, "16000", MIN_PRICE)
 
 	testing.SetRealm(adminRealm)
 
 	testing.SetRealm(posRealm)
-	pool.Mint(cross, fooPath, barPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
+	pool.Mint(cross, btcPath, atomPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
 
 	println("[INFO] dry swap")
 	println("[INFO] zeroForOne true, amountSpecified 16000")
 	poolIn, poolOut, _ := pool.DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
+		btcPath,   // btcPath
+		atomPath,   // atomPath
 		fee500,    // fee500
 		true,      // zeroForOne
 		"16000",   // amountSpecified
@@ -111,8 +111,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
 	println("[INFO] zeroForOne true, amountSpecified -16000")
 
 	poolIn, poolOut, _ := pool.DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
+		btcPath,   // btcPath
+		atomPath,   // atomPath
 		fee500,    // fee500
 		true,      // zeroForOne
 		"-16000",  // amountSpecified

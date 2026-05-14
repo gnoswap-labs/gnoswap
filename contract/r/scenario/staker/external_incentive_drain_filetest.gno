@@ -1,13 +1,13 @@
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
 // POOLs:
-// 1. bar:qux:100
+// 1. atom:sol:100
 
 // POSITIONs:
 // 1. in-range
 
 // REWARDs:
-// - external gns 90 days ( bar:qux:100 )
+// - external gns 90 days ( atom:sol:100 )
 
 // This test demonstrates the vulnerability where EndExternalIncentive
 // can be called multiple times to drain GNS from the staker contract
@@ -39,8 +39,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -55,8 +55,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
 	fee100 uint32 = 100
@@ -84,8 +84,8 @@ func main() {
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint bar qux position")
-	mintBarQuxPosition()
+	println("[SCENARIO] 3. Mint atom sol position")
+	mintAtomSolPosition()
 	println()
 
 	println("[SCENARIO] 4. Create external incentive GNS")
@@ -128,30 +128,30 @@ func createPool() {
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFee(cross, 0)
 
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
+	println("[INFO] create pool gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 }
 
-func mintBarQuxPosition() {
+func mintAtomSolPosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
 	pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-50),
 		int32(50),
@@ -185,7 +185,7 @@ func createExternalIncentiveGns() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		gnsPath,
 		9000000000,
 		1234569600,
@@ -233,7 +233,7 @@ func endExternalGnsIncentive() {
 	// Use the actual incentive ID that was created
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -257,7 +257,7 @@ func demonstrateVulnerability() {
 	uassert.AbortsContains(t, "[GNOSWAP-STAKER-008]", func() {
 		sr.EndExternalIncentive(
 			cross,
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 			actualIncentiveID,
 			externalCreatorUser,
 		)
@@ -287,9 +287,9 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0
+// [INFO] create pool gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100 at tick 0
 //
-// [SCENARIO] 3. Mint bar qux position
+// [SCENARIO] 3. Mint atom sol position
 // [INFO] approve tokens for position
 // [INFO] mint in-range position (tick range: -50 ~ 50, requested amount: 50, 50)
 //

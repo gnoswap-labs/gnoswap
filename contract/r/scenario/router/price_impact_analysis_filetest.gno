@@ -22,9 +22,9 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -44,9 +44,9 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 	fee500  = uint32(500)
 	fee3000 = uint32(3000)
 )
@@ -86,48 +86,48 @@ func initPools() {
 	defaultTokenAmount := int64(100_000_000_000_000)
 
 	ufmt.Println("[INFO] Distributing tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
-	baz.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atone.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pools with different fee tiers")
 	// Create 0.05% fee pool (concentrated liquidity)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Create 0.3% fee pool (standard)
-	pool.CreatePool(cross, barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, atomPath, btcPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Create multi-hop pools
-	pool.CreatePool(cross, fooPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, btcPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Add liquidity
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
+	atone.Approve(cross, poolAddr, INT64_MAX)
 
 	// Add concentrated liquidity around current price
-	position.Mint(cross, barPath, fooPath, fee500, -100, 100, "10000000000", "10000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	position.Mint(cross, barPath, fooPath, fee500, -1000, 1000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	position.Mint(cross, barPath, fooPath, fee500, -10000, 10000, "100000000000", "100000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	position.Mint(cross, atomPath, btcPath, fee500, -100, 100, "10000000000", "10000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	position.Mint(cross, atomPath, btcPath, fee500, -1000, 1000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	position.Mint(cross, atomPath, btcPath, fee500, -10000, 10000, "100000000000", "100000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 
 	// Add liquidity to 0.3% pool
-	position.Mint(cross, barPath, fooPath, fee3000, -6000, 6000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	position.Mint(cross, atomPath, btcPath, fee3000, -6000, 6000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 
 	// Add liquidity for multi-hop
-	position.Mint(cross, fooPath, bazPath, fee500, -5000, 5000, "30000000000", "30000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	position.Mint(cross, btcPath, atonePath, fee500, -5000, 5000, "30000000000", "30000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 }
 
 func testPriceImpactSmall() {
@@ -135,18 +135,18 @@ func testPriceImpactSmall() {
 
 	ufmt.Println("[INFO] Testing small trade (0.01% of liquidity)")
 	amount := "10000000" // Small amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
 	// Get initial price
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	// Execute swap
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 	_, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -166,14 +166,14 @@ func testPriceImpactMedium() {
 
 	ufmt.Println("[INFO] Testing medium trade (1% of liquidity)")
 	amount := "1000000000" // Medium amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -191,14 +191,14 @@ func testPriceImpactLarge() {
 
 	ufmt.Println("[INFO] Testing large trade (10% of liquidity)")
 	amount := "10000000000" // Large amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross, atomPath, btcPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -217,29 +217,29 @@ func testPriceImpactFeeTiers() {
 	ufmt.Println("[INFO] Comparing price impact across fee tiers")
 	amount := "1000000000"
 
-	barFoo500Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	barFoo3000Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	initialPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
-	initialPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
+	atomBtc500Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
+	atomBtc3000Path := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
+	initialPrice500 := pool.GetSlot0SqrtPriceX96(atomBtc500Path)
+	initialPrice3000 := pool.GetSlot0SqrtPriceX96(atomBtc3000Path)
 
 	// Test 0.05% fee pool
-	route500 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route500 := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	_, amountOut500 := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route500, "100", "1",
+		cross, atomPath, btcPath, amount, route500, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] 0.05%% fee pool output: %s\n", amountOut500)
 
 	// Test 0.3% fee pool
-	route3000 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	route3000 := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	_, amountOut3000 := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route3000, "100", "1",
+		cross, atomPath, btcPath, amount, route3000, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] 0.3%% fee pool output: %s\n", amountOut3000)
 
-	finalPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
-	finalPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
+	finalPrice500 := pool.GetSlot0SqrtPriceX96(atomBtc500Path)
+	finalPrice3000 := pool.GetSlot0SqrtPriceX96(atomBtc3000Path)
 
 	priceImpact500 := calculatePriceImpact(initialPrice500, finalPrice500)
 	priceImpact3000 := calculatePriceImpact(initialPrice3000, finalPrice3000)
@@ -257,15 +257,15 @@ func testMultiHopPriceImpact() {
 	ufmt.Println("[INFO] Testing multi-hop price impact")
 	amount := "1000000000"
 
-	// Single hop: BAR -> FOO
-	routeSingle := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	// Single hop: ATOM -> BTC
+	routeSingle := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	_, outputSingle := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, routeSingle, "100", "1",
+		cross, atomPath, btcPath, amount, routeSingle, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Single hop output: %s\n", outputSingle)
 
-	// Multi-hop: BAR -> FOO -> BAZ -> FOO -> BAR (should have more price impact)
+	// Multi-hop: ATOM -> BTC -> ATONE -> BTC -> ATOM (should have more price impact)
 	// Note: This is a simplified example, actual multi-hop would use different paths
 	ufmt.Println("[INFO] Multi-hop swaps aggregate price impact from each hop")
 }
@@ -277,10 +277,10 @@ func testTickBoundaryPriceImpact() {
 
 	// Small swap within single tick
 	smallAmount := "1000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
 	_, outputSmall := router.ExactInSwapRoute(
-		cross, barPath, fooPath, smallAmount, route, "100", "1",
+		cross, atomPath, btcPath, smallAmount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Within tick output: %s\n", outputSmall)
@@ -288,7 +288,7 @@ func testTickBoundaryPriceImpact() {
 	// Large swap crossing multiple ticks
 	largeAmount := "50000000000"
 	_, outputLarge := router.ExactInSwapRoute(
-		cross, barPath, fooPath, largeAmount, route, "100", "1",
+		cross, atomPath, btcPath, largeAmount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Cross-tick output: %s\n", outputLarge)

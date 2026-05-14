@@ -1,11 +1,11 @@
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
 // POOLs:
-// 1. bar:qux:100 (internal tier 1)
+// 1. atom:sol:100 (internal tier 1)
 //
 // POSITIONs:
-// 1. Provider: mints 5,000,000 bar + 5,000,000 qux → liquidity 1,002,552,082
-// 2. Target: mints 1 bar + 1 qux → liquidity 200 (share ≈ 0.00000002%)
+// 1. Provider: mints 5,000,000 atom + 5,000,000 sol → liquidity 1,002,552,082
+// 2. Target: mints 1 atom + 1 sol → liquidity 200 (share ≈ 0.00000002%)
 //
 // SCENARIO:
 // This test verifies that CollectReward skips state updates for internal (GNS)
@@ -46,8 +46,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -66,8 +66,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 
@@ -139,11 +139,11 @@ func initialize() {
 	pl.SetPoolCreationFee(cross, 0)
 	testing.SkipHeights(1)
 
-	bar.Transfer(cross, providerUser, 5000000)
-	qux.Transfer(cross, providerUser, 5000000)
+	atom.Transfer(cross, providerUser, 5000000)
+	sol.Transfer(cross, providerUser, 5000000)
 
-	bar.Transfer(cross, user1User, 5000000)
-	qux.Transfer(cross, user1User, 5000000)
+	atom.Transfer(cross, user1User, 5000000)
+	sol.Transfer(cross, user1User, 5000000)
 
 	println("[INFO] initialized accounts with emission enabled")
 }
@@ -154,14 +154,14 @@ func createPool() {
 	testing.SkipHeights(1)
 	pl.CreatePool(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Set internal tier 1 → pool receives GNS emission
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", 1)
 
 	println("[INFO] created pool with internal tier 1 (GNS emission enabled)")
 }
@@ -169,14 +169,14 @@ func createPool() {
 func providerMintThenStake() {
 	testing.SetRealm(providerRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -198,14 +198,14 @@ func providerMintThenStake() {
 func userMintThenStake() {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),

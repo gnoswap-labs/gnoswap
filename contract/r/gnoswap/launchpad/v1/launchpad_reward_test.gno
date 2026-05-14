@@ -423,9 +423,9 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 			// Collect rewards and verify
 			rewards := make([]int64, len(tt.depositors))
 			for i, userAddr := range userAddrs {
-				balanceBefore := common.BalanceOf(testOblTokenPath, userAddr)
+				balanceBefore := common.BalanceOf(testEthTokenPath, userAddr)
 				rewards[i] = collectTestReward(t, lp, userAddr, depositIDs[i])
-				balanceAfter := common.BalanceOf(testOblTokenPath, userAddr)
+				balanceAfter := common.BalanceOf(testEthTokenPath, userAddr)
 
 				// Verify reward was collected
 				uassert.True(t, rewards[i] > 0, "reward should be > 0")
@@ -744,18 +744,18 @@ func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(t *test
 
 			// First collection
 			testing.SkipHeights(tt.skipToFirstCollect)
-			balanceBefore1 := common.BalanceOf(testOblTokenPath, userAddr)
+			balanceBefore1 := common.BalanceOf(testEthTokenPath, userAddr)
 			reward1 := collectTestReward(t, lp, userAddr, depositID)
-			balanceAfter1 := common.BalanceOf(testOblTokenPath, userAddr)
+			balanceAfter1 := common.BalanceOf(testEthTokenPath, userAddr)
 
 			uassert.True(t, reward1 > 0, "first reward should be > 0")
 			uassert.Equal(t, reward1, balanceAfter1-balanceBefore1)
 
 			// Second collection
 			testing.SkipHeights(tt.skipBetweenCollects)
-			balanceBefore2 := common.BalanceOf(testOblTokenPath, userAddr)
+			balanceBefore2 := common.BalanceOf(testEthTokenPath, userAddr)
 			reward2 := collectTestReward(t, lp, userAddr, depositID)
-			balanceAfter2 := common.BalanceOf(testOblTokenPath, userAddr)
+			balanceAfter2 := common.BalanceOf(testEthTokenPath, userAddr)
 
 			uassert.Equal(t, reward2, balanceAfter2-balanceBefore2)
 
@@ -788,7 +788,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(t *testing.T)
 
 	// Create project
 	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, project)
-	launchpadBalanceAfterCreate := common.BalanceOf(testOblTokenPath, launchpadAddr)
+	launchpadBalanceAfterCreate := common.BalanceOf(testEthTokenPath, launchpadAddr)
 
 	// Create all deposits
 	userAddrs, depositIDs := createTestDeposits(t, lp, launchpadAddr, adminRealm, projectID, depositors)
@@ -808,14 +808,14 @@ func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(t *testing.T)
 		totalDistributed += r
 	}
 
-	launchpadBalanceAfterCollect := common.BalanceOf(testOblTokenPath, launchpadAddr)
+	launchpadBalanceAfterCollect := common.BalanceOf(testEthTokenPath, launchpadAddr)
 	launchpadBalanceDecrease := launchpadBalanceAfterCreate - launchpadBalanceAfterCollect
 
 	uassert.Equal(t, totalDistributed, launchpadBalanceDecrease)
 
 	// Verify each user received their reward
 	for i, userAddr := range userAddrs {
-		userBalance := common.BalanceOf(testOblTokenPath, userAddr)
+		userBalance := common.BalanceOf(testEthTokenPath, userAddr)
 		uassert.Equal(t, rewards[i], userBalance)
 	}
 }

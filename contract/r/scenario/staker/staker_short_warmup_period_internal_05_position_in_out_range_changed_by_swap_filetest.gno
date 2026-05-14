@@ -29,8 +29,8 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -44,15 +44,15 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath              string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath              string = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100"
 	MUST_EXISTS_IN_TIER_1        = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
@@ -66,11 +66,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint position 01 (narrow range)")
-	mintBarQux100_1()
+	mintAtomSol100_1()
 	println()
 
 	println("[SCENARIO] 4. Mint position 02 (wide range)")
-	mintBarQux100_2()
+	mintAtomSol100_2()
 	println()
 
 	println("[SCENARIO] 5. Stake both positions and check initial rewards")
@@ -108,23 +108,23 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
 	sr.SetPoolTier(cross, poolPath, 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintAtomSol100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -145,16 +145,16 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_2() {
+func mintAtomSol100_2() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -240,18 +240,18 @@ func makePosition1OutRange() {
 	// ROUTER SWAP
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
-	bar.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	atom.Approve(cross, routerAddr, maxInt64)
+	sol.Approve(cross, routerAddr, maxInt64)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		"10000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		"100",
 		"0",
 		maxTimeout,
@@ -262,7 +262,7 @@ func makePosition1OutRange() {
 		panic("unexpected swap result")
 	}
 
-	ufmt.Printf("[EXPECTED] swap executed: %s BAR -> %s QUX\n", tokenIn, tokenOut)
+	ufmt.Printf("[EXPECTED] swap executed: %s ATOM -> %s SOL\n", tokenIn, tokenOut)
 	testing.SkipHeights(1)
 
 	// position-01 became out-range
@@ -333,7 +333,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position 02 (in-range) reward: 3886800 GNS
 //
 // [SCENARIO] 6. Make position 01 out of range via swap
-// [EXPECTED] swap executed: 10000 BAR -> -9884 QUX
+// [EXPECTED] swap executed: 10000 ATOM -> -9884 SOL
 //
 // [SCENARIO] 7. Check rewards after position goes out of range
 // [INFO] checking reward for position 01 (now out-range)

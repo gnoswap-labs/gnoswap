@@ -55,8 +55,8 @@ func TestNewPoolParam(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -68,8 +68,8 @@ func TestNewPoolParam(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
-			uassert.Equal(t, params.token0Path, barPath, "Token0Path should match")
-			uassert.Equal(t, params.token1Path, bazPath, "Token1Path should match")
+			uassert.Equal(t, params.token0Path, atomPath, "Token0Path should match")
+			uassert.Equal(t, params.token1Path, atonePath, "Token1Path should match")
 			uassert.Equal(t, params.fee, FeeTier3000, "Fee should match")
 			uassert.Equal(t, params.tickSpacing, params.TickSpacing(), "TickSpacing should match")
 			uassert.Equal(t, params.SqrtPriceX96().ToString(), u256.MustFromDecimal(tt.sqrtPriceX96Str).ToString(), "SqrtPriceX96 should match")
@@ -91,8 +91,8 @@ func TestIsInOrder(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -105,7 +105,7 @@ func TestIsInOrder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			poolPath := params.poolPath()
-			uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", "Pool path should match")
+			uassert.Equal(t, poolPath, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000", "Pool path should match")
 			uassert.Equal(t, params.isInOrder(), true, "Tokens order should match")
 		})
 	}
@@ -128,8 +128,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 	}{
 		{
 			name:            "success - tokens in order",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -138,8 +138,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "success - near MIN_SQRT_RATIO",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128740", // MIN_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128740"),
@@ -148,8 +148,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "fail - below MIN_SQRT_RATIO",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738",                       // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"), // Fixed to match the string
@@ -159,8 +159,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "fail - above MAX_SQRT_RATIO",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("1461446703485210103287273052203988822378723970342"),
@@ -170,8 +170,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "success - price from tick",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: sqrtPriceX96FromTick.ToString(),
 			sqrtPriceX96:    sqrtPriceX96FromTick,
@@ -180,8 +180,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "fail - tokens not in order, below MIN_SQRT_RATIO",
-			token0Path:      bazPath,  // not in order: baz > bar
-			token1Path:      barPath,
+			token0Path:      atonePath,  // not in order: atone > atom
+			token1Path:      atomPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"),
@@ -246,8 +246,8 @@ func TestGeneratePoolPath(t *testing.T) {
 	}{
 		{
 			name:            "success - pool path generated correctly",
-			token0Path:      barPath,
-			token1Path:      bazPath,
+			token0Path:      atomPath,
+			token1Path:      atonePath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),

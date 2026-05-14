@@ -30,8 +30,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
@@ -57,7 +57,7 @@ var (
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 )
 
 func main() {
@@ -65,7 +65,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -113,8 +113,8 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -123,15 +123,15 @@ func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] create external incentive with bar token")
+	println("[INFO] create external incentive with atom token")
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		barPath,
-		90_000_000_000, // 90 billion bar tokens for 90 days
+		atomPath,
+		90_000_000_000, // 90 billion atom tokens for 90 days
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
@@ -149,15 +149,15 @@ func mintAndStakePosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -188,10 +188,10 @@ func firstExternalRewardCollection() {
 	testing.SkipHeights(5)
 
 	println("[INFO] collect first external reward")
-	beforeBar1 := bar.BalanceOf(adminUser)
+	beforeAtom1 := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBar1 := bar.BalanceOf(adminUser)
-	firstExternalReward := afterBar1 - beforeBar1
+	afterAtom1 := atom.BalanceOf(adminUser)
+	firstExternalReward := afterAtom1 - beforeAtom1
 
 	ufmt.Printf("[EXPECTED] first external reward (5 blocks): %d\n", firstExternalReward)
 
@@ -209,10 +209,10 @@ func secondExternalRewardCollection() {
 	testing.SkipHeights(5)
 
 	println("[INFO] collect second external reward")
-	beforeBar2 := bar.BalanceOf(adminUser)
+	beforeAtom2 := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBar2 := bar.BalanceOf(adminUser)
-	secondExternalReward := afterBar2 - beforeBar2
+	afterAtom2 := atom.BalanceOf(adminUser)
+	secondExternalReward := afterAtom2 - beforeAtom2
 
 	ufmt.Printf("[EXPECTED] second external reward (5 blocks): %d\n", secondExternalReward)
 
@@ -230,10 +230,10 @@ func thirdExternalRewardCollectionLonger() {
 	testing.SkipHeights(10)
 
 	println("[INFO] collect third external reward")
-	beforeBar3 := bar.BalanceOf(adminUser)
+	beforeAtom3 := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBar3 := bar.BalanceOf(adminUser)
-	thirdExternalReward := afterBar3 - beforeBar3
+	afterAtom3 := atom.BalanceOf(adminUser)
+	thirdExternalReward := afterAtom3 - beforeAtom3
 
 	ufmt.Printf("[EXPECTED] third external reward (10 blocks): %d\n", thirdExternalReward)
 
@@ -256,10 +256,10 @@ func compareExternalRewardPatterns() {
 	// Collect external rewards every 2 blocks, 5 times (total 10 blocks)
 	for i := 0; i < 5; i++ {
 		testing.SkipHeights(2)
-		beforeBar := bar.BalanceOf(adminUser)
+		beforeAtom := atom.BalanceOf(adminUser)
 		sr.CollectReward(cross, 1)
-		afterBar := bar.BalanceOf(adminUser)
-		rewardFromSmallExternalCollection := afterBar - beforeBar
+		afterAtom := atom.BalanceOf(adminUser)
+		rewardFromSmallExternalCollection := afterAtom - beforeAtom
 		totalFromFrequentExternalCollections += rewardFromSmallExternalCollection
 		ufmt.Printf("[INFO] small external collection %d (2 blocks): %d\n", i+1, rewardFromSmallExternalCollection)
 	}
@@ -269,10 +269,10 @@ func compareExternalRewardPatterns() {
 	// Now test one large collection for comparison
 	println("[INFO] test pattern: single large external collection")
 	testing.SkipHeights(10)
-	beforeBarLarge := bar.BalanceOf(adminUser)
+	beforeAtomLarge := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBarLarge := bar.BalanceOf(adminUser)
-	rewardFromLargeExternalCollection := afterBarLarge - beforeBarLarge
+	afterAtomLarge := atom.BalanceOf(adminUser)
+	rewardFromLargeExternalCollection := afterAtomLarge - beforeAtomLarge
 
 	ufmt.Printf("[EXPECTED] single large external collection (10 blocks): %d\n", rewardFromLargeExternalCollection)
 
@@ -293,8 +293,8 @@ func finalVerificationMultipleExternalCollections() {
 	println("[INFO] final verification with multiple rapid external collections")
 
 	// Record initial balance
-	initialBalance := bar.BalanceOf(adminUser)
-	ufmt.Printf("[INFO] initial BAR balance: %d\n", initialBalance)
+	initialBalance := atom.BalanceOf(adminUser)
+	ufmt.Printf("[INFO] initial ATOM balance: %d\n", initialBalance)
 
 	// Skip some blocks to accumulate external rewards
 	testing.SkipHeights(15)
@@ -302,21 +302,21 @@ func finalVerificationMultipleExternalCollections() {
 	// Perform multiple collections in sequence
 	println("[INFO] perform 3 consecutive external collections")
 
-	collection1Before := bar.BalanceOf(adminUser)
+	collection1Before := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	collection1After := bar.BalanceOf(adminUser)
+	collection1After := atom.BalanceOf(adminUser)
 	externalReward1 := collection1After - collection1Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 1: %d\n", externalReward1)
 
-	collection2Before := bar.BalanceOf(adminUser)
+	collection2Before := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	collection2After := bar.BalanceOf(adminUser)
+	collection2After := atom.BalanceOf(adminUser)
 	externalReward2 := collection2After - collection2Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 2: %d\n", externalReward2)
 
-	collection3Before := bar.BalanceOf(adminUser)
+	collection3Before := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	collection3After := bar.BalanceOf(adminUser)
+	collection3After := atom.BalanceOf(adminUser)
 	externalReward3 := collection3After - collection3Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 3: %d\n", externalReward3)
 
@@ -333,9 +333,9 @@ func finalVerificationMultipleExternalCollections() {
 		panic("third consecutive external collection should yield 0 rewards")
 	}
 
-	finalBalance := bar.BalanceOf(adminUser)
+	finalBalance := atom.BalanceOf(adminUser)
 	totalExternalGained := finalBalance - initialBalance
-	ufmt.Printf("[EXPECTED] total BAR gained in this test: %d\n", totalExternalGained)
+	ufmt.Printf("[EXPECTED] total ATOM gained in this test: %d\n", totalExternalGained)
 
 	println("[INFO] external reward collection pattern scenario completed successfully")
 	println("[INFO] confirmed: external rewards accumulate over time and are collected when requested")
@@ -366,12 +366,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [SCENARIO] 3. Create external incentive
 // [INFO] approve tokens for external incentive
-// [INFO] create external incentive with bar token
+// [INFO] create external incentive with atom token
 // [INFO] external incentive created - reward per block: ~1000000000
 //
 // [SCENARIO] 4. Mint and stake position
@@ -418,11 +418,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Final verification with multiple external collections
 // [INFO] final verification with multiple rapid external collections
-// [INFO] initial BAR balance: 99910000710797
+// [INFO] initial ATOM balance: 299910000710797
 // [INFO] perform 3 consecutive external collections
 // [EXPECTED] consecutive external collection 1: 260415
 // [EXPECTED] consecutive external collection 2: 0
 // [EXPECTED] consecutive external collection 3: 0
-// [EXPECTED] total BAR gained in this test: 260415
+// [EXPECTED] total ATOM gained in this test: 260415
 // [INFO] external reward collection pattern scenario completed successfully
 // [INFO] confirmed: external rewards accumulate over time and are collected when requested

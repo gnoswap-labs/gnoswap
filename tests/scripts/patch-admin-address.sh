@@ -10,12 +10,16 @@ OLD_ADDRESS="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 # Static list of files to process (from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2)
 TARGET_FILES=(
     "contract/r/gnoswap/rbac/consts.gno"
-    "contract/r/gnoswap/test_token/bar/bar.gno"
-    "contract/r/gnoswap/test_token/baz/baz.gno"
-    "contract/r/gnoswap/test_token/foo/foo.gno"
-    "contract/r/gnoswap/test_token/obl/obl.gno"
-    "contract/r/gnoswap/test_token/qux/qux.gno"
+    "contract/r/gnoswap/test_token/atom/atom.gno"
+    "contract/r/gnoswap/test_token/atone/atone.gno"
+    "contract/r/gnoswap/test_token/btc/btc.gno"
+    "contract/r/gnoswap/test_token/dai/dai.gno"
+    "contract/r/gnoswap/test_token/eth/eth.gno"
+    "contract/r/gnoswap/test_token/photon/photon.gno"
+    "contract/r/gnoswap/test_token/sol/sol.gno"
+    "contract/r/gnoswap/test_token/trx/trx.gno"
     "contract/r/gnoswap/test_token/usdc/usdc.gno"
+    "contract/r/gnoswap/test_token/usdt/usdt.gno"
 )
 
 # Check if new address is provided

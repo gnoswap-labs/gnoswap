@@ -24,16 +24,16 @@ func TestMultiSwap(t *testing.T) {
 		expectError     bool
 	}{
 		{
-			name: "single hop swap BAR -> BAZ",
+			name: "single hop swap ATOM -> ATONE",
 			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+				env.GivenPoolCreated(atomPath, atonePath, 3000, "79228162514264337593543950336").
 					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
+					AndUserFundedAndApproved(user1Addr, routerAddr, atomPath, atonePath)
 			},
 			params: NewSwapParams().
 				Recipient(alice).
-				TokenIn(barPath).
-				TokenOut(bazPath).
+				TokenIn(atomPath).
+				TokenOut(atonePath).
 				Fee(3000).
 				ExactInput("100").
 				Build(),
@@ -44,33 +44,33 @@ func TestMultiSwap(t *testing.T) {
 			expectError:     false,
 		},
 		// {
-		// 	name: "multi hop swap (BAR -> BAZ -> QUX)",
+		// 	name: "multi hop swap (ATOM -> ATONE -> SOL)",
 		// 	setupFn: func(t *testing.T) {
-		// 		// BAR -> BAZ
+		// 		// ATOM -> ATONE
 		// 		CreatePoolWithoutFee(t)
 		// 		MakeMintPositionWithoutFee(t)
 
-		// 		// BAZ -> QUX
+		// 		// ATONE -> SOL
 		// 		CreateSecondPoolWithoutFee(t)
 		// 		MakeSecondMintPositionWithoutFee(t)
 
 		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
+		// 		atom.Approve(cross, routerAddr, maxApprove)
+		// 		atone.Approve(cross, routerAddr, maxApprove)
+		// 		sol.Approve(cross, routerAddr, maxApprove)
+		// 		TokenFaucet(t, atomPath, user1Addr)
 		// 	},
 		// 	params: SwapParams{
 		// 		recipient: alice,
 		// 		SingleSwapParams: SingleSwapParams{
-		// 			tokenIn:         barPath,
-		// 			tokenOut:        bazPath,
+		// 			tokenIn:         atomPath,
+		// 			tokenOut:        atonePath,
 		// 			fee:             3000,
 		// 			amountSpecified: i256.MustFromDecimal("100"),
 		// 		},
 		// 	},
 		// 	numPools:        2,
-		// 	swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+		// 	swapPath:        "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:3000",
 		// 	expectedFirstIn: "100",
 		// 	expectedLastOut: "96",
 		// 	expectError:     false,
@@ -78,29 +78,29 @@ func TestMultiSwap(t *testing.T) {
 		// {
 		// 	name: "multi hop swap with exact output",
 		// 	setupFn: func(t *testing.T) {
-		// 		// BAR -> BAZ -> QUX
+		// 		// ATOM -> ATONE -> SOL
 		// 		CreatePoolWithoutFee(t)
 		// 		MakeMintPositionWithoutFee(t)
 		// 		CreateSecondPoolWithoutFee(t)
 		// 		MakeSecondMintPositionWithoutFee(t)
 
 		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
+		// 		atom.Approve(cross, routerAddr, maxApprove)
+		// 		atone.Approve(cross, routerAddr, maxApprove)
+		// 		sol.Approve(cross, routerAddr, maxApprove)
+		// 		TokenFaucet(t, atomPath, user1Addr)
 		// 	},
 		// 	params: SwapParams{
 		// 		recipient: alice,
 		// 		SingleSwapParams: SingleSwapParams{
-		// 			tokenIn:         barPath,
-		// 			tokenOut:        bazPath,
+		// 			tokenIn:         atomPath,
+		// 			tokenOut:        atonePath,
 		// 			fee:             3000,
 		// 			amountSpecified: i256.MustFromDecimal("-96"),
 		// 		},
 		// 	},
 		// 	numPools:        2,
-		// 	swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+		// 	swapPath:        "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:3000",
 		// 	expectedFirstIn: "98",
 		// 	expectedLastOut: "94",
 		// 	expectError:     false,

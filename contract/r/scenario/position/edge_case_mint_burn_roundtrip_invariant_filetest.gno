@@ -24,8 +24,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -40,8 +40,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -72,21 +72,21 @@ func initializeSetup() {
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	atom.Transfer(cross, aliceAddr, testAmount)
+	atone.Transfer(cross, aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
 
 	// Track initial balances
-	initialBarBalance := bar.BalanceOf(aliceAddr)
-	initialBazBalance := baz.BalanceOf(aliceAddr)
+	initialAtomBalance := atom.BalanceOf(aliceAddr)
+	initialAtoneBalance := atone.BalanceOf(aliceAddr)
 
-	ufmt.Printf("[INFO] Initial Bar balance: %d\n", initialBarBalance)
-	ufmt.Printf("[INFO] Initial Baz balance: %d\n", initialBazBalance)
+	ufmt.Printf("[INFO] Initial Atom balance: %d\n", initialAtomBalance)
+	ufmt.Printf("[INFO] Initial Atone balance: %d\n", initialAtoneBalance)
 }
 
 func testRoundTripUltraTight() {
@@ -95,8 +95,8 @@ func testRoundTripUltraTight() {
 	// Create pool with tick spacing 1 (most sensitive)
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -104,14 +104,14 @@ func testRoundTripUltraTight() {
 	testing.SetRealm(aliceRealm)
 
 	// Record balances before mint
-	// barBefore := bar.BalanceOf(aliceAddr)
-	// bazBefore := baz.BalanceOf(aliceAddr)
+	// atomBefore := atom.BalanceOf(aliceAddr)
+	// atoneBefore := atone.BalanceOf(aliceAddr)
 
 	// Mint position with ultra-tight range (1 tick)
 	println("[TEST] Mint position with 1-tick range")
 	positionId, liquidity, amount0Used, amount1Used := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		0, 1, // 1-tick range
 		"1000000000", "1000000000",
 		"0", "0",
@@ -192,8 +192,8 @@ func testRoundTripVariousAmounts() {
 	// Create new pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -214,7 +214,7 @@ func testRoundTripVariousAmounts() {
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			-100, 100,
 			amount, amount,
 			"0", "0",
@@ -254,8 +254,8 @@ func testRoundTripPriceBoundaries() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -280,7 +280,7 @@ func testRoundTripPriceBoundaries() {
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 3000,
+			atomPath, atonePath, 3000,
 			tr.tickLower, tr.tickUpper,
 			"1000000", "1000000",
 			"0", "0",
@@ -309,8 +309,8 @@ func testMultipleRoundTrips() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -319,15 +319,15 @@ func testMultipleRoundTrips() {
 
 	println("[TEST] Multiple consecutive round-trips (checking compound effects)")
 
-	initialBar := bar.BalanceOf(aliceAddr)
-	initialBaz := baz.BalanceOf(aliceAddr)
+	initialAtom := atom.BalanceOf(aliceAddr)
+	initialAtone := atone.BalanceOf(aliceAddr)
 
 	// Perform 5 round-trips
 	for i := 1; i <= 5; i++ {
 		// Mint
 		posId, liq, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 10000,
+			atomPath, atonePath, 10000,
 			-200, 200,
 			"1000000", "1000000",
 			"0", "0",
@@ -345,26 +345,26 @@ func testMultipleRoundTrips() {
 			9999999999,
 		)
 
-		currentBar := bar.BalanceOf(aliceAddr)
-		currentBaz := baz.BalanceOf(aliceAddr)
+		currentAtom := atom.BalanceOf(aliceAddr)
+		currentAtone := atone.BalanceOf(aliceAddr)
 
-		ufmt.Printf("[ROUND %d] Bar balance: %d, Baz balance: %d\n",
-			i, currentBar, currentBaz)
+		ufmt.Printf("[ROUND %d] Atom balance: %d, Atone balance: %d\n",
+			i, currentAtom, currentAtone)
 	}
 
-	finalBar := bar.BalanceOf(aliceAddr)
-	finalBaz := baz.BalanceOf(aliceAddr)
+	finalAtom := atom.BalanceOf(aliceAddr)
+	finalAtone := atone.BalanceOf(aliceAddr)
 
 	// Check cumulative effect
-	totalLossBar := initialBar - finalBar
-	totalLossBaz := initialBaz - finalBaz
+	totalLossAtom := initialAtom - finalAtom
+	totalLossAtone := initialAtone - finalAtone
 
-	ufmt.Printf("[FINAL] Total Bar loss after 5 round-trips: %d\n", totalLossBar)
-	ufmt.Printf("[FINAL] Total Baz loss after 5 round-trips: %d\n", totalLossBaz)
+	ufmt.Printf("[FINAL] Total Atom loss after 5 round-trips: %d\n", totalLossAtom)
+	ufmt.Printf("[FINAL] Total Atone loss after 5 round-trips: %d\n", totalLossAtone)
 
 	// Loss should be minimal (< 0.1% total)
 	maxAcceptableLoss := int64(5000) // 5 * 1000000 * 0.001
-	if totalLossBar > maxAcceptableLoss || totalLossBaz > maxAcceptableLoss {
+	if totalLossAtom > maxAcceptableLoss || totalLossAtone > maxAcceptableLoss {
 		ufmt.Printf("[WARNING] Excessive loss detected in multiple round-trips!\n")
 	} else {
 		ufmt.Printf("[PASS] Multiple round-trips maintain value preservation\n")
@@ -373,8 +373,8 @@ func testMultipleRoundTrips() {
 
 // Output:
 // [SCENARIO] 1. Initialize Setup
-// [INFO] Initial Bar balance: 10000000000
-// [INFO] Initial Baz balance: 10000000000
+// [INFO] Initial Atom balance: 10000000000
+// [INFO] Initial Atone balance: 10000000000
 //
 // [SCENARIO] 2. Test Round-Trip in Ultra-Tight Range
 // [TEST] Mint position with 1-tick range
@@ -412,11 +412,11 @@ func testMultipleRoundTrips() {
 //
 // [SCENARIO] 5. Test Multiple Round-Trips (Compound Effect)
 // [TEST] Multiple consecutive round-trips (checking compound effects)
-// [ROUND 1] Bar balance: 9999999991, Baz balance: 9999999992
-// [ROUND 2] Bar balance: 9999999990, Baz balance: 9999999991
-// [ROUND 3] Bar balance: 9999999989, Baz balance: 9999999990
-// [ROUND 4] Bar balance: 9999999988, Baz balance: 9999999989
-// [ROUND 5] Bar balance: 9999999987, Baz balance: 9999999988
-// [FINAL] Total Bar loss after 5 round-trips: 5
-// [FINAL] Total Baz loss after 5 round-trips: 5
+// [ROUND 1] Atom balance: 9999999991, Atone balance: 9999999992
+// [ROUND 2] Atom balance: 9999999990, Atone balance: 9999999991
+// [ROUND 3] Atom balance: 9999999989, Atone balance: 9999999990
+// [ROUND 4] Atom balance: 9999999988, Atone balance: 9999999989
+// [ROUND 5] Atom balance: 9999999987, Atone balance: 9999999988
+// [FINAL] Total Atom loss after 5 round-trips: 5
+// [FINAL] Total Atone loss after 5 round-trips: 5
 // [PASS] Multiple round-trips maintain value preservation

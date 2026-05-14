@@ -105,7 +105,7 @@ func TestTierDurationConsistency(t *testing.T) {
 			project, err := lp.createProject(
 				&createProjectParams{
 					name:          "Test Project " + tt.name,
-					tokenPath:     "gno.land/r/onbloc/obl",
+					tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 					depositAmount: 10000000,
 					tier30Ratio:   tier30Ratio,
 					tier90Ratio:   tier90Ratio,

@@ -32,8 +32,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -49,8 +49,8 @@ var (
 	bobRealm   = testing.NewUserRealm(bobAddr)
 	carolAddr  = testutils.TestAddress("carol")
 
-	token0Path = "gno.land/r/onbloc/bar"
-	token1Path = "gno.land/r/onbloc/foo"
+	token0Path = "gno.land/r/gnoswap/test_token/atom"
+	token1Path = "gno.land/r/gnoswap/test_token/btc"
 	fee        = uint32(3000)
 
 	maxInt64    int64 = 9223372036854775807
@@ -78,12 +78,12 @@ func setup() {
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross, 0)
 
-	bar.Transfer(cross, aliceAddr, int64(200000000))
-	foo.Transfer(cross, aliceAddr, int64(200000000))
+	atom.Transfer(cross, aliceAddr, int64(200000000))
+	btc.Transfer(cross, aliceAddr, int64(200000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
 	pool.CreatePool(
 		cross,
@@ -136,8 +136,8 @@ func revokeOperator() {
 	// Bob mints another position so we have something Alice still owns to
 	// test the revoked-operator case. We reuse the existing pool.
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, aliceAddr, int64(50000000))
-	foo.Transfer(cross, aliceAddr, int64(50000000))
+	atom.Transfer(cross, aliceAddr, int64(50000000))
+	btc.Transfer(cross, aliceAddr, int64(50000000))
 
 	testing.SetRealm(aliceRealm)
 	id, _, _, _ := position.Mint(

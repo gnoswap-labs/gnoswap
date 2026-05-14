@@ -20,7 +20,7 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/sol"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -33,9 +33,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
@@ -62,8 +62,8 @@ func main() {
 	println("[INFO] Approving pool creation fees")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	println("[INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)")
-	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	println("[INFO] Creating sol-wugnot pool (fee: 500, tick: -10000)")
+	pl.CreatePool(cross, wrappedWugnot, solPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Executing test scenarios")
 	println()
@@ -75,26 +75,26 @@ func main() {
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(chain.Coins{})
 
-	testPositionMintQuxGnot(t)
-	testDrySwapRouteQuxGnotExactIn(t)
-	testDrySwapRouteQuxGnotExactOut(t)
+	testPositionMintSolGnot(t)
+	testDrySwapRouteSolGnotExactIn(t)
+	testDrySwapRouteSolGnotExactOut(t)
 
 	println("[INFO] Scenario completed")
 }
 
-func testPositionMintQuxGnot(t *testing.T) {
-	println("[SCENARIO] Given: Position minting preparation for qux-wugnot pool")
+func testPositionMintSolGnot(t *testing.T) {
+	println("[SCENARIO] Given: Position minting preparation for sol-wugnot pool")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Deposit already done in main()")
 
 	println("[INFO] Approving tokens for pool operations")
-	qux.Approve(cross, poolAddr, max_approve)
+	sol.Approve(cross, poolAddr, max_approve)
 	wugnot.Approve(cross, poolAddr, max_approve)
 
-	println("[INFO] Minting position in qux-wugnot pool")
+	println("[INFO] Minting position in sol-wugnot pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, solPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -107,17 +107,17 @@ func testPositionMintQuxGnot(t *testing.T) {
 	println()
 }
 
-func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
-	println("[SCENARIO] Given: Dry swap route qux to wugnot exact in preparation")
+func testDrySwapRouteSolGnotExactIn(t *testing.T) {
+	println("[SCENARIO] Given: Dry swap route sol to wugnot exact in preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route (qux → wugnot)")
+	println("[INFO] Executing dry swap route (sol → wugnot)")
 	_, dryResult, _ := router.DrySwapRoute(
-		quxPath,       // inputToken
+		solPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
 		"EXACT_IN",    // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -125,17 +125,17 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 	println()
 }
 
-func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
-	println("[SCENARIO] Given: Dry swap route qux to wugnot exact out preparation")
+func testDrySwapRouteSolGnotExactOut(t *testing.T) {
+	println("[SCENARIO] Given: Dry swap route sol to wugnot exact out preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route exact out (qux → wugnot)")
+	println("[INFO] Executing dry swap route exact out (sol → wugnot)")
 	dryResult, _, _ := router.DrySwapRoute(
-		quxPath,       // inputToken
+		solPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
 		"EXACT_OUT",   // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"100000",
 	)
@@ -148,13 +148,13 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 // [INFO] Starting scenario: Wrapped native token (wugnot) swap tests
 // [INFO] Setting up pools and positions
 // [INFO] Approving pool creation fees
-// [INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)
+// [INFO] Creating sol-wugnot pool (fee: 500, tick: -10000)
 // [INFO] Executing test scenarios
 //
-// [SCENARIO] Given: Position minting preparation for qux-wugnot pool
+// [SCENARIO] Given: Position minting preparation for sol-wugnot pool
 // [INFO] Deposit already done in main()
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting position in qux-wugnot pool
+// [INFO] Minting position in sol-wugnot pool
 // [INFO] positionId: 1
 // [INFO] amount0: 100000
 // [INFO] amount1: 36790
@@ -163,12 +163,12 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 // [EXPECTED] amount0: 100000 expected: 100000
 // [EXPECTED] amount1: 36790 expected: 36790
 //
-// [SCENARIO] Given: Dry swap route qux to wugnot exact in preparation
-// [INFO] Executing dry swap route (qux → wugnot)
+// [SCENARIO] Given: Dry swap route sol to wugnot exact in preparation
+// [INFO] Executing dry swap route (sol → wugnot)
 // [EXPECTED] dry swap result: 2707 expected: 2707
 //
-// [SCENARIO] Given: Dry swap route qux to wugnot exact out preparation
-// [INFO] Executing dry swap route exact out (qux → wugnot)
+// [SCENARIO] Given: Dry swap route sol to wugnot exact out preparation
+// [INFO] Executing dry swap route exact out (sol → wugnot)
 // [EXPECTED] dry swap result: 370 expected: 370
 //
 // [INFO] Scenario completed

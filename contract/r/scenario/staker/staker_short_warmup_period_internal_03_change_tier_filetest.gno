@@ -26,9 +26,9 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -41,9 +41,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -67,12 +67,12 @@ func main() {
 	createPool()
 	println()
 
-	println("[SCENARIO] 4. Mint position 01 on bar:qux:100")
-	mintBarQux100_1()
+	println("[SCENARIO] 4. Mint position 01 on atom:sol:100")
+	mintAtomSol100_1()
 	println()
 
-	println("[SCENARIO] 5. Mint position 02 on bar:baz:3000")
-	mintBarBaz100_2()
+	println("[SCENARIO] 5. Mint position 02 on atom:atone:3000")
+	mintAtomAtone100_2()
 	println()
 
 	println("[SCENARIO] 6. Skip 100 heights")
@@ -83,7 +83,7 @@ func main() {
 	stakeToken_1()
 	println()
 
-	println("[SCENARIO] 8. Set bar:baz:3000 pool to tier 2")
+	println("[SCENARIO] 8. Set atom:atone:3000 pool to tier 2")
 	setPoolTier()
 	println()
 
@@ -139,25 +139,25 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", 1)
 
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, 3000, "79228162514264337593543950337")
 
-	ufmt.Printf("[EXPECTED] pools created: bar:qux:100 (tier 1), bar:baz:3000 (no tier)\n")
+	ufmt.Printf("[EXPECTED] pools created: atom:sol:100 (tier 1), atom:atone:3000 (no tier)\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintAtomSol100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -179,20 +179,20 @@ func mintBarQux100_1() {
 		panic("unexpected owner")
 	}
 
-	ufmt.Printf("[EXPECTED] position 01 minted on bar:qux:100: id=%d\n", positionId)
+	ufmt.Printf("[EXPECTED] position 01 minted on atom:sol:100: id=%d\n", positionId)
 	testing.SkipHeights(1)
 }
 
-func mintBarBaz100_2() {
+func mintAtomAtone100_2() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		int32(-1020),
 		int32(1020),
@@ -214,7 +214,7 @@ func mintBarBaz100_2() {
 		panic("unexpected owner")
 	}
 
-	ufmt.Printf("[EXPECTED] position 02 minted on bar:baz:3000: id=%d\n", positionId)
+	ufmt.Printf("[EXPECTED] position 02 minted on atom:atone:3000: id=%d\n", positionId)
 	testing.SkipHeights(1)
 }
 
@@ -235,12 +235,12 @@ func stakeToken_1() {
 }
 
 func setPoolTier() {
-	testing.SkipHeights(100) // this reward should go to bar:qux:100
+	testing.SkipHeights(100) // this reward should go to atom:sol:100
 
 	testing.SetRealm(adminRealm)
 
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
-	ufmt.Printf("[EXPECTED] bar:baz:3000 pool set to tier 2\n")
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000", 2)
+	ufmt.Printf("[EXPECTED] atom:atone:3000 pool set to tier 2\n")
 	testing.SkipHeights(1)
 }
 
@@ -268,7 +268,7 @@ func stakeToken_2() {
 func changePoolTier() {
 	testing.SetRealm(adminRealm)
 
-	sr.ChangePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
+	sr.ChangePoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000", 1)
 	sr.CollectReward(cross, 2)
 	ufmt.Printf("[EXPECTED] pool tier changed to 1\n")
 
@@ -305,13 +305,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] GNS minted and distributed
 //
 // [SCENARIO] 3. Create pools
-// [EXPECTED] pools created: bar:qux:100 (tier 1), bar:baz:3000 (no tier)
+// [EXPECTED] pools created: atom:sol:100 (tier 1), atom:atone:3000 (no tier)
 //
-// [SCENARIO] 4. Mint position 01 on bar:qux:100
-// [EXPECTED] position 01 minted on bar:qux:100: id=1
+// [SCENARIO] 4. Mint position 01 on atom:sol:100
+// [EXPECTED] position 01 minted on atom:sol:100: id=1
 //
-// [SCENARIO] 5. Mint position 02 on bar:baz:3000
-// [EXPECTED] position 02 minted on bar:baz:3000: id=2
+// [SCENARIO] 5. Mint position 02 on atom:atone:3000
+// [EXPECTED] position 02 minted on atom:atone:3000: id=2
 //
 // [SCENARIO] 6. Skip 100 heights
 // [EXPECTED] skipped 100 heights
@@ -319,8 +319,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Stake position 01
 // [EXPECTED] position 01 staked
 //
-// [SCENARIO] 8. Set bar:baz:3000 pool to tier 2
-// [EXPECTED] bar:baz:3000 pool set to tier 2
+// [SCENARIO] 8. Set atom:atone:3000 pool to tier 2
+// [EXPECTED] atom:atone:3000 pool set to tier 2
 //
 // [SCENARIO] 9. Stake position 02 and check tier 2 reward
 // [EXPECTED] position 02 staked

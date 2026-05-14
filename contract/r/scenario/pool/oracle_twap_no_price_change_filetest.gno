@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -37,8 +37,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 const (
@@ -64,12 +64,12 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
-	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] Creating atom-btc pool (fee: 500, initial tick: 0)")
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 	println()
 
 	// Add liquidity
@@ -78,8 +78,8 @@ func main() {
 	println("[INFO] Minting position: tick range [-1000, 1000], liquidity: 10000000")
 	pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-1000,
 		1000,
@@ -87,14 +87,14 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Pool tick:", thisPool.Slot0Tick())
 	println()
 
 	// Get initial TWAP (should be current tick since no time has passed)
 	println("[SCENARIO] 3. Initial TWAP Query (0 seconds ago)")
-	poolPath := barPath + ":" + fooPath + ":" + "500"
+	poolPath := atomPath + ":" + btcPath + ":" + "500"
 	twapTick, twapLiquidity, _ := pool.GetTWAP(poolPath, 0)
 	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago - tick: %d, liquidity: %s\n", twapTick, twapLiquidity)
 	println()
@@ -130,7 +130,7 @@ func main() {
 //
 // [SCENARIO] 1. Pool Creation
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-foo pool (fee: 500, initial tick: 0)
+// [INFO] Creating atom-btc pool (fee: 500, initial tick: 0)
 // [INFO] Approving tokens for pool operations
 //
 // [SCENARIO] 2. Add Liquidity

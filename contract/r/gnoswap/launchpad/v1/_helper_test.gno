@@ -15,12 +15,12 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 const (
 	testLaunchpadPkgPath = "gno.land/r/gnoswap/launchpad"
-	testOblTokenPath     = "gno.land/r/onbloc/obl"
+	testEthTokenPath     = "gno.land/r/gnoswap/test_token/eth"
 	testBlockTimeSeconds = int64(5)
 )
 
@@ -96,11 +96,11 @@ func createTestProject(
 
 	tokenPath := cfg.tokenPath
 	if tokenPath == "" {
-		tokenPath = testOblTokenPath
+		tokenPath = testEthTokenPath
 	}
 
-	if tokenPath == testOblTokenPath {
-		obl.Approve(cross, launchpadAddr, cfg.rewardAmount)
+	if tokenPath == testEthTokenPath {
+		eth.Approve(cross, launchpadAddr, cfg.rewardAmount)
 	}
 
 	startTime := testing.GetContext().Time.Unix() + projectMinimumStartDelayTime

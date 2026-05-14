@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -48,8 +48,8 @@ func initEnvironment() {}
 func createProjectByZeroRewardAmount() {
 	testing.SetOriginCaller(adminAddr)
 
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(0)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -72,7 +72,7 @@ func createProjectByZeroRewardAmount() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || deposit amount cannot be 0"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
@@ -99,8 +99,8 @@ func createProjectByZeroRewardAmount() {
 //
 // [SCENARIO] 2. Admin attempts to create project with zero reward amount
 // [INFO] admin attempting to create project with zero reward amount
-// [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with project name: ETH Launchpad Project
+// [INFO] create project with reward token path: gno.land/r/gnoswap/test_token/eth
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 0
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
