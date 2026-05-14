@@ -10,7 +10,7 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-loadpkg gno.land/r/onbloc/usdc
+loadpkg gno.land/r/gnoswap/test_token/usdc
 loadpkg gno.land/r/onbloc/foo
 loadpkg gno.land/r/onbloc/bar
 loadpkg gno.land/r/onbloc/baz
