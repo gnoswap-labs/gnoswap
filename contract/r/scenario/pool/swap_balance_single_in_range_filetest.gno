@@ -21,8 +21,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -42,8 +42,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 const (
@@ -58,12 +58,12 @@ func init() {
 }
 
 type BalanceSnapshot struct {
-	userBar        int64
-	userFoo        int64
-	poolBar        int64
-	poolFoo        int64
-	protocolFeeBar int64
-	protocolFeeFoo int64
+	userAtom        int64
+	userBtc        int64
+	poolAtom        int64
+	poolBtc        int64
+	protocolFeeAtom int64
+	protocolFeeBtc int64
 }
 
 func main() {
@@ -76,13 +76,13 @@ func main() {
 	printBalanceSnapshot("After Pool Setup", initial)
 	println()
 
-	println("[SCENARIO] 2. ExactInput Swap (BAR -> FOO)")
+	println("[SCENARIO] 2. ExactInput Swap (ATOM -> BTC)")
 	afterExactIn := testExactInputSwap(initial)
 	printBalanceSnapshot("After ExactInput Swap", afterExactIn)
 	validateBalanceChange(initial, afterExactIn, "ExactInput")
 	println()
 
-	println("[SCENARIO] 3. ExactOutput Swap (FOO -> BAR)")
+	println("[SCENARIO] 3. ExactOutput Swap (BTC -> ATOM)")
 	afterExactOut := testExactOutputSwap(afterExactIn)
 	printBalanceSnapshot("After ExactOutput Swap", afterExactOut)
 	validateBalanceChange(afterExactIn, afterExactOut, "ExactOutput")
@@ -93,39 +93,39 @@ func main() {
 
 func getBalanceSnapshot() BalanceSnapshot {
 	return BalanceSnapshot{
-		userBar:        bar.BalanceOf(adminAddr),
-		userFoo:        foo.BalanceOf(adminAddr),
-		poolBar:        bar.BalanceOf(poolAddr),
-		poolFoo:        foo.BalanceOf(poolAddr),
-		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
+		userAtom:        atom.BalanceOf(adminAddr),
+		userBtc:        btc.BalanceOf(adminAddr),
+		poolAtom:        atom.BalanceOf(poolAddr),
+		poolBtc:        btc.BalanceOf(poolAddr),
+		protocolFeeAtom: atom.BalanceOf(protocolFeeAddr),
+		protocolFeeBtc: btc.BalanceOf(protocolFeeAddr),
 	}
 }
 
 func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
-	println("[EXPECTED] User BAR balance:", snapshot.userBar)
-	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
-	println("[EXPECTED] Pool BAR balance:", snapshot.poolBar)
-	println("[EXPECTED] Pool FOO balance:", snapshot.poolFoo)
-	println("[EXPECTED] Protocol fee BAR balance:", snapshot.protocolFeeBar)
-	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
+	println("[EXPECTED] User ATOM balance:", snapshot.userAtom)
+	println("[EXPECTED] User BTC balance:", snapshot.userBtc)
+	println("[EXPECTED] Pool ATOM balance:", snapshot.poolAtom)
+	println("[EXPECTED] Pool BTC balance:", snapshot.poolBtc)
+	println("[EXPECTED] Protocol fee ATOM balance:", snapshot.protocolFeeAtom)
+	println("[EXPECTED] Protocol fee BTC balance:", snapshot.protocolFeeBtc)
 }
 
 func setupPool() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, "79228162514264337593543950336")
+	pool.CreatePool(cross, atomPath, btcPath, fee500, "79228162514264337593543950336")
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-1000,
 		1000,
@@ -134,7 +134,7 @@ func setupPool() BalanceSnapshot {
 	)
 
 	println("[INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)")
-	println("[INFO] Minted amounts - bar:", amount0, "foo:", amount1)
+	println("[INFO] Minted amounts - atom:", amount0, "btc:", amount1)
 
 	return getBalanceSnapshot()
 }
@@ -142,19 +142,19 @@ func setupPool() BalanceSnapshot {
 func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPool(atomPath, btcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	println("[INFO] Swapping 100000 BAR -> FOO (exact input)")
+	println("[INFO] Swapping 100000 ATOM -> BTC (exact input)")
 
-	bar.Approve(cross, poolAddr, 100000)
+	atom.Approve(cross, poolAddr, 100000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -162,11 +162,11 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPool(atomPath, btcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -180,19 +180,19 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPool(atomPath, btcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	println("[INFO] Swapping FOO -> 50000 BAR (exact output)")
+	println("[INFO] Swapping BTC -> 50000 ATOM (exact output)")
 
-	foo.Approve(cross, poolAddr, 200000)
+	btc.Approve(cross, poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,
@@ -200,11 +200,11 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPool(atomPath, btcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -218,29 +218,29 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
-	userBarDiff := after.userBar - before.userBar
-	userFooDiff := after.userFoo - before.userFoo
-	poolBarDiff := after.poolBar - before.poolBar
-	poolFooDiff := after.poolFoo - before.poolFoo
-	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
-	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
+	userAtomDiff := after.userAtom - before.userAtom
+	userBtcDiff := after.userBtc - before.userBtc
+	poolAtomDiff := after.poolAtom - before.poolAtom
+	poolBtcDiff := after.poolBtc - before.poolBtc
+	protocolFeeAtomDiff := after.protocolFeeAtom - before.protocolFeeAtom
+	protocolFeeBtcDiff := after.protocolFeeBtc - before.protocolFeeBtc
 
-	println("[EXPECTED] User BAR change:", userBarDiff)
-	println("[EXPECTED] User FOO change:", userFooDiff)
-	println("[EXPECTED] Pool BAR change:", poolBarDiff)
-	println("[EXPECTED] Pool FOO change:", poolFooDiff)
-	println("[EXPECTED] Protocol Fee BAR change:", protocolFeeBarDiff)
-	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
+	println("[EXPECTED] User ATOM change:", userAtomDiff)
+	println("[EXPECTED] User BTC change:", userBtcDiff)
+	println("[EXPECTED] Pool ATOM change:", poolAtomDiff)
+	println("[EXPECTED] Pool BTC change:", poolBtcDiff)
+	println("[EXPECTED] Protocol Fee ATOM change:", protocolFeeAtomDiff)
+	println("[EXPECTED] Protocol Fee BTC change:", protocolFeeBtcDiff)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
-	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
-	totalFooChange := userFooDiff + poolFooDiff + protocolFeeFooDiff
+	totalAtomChange := userAtomDiff + poolAtomDiff + protocolFeeAtomDiff
+	totalBtcChange := userBtcDiff + poolBtcDiff + protocolFeeBtcDiff
 
-	if totalBarChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] BAR not conserved! Total change: %d", totalBarChange))
+	if totalAtomChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] ATOM not conserved! Total change: %d", totalAtomChange))
 	}
-	if totalFooChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] FOO not conserved! Total change: %d", totalFooChange))
+	if totalBtcChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BTC not conserved! Total change: %d", totalBtcChange))
 	}
 
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
@@ -265,55 +265,55 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 1. Setup Pool with In-Range Position
 // [INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)
-// [INFO] Minted amounts - bar: 48768198 foo: 48768198
+// [INFO] Minted amounts - atom: 48768198 btc: 48768198
 // [INFO] After Pool Setup
-// [EXPECTED] User BAR balance: 99999951231802
-// [EXPECTED] User FOO balance: 99999951231802
-// [EXPECTED] Pool BAR balance: 48768198
-// [EXPECTED] Pool FOO balance: 48768198
-// [EXPECTED] Protocol fee BAR balance: 0
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 299999951231802
+// [EXPECTED] User BTC balance: 2099999951231802
+// [EXPECTED] Pool ATOM balance: 48768198
+// [EXPECTED] Pool BTC balance: 48768198
+// [EXPECTED] Protocol fee ATOM balance: 0
+// [EXPECTED] Protocol fee BTC balance: 0
 //
-// [SCENARIO] 2. ExactInput Swap (BAR -> FOO)
-// [INFO] Swapping 100000 BAR -> FOO (exact input)
+// [SCENARIO] 2. ExactInput Swap (ATOM -> BTC)
+// [INFO] Swapping 100000 ATOM -> BTC (exact input)
 // [INFO] Swap - In: 100000 Out: -99940
 // [INFO] Tick: 0 -> -2
 // [INFO] Liquidity: before: 1000000000 after: 1000000000
 // [INFO] After ExactInput Swap
-// [EXPECTED] User BAR balance: 99999951131802
-// [EXPECTED] User FOO balance: 99999951331742
-// [EXPECTED] Pool BAR balance: 48868198
-// [EXPECTED] Pool FOO balance: 48668258
-// [EXPECTED] Protocol fee BAR balance: 0
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 299999951131802
+// [EXPECTED] User BTC balance: 2099999951331742
+// [EXPECTED] Pool ATOM balance: 48868198
+// [EXPECTED] Pool BTC balance: 48668258
+// [EXPECTED] Protocol fee ATOM balance: 0
+// [EXPECTED] Protocol fee BTC balance: 0
 // [INFO] Validating balance changes for ExactInput
-// [EXPECTED] User BAR change: -100000
-// [EXPECTED] User FOO change: 99940
-// [EXPECTED] Pool BAR change: 100000
-// [EXPECTED] Pool FOO change: -99940
-// [EXPECTED] Protocol Fee BAR change: 0
-// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] User ATOM change: -100000
+// [EXPECTED] User BTC change: 99940
+// [EXPECTED] Pool ATOM change: 100000
+// [EXPECTED] Pool BTC change: -99940
+// [EXPECTED] Protocol Fee ATOM change: 0
+// [EXPECTED] Protocol Fee BTC change: 0
 // [EXPECTED] Exact balance conservation verified for ExactInput
 //
-// [SCENARIO] 3. ExactOutput Swap (FOO -> BAR)
-// [INFO] Swapping FOO -> 50000 BAR (exact output)
+// [SCENARIO] 3. ExactOutput Swap (BTC -> ATOM)
+// [INFO] Swapping BTC -> 50000 ATOM (exact output)
 // [INFO] Swap - In: -50000 Out: 50019
 // [INFO] Tick: -2 -> -1
 // [INFO] Liquidity: before: 1000000000 after: 1000000000
 // [INFO] After ExactOutput Swap
-// [EXPECTED] User BAR balance: 99999951181802
-// [EXPECTED] User FOO balance: 99999951281723
-// [EXPECTED] Pool BAR balance: 48818198
-// [EXPECTED] Pool FOO balance: 48718277
-// [EXPECTED] Protocol fee BAR balance: 0
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 299999951181802
+// [EXPECTED] User BTC balance: 2099999951281723
+// [EXPECTED] Pool ATOM balance: 48818198
+// [EXPECTED] Pool BTC balance: 48718277
+// [EXPECTED] Protocol fee ATOM balance: 0
+// [EXPECTED] Protocol fee BTC balance: 0
 // [INFO] Validating balance changes for ExactOutput
-// [EXPECTED] User BAR change: 50000
-// [EXPECTED] User FOO change: -50019
-// [EXPECTED] Pool BAR change: -50000
-// [EXPECTED] Pool FOO change: 50019
-// [EXPECTED] Protocol Fee BAR change: 0
-// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] User ATOM change: 50000
+// [EXPECTED] User BTC change: -50019
+// [EXPECTED] Pool ATOM change: -50000
+// [EXPECTED] Pool BTC change: 50019
+// [EXPECTED] Protocol Fee ATOM change: 0
+// [EXPECTED] Protocol Fee BTC change: 0
 // [EXPECTED] Exact balance conservation verified for ExactOutput
 //
 // [SCENARIO] Complete - All in-range position validations passed

@@ -20,8 +20,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -41,8 +41,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 const (
@@ -81,16 +81,16 @@ func setupPool() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, "79228162514264337593543950336")
+	pool.CreatePool(cross, atomPath, btcPath, fee500, "79228162514264337593543950336")
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-887220,
 		887220,
@@ -99,18 +99,18 @@ func setupPool() {
 	)
 
 	println("[INFO] Pool created at 1:1 price")
-	println("[EXPECTED] Minted amounts - bar:", amount0, "foo:", amount1)
+	println("[EXPECTED] Minted amounts - atom:", amount0, "btc:", amount1)
 }
 
 func testZeroAmountSwap() {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPool(atomPath, btcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Attempting swap with amount: 1")
 
-	bar.Approve(cross, poolAddr, 1)
+	atom.Approve(cross, poolAddr, 1)
 
 	callbackCalled = false
 	callbackAmount0Delta = 0
@@ -119,8 +119,8 @@ func testZeroAmountSwap() {
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -128,11 +128,11 @@ func testZeroAmountSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return zeroAmountSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return zeroAmountSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPool(atomPath, btcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap completed successfully")
@@ -182,7 +182,7 @@ func zeroAmountSwapCallback(token0Path string, token1Path string, amount0Delta i
 //
 // [SCENARIO] 1. Setup Pool
 // [INFO] Pool created at 1:1 price
-// [EXPECTED] Minted amounts - bar: 1000000 foo: 1000000
+// [EXPECTED] Minted amounts - atom: 1000000 btc: 1000000
 //
 // [SCENARIO] 2. Execute Swap with Minimal Amount (amount1=0 case)
 // [INFO] Attempting swap with amount: 1

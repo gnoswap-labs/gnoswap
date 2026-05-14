@@ -24,14 +24,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "zero for one swap is success for paid amount equal to specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -40,8 +40,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -56,14 +56,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "zero for one swap is success for paid amount equal to specified amount with multiple positions",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -71,8 +71,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 					amount1Requested: 10000000,
 				},
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -6000,
 					tickUpper:        6000,
@@ -81,8 +81,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "15000000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -97,14 +97,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "zero for one swap is success for paid amount greater than specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -113,8 +113,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -129,14 +129,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "zero for one swap is failed for paid amount less than specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -145,8 +145,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -161,14 +161,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "one for zero swap is success for paid amount equal to specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -177,8 +177,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -193,14 +193,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "one for zero swap is success for paid amount greater than specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -209,8 +209,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -225,14 +225,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "one for zero swap is failed for paid amount less than specified amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -241,8 +241,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:               barPath,
-				token1Path:               bazPath,
+				token0Path:               atomPath,
+				token1Path:               atonePath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
 				payer:                    adminAddr,
@@ -257,14 +257,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 		{
 			name: "zero for one swap is success for partial paid amount",
 			poolInfo: swapPaidCreatePoolParams{
-				token0Path: barPath,
-				token1Path: bazPath,
+				token0Path: atomPath,
+				token1Path: atonePath,
 				feeTier:    FeeTier500,
 			},
 			positionInfo: []swapPaidMintPositionParams{
 				{
-					token0Path:       barPath,
-					token1Path:       bazPath,
+					token0Path:       atomPath,
+					token1Path:       atonePath,
 					feeTier:          FeeTier500,
 					tickLower:        -200,
 					tickUpper:        200,
@@ -273,8 +273,8 @@ func TestSwapCallback_Pay(t *testing.T) {
 				},
 			},
 			swapInfo: swapPaidSwapParams{
-				token0Path:          barPath,
-				token1Path:          bazPath,
+				token0Path:          atomPath,
+				token1Path:          atonePath,
 				specifiedAmount:     "5000000",
 				recipient:           adminAddr,
 				payer:               adminAddr,

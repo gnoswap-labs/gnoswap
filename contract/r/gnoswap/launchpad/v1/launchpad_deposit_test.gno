@@ -10,7 +10,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -68,7 +68,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function
 				var projectID string
@@ -78,7 +78,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 					// Approve token for project creation
 					projectID = lp.CreateProject(
 						"Test Project",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -139,7 +139,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Approve token for project creation
 				testing.SetRealm(adminRealm)
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function
 				var projectID string
@@ -148,7 +148,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 					projectID = lp.CreateProject(
 						"Test Project 2",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -203,7 +203,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function
 				var projectID string
@@ -212,7 +212,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 					projectID = lp.CreateProject(
 						"Test Project 3",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -260,9 +260,9 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				userAddr := testutils.TestAddress("user5")
 
 				// Return a valid project tier ID format
-				return "gno.land/r/onbloc/obl:123:30", userAddr
+				return "gno.land/r/gnoswap/test_token/eth:123:30", userAddr
 			},
-			targetProjectTierID:  "gno.land/r/onbloc/obl:123:30",
+			targetProjectTierID:  "gno.land/r/gnoswap/test_token/eth:123:30",
 			depositAmount:        0,
 			referrer:             "",
 			expectedPanic:        true,
@@ -274,9 +274,9 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				userAddr := testutils.TestAddress("user6")
 
 				// No need to set up project since validation fails early
-				return "gno.land/r/onbloc/obl:123:30", userAddr
+				return "gno.land/r/gnoswap/test_token/eth:123:30", userAddr
 			},
-			targetProjectTierID:  "gno.land/r/onbloc/obl:123:30",
+			targetProjectTierID:  "gno.land/r/gnoswap/test_token/eth:123:30",
 			depositAmount:        -1000000,
 			referrer:             "",
 			expectedPanic:        true,
@@ -331,7 +331,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function
 				var projectID string
@@ -340,7 +340,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 					projectID = lp.CreateProject(
 						"Test Project 9",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -391,7 +391,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				futureTime := time.Now().Unix() + projectMinimumStartDelayTime + dayTime // 8 days in future
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function with future start time
 				var projectID string
@@ -399,7 +399,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 					projectID = lp.CreateProject(
 						"Future Project",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -427,7 +427,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl:123",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/gnoswap/test_token/eth:123",
 		},
 		{
 			name: "successful deposit when called from contract",
@@ -449,7 +449,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				eth.Approve(cross, launchpadAddr, 10000)
 
 				// Create project using public CreateProject function
 				var projectID string
@@ -458,7 +458,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 					projectID = lp.CreateProject(
 						"Test Project 12",
-						"gno.land/r/onbloc/obl",
+						"gno.land/r/gnoswap/test_token/eth",
 						projectAddr,
 						10000,
 						"", // no conditions
@@ -553,7 +553,7 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 	}{
 		{
 			name:             "deposit gns successfully",
-			projectID:        "gno.land/r/onbloc/obl:123",
+			projectID:        "gno.land/r/gnoswap/test_token/eth:123",
 			tierDuration:     30,
 			depositAmount:    1000,
 			callerAddress:    userAddr,
@@ -681,7 +681,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 			depositAmount: 1000000,
 			tier30Ratio:   30,
 			tier90Ratio:   30,
@@ -728,7 +728,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 10000)
+		eth.Approve(cross, launchpadAddr, 10000)
 
 		lp := getTestImplementation()
 
@@ -738,7 +738,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"xGNS Test Project",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				10000,
 				"", // no conditions
@@ -813,7 +813,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 10000)
+		eth.Approve(cross, launchpadAddr, 10000)
 
 		lp := getTestImplementation()
 
@@ -823,7 +823,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"xGNS Multi Test Project",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				10000,
 				"",
@@ -916,14 +916,14 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		eth.Approve(cross, launchpadAddr, 1000000)
 
 		var projectID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"Reward Distribution Test Project",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				1000000, // total reward amount
 				"",
@@ -1023,14 +1023,14 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		eth.Approve(cross, launchpadAddr, 1000000)
 
 		var projectID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"No Prior Claim Test",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				1000000,
 				"",
@@ -1132,14 +1132,14 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		eth.Approve(cross, launchpadAddr, 1000000)
 
 		var projectID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"Boundary Test Project",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				1000000,
 				"", "",
@@ -1198,14 +1198,14 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		eth.Approve(cross, launchpadAddr, 1000000)
 
 		var projectID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			projectID = lp.CreateProject(
 				"Boundary Test Project 2",
-				"gno.land/r/onbloc/obl",
+				"gno.land/r/gnoswap/test_token/eth",
 				projectAddr,
 				1000000,
 				"", "",

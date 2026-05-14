@@ -26,8 +26,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -40,8 +40,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 
@@ -64,11 +64,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Mint position 01 with large liquidity")
-	mintBarQux100_1()
+	mintAtomSol100_1()
 	println()
 
 	println("[SCENARIO] 5. Mint position 02 with small liquidity")
-	mintBarQux100_2()
+	mintAtomSol100_2()
 	println()
 
 	println("[SCENARIO] 6. Stake both positions")
@@ -123,23 +123,23 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintAtomSol100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -165,16 +165,16 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_2() {
+func mintAtomSol100_2() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),

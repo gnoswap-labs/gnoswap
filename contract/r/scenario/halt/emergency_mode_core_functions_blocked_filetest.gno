@@ -36,9 +36,9 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	staker "gno.land/r/gnoswap/staker"
 	_ "gno.land/r/gnoswap/staker/v1"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 const int64Max int64 = 9223372036854775807
@@ -59,8 +59,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	barPath                    = "gno.land/r/onbloc/bar"
-	fooPath                    = "gno.land/r/onbloc/foo"
+	atomPath                    = "gno.land/r/gnoswap/test_token/atom"
+	btcPath                    = "gno.land/r/gnoswap/test_token/btc"
 	fee                        = uint32(3000)
 	existingLaunchpadProjectID string
 )
@@ -82,19 +82,19 @@ func setupScenario() {
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross, 0)
-	bar.Transfer(cross, aliceAddr, 100000000)
-	foo.Transfer(cross, aliceAddr, 100000000)
+	atom.Transfer(cross, aliceAddr, 100000000)
+	btc.Transfer(cross, aliceAddr, 100000000)
 	gns.Transfer(cross, bobAddr, 2000000)
-	pool.CreatePool(cross, barPath, fooPath, fee, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 1)
-	obl.Approve(cross, launchpadAddr, 10000)
-	existingLaunchpadProjectID = launchpad.CreateProject(cross, "Existing Project", "gno.land/r/onbloc/obl", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
+	pool.CreatePool(cross, atomPath, btcPath, fee, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	staker.SetPoolTier(cross, atomPath+":"+btcPath+":3000", 1)
+	eth.Approve(cross, launchpadAddr, 10000)
+	existingLaunchpadProjectID = launchpad.CreateProject(cross, "Existing Project", "gno.land/r/gnoswap/test_token/eth", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, int64Max)
-	foo.Approve(cross, poolAddr, int64Max)
+	atom.Approve(cross, poolAddr, int64Max)
+	btc.Approve(cross, poolAddr, int64Max)
 	testing.SetOriginSend(chain.Coins{})
-	positionId, _, _, _ := position.Mint(cross, barPath, fooPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	positionId, _, _, _ := position.Mint(cross, atomPath, btcPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	ufmt.Printf("[INFO] setup position id: %d\n", positionId)
 
@@ -130,26 +130,26 @@ func testBlockedEntriesOneByOne() {
 	testing.SetRealm(adminRealm)
 	printBlockedScenario("pool", "CreatePool")
 	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pool.CreatePool(cross, atomPath, btcPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	})
 	printBlockedExpected("pool", "CreatePool", "pool")
 
 	testing.SetRealm(aliceRealm)
 	printBlockedScenario("pool", "IncreaseObservationCardinalityNext")
 	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee, 2)
+		pool.IncreaseObservationCardinalityNext(cross, atomPath, btcPath, fee, 2)
 	})
 	printBlockedExpected("pool", "IncreaseObservationCardinalityNext", "pool")
 
 	printBlockedScenario("pool", "Mint")
 	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.Mint(cross, barPath, fooPath, fee, -960, 960, "1000", aliceAddr)
+		pool.Mint(cross, atomPath, btcPath, fee, -960, 960, "1000", aliceAddr)
 	})
 	printBlockedExpected("pool", "Mint", "pool")
 
 	printBlockedScenario("pool", "Swap")
 	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.Swap(cross, barPath, fooPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
+		pool.Swap(cross, atomPath, btcPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
 	})
 	printBlockedExpected("pool", "Swap", "pool")
 
@@ -175,41 +175,41 @@ func testBlockedEntriesOneByOne() {
 	printBlockedScenario("position", "Mint")
 	uassert.AbortsContains(t, "halted: position", func() {
 		testing.SetOriginSend(chain.Coins{})
-		position.Mint(cross, barPath, fooPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+		position.Mint(cross, atomPath, btcPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 	})
 	printBlockedExpected("position", "Mint", "position")
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, int64Max)
-	foo.Approve(cross, routerAddr, int64Max)
+	atom.Approve(cross, routerAddr, int64Max)
+	btc.Approve(cross, routerAddr, int64Max)
 	printBlockedScenario("router", "ExactInSwapRoute")
 	uassert.AbortsContains(t, "halted: router", func() {
 		testing.SetOriginSend(chain.Coins{})
-		router.ExactInSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "0", time.Now().Unix()+3600, "")
+		router.ExactInSwapRoute(cross, atomPath, btcPath, "100000", atomPath+":"+btcPath+":3000", "100", "0", time.Now().Unix()+3600, "")
 	})
 	printBlockedExpected("router", "ExactInSwapRoute", "router")
 
 	printBlockedScenario("router", "ExactInSingleSwapRoute")
 	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactInSingleSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "0", "0", time.Now().Unix()+3600, "")
+		router.ExactInSingleSwapRoute(cross, atomPath, btcPath, "100000", atomPath+":"+btcPath+":3000", "0", "0", time.Now().Unix()+3600, "")
 	})
 	printBlockedExpected("router", "ExactInSingleSwapRoute", "router")
 
 	printBlockedScenario("router", "ExactOutSwapRoute")
 	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactOutSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "1000000", time.Now().Unix()+3600, "")
+		router.ExactOutSwapRoute(cross, atomPath, btcPath, "100000", atomPath+":"+btcPath+":3000", "100", "1000000", time.Now().Unix()+3600, "")
 	})
 	printBlockedExpected("router", "ExactOutSwapRoute", "router")
 
 	printBlockedScenario("router", "ExactOutSingleSwapRoute")
 	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactOutSingleSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "1000000", "0", time.Now().Unix()+3600, "")
+		router.ExactOutSingleSwapRoute(cross, atomPath, btcPath, "100000", atomPath+":"+btcPath+":3000", "1000000", "0", time.Now().Unix()+3600, "")
 	})
 	printBlockedExpected("router", "ExactOutSingleSwapRoute", "router")
 
 	printBlockedScenario("router", "SwapCallback")
 	uassert.AbortsContains(t, "halted: router", func() {
-		router.SwapCallback(barPath, fooPath, 1, 0, aliceAddr)
+		router.SwapCallback(atomPath, btcPath, 1, 0, aliceAddr)
 	})
 	printBlockedExpected("router", "SwapCallback", "router")
 
@@ -222,7 +222,7 @@ func testBlockedEntriesOneByOne() {
 
 	printBlockedScenario("staker", "SetPoolTier")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 2)
+		staker.SetPoolTier(cross, atomPath+":"+btcPath+":3000", 2)
 	})
 	printBlockedExpected("staker", "SetPoolTier", "staker")
 
@@ -248,15 +248,15 @@ func testBlockedEntriesOneByOne() {
 	testing.SetRealm(adminRealm)
 	printBlockedScenario("launchpad", "CreateProject")
 	uassert.AbortsContains(t, "halted: launchpad", func() {
-		obl.Approve(cross, launchpadAddr, 10000)
-		launchpad.CreateProject(cross, "Blocked Project", "gno.land/r/onbloc/obl", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
+		eth.Approve(cross, launchpadAddr, 10000)
+		launchpad.CreateProject(cross, "Blocked Project", "gno.land/r/gnoswap/test_token/eth", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 	})
 	printBlockedExpected("launchpad", "CreateProject", "launchpad")
 
 	testing.SetRealm(bobRealm)
 	printBlockedScenario("launchpad", "DepositGns")
 	uassert.AbortsContains(t, "halted: launchpad", func() {
-		launchpad.DepositGns(cross, "gno.land/r/onbloc/obl:123:30", 1000000, "")
+		launchpad.DepositGns(cross, "gno.land/r/gnoswap/test_token/eth:123:30", 1000000, "")
 	})
 	printBlockedExpected("launchpad", "DepositGns", "launchpad")
 
@@ -294,19 +294,19 @@ func testBlockedEntriesOneByOne() {
 
 	printBlockedScenario("staker", "SetPoolTier")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 1)
+		staker.SetPoolTier(cross, atomPath+":"+btcPath+":3000", 1)
 	})
 	printBlockedExpected("staker", "SetPoolTier", "staker")
 
 	printBlockedScenario("staker", "ChangePoolTier")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.ChangePoolTier(cross, barPath+":"+fooPath+":3000", 1)
+		staker.ChangePoolTier(cross, atomPath+":"+btcPath+":3000", 1)
 	})
 	printBlockedExpected("staker", "ChangePoolTier", "staker")
 
 	printBlockedScenario("staker", "RemovePoolTier")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.RemovePoolTier(cross, barPath+":"+fooPath+":3000")
+		staker.RemovePoolTier(cross, atomPath+":"+btcPath+":3000")
 	})
 	printBlockedExpected("staker", "RemovePoolTier", "staker")
 
@@ -330,7 +330,7 @@ func testBlockedEntriesOneByOne() {
 
 	printBlockedScenario("staker", "SetTokenMinimumRewardAmount")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetTokenMinimumRewardAmount(cross, barPath+":1")
+		staker.SetTokenMinimumRewardAmount(cross, atomPath+":1")
 	})
 	printBlockedExpected("staker", "SetTokenMinimumRewardAmount", "staker")
 
@@ -353,7 +353,7 @@ func testBlockedEntriesOneByOne() {
 	printBlockedExpected("protocol_fee", "SetGovStakerPct", "protocol_fee")
 
 	printBlockedScenario("protocol_fee", "AddToProtocolFee")
-	if err := protocolfee.AddToProtocolFee(cross, barPath, 1); err == nil || err.Error() != "[GNOSWAP-PROTOCOL_FEE-003] protocol fee halted" {
+	if err := protocolfee.AddToProtocolFee(cross, atomPath, 1); err == nil || err.Error() != "[GNOSWAP-PROTOCOL_FEE-003] protocol fee halted" {
 		panic("expected protocol fee add to fail while protocol fee is halted")
 	}
 	printBlockedExpected("protocol_fee", "AddToProtocolFee", "protocol_fee")
@@ -403,19 +403,19 @@ func testBlockedEntriesOneByOne() {
 
 	printBlockedScenario("staker", "CreateExternalIncentive")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.CreateExternalIncentive(cross, barPath+":"+fooPath+":3000", barPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
+		staker.CreateExternalIncentive(cross, atomPath+":"+btcPath+":3000", atomPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
 	})
 	printBlockedExpected("staker", "CreateExternalIncentive", "staker")
 
 	printBlockedScenario("staker", "AddToken")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.AddToken(cross, barPath)
+		staker.AddToken(cross, atomPath)
 	})
 	printBlockedExpected("staker", "AddToken", "staker")
 
 	printBlockedScenario("staker", "RemoveToken")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.RemoveToken(cross, barPath)
+		staker.RemoveToken(cross, atomPath)
 	})
 	printBlockedExpected("staker", "RemoveToken", "staker")
 

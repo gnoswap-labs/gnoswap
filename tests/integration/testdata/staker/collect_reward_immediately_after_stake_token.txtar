@@ -4,18 +4,18 @@ loadpkg gno.land/p/onbloc/json
 loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/demo/tokens/grc20
 loadpkg gno.land/p/demo/tokens/grc721
-loadpkg gno.land/r/demo/defi/foo20
+loadpkg gno.land/r/demo/defi/btc20
 
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-loadpkg gno.land/r/onbloc/usdc
-loadpkg gno.land/r/onbloc/foo
-loadpkg gno.land/r/onbloc/bar
-loadpkg gno.land/r/onbloc/baz
-loadpkg gno.land/r/onbloc/qux
-loadpkg gno.land/r/onbloc/obl
+loadpkg gno.land/r/gnoswap/test_token/usdc
+loadpkg gno.land/r/gnoswap/test_token/btc
+loadpkg gno.land/r/gnoswap/test_token/atom
+loadpkg gno.land/r/gnoswap/test_token/atone
+loadpkg gno.land/r/gnoswap/test_token/sol
+loadpkg gno.land/r/gnoswap/test_token/eth
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
@@ -54,56 +54,56 @@ patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 ## start a new node
 gnoland start
 
-# Transfer Bar tokens
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Transfer Atom tokens
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/atom -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/atom -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Transfer Foo tokens
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Transfer Btc tokens
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/btc -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/btc -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 # Approve test tokens to pool address
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/atom -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/btc -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 # Approve test tokens to staker address
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/atom -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/test_token/btc -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create Pool (BAR:FOO:3000)
+# Create Pool (ATOM:BTC:3000)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
-gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoswap/test_token/atom" -args "gno.land/r/gnoswap/test_token/btc" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\")"
 # stdout true
 
 # Mint position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args "5000000" -args "5000000" -args "1" -args "1" -args 9999999999 -args $test1_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoswap/test_token/atom" -args "gno.land/r/gnoswap/test_token/btc" -args 3000 -args -60 -args 60 -args "5000000" -args "5000000" -args "1" -args "1" -args 9999999999 -args $test1_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 1
 # stdout "1669251248"
 # stdout "5000000"
 # stdout "5000000"
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000" -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   3[0-9]{7}'
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{4} bytes'
 # stdout 'TOTAL TX COST:  (1|2)[0-9]{7}ugnot'
-# stdout 'EVENTS:     \[{\"type\":\"SetPoolTier\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"tier\",\"value\":\"1\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
+# stdout 'EVENTS:     \[{\"type\":\"SetPoolTier\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\"},{\"key\":\"tier\",\"value\":\"1\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
-gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\")"
 # stdout 1
 
 # Stake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
-# stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+# stdout "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 # stdout 'GAS USED:   (5|6)[0-9]{7}'
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{4} bytes'
 # stdout 'TOTAL TX COST:  1[0-9]{7}ugnot'
-# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"StakeToken\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"liquidity\",\"value\":\"1669251248\"},{\"key\":\"positionUpperTick\",\"value\":\"60\"},{\"key\":\"positionLowerTick\",\"value\":\"-60\"},{\"key\":\"currentTick\",\"value\":\"0\"},{\"key\":\"isInRange\",\"value\":\"true\"},{\"key\":\"referrer\",\"value\":\"\"},{\"key\":\"amount0\",\"value\":\"4999999\"},{\"key\":\"amount1\",\"value\":\"4999999\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}.*\]'
+# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"StakeToken\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\"},{\"key\":\"liquidity\",\"value\":\"1669251248\"},{\"key\":\"positionUpperTick\",\"value\":\"60\"},{\"key\":\"positionLowerTick\",\"value\":\"-60\"},{\"key\":\"currentTick\",\"value\":\"0\"},{\"key\":\"isInRange\",\"value\":\"true\"},{\"key\":\"referrer\",\"value\":\"\"},{\"key\":\"amount0\",\"value\":\"4999999\"},{\"key\":\"amount1\",\"value\":\"4999999\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}.*\]'
 
 # Reward collection immediately after staking.
 # No rewards are accumulated between the two function calls, so the total amount of collected rewards should be 0.
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CollectReward -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout "0"
 # stdout 'GAS USED:   (3|4|5)[0-9]{7}'
-# stdout 'EVENTS:     \[{\"type\":\"ProtocolFeeInternalReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"fromPositionId\",\"value\":\"1\"},{\"key\":\"fromPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"recipient\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"rewardAmount\",\"value\":\"0\"},{\"key\":\"rewardToUser\",\"value\":\"0\"},{\"key\":\"rewardToFee\",\"value\":\"0\"},{\"key\":\"rewardPenalty\",\"value\":\"0\"},{\"key\":\"rewardUnClaimableAmount\",\"value\":\"0\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}.*\]'
+# stdout 'EVENTS:     \[{\"type\":\"ProtocolFeeInternalReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"fromPositionId\",\"value\":\"1\"},{\"key\":\"fromPoolPath\",\"value\":\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000\"},{\"key\":\"recipient\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"rewardAmount\",\"value\":\"0\"},{\"key\":\"rewardToUser\",\"value\":\"0\"},{\"key\":\"rewardToFee\",\"value\":\"0\"},{\"key\":\"rewardPenalty\",\"value\":\"0\"},{\"key\":\"rewardUnClaimableAmount\",\"value\":\"0\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}.*\]'

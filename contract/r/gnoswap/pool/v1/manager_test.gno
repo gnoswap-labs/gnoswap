@@ -8,13 +8,13 @@ import (
 )
 
 func TestGetPoolPath(t *testing.T) {
-	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
-	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	path := GetPoolPath(atomTokenPath, btcTokenPath, 500)
+	expected := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	if path != expected {
 		t.Errorf("Expected path %s, got %s", expected, path)
 	}
 
-	path = GetPoolPath(fooTokenPath, barTokenPath, 500)
+	path = GetPoolPath(btcTokenPath, atomTokenPath, 500)
 	if path != expected {
 		t.Errorf("Expected tokens to be sorted, expected %s, got %s", expected, path)
 	}
@@ -53,59 +53,59 @@ func TestCreatePool(t *testing.T) {
 	}{
 		{
 			name:       "success - normal token pair",
-			token0Path: barPath,
-			token1Path: fooPath,
+			token0Path: atomPath,
+			token1Path: btcPath,
 			fee:        3000,
 			sqrtPrice:  "4295128740",
 		},
 		{
-			name:       "success - gns <> baz pool",
+			name:       "success - gns <> atone pool",
 			token0Path: gnsPath,
-			token1Path: bazPath,
+			token1Path: atonePath,
 			fee:        3000,
 			sqrtPrice:  "79228162514264337593543950337",
 		},
 		{
 			name:        "fail - same tokens",
-			token0Path:  barPath,
-			token1Path:  barPath,
+			token0Path:  atomPath,
+			token1Path:  atomPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoswap/test_token/atom) != token1Path(gno.land/r/gnoswap/test_token/atom)",
 		},
 		{
-			name:        "fail - same tokens (foo)",
-			token0Path:  fooPath,
-			token1Path:  fooPath,
+			name:        "fail - same tokens (btc)",
+			token0Path:  btcPath,
+			token1Path:  btcPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/foo) != token1Path(gno.land/r/onbloc/foo)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoswap/test_token/btc) != token1Path(gno.land/r/gnoswap/test_token/btc)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
-			token0Path:  fooPath,
-			token1Path:  bazPath,
+			token0Path:  btcPath,
+			token1Path:  atonePath,
 			fee:         3000,
 			sqrtPrice:   "4295343490",
 			shouldPanic: false,
-			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
+			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/gnoswap/test_token/btc) < token1Path(gno.land/r/gnoswap/test_token/atone)",
 			inOrder:     true,
 		},
 		{
 			name:        "fail - pool already exists",
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000) not to exist",
 		},
 		{
 			name:        "fail - invalid fee amount",
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			fee:         1234,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
@@ -113,8 +113,8 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "fail - invalid sqrtPrice (too small)",
-			token0Path:  bazPath,
-			token1Path:  barPath,
+			token0Path:  atonePath,
+			token1Path:  atomPath,
 			fee:         3000,
 			sqrtPrice:   "0",
 			shouldPanic: true,
@@ -122,8 +122,8 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "fail - sqrtPrice above MAX_SQRT_RATIO",
-			token0Path:  barPath,
-			token1Path:  quxPath,
+			token0Path:  atomPath,
+			token1Path:  solPath,
 			fee:         3000,
 			sqrtPrice:   "1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
 			shouldPanic: true,
@@ -131,16 +131,16 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "success - sqrtPrice at MIN_SQRT_RATIO",
-			token0Path:  fooPath,
-			token1Path:  quxPath,
+			token0Path:  btcPath,
+			token1Path:  solPath,
 			fee:         500,
 			sqrtPrice:   "4295128739", // MIN_SQRT_RATIO
 			shouldPanic: false,
 		},
 		{
 			name:        "fail - sqrtPrice at MAX_SQRT_RATIO (boundary excluded)",
-			token0Path:  bazPath,
-			token1Path:  quxPath,
+			token0Path:  atonePath,
+			token1Path:  solPath,
 			fee:         10000,
 			sqrtPrice:   "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO
 			shouldPanic: true,
@@ -148,16 +148,16 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "success - sqrtPrice just below MAX_SQRT_RATIO",
-			token0Path:  barPath,
-			token1Path:  bazPath,
+			token0Path:  atomPath,
+			token1Path:  atonePath,
 			fee:         100,
 			sqrtPrice:   "1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
 			shouldPanic: false,
 		},
 		{
 			name:        "fail - sqrtPrice just below MIN_SQRT_RATIO",
-			token0Path:  oblPath,
-			token1Path:  barPath,
+			token0Path:  ethPath,
+			token1Path:  atomPath,
 			fee:         500,
 			sqrtPrice:   "4295128738", // MIN_SQRT_RATIO - 1
 			shouldPanic: true,
@@ -165,16 +165,16 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "success - sqrtPrice just above MIN_SQRT_RATIO",
-			token0Path:  fooPath,
-			token1Path:  oblPath,
+			token0Path:  btcPath,
+			token1Path:  ethPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740", // MIN_SQRT_RATIO + 1
 			shouldPanic: false,
 		},
 		{
 			name:        "fail - sqrtPrice one",
-			token0Path:  oblPath,
-			token1Path:  quxPath,
+			token0Path:  ethPath,
+			token1Path:  solPath,
 			fee:         500,
 			sqrtPrice:   "1",
 			shouldPanic: true,
@@ -182,8 +182,8 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "success - mid-range sqrtPrice",
-			token0Path:  bazPath,
-			token1Path:  oblPath,
+			token0Path:  atonePath,
+			token1Path:  ethPath,
 			fee:         10000,
 			sqrtPrice:   "79228162514264337593543950337", // sqrt(1) * 2^96
 			shouldPanic: false,
@@ -240,21 +240,21 @@ func TestGetPool(t *testing.T) {
 				mockInstanceSetPoolCreationFee(0)
 			},
 			shouldError: true,
-			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500) to exist",
 		},
 		{
-			name: "success - get pool (bar:foo:500)",
+			name: "success - get pool (atom:btc:500)",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				mockInstanceSetPoolCreationFee(0)
-				mockInstanceCreatePool(barPath, fooPath, fee500, "4295128740")
+				mockInstanceCreatePool(atomPath, btcPath, fee500, "4295128740")
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool) {
-				if pool.Token0Path() != barPath {
-					t.Errorf("expected token0Path %s, got %s", barPath, pool.Token0Path())
+				if pool.Token0Path() != atomPath {
+					t.Errorf("expected token0Path %s, got %s", atomPath, pool.Token0Path())
 				}
-				if pool.Token1Path() != fooPath {
-					t.Errorf("expected token1Path %s, got %s", fooPath, pool.Token1Path())
+				if pool.Token1Path() != btcPath {
+					t.Errorf("expected token1Path %s, got %s", btcPath, pool.Token1Path())
 				}
 				if pool.Fee() != fee500 {
 					t.Errorf("expected fee %d, got %d", fee500, pool.Fee())
@@ -272,7 +272,7 @@ func TestGetPool(t *testing.T) {
 				tt.setupFn(t)
 			}
 
-			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
+			pool, err := getMockInstance().GetPool(atomPath, btcPath, fee500)
 			if tt.shouldError {
 				uassert.Error(t, err, "expected error")
 			} else {

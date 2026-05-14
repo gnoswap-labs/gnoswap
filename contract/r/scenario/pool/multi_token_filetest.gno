@@ -20,9 +20,9 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -50,9 +50,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -70,56 +70,56 @@ func main() {
 	println("[SCENARIO] Multi Token")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Create foo <> bar pool")
+	println("[INFO] Create btc <> atom pool")
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	println("[INFO] Create bar <> baz pool")
+	println("[INFO] Create atom <> atone pool")
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, barPath, fee500, "130621891405341611593710811006")
+	pool.CreatePool(cross, atonePath, atomPath, fee500, "130621891405341611593710811006")
 
-	println("[SCENARIO] 1. Mint Foo:Bar Liquidity")
-	TestMintFooBarLiquidity()
+	println("[SCENARIO] 1. Mint Btc:Atom Liquidity")
+	TestMintBtcAtomLiquidity()
 
-	println("[SCENARIO] 2. Mint Bar:Baz Liquidity")
-	TestMintBarBazLiquidity()
+	println("[SCENARIO] 2. Mint Atom:Atone Liquidity")
+	TestMintAtomAtoneLiquidity()
 
-	println("[SCENARIO] 3. Swap Foo:Bar Foo > Bar")
-	TestSwapFooBarFooToBar()
+	println("[SCENARIO] 3. Swap Btc:Atom Btc > Atom")
+	TestSwapBtcAtomBtcToAtom()
 
-	println("[SCENARIO] 4. Swap Bar:Baz Bar > Baz by admin")
-	TestSwapBarBazBarToBaz()
+	println("[SCENARIO] 4. Swap Atom:Atone Atom > Atone by admin")
+	TestSwapAtomAtoneAtomToAtone()
 
-	println("[SCENARIO] 5. Collect Foo:Bar Fees")
-	TestCollectFooBarFees()
+	println("[SCENARIO] 5. Collect Btc:Atom Fees")
+	TestCollectBtcAtomFees()
 
-	println("[SCENARIO] 6. Collect Bar:Baz Fees")
-	TestCollectBarBazFees()
+	println("[SCENARIO] 6. Collect Atom:Atone Fees")
+	TestCollectAtomAtoneFees()
 
-	println("[SCENARIO] 7. Burn Foo:Bar Liquidity")
-	TestBurnFooBarLiquidity()
+	println("[SCENARIO] 7. Burn Btc:Atom Liquidity")
+	TestBurnBtcAtomLiquidity()
 
-	println("[SCENARIO] 8. Burn Bar:Baz Liquidity")
-	TestBurnBarBazLiquidity()
+	println("[SCENARIO] 8. Burn Atom:Atone Liquidity")
+	TestBurnAtomAtoneLiquidity()
 
-	println("[SCENARIO] 9. Collect Foo:Bar burned Liquidity")
-	TestCollectFooBarLiquidity()
+	println("[SCENARIO] 9. Collect Btc:Atom burned Liquidity")
+	TestCollectBtcAtomLiquidity()
 
-	println("[SCENARIO] 10. Collect Bar:Baz burned Liquidity")
-	TestCollectBarBazLiquidity()
+	println("[SCENARIO] 10. Collect Atom:Atone burned Liquidity")
+	TestCollectAtomAtoneLiquidity()
 }
 
-// Mint Foo:Bar Liquidity by admin
-func TestMintFooBarLiquidity() {
+// Mint Btc:Atom Liquidity by admin
+func TestMintBtcAtomLiquidity() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		fee500,
 		-test_tickUpper,
 		-test_tickLower,
@@ -132,17 +132,17 @@ func TestMintFooBarLiquidity() {
 	println()
 }
 
-// Mint Bar:Baz Liquidity by admin
-func TestMintBarBazLiquidity() {
+// Mint Atom:Atone Liquidity by admin
+func TestMintAtomAtoneLiquidity() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		test_tickLower,
 		test_tickUpper,
@@ -155,23 +155,23 @@ func TestMintBarBazLiquidity() {
 	println()
 }
 
-// Swap Foo:Bar Foo > Bar by admin
-func TestSwapFooBarFooToBar() {
-	oldTest1Bar := bar.BalanceOf(adminAddr)
-	oldTest1Foo := foo.BalanceOf(adminAddr)
+// Swap Btc:Atom Btc > Atom by admin
+func TestSwapBtcAtomBtcToAtom() {
+	oldTest1Atom := atom.BalanceOf(adminAddr)
+	oldTest1Btc := btc.BalanceOf(adminAddr)
 
-	oldPoolBar := bar.BalanceOf(poolAddr)
-	oldPoolFoo := foo.BalanceOf(poolAddr)
+	oldPoolAtom := atom.BalanceOf(poolAddr)
+	oldPoolBtc := btc.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	atom.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -179,7 +179,7 @@ func TestSwapFooBarFooToBar() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 
 			return nil
 		},
@@ -188,34 +188,34 @@ func TestSwapFooBarFooToBar() {
 	println("[EXPECTED] poolOut:", poolOut, "expected: -5882")
 	println()
 
-	newTest1Bar := bar.BalanceOf(adminAddr)
-	newTest1Foo := foo.BalanceOf(adminAddr)
+	newTest1Atom := atom.BalanceOf(adminAddr)
+	newTest1Btc := btc.BalanceOf(adminAddr)
 
-	newPoolBar := bar.BalanceOf(poolAddr)
-	newPoolFoo := foo.BalanceOf(poolAddr)
+	newPoolAtom := atom.BalanceOf(poolAddr)
+	newPoolBtc := btc.BalanceOf(poolAddr)
 
-	println("[EXPECTED] oldTest1Bar-newTest1Bar:", oldTest1Bar-newTest1Bar, "expected: 16000")
-	println("[EXPECTED] newTest1Foo-oldTest1Foo:", newTest1Foo-oldTest1Foo, "expected: 5882")
-	println("[EXPECTED] newPoolBar-oldPoolBar:", newPoolBar-oldPoolBar, "expected: 16000")
-	println("[EXPECTED] oldPoolFoo-newPoolFoo:", oldPoolFoo-newPoolFoo, "expected: 5882")
+	println("[EXPECTED] oldTest1Atom-newTest1Atom:", oldTest1Atom-newTest1Atom, "expected: 16000")
+	println("[EXPECTED] newTest1Btc-oldTest1Btc:", newTest1Btc-oldTest1Btc, "expected: 5882")
+	println("[EXPECTED] newPoolAtom-oldPoolAtom:", newPoolAtom-oldPoolAtom, "expected: 16000")
+	println("[EXPECTED] oldPoolBtc-newPoolBtc:", oldPoolBtc-newPoolBtc, "expected: 5882")
 	println()
 }
 
-func TestSwapBarBazBarToBaz() {
-	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
-	oldadminBazBalance := baz.BalanceOf(adminAddr)
-	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
-	oldPoolBazBalance := baz.BalanceOf(poolAddr)
+func TestSwapAtomAtoneAtomToAtone() {
+	oldTest1Token0Balance := atom.BalanceOf(adminAddr)
+	oldadminAtoneBalance := atone.BalanceOf(adminAddr)
+	oldPoolToken0Balance := atom.BalanceOf(poolAddr)
+	oldPoolAtoneBalance := atone.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	atom.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		adminAddr,
 		true,
@@ -223,7 +223,7 @@ func TestSwapBarBazBarToBaz() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, atonePath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -231,32 +231,32 @@ func TestSwapBarBazBarToBaz() {
 	println("[EXPECTED] poolOut:", poolOut, "expected: -43457")
 	println()
 
-	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newAdminBazBalance := baz.BalanceOf(adminAddr)
-	newPoolToken0Balance := bar.BalanceOf(poolAddr)
-	newPoolBazBalance := baz.BalanceOf(poolAddr)
+	newTest1Token0Balance := atom.BalanceOf(adminAddr)
+	newAdminAtoneBalance := atone.BalanceOf(adminAddr)
+	newPoolToken0Balance := atom.BalanceOf(poolAddr)
+	newPoolAtoneBalance := atone.BalanceOf(poolAddr)
 
 	println("[EXPECTED] oldTest1Token0Balance-newTest1Token0Balance:", oldTest1Token0Balance-newTest1Token0Balance, "expected: 16000")
-	println("[EXPECTED] newAdminBazBalance-oldadminBazBalance:", newAdminBazBalance-oldadminBazBalance, "expected: 43457")
+	println("[EXPECTED] newAdminAtoneBalance-oldadminAtoneBalance:", newAdminAtoneBalance-oldadminAtoneBalance, "expected: 43457")
 	println("[EXPECTED] newPoolToken0Balance-oldPoolToken0Balance:", newPoolToken0Balance-oldPoolToken0Balance, "expected: 16000")
-	println("[EXPECTED] oldPoolBazBalance-newPoolBazBalance:", oldPoolBazBalance-newPoolBazBalance, "expected: 43457")
+	println("[EXPECTED] oldPoolAtoneBalance-newPoolAtoneBalance:", oldPoolAtoneBalance-newPoolAtoneBalance, "expected: 43457")
 	println()
 }
 
-func TestCollectFooBarFees() {
+func TestCollectBtcAtomFees() {
 	testing.SetRealm(posRealm)
 
-	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	poolPath := ufmt.Sprintf("%s:%s:%d", atomPath, btcPath, fee500)
 	oldToken0Balance := pool.GetBalanceToken0(poolPath)
 	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	// burn 0 to collect swap fees
-	pool.Burn(cross, barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
+	pool.Burn(cross, atomPath, btcPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
 
 	c0, c1 := pool.Collect(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		-test_tickUpper,
@@ -265,9 +265,9 @@ func TestCollectFooBarFees() {
 		"100000",
 	)
 
-	println("[INFO] Swap: foo -> bar, thus only foo has fees")
-	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was foo > bar, so only foo has fees
-	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was foo > bar, so bar has no fees
+	println("[INFO] Swap: btc -> atom, thus only btc has fees")
+	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was btc > atom, so only btc has fees
+	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was btc > atom, so atom has no fees
 
 	newToken0Balance := pool.GetBalanceToken0(poolPath)
 	newToken1Balance := pool.GetBalanceToken1(poolPath)
@@ -279,20 +279,20 @@ func TestCollectFooBarFees() {
 	println()
 }
 
-func TestCollectBarBazFees() {
+func TestCollectAtomAtoneFees() {
 	testing.SetRealm(posRealm)
 
-	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
+	poolPath := ufmt.Sprintf("%s:%s:%d", atomPath, atonePath, fee500)
 	oldToken0Balance := pool.GetBalanceToken1(poolPath)
 	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	// burn 0 to collect swap fees
-	pool.Burn(cross, barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
+	pool.Burn(cross, atomPath, atonePath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
 
 	c0, c1 := pool.Collect(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		adminAddr,
 		test_tickLower,
@@ -301,9 +301,9 @@ func TestCollectBarBazFees() {
 		"100000",
 	)
 
-	println("[INFO] Swap: bar -> baz, thus only bar has fees")
-	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was bar > baz, so only bar has fees
-	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was bar > baz, so baz has no fees
+	println("[INFO] Swap: atom -> atone, thus only atom has fees")
+	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was atom > atone, so only atom has fees
+	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was atom > atone, so atone has no fees
 
 	newToken0Balance := pool.GetBalanceToken0(poolPath)
 	newToken1Balance := pool.GetBalanceToken1(poolPath)
@@ -315,17 +315,17 @@ func TestCollectBarBazFees() {
 	println()
 }
 
-// Burn Foo:Bar Liquidity by admin
-func TestBurnFooBarLiquidity() {
+// Burn Btc:Atom Liquidity by admin
+func TestBurnBtcAtomLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolData, _ := pool.GetPool(fooPath, barPath, fee500)
+	poolData, _ := pool.GetPool(btcPath, atomPath, fee500)
 	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		fee500,
 		-test_tickUpper,
 		-test_tickLower,
@@ -336,7 +336,7 @@ func TestBurnFooBarLiquidity() {
 	println("[EXPECTED] b0:", b0, "expected: should not be 0")
 	println("[EXPECTED] b1:", b1, "expected: should not be 0")
 
-	poolData, _ = pool.GetPool(fooPath, barPath, fee500)
+	poolData, _ = pool.GetPool(btcPath, atomPath, fee500)
 	poolNewLiquidity := poolData.Liquidity()
 
 	expected := u256.Zero().Sub(poolOldLiquidity, poolNewLiquidity).ToString()
@@ -344,16 +344,16 @@ func TestBurnFooBarLiquidity() {
 	println()
 }
 
-func TestBurnBarBazLiquidity() {
+func TestBurnAtomAtoneLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolData, _ := pool.GetPool(barPath, bazPath, fee500)
+	poolData, _ := pool.GetPool(atomPath, atonePath, fee500)
 	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		test_tickLower,
 		test_tickUpper,
@@ -364,7 +364,7 @@ func TestBurnBarBazLiquidity() {
 	println("[EXPECTED] b0:", b0, "expected: should not be 0")
 	println("[EXPECTED] b1:", b1, "expected: should not be 0")
 
-	poolData, _ = pool.GetPool(barPath, bazPath, fee500)
+	poolData, _ = pool.GetPool(atomPath, atonePath, fee500)
 	poolNewLiquidity := poolData.Liquidity()
 
 	expected := u256.Zero().Sub(poolOldLiquidity, poolNewLiquidity).ToString()
@@ -372,18 +372,18 @@ func TestBurnBarBazLiquidity() {
 	println()
 }
 
-// Collect Foo:Bar burned Liquidity by admin
-func TestCollectFooBarLiquidity() {
+// Collect Btc:Atom burned Liquidity by admin
+func TestCollectBtcAtomLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	poolPath := ufmt.Sprintf("%s:%s:%d", atomPath, btcPath, fee500)
 	oldToken0Balance := pool.GetBalanceToken0(poolPath)
 	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		-test_tickUpper,
@@ -405,18 +405,18 @@ func TestCollectFooBarLiquidity() {
 	println()
 }
 
-// Collect Bar:Baz burned Liquidity by admin
-func TestCollectBarBazLiquidity() {
+// Collect Atom:Atone burned Liquidity by admin
+func TestCollectAtomAtoneLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
+	poolPath := ufmt.Sprintf("%s:%s:%d", atomPath, atonePath, fee500)
 	oldToken0Balance := pool.GetBalanceToken1(poolPath)
 	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		adminAddr,
 		test_tickLower,
@@ -462,36 +462,36 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 
 // Output:
 // [SCENARIO] Multi Token
-// [INFO] Create foo <> bar pool
-// [INFO] Create bar <> baz pool
-// [SCENARIO] 1. Mint Foo:Bar Liquidity
+// [INFO] Create btc <> atom pool
+// [INFO] Create atom <> atone pool
+// [SCENARIO] 1. Mint Btc:Atom Liquidity
 // [EXPECTED] amount0: 8040316 expected: 8040316
 // [EXPECTED] amount1: 2958015 expected: 2958015
 //
-// [SCENARIO] 2. Mint Bar:Baz Liquidity
+// [SCENARIO] 2. Mint Atom:Atone Liquidity
 // [EXPECTED] amount0: 6067683 expected: 2958015
 // [EXPECTED] amount1: 0 expected: 8040316
 //
-// [SCENARIO] 3. Swap Foo:Bar Foo > Bar
+// [SCENARIO] 3. Swap Btc:Atom Btc > Atom
 // [EXPECTED] poolIn: 16000 expected: 16000
 // [EXPECTED] poolOut: -5882 expected: -5882
 //
-// [EXPECTED] oldTest1Bar-newTest1Bar: 16000 expected: 16000
-// [EXPECTED] newTest1Foo-oldTest1Foo: 5882 expected: 5882
-// [EXPECTED] newPoolBar-oldPoolBar: 16000 expected: 16000
-// [EXPECTED] oldPoolFoo-newPoolFoo: 5882 expected: 5882
+// [EXPECTED] oldTest1Atom-newTest1Atom: 16000 expected: 16000
+// [EXPECTED] newTest1Btc-oldTest1Btc: 5882 expected: 5882
+// [EXPECTED] newPoolAtom-oldPoolAtom: 16000 expected: 16000
+// [EXPECTED] oldPoolBtc-newPoolBtc: 5882 expected: 5882
 //
-// [SCENARIO] 4. Swap Bar:Baz Bar > Baz by admin
+// [SCENARIO] 4. Swap Atom:Atone Atom > Atone by admin
 // [EXPECTED] poolIn: 0 expected: 16000
 // [EXPECTED] poolOut: 0 expected: -43457
 //
 // [EXPECTED] oldTest1Token0Balance-newTest1Token0Balance: 0 expected: 16000
-// [EXPECTED] newAdminBazBalance-oldadminBazBalance: 0 expected: 43457
+// [EXPECTED] newAdminAtoneBalance-oldadminAtoneBalance: 0 expected: 43457
 // [EXPECTED] newPoolToken0Balance-oldPoolToken0Balance: 0 expected: 16000
-// [EXPECTED] oldPoolBazBalance-newPoolBazBalance: 0 expected: 43457
+// [EXPECTED] oldPoolAtoneBalance-newPoolAtoneBalance: 0 expected: 43457
 //
-// [SCENARIO] 5. Collect Foo:Bar Fees
-// [INFO] Swap: foo -> bar, thus only foo has fees
+// [SCENARIO] 5. Collect Btc:Atom Fees
+// [INFO] Swap: btc -> atom, thus only btc has fees
 // [EXPECTED] c0: 7 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should be 0
 // [EXPECTED] oldToken0Balance: 8056316
@@ -499,8 +499,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] newToken0Balance: 8056309
 // [EXPECTED] newToken1Balance: 2952133
 //
-// [SCENARIO] 6. Collect Bar:Baz Fees
-// [INFO] Swap: bar -> baz, thus only bar has fees
+// [SCENARIO] 6. Collect Atom:Atone Fees
+// [INFO] Swap: atom -> atone, thus only atom has fees
 // [EXPECTED] c0: 0 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should be 0
 // [EXPECTED] oldToken0Balance: 0
@@ -508,17 +508,17 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] newToken0Balance: 6067683
 // [EXPECTED] newToken1Balance: 0
 //
-// [SCENARIO] 7. Burn Foo:Bar Liquidity
+// [SCENARIO] 7. Burn Btc:Atom Liquidity
 // [EXPECTED] b0: 8056307 expected: should not be 0
 // [EXPECTED] b1: 2952131 expected: should not be 0
 // [EXPECTED] expected: 100000000 expected: should be 100000000
 //
-// [SCENARIO] 8. Burn Bar:Baz Liquidity
+// [SCENARIO] 8. Burn Atom:Atone Liquidity
 // [EXPECTED] b0: 6067682 expected: should not be 0
 // [EXPECTED] b1: 0 expected: should not be 0
 // [EXPECTED] expected: 0 expected: should be 0
 //
-// [SCENARIO] 9. Collect Foo:Bar burned Liquidity
+// [SCENARIO] 9. Collect Btc:Atom burned Liquidity
 // [EXPECTED] c0: 100000 expected: should not be 0
 // [EXPECTED] c1: 100000 expected: should not be 0
 // [EXPECTED] oldToken0Balance: 8056309
@@ -526,7 +526,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] newToken0Balance: 7956309
 // [EXPECTED] newToken1Balance: 2852133
 //
-// [SCENARIO] 10. Collect Bar:Baz burned Liquidity
+// [SCENARIO] 10. Collect Atom:Atone burned Liquidity
 // [EXPECTED] c0: 100000 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should not be 0
 // [EXPECTED] oldToken0Balance: 0

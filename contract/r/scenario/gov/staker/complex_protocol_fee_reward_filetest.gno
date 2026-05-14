@@ -27,8 +27,8 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var t *testing.T
@@ -47,8 +47,8 @@ var (
 
 	minAmount = int64(1_000_000)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	wugnotPath         = "gno.land/r/gnoland/wugnot"
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
@@ -59,20 +59,20 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveProtocolFeeCallerBar(amount int64) {
+func fundAndApproveProtocolFeeCallerAtom(amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
+	atom.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	atom.Approve(cross, protocolFeeAddr, amount)
+	atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveProtocolFeeCallerQux(amount int64) {
+func fundAndApproveProtocolFeeCallerSol(amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerAddr, amount)
+	sol.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	sol.Approve(cross, protocolFeeAddr, amount)
+	sol.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
 func fundAndApproveProtocolFeeCallerWugnot(amount int64) {
@@ -84,7 +84,7 @@ func fundAndApproveProtocolFeeCallerWugnot(amount int64) {
 }
 
 func main() {
-	println("[SCENARIO] 1. Prepare protocol fee tokens (WUGNOT, bar, qux)")
+	println("[SCENARIO] 1. Prepare protocol fee tokens (WUGNOT, atom, sol)")
 	setupTokens()
 	println()
 
@@ -150,10 +150,10 @@ func delegateDummyToDummy() {
 }
 
 func depositProtocolFeePre() {
-	// protocol fee deposit (bar, qux, wugnot)
+	// protocol fee deposit (atom, sol, wugnot)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	atom.Transfer(cross, stakerAddr, 1000)
+	sol.Transfer(cross, stakerAddr, 2500)
 
 	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
@@ -165,18 +165,18 @@ func depositProtocolFeePre() {
 func depositProtocolFeePost() {
 	fundAndApproveProtocolFeeCallerWugnot(10000)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
+	atom.Approve(cross, protocolFeeAddr, 1000)
+	sol.Approve(cross, protocolFeeAddr, 2500)
 	wugnot.Approve(cross, protocolFeeAddr, 10000)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
+	pf.AddToProtocolFee(cross, atomPath, 1000)
+	pf.AddToProtocolFee(cross, solPath, 2500)
 	pf.AddToProtocolFee(cross, wugnotPath, 10000)
 
-	currentBarBalance := bar.BalanceOf(protocolFeeAddr)
-	currentQuxBalance := qux.BalanceOf(protocolFeeAddr)
+	currentAtomBalance := atom.BalanceOf(protocolFeeAddr)
+	currentSolBalance := sol.BalanceOf(protocolFeeAddr)
 	currentWugnotBalance := wugnot.BalanceOf(protocolFeeAddr)
 
-	ufmt.Printf("[INFO] protocol fee deposited: bar(%d), qux(%d), wugnot(%d)\n", currentBarBalance, currentQuxBalance, currentWugnotBalance)
+	ufmt.Printf("[INFO] protocol fee deposited: atom(%d), sol(%d), wugnot(%d)\n", currentAtomBalance, currentSolBalance, currentWugnotBalance)
 }
 
 func skipBlocksAndDistribute() {
@@ -187,55 +187,55 @@ func skipBlocksAndDistribute() {
 }
 
 func depositProtocolFeeAdditional() {
-	// additional protocol fee deposit (bar, qux)
-	fundAndApproveProtocolFeeCallerBar(2500)
-	fundAndApproveProtocolFeeCallerQux(4000)
+	// additional protocol fee deposit (atom, sol)
+	fundAndApproveProtocolFeeCallerAtom(2500)
+	fundAndApproveProtocolFeeCallerSol(4000)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 2500)
-	qux.Approve(cross, protocolFeeAddr, 4000)
-	pf.AddToProtocolFee(cross, barPath, 2500)
-	pf.AddToProtocolFee(cross, quxPath, 4000)
+	atom.Approve(cross, protocolFeeAddr, 2500)
+	sol.Approve(cross, protocolFeeAddr, 4000)
+	pf.AddToProtocolFee(cross, atomPath, 2500)
+	pf.AddToProtocolFee(cross, solPath, 4000)
 
-	currentBarBalance := bar.BalanceOf(protocolFeeAddr)
-	currentQuxBalance := qux.BalanceOf(protocolFeeAddr)
+	currentAtomBalance := atom.BalanceOf(protocolFeeAddr)
+	currentSolBalance := sol.BalanceOf(protocolFeeAddr)
 	currentWugnotBalance := wugnot.BalanceOf(protocolFeeAddr)
 
-	ufmt.Printf("[INFO] protocol fee deposited: bar(%d), qux(%d), wugnot(%d)\n", currentBarBalance, currentQuxBalance, currentWugnotBalance)
+	ufmt.Printf("[INFO] protocol fee deposited: atom(%d), sol(%d), wugnot(%d)\n", currentAtomBalance, currentSolBalance, currentWugnotBalance)
 }
 
 func collectRewardsByDummy() {
 	testing.SetOriginCaller(dummyAddr)
 	testing.SkipHeights(1)
 
-	prevBarBalance := bar.BalanceOf(dummyAddr)
-	prevQuxBalance := qux.BalanceOf(dummyAddr)
+	prevAtomBalance := atom.BalanceOf(dummyAddr)
+	prevSolBalance := sol.BalanceOf(dummyAddr)
 
 	staker.CollectReward(cross)
 
-	afterBarBalance := bar.BalanceOf(dummyAddr)
-	afterQuxBalance := qux.BalanceOf(dummyAddr)
+	afterAtomBalance := atom.BalanceOf(dummyAddr)
+	afterSolBalance := sol.BalanceOf(dummyAddr)
 
-	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance)
+	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: atom(%d), sol(%d)\n", afterAtomBalance-prevAtomBalance, afterSolBalance-prevSolBalance)
 }
 
 func unDelegateAndCollectRewardByAdmin() {
 	testing.SetRealm(adminRealm)
 	testing.SkipHeights(1)
 
-	prevBarBalance := bar.BalanceOf(adminAddr)
-	prevQuxBalance := qux.BalanceOf(adminAddr)
+	prevAtomBalance := atom.BalanceOf(adminAddr)
+	prevSolBalance := sol.BalanceOf(adminAddr)
 
 	staker.Undelegate(cross, adminAddr, int64(minAmount))
 	staker.CollectReward(cross)
 
-	afterBarBalance := bar.BalanceOf(adminAddr)
-	afterQuxBalance := qux.BalanceOf(adminAddr)
+	afterAtomBalance := atom.BalanceOf(adminAddr)
+	afterSolBalance := sol.BalanceOf(adminAddr)
 
-	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance)
+	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: atom(%d), sol(%d)\n", minAmount, afterAtomBalance-prevAtomBalance, afterSolBalance-prevSolBalance)
 }
 
 // Output:
-// [SCENARIO] 1. Prepare protocol fee tokens (WUGNOT, bar, qux)
+// [SCENARIO] 1. Prepare protocol fee tokens (WUGNOT, atom, sol)
 // [INFO] WUGNOT token issued for protocol fee
 //
 // [SCENARIO] 2. Admin delegates GNS to dummy2
@@ -245,19 +245,19 @@ func unDelegateAndCollectRewardByAdmin() {
 // [INFO] delegated 5000000 GNS from dummy to dummy
 //
 // [SCENARIO] 4. Protocol fee deposit
-// [INFO] protocol fee deposited: bar(1000), qux(2500), wugnot(10000)
+// [INFO] protocol fee deposited: atom(1000), sol(2500), wugnot(10000)
 //
 // [SCENARIO] 5. Skip blocks and distribute emission/protocol fee
 // [INFO] skipped 10+1 blocks and distributed emission/protocol fee
 //
 // [SCENARIO] 6. Collect rewards
-// [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083)
+// [INFO] collected more protocol fee reward for dummy: atom(833), sol(2083)
 //
 // [SCENARIO] 7. Additional protocol fee deposit
-// [INFO] protocol fee deposited: bar(2500), qux(4000), wugnot(0)
+// [INFO] protocol fee deposited: atom(2500), sol(4000), wugnot(0)
 //
 // [SCENARIO] 8. Collect rewards after additional protocol fee
-// [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333)
+// [INFO] collected more protocol fee reward for dummy: atom(2083), sol(3333)
 //
 // [SCENARIO] 9. Admin undelegates dummy2 and collects reward
-// [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083)
+// [INFO] admin undelegated 1000000 GNS from dummy2: atom(583), sol(1083)

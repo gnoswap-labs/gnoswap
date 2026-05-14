@@ -429,11 +429,11 @@ func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(atomPath, btcPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
 			mockInstanceMint(
-				barPath, fooPath, fee500,
+				atomPath, btcPath, fee500,
 				-10000, 10000,
 				"1000000", "1000000",
 				"0", "0",

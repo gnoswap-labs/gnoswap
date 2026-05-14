@@ -24,28 +24,28 @@ func TestSwapCallback_Token0Delta(t *testing.T) {
 	}{
 		{
 			name:          "positive token0 delta",
-			token0Path:    "gno.land/r/onbloc/foo",
-			token1Path:    "gno.land/r/onbloc/bar",
+			token0Path:    "gno.land/r/gnoswap/test_token/btc",
+			token1Path:    "gno.land/r/gnoswap/test_token/atom",
 			amount0Delta:  "1000",
 			amount1Delta:  "-500",
 			payer:         routerAddr,
 			expectError:   false,
-			expectedToken: "gno.land/r/onbloc/foo",
+			expectedToken: "gno.land/r/gnoswap/test_token/btc",
 		},
 		{
 			name:          "positive token1 delta",
-			token0Path:    "gno.land/r/onbloc/foo",
-			token1Path:    "gno.land/r/onbloc/bar",
+			token0Path:    "gno.land/r/gnoswap/test_token/btc",
+			token1Path:    "gno.land/r/gnoswap/test_token/atom",
 			amount0Delta:  "-500",
 			amount1Delta:  "1000",
 			payer:         routerAddr,
 			expectError:   false,
-			expectedToken: "gno.land/r/onbloc/bar",
+			expectedToken: "gno.land/r/gnoswap/test_token/atom",
 		},
 		{
 			name:         "both deltas negative",
-			token0Path:   "gno.land/r/onbloc/foo",
-			token1Path:   "gno.land/r/onbloc/bar",
+			token0Path:   "gno.land/r/gnoswap/test_token/btc",
+			token1Path:   "gno.land/r/gnoswap/test_token/atom",
 			amount0Delta: "-500",
 			amount1Delta: "-1000",
 			payer:        routerAddr,
@@ -53,8 +53,8 @@ func TestSwapCallback_Token0Delta(t *testing.T) {
 		},
 		{
 			name:         "both deltas zero",
-			token0Path:   "gno.land/r/onbloc/foo",
-			token1Path:   "gno.land/r/onbloc/bar",
+			token0Path:   "gno.land/r/gnoswap/test_token/btc",
+			token1Path:   "gno.land/r/gnoswap/test_token/atom",
 			amount0Delta: "0",
 			amount1Delta: "0",
 			payer:        routerAddr,
@@ -483,8 +483,8 @@ func TestExecuteSwap_SameToken(t *testing.T) {
 	executor := &DrySwapExecutor{router: router}
 
 	params := &SingleSwapParams{
-		tokenIn:  "gno.land/r/onbloc/foo",
-		tokenOut: "gno.land/r/onbloc/foo", // Same token
+		tokenIn:  "gno.land/r/gnoswap/test_token/btc",
+		tokenOut: "gno.land/r/gnoswap/test_token/btc", // Same token
 		fee:      3000,
 	}
 
@@ -505,15 +505,15 @@ func TestExecuteSwap_DifferentTokens(t *testing.T) {
 		fee      uint32
 	}{
 		{
-			name:     "foo to bar",
-			tokenIn:  "gno.land/r/onbloc/foo",
-			tokenOut: "gno.land/r/onbloc/bar",
+			name:     "btc to atom",
+			tokenIn:  "gno.land/r/gnoswap/test_token/btc",
+			tokenOut: "gno.land/r/gnoswap/test_token/atom",
 			fee:      3000,
 		},
 		{
-			name:     "bar to baz",
-			tokenIn:  "gno.land/r/onbloc/bar",
-			tokenOut: "gno.land/r/onbloc/baz",
+			name:     "atom to atone",
+			tokenIn:  "gno.land/r/gnoswap/test_token/atom",
+			tokenOut: "gno.land/r/gnoswap/test_token/atone",
 			fee:      500,
 		},
 	}
@@ -653,14 +653,14 @@ func TestSwapInner_ZeroForOneLogic(t *testing.T) {
 	}{
 		{
 			name:       "tokenIn < tokenOut means zeroForOne",
-			tokenIn:    "gno.land/r/onbloc/bar",
-			tokenOut:   "gno.land/r/onbloc/foo",
+			tokenIn:    "gno.land/r/gnoswap/test_token/atom",
+			tokenOut:   "gno.land/r/gnoswap/test_token/btc",
 			zeroForOne: true,
 		},
 		{
 			name:       "tokenIn > tokenOut means !zeroForOne",
-			tokenIn:    "gno.land/r/onbloc/foo",
-			tokenOut:   "gno.land/r/onbloc/bar",
+			tokenIn:    "gno.land/r/gnoswap/test_token/btc",
+			tokenOut:   "gno.land/r/gnoswap/test_token/atom",
 			zeroForOne: false,
 		},
 	}

@@ -1,7 +1,7 @@
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
 // POOLs:
-// 1. bar:qux:100
+// 1. atom:sol:100
 
 // POSITIONs:
 // 1. in-range position
@@ -37,8 +37,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -53,8 +53,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
 	fee100 uint32 = 100
@@ -116,8 +116,8 @@ func initAccountAndSettings() {
 	// Admin already has tokens in test environment
 	// Transfer tokens to external creator
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, externalCreatorUser, 100_000_000)
-	qux.Transfer(cross, externalCreatorUser, 100_000_000)
+	atom.Transfer(cross, externalCreatorUser, 100_000_000)
+	sol.Transfer(cross, externalCreatorUser, 100_000_000)
 }
 
 func createPool() {
@@ -126,13 +126,13 @@ func createPool() {
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFee(cross, 0)
 
-	println("[INFO] create pool bar:qux:100")
+	println("[INFO] create pool atom:sol:100")
 	testing.SkipHeights(1)
 
 	pl.CreatePool(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		"79228162514264337593543950337", // sqrtPriceX96 for price 1:1
 	)
@@ -142,16 +142,16 @@ func mintPosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -100 ~ 100)")
 	testing.SkipHeights(1)
 
 	pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -176,12 +176,12 @@ func createExternalIncentiveWithDust() {
 
 	println("[INFO] transfer tokens to external creator")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, externalCreatorUser, rewardAmount)
+	atom.Transfer(cross, externalCreatorUser, rewardAmount)
 	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve tokens for external incentive creation")
 	testing.SetRealm(externalCreatorRealm)
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, maxInt64)
 
 	// Use fixed timestamps for test reproducibility
@@ -201,8 +201,8 @@ func createExternalIncentiveWithDust() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		barPath,
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
+		atomPath,
 		rewardAmount,
 		startTime,
 		endTime,
@@ -244,10 +244,10 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	testing.SetRealm(externalCreatorRealm)
 
 	// Get balance before ending incentive
-	barBalanceBefore := bar.BalanceOf(externalCreatorUser)
+	atomBalanceBefore := atom.BalanceOf(externalCreatorUser)
 	gnsBalanceBefore := gns.BalanceOf(externalCreatorUser)
 
-	ufmt.Printf("[INFO] bar balance before ending: %d\n", barBalanceBefore)
+	ufmt.Printf("[INFO] atom balance before ending: %d\n", atomBalanceBefore)
 	ufmt.Printf("[INFO] gns balance before ending: %d\n", gnsBalanceBefore)
 
 	// Use the exact incentive ID format with the stored creation time
@@ -256,23 +256,23 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		incentiveID,
 		externalCreatorUser,
 	)
 
 	// Get balance after ending incentive
-	barBalanceAfter := bar.BalanceOf(externalCreatorUser)
+	atomBalanceAfter := atom.BalanceOf(externalCreatorUser)
 	gnsBalanceAfter := gns.BalanceOf(externalCreatorUser)
 
-	ufmt.Printf("[INFO] bar balance after ending: %d\n", barBalanceAfter)
+	ufmt.Printf("[INFO] atom balance after ending: %d\n", atomBalanceAfter)
 	ufmt.Printf("[INFO] gns balance after ending: %d\n", gnsBalanceAfter)
 
 	// Calculate refunded amounts
-	barRefunded := barBalanceAfter - barBalanceBefore
+	atomRefunded := atomBalanceAfter - atomBalanceBefore
 	gnsRefunded := gnsBalanceAfter - gnsBalanceBefore
 
-	ufmt.Printf("[RESULT] bar tokens refunded: %d\n", barRefunded)
+	ufmt.Printf("[RESULT] atom tokens refunded: %d\n", atomRefunded)
 	ufmt.Printf("[RESULT] gns tokens refunded: %d\n", gnsRefunded)
 
 	// The refund should include:
@@ -292,15 +292,15 @@ func endExternalIncentiveAndVerifyDustRefund() {
 
 	// Verify that dust was included in the refund
 	// The refund should be at least the dust amount
-	if barRefunded < expectedDust {
-		panic(ufmt.Sprintf("Expected refund to include at least dust amount of %d, but got %d", expectedDust, barRefunded))
+	if atomRefunded < expectedDust {
+		panic(ufmt.Sprintf("Expected refund to include at least dust amount of %d, but got %d", expectedDust, atomRefunded))
 	}
 
 	// Check if the refund amount makes sense (dust + unallocated rewards)
-	if barRefunded > 0 && barRefunded >= expectedDust {
-		ufmt.Printf("[SUCCESS] Dust refund mechanism verified - dust amount (%d) properly included in total refund (%d)!\n", expectedDust, barRefunded)
+	if atomRefunded > 0 && atomRefunded >= expectedDust {
+		ufmt.Printf("[SUCCESS] Dust refund mechanism verified - dust amount (%d) properly included in total refund (%d)!\n", expectedDust, atomRefunded)
 	} else {
-		panic(ufmt.Sprintf("Unexpected refund amount: %d (expected dust: %d)", barRefunded, expectedDust))
+		panic(ufmt.Sprintf("Unexpected refund amount: %d (expected dust: %d)", atomRefunded, expectedDust))
 	}
 }
 
@@ -310,12 +310,12 @@ func collectRewardStakedPosition() {
 	println("[INFO] collect reward staked position")
 	testing.SkipHeights(1)
 
-	beforeBarBalance := bar.BalanceOf(adminUser)
+	beforeAtomBalance := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	afterBarBalance := bar.BalanceOf(adminUser)
+	afterAtomBalance := atom.BalanceOf(adminUser)
 
-	barReward := afterBarBalance - beforeBarBalance
-	ufmt.Printf("[EXPECTED] bar reward: %d\n", barReward)
+	atomReward := afterAtomBalance - beforeAtomBalance
+	ufmt.Printf("[EXPECTED] atom reward: %d\n", atomReward)
 }
 
 func collectExternalIncentivePenalty() {
@@ -324,16 +324,16 @@ func collectExternalIncentivePenalty() {
 	println("[INFO] collect external incentive penalty", incentiveID)
 	testing.SkipHeights(1)
 
-	beforeBarBalance := bar.BalanceOf(externalCreatorUser)
-	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
-	afterBarBalance := bar.BalanceOf(externalCreatorUser)
+	beforeAtomBalance := atom.BalanceOf(externalCreatorUser)
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", incentiveID, externalCreatorUser)
+	afterAtomBalance := atom.BalanceOf(externalCreatorUser)
 
-	barPenalty := afterBarBalance - beforeBarBalance
+	atomPenalty := afterAtomBalance - beforeAtomBalance
 
-	stakerBarBalance := bar.BalanceOf(stakerAddr)
+	stakerAtomBalance := atom.BalanceOf(stakerAddr)
 
-	ufmt.Printf("[EXPECTED] bar penalty: %d\n", barPenalty)
-	ufmt.Printf("[EXPECTED] staker bar balance: %d\n", stakerBarBalance)
+	ufmt.Printf("[EXPECTED] atom penalty: %d\n", atomPenalty)
+	ufmt.Printf("[EXPECTED] staker atom balance: %d\n", stakerAtomBalance)
 }
 
 func positionIdFrom(tokenId uint64) grc721.TokenID {
@@ -348,7 +348,7 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool bar:qux:100
+// [INFO] create pool atom:sol:100
 //
 // [SCENARIO] 3. Mint position
 // [INFO] approve tokens for position
@@ -371,22 +371,22 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] position staked successfully
 //
 // [SCENARIO] 7. Wait until incentive ends and verify dust refund
-// [INFO] bar balance before ending: 100000000
+// [INFO] atom balance before ending: 100000000
 // [INFO] gns balance before ending: 0
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100070437
+// [INFO] atom balance after ending: 100070437
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 70437
+// [RESULT] atom tokens refunded: 70437
 // [RESULT] gns tokens refunded: 1000000000
 // [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70437)!
 //
 // [SCENARIO] 8. Collect reward staked position
 // [INFO] collect reward staked position
-// [EXPECTED] bar reward: 7974942592
+// [EXPECTED] atom reward: 7974942592
 //
 // [SCENARIO] 9. Collect external incentive penalty
 // [INFO] collect external incentive penalty g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
-// [EXPECTED] bar penalty: 1944432000
-// [EXPECTED] staker bar balance: 3
+// [EXPECTED] atom penalty: 1944432000
+// [EXPECTED] staker atom balance: 3
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

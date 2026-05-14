@@ -20,8 +20,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const (
@@ -43,8 +43,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -76,22 +76,22 @@ func initializeSetup() {
 	// Create pool with fee tier 100 (tick spacing = 1, most sensitive)
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100, // fee tier with tick spacing 1
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	atom.Transfer(cross, aliceAddr, testAmount)
+	atone.Transfer(cross, aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
 
 	println("[INFO] Pool created with tick spacing 1 (most sensitive to edge cases)")
 	println("[INFO] Test accounts funded and approved")
@@ -109,8 +109,8 @@ func testSingleTickRange() {
 
 	positionId, liquidity, actualAmount0, actualAmount1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		tickLower,
 		tickUpper,
@@ -141,8 +141,8 @@ func testMultipleUltraTightPositions() {
 	// First position
 	pos1Id, liq1, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		10, 11, // 1-tick range
 		"500000000",
@@ -156,8 +156,8 @@ func testMultipleUltraTightPositions() {
 	// Second position at same range
 	pos2Id, liq2, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		10, 11, // same 1-tick range
 		"500000000",
@@ -187,8 +187,8 @@ func testLargeAmountsMinimalRange() {
 
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		tickLower,
 		tickUpper,
@@ -218,8 +218,8 @@ func testLiquidityPrecision() {
 	// Position with base amount
 	_, liq1, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		100, 101, // 1-tick range
 		baseAmount,
@@ -233,8 +233,8 @@ func testLiquidityPrecision() {
 	// Position with +1 wei
 	_, liq2, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		110, 111, // different range to avoid interference
 		incrementAmount,

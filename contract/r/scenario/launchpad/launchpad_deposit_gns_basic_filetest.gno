@@ -23,7 +23,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -46,8 +46,8 @@ var (
 var t *testing.T
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	projectId := createOBLProject()
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	projectId := createETHProject()
 	projectTier30Id := projectId + ":30"
 	projectTier90Id := projectId + ":90"
 	projectTier180Id := projectId + ":180"
@@ -82,13 +82,13 @@ func main() {
 	println()
 }
 
-// Create OBL launchpad project
-func createOBLProject() string {
-	println("[INFO] Creating OBL launchpad project")
+// Create ETH launchpad project
+func createETHProject() string {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "Test ETH Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -97,9 +97,9 @@ func createOBLProject() string {
 	tier180Ratio := int64(40)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days from now
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -253,11 +253,11 @@ func depositGnsFailNonExistent() {
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 //
 // [SCENARIO] 2. Successful deposit with valid project and tier (30 days)
 // [INFO] Testing successful GNS deposit

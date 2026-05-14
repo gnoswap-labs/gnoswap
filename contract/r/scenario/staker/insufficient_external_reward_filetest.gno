@@ -30,8 +30,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
@@ -57,7 +57,7 @@ var (
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 )
 
 func main() {
@@ -68,7 +68,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[STEP 2] Create bar:baz:100 pool")
+	println("[STEP 2] Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -108,8 +108,8 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -118,7 +118,7 @@ func createShortDurationIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	// Create incentive with minimum rewards and shorter duration for higher reward rate
@@ -126,7 +126,7 @@ func createShortDurationIncentive() {
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		barPath,
+		atomPath,
 		1_000_000_000, // Minimum allowed
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS, // Only 90 days instead of 90
@@ -145,8 +145,8 @@ func mintAndStakeMultiplePositions() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	// Mint MANY positions with MAX liquidity to maximize reward consumption
@@ -155,8 +155,8 @@ func mintAndStakeMultiplePositions() {
 		// Use same tight range for all positions to maximize liquidity
 		positionId, liquidity, _, _ := pn.Mint(
 			cross,
-			barPath,
-			bazPath,
+			atomPath,
+			atonePath,
 			fee100,
 			int32(-10),
 			int32(10),
@@ -194,20 +194,20 @@ func drainIncentiveFunds() {
 
 	println("[INFO] collect rewards from all 50 positions - this should drain most of the incentive")
 	for i := 1; i <= 50; i++ {
-		beforeBar := bar.BalanceOf(adminUser)
+		beforeAtom := atom.BalanceOf(adminUser)
 		sr.CollectReward(cross, uint64(i))
-		afterBar := bar.BalanceOf(adminUser)
-		reward := afterBar - beforeBar
+		afterAtom := atom.BalanceOf(adminUser)
+		reward := afterAtom - beforeAtom
 		totalCollected += reward
 
 		if i <= 5 || i == 50 {
-			ufmt.Printf("[INFO] position %d collected: %d bar\n", i, reward)
+			ufmt.Printf("[INFO] position %d collected: %d atom\n", i, reward)
 		} else if i == 6 {
 			println("[INFO] ... collecting from positions 6-49 ...")
 		}
 	}
 
-	ufmt.Printf("[INFO] total collected in first massive round: %d bar\n", totalCollected)
+	ufmt.Printf("[INFO] total collected in first massive round: %d atom\n", totalCollected)
 
 	// Do one more extreme collection to fully deplete
 	println("[INFO] skip another 30,000 blocks and collect again to fully deplete")
@@ -215,16 +215,16 @@ func drainIncentiveFunds() {
 
 	round2Total := int64(0)
 	for i := 1; i <= 50; i++ {
-		beforeBar := bar.BalanceOf(adminUser)
+		beforeAtom := atom.BalanceOf(adminUser)
 		sr.CollectReward(cross, uint64(i))
-		afterBar := bar.BalanceOf(adminUser)
-		reward := afterBar - beforeBar
+		afterAtom := atom.BalanceOf(adminUser)
+		reward := afterAtom - beforeAtom
 		round2Total += reward
 	}
 
 	totalCollected += round2Total
-	ufmt.Printf("[INFO] second round collected: %d bar\n", round2Total)
-	ufmt.Printf("[INFO] TOTAL drained from incentive: %d bar (should be close to 1 billion)\n", totalCollected)
+	ufmt.Printf("[INFO] second round collected: %d atom\n", round2Total)
+	ufmt.Printf("[INFO] TOTAL drained from incentive: %d atom (should be close to 1 billion)\n", totalCollected)
 
 	if totalCollected < 900_000_000 {
 		println("[WARNING] May not have fully depleted the incentive, but continuing...")
@@ -244,16 +244,16 @@ func demonstratePermanentRewardLoss() {
 	zeroRewardCount := 0
 
 	for i := 1; i <= 50; i++ {
-		beforeBar := bar.BalanceOf(adminUser)
+		beforeAtom := atom.BalanceOf(adminUser)
 
 		// This will update lastCollectTime even if external rewards fail
 		sr.CollectReward(cross, uint64(i))
 
-		afterBar := bar.BalanceOf(adminUser)
-		reward := afterBar - beforeBar
+		afterAtom := atom.BalanceOf(adminUser)
+		reward := afterAtom - beforeAtom
 
 		if i <= 5 || i == 50 || reward == 0 {
-			ufmt.Printf("[RESULT] position %d reward: %d bar\n", i, reward)
+			ufmt.Printf("[RESULT] position %d reward: %d atom\n", i, reward)
 		}
 
 		if reward == 0 {
@@ -265,7 +265,7 @@ func demonstratePermanentRewardLoss() {
 	}
 
 	ufmt.Printf("\n[INFO] %d positions received ZERO rewards due to depleted incentive\n", zeroRewardCount)
-	ufmt.Printf("[INFO] Estimated total unclaimed rewards: %d bar\n", totalUnclaimed)
+	ufmt.Printf("[INFO] Estimated total unclaimed rewards: %d atom\n", totalUnclaimed)
 }
 
 func verifyPermanentLoss() {
@@ -275,17 +275,17 @@ func verifyPermanentLoss() {
 
 	zeroCount := 0
 	for i := 1; i <= 10; i++ {
-		beforeBar := bar.BalanceOf(adminUser)
+		beforeAtom := atom.BalanceOf(adminUser)
 		sr.CollectReward(cross, uint64(i))
-		afterBar := bar.BalanceOf(adminUser)
-		immediateReward := afterBar - beforeBar
+		afterAtom := atom.BalanceOf(adminUser)
+		immediateReward := afterAtom - beforeAtom
 
 		if immediateReward == 0 {
 			zeroCount++
 		}
 
 		if i <= 5 {
-			ufmt.Printf("[VERIFIED] position %d immediate re-collection: %d bar\n", i, immediateReward)
+			ufmt.Printf("[VERIFIED] position %d immediate re-collection: %d atom\n", i, immediateReward)
 		}
 	}
 
@@ -293,7 +293,7 @@ func verifyPermanentLoss() {
 }
 
 // Test results summary:
-// 	 1. External incentive with 1 billion bar tested with 50 positions
+// 	 1. External incentive with 1 billion atom tested with 50 positions
 // 	 2. 50 positions with maximum liquidity created high reward consumption rate
 // 	 3. Tested behavior when external incentive funds are insufficient
 // 	 4. Verified immediate re-collection yields 0 rewards as expected
@@ -325,8 +325,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [STEP 2] Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [STEP 2] Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [STEP 3] Create external incentive with minimum rewards and short duration
 // [INFO] approve tokens for external incentive
@@ -348,39 +348,39 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [STEP 5] Drain incentive through multiple collections
 // [INFO] skip 50,000 blocks for EXTREME reward accumulation
 // [INFO] collect rewards from all 50 positions - this should drain most of the incentive
-// [INFO] position 1 collected: 192003 bar
-// [INFO] position 2 collected: 192003 bar
-// [INFO] position 3 collected: 192003 bar
-// [INFO] position 4 collected: 192003 bar
-// [INFO] position 5 collected: 192003 bar
+// [INFO] position 1 collected: 192003 atom
+// [INFO] position 2 collected: 192003 atom
+// [INFO] position 3 collected: 192003 atom
+// [INFO] position 4 collected: 192003 atom
+// [INFO] position 5 collected: 192003 atom
 // [INFO] ... collecting from positions 6-49 ...
-// [INFO] position 50 collected: 192003 bar
-// [INFO] total collected in first massive round: 9600150 bar
+// [INFO] position 50 collected: 192003 atom
+// [INFO] total collected in first massive round: 9600150 atom
 // [INFO] skip another 30,000 blocks and collect again to fully deplete
-// [INFO] second round collected: 5759950 bar
-// [INFO] TOTAL drained from incentive: 15360100 bar (should be close to 1 billion)
+// [INFO] second round collected: 5759950 atom
+// [INFO] TOTAL drained from incentive: 15360100 atom (should be close to 1 billion)
 // [WARNING] May not have fully depleted the incentive, but continuing...
 //
 // [STEP 6] Demonstrate bug: permanent reward loss after fund depletion
 // [INFO] skip 10,000 blocks - HUGE time gap for reward accumulation
 // [INFO] attempt to collect rewards when incentive should be depleted
 // [EXPECTED] InsufficientExternalReward events should be emitted for all positions
-// [RESULT] position 1 reward: 47618 bar
-// [RESULT] position 2 reward: 47618 bar
-// [RESULT] position 3 reward: 47618 bar
-// [RESULT] position 4 reward: 47618 bar
-// [RESULT] position 5 reward: 47618 bar
-// [RESULT] position 50 reward: 47618 bar
+// [RESULT] position 1 reward: 47618 atom
+// [RESULT] position 2 reward: 47618 atom
+// [RESULT] position 3 reward: 47618 atom
+// [RESULT] position 4 reward: 47618 atom
+// [RESULT] position 5 reward: 47618 atom
+// [RESULT] position 50 reward: 47618 atom
 //
 // [INFO] 0 positions received ZERO rewards due to depleted incentive
-// [INFO] Estimated total unclaimed rewards: 0 bar
+// [INFO] Estimated total unclaimed rewards: 0 atom
 //
 // [STEP 7] Verify permanent loss
 //
 // [VERIFY] Try immediate re-collection to confirm lastCollectTime was updated
-// [VERIFIED] position 1 immediate re-collection: 0 bar
-// [VERIFIED] position 2 immediate re-collection: 0 bar
-// [VERIFIED] position 3 immediate re-collection: 0 bar
-// [VERIFIED] position 4 immediate re-collection: 0 bar
-// [VERIFIED] position 5 immediate re-collection: 0 bar
+// [VERIFIED] position 1 immediate re-collection: 0 atom
+// [VERIFIED] position 2 immediate re-collection: 0 atom
+// [VERIFIED] position 3 immediate re-collection: 0 atom
+// [VERIFIED] position 4 immediate re-collection: 0 atom
+// [VERIFIED] position 5 immediate re-collection: 0 atom
 // [VERIFIED] 10/10 positions yielded 0 rewards on immediate re-collection

@@ -36,8 +36,8 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 
 	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 func main() {
@@ -47,7 +47,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Add protocol fee by pool creation")
-	createPoolByAdmin(barPath, quxPath, 3000)
+	createPoolByAdmin(atomPath, solPath, 3000)
 	testing.SkipHeights(1)
 	println()
 
@@ -103,7 +103,7 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Add protocol fee by pool creation
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 100000000)
+// [INFO] created gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000 pool (poolCreationFee: 100000000)
 //
 // [SCENARIO] 3. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for  g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh

@@ -306,11 +306,11 @@ var (
 
 func buildPositionTokenConfigs() []positionTokenConfig {
 	tokenPaths := []string{
-		barPath,
-		bazPath,
-		fooPath,
-		oblPath,
-		quxPath,
+		atomPath,
+		atonePath,
+		btcPath,
+		ethPath,
+		solPath,
 	}
 
 	configs := []positionTokenConfig{}

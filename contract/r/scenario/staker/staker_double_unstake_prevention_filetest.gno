@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -42,8 +42,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee500 uint32 = 500
 
@@ -110,12 +110,12 @@ func createPoolWithTier() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
 	// Create pool
-	pl.CreatePool(cross, barPath, bazPath, fee500, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, fee500, "79228162514264337593543950337")
 
 	// Set pool to tier 1
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500", 1)
 
-	ufmt.Printf("[EXPECTED] pool created: bar:baz:500 with tier 1\n")
+	ufmt.Printf("[EXPECTED] pool created: atom:atone:500 with tier 1\n")
 	testing.SkipHeights(1)
 }
 
@@ -123,14 +123,14 @@ func mintAndStakePosition() {
 	testing.SetRealm(adminRealm)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	// Mint position
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		int32(-1000),
 		int32(1000),
@@ -257,7 +257,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] initialized with short warm-up periods and minted GNS
 //
 // [SCENARIO] 2. Create pool with tier
-// [EXPECTED] pool created: bar:baz:500 with tier 1
+// [EXPECTED] pool created: atom:atone:500 with tier 1
 //
 // [SCENARIO] 3. Mint and stake position
 // [EXPECTED] position 1 minted and staked successfully

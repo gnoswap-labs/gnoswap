@@ -10,8 +10,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	"gno.land/r/gnoswap/pool"
 
@@ -46,8 +46,8 @@ func main() {
 // testInvalidTickRangeBurn tests burning with invalid tick range (should abort)
 func testInvalidTickRangeBurn() {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	atomTokenPath := "gno.land/r/gnoswap/test_token/atom"
+	atoneTokenPath := "gno.land/r/gnoswap/test_token/atone"
 	fee := FeeTier100
 	liquidityAmount := "1000000"
 	tickLower := int32(-100)
@@ -62,22 +62,22 @@ func testInvalidTickRangeBurn() {
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barTokenPath,
-		bazTokenPath,
+		atomTokenPath,
+		atoneTokenPath,
 		fee,
 		"79228162514264337593543950336",
 	)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	pool.Mint(
 		cross,
-		barTokenPath,
-		bazTokenPath,
+		atomTokenPath,
+		atoneTokenPath,
 		fee,
 		tickLower,
 		tickUpper,
@@ -103,8 +103,8 @@ func testInvalidTickRangeBurn() {
 	uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
 		pool.Burn(
 			cross,
-			barTokenPath,
-			bazTokenPath,
+			atomTokenPath,
+			atoneTokenPath,
 			fee,
 			invalidTickLower,
 			invalidTickUpper,

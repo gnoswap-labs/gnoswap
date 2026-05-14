@@ -25,7 +25,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -45,10 +45,10 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println()
 
 	println("[SCENARIO] 2. Partial deposits - only tier 30 receives deposits")
@@ -101,8 +101,8 @@ func main() {
 
 	println("[SCENARIO] 9. Admin transfers remaining rewards to project recipient")
 	println("[INFO] Remaining rewards include:")
-	println("[INFO] - Tier 90 full amount (no deposits): 200,000,000 OBL")
-	println("[INFO] - Tier 180 full amount (no deposits): 700,000,000 OBL")
+	println("[INFO] - Tier 90 full amount (no deposits): 200,000,000 ETH")
+	println("[INFO] - Tier 180 full amount (no deposits): 700,000,000 ETH")
 	println("[INFO] - Any undistributed rewards from tier 30")
 	transferRemainingRewards(projectId)
 	println()
@@ -112,23 +112,23 @@ func main() {
 	println()
 }
 
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)  // 100,000,000 OBL
-	tier90Ratio := int64(20)  // 200,000,000 OBL
-	tier180Ratio := int64(70) // 700,000,000 OBL
+	tier30Ratio := int64(10)  // 100,000,000 ETH
+	tier90Ratio := int64(20)  // 200,000,000 ETH
+	tier180Ratio := int64(70) // 700,000,000 ETH
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -147,10 +147,10 @@ func createOBLProject() {
 	testing.SkipHeights(120960)
 
 	println("[INFO] Project created with ID:", projectId)
-	println("[INFO] Total reward: 1,000,000,000 OBL")
-	println("[INFO] Tier 30 reward: 100,000,000 OBL (10%)")
-	println("[INFO] Tier 90 reward: 200,000,000 OBL (20%)")
-	println("[INFO] Tier 180 reward: 700,000,000 OBL (70%)")
+	println("[INFO] Total reward: 1,000,000,000 ETH")
+	println("[INFO] Tier 30 reward: 100,000,000 ETH (10%)")
+	println("[INFO] Tier 90 reward: 200,000,000 ETH (20%)")
+	println("[INFO] Tier 180 reward: 700,000,000 ETH (70%)")
 }
 
 func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
@@ -178,13 +178,13 @@ func collectReward(ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
-	beforeOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
+	beforeEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance before: %d\n", beforeEthBalance)
 
 	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
 
-	afterOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
+	afterEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance after: %d\n", afterEthBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
@@ -203,38 +203,38 @@ func withdrawDeposit(ownerAddr address, depositId string) {
 }
 
 func checkProjectRecipientBalance() {
-	oblBalance := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Project recipient OBL balance: %d\n", oblBalance)
+	ethBalance := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Project recipient ETH balance: %d\n", ethBalance)
 }
 
 func transferRemainingRewards(projectId string) {
 	println("[INFO] Admin transferring remaining rewards to project recipient")
 	testing.SetRealm(adminRealm)
 
-	launchpadBalanceBefore := obl.BalanceOf(launchpadAddr)
-	recipientBalanceBefore := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance before: %d\n", launchpadBalanceBefore)
-	ufmt.Printf("[INFO] Recipient OBL balance before: %d\n", recipientBalanceBefore)
+	launchpadBalanceBefore := eth.BalanceOf(launchpadAddr)
+	recipientBalanceBefore := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance before: %d\n", launchpadBalanceBefore)
+	ufmt.Printf("[INFO] Recipient ETH balance before: %d\n", recipientBalanceBefore)
 
 	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
 
-	launchpadBalanceAfter := obl.BalanceOf(launchpadAddr)
-	recipientBalanceAfter := obl.BalanceOf(projectAddr)
-	ufmt.Printf("[INFO] Launchpad OBL balance after: %d\n", launchpadBalanceAfter)
-	ufmt.Printf("[INFO] Recipient OBL balance after: %d\n", recipientBalanceAfter)
-	ufmt.Printf("[INFO] OBL transferred: %d\n", recipientBalanceAfter-recipientBalanceBefore)
+	launchpadBalanceAfter := eth.BalanceOf(launchpadAddr)
+	recipientBalanceAfter := eth.BalanceOf(projectAddr)
+	ufmt.Printf("[INFO] Launchpad ETH balance after: %d\n", launchpadBalanceAfter)
+	ufmt.Printf("[INFO] Recipient ETH balance after: %d\n", recipientBalanceAfter)
+	ufmt.Printf("[INFO] ETH transferred: %d\n", recipientBalanceAfter-recipientBalanceBefore)
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
-// [INFO] Total reward: 1,000,000,000 OBL
-// [INFO] Tier 30 reward: 100,000,000 OBL (10%)
-// [INFO] Tier 90 reward: 200,000,000 OBL (20%)
-// [INFO] Tier 180 reward: 700,000,000 OBL (70%)
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [INFO] Total reward: 1,000,000,000 ETH
+// [INFO] Tier 30 reward: 100,000,000 ETH (10%)
+// [INFO] Tier 90 reward: 200,000,000 ETH (20%)
+// [INFO] Tier 180 reward: 700,000,000 ETH (70%)
 //
 // [SCENARIO] 2. Partial deposits - only tier 30 receives deposits
 // [INFO] Only Alice and Bob deposit to tier 30, tier 90 and 180 have no deposits
@@ -251,14 +251,14 @@ func transferRemainingRewards(projectId string) {
 // [SCENARIO] 4. Depositors collect their rewards
 // [INFO] Alice collecting reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 5000289
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 5000289
 // [INFO] Reward collected: 5000289
 //
 // [INFO] Bob collecting reward
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 5000096
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 5000096
 // [INFO] Reward collected: 5000096
 //
 // [SCENARIO] 5. Skip blocks to end project
@@ -268,14 +268,14 @@ func transferRemainingRewards(projectId string) {
 // [SCENARIO] 6. Depositors collect final rewards after project ends
 // [INFO] Alice collecting final reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 5000289
-// [INFO] OBL balance after: 50000096
+// [INFO] ETH balance before: 5000289
+// [INFO] ETH balance after: 50000096
 // [INFO] Reward collected: 44999807
 //
 // [INFO] Bob collecting final reward
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 5000096
-// [INFO] OBL balance after: 49999903
+// [INFO] ETH balance before: 5000096
+// [INFO] ETH balance after: 49999903
 // [INFO] Reward collected: 44999807
 //
 // [SCENARIO] 7. Depositors withdraw their GNS deposits
@@ -292,19 +292,19 @@ func transferRemainingRewards(projectId string) {
 // [INFO] GNS withdrawn: 1000000
 //
 // [SCENARIO] 8. Check project recipient balance before refund
-// [INFO] Project recipient OBL balance: 0
+// [INFO] Project recipient ETH balance: 0
 //
 // [SCENARIO] 9. Admin transfers remaining rewards to project recipient
 // [INFO] Remaining rewards include:
-// [INFO] - Tier 90 full amount (no deposits): 200,000,000 OBL
-// [INFO] - Tier 180 full amount (no deposits): 700,000,000 OBL
+// [INFO] - Tier 90 full amount (no deposits): 200,000,000 ETH
+// [INFO] - Tier 180 full amount (no deposits): 700,000,000 ETH
 // [INFO] - Any undistributed rewards from tier 30
 // [INFO] Admin transferring remaining rewards to project recipient
-// [INFO] Launchpad OBL balance before: 900000001
-// [INFO] Recipient OBL balance before: 0
-// [INFO] Launchpad OBL balance after: 0
-// [INFO] Recipient OBL balance after: 900000001
-// [INFO] OBL transferred: 900000001
+// [INFO] Launchpad ETH balance before: 900000001
+// [INFO] Recipient ETH balance before: 0
+// [INFO] Launchpad ETH balance after: 0
+// [INFO] Recipient ETH balance after: 900000001
+// [INFO] ETH transferred: 900000001
 //
 // [SCENARIO] 10. Check project recipient balance after refund
-// [INFO] Project recipient OBL balance: 900000001
+// [INFO] Project recipient ETH balance: 900000001

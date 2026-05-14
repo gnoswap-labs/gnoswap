@@ -97,13 +97,13 @@ func TestAddPendingProtocolFee(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	instance.addPendingProtocolFee(barPath, 100)
-	instance.addPendingProtocolFee(barPath, 50)
+	instance.addPendingProtocolFee(atomPath, 100)
+	instance.addPendingProtocolFee(atomPath, 50)
 	instance.addPendingProtocolFee(gnsPath, 25)
-	instance.addPendingProtocolFee(fooPath, 0)
+	instance.addPendingProtocolFee(btcPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
-	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
+	uassert.Equal(t, pendingProtocolFees[atomPath], int64(150))
 	uassert.Equal(t, pendingProtocolFees[gnsPath], int64(25))
 	uassert.Equal(t, len(pendingProtocolFees), 2)
 }
@@ -112,7 +112,7 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
+		atomPath: 0,
 		gnsPath: -10,
 	}
 	instance.store.SetPendingProtocolFees(originalPendingProtocolFees)
@@ -352,7 +352,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 		},
 		{
 			name:         "internal reward uses GNS_PATH",
-			tokenPath:    barPath,
+			tokenPath:    atomPath,
 			amount:       10000,
 			unstakingFee: 100,
 			internal:     true, // Should convert to GNS_PATH

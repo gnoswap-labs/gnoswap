@@ -38,7 +38,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -125,11 +125,11 @@ func delegateToMultipleVoters() {
 
 func createLaunchpadProject() string {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Approve(cross, launchpadAddr, int64(10_000_000))
+	eth.Approve(cross, launchpadAddr, int64(10_000_000))
 	projectId := launchpad.CreateProject(
 		cross,
-		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"Test ETH Project",
+		"gno.land/r/gnoswap/test_token/eth",
 		projectAddr,
 		int64(10_000_000),
 		"",
@@ -258,7 +258,7 @@ func verifyVotingResults(proposalId int64) {
 // [INFO] xGNS total supply: 6000000000
 //
 // [SCENARIO] 2. Create Launchpad Project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 //
 // [SCENARIO] 3. Multiple depositors deposit to launchpad
 // [INFO] Depositor1 deposited 4000000000 GNS (depositId: %!d(string=1))

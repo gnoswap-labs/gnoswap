@@ -34,8 +34,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -49,8 +49,8 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -66,7 +66,7 @@ func main() {
 	setup()
 	println()
 
-	println("[SCENARIO] 2. DrySwap: quote ExactOut 1000000 baz with no router fee")
+	println("[SCENARIO] 2. DrySwap: quote ExactOut 1000000 atone with no router fee")
 	drySwapQuote()
 	println()
 
@@ -79,19 +79,19 @@ func setup() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	atone.Approve(cross, poolAddr, max_approve)
 
 	// 1:1 pool with deep liquidity
-	pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
-	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	pl.CreatePool(cross, atomPath, atonePath, 500, "79228162514264337593543950336")
+	pn.Mint(cross, atomPath, atonePath, 500, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
-	bar.Transfer(cross, userAddr, 1012141) // user needs to have exactly 1012141 bar to swap 1000000 baz
-	baz.Transfer(cross, userAddr, 1000000)
+	atom.Transfer(cross, userAddr, 1012141) // user needs to have exactly 1012141 atom to swap 1000000 atone
+	atone.Transfer(cross, userAddr, 1000000)
 
-	ufmt.Printf("[INFO] user bar balance: %d\n", bar.BalanceOf(userAddr))
-	ufmt.Printf("[INFO] user baz balance: %d\n", baz.BalanceOf(userAddr))
-	println("[INFO] pool created at 1:1, user has exactly 1000000 bar + 1000000 baz")
+	ufmt.Printf("[INFO] user atom balance: %d\n", atom.BalanceOf(userAddr))
+	ufmt.Printf("[INFO] user atone balance: %d\n", atone.BalanceOf(userAddr))
+	println("[INFO] pool created at 1:1, user has exactly 1000000 atom + 1000000 atone")
 }
 
 func drySwapQuote() {
@@ -102,11 +102,11 @@ func drySwapQuote() {
 
 	// DrySwap should report the true input cost including router fee
 	amountIn, amountOut, ok := router.DrySwapRoute(
-		barPath,   // inputToken
-		bazPath,   // outputToken
-		"1000000", // specifiedAmount (user wants exactly 1000000 baz)
+		atomPath,   // inputToken
+		atonePath,   // outputToken
+		"1000000", // specifiedAmount (user wants exactly 1000000 atone)
 		"EXACT_OUT",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
 		"100",
 		"9223372036854775807", // no limit for dry swap
 	)
@@ -116,11 +116,11 @@ func drySwapQuote() {
 
 	// DrySwap should report the true input cost including router fee
 	amountInWithFee, amountOutWithFee, okWithFee := router.DrySwapRoute(
-		barPath,   // inputToken
-		bazPath,   // outputToken
-		"1000000", // specifiedAmount (user wants exactly 1000000 baz)
+		atomPath,   // inputToken
+		atonePath,   // outputToken
+		"1000000", // specifiedAmount (user wants exactly 1000000 atone)
 		"EXACT_OUT",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
 		"100",
 		"9223372036854775807", // no limit for dry swap
 	)
@@ -138,22 +138,22 @@ func drySwapQuote() {
 func actualSwapFailure() {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	atone.Approve(cross, routerAddr, max_approve)
 
-	userBarBefore := bar.BalanceOf(userAddr)
-	userBazBefore := baz.BalanceOf(userAddr)
+	userAtomBefore := atom.BalanceOf(userAddr)
+	userAtoneBefore := atone.BalanceOf(userAddr)
 
-	// User tries ExactOut 1000000 baz with amountInMax = 1000000 (their full balance)
-	// This should fail because pool fee + router fee requires > 1000000 bar input
+	// User tries ExactOut 1000000 atone with amountInMax = 1000000 (their full balance)
+	// This should fail because pool fee + router fee requires > 1000000 atom input
 	// Use revive to catch the cross-realm abort
 	r := revive(func() {
 		router.ExactOutSwapRoute(
 			cross,
-			barPath,
-			bazPath,
-			"1000000", // want exactly 1000000 baz
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			atomPath,
+			atonePath,
+			"1000000", // want exactly 1000000 atone
+			"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
 			"100",
 			"100000000000", // amountInMax = user's full balance
 			time.Now().Add(time.Hour).Unix(),
@@ -161,8 +161,8 @@ func actualSwapFailure() {
 		)
 	})
 
-	userBarAfter := bar.BalanceOf(userAddr)
-	userBazAfter := baz.BalanceOf(userAddr)
+	userAtomAfter := atom.BalanceOf(userAddr)
+	userAtoneAfter := atone.BalanceOf(userAddr)
 
 	if r != nil {
 		ufmt.Printf("[INFO] swap aborted: %v\n", r)
@@ -170,8 +170,8 @@ func actualSwapFailure() {
 		println("[WARNING] swap did not abort (unexpected)")
 	}
 
-	ufmt.Printf("[INFO] user bar balance changes: %d (unchanged)\n", userBarAfter-userBarBefore)
-	ufmt.Printf("[INFO] user baz balance changes: %d (unchanged)\n", userBazAfter-userBazBefore)
+	ufmt.Printf("[INFO] user atom balance changes: %d (unchanged)\n", userAtomAfter-userAtomBefore)
+	ufmt.Printf("[INFO] user atone balance changes: %d (unchanged)\n", userAtoneAfter-userAtoneBefore)
 	println("[EXPECTED] swap failed due to slippage (input required > 1000000, but amountInMax = 1000000)")
 }
 
@@ -179,11 +179,11 @@ func actualSwapFailure() {
 // [SCENARIO] DrySwap fee detection for ExactOut
 //
 // [SCENARIO] 1. Initialize pool and user
-// [INFO] user bar balance: 1012141
-// [INFO] user baz balance: 1000000
-// [INFO] pool created at 1:1, user has exactly 1000000 bar + 1000000 baz
+// [INFO] user atom balance: 1012141
+// [INFO] user atone balance: 1000000
+// [INFO] pool created at 1:1, user has exactly 1000000 atom + 1000000 atone
 //
-// [SCENARIO] 2. DrySwap: quote ExactOut 1000000 baz with no router fee
+// [SCENARIO] 2. DrySwap: quote ExactOut 1000000 atone with no router fee
 // [INFO] setup router fee to 0
 // [INFO] setup router fee to 15
 // [INFO] DrySwap result: amountIn=1010608, amountOut=1000000, ok=true
@@ -192,6 +192,6 @@ func actualSwapFailure() {
 //
 // [SCENARIO] 3. Actual swap with amountInMax = user balance (1000000)
 // [WARNING] swap did not abort (unexpected)
-// [INFO] user bar balance changes: -1012141 (unchanged)
-// [INFO] user baz balance changes: 1000000 (unchanged)
+// [INFO] user atom balance changes: -1012141 (unchanged)
+// [INFO] user atone balance changes: 1000000 (unchanged)
 // [EXPECTED] swap failed due to slippage (input required > 1000000, but amountInMax = 1000000)

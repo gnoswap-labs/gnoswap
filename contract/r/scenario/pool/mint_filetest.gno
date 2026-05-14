@@ -7,8 +7,8 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -46,9 +46,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 // Test variables
@@ -66,12 +66,12 @@ func main() {
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee500)
 
 	println("[SCENARIO] 1. returns 0 before initialization")
 	println("[EXPECTED] liquidity:", thisPool.Liquidity().ToString(), "expected: 0")
@@ -83,8 +83,8 @@ func main() {
 
 	amount0, amount1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		1000,
 		2000,
@@ -104,8 +104,8 @@ func main() {
 
 	amount0, amount1 = pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-2000,
 		-1000,
@@ -128,8 +128,8 @@ func main() {
 		func() {
 			pool.Burn(
 				cross,
-				barPath,
-				fooPath,
+				atomPath,
+				btcPath,
 				fee500,
 				test_tickLower,
 				test_tickUpper,

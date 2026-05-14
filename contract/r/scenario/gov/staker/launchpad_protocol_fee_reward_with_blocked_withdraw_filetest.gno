@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -51,24 +51,24 @@ var (
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = testing.NewUserRealm(projectAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
-func fundAndApproveProtocolFeeCallerBar(amount int64) {
+func fundAndApproveProtocolFeeCallerAtom(amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
+	atom.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	atom.Approve(cross, protocolFeeAddr, amount)
+	atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveProtocolFeeCallerQux(amount int64) {
+func fundAndApproveProtocolFeeCallerSol(amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerAddr, amount)
+	sol.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	sol.Approve(cross, protocolFeeAddr, amount)
+	sol.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
 func main() {
@@ -76,7 +76,7 @@ func main() {
 	createLaunchpadProject()
 	println()
 
-	println("[SCENARIO] 2. Setup protocol fee deposit (bar, qux)")
+	println("[SCENARIO] 2. Setup protocol fee deposit (atom, sol)")
 	setupProtocolFeeDeposit()
 	println()
 
@@ -98,14 +98,14 @@ func createLaunchpadProject() {
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, launchpadAddr, rewardAmount)
+	atom.Approve(cross, launchpadAddr, rewardAmount)
 	lp.CreateProject(
 		cross,
-		"Bar Launchpad Project",
-		barPath,
+		"Atom Launchpad Project",
+		atomPath,
 		projectAddr,
 		int64(rewardAmount),
-		barPath,
+		atomPath,
 		"1000000",
 		10,
 		20,
@@ -118,21 +118,21 @@ func createLaunchpadProject() {
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, launchpadAddr, rewardAmount)
-	depositID := lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
+	depositID := lp.DepositGns(cross, "gno.land/r/gnoswap/test_token/atom:123:30", int64(rewardAmount), "")
 	ufmt.Printf("[INFO] deposited launchpad deposit: %s\n", depositID)
 }
 
 func setupProtocolFeeDeposit() {
-	// mock protocol fee deposit (bar, qux)
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+	// mock protocol fee deposit (atom, sol)
+	fundAndApproveProtocolFeeCallerAtom(1000)
+	fundAndApproveProtocolFeeCallerSol(2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
+	atom.Approve(cross, protocolFeeAddr, 1000)
+	sol.Approve(cross, protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross, atomPath, 1000)
+	pf.AddToProtocolFee(cross, solPath, 2500)
 
-	println("[INFO] protocol fee deposited: bar(1000), qux(2500)")
+	println("[INFO] protocol fee deposited: atom(1000), sol(2500)")
 }
 
 func skipBlocksAndDistribute() {
@@ -165,17 +165,17 @@ func protocolFeeRewardProjectRecipient() {
 	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	testing.SetRealm(projectRealm)
-	prevBarBalance := bar.BalanceOf(projectAddr)
-	prevQuxBalance := qux.BalanceOf(projectAddr)
+	prevAtomBalance := atom.BalanceOf(projectAddr)
+	prevSolBalance := sol.BalanceOf(projectAddr)
 
 	lp.CollectProtocolFee(cross)
 
-	afterBarBalance := bar.BalanceOf(projectAddr)
-	afterQuxBalance := qux.BalanceOf(projectAddr)
+	afterAtomBalance := atom.BalanceOf(projectAddr)
+	afterSolBalance := sol.BalanceOf(projectAddr)
 
 	println("[INFO] collected protocol fee reward for project recipient")
-	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
-	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
+	ufmt.Printf("[EXPECTED] collected atom amount: %d\n", afterAtomBalance-prevAtomBalance)
+	ufmt.Printf("[EXPECTED] collected sol amount: %d\n", afterSolBalance-prevSolBalance)
 }
 
 func checkBlockedWithLaunchpadCollectDepositGns() {
@@ -191,17 +191,17 @@ func checkBlockedWithLaunchpadCollectDepositGns() {
 // [INFO] skipped 120960 blocks
 // [INFO] deposited launchpad deposit: 1
 //
-// [SCENARIO] 2. Setup protocol fee deposit (bar, qux)
-// [INFO] protocol fee deposited: bar(1000), qux(2500)
+// [SCENARIO] 2. Setup protocol fee deposit (atom, sol)
+// [INFO] protocol fee deposited: atom(1000), sol(2500)
 //
 // [SCENARIO] 3. Skip blocks and distribute protocol fee
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:999 gno.land/r/onbloc/qux:2499]
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/gnoswap/test_token/atom:999 gno.land/r/gnoswap/test_token/sol:2499]
 // [INFO] collected protocol fee reward for project recipient
-// [EXPECTED] collected bar amount: 999
-// [EXPECTED] collected qux amount: 2499
+// [EXPECTED] collected atom amount: 999
+// [EXPECTED] collected sol amount: 2499
 //
 // [SCENARIO] 5. Block withdraw and check claimable reward
 // [INFO] blocked launchpad collect deposit gns by not yet ended project

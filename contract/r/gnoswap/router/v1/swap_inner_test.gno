@@ -11,8 +11,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
@@ -162,14 +162,14 @@ func TestSwapInner(t *testing.T) {
 			name: "normal swap - exact input",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, barPath, alice)
+				TokenFaucet(t, atomPath, alice)
 			},
 			amountSpecified:   100,
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
-				tokenIn:  barPath,
-				tokenOut: bazPath,
+				tokenIn:  atomPath,
+				tokenOut: atonePath,
 				fee:      3000,
 				payer:    alice,
 			},
@@ -181,14 +181,14 @@ func TestSwapInner(t *testing.T) {
 			name: "insufficient balance - large amount",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, barPath, alice)
+				TokenFaucet(t, atomPath, alice)
 			},
 			amountSpecified:   9223372036854775807, // Large amount (int64 max)
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
-				tokenIn:  barPath,
-				tokenOut: bazPath,
+				tokenIn:  atomPath,
+				tokenOut: atonePath,
 				fee:      3000,
 				payer:    alice,
 			},
@@ -210,11 +210,11 @@ func TestSwapInner(t *testing.T) {
 			// Additional setup for swapInner test requirements
 			aliceRealm := testing.NewUserRealm(alice)
 			testing.SetRealm(aliceRealm)
-			bar.Approve(cross, routerAddr, maxApprove)
-			baz.Approve(cross, routerAddr, maxApprove)
-			bar.Approve(cross, poolAddr, maxApprove)
-			baz.Approve(cross, poolAddr, maxApprove)
-			TokenFaucet(t, barPath, routerAddr)
+			atom.Approve(cross, routerAddr, maxApprove)
+			atone.Approve(cross, routerAddr, maxApprove)
+			atom.Approve(cross, poolAddr, maxApprove)
+			atone.Approve(cross, poolAddr, maxApprove)
+			TokenFaucet(t, atomPath, routerAddr)
 
 			testing.SetRealm(routerRealm)
 

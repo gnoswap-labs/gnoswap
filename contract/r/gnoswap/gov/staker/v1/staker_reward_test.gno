@@ -6,7 +6,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 	"gno.land/r/gnoswap/gns"
 )
 
@@ -44,7 +44,7 @@ func TestStakerReward_CollectReward(t *testing.T) {
 				cleanupStakerRewardTest(t)
 				setupStakerRewardTestProtocolFeeRewards(t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 500,
-					barPath:  300,
+					atomPath:  300,
 				}, 1000)
 			},
 			cleanupMocks: func() {
@@ -53,7 +53,7 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
 				GNS_PATH: 500,
-				barPath:  300,
+				atomPath:  300,
 			},
 		},
 		{
@@ -77,8 +77,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 				cleanupStakerRewardTest(t)
 				setupStakerRewardTestProtocolFeeRewards(t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 1000,
-					barPath:  2000,
-					bazPath:  1500,
+					atomPath:  2000,
+					atonePath:  1500,
 					usdcPath: 500,
 				}, 1000)
 			},
@@ -88,8 +88,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
 				GNS_PATH: 1000,
-				barPath:  2000,
-				bazPath:  1500,
+				atomPath:  2000,
+				atonePath:  1500,
 				usdcPath: 500,
 			},
 		},
@@ -436,14 +436,14 @@ func TestStakerReward_transferToken(t *testing.T) {
 			},
 		},
 		{
-			name:        "GRC20 bar token transfer",
-			tokenPath:   barPath,
+			name:        "GRC20 atom token transfer",
+			tokenPath:   atomPath,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100,
 			expectError: false,
 			setupBalance: func() {
-				// bar balance is set up via setupStakerRewardStakerTokenBalance
+				// atom balance is set up via setupStakerRewardStakerTokenBalance
 			},
 		},
 	}
@@ -492,7 +492,7 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectEmissionReward: 100_000_000,
 			expectProtocolReward: map[string]int64{
 				GNS_PATH: 50_000_000,
-				barPath:  30_000_000,
+				atomPath:  30_000_000,
 			},
 			description: "Regular xGNS should have full voting weight and reward eligibility",
 		},
@@ -506,7 +506,7 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectEmissionReward: 200_000_000,
 			expectProtocolReward: map[string]int64{
 				GNS_PATH: 100_000_000,
-				barPath:  60_000_000,
+				atomPath:  60_000_000,
 			},
 			description: "Launchpad xGNS should be excluded from voting but eligible for rewards",
 		},
@@ -520,7 +520,7 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			expectEmissionReward: 100_000_000, // Based on total xGNS
 			expectProtocolReward: map[string]int64{
 				GNS_PATH: 50_000_000,
-				barPath:  30_000_000,
+				atomPath:  30_000_000,
 			},
 			description: "Mixed xGNS should have voting weight from regular only but rewards from total",
 		},
@@ -649,14 +649,14 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			expectedError: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
 		},
 		{
-			name:        "success - GRC20 bar token transfer",
-			tokenPath:   barPath,
+			name:        "success - GRC20 atom token transfer",
+			tokenPath:   atomPath,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
 			fromBalance: 500_000_000,
 			shouldFail:  false,
-			description: "GRC20 bar token transfer",
+			description: "GRC20 atom token transfer",
 		},
 	}
 
@@ -706,17 +706,17 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			emissionReward: 0,
 			protocolFeeReward: map[string]int64{
 				GNS_PATH: 0,
-				barPath:  0,
+				atomPath:  0,
 			},
 			updatedEmissionReward: 100_000_000,
 			updatedProtocolFeeReward: map[string]int64{
 				GNS_PATH: 50_000_000,
-				barPath:  30_000_000,
+				atomPath:  30_000_000,
 			},
 			expectedEmission: 99_999_999,
 			expectedProtocol: map[string]int64{
 				GNS_PATH: 49_999_999,
-				barPath:  29_999_999,
+				atomPath:  29_999_999,
 			},
 		},
 		{
@@ -814,7 +814,7 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, govStakerAddr, amount)
-	bar.Transfer(cross, govStakerAddr, amount*10)
+	atom.Transfer(cross, govStakerAddr, amount*10)
 }
 
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {

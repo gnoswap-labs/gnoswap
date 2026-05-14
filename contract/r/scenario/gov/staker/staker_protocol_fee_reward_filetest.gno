@@ -22,8 +22,8 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -43,24 +43,24 @@ var (
 	bobAddr   = testutils.TestAddress("bob")
 	bobRealm  = testing.NewUserRealm(bobAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
-func fundAndApproveProtocolFeeCallerBar(amount int64) {
+func fundAndApproveProtocolFeeCallerAtom(amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
+	atom.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	atom.Approve(cross, protocolFeeAddr, amount)
+	atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveProtocolFeeCallerQux(amount int64) {
+func fundAndApproveProtocolFeeCallerSol(amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerAddr, amount)
+	sol.Transfer(cross, stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	sol.Approve(cross, protocolFeeAddr, amount)
+	sol.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
 func main() {
@@ -68,7 +68,7 @@ func main() {
 	adminDelegateToAlice()
 	println()
 
-	println("[SCENARIO] 2. Mock protocol fee deposit (bar, qux)")
+	println("[SCENARIO] 2. Mock protocol fee deposit (atom, sol)")
 	mockProtocolFeeDeposit()
 	println()
 
@@ -76,7 +76,7 @@ func main() {
 	bobDelegateToBob()
 	println()
 
-	println("[SCENARIO] 4. Mock protocol fee deposit again (bar, qux)")
+	println("[SCENARIO] 4. Mock protocol fee deposit again (atom, sol)")
 	mockProtocolFeeDepositAgain()
 	println()
 
@@ -102,14 +102,14 @@ func adminDelegateToAlice() {
 }
 
 func mockProtocolFeeDeposit() {
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+	fundAndApproveProtocolFeeCallerAtom(1000)
+	fundAndApproveProtocolFeeCallerSol(2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
-	print("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
+	atom.Approve(cross, protocolFeeAddr, 1000)
+	sol.Approve(cross, protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross, atomPath, 1000)
+	pf.AddToProtocolFee(cross, solPath, 2500)
+	print("[INFO] protocol fee deposited: atom(1000), sol(2500)\n")
 }
 
 func bobDelegateToBob() {
@@ -123,14 +123,14 @@ func bobDelegateToBob() {
 }
 
 func mockProtocolFeeDepositAgain() {
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+	fundAndApproveProtocolFeeCallerAtom(1000)
+	fundAndApproveProtocolFeeCallerSol(2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
-	println("[INFO] protocol fee deposited again: bar(1000), qux(2500)")
+	atom.Approve(cross, protocolFeeAddr, 1000)
+	sol.Approve(cross, protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross, atomPath, 1000)
+	pf.AddToProtocolFee(cross, solPath, 2500)
+	println("[INFO] protocol fee deposited again: atom(1000), sol(2500)")
 }
 
 func skipBlocksAndDistribute() {
@@ -173,42 +173,42 @@ func protocolFeeRewardAdmin() {
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
 	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
-	prevBarBalance := bar.BalanceOf(adminAddr)
-	prevQuxBalance := qux.BalanceOf(adminAddr)
+	prevAtomBalance := atom.BalanceOf(adminAddr)
+	prevSolBalance := sol.BalanceOf(adminAddr)
 
 	testing.SetRealm(adminRealm)
 	staker.CollectReward(cross)
 
-	afterBarBalance := bar.BalanceOf(adminAddr)
-	afterQuxBalance := qux.BalanceOf(adminAddr)
+	afterAtomBalance := atom.BalanceOf(adminAddr)
+	afterSolBalance := sol.BalanceOf(adminAddr)
 
 	println("[INFO] collected protocol fee reward for adminAddr")
-	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
-	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
+	ufmt.Printf("[EXPECTED] collected atom amount: %d\n", afterAtomBalance-prevAtomBalance)
+	ufmt.Printf("[EXPECTED] collected sol amount: %d\n", afterSolBalance-prevSolBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Admin delegates GNS to Alice
 // [INFO] delegated 1000000 GNS from adminAddr to alice
 //
-// [SCENARIO] 2. Mock protocol fee deposit (bar, qux)
-// [INFO] protocol fee deposited: bar(1000), qux(2500)
+// [SCENARIO] 2. Mock protocol fee deposit (atom, sol)
+// [INFO] protocol fee deposited: atom(1000), sol(2500)
 //
 // [SCENARIO] 3. Bob delegates GNS to Bob
 // [INFO] delegated 5000000 GNS from bob to bob
 //
-// [SCENARIO] 4. Mock protocol fee deposit again (bar, qux)
-// [INFO] protocol fee deposited again: bar(1000), qux(2500)
+// [SCENARIO] 4. Mock protocol fee deposit again (atom, sol)
+// [INFO] protocol fee deposited again: atom(1000), sol(2500)
 //
 // [SCENARIO] 5. Skip blocks and distribute protocol fee
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for Bob
-// [INFO] claimable reward (bob): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:833 gno.land/r/onbloc/qux:2083]
+// [INFO] claimable reward (bob): emissionReward=0, protocolFees=map[gno.land/r/gnoswap/test_token/atom:833 gno.land/r/gnoswap/test_token/sol:2083]
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 7. Check and collect protocol fee reward for Admin
-// [INFO] claimable reward (adminAddr): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1166 gno.land/r/onbloc/qux:2916]
+// [INFO] claimable reward (adminAddr): emissionReward=0, protocolFees=map[gno.land/r/gnoswap/test_token/atom:1166 gno.land/r/gnoswap/test_token/sol:2916]
 // [INFO] collected protocol fee reward for adminAddr
-// [EXPECTED] collected bar amount: 1166
-// [EXPECTED] collected qux amount: 2916
+// [EXPECTED] collected atom amount: 1166
+// [EXPECTED] collected sol amount: 2916

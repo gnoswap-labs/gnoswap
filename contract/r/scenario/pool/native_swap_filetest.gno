@@ -20,7 +20,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 // Constants for fee tiers
@@ -46,9 +46,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath   = "gno.land/r/gnoswap/test_token/btc"
+	atomPath  = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -70,7 +70,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
+	pool.CreatePool(cross, WRAPPED_WUGNOT, btcPath, fee500, "130621891405341611593710811006") // x2.7
 
 	// prepare ugnot
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1_010_000}})
@@ -94,7 +94,7 @@ func main() {
 
 // 2. Mint LP and Get GNFT
 func TestMint() {
-	token0, token1 := fooPath, WRAPPED_WUGNOT
+	token0, token1 := btcPath, WRAPPED_WUGNOT
 	if token1 < token0 {
 		token0, token1 = token1, token0
 	}
@@ -102,14 +102,14 @@ func TestMint() {
 	println("[INFO] token0:", token0, "token1:", token1)
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 	wugnot.Approve(cross, poolAddr, maxApprove)
 
 	// Mint
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		fooPath,
+		btcPath,
 		WRAPPED_WUGNOT,
 		fee500,
 		test_tickLower,
@@ -124,22 +124,22 @@ func TestMint() {
 }
 
 func TestSwapBuyNative() {
-	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
+	pools, _ := pool.GetPool(btcPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
 	println("[INFO] admin wugnot balance before swap:", adminOldT0Bal)
-	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
+	println("[INFO] admin btc balance before swap:", adminOldT1Bal)
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, 10000)
+	btc.Approve(cross, poolAddr, 10000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
 		WRAPPED_WUGNOT, // token0
-		fooPath,        // token1
+		btcPath,        // token1
 		fee500,
 		adminAddr,
 		true,
@@ -147,7 +147,7 @@ func TestSwapBuyNative() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(WRAPPED_WUGNOT, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -157,29 +157,29 @@ func TestSwapBuyNative() {
 	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
 	println("[INFO] admin wugnot balance after swap:", adminNewT0Bal)
-	println("[INFO] admin foo balance after swap:", adminNewT1Bal)
+	println("[INFO] admin btc balance after swap:", adminNewT1Bal)
 	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be -10000")
 	println("[EXPECTED] admin token1 changed:", adminNewT1Bal-adminOldT1Bal, "expected: should be 27123")
 	println()
 }
 
 func TestSwapSellNative() {
-	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
+	pools, _ := pool.GetPool(btcPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
 	println("[INFO] admin wugnot balance before swap:", adminOldT0Bal)
-	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
+	println("[INFO] admin btc balance before swap:", adminOldT1Bal)
 
 	testing.SetRealm(adminRealm)
 	wugnot.Approve(cross, poolAddr, 27123)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
+	amount0, amount1 := pool.Swap( // ugnot 10_000 > btc ??
 		cross,
 		WRAPPED_WUGNOT, // token0
-		fooPath,        // token1
+		btcPath,        // token1
 		fee500,
 		adminAddr,
 		false,
@@ -187,7 +187,7 @@ func TestSwapSellNative() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(WRAPPED_WUGNOT, btcPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -197,7 +197,7 @@ func TestSwapSellNative() {
 	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
 	println("[INFO] admin wugnot balance after swap:", adminNewT0Bal)
-	println("[INFO] admin foo balance after swap:", adminNewT1Bal)
+	println("[INFO] admin btc balance after swap:", adminNewT1Bal)
 	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be 3687")
 	println("[EXPECTED] admin token1 changed:", adminNewT1Bal-adminOldT1Bal, "expected: should be -10000")
 	println()
@@ -217,26 +217,26 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 
 // Output:
 // [SCENARIO] 1. Mint LP and Get GNFT
-// [INFO] token0: gno.land/r/gnoland/wugnot token1: gno.land/r/onbloc/foo
+// [INFO] token0: gno.land/r/gnoland/wugnot token1: gno.land/r/gnoswap/test_token/btc
 // [EXPECTED] amount0: 295802 expected: should be 295802
 // [EXPECTED] amount1: 804032 expected: should be 804032
 //
 // [SCENARIO] 2. Swap Buy Native
 // [INFO] admin wugnot balance before swap: 714198
-// [INFO] admin foo balance before swap: 99999999195968
+// [INFO] admin btc balance before swap: 2099999999195968
 // [EXPECTED] amount0: 10000 expected: should be 10000
 // [EXPECTED] amount1: -27123 expected: should be -27123
 // [INFO] admin wugnot balance after swap: 704198
-// [INFO] admin foo balance after swap: 99999999223091
+// [INFO] admin btc balance after swap: 2099999999223091
 // [EXPECTED] admin token0 changed: -10000 expected: should be -10000
 // [EXPECTED] admin token1 changed: 27123 expected: should be 27123
 //
 // [SCENARIO] 3. Swap Sell Native
 // [INFO] admin wugnot balance before swap: 704198
-// [INFO] admin foo balance before swap: 99999999223091
+// [INFO] admin btc balance before swap: 2099999999223091
 // [EXPECTED] amount0: -3687 expected: should be -3687
 // [EXPECTED] amount1: 10000 expected: should be 10000
 // [INFO] admin wugnot balance after swap: 707885
-// [INFO] admin foo balance after swap: 99999999213091
+// [INFO] admin btc balance after swap: 2099999999213091
 // [EXPECTED] admin token0 changed: 3687 expected: should be 3687
 // [EXPECTED] admin token1 changed: -10000 expected: should be -10000

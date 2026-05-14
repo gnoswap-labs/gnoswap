@@ -218,8 +218,8 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
 
 	return &positionMintParams{
-		token0Path:     "gno.land/r/onbloc/bar",
-		token1Path:     "gno.land/r/onbloc/foo",
+		token0Path:     "gno.land/r/gnoswap/test_token/atom",
+		token1Path:     "gno.land/r/gnoswap/test_token/btc",
 		fee:            fee,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,

@@ -31,8 +31,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -46,15 +46,15 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 
 	minTick int32 = -887272
 	maxTick int32 = 887272
@@ -65,7 +65,7 @@ func main() {
 	initAndSetupSinglePool()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -113,12 +113,12 @@ func initAndSetupSinglePool() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool at price ratio 1:1")
+	println("[INFO] create atom:atone:100 pool at price ratio 1:1")
 	gns.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, poolPath, 1)
@@ -129,14 +129,14 @@ func createPool() {
 func mintPositionsWithDifferentLiquidity() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 - full range (max liquidity)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(minTick),
 		int32(maxTick-1),
@@ -156,8 +156,8 @@ func mintPositionsWithDifferentLiquidity() {
 	println("[INFO] mint position 02 - wide range")
 	positionId2, liquidity2, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-6931), // price ratio 1:0.5
 		int32(6932),  // price ratio 1:2
@@ -176,8 +176,8 @@ func mintPositionsWithDifferentLiquidity() {
 	println("[INFO] mint position 03 - narrow range around current price")
 	positionId3, liquidity3, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-944), // price ratio 1:0.9
 		int32(954),  // price ratio 1:1.1
@@ -196,8 +196,8 @@ func mintPositionsWithDifferentLiquidity() {
 	println("[INFO] mint position 04 - out of range (lower)")
 	positionId4, liquidity4, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-944), // price ratio 1:0.90
 		int32(-512), // price ratio 1:0.95
@@ -216,8 +216,8 @@ func mintPositionsWithDifferentLiquidity() {
 	println("[INFO] mint position 05 - out of range (upper)")
 	positionId5, liquidity5, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(maxTick-10), // very high tick
 		int32(maxTick-1),  // max tick
@@ -404,8 +404,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set community pool distribution to 0%
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool at price ratio 1:1
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool at price ratio 1:1
 // [INFO] set pool to tier 1
 //
 // [SCENARIO] 3. Mint 5 positions with different liquidity ranges

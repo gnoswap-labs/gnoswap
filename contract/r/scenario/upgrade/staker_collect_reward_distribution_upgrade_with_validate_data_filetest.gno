@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/staker"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	mock "gno.land/r/gnoswap/staker/mock"
 
@@ -36,11 +36,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	atomBtc500PoolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	positionId        = uint64(1)
 )
 
@@ -56,15 +56,15 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(atomPath, btcPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Set pool tier for staking")
-	setPoolTier(barFoo500PoolPath, 1)
+	setPoolTier(atomBtc500PoolPath, 1)
 	println()
 
 	println("[SCENARIO] 5. Stake position")
@@ -134,12 +134,12 @@ func initializeV2Mock() {
 	})
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(atomPath, btcPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
+	pool.CreatePool(cross, atomPath, btcPath, fee, sqrtPriceX96)
+	poolPath := pool.GetPoolPath(atomPath, btcPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 
@@ -147,14 +147,14 @@ func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
 	testing.SkipHeights(1)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(atomPath, btcPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	atom.Approve(cross, poolAddr, math.MaxInt64)
+	btc.Approve(cross, poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross, atomPath, btcPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
@@ -245,7 +245,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 3. Mint position
 // [INFO] Mint position
@@ -261,7 +261,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [SCENARIO] 5. Stake position
 // [INFO] Stake position
 // [EXPECTED] Staked position ID: 1
-// [EXPECTED] LP Token ID: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] LP Token ID: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 6. Wait 10 blocks for reward accumulation
 // [INFO] Waiting 10 blocks
@@ -273,7 +273,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [SCENARIO] 7. Check staking info before upgrade
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -291,7 +291,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [SCENARIO] 10. Check staking info with v2_mock (invalid logic)
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -302,7 +302,7 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [SCENARIO] 12. Check staking info after upgrade to v3_valid
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -315,6 +315,6 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [SCENARIO] 14. Check staking info after reward collection
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900

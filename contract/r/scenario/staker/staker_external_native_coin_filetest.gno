@@ -33,8 +33,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -50,8 +50,8 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -72,7 +72,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -121,8 +121,8 @@ func createPool() {
 	println("[INFO] approve gns for pool creation")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -131,15 +131,15 @@ func mintPosition01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -1000 ~ 1000)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -170,7 +170,7 @@ func createExternalIncentiveWithNativeCoin() {
 	println("[INFO] create external incentive with ugnot (native coin)")
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp
@@ -302,9 +302,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
 // [INFO] approve gns for pool creation
-// [INFO] create bar:baz:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [SCENARIO] 3. Mint position 01
 // [INFO] approve tokens for minting

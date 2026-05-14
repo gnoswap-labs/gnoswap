@@ -26,7 +26,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -48,11 +48,11 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
-	projectTier90Id := "gno.land/r/onbloc/obl:123:90"
-	projectTier180Id := "gno.land/r/onbloc/obl:123:180"
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
+	projectTier90Id := "gno.land/r/gnoswap/test_token/eth:123:90"
+	projectTier180Id := "gno.land/r/gnoswap/test_token/eth:123:180"
 	println()
 
 	println("[SCENARIO] 2. First deposit by Alice (1,000,000 GNS)")
@@ -120,12 +120,12 @@ func main() {
 	validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id)
 }
 
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -134,9 +134,9 @@ func createOBLProject() {
 	tier180Ratio := int64(70)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -155,7 +155,7 @@ func createOBLProject() {
 	testing.SkipHeights(120960)
 
 	println("[INFO] Project created with ID:", projectId)
-	println("[INFO] Tier 30 total reward: 100,000,000 OBL (10% of 1,000,000,000)")
+	println("[INFO] Tier 30 total reward: 100,000,000 ETH (10% of 1,000,000,000)")
 }
 
 func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
@@ -184,13 +184,13 @@ func collectReward(ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
-	beforeOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
+	beforeEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance before: %d\n", beforeEthBalance)
 
 	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
 
-	afterOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
+	afterEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance after: %d\n", afterEthBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
@@ -247,12 +247,12 @@ func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
-// [INFO] Tier 30 total reward: 100,000,000 OBL (10% of 1,000,000,000)
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [INFO] Tier 30 total reward: 100,000,000 ETH (10% of 1,000,000,000)
 //
 // [SCENARIO] 2. First deposit by Alice (1,000,000 GNS)
 // [INFO] Admin transferring 1000000 GNS to depositor
@@ -289,20 +289,20 @@ func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
 // [SCENARIO] 8. Collect rewards for all depositors
 // [INFO] Collecting Alice's reward (deposit ID: 1)
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 2529272
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 2529272
 // [INFO] Reward collected: 2529272
 //
 // [INFO] Collecting Bob's reward (deposit ID: 2)
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 2509789
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 2509789
 // [INFO] Reward collected: 2509789
 //
 // [INFO] Collecting Charlie's reward (deposit ID: 3)
 // [INFO] Collecting reward for deposit ID: 3
-// [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 5000096
+// [INFO] ETH balance before: 0
+// [INFO] ETH balance after: 5000096
 // [INFO] Reward collected: 5000096
 //
 // [SCENARIO] 9. Skip more blocks and collect again to verify ongoing distribution
@@ -310,20 +310,20 @@ func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
 //
 // [INFO] Alice collecting additional reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 2529272
-// [INFO] OBL balance after: 2531684
+// [INFO] ETH balance before: 2529272
+// [INFO] ETH balance after: 2531684
 // [INFO] Reward collected: 2412
 //
 // [INFO] Bob collecting additional reward
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 2509789
-// [INFO] OBL balance after: 2512201
+// [INFO] ETH balance before: 2509789
+// [INFO] ETH balance after: 2512201
 // [INFO] Reward collected: 2412
 //
 // [INFO] Charlie collecting additional reward
 // [INFO] Collecting reward for deposit ID: 3
-// [INFO] OBL balance before: 5000096
-// [INFO] OBL balance after: 5004918
+// [INFO] ETH balance before: 5000096
+// [INFO] ETH balance after: 5004918
 // [INFO] Reward collected: 4822
 //
 // [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-011] invalid reward state

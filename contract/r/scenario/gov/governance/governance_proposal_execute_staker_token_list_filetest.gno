@@ -33,7 +33,7 @@ var (
 	currentBlockTime = int64(2)
 )
 
-const testTokenPath = "gno.land/r/onbloc/obl"
+const testTokenPath = "gno.land/r/gnoswap/test_token/eth"
 
 func main() {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -80,7 +80,7 @@ func proposeAddToken() int64 {
 	proposalID := governance.ProposeParameterChange(
 		cross,
 		"staker",
-		"Add OBL token to allowed list",
+		"Add ETH token to allowed list",
 		1,
 		"gno.land/r/gnoswap/staker*EXE*AddToken*EXE*"+testTokenPath,
 	)
@@ -94,7 +94,7 @@ func proposeRemoveToken() int64 {
 	proposalID := governance.ProposeParameterChange(
 		cross,
 		"staker",
-		"Remove OBL token from allowed list",
+		"Remove ETH token from allowed list",
 		1,
 		"gno.land/r/gnoswap/staker*EXE*RemoveToken*EXE*"+testTokenPath,
 	)

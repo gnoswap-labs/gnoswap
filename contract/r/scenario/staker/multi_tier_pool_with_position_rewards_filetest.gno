@@ -34,8 +34,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -55,8 +55,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -65,9 +65,9 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath1 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	poolPath2 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
-	poolPath3 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	poolPath1 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
+	poolPath2 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500"
+	poolPath3 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000"
 
 	position1 uint64
 	position2 uint64
@@ -105,13 +105,13 @@ func main() {
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range")
+	println("[SCENARIO] 7. ExactInSwapRoute ATOM -> ATONE, atom:atone:100 to out-of-range")
 	exactInSingleSwapRouteBy(
 		poolPath1,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		"2000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100",
 		"100",
 		"1",
 	)
@@ -123,13 +123,13 @@ func main() {
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range", position2)
+	println("[SCENARIO] 9. ExactInSwapRoute ATONE -> ATOM, atone:atom:100 to in-range", position2)
 	exactInSingleSwapRouteBy(
 		poolPath1,
-		bazPath,
-		barPath,
+		atonePath,
+		atomPath,
 		"2000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:100",
 		"100",
 		"1",
 	)
@@ -160,19 +160,19 @@ func initAndSetup() {
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] distribute tokens to users")
-	bar.Transfer(cross, user1Addr, 50000)
-	baz.Transfer(cross, user1Addr, 50000)
-	bar.Transfer(cross, user2Addr, 50000)
-	baz.Transfer(cross, user2Addr, 50000)
+	atom.Transfer(cross, user1Addr, 50000)
+	atone.Transfer(cross, user1Addr, 50000)
+	atom.Transfer(cross, user2Addr, 50000)
+	atone.Transfer(cross, user2Addr, 50000)
 }
 
 func createPoolsAndSetTier() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz pools with fee 100/500/3000")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone pools with fee 100/500/3000")
+	pl.CreatePool(cross, atomPath, atonePath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, atonePath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, atonePath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set all pools to tier 2")
 	sr.SetPoolTier(cross, poolPath1, 2)
@@ -192,14 +192,14 @@ func createPoolsAndSetTier() {
 func mintAndStakePerPool() {
 	testing.SetRealm(user1Realm)
 	println("[INFO] user1 approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] user1 mint+stake on fee100 pool")
 	p1, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-100),
 		int32(100),
@@ -217,14 +217,14 @@ func mintAndStakePerPool() {
 
 	testing.SetRealm(user2Realm)
 	println("[INFO] user2 approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] user2 mint+stake on fee500 pool")
 	p2, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		int32(-100),
 		int32(100),
@@ -242,14 +242,14 @@ func mintAndStakePerPool() {
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] admin approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] admin mint+stake on fee3000 pool")
 	p3, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		int32(-120),
 		int32(120),
@@ -268,8 +268,8 @@ func mintAndStakePerPool() {
 	println("[INFO] admin only mint on fee100 pool")
 	p4, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-200),
 		int32(200),
@@ -368,14 +368,14 @@ func exactInSingleSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	beforeBARBalance := bar.BalanceOf(adminAddr)
-	beforeBAZBalance := baz.BalanceOf(adminAddr)
+	beforeATOMBalance := atom.BalanceOf(adminAddr)
+	beforeATONEBalance := atone.BalanceOf(adminAddr)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
-	bar.Approve(cross, routerAddr, maxInt64)
-	baz.Approve(cross, routerAddr, maxInt64)
+	atom.Approve(cross, routerAddr, maxInt64)
+	atone.Approve(cross, routerAddr, maxInt64)
 
 	beforePoolTick := pl.GetSlot0Tick(poolPath)
 
@@ -392,15 +392,15 @@ func exactInSingleSwapRouteBy(
 		"",
 	)
 
-	afterBARBalance := bar.BalanceOf(adminAddr)
-	afterBAZBalance := baz.BalanceOf(adminAddr)
+	afterATOMBalance := atom.BalanceOf(adminAddr)
+	afterATONEBalance := atone.BalanceOf(adminAddr)
 
 	afterPoolTick := pl.GetSlot0Tick(poolPath)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
-	ufmt.Printf("[EXPECTED] BAR balance changed: %d\n", afterBARBalance-beforeBARBalance)
-	ufmt.Printf("[EXPECTED] BAZ balance changed: %d\n", afterBAZBalance-beforeBAZBalance)
+	ufmt.Printf("[EXPECTED] ATOM balance changed: %d\n", afterATOMBalance-beforeATOMBalance)
+	ufmt.Printf("[EXPECTED] ATONE balance changed: %d\n", afterATONEBalance-beforeATONEBalance)
 	ufmt.Printf("[EXPECTED] pool tick changed: %d to %d\n", beforePoolTick, afterPoolTick)
 }
 
@@ -431,7 +431,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] distribute tokens to users
 //
 // [SCENARIO] 2. Create 3 pools and set tier 2
-// [INFO] create bar:baz pools with fee 100/500/3000
+// [INFO] create atom:atone pools with fee 100/500/3000
 // [INFO] set all pools to tier 2
 // [EXPECTED] pool tiers: 2,2,2 (should be 2,2,2)
 //
@@ -457,36 +457,36 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] confirmed: cacheRewardForPool path works with 3 pools in same tier
 // [INFO] confirmed: rewards are computed correctly without tier change/removal
 //
-// [SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range
+// [SCENARIO] 7. ExactInSwapRoute ATOM -> ATONE, atom:atone:100 to out-of-range
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/bar
-// [INFO] outputToken: gno.land/r/onbloc/baz
+// [INFO] inputToken: gno.land/r/gnoswap/test_token/atom
+// [INFO] outputToken: gno.land/r/gnoswap/test_token/atone
 // [INFO] specifiedAmount: 2000
-// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100
+// [INFO] routeQueryString: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
 // [EXPECTED] outputTokenAmount: -1980
-// [EXPECTED] BAR balance changed: -2000
-// [EXPECTED] BAZ balance changed: 1980
+// [EXPECTED] ATOM balance changed: -2000
+// [EXPECTED] ATONE balance changed: 1980
 // [EXPECTED] pool tick changed: 0 to -197
 //
 // [SCENARIO] 8. Collect rewards from one position 1
 // [INFO] collect reward by tokenID: 1
 // [EXPECTED] reward: 802652 (should be > 0)
 //
-// [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
+// [SCENARIO] 9. ExactInSwapRoute ATONE -> ATOM, atone:atom:100 to in-range 2
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/baz
-// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/gnoswap/test_token/atone
+// [INFO] outputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] specifiedAmount: 2000
-// [INFO] routeQueryString: gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100
+// [INFO] routeQueryString: gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:100
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
 // [EXPECTED] outputTokenAmount: -2006
-// [EXPECTED] BAR balance changed: 2006
-// [EXPECTED] BAZ balance changed: -2000
+// [EXPECTED] ATOM balance changed: 2006
+// [EXPECTED] ATONE balance changed: -2000
 // [EXPECTED] pool tick changed: -197 to 0
 //
 // [SCENARIO] 10. Collect rewards from all positions

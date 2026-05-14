@@ -12,8 +12,8 @@ import (
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -31,20 +31,20 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveBarFromStaker(amount int64) {
+func fundAndApproveAtomFromStaker(amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerRealm.Address(), amount)
+	atom.Transfer(cross, stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	atom.Approve(cross, protocolFeeAddr, amount)
+	atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveQuxFromStaker(amount int64) {
+func fundAndApproveSolFromStaker(amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerRealm.Address(), amount)
+	sol.Transfer(cross, stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	sol.Approve(cross, protocolFeeAddr, amount)
+	sol.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
 func main() {
@@ -62,26 +62,26 @@ func main() {
 }
 
 func setupTokens() {
-	println("[INFO] Funding and approving bar tokens from staker")
-	fundAndApproveBarFromStaker(1000)
+	println("[INFO] Funding and approving atom tokens from staker")
+	fundAndApproveAtomFromStaker(1000)
 
-	println("[INFO] Funding and approving qux tokens from staker")
-	fundAndApproveQuxFromStaker(1000)
+	println("[INFO] Funding and approving sol tokens from staker")
+	fundAndApproveSolFromStaker(1000)
 
-	println("[EXPECTED] Bar balance of protocol_fee:", bar.BalanceOf(protocolFeeAddr))
-	println("[EXPECTED] Qux balance of protocol_fee:", qux.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Atom balance of protocol_fee:", atom.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Sol balance of protocol_fee:", sol.BalanceOf(protocolFeeAddr))
 }
 
 func recordProtocolFees() {
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 1000)
+	atom.Approve(cross, protocolFeeAddr, 1000)
+	sol.Approve(cross, protocolFeeAddr, 1000)
 
-	println("[INFO] Recording bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	println("[INFO] Recording atom protocol fee")
+	pf.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/atom", 1000)
 
-	println("[INFO] Recording qux protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 1000)
+	println("[INFO] Recording sol protocol fee")
+	pf.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/sol", 1000)
 }
 
 func distributeProtocolFees() {
@@ -90,26 +90,26 @@ func distributeProtocolFees() {
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Bar balance of protocol_fee after distribution:", bar.BalanceOf(protocolFeeAddr))
-	println("[EXPECTED] Bar balance of govStaker after distribution:", bar.BalanceOf(govStakerAddr))
-	println("[EXPECTED] Qux balance of protocol_fee after distribution:", qux.BalanceOf(protocolFeeAddr))
-	println("[EXPECTED] Qux balance of govStaker after distribution:", qux.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Atom balance of protocol_fee after distribution:", atom.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Atom balance of govStaker after distribution:", atom.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Sol balance of protocol_fee after distribution:", sol.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Sol balance of govStaker after distribution:", sol.BalanceOf(govStakerAddr))
 }
 
 // Output:
 // [SCENARIO] 1. Setup: Transfer tokens to protocol fee
-// [INFO] Funding and approving bar tokens from staker
-// [INFO] Funding and approving qux tokens from staker
-// [EXPECTED] Bar balance of protocol_fee: 0
-// [EXPECTED] Qux balance of protocol_fee: 0
+// [INFO] Funding and approving atom tokens from staker
+// [INFO] Funding and approving sol tokens from staker
+// [EXPECTED] Atom balance of protocol_fee: 0
+// [EXPECTED] Sol balance of protocol_fee: 0
 //
 // [SCENARIO] 2. Record protocol fees
-// [INFO] Recording bar protocol fee
-// [INFO] Recording qux protocol fee
+// [INFO] Recording atom protocol fee
+// [INFO] Recording sol protocol fee
 //
 // [SCENARIO] 3. Distribute protocol fees
 // [INFO] Distributing protocol fees
-// [EXPECTED] Bar balance of protocol_fee after distribution: 0
-// [EXPECTED] Bar balance of govStaker after distribution: 1000
-// [EXPECTED] Qux balance of protocol_fee after distribution: 0
-// [EXPECTED] Qux balance of govStaker after distribution: 1000
+// [EXPECTED] Atom balance of protocol_fee after distribution: 0
+// [EXPECTED] Atom balance of govStaker after distribution: 1000
+// [EXPECTED] Sol balance of protocol_fee after distribution: 0
+// [EXPECTED] Sol balance of govStaker after distribution: 1000

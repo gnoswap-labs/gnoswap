@@ -37,8 +37,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -89,11 +89,11 @@ func createPools() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 	testing.SkipHeights(1)
 
-	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	println("[INFO] create atom:btc:500 pool")
+	pl.CreatePool(cross, atomPath, btcPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
-	println("[INFO] create bar:foo:100 pool")
-	pl.CreatePool(cross, barPath, fooPath, 100, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	println("[INFO] create atom:btc:100 pool")
+	pl.CreatePool(cross, atomPath, btcPath, 100, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -101,7 +101,7 @@ func createPools() {
 func setPoolTierByAdmin() {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	targetTier := uint64(2)
 
 	println("[INFO] set pool tier to 2")
@@ -119,7 +119,7 @@ func setPoolTierByAdmin() {
 func changePoolTierByAdmin() {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 	newTier := uint64(3)
 
 	println("[INFO] change pool tier from 2 to 3")
@@ -137,10 +137,10 @@ func changePoolTierByAdmin() {
 func setAnotherPoolTier3() {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:100"
 	targetTier := uint64(3)
 
-	println("[INFO] set another pool (bar:foo:100) to tier 3")
+	println("[INFO] set another pool (atom:btc:100) to tier 3")
 	sr.SetPoolTier(cross, poolPath, targetTier)
 
 	// Verify the tier was set correctly
@@ -155,7 +155,7 @@ func setAnotherPoolTier3() {
 func removePoolTierByAdmin() {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500"
 
 	println("[INFO] remove pool tier (set to 0)")
 	sr.RemovePoolTier(cross, poolPath)
@@ -169,7 +169,7 @@ func removePoolTierByAdmin() {
 	}
 
 	// Verify the other pool still has its tier
-	otherPoolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	otherPoolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:100"
 	otherTier := sr.GetPoolTier(otherPoolPath)
 	ufmt.Printf("[EXPECTED] other pool tier unchanged: %d\n", otherTier)
 
@@ -186,8 +186,8 @@ func removePoolTierByAdmin() {
 //
 // [SCENARIO] 2. Create pools
 // [INFO] approve gns for pool creation
-// [INFO] create bar:foo:500 pool
-// [INFO] create bar:foo:100 pool
+// [INFO] create atom:btc:500 pool
+// [INFO] create atom:btc:100 pool
 //
 // [SCENARIO] 3. Set pool tier by admin
 // [INFO] set pool tier to 2
@@ -198,7 +198,7 @@ func removePoolTierByAdmin() {
 // [EXPECTED] pool tier changed to: 3
 //
 // [SCENARIO] 5. Set another pool to tier 3
-// [INFO] set another pool (bar:foo:100) to tier 3
+// [INFO] set another pool (atom:btc:100) to tier 3
 // [EXPECTED] second pool tier set to: 3
 //
 // [SCENARIO] 6. Remove pool tier by admin

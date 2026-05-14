@@ -243,7 +243,7 @@ func TestGetProjectTokenPath(t *testing.T) {
 	}{
 		{
 			name:             "get existing project token path",
-			tokenPath:        testOblTokenPath,
+			tokenPath:        testEthTokenPath,
 			getExisting:      true,
 			expectedHasError: false,
 		},

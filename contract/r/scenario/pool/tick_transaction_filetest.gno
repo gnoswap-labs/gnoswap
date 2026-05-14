@@ -22,8 +22,8 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var t *testing.T
@@ -51,9 +51,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 // Test variables
@@ -76,34 +76,34 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
-	println("[INFO] Creating bar-foo pool (fee: 100, tick: -24081)")
+	println("[INFO] Creating atom-btc pool (fee: 100, tick: -24081)")
 	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
-	pool.CreatePool(cross, barPath, fooPath, fee100, testSqrt.ToString())
+	pool.CreatePool(cross, atomPath, btcPath, fee100, testSqrt.ToString())
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee100)
 
 	println("[EXPECTED] Initial pool liquidity:", thisPool.Liquidity().ToString(), "expected: 0")
 	println("[EXPECTED] Initial pool tick:", thisPool.Slot0Tick(), "expected: -24081")
 
 	println("[INFO] Setting up positions and liquidity")
 	liqToMint := "10000000000" // 10_000_000_000
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
 	println("[SCENARIO] 1. Minting position spanning current tick")
 	testing.SetRealm(posRealm)
 	pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		-24082,
 		-24080,
 		liqToMint,
 		adminAddr,
 	)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee100)
 	println("[EXPECTED] Pool liquidity after first mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -111,15 +111,15 @@ func main() {
 	testing.SetRealm(posRealm)
 	pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		-24082,
 		-24081,
 		liqToMint,
 		adminAddr,
 	)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee100)
 	println("[EXPECTED] Pool liquidity after second mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -148,8 +148,8 @@ func main() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		adminAddr,
 		true,
@@ -157,12 +157,12 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected: 23768044726356341008264205109")
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")
@@ -188,7 +188,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Starting scenario: Tick transaction and liquidity management tests
 // [INFO] Setting up pool with specific tick
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-foo pool (fee: 100, tick: -24081)
+// [INFO] Creating atom-btc pool (fee: 100, tick: -24081)
 // [EXPECTED] Initial pool liquidity: 0 expected: 0
 // [EXPECTED] Initial pool tick: -24081 expected: -24081
 // [INFO] Setting up positions and liquidity

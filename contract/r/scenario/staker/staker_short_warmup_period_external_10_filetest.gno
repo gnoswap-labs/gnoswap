@@ -30,8 +30,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100 uint32 = 100
 
@@ -64,12 +64,12 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:qux:100 pool")
+	println("[SCENARIO] 2. Create atom:sol:100 pool")
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint position 01 (bar:qux:100)")
-	mintBarQux100Position1()
+	println("[SCENARIO] 3. Mint position 01 (atom:sol:100)")
+	mintAtomSol100Position1()
 	println()
 
 	println("[SCENARIO] 4. Create external incentive")
@@ -122,25 +122,25 @@ func createPool() {
 	println("[INFO] approve gns for pool creation")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	println("[INFO] create bar:qux:100 pool")
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
+	println("[INFO] create atom:sol:100 pool")
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
 
 	ufmt.Printf("[EXPECTED] pool created successfully\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100Position1() {
+func mintAtomSol100Position1() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] mint position 01 (bar:qux:100)")
+	println("[INFO] mint position 01 (atom:sol:100)")
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,      // token0
-		quxPath,      // token1
+		atomPath,      // token0
+		solPath,      // token1
 		fee100,       // fee
 		int32(-1000), // tickLower
 		int32(1000),  // tickUpper
@@ -171,14 +171,14 @@ func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] create external incentive for bar:qux:100")
+	println("[INFO] create external incentive for atom:sol:100")
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		barPath,
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
+		atomPath,
 		9_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
@@ -227,12 +227,12 @@ func collectRewardsAfterDuration() {
 	testing.SkipHeights(200)
 
 	println("[INFO] collect reward for position 01")
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	newBar := bar.BalanceOf(adminUser)
-	reward := newBar - oldBar
+	newAtom := atom.BalanceOf(adminUser)
+	reward := newAtom - oldAtom
 
-	ufmt.Printf("[EXPECTED] collected reward: %d BAR tokens\n", reward)
+	ufmt.Printf("[EXPECTED] collected reward: %d ATOM tokens\n", reward)
 
 	testing.SkipHeights(1)
 }
@@ -241,14 +241,14 @@ func mintAndStakePosition2() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting position 02")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
-	println("[INFO] mint position 02 (bar:qux:100)")
+	println("[INFO] mint position 02 (atom:sol:100)")
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,      // token0
-		quxPath,      // token1
+		atomPath,      // token0
+		solPath,      // token1
 		fee100,       // fee
 		int32(-1000), // tickLower
 		int32(1000),  // tickUpper
@@ -298,18 +298,18 @@ func collectRewardsForAllPositions() {
 	// Position 02 warm-up 30% = 115 * 0.3 = 34.5
 
 	println("[INFO] collect reward for position 01")
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	newBar := bar.BalanceOf(adminUser)
-	reward1 := newBar - oldBar
+	newAtom := atom.BalanceOf(adminUser)
+	reward1 := newAtom - oldAtom
 
 	ufmt.Printf("[EXPECTED] position 01 reward (70%% warm-up): %d\n", reward1)
 
 	println("[INFO] collect reward for position 02")
-	oldBar = newBar
+	oldAtom = newAtom
 	sr.CollectReward(cross, 2)
-	newBar = bar.BalanceOf(adminUser)
-	reward2 := newBar - oldBar
+	newAtom = atom.BalanceOf(adminUser)
+	reward2 := newAtom - oldAtom
 
 	ufmt.Printf("[EXPECTED] position 02 reward (30%% warm-up): %d\n", reward2)
 
@@ -341,19 +341,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:qux:100 pool
+// [SCENARIO] 2. Create atom:sol:100 pool
 // [INFO] approve gns for pool creation
-// [INFO] create bar:qux:100 pool
+// [INFO] create atom:sol:100 pool
 // [EXPECTED] pool created successfully
 //
-// [SCENARIO] 3. Mint position 01 (bar:qux:100)
+// [SCENARIO] 3. Mint position 01 (atom:sol:100)
 // [INFO] approve tokens for minting
-// [INFO] mint position 01 (bar:qux:100)
+// [INFO] mint position 01 (atom:sol:100)
 // [EXPECTED] position 01 minted: ID=1, liquidity=1025
 //
 // [SCENARIO] 4. Create external incentive
 // [INFO] approve tokens for external incentive
-// [INFO] create external incentive for bar:qux:100
+// [INFO] create external incentive for atom:sol:100
 // [EXPECTED] external incentive created successfully
 //
 // [SCENARIO] 5. Stake token 01
@@ -371,11 +371,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after duration
 // [INFO] skip duration 200 blocks
 // [INFO] collect reward for position 01
-// [EXPECTED] collected reward: 4413955 BAR tokens
+// [EXPECTED] collected reward: 4413955 ATOM tokens
 //
 // [SCENARIO] 9. Mint and stake position 02
 // [INFO] approve tokens for minting position 02
-// [INFO] mint position 02 (bar:qux:100)
+// [INFO] mint position 02 (atom:sol:100)
 // [EXPECTED] position 02 minted: ID=2, liquidity=1025
 // [INFO] stake position 02
 // [EXPECTED] position 02 staked successfully

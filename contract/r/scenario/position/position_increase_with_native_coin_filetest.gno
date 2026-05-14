@@ -16,7 +16,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -34,7 +34,7 @@ var (
 	routerRealm     = testing.NewUserRealm(routerAddr)
 
 	wugnotPath        = "gno.land/r/gnoland/wugnot"
-	fooPath           = "gno.land/r/onbloc/foo"
+	btcPath           = "gno.land/r/gnoswap/test_token/btc"
 	fee500     uint32 = 500
 )
 
@@ -69,11 +69,11 @@ func initPool() {
 	println("[INFO] GNOT balance of admin", currentBanker.GetCoins(adminAddr).AmountOf("ugnot"))
 
 	ufmt.Println("[INFO] Creating pool at tick 100")
-	ufmt.Println("[INFO] Pool path", pool.GetPoolPath(wugnotPath, fooPath, fee500))
+	ufmt.Println("[INFO] Pool path", pool.GetPoolPath(wugnotPath, btcPath, fee500))
 	pool.CreatePool(
 		cross,
 		wugnotPath,
-		fooPath,
+		btcPath,
 		fee500,
 		common.TickMathGetSqrtRatioAtTick(100).ToString(),
 	)
@@ -87,10 +87,10 @@ func mintInitialPositionWithNativeCoin() {
 
 	wugnot.Approve(cross, poolAddr, amount0Int)
 	wugnot.Approve(cross, positionAddr, amount0Int)
-	foo.Approve(cross, poolAddr, amount1Int)
+	btc.Approve(cross, poolAddr, amount1Int)
 
 	inputToken0Path := wugnotPath
-	inputToken1Path := fooPath
+	inputToken1Path := btcPath
 	minTick := int32(-12000)
 	maxTick := int32(12000)
 	amount0Desired := ufmt.Sprintf("%d", amount0Int)
@@ -138,7 +138,7 @@ func increasePositionLiquidity() {
 
 	wugnot.Approve(cross, poolAddr, amount0Int)
 	wugnot.Approve(cross, positionAddr, amount0Int)
-	foo.Approve(cross, poolAddr, amount1Int)
+	btc.Approve(cross, poolAddr, amount1Int)
 
 	ufmt.Println("[INFO] Minting initial position with native coin")
 
@@ -173,30 +173,30 @@ func checkBalanceChanges(callback func()) {
 	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
 	gnotBalanceBefore := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceBefore := wugnot.BalanceOf(adminAddr)
-	fooBalanceBefore := foo.BalanceOf(adminAddr)
+	btcBalanceBefore := btc.BalanceOf(adminAddr)
 
 	callback()
 
 	currentBanker = banker.NewBanker(banker.BankerTypeReadonly)
 	gnotBalanceAfter := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceAfter := wugnot.BalanceOf(adminAddr)
-	fooBalanceAfter := foo.BalanceOf(adminAddr)
+	btcBalanceAfter := btc.BalanceOf(adminAddr)
 
 	ufmt.Printf("[EXPECTED] GNOT balance changed: %d\n", gnotBalanceAfter-gnotBalanceBefore)
 	ufmt.Printf("[EXPECTED] WUGNOT balance changed: %d\n", wugnotBalanceAfter-wugnotBalanceBefore)
-	ufmt.Printf("[EXPECTED] FOO balance changed: %d\n", fooBalanceAfter-fooBalanceBefore)
+	ufmt.Printf("[EXPECTED] BTC balance changed: %d\n", btcBalanceAfter-btcBalanceBefore)
 }
 
 // Output:
 // [SCENARIO] 1. Initialize pool with tick 100
 // [INFO] GNOT balance of admin 100000000
 // [INFO] Creating pool at tick 100
-// [INFO] Pool path gno.land/r/gnoland/wugnot:gno.land/r/onbloc/foo:500
+// [INFO] Pool path gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/btc:500
 //
 // [SCENARIO] 2. Mint initial position (-12000~12000)
 // [INFO] Minting initial position with native coin
 // [INFO] Input token0 path: gno.land/r/gnoland/wugnot
-// [INFO] Input token1 path: gno.land/r/onbloc/foo
+// [INFO] Input token1 path: gno.land/r/gnoswap/test_token/btc
 // [INFO] Min tick: -12000
 // [INFO] Max tick: 12000
 // [INFO] Amount0 desired: 50000000
@@ -209,7 +209,7 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Amount1 should be 50000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -48904002
-// [EXPECTED] FOO balance changed: -50000000
+// [EXPECTED] BTC balance changed: -50000000
 //
 // [SCENARIO] 3. Increase position liquidity
 // [INFO] Minting initial position with native coin
@@ -224,4 +224,4 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Amount1 added should be 50000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -48904002
-// [EXPECTED] FOO balance changed: -50000000
+// [EXPECTED] BTC balance changed: -50000000

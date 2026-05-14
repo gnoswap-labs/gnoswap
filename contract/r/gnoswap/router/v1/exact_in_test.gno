@@ -22,8 +22,8 @@ import (
 	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 func TestExactInSwapRouteOperation_Validate(t *testing.T) {
@@ -40,8 +40,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 	}{
 		{
 			name:         "Pass: single pool path",
-			inputToken:   barPath,
-			outputToken:  bazPath,
+			inputToken:   atomPath,
+			outputToken:  atonePath,
 			amountIn:     100,
 			amountOutMin: 90,
 			routeArr:     singlePoolPath,
@@ -50,8 +50,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 		},
 		{
 			name:         "Fail: amountIn is 0",
-			inputToken:   barPath,
-			outputToken:  bazPath,
+			inputToken:   atomPath,
+			outputToken:  atonePath,
 			amountIn:     0,
 			amountOutMin: 100,
 			routeArr:     singlePoolPath,
@@ -61,8 +61,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 		},
 		{
 			name:         "Fail: amountIn is negative",
-			inputToken:   barPath,
-			outputToken:  bazPath,
+			inputToken:   atomPath,
+			outputToken:  atonePath,
 			amountIn:     -100,
 			amountOutMin: 10,
 			routeArr:     singlePoolPath,
@@ -122,15 +122,15 @@ func TestExactInSwapRoute(t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			name: "BAR -> BAZ",
+			name: "ATOM -> ATONE",
 			setupFn: func(env *TestEnv) {
 				routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+				env.GivenPoolCreated(atomPath, atonePath, 3000, "79228162514264337593543950336").
 					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
+					AndUserFundedAndApproved(user1Addr, routerAddr, atomPath, atonePath)
 			},
-			inputToken:   barPath,
-			outputToken:  bazPath,
+			inputToken:   atomPath,
+			outputToken:  atonePath,
 			amountIn:     "100",
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
@@ -152,8 +152,8 @@ func TestExactInSwapRoute(t *testing.T) {
 			// Additional approvals needed for pool operations
 			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			bar.Approve(cross, poolAddr, maxApprove)
-			baz.Approve(cross, poolAddr, maxApprove)
+			atom.Approve(cross, poolAddr, maxApprove)
+			atone.Approve(cross, poolAddr, maxApprove)
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -219,8 +219,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> bar",
-			tokenPath0:       barPath,
+			name:             "success - gns -> atom",
+			tokenPath0:       atomPath,
 			tokenPath1:       gnsPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -231,9 +231,9 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsPath,
-			outputToken:      barPath,
+			outputToken:      atomPath,
 			amountIn:         "100",
-			routeArr:         BuildSingleHopRoutePath(gnsPath, barPath, uint32(500)),
+			routeArr:         BuildSingleHopRoutePath(gnsPath, atomPath, uint32(500)),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
@@ -260,13 +260,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				atom.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolAddr, maxApprove)
+			atom.Approve(cross, poolAddr, maxApprove)
 			gns.Approve(cross, poolAddr, maxApprove)
 
 			// Position Creation
@@ -289,13 +289,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerAddr, 20000000)
+			atom.Transfer(cross, routerAddr, 20000000)
 			gns.Transfer(cross, routerAddr, 20000000)
-			bar.Approve(cross, routerAddr, maxApprove)
+			atom.Approve(cross, routerAddr, maxApprove)
 			gns.Approve(cross, routerAddr, maxApprove)
 
 			testing.SetRealm(routerRealm)
-			bar.Approve(cross, poolAddr, maxApprove)
+			atom.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -1029,8 +1029,8 @@ func TestSwapRoute_EmptyRoute(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1046,8 +1046,8 @@ func TestSwapRoute_EmptyRoute(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"100000",
 				"", // Empty route
 				"100",
@@ -1066,8 +1066,8 @@ func TestSwapRoute_EmptyQuote(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1083,8 +1083,8 @@ func TestSwapRoute_EmptyQuote(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"100000",
 				singlePoolPath,
 				"", // Empty quote
@@ -1103,8 +1103,8 @@ func TestSwapRoute_ZeroAmountIn(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1120,8 +1120,8 @@ func TestSwapRoute_ZeroAmountIn(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"0", // Zero amount
 				singlePoolPath,
 				"100",
@@ -1140,8 +1140,8 @@ func TestSwapRoute_SameTokenSwap(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1157,8 +1157,8 @@ func TestSwapRoute_SameTokenSwap(t *testing.T) {
 	uassert.AbortsContains(t, "invalid route", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				barPath, // Same as input
+				atomPath,
+				atomPath, // Same as input
 				"100000",
 				singlePoolPath,
 				"100",
@@ -1177,8 +1177,8 @@ func TestSwapRoute_InvalidQuoteSum(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1194,8 +1194,8 @@ func TestSwapRoute_InvalidQuoteSum(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"100000",
 				singlePoolPath+","+singlePoolPath, // Two routes
 				"50,40", // Sum = 90, not 100
@@ -1214,8 +1214,8 @@ func TestSwapRoute_NegativeDeadline(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(t, atomPath, userAddr)
+	TokenApprove(t, atomPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
@@ -1231,8 +1231,8 @@ func TestSwapRoute_NegativeDeadline(t *testing.T) {
 	uassert.AbortsContains(t, "", func() {
 		func(cur realm) {
 			router.ExactInSwapRoute(
-				barPath,
-				bazPath,
+				atomPath,
+				atonePath,
 				"100000",
 				singlePoolPath,
 				"100",

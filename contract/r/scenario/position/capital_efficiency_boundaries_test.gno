@@ -21,8 +21,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -35,8 +35,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -49,14 +49,14 @@ func main() {
 
 	// Give Alice plenty of tokens
 	largeAmount := int64(1_000_000_000_000_000) // 1e15
-	bar.Transfer(cross, aliceAddr, largeAmount)
-	baz.Transfer(cross, aliceAddr, largeAmount)
+	atom.Transfer(cross, aliceAddr, largeAmount)
+	atone.Transfer(cross, aliceAddr, largeAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largeAmount)
-	baz.Approve(cross, poolAddr, largeAmount)
-	bar.Approve(cross, positionAddr, largeAmount)
-	baz.Approve(cross, positionAddr, largeAmount)
+	atom.Approve(cross, poolAddr, largeAmount)
+	atone.Approve(cross, poolAddr, largeAmount)
+	atom.Approve(cross, positionAddr, largeAmount)
+	atone.Approve(cross, positionAddr, largeAmount)
 
 	// Test 1: Symmetric large amounts in narrow range
 	println("\n[TEST 1] Symmetric Large Amounts in Narrow Range")
@@ -77,8 +77,8 @@ func testSymmetricNarrowRange() {
 	// Create pool with tight tick spacing
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100, // 0.01% fee
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -97,7 +97,7 @@ func testSymmetricNarrowRange() {
 		// Use very narrow range: just 2 ticks
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
 			cross,
-			barPath, bazPath, 100,
+			atomPath, atonePath, 100,
 			0, 2, // 2-tick range
 			amount, amount, // SYMMETRIC amounts
 			"0", "0",
@@ -132,8 +132,8 @@ func testRangeWidthEfficiency() {
 	// Create new pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -161,7 +161,7 @@ func testRangeWidthEfficiency() {
 	for _, r := range ranges {
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			r.lower, r.upper,
 			testAmount, testAmount,
 			"0", "0",
@@ -191,8 +191,8 @@ func testActualLimits() {
 	// Create new pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -215,15 +215,15 @@ func testActualLimits() {
 
 	for _, amount := range testAmounts {
 		// Check if Alice has enough balance
-		aliceBar := bar.BalanceOf(aliceAddr)
-		aliceBaz := baz.BalanceOf(aliceAddr)
+		aliceAtom := atom.BalanceOf(aliceAddr)
+		aliceAtone := atone.BalanceOf(aliceAddr)
 
 		ufmt.Printf("Testing amount: %s\n", amount)
-		ufmt.Printf("  Alice balance: bar=%d, baz=%d\n", aliceBar, aliceBaz)
+		ufmt.Printf("  Alice balance: atom=%d, atone=%d\n", aliceAtom, aliceAtone)
 
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
 			cross,
-			barPath, bazPath, 3000,
+			atomPath, atonePath, 3000,
 			-60, 60, // Minimum range for fee tier 3000
 			amount, amount,
 			"0", "0",

@@ -9,9 +9,9 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -43,9 +43,9 @@ const (
 )
 
 var (
-	fooTokenPath = "gno.land/r/onbloc/foo"
-	barTokenPath = "gno.land/r/onbloc/bar"
-	bazTokenPath = "gno.land/r/onbloc/baz"
+	btcTokenPath = "gno.land/r/gnoswap/test_token/btc"
+	atomTokenPath = "gno.land/r/gnoswap/test_token/atom"
+	atoneTokenPath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 type PoolTestScenario struct {
@@ -74,10 +74,10 @@ func setupStablecoinPool(t *testing.T) *pl.Pool {
 	testing.SetRealm(adminRealm)
 	mockInstanceSetPoolCreationFee(0)
 
-	// BAR-BAZ: Stablecoin pair simulation (low fee)
-	mockInstanceCreatePool(barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
+	// ATOM-ATONE: Stablecoin pair simulation (low fee)
+	mockInstanceCreatePool(atomTokenPath, atoneTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
-	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier100))
+	pool := getMockInstance().mustGetPool(GetPoolPath(atomTokenPath, atoneTokenPath, FeeTier100))
 	return pool
 }
 
@@ -87,10 +87,10 @@ func setupVolatilePool(t *testing.T) *pl.Pool {
 	testing.SetRealm(adminRealm)
 	mockInstanceSetPoolCreationFee(0)
 
-	// FOO-BAR: Volatile token pair (high fee)
-	mockInstanceCreatePool(barTokenPath, fooTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
+	// BTC-ATOM: Volatile token pair (high fee)
+	mockInstanceCreatePool(atomTokenPath, btcTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 
-	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000))
+	pool := getMockInstance().mustGetPool(GetPoolPath(atomTokenPath, btcTokenPath, FeeTier3000))
 	return pool
 }
 
@@ -167,7 +167,7 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 			setupEnv: func() *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+					GivenPoolCreated(atomPath, atonePath, FeeTier100, EQUAL_PRICE_RATIO)
 			},
 			timeElapsed: ONE_HOUR,
 			context:     "Precise accumulation is important for high-volume stablecoin pairs",
@@ -178,7 +178,7 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 			setupEnv: func() *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(fooPath, barPath, FeeTier3000, VOLATILE_PRICE_RATIO)
+					GivenPoolCreated(btcPath, atomPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 			},
 			timeElapsed: ONE_MINUTE,
 			context:     "Precise accumulation is important even for fast price volatility",
@@ -189,7 +189,7 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 			setupEnv: func() *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+					GivenPoolCreated(atomPath, atonePath, FeeTier100, EQUAL_PRICE_RATIO)
 			},
 			timeElapsed: ONE_DAY,
 			context:     "Avoid overflows and precision loss in long-term accumulation",
@@ -200,9 +200,9 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			// Given: Pool with specific business context using DSL
 			env := scenario.setupEnv()
-			pool := env.pools[GetPoolPath(barPath, bazPath, FeeTier100)]
+			pool := env.pools[GetPoolPath(atomPath, atonePath, FeeTier100)]
 			if pool == nil {
-				pool = env.pools[GetPoolPath(fooPath, barPath, FeeTier3000)]
+				pool = env.pools[GetPoolPath(btcPath, atomPath, FeeTier3000)]
 			}
 			initialTick := pool.Slot0Tick()
 
@@ -613,8 +613,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 		{
 			name:            "valid_stablecoin_pool",
 			description:     "Valid stablecoin pool creation",
-			token0Path:      barTokenPath,
-			token1Path:      bazTokenPath,
+			token0Path:      atomTokenPath,
+			token1Path:      atoneTokenPath,
 			fee:             FeeTier100,
 			sqrtPriceX96:    EQUAL_PRICE_RATIO,
 			expectSuccess:   true,
@@ -623,8 +623,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 		{
 			name:            "invalid_price_too_low",
 			description:     "Invalid price too low pool creation attempt",
-			token0Path:      fooTokenPath,
-			token1Path:      barTokenPath,
+			token0Path:      btcTokenPath,
+			token1Path:      atomTokenPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "1",
 			expectSuccess:   false,
@@ -634,8 +634,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 		{
 			name:            "invalid_price_too_high",
 			description:     "Invalid price too high pool creation attempt",
-			token0Path:      fooTokenPath,
-			token1Path:      barTokenPath,
+			token0Path:      btcTokenPath,
+			token1Path:      atomTokenPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO
 			expectSuccess:   false,
@@ -645,8 +645,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 		{
 			name:            "minimum_valid_price",
 			description:     "Minimum valid price pool creation",
-			token0Path:      barTokenPath,
-			token1Path:      bazTokenPath,
+			token0Path:      atomTokenPath,
+			token1Path:      atoneTokenPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "4295128739", // MIN_SQRT_RATIO
 			expectSuccess:   true,
@@ -655,8 +655,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 		{
 			name:            "maximum_valid_price",
 			description:     "Maximum valid price pool creation",
-			token0Path:      barTokenPath,
-			token1Path:      bazTokenPath,
+			token0Path:      atomTokenPath,
+			token1Path:      atoneTokenPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO-1
 			expectSuccess:   true,
@@ -923,21 +923,21 @@ func simulateSwapActivity(t *testing.T, pool *pl.Pool) {
 
 	// Send tokens to router
 	switch pool.Token0Path() {
-	case barTokenPath:
-		bar.Transfer(cross, routerAddr, 20000000)
-	case bazTokenPath:
-		baz.Transfer(cross, routerAddr, 20000000)
-	case fooTokenPath:
-		foo.Transfer(cross, routerAddr, 20000000)
+	case atomTokenPath:
+		atom.Transfer(cross, routerAddr, 20000000)
+	case atoneTokenPath:
+		atone.Transfer(cross, routerAddr, 20000000)
+	case btcTokenPath:
+		btc.Transfer(cross, routerAddr, 20000000)
 	}
 
 	switch pool.Token1Path() {
-	case barTokenPath:
-		bar.Transfer(cross, routerAddr, 20000000)
-	case bazTokenPath:
-		baz.Transfer(cross, routerAddr, 20000000)
-	case fooTokenPath:
-		foo.Transfer(cross, routerAddr, 20000000)
+	case atomTokenPath:
+		atom.Transfer(cross, routerAddr, 20000000)
+	case atoneTokenPath:
+		atone.Transfer(cross, routerAddr, 20000000)
+	case btcTokenPath:
+		btc.Transfer(cross, routerAddr, 20000000)
 	}
 
 	// Create fees through swap execution
@@ -956,12 +956,12 @@ func approveTokenForRouter(t *testing.T, tokenPath string) {
 	t.Helper()
 
 	switch tokenPath {
-	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
-	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
-	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
+	case atomTokenPath:
+		atom.Approve(cross, poolAddr, maxApprove)
+	case atoneTokenPath:
+		atone.Approve(cross, poolAddr, maxApprove)
+	case btcTokenPath:
+		btc.Approve(cross, poolAddr, maxApprove)
 	}
 }
 
@@ -989,21 +989,21 @@ func approveTokensForPool(t *testing.T, pool *pl.Pool) {
 
 	// Approve tokens for pool
 	switch pool.Token0Path() {
-	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
-	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
-	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
+	case btcTokenPath:
+		btc.Approve(cross, poolAddr, maxApprove)
+	case atomTokenPath:
+		atom.Approve(cross, poolAddr, maxApprove)
+	case atoneTokenPath:
+		atone.Approve(cross, poolAddr, maxApprove)
 	}
 
 	switch pool.Token1Path() {
-	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
-	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
-	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
+	case btcTokenPath:
+		btc.Approve(cross, poolAddr, maxApprove)
+	case atomTokenPath:
+		atom.Approve(cross, poolAddr, maxApprove)
+	case atoneTokenPath:
+		atone.Approve(cross, poolAddr, maxApprove)
 	}
 }
 
@@ -1011,12 +1011,12 @@ func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	t.Helper()
 
 	switch tokenPath {
-	case fooTokenPath:
-		return foo.BalanceOf(addr)
-	case barTokenPath:
-		return bar.BalanceOf(addr)
-	case bazTokenPath:
-		return baz.BalanceOf(addr)
+	case btcTokenPath:
+		return btc.BalanceOf(addr)
+	case atomTokenPath:
+		return atom.BalanceOf(addr)
+	case atoneTokenPath:
+		return atone.BalanceOf(addr)
 	default:
 		t.Fatalf("Unknown token path: %s", tokenPath)
 		return 0
@@ -1163,22 +1163,22 @@ func TestSwap_ZeroOutputAllowed(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	mockInstanceSetPoolCreationFee(0)
 
-	mockInstanceCreatePool(barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(atomTokenPath, btcTokenPath, 500, EQUAL_PRICE_RATIO)
 
-	pool := getMockInstance().mustGetPoolBy(barTokenPath, fooTokenPath, 500)
+	pool := getMockInstance().mustGetPoolBy(atomTokenPath, btcTokenPath, 500)
 	approveTokensForPool(t, pool)
 
 	testing.SetRealm(posRealm)
-	mockInstanceMint(barTokenPath, fooTokenPath, 500, FULL_RANGE_LOWER, FULL_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceMint(atomTokenPath, btcTokenPath, 500, FULL_RANGE_LOWER, FULL_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
 
 	slot0Before := pool.Slot0()
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	bar.Approve(cross, poolAddr, 1)
+	atom.Approve(cross, poolAddr, 1)
 
 	amount0, amount1 := mockInstanceSwap(
-		barTokenPath,
-		fooTokenPath,
+		atomTokenPath,
+		btcTokenPath,
 		500,
 		adminAddr,
 		true,
@@ -1186,7 +1186,7 @@ func TestSwap_ZeroOutputAllowed(t *testing.T) {
 		"4295128740",
 		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomTokenPath, btcTokenPath, amount0Delta, amount1Delta)
 		},
 	)
 

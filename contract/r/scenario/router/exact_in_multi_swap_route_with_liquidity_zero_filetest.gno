@@ -41,7 +41,7 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	barPath    = "gno.land/r/onbloc/bar"
+	atomPath    = "gno.land/r/gnoswap/test_token/atom"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -60,16 +60,16 @@ func main() {
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity")
-	createPool(barPath, gnsPath, 500, 0)
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:500) with zero liquidity")
+	createPool(atomPath, gnsPath, 500, 0)
 	println()
 
 	println("[SCENARIO] 4. ExactInSwapRoute")
 	exactInSwapRouteByWithPanic(
 		wugnotPath,
-		barPath,
+		atomPath,
 		"10000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:500",
 		"100",
 		"1",
 	)
@@ -183,15 +183,15 @@ func exactInSwapRouteByWithPanic(
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity
-// [EXPECTED] created gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:500) with zero liquidity
+// [EXPECTED] created gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/gns:500 pool at tick 0
 //
 // [SCENARIO] 4. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
 // [INFO] inputToken: gno.land/r/gnoland/wugnot
-// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] outputToken: gno.land/r/gnoswap/test_token/atom
 // [INFO] specifiedAmount: 10000000
-// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/atom:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] swap aborted: zero liquidity pool causes slippage failure

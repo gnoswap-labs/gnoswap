@@ -16,8 +16,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -34,8 +34,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -49,28 +49,28 @@ func main() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500, // 0.05% fee
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Give Alice tokens
 	largeAmount := int64(10_000_000_000_000) // 1e13
-	bar.Transfer(cross, aliceAddr, largeAmount)
-	baz.Transfer(cross, aliceAddr, largeAmount)
+	atom.Transfer(cross, aliceAddr, largeAmount)
+	atone.Transfer(cross, aliceAddr, largeAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largeAmount)
-	baz.Approve(cross, poolAddr, largeAmount)
-	bar.Approve(cross, positionAddr, largeAmount)
-	baz.Approve(cross, positionAddr, largeAmount)
+	atom.Approve(cross, poolAddr, largeAmount)
+	atone.Approve(cross, poolAddr, largeAmount)
+	atom.Approve(cross, positionAddr, largeAmount)
+	atone.Approve(cross, positionAddr, largeAmount)
 
 	// Test 1: ASYMMETRIC amounts (reproducing the "issue")
 	println("[CASE 1] Asymmetric Amounts (1e12 vs 1e6)")
 	_, liq1, amt0_1, amt1_1 := pn.Mint(
 		cross,
-		barPath, bazPath, 500,
+		atomPath, atonePath, 500,
 		-10, 10,
 		"1000000000000", // 1e12 for token0
 		"1000000",       // 1e6 for token1 (limiting factor!)
@@ -89,7 +89,7 @@ func main() {
 	println("[CASE 2] Symmetric Amounts (1e12 vs 1e12)")
 	_, liq2, amt0_2, amt1_2 := pn.Mint(
 		cross,
-		barPath, bazPath, 500,
+		atomPath, atonePath, 500,
 		-20, 20,
 		"1000000000000", // 1e12 for token0
 		"1000000000000", // 1e12 for token1 (SAME!)
@@ -108,7 +108,7 @@ func main() {
 	println("[CASE 3] Ultra-Narrow Range (1 tick) with Symmetric 1e10")
 	_, liq3, amt0_3, amt1_3 := pn.Mint(
 		cross,
-		barPath, bazPath, 500,
+		atomPath, atonePath, 500,
 		0, 10, // Just 10 ticks!
 		"10000000000", // 1e10
 		"10000000000", // 1e10
@@ -137,7 +137,7 @@ func main() {
 	for _, r := range ranges {
 		_, liq, amt0, amt1 := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			r.lower, r.upper,
 			"1000000000000", // 1e12
 			"1000000000000", // 1e12

@@ -17,7 +17,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -47,8 +47,8 @@ func initEnvironment() {}
 func createProjectByInvalidRecipient() {
 	testing.SetOriginCaller(adminAddr)
 
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	recipientAddr := address("invalidAddress")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -71,7 +71,7 @@ func createProjectByInvalidRecipient() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
@@ -98,8 +98,8 @@ func createProjectByInvalidRecipient() {
 //
 // [SCENARIO] 2. Admin attempts to create project with invalid recipient
 // [INFO] admin attempting to create project with invalid recipient
-// [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with project name: ETH Launchpad Project
+// [INFO] create project with reward token path: gno.land/r/gnoswap/test_token/eth
 // [INFO] create project with recipient: invalidAddress
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

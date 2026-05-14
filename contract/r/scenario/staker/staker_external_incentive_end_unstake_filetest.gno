@@ -27,8 +27,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -41,8 +41,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	fee3000 uint32 = 3000
 
@@ -125,11 +125,11 @@ func createPoolNoTier() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
 	// Create pool without setting any tier
-	pl.CreatePool(cross, barPath, fooPath, fee3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, btcPath, fee3000, "79228162514264337593543950337")
 
 	// Verify pool has no tier
 	// Pool should not be in tier system
-	ufmt.Printf("[EXPECTED] pool created: bar:foo:3000 with no tier\n")
+	ufmt.Printf("[EXPECTED] pool created: atom:btc:3000 with no tier\n")
 	testing.SkipHeights(1)
 }
 
@@ -137,13 +137,13 @@ func createExternalIncentive() {
 	testing.SetRealm(adminRealm)
 
 	// Add external reward token
-	sr.AddToken(cross, "gno.land/r/onbloc/obl")
+	sr.AddToken(cross, "gno.land/r/gnoswap/test_token/eth")
 
 	// Approve GNS for deposit
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	// Approve reward tokens
-	bar.Approve(cross, stakerAddr, externalRewardAmount)
+	atom.Approve(cross, stakerAddr, externalRewardAmount)
 
 	// Create external incentive
 	// Start time must be at least 1 day in the future AND must be midnight
@@ -155,8 +155,8 @@ func createExternalIncentive() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000", // targetPoolPath
-		barPath,              // rewardToken
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000", // targetPoolPath
+		atomPath,              // rewardToken
 		externalRewardAmount, // rewardAmount
 		incentiveStartTime,   // startTimestamp
 		endTime,              // endTimestamp
@@ -170,14 +170,14 @@ func mintAndStakePositions() {
 	testing.SetRealm(adminRealm)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
 	// Mint position 1
 	positionId1, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee3000,
 		int32(-2400),
 		int32(2400),
@@ -193,8 +193,8 @@ func mintAndStakePositions() {
 	// Mint position 2
 	positionId2, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee3000,
 		int32(-3000),
 		int32(3000),
@@ -224,16 +224,16 @@ func verifyExternalRewards() {
 
 	testing.SetRealm(adminRealm)
 
-	beforeBar := bar.BalanceOf(adminUser)
+	beforeAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1) // Collect rewards from external incentive
-	afterBar := bar.BalanceOf(adminUser)
-	diff := afterBar - beforeBar
+	afterAtom := atom.BalanceOf(adminUser)
+	diff := afterAtom - beforeAtom
 
 	if diff == 0 {
 		panic("expected external rewards to accumulate")
 	}
 
-	ufmt.Printf("[EXPECTED] external rewards accumulated: %d BAR tokens\n", diff)
+	ufmt.Printf("[EXPECTED] external rewards accumulated: %d ATOM tokens\n", diff)
 	testing.SkipHeights(1)
 }
 
@@ -248,18 +248,18 @@ func verifyNoIncentives() {
 	// Try to collect rewards - should be minimal or none
 	testing.SetRealm(adminRealm)
 
-	beforeBar := bar.BalanceOf(adminUser)
+	beforeAtom := atom.BalanceOf(adminUser)
 	beforeGns := gns.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	afterBar := bar.BalanceOf(adminUser)
+	afterAtom := atom.BalanceOf(adminUser)
 	afterGns := gns.BalanceOf(adminUser)
 
-	barDiff := afterBar - beforeBar
+	atomDiff := afterAtom - beforeAtom
 	gnsDiff := afterGns - beforeGns
 
-	ufmt.Printf("[INFO] rewards after incentive end - BAR: %d, GNS: %d (should be minimal)\n", barDiff, gnsDiff)
+	ufmt.Printf("[INFO] rewards after incentive end - ATOM: %d, GNS: %d (should be minimal)\n", atomDiff, gnsDiff)
 
 	// Verify pool has no tier and no active external incentives
 	// Pool has no tier and external incentive has ended
@@ -326,7 +326,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] initialized with short warm-up periods
 //
 // [SCENARIO] 2. Create pool without tier
-// [EXPECTED] pool created: bar:foo:3000 with no tier
+// [EXPECTED] pool created: atom:btc:3000 with no tier
 //
 // [SCENARIO] 3. Create external incentive
 // [EXPECTED] external incentive created - start: 1234656000, end: 1242432000
@@ -335,13 +335,13 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] minted and staked positions: 1 and 2
 //
 // [SCENARIO] 5. Verify rewards accumulate with external incentive
-// [EXPECTED] external rewards accumulated: 447038022 BAR tokens
+// [EXPECTED] external rewards accumulated: 447038022 ATOM tokens
 //
 // [SCENARIO] 6. Wait for external incentive to expire
 // [EXPECTED] waited for external incentive to expire
 //
 // [SCENARIO] 7. Verify pool has no incentives
-// [INFO] rewards after incentive end - BAR: 24513533, GNS: 0 (should be minimal)
+// [INFO] rewards after incentive end - ATOM: 24513533, GNS: 0 (should be minimal)
 // [EXPECTED] pool has no tier and external incentive ended
 //
 // [SCENARIO] 8. Unstake positions after incentive ended

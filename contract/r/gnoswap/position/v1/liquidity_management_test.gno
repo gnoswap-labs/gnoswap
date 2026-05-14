@@ -15,13 +15,13 @@ func initialSetup(t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	CreatePool(t, gnsPath, atomPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	TokenFaucet(t, gnsPath, alice)
-	TokenFaucet(t, barPath, alice)
+	TokenFaucet(t, atomPath, alice)
 }
 
 func TestLiquidityManagement_addLiquidity(t *testing.T) {
-	poolKey := pl.GetPoolPath(gnsPath, barPath, fee3000)
+	poolKey := pl.GetPoolPath(gnsPath, atomPath, fee3000)
 
 	tests := []struct {
 		name            string
@@ -316,7 +316,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			initialSetup(t)
 			testing.SetRealm(posRealm)
 			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
-			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
+			TokenApprove(t, atomPath, alice, poolAddr, tt.params.amount1Desired.Int64())
 
 			if tt.expectError {
 				if tt.errorType == "panic" {

@@ -26,8 +26,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -40,8 +40,8 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	fee500 uint32 = 500
 
@@ -52,14 +52,14 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userFoo          int64
-	poolBar          int64
-	poolFoo          int64
-	routerBar        int64
-	routerFoo        int64
-	protocolFeeBar   int64
-	protocolFeeFoo   int64
+	userAtom          int64
+	userBtc          int64
+	poolAtom          int64
+	poolBtc          int64
+	routerAtom        int64
+	routerBtc        int64
+	protocolFeeAtom   int64
+	protocolFeeBtc   int64
 }
 
 func main() {
@@ -105,14 +105,14 @@ func main() {
 
 func getBalanceSnapshot() BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:          bar.BalanceOf(userAddr),
-		userFoo:          foo.BalanceOf(userAddr),
-		poolBar:          bar.BalanceOf(poolAddr),
-		poolFoo:          foo.BalanceOf(poolAddr),
-		routerBar:        bar.BalanceOf(routerAddr),
-		routerFoo:        foo.BalanceOf(routerAddr),
-		protocolFeeBar:   bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo:   foo.BalanceOf(protocolFeeAddr),
+		userAtom:          atom.BalanceOf(userAddr),
+		userBtc:          btc.BalanceOf(userAddr),
+		poolAtom:          atom.BalanceOf(poolAddr),
+		poolBtc:          btc.BalanceOf(poolAddr),
+		routerAtom:        atom.BalanceOf(routerAddr),
+		routerBtc:        btc.BalanceOf(routerAddr),
+		protocolFeeAtom:   atom.BalanceOf(protocolFeeAddr),
+		protocolFeeBtc:   btc.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot
@@ -120,22 +120,22 @@ func getBalanceSnapshot() BalanceSnapshot {
 
 func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
-	println("[EXPECTED] User BAR balance:", snapshot.userBar)
-	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
-	println("[EXPECTED] Pool BAR balance:", snapshot.poolBar)
-	println("[EXPECTED] Pool FOO balance:", snapshot.poolFoo)
-	println("[EXPECTED] Router BAR balance:", snapshot.routerBar)
-	println("[EXPECTED] Router FOO balance:", snapshot.routerFoo)
-	println("[EXPECTED] Protocol fee BAR balance:", snapshot.protocolFeeBar)
-	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
+	println("[EXPECTED] User ATOM balance:", snapshot.userAtom)
+	println("[EXPECTED] User BTC balance:", snapshot.userBtc)
+	println("[EXPECTED] Pool ATOM balance:", snapshot.poolAtom)
+	println("[EXPECTED] Pool BTC balance:", snapshot.poolBtc)
+	println("[EXPECTED] Router ATOM balance:", snapshot.routerAtom)
+	println("[EXPECTED] Router BTC balance:", snapshot.routerBtc)
+	println("[EXPECTED] Protocol fee ATOM balance:", snapshot.protocolFeeAtom)
+	println("[EXPECTED] Protocol fee BTC balance:", snapshot.protocolFeeBtc)
 }
 
 func setupEnvironment() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
+	atom.Transfer(cross, userAddr, initialBalance)
+	btc.Transfer(cross, userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
 	return getBalanceSnapshot()
@@ -147,20 +147,20 @@ func setupPoolAndPosition() BalanceSnapshot {
 	// Create pool
 	pl.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
+	btc.Approve(cross, poolAddr, max_approve)
 
 	// Mint very large position for extreme swaps
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		int32(-50000), // very wide range
 		int32(50000),
@@ -175,8 +175,8 @@ func setupPoolAndPosition() BalanceSnapshot {
 
 	println("[INFO] Large Position ID:", tokenId)
 	println("[INFO] Liquidity:", liquidity)
-	println("[INFO] Amount0 (BAR):", amount0)
-	println("[INFO] Amount1 (FOO):", amount1)
+	println("[INFO] Amount0 (ATOM):", amount0)
+	println("[INFO] Amount1 (BTC):", amount1)
 
 	return getBalanceSnapshot()
 }
@@ -184,18 +184,18 @@ func setupPoolAndPosition() BalanceSnapshot {
 func performLargeSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
 
-	// Swap 90% of pool's FOO liquidity
+	// Swap 90% of pool's BTC liquidity
 	swapAmount := int64(450_000_000_000) // 90% of 500B
-	println("[INFO] Extreme Swap: Swapping", swapAmount, "FOO -> BAR (90% of liquidity)")
+	println("[INFO] Extreme Swap: Swapping", swapAmount, "BTC -> ATOM (90% of liquidity)")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500",
 		"100",
 		"1", // minimal output requirement
 		time.Now().Add(time.Hour).Unix(),
@@ -213,18 +213,18 @@ func performLargeSwap(before BalanceSnapshot) BalanceSnapshot {
 func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
 
 	// Swap back with exact out
 	swapAmount := int64(200_000_000_000)
-	println("[INFO] Reverse Swap: Getting", swapAmount, "FOO back")
+	println("[INFO] Reverse Swap: Getting", swapAmount, "BTC back")
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500",
 		"100",
 		ufmt.Sprintf("%d", max_approve), // allow max slippage
 		time.Now().Add(time.Hour).Unix(),
@@ -241,18 +241,18 @@ func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
 func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
 
 	// Very small swap after extreme price movement
 	swapAmount := int64(1_000_000) // just 1M
-	println("[INFO] Small Swap: Swapping", swapAmount, "FOO -> BAR (after extreme movement)")
+	println("[INFO] Small Swap: Swapping", swapAmount, "BTC -> ATOM (after extreme movement)")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -269,32 +269,32 @@ func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance conservation for", swapType)
 
-	userBarDiff := after.userBar - before.userBar
-	userFooDiff := after.userFoo - before.userFoo
-	poolBarDiff := after.poolBar - before.poolBar
-	poolFooDiff := after.poolFoo - before.poolFoo
-	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
-	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
+	userAtomDiff := after.userAtom - before.userAtom
+	userBtcDiff := after.userBtc - before.userBtc
+	poolAtomDiff := after.poolAtom - before.poolAtom
+	poolBtcDiff := after.poolBtc - before.poolBtc
+	protocolFeeAtomDiff := after.protocolFeeAtom - before.protocolFeeAtom
+	protocolFeeBtcDiff := after.protocolFeeBtc - before.protocolFeeBtc
 
-	println("[EXPECTED] User BAR change:", userBarDiff)
-	println("[EXPECTED] User FOO change:", userFooDiff)
-	println("[EXPECTED] Pool BAR change:", poolBarDiff)
-	println("[EXPECTED] Pool FOO change:", poolFooDiff)
-	println("[EXPECTED] Protocol Fee BAR change:", protocolFeeBarDiff)
-	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
+	println("[EXPECTED] User ATOM change:", userAtomDiff)
+	println("[EXPECTED] User BTC change:", userBtcDiff)
+	println("[EXPECTED] Pool ATOM change:", poolAtomDiff)
+	println("[EXPECTED] Pool BTC change:", poolBtcDiff)
+	println("[EXPECTED] Protocol Fee ATOM change:", protocolFeeAtomDiff)
+	println("[EXPECTED] Protocol Fee BTC change:", protocolFeeBtcDiff)
 
 	// Router must be empty
 	assertRouterIsEmpty(after)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
-	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
-	totalFooChange := userFooDiff + poolFooDiff + protocolFeeFooDiff
+	totalAtomChange := userAtomDiff + poolAtomDiff + protocolFeeAtomDiff
+	totalBtcChange := userBtcDiff + poolBtcDiff + protocolFeeBtcDiff
 
-	if totalBarChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] BAR not conserved in swap! Total change: %d", totalBarChange))
+	if totalAtomChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] ATOM not conserved in swap! Total change: %d", totalAtomChange))
 	}
-	if totalFooChange != 0 {
-		panic(ufmt.Sprintf("[ERROR] FOO not conserved in swap! Total change: %d", totalFooChange))
+	if totalBtcChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BTC not conserved in swap! Total change: %d", totalBtcChange))
 	}
 
 	println("[EXPECTED] Exact balance conservation verified - all tokens accounted for")
@@ -303,35 +303,35 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 func validateSmallSwapImpact(before, after BalanceSnapshot) {
 	println("[INFO] Validating small swap impact")
 
-	userBarDiff := after.userBar - before.userBar
-	userFooDiff := after.userFoo - before.userFoo
+	userAtomDiff := after.userAtom - before.userAtom
+	userBtcDiff := after.userBtc - before.userBtc
 
 	println("[EXPECTED] Small swap caused minimal balance change")
-	println("[EXPECTED] User BAR change:", userBarDiff)
-	println("[EXPECTED] User FOO change:", userFooDiff)
+	println("[EXPECTED] User ATOM change:", userAtomDiff)
+	println("[EXPECTED] User BTC change:", userBtcDiff)
 
 	// Small swap should have actual token movements
-	if userBarDiff == 0 && userFooDiff == 0 {
+	if userAtomDiff == 0 && userBtcDiff == 0 {
 		panic("[ERROR] Small swap had no effect")
 	}
 
-	// Verify swap direction is correct (FOO in, BAR out)
-	if userFooDiff >= 0 {
-		panic("[ERROR] User FOO should decrease in small swap")
+	// Verify swap direction is correct (BTC in, ATOM out)
+	if userBtcDiff >= 0 {
+		panic("[ERROR] User BTC should decrease in small swap")
 	}
-	if userBarDiff <= 0 {
-		panic("[ERROR] User BAR should increase in small swap")
+	if userAtomDiff <= 0 {
+		panic("[ERROR] User ATOM should increase in small swap")
 	}
 
 	println("[EXPECTED] Small swap executed correctly despite extreme price")
 }
 
 func assertRouterIsEmpty(snapshot BalanceSnapshot) {
-	if snapshot.routerBar != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
+	if snapshot.routerAtom != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has ATOM balance: %d - funds stuck!", snapshot.routerAtom))
 	}
-	if snapshot.routerFoo != 0 {
-		panic(ufmt.Sprintf("[ERROR] Router has FOO balance: %d - funds stuck!", snapshot.routerFoo))
+	if snapshot.routerBtc != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BTC balance: %d - funds stuck!", snapshot.routerBtc))
 	}
 }
 
@@ -341,21 +341,21 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 	// Total supply in system should be conserved
 	// User + Pool + Router + ProtocolFee = Initial Supply
 
-	totalBarInitial := initial.userBar + initial.poolBar + initial.routerBar + initial.protocolFeeBar
-	totalBarFinal := final.userBar + final.poolBar + final.routerBar + final.protocolFeeBar
+	totalAtomInitial := initial.userAtom + initial.poolAtom + initial.routerAtom + initial.protocolFeeAtom
+	totalAtomFinal := final.userAtom + final.poolAtom + final.routerAtom + final.protocolFeeAtom
 
-	totalFooInitial := initial.userFoo + initial.poolFoo + initial.routerFoo + initial.protocolFeeFoo
-	totalFooFinal := final.userFoo + final.poolFoo + final.routerFoo + final.protocolFeeFoo
+	totalBtcInitial := initial.userBtc + initial.poolBtc + initial.routerBtc + initial.protocolFeeBtc
+	totalBtcFinal := final.userBtc + final.poolBtc + final.routerBtc + final.protocolFeeBtc
 
-	println("[EXPECTED] Total BAR - Initial:", totalBarInitial, "Final:", totalBarFinal)
-	println("[EXPECTED] Total FOO - Initial:", totalFooInitial, "Final:", totalFooFinal)
+	println("[EXPECTED] Total ATOM - Initial:", totalAtomInitial, "Final:", totalAtomFinal)
+	println("[EXPECTED] Total BTC - Initial:", totalBtcInitial, "Final:", totalBtcFinal)
 
-	if totalBarInitial != totalBarFinal {
-		panic("[ERROR] BAR tokens were created or destroyed!")
+	if totalAtomInitial != totalAtomFinal {
+		panic("[ERROR] ATOM tokens were created or destroyed!")
 	}
 
-	if totalFooInitial != totalFooFinal {
-		panic("[ERROR] FOO tokens were created or destroyed!")
+	if totalBtcInitial != totalBtcFinal {
+		panic("[ERROR] BTC tokens were created or destroyed!")
 	}
 
 	println("[EXPECTED] System-wide balance perfectly conserved")
@@ -368,103 +368,103 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 1. Initial Setup
 // [INFO] Initial State
-// [EXPECTED] User BAR balance: 1000000000000
-// [EXPECTED] User FOO balance: 1000000000000
-// [EXPECTED] Pool BAR balance: 0
-// [EXPECTED] Pool FOO balance: 0
-// [EXPECTED] Router BAR balance: 0
-// [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 0
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 1000000000000
+// [EXPECTED] User BTC balance: 1000000000000
+// [EXPECTED] Pool ATOM balance: 0
+// [EXPECTED] Pool BTC balance: 0
+// [EXPECTED] Router ATOM balance: 0
+// [EXPECTED] Router BTC balance: 0
+// [EXPECTED] Protocol fee ATOM balance: 0
+// [EXPECTED] Protocol fee BTC balance: 0
 //
 // [SCENARIO] 2. Create Pool & Mint Large Position
 // [INFO] Large Position ID: 1
 // [INFO] Liquidity: 544718833860
-// [INFO] Amount0 (BAR): 500000000000
-// [INFO] Amount1 (FOO): 500000000000
+// [INFO] Amount0 (ATOM): 500000000000
+// [INFO] Amount1 (BTC): 500000000000
 // [INFO] After Setup
-// [EXPECTED] User BAR balance: 500000000000
-// [EXPECTED] User FOO balance: 500000000000
-// [EXPECTED] Pool BAR balance: 500000000000
-// [EXPECTED] Pool FOO balance: 500000000000
-// [EXPECTED] Router BAR balance: 0
-// [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 0
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 500000000000
+// [EXPECTED] User BTC balance: 500000000000
+// [EXPECTED] Pool ATOM balance: 500000000000
+// [EXPECTED] Pool BTC balance: 500000000000
+// [EXPECTED] Router ATOM balance: 0
+// [EXPECTED] Router BTC balance: 0
+// [EXPECTED] Protocol fee ATOM balance: 0
+// [EXPECTED] Protocol fee BTC balance: 0
 //
 // [SCENARIO] 3. Extreme Case 1: Very Large Swap (90% of liquidity)
-// [INFO] Extreme Swap: Swapping 450000000000 FOO -> BAR (90% of liquidity)
+// [INFO] Extreme Swap: Swapping 450000000000 BTC -> ATOM (90% of liquidity)
 // [INFO] Large Swap - In: 450000000000 Out: -245987862163
 // [INFO] Expected: Massive price impact and slippage
 // [INFO] After Large Swap
-// [EXPECTED] User BAR balance: 745987862163
-// [EXPECTED] User FOO balance: 50000000000
-// [EXPECTED] Pool BAR balance: 253642601740
-// [EXPECTED] Pool FOO balance: 950000000000
-// [EXPECTED] Router BAR balance: 0
-// [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 369536097
-// [EXPECTED] Protocol fee FOO balance: 0
+// [EXPECTED] User ATOM balance: 745987862163
+// [EXPECTED] User BTC balance: 50000000000
+// [EXPECTED] Pool ATOM balance: 253642601740
+// [EXPECTED] Pool BTC balance: 950000000000
+// [EXPECTED] Router ATOM balance: 0
+// [EXPECTED] Router BTC balance: 0
+// [EXPECTED] Protocol fee ATOM balance: 369536097
+// [EXPECTED] Protocol fee BTC balance: 0
 // [INFO] Validating balance conservation for Large ExactIn
-// [EXPECTED] User BAR change: 245987862163
-// [EXPECTED] User FOO change: -450000000000
-// [EXPECTED] Pool BAR change: -246357398260
-// [EXPECTED] Pool FOO change: 450000000000
-// [EXPECTED] Protocol Fee BAR change: 369536097
-// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] User ATOM change: 245987862163
+// [EXPECTED] User BTC change: -450000000000
+// [EXPECTED] Pool ATOM change: -246357398260
+// [EXPECTED] Pool BTC change: 450000000000
+// [EXPECTED] Protocol Fee ATOM change: 369536097
+// [EXPECTED] Protocol Fee BTC change: 0
 // [EXPECTED] Exact balance conservation verified - all tokens accounted for
 //
 // [SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage
-// [INFO] Reverse Swap: Getting 200000000000 FOO back
+// [INFO] Reverse Swap: Getting 200000000000 BTC back
 // [INFO] Reverse Swap - In: 75286230276 Out: -200000000000
 // [INFO] After Reverse Swap
-// [EXPECTED] User BAR balance: 670701631887
-// [EXPECTED] User FOO balance: 250000000000
-// [EXPECTED] Pool BAR balance: 328928832016
-// [EXPECTED] Pool FOO balance: 749699549324
-// [EXPECTED] Router BAR balance: 0
-// [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 369536097
-// [EXPECTED] Protocol fee FOO balance: 300450676
+// [EXPECTED] User ATOM balance: 670701631887
+// [EXPECTED] User BTC balance: 250000000000
+// [EXPECTED] Pool ATOM balance: 328928832016
+// [EXPECTED] Pool BTC balance: 749699549324
+// [EXPECTED] Router ATOM balance: 0
+// [EXPECTED] Router BTC balance: 0
+// [EXPECTED] Protocol fee ATOM balance: 369536097
+// [EXPECTED] Protocol fee BTC balance: 300450676
 // [INFO] Validating balance conservation for Large ExactOut
-// [EXPECTED] User BAR change: -75286230276
-// [EXPECTED] User FOO change: 200000000000
-// [EXPECTED] Pool BAR change: 75286230276
-// [EXPECTED] Pool FOO change: -200300450676
-// [EXPECTED] Protocol Fee BAR change: 0
-// [EXPECTED] Protocol Fee FOO change: 300450676
+// [EXPECTED] User ATOM change: -75286230276
+// [EXPECTED] User BTC change: 200000000000
+// [EXPECTED] Pool ATOM change: 75286230276
+// [EXPECTED] Pool BTC change: -200300450676
+// [EXPECTED] Protocol Fee ATOM change: 0
+// [EXPECTED] Protocol Fee BTC change: 300450676
 // [EXPECTED] Exact balance conservation verified - all tokens accounted for
 //
 // [SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement
-// [INFO] Small Swap: Swapping 1000000 FOO -> BAR (after extreme movement)
+// [INFO] Small Swap: Swapping 1000000 BTC -> ATOM (after extreme movement)
 // [INFO] Small Swap - In: 1000000 Out: -469486
 // [INFO] After Small Swap
-// [EXPECTED] User BAR balance: 670702101373
-// [EXPECTED] User FOO balance: 249999000000
-// [EXPECTED] Pool BAR balance: 328928361825
-// [EXPECTED] Pool FOO balance: 749700549324
-// [EXPECTED] Router BAR balance: 0
-// [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 369536802
-// [EXPECTED] Protocol fee FOO balance: 300450676
+// [EXPECTED] User ATOM balance: 670702101373
+// [EXPECTED] User BTC balance: 249999000000
+// [EXPECTED] Pool ATOM balance: 328928361825
+// [EXPECTED] Pool BTC balance: 749700549324
+// [EXPECTED] Router ATOM balance: 0
+// [EXPECTED] Router BTC balance: 0
+// [EXPECTED] Protocol fee ATOM balance: 369536802
+// [EXPECTED] Protocol fee BTC balance: 300450676
 // [INFO] Validating balance conservation for Small ExactIn
-// [EXPECTED] User BAR change: 469486
-// [EXPECTED] User FOO change: -1000000
-// [EXPECTED] Pool BAR change: -470191
-// [EXPECTED] Pool FOO change: 1000000
-// [EXPECTED] Protocol Fee BAR change: 705
-// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] User ATOM change: 469486
+// [EXPECTED] User BTC change: -1000000
+// [EXPECTED] Pool ATOM change: -470191
+// [EXPECTED] Pool BTC change: 1000000
+// [EXPECTED] Protocol Fee ATOM change: 705
+// [EXPECTED] Protocol Fee BTC change: 0
 // [EXPECTED] Exact balance conservation verified - all tokens accounted for
 // [INFO] Validating small swap impact
 // [EXPECTED] Small swap caused minimal balance change
-// [EXPECTED] User BAR change: 469486
-// [EXPECTED] User FOO change: -1000000
+// [EXPECTED] User ATOM change: 469486
+// [EXPECTED] User BTC change: -1000000
 // [EXPECTED] Small swap executed correctly despite extreme price
 //
 // [SCENARIO] 6. Final Validation: Total System Balance Conservation
 // [INFO] Validating system-wide balance conservation
-// [EXPECTED] Total BAR - Initial: 1000000000000 Final: 1000000000000
-// [EXPECTED] Total FOO - Initial: 1000000000000 Final: 1000000000000
+// [EXPECTED] Total ATOM - Initial: 1000000000000 Final: 1000000000000
+// [EXPECTED] Total BTC - Initial: 1000000000000 Final: 1000000000000
 // [EXPECTED] System-wide balance perfectly conserved
 // [EXPECTED] No tokens leaked, created, or destroyed in extreme scenarios
 //

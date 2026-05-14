@@ -33,8 +33,8 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -49,15 +49,15 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 
 	t *testing.T
 )
@@ -67,7 +67,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -116,8 +116,8 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, poolPath, 1)
@@ -129,15 +129,15 @@ func mintNarrowRangePosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint narrow range position (tick range: -50 ~ 50)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-50), // narrow range around current price (tick 0)
 		int32(50),
@@ -211,8 +211,8 @@ func performSwapToMovePrice() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for swapping")
-	bar.Approve(cross, routerAddr, maxInt64)
-	baz.Approve(cross, routerAddr, maxInt64)
+	atom.Approve(cross, routerAddr, maxInt64)
+	atone.Approve(cross, routerAddr, maxInt64)
 
 	// Check current tick before swap
 	currentTickBefore := pl.GetSlot0Tick(poolPath)
@@ -222,20 +222,20 @@ func performSwapToMovePrice() {
 	// Swap a large amount to move the tick significantly
 	swapAmount := "100000"
 
-	println("[INFO] swap bar for baz to move tick up")
+	println("[INFO] swap atom for atone to move tick up")
 	_, amountOut := rt.ExactInSwapRoute(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		swapAmount,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100",
 		"100",
 		"0",
 		maxTimeout,
 		"",
 	)
 
-	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", swapAmount, amountOut)
+	ufmt.Printf("[INFO] swapped %s atom for %s atone\n", swapAmount, amountOut)
 
 	// Check tick after swap
 	currentTickAfter := pl.GetSlot0Tick(poolPath)
@@ -248,10 +248,10 @@ func performSwapToMovePrice() {
 		println("[INFO] perform additional swap")
 		rt.ExactInSwapRoute(
 			cross,
-			barPath,
-			bazPath,
+			atomPath,
+			atonePath,
 			swapAmount,
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+			"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100",
 			"100",
 			"0",
 			maxTimeout,
@@ -294,25 +294,25 @@ func performReverseSwap() {
 	ufmt.Printf("[INFO] tick before reverse swap: %d\n", currentTickBefore)
 
 	println("[INFO] perform reverse swap to move price back into range")
-	// Swap baz for bar to move tick back down
+	// Swap atone for atom to move tick back down
 	reverseSwapAmount := "50000"
 
 	var amountOut string = "0"
 
-	println("[INFO] swap baz for bar to move tick down")
+	println("[INFO] swap atone for atom to move tick down")
 	_, amountOut = rt.ExactInSwapRoute(
 		cross,
-		bazPath,
-		barPath,
+		atonePath,
+		atomPath,
 		reverseSwapAmount,
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:100",
 		"100",
 		"0",
 		maxTimeout,
 		"",
 	)
 
-	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
+	ufmt.Printf("[INFO] swapped %s atone for %s atom\n", reverseSwapAmount, amountOut)
 
 	// Check tick after reverse swap
 	currentTickAfter := pl.GetSlot0Tick(poolPath)
@@ -388,8 +388,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set pool creation fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 // [INFO] set pool to tier 1
 //
 // [SCENARIO] 3. Mint narrow range position
@@ -416,8 +416,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] approve tokens for swapping
 // [INFO] tick before swap: 0
 // [INFO] perform large swap to move price out of range
-// [INFO] swap bar for baz to move tick up
-// [INFO] swapped 100000 bar for -9985 baz
+// [INFO] swap atom for atone to move tick up
+// [INFO] swapped 100000 atom for -9985 atone
 // [EXPECTED] tick after swap: -887271
 // [WARNING] swap might not have moved price far enough
 // [INFO] perform additional swap
@@ -432,8 +432,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Perform reverse swap to move price back in-range
 // [INFO] tick before reverse swap: -887271
 // [INFO] perform reverse swap to move price back into range
-// [INFO] swap baz for bar to move tick down
-// [INFO] swapped 50000 baz for 0 bar
+// [INFO] swap atone for atom to move tick down
+// [INFO] swapped 50000 atone for 0 atom
 // [EXPECTED] tick after reverse swap: -887271
 // [WARNING] position might still be out-of-range
 // [INFO] position range: -50 to 50, current tick: -887271

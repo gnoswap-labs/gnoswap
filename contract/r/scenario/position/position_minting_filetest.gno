@@ -19,8 +19,8 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -52,8 +52,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 // Pool setup flag to prevent duplicate creation
@@ -87,7 +87,7 @@ func setupPool() {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross, 0)
 		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }
@@ -97,10 +97,10 @@ func tokenFaucet(tokenPath string, to address) {
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
-	case barPath:
-		bar.Transfer(cross, to, defaultAmount)
-	case fooPath:
-		foo.Transfer(cross, to, defaultAmount)
+	case atomPath:
+		atom.Transfer(cross, to, defaultAmount)
+	case btcPath:
+		btc.Transfer(cross, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -113,18 +113,18 @@ func testBasicPositionMinting() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Creating position with valid parameters")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-10000,
 		10000,
@@ -154,12 +154,12 @@ func testZeroLiquidityMintingFailure() {
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(atomPath, bobAddr)
+	tokenFaucet(btcPath, bobAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Attempting to mint with zero liquidity")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -178,12 +178,12 @@ func testInsufficientMinimumAmountMinting() {
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(atomPath, aliceAddr)
+	tokenFaucet(btcPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Attempting to mint with insufficient minimum amounts")
 	// Note: This would normally panic due to slippage, but for testing we check the behavior
@@ -202,8 +202,8 @@ func testTokenApprovalRequiredForMinting() {
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(atomPath, bobAddr)
+	tokenFaucet(btcPath, bobAddr)
 
 	println("[INFO] Attempting to mint without token approval")
 	// Note: This would normally panic, but for testing we check the behavior

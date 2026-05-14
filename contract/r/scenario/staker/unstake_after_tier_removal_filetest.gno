@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -40,8 +40,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee3000 uint32 = 3000
 
@@ -96,12 +96,12 @@ func createPoolAndSetTier() {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, fee3000, "79228162514264337593543950337")
 
 	// Set pool to tier 2
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000", 2)
 
-	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	tier := sr.GetPoolTier("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000")
 	ufmt.Printf("[INFO] Pool created and set to tier %d\n", tier)
 
 	testing.SkipHeights(1)
@@ -111,15 +111,15 @@ func mintAndStakePosition() uint64 {
 	testing.SetRealm(adminRealm)
 
 	// Approve tokens
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	// Mint position
 	// fee3000 has tick spacing of 60, so ticks must be multiples of 60
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		int32(-1020), // -1020 is divisible by 60
 		int32(1020),  // 1020 is divisible by 60
@@ -158,9 +158,9 @@ func removePoolTier() {
 	testing.SetRealm(adminRealm)
 
 	println("Removing pool from tier system...")
-	sr.RemovePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	sr.RemovePoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000")
 
-	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	tier := sr.GetPoolTier("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000")
 	ufmt.Printf("[INFO] Pool tier after removal: %d (0 means no tier)\n", tier)
 
 	if tier != 0 {
@@ -246,7 +246,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] Pool tier after removal: 0 (0 means no tier)
 // [STEP 6] Attempt to unstake position after tier removal
 // Attempting to unstake position from de-tiered pool...
-// [INFO] poolPath:  gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000
+// [INFO] poolPath:  gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000
 //
 // === BUG FIXED ===
 // Users CAN NOW unstake positions from pools that have been removed from the tier system.

@@ -18,9 +18,9 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -31,9 +31,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	max_timeout int64 = 9999999999
 	maxApprove  int64 = 9223372036854775806
@@ -53,48 +53,48 @@ func main() {
 	// create pool
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
-	println("[INFO] Creating bar-baz pool (fee: 500)")
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	println("[INFO] Creating baz-qux pool (fee: 500)")
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	println("[INFO] Creating atom-atone pool (fee: 500)")
+	pl.CreatePool(cross, atomPath, atonePath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	println("[INFO] Creating atone-sol pool (fee: 500)")
+	pl.CreatePool(cross, atonePath, solPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
+	sol.Approve(cross, poolAddr, maxApprove)
 
-	println("[INFO] Minting positions in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
-	println("[INFO] Minting positions in baz-qux pool")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	println("[INFO] Minting positions in atom-atone pool")
+	pn.Mint(cross, atomPath, atonePath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	println("[INFO] Minting positions in atone-sol pool")
+	pn.Mint(cross, atonePath, solPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] Executing test scenarios")
 	println()
-	testDrySwapRouteBarQuxExactIn()
-	testSwapRouteBarQuxExactIn()
-	testDrySwapRouteBarQuxExactOut()
-	testSwapRouteBarQuxExactOut()
-	TestDrySwapRouteQuxBarExactIn()
-	TestSwapRouteQuxBarExactIn()
-	TestDrySwapRouteQuxBarExactOut()
-	TestSwapRouteQuxBarExactOut()
+	testDrySwapRouteAtomSolExactIn()
+	testSwapRouteAtomSolExactIn()
+	testDrySwapRouteAtomSolExactOut()
+	testSwapRouteAtomSolExactOut()
+	TestDrySwapRouteSolAtomExactIn()
+	TestSwapRouteSolAtomExactIn()
+	TestDrySwapRouteSolAtomExactOut()
+	TestSwapRouteSolAtomExactOut()
 
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Scenario completed")
 }
 
-func testDrySwapRouteBarQuxExactIn() {
-	println("[SCENARIO] Given: Dry swap route bar to qux exact in preparation")
+func testDrySwapRouteAtomSolExactIn() {
+	println("[SCENARIO] Given: Dry swap route atom to sol exact in preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route (bar → baz → qux)")
+	println("[INFO] Executing dry swap route (atom → atone → sol)")
 	_, dryResult, _ := router.DrySwapRoute(
-		barPath,    // inputToken
-		quxPath,    // outputToken
+		atomPath,    // inputToken
+		solPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500", // strRouteArr
 		"100", // quoteArr
 		"100",
 	)
@@ -103,20 +103,20 @@ func testDrySwapRouteBarQuxExactIn() {
 	println()
 }
 
-func testSwapRouteBarQuxExactIn() {
-	println("[SCENARIO] Given: Swap route bar to qux exact in preparation")
+func testSwapRouteAtomSolExactIn() {
+	println("[SCENARIO] Given: Swap route atom to sol exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, 10000)
+	atom.Approve(cross, routerAddr, 10000)
 
-	println("[INFO] Executing swap route (bar → baz → qux)")
+	println("[INFO] Executing swap route (atom → atone → sol)")
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath, // inputToken
-		quxPath, // outputToken
+		atomPath, // inputToken
+		solPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500", // strRouteArr
 		"50,50", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -128,17 +128,17 @@ func testSwapRouteBarQuxExactIn() {
 	println()
 }
 
-func testDrySwapRouteBarQuxExactOut() {
-	println("[SCENARIO] Given: Dry swap route bar to qux exact out preparation")
+func testDrySwapRouteAtomSolExactOut() {
+	println("[SCENARIO] Given: Dry swap route atom to sol exact out preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route exact out (bar → baz → qux)")
+	println("[INFO] Executing dry swap route exact out (atom → atone → sol)")
 	dryResult, _, _ := router.DrySwapRoute(
-		barPath,     // inputToken
-		quxPath,     // outputToken
+		atomPath,     // inputToken
+		solPath,     // outputToken
 		"1000",      // amountSpecified
 		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500", // strRouteArr
 		"50,50", // quoteArr
 		"10000",
 	)
@@ -147,20 +147,20 @@ func testDrySwapRouteBarQuxExactOut() {
 	println()
 }
 
-func testSwapRouteBarQuxExactOut() {
-	println("[SCENARIO] Given: Swap route bar to qux exact out preparation")
+func testSwapRouteAtomSolExactOut() {
+	println("[SCENARIO] Given: Swap route atom to sol exact out preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, 99999)
+	atom.Approve(cross, routerAddr, 99999)
 
-	println("[INFO] Executing swap route exact out (bar → baz → qux)")
+	println("[INFO] Executing swap route exact out (atom → atone → sol)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
-		barPath, // inputToken
-		quxPath, // outputToken
+		atomPath, // inputToken
+		solPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500", // strRouteArr
 		"60,40", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -172,17 +172,17 @@ func testSwapRouteBarQuxExactOut() {
 	println()
 }
 
-func TestDrySwapRouteQuxBarExactIn() {
-	println("[SCENARIO] Given: Dry swap route qux to bar exact in preparation")
+func TestDrySwapRouteSolAtomExactIn() {
+	println("[SCENARIO] Given: Dry swap route sol to atom exact in preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route (qux → baz → bar)")
+	println("[INFO] Executing dry swap route (sol → atone → atom)")
 	_, dryResult, _ := router.DrySwapRoute(
-		quxPath,    // inputToken
-		barPath,    // outputToken
+		solPath,    // inputToken
+		atomPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500,gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",
 	)
@@ -191,20 +191,20 @@ func TestDrySwapRouteQuxBarExactIn() {
 	println()
 }
 
-func TestSwapRouteQuxBarExactIn() {
-	println("[SCENARIO] Given: Swap route qux to bar exact in preparation")
+func TestSwapRouteSolAtomExactIn() {
+	println("[SCENARIO] Given: Swap route sol to atom exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, routerAddr, 10000)
+	sol.Approve(cross, routerAddr, 10000)
 
-	println("[INFO] Executing swap route (qux → baz → bar)")
+	println("[INFO] Executing swap route (sol → atone → atom)")
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		quxPath, // inputToken
-		barPath, // outputToken
+		solPath, // inputToken
+		atomPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500,gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -216,17 +216,17 @@ func TestSwapRouteQuxBarExactIn() {
 	println()
 }
 
-func TestDrySwapRouteQuxBarExactOut() {
-	println("[SCENARIO] Given: Dry swap route qux to bar exact out preparation")
+func TestDrySwapRouteSolAtomExactOut() {
+	println("[SCENARIO] Given: Dry swap route sol to atom exact out preparation")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Executing dry swap route exact out (qux → baz → bar)")
+	println("[INFO] Executing dry swap route exact out (sol → atone → atom)")
 	dryResult, _, _ := router.DrySwapRoute(
-		quxPath,     // inputToken
-		barPath,     // outputToken
+		solPath,     // inputToken
+		atomPath,     // outputToken
 		"1000",      // amountSpecified
 		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500,gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"30,70", // quoteArr
 		"100000",
 	)
@@ -235,20 +235,20 @@ func TestDrySwapRouteQuxBarExactOut() {
 	println()
 }
 
-func TestSwapRouteQuxBarExactOut() {
-	println("[SCENARIO] Given: Swap route qux to bar exact out preparation")
+func TestSwapRouteSolAtomExactOut() {
+	println("[SCENARIO] Given: Swap route sol to atom exact out preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, routerAddr, 99999)
+	sol.Approve(cross, routerAddr, 99999)
 
-	println("[INFO] Executing swap route exact out (qux → baz → bar)")
+	println("[INFO] Executing swap route exact out (sol → atone → atom)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
-		quxPath, // inputToken
-		barPath, // outputToken
+		solPath, // inputToken
+		atomPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500,gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500", // strRouteArr
 		"30,70", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -264,50 +264,50 @@ func TestSwapRouteQuxBarExactOut() {
 // [SCENARIO] #2 Route 2 Hop Test
 // [INFO] Starting scenario: Multi-hop routing with 2 routes and 2 hops
 // [INFO] Setting up pools and positions
-// [INFO] Creating bar-baz pool (fee: 500)
-// [INFO] Creating baz-qux pool (fee: 500)
+// [INFO] Creating atom-atone pool (fee: 500)
+// [INFO] Creating atone-sol pool (fee: 500)
 // [INFO] Approving tokens for pool operations
-// [INFO] Minting positions in bar-baz pool
-// [INFO] Minting positions in baz-qux pool
+// [INFO] Minting positions in atom-atone pool
+// [INFO] Minting positions in atone-sol pool
 // [INFO] Executing test scenarios
 //
-// [SCENARIO] Given: Dry swap route bar to qux exact in preparation
-// [INFO] Executing dry swap route (bar → baz → qux)
+// [SCENARIO] Given: Dry swap route atom to sol exact in preparation
+// [INFO] Executing dry swap route (atom → atone → sol)
 // [EXPECTED] dryResult: 7326 expected: 7326
 //
-// [SCENARIO] Given: Swap route bar to qux exact in preparation
+// [SCENARIO] Given: Swap route atom to sol exact in preparation
 // [INFO] Approving tokens for swap
-// [INFO] Executing swap route (bar → baz → qux)
+// [INFO] Executing swap route (atom → atone → sol)
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -7318 expected: -7318
 //
-// [SCENARIO] Given: Dry swap route bar to qux exact out preparation
-// [INFO] Executing dry swap route exact out (bar → baz → qux)
+// [SCENARIO] Given: Dry swap route atom to sol exact out preparation
+// [INFO] Executing dry swap route exact out (atom → atone → sol)
 // [EXPECTED] dryResult: 140 expected: 140
 //
-// [SCENARIO] Given: Swap route bar to qux exact out preparation
+// [SCENARIO] Given: Swap route atom to sol exact out preparation
 // [INFO] Approving tokens for swap
-// [INFO] Executing swap route exact out (bar → baz → qux)
+// [INFO] Executing swap route exact out (atom → atone → sol)
 // [EXPECTED] amountIn: 141 expected: 141
 // [EXPECTED] amountOut: -1001 expected: -1001
 //
-// [SCENARIO] Given: Dry swap route qux to bar exact in preparation
-// [INFO] Executing dry swap route (qux → baz → bar)
+// [SCENARIO] Given: Dry swap route sol to atom exact in preparation
+// [INFO] Executing dry swap route (sol → atone → atom)
 // [EXPECTED] dryResult: 135 expected: 135
 //
-// [SCENARIO] Given: Swap route qux to bar exact in preparation
+// [SCENARIO] Given: Swap route sol to atom exact in preparation
 // [INFO] Approving tokens for swap
-// [INFO] Executing swap route (qux → baz → bar)
+// [INFO] Executing swap route (sol → atone → atom)
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -135 expected: -135
 //
-// [SCENARIO] Given: Dry swap route qux to bar exact out preparation
-// [INFO] Executing dry swap route exact out (qux → baz → bar)
+// [SCENARIO] Given: Dry swap route sol to atom exact out preparation
+// [INFO] Executing dry swap route exact out (sol → atone → atom)
 // [EXPECTED] dryResult: 7359 expected: 7359
 //
-// [SCENARIO] Given: Swap route qux to bar exact out preparation
+// [SCENARIO] Given: Swap route sol to atom exact out preparation
 // [INFO] Approving tokens for swap
-// [INFO] Executing swap route exact out (qux → baz → bar)
+// [INFO] Executing swap route exact out (sol → atone → atom)
 // [EXPECTED] amountIn: 7373 expected: 7365
 // [EXPECTED] amountOut: -1000 expected: -999
 //

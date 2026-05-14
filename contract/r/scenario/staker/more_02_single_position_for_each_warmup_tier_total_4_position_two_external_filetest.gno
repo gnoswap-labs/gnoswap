@@ -31,8 +31,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -46,8 +46,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
@@ -59,7 +59,7 @@ var (
 
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 )
 
 func main() {
@@ -67,7 +67,7 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -75,7 +75,7 @@ func main() {
 	mintPositions()
 	println()
 
-	println("[SCENARIO] 4. Create external incentives (bar and baz)")
+	println("[SCENARIO] 4. Create external incentives (atom and atone)")
 	createExternalIncentives()
 	println()
 
@@ -116,8 +116,8 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
@@ -125,14 +125,14 @@ func createPool() {
 func mintPositions() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -30 ~ 30)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -152,8 +152,8 @@ func mintPositions() {
 	println("[INFO] mint position 02 (tick range: -30 ~ 30)")
 	positionId2, liquidity2, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -172,8 +172,8 @@ func mintPositions() {
 	println("[INFO] mint position 03 (tick range: -30 ~ 30)")
 	positionId3, liquidity3, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -192,8 +192,8 @@ func mintPositions() {
 	println("[INFO] mint position 04 (tick range: -30 ~ 30)")
 	positionId4, liquidity4, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -213,35 +213,35 @@ func mintPositions() {
 func createExternalIncentives() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create external incentive for bar token (365 days)")
-	bar.Approve(cross, stakerAddr, maxInt64)
+	println("[INFO] create external incentive for atom token (365 days)")
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		barPath,
-		365_000_000_000, // 365 billion bar tokens
+		atomPath,
+		365_000_000_000, // 365 billion atom tokens
 		1234569600,
 		1234569600+TIMESTAMP_365DAYS,
 	)
 
-	ufmt.Printf("[INFO] bar external incentive created - reward per block: ~23148\n")
+	ufmt.Printf("[INFO] atom external incentive created - reward per block: ~23148\n")
 
-	println("[INFO] create external incentive for baz token (365 days)")
-	baz.Approve(cross, stakerAddr, maxInt64)
+	println("[INFO] create external incentive for atone token (365 days)")
+	atone.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		bazPath,
-		3_650_000_000, // 3650 million baz tokens
+		atonePath,
+		3_650_000_000, // 3650 million atone tokens
 		1234569600,
 		1234569600+TIMESTAMP_365DAYS,
 	)
 
-	ufmt.Printf("[INFO] baz external incentive created - reward per block: ~23\n")
+	ufmt.Printf("[INFO] atone external incentive created - reward per block: ~23\n")
 
 	// Make external incentives start
 	leftHeight := 978 - runtime.ChainHeight()
@@ -259,19 +259,19 @@ func stakeTokenPos01ToWarmUp100() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for 30% warm-up")
-	userOldBar := bar.BalanceOf(adminUser)
-	userOldBaz := baz.BalanceOf(adminUser)
+	userOldAtom := atom.BalanceOf(adminUser)
+	userOldAtone := atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	userNewBar := bar.BalanceOf(adminUser)
-	userNewBaz := baz.BalanceOf(adminUser)
+	userNewAtom := atom.BalanceOf(adminUser)
+	userNewAtone := atone.BalanceOf(adminUser)
 
-	barReward := userNewBar - userOldBar
-	bazReward := userNewBaz - userOldBaz
+	atomReward := userNewAtom - userOldAtom
+	atoneReward := userNewAtone - userOldAtone
 
-	ufmt.Printf("[EXPECTED] bar reward (30%% warm-up): %d\n", barReward)
-	ufmt.Printf("[EXPECTED] baz reward (30%% warm-up): %d\n", bazReward)
+	ufmt.Printf("[EXPECTED] atom reward (30%% warm-up): %d\n", atomReward)
+	ufmt.Printf("[EXPECTED] atone reward (30%% warm-up): %d\n", atoneReward)
 
 	testing.SkipHeights(1)
 
@@ -280,19 +280,19 @@ func stakeTokenPos01ToWarmUp100() {
 	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
-	userOldBar = bar.BalanceOf(adminUser)
-	userOldBaz = baz.BalanceOf(adminUser)
+	userOldAtom = atom.BalanceOf(adminUser)
+	userOldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	userNewBar = bar.BalanceOf(adminUser)
-	userNewBaz = baz.BalanceOf(adminUser)
+	userNewAtom = atom.BalanceOf(adminUser)
+	userNewAtone = atone.BalanceOf(adminUser)
 
-	barReward = userNewBar - userOldBar
-	bazReward = userNewBaz - userOldBaz
+	atomReward = userNewAtom - userOldAtom
+	atoneReward = userNewAtone - userOldAtone
 
-	ufmt.Printf("[EXPECTED] bar reward (50%% warm-up): %d\n", barReward)
-	ufmt.Printf("[EXPECTED] baz reward (50%% warm-up): %d\n", bazReward)
+	ufmt.Printf("[EXPECTED] atom reward (50%% warm-up): %d\n", atomReward)
+	ufmt.Printf("[EXPECTED] atone reward (50%% warm-up): %d\n", atoneReward)
 
 	testing.SkipHeights(1)
 
@@ -301,19 +301,19 @@ func stakeTokenPos01ToWarmUp100() {
 	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
-	userOldBar = bar.BalanceOf(adminUser)
-	userOldBaz = baz.BalanceOf(adminUser)
+	userOldAtom = atom.BalanceOf(adminUser)
+	userOldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	userNewBar = bar.BalanceOf(adminUser)
-	userNewBaz = baz.BalanceOf(adminUser)
+	userNewAtom = atom.BalanceOf(adminUser)
+	userNewAtone = atone.BalanceOf(adminUser)
 
-	barReward = userNewBar - userOldBar
-	bazReward = userNewBaz - userOldBaz
+	atomReward = userNewAtom - userOldAtom
+	atoneReward = userNewAtone - userOldAtone
 
-	ufmt.Printf("[EXPECTED] bar reward (70%% warm-up): %d\n", barReward)
-	ufmt.Printf("[EXPECTED] baz reward (70%% warm-up): %d\n", bazReward)
+	ufmt.Printf("[EXPECTED] atom reward (70%% warm-up): %d\n", atomReward)
+	ufmt.Printf("[EXPECTED] atone reward (70%% warm-up): %d\n", atoneReward)
 
 	testing.SkipHeights(1)
 
@@ -322,19 +322,19 @@ func stakeTokenPos01ToWarmUp100() {
 	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
-	userOldBar = bar.BalanceOf(adminUser)
-	userOldBaz = baz.BalanceOf(adminUser)
+	userOldAtom = atom.BalanceOf(adminUser)
+	userOldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	userNewBar = bar.BalanceOf(adminUser)
-	userNewBaz = baz.BalanceOf(adminUser)
+	userNewAtom = atom.BalanceOf(adminUser)
+	userNewAtone = atone.BalanceOf(adminUser)
 
-	barReward = userNewBar - userOldBar
-	bazReward = userNewBaz - userOldBaz
+	atomReward = userNewAtom - userOldAtom
+	atoneReward = userNewAtone - userOldAtone
 
-	ufmt.Printf("[EXPECTED] bar reward (100%% warm-up): %d\n", barReward)
-	ufmt.Printf("[EXPECTED] baz reward (100%% warm-up): %d\n", bazReward)
+	ufmt.Printf("[EXPECTED] atom reward (100%% warm-up): %d\n", atomReward)
+	ufmt.Printf("[EXPECTED] atone reward (100%% warm-up): %d\n", atoneReward)
 
 	testing.SkipHeights(1)
 }
@@ -371,71 +371,71 @@ func testSingleBlockRewardDistribution() {
 
 	println("[INFO] test reward distribution for single block")
 	// 1 block skipped
-	// bar reward of 1 block: 23148 will be distributed to all positions
-	// baz reward of 1 block: 23 will be distributed to all positions
+	// atom reward of 1 block: 23148 will be distributed to all positions
+	// atone reward of 1 block: 23 will be distributed to all positions
 	// since all positions have same amount of liquidity, it will be distributed equally
 	// 23148 / 4 = 5787
 	// 23 / 4 = 5.75
 
 	// Position 01 (100% warm-up)
-	oldBar := bar.BalanceOf(adminUser)
-	oldBaz := baz.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
+	oldAtone := atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 
-	newBar := bar.BalanceOf(adminUser)
-	newBaz := baz.BalanceOf(adminUser)
+	newAtom := atom.BalanceOf(adminUser)
+	newAtone := atone.BalanceOf(adminUser)
 
-	pos01BarReward := newBar - oldBar
-	pos01BazReward := newBaz - oldBaz
+	pos01AtomReward := newAtom - oldAtom
+	pos01AtoneReward := newAtone - oldAtone
 
-	ufmt.Printf("[EXPECTED] position 01 bar reward (100%% warm-up): %d\n", pos01BarReward)
-	ufmt.Printf("[EXPECTED] position 01 baz reward (100%% warm-up): %d\n", pos01BazReward)
+	ufmt.Printf("[EXPECTED] position 01 atom reward (100%% warm-up): %d\n", pos01AtomReward)
+	ufmt.Printf("[EXPECTED] position 01 atone reward (100%% warm-up): %d\n", pos01AtoneReward)
 
 	// Position 02 (70% warm-up)
-	oldBar = bar.BalanceOf(adminUser)
-	oldBaz = baz.BalanceOf(adminUser)
+	oldAtom = atom.BalanceOf(adminUser)
+	oldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 2)
 
-	newBar = bar.BalanceOf(adminUser)
-	newBaz = baz.BalanceOf(adminUser)
+	newAtom = atom.BalanceOf(adminUser)
+	newAtone = atone.BalanceOf(adminUser)
 
-	pos02BarReward := newBar - oldBar
-	pos02BazReward := newBaz - oldBaz
+	pos02AtomReward := newAtom - oldAtom
+	pos02AtoneReward := newAtone - oldAtone
 
-	ufmt.Printf("[EXPECTED] position 02 bar reward (70%% warm-up): %d\n", pos02BarReward)
-	ufmt.Printf("[EXPECTED] position 02 baz reward (70%% warm-up): %d\n", pos02BazReward)
+	ufmt.Printf("[EXPECTED] position 02 atom reward (70%% warm-up): %d\n", pos02AtomReward)
+	ufmt.Printf("[EXPECTED] position 02 atone reward (70%% warm-up): %d\n", pos02AtoneReward)
 
 	// Position 03 (50% warm-up)
-	oldBar = bar.BalanceOf(adminUser)
-	oldBaz = baz.BalanceOf(adminUser)
+	oldAtom = atom.BalanceOf(adminUser)
+	oldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 3)
 
-	newBar = bar.BalanceOf(adminUser)
-	newBaz = baz.BalanceOf(adminUser)
+	newAtom = atom.BalanceOf(adminUser)
+	newAtone = atone.BalanceOf(adminUser)
 
-	pos03BarReward := newBar - oldBar
-	pos03BazReward := newBaz - oldBaz
+	pos03AtomReward := newAtom - oldAtom
+	pos03AtoneReward := newAtone - oldAtone
 
-	ufmt.Printf("[EXPECTED] position 03 bar reward (50%% warm-up): %d\n", pos03BarReward)
-	ufmt.Printf("[EXPECTED] position 03 baz reward (50%% warm-up): %d\n", pos03BazReward)
+	ufmt.Printf("[EXPECTED] position 03 atom reward (50%% warm-up): %d\n", pos03AtomReward)
+	ufmt.Printf("[EXPECTED] position 03 atone reward (50%% warm-up): %d\n", pos03AtoneReward)
 
 	// Position 04 (30% warm-up)
-	oldBar = bar.BalanceOf(adminUser)
-	oldBaz = baz.BalanceOf(adminUser)
+	oldAtom = atom.BalanceOf(adminUser)
+	oldAtone = atone.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 4)
 
-	newBar = bar.BalanceOf(adminUser)
-	newBaz = baz.BalanceOf(adminUser)
+	newAtom = atom.BalanceOf(adminUser)
+	newAtone = atone.BalanceOf(adminUser)
 
-	pos04BarReward := newBar - oldBar
-	pos04BazReward := newBaz - oldBaz
+	pos04AtomReward := newAtom - oldAtom
+	pos04AtoneReward := newAtone - oldAtone
 
-	ufmt.Printf("[EXPECTED] position 04 bar reward (30%% warm-up): %d\n", pos04BarReward)
-	ufmt.Printf("[EXPECTED] position 04 baz reward (30%% warm-up): %d\n", pos04BazReward)
+	ufmt.Printf("[EXPECTED] position 04 atom reward (30%% warm-up): %d\n", pos04AtomReward)
+	ufmt.Printf("[EXPECTED] position 04 atone reward (30%% warm-up): %d\n", pos04AtoneReward)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -464,8 +464,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set community pool distribution to 0%
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 //
 // [SCENARIO] 3. Mint 4 positions
 // [INFO] mint position 01 (tick range: -30 ~ 30)
@@ -478,26 +478,26 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] mint position 04 (tick range: -30 ~ 30)
 // [EXPECTED] position 04 - ID: 4, liquidity: 33360
 //
-// [SCENARIO] 4. Create external incentives (bar and baz)
-// [INFO] create external incentive for bar token (365 days)
-// [INFO] bar external incentive created - reward per block: ~23148
-// [INFO] create external incentive for baz token (365 days)
-// [INFO] baz external incentive created - reward per block: ~23
+// [SCENARIO] 4. Create external incentives (atom and atone)
+// [INFO] create external incentive for atom token (365 days)
+// [INFO] atom external incentive created - reward per block: ~23148
+// [INFO] create external incentive for atone token (365 days)
+// [INFO] atone external incentive created - reward per block: ~23
 //
 // [SCENARIO] 5. Stake position 01 and test warm-up to 100%
 // [INFO] stake position 01
 // [INFO] collect reward for 30% warm-up
-// [EXPECTED] bar reward (30% warm-up): 17360
-// [EXPECTED] baz reward (30% warm-up): 172
+// [EXPECTED] atom reward (30% warm-up): 17360
+// [EXPECTED] atone reward (30% warm-up): 172
 // [INFO] progress to 50% warm-up
-// [EXPECTED] bar reward (50% warm-up): 28935
-// [EXPECTED] baz reward (50% warm-up): 287
+// [EXPECTED] atom reward (50% warm-up): 28935
+// [EXPECTED] atone reward (50% warm-up): 287
 // [INFO] progress to 70% warm-up
-// [EXPECTED] bar reward (70% warm-up): 40509
-// [EXPECTED] baz reward (70% warm-up): 402
+// [EXPECTED] atom reward (70% warm-up): 40509
+// [EXPECTED] atone reward (70% warm-up): 402
 // [INFO] progress to 100% warm-up
-// [EXPECTED] bar reward (100% warm-up): 57869
-// [EXPECTED] baz reward (100% warm-up): 574
+// [EXPECTED] atom reward (100% warm-up): 57869
+// [EXPECTED] atone reward (100% warm-up): 574
 //
 // [SCENARIO] 6. Stake positions 02-04 with different warm-up levels
 // [INFO] stake position 02 (will be 70% warm-up)
@@ -507,11 +507,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Test single block reward distribution
 // [INFO] test reward distribution for single block
-// [EXPECTED] position 01 bar reward (100% warm-up): 14467
-// [EXPECTED] position 01 baz reward (100% warm-up): 143
-// [EXPECTED] position 02 bar reward (70% warm-up): 10126
-// [EXPECTED] position 02 baz reward (70% warm-up): 100
-// [EXPECTED] position 03 bar reward (50% warm-up): 7233
-// [EXPECTED] position 03 baz reward (50% warm-up): 71
-// [EXPECTED] position 04 bar reward (30% warm-up): 4340
-// [EXPECTED] position 04 baz reward (30% warm-up): 42
+// [EXPECTED] position 01 atom reward (100% warm-up): 14467
+// [EXPECTED] position 01 atone reward (100% warm-up): 143
+// [EXPECTED] position 02 atom reward (70% warm-up): 10126
+// [EXPECTED] position 02 atone reward (70% warm-up): 100
+// [EXPECTED] position 03 atom reward (50% warm-up): 7233
+// [EXPECTED] position 03 atone reward (50% warm-up): 71
+// [EXPECTED] position 04 atom reward (30% warm-up): 4340
+// [EXPECTED] position 04 atone reward (30% warm-up): 42

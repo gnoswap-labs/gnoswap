@@ -19,8 +19,8 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -33,8 +33,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -163,22 +163,22 @@ func initializeSetup() {
 }
 
 func createPool() {
-	println("[INFO] Creating bar-foo pool (fee: 3000)")
+	println("[INFO] Creating atom-btc pool (fee: 3000)")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	btc.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
 
-	println("[INFO] Creating bar-foo pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	println("[INFO] Creating atom-btc pool (fee: 3000)")
+	pl.CreatePool(cross, atomPath, btcPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 }
 
 func mintPosition() {
-	println("[INFO] Minting position in bar-foo pool")
+	println("[INFO] Minting position in atom-btc pool")
 	testing.SetRealm(adminRealm)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	tokenId, liquidity, amount0, amount1 := pn.Mint(cross, atomPath, btcPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	positionId = tokenId
 
@@ -192,43 +192,43 @@ func exactInSwapRoute() {
 	println("[INFO] Executing ExactIn swap for fee accumulation")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
 
-	poolToken0Before := bar.BalanceOf(poolAddr)
-	poolToken1Before := foo.BalanceOf(poolAddr)
-	user1Token0Before := bar.BalanceOf(adminAddr)
-	user1Token1Before := foo.BalanceOf(adminAddr)
-	protocolFeeToken0Before := bar.BalanceOf(protocolFeeAddr)
-	protocolFeeToken1Before := foo.BalanceOf(protocolFeeAddr)
+	poolToken0Before := atom.BalanceOf(poolAddr)
+	poolToken1Before := btc.BalanceOf(poolAddr)
+	user1Token0Before := atom.BalanceOf(adminAddr)
+	user1Token1Before := btc.BalanceOf(adminAddr)
+	protocolFeeToken0Before := atom.BalanceOf(protocolFeeAddr)
+	protocolFeeToken1Before := btc.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,   // inputToken
-		barPath,   // outputToken
+		btcPath,   // inputToken
+		atomPath,   // outputToken
 		"1000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 
-	poolToken0After := bar.BalanceOf(poolAddr)
-	poolToken1After := foo.BalanceOf(poolAddr)
-	user1Token0After := bar.BalanceOf(adminAddr)
-	user1Token1After := foo.BalanceOf(adminAddr)
-	protocolFeeToken0After := bar.BalanceOf(protocolFeeAddr)
-	protocolFeeToken1After := foo.BalanceOf(protocolFeeAddr)
+	poolToken0After := atom.BalanceOf(poolAddr)
+	poolToken1After := btc.BalanceOf(poolAddr)
+	user1Token0After := atom.BalanceOf(adminAddr)
+	user1Token1After := btc.BalanceOf(adminAddr)
+	protocolFeeToken0After := atom.BalanceOf(protocolFeeAddr)
+	protocolFeeToken1After := btc.BalanceOf(protocolFeeAddr)
 
 	println("[EXPECTED] amountIn:", amountIn)
 	println("[EXPECTED] amountOut:", amountOut)
-	println("[EXPECTED] admin bar balance change:", user1Token0After-user1Token0Before)
-	println("[EXPECTED] admin foo balance change:", user1Token1After-user1Token1Before)
-	println("[EXPECTED] pool bar balance change:", poolToken0After-poolToken0Before)
-	println("[EXPECTED] pool foo balance change:", poolToken1After-poolToken1Before)
-	println("[EXPECTED] protocol fee bar balance change:", protocolFeeToken0After-protocolFeeToken0Before)
-	println("[EXPECTED] protocol fee foo balance change:", protocolFeeToken1After-protocolFeeToken1Before)
+	println("[EXPECTED] admin atom balance change:", user1Token0After-user1Token0Before)
+	println("[EXPECTED] admin btc balance change:", user1Token1After-user1Token1Before)
+	println("[EXPECTED] pool atom balance change:", poolToken0After-poolToken0Before)
+	println("[EXPECTED] pool btc balance change:", poolToken1After-poolToken1Before)
+	println("[EXPECTED] protocol fee atom balance change:", protocolFeeToken0After-protocolFeeToken0Before)
+	println("[EXPECTED] protocol fee btc balance change:", protocolFeeToken1After-protocolFeeToken1Before)
 }
 
 // Position Getter Methods Tests
@@ -295,8 +295,8 @@ func getPositionTokenBalances() {
 	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
 	println("[EXPECTED] position token0 balance:", balance0)
 	println("[EXPECTED] position token1 balance:", balance1)
-	println("[EXPECTED] pool token0 balance:", bar.BalanceOf(poolAddr))
-	println("[EXPECTED] pool token1 balance:", foo.BalanceOf(poolAddr))
+	println("[EXPECTED] pool token0 balance:", atom.BalanceOf(poolAddr))
+	println("[EXPECTED] pool token1 balance:", btc.BalanceOf(poolAddr))
 	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
 	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
@@ -438,12 +438,12 @@ func getPositionOwner() {
 // [SCENARIO] 1.1. Initialize Setup
 //
 // [SCENARIO] 1.2. Create Pool
-// [INFO] Creating bar-foo pool (fee: 3000)
+// [INFO] Creating atom-btc pool (fee: 3000)
 // [INFO] Approving tokens for pool operations
-// [INFO] Creating bar-foo pool (fee: 3000)
+// [INFO] Creating atom-btc pool (fee: 3000)
 //
 // [SCENARIO] 1.3. Mint Position
-// [INFO] Minting position in bar-foo pool
+// [INFO] Minting position in atom-btc pool
 // [EXPECTED] minted position tokenId: 1
 // [EXPECTED] minted position liquidity: 100000000
 // [EXPECTED] minted position amount0: 100000000
@@ -453,12 +453,12 @@ func getPositionOwner() {
 // [INFO] Executing ExactIn swap for fee accumulation
 // [EXPECTED] amountIn: 1000000
 // [EXPECTED] amountOut: -985678
-// [EXPECTED] admin bar balance change: 985678
-// [EXPECTED] admin foo balance change: -1000000
-// [EXPECTED] pool bar balance change: -987158
-// [EXPECTED] pool foo balance change: 1000000
-// [EXPECTED] protocol fee bar balance change: 1480
-// [EXPECTED] protocol fee foo balance change: 0
+// [EXPECTED] admin atom balance change: 985678
+// [EXPECTED] admin btc balance change: -1000000
+// [EXPECTED] pool atom balance change: -987158
+// [EXPECTED] pool btc balance change: 1000000
+// [EXPECTED] protocol fee atom balance change: 1480
+// [EXPECTED] protocol fee btc balance change: 0
 //
 // [SCENARIO] 2. Position Getter Methods
 // [SCENARIO] 2.1. GetPositionCount
@@ -472,7 +472,7 @@ func getPositionOwner() {
 //
 // [SCENARIO] 2.3. GetPosition
 // [INFO] Check GetPosition method
-// [EXPECTED] position poolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] position poolKey: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 // [EXPECTED] position tickLower: -887220
 // [EXPECTED] position tickUpper: 887220
 // [EXPECTED] position liquidity: 100000000
@@ -529,7 +529,7 @@ func getPositionOwner() {
 //
 // [SCENARIO] 2.14. GetPositionPoolKey
 // [INFO] Check GetPositionPoolKey method
-// [EXPECTED] position poolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] position poolKey: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 //
 // [SCENARIO] 2.15. GetPositionTickLower
 // [INFO] Check GetPositionTickLower method

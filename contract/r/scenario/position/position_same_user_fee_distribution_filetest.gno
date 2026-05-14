@@ -25,8 +25,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -46,8 +46,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(3000)
 )
 
@@ -89,23 +89,23 @@ func initPool() {
 
 	defaultTokenAmount := int64(10000000000)
 
-	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Atom tokens")
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	ufmt.Println("[INFO] Distributing Btc tokens")
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
-	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
-	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Initial Atom balance of Alice: %d\n", atom.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Initial Btc balance of Alice: %d\n", btc.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -113,14 +113,14 @@ func initPool() {
 
 func mintSameRangePositions() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting first position in same range")
 	positionId1, liquidity1, amount01, amount11 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -141,8 +141,8 @@ func mintSameRangePositions() {
 	ufmt.Println("[INFO] Minting second position in same range")
 	positionId2, liquidity2, amount02, amount12 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -163,14 +163,14 @@ func mintSameRangePositions() {
 
 func mintDifferentRangePositions() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position in lower range")
 	positionId3, liquidity3, amount03, amount13 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-1980,
 		0,
@@ -191,8 +191,8 @@ func mintDifferentRangePositions() {
 	ufmt.Println("[INFO] Minting position in upper range")
 	positionId4, liquidity4, amount04, amount14 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		0,
 		1980,
@@ -213,16 +213,16 @@ func mintDifferentRangePositions() {
 
 func executeSwaps() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	ufmt.Println("[INFO] Executing swap BAR -> FOO")
+	ufmt.Println("[INFO] Executing swap ATOM -> BTC")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		adminAddr,
 		true,
@@ -230,18 +230,18 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap1 amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap1 amount1 should be %s\n", amount1)
 
-	ufmt.Println("[INFO] Executing swap FOO -> BAR")
+	ufmt.Println("[INFO] Executing swap BTC -> ATOM")
 	amount0, amount1 = pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		adminAddr,
 		false,
@@ -249,7 +249,7 @@ func executeSwaps() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -259,8 +259,8 @@ func executeSwaps() {
 
 func checkSameRangeFees() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 1")
 	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1)
@@ -277,8 +277,8 @@ func checkSameRangeFees() {
 
 func checkDifferentRangeFees() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 3")
 	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3)
@@ -297,11 +297,11 @@ func verifyFinalBalances() {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking final balances")
-	aliceBarBalance := bar.BalanceOf(aliceAddr)
-	aliceFooBalance := foo.BalanceOf(aliceAddr)
+	aliceAtomBalance := atom.BalanceOf(aliceAddr)
+	aliceBtcBalance := btc.BalanceOf(aliceAddr)
 
-	ufmt.Printf("[EXPECTED] Alice BAR balance should be %d\n", aliceBarBalance)
-	ufmt.Printf("[EXPECTED] Alice FOO balance should be %d\n", aliceFooBalance)
+	ufmt.Printf("[EXPECTED] Alice ATOM balance should be %d\n", aliceAtomBalance)
+	ufmt.Printf("[EXPECTED] Alice BTC balance should be %d\n", aliceBtcBalance)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
@@ -320,10 +320,10 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 
 // Output:
 // [SCENARIO] 1. Initialize pool
-// [INFO] Distributing Bar tokens
-// [INFO] Distributing Foo tokens
-// [INFO] Initial Bar balance of Alice: 10000000000
-// [INFO] Initial Foo balance of Alice: 10000000000
+// [INFO] Distributing Atom tokens
+// [INFO] Distributing Btc tokens
+// [INFO] Initial Atom balance of Alice: 10000000000
+// [INFO] Initial Btc balance of Alice: 10000000000
 // [INFO] Creating pool
 //
 // [SCENARIO] 2. Mint positions with same range
@@ -351,10 +351,10 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Position 4 amount1 should be 0
 //
 // [SCENARIO] 4. Execute swaps
-// [INFO] Executing swap BAR -> FOO
+// [INFO] Executing swap ATOM -> BTC
 // [EXPECTED] Swap1 amount0 should be 10000000
 // [EXPECTED] Swap1 amount1 should be -9932830
-// [INFO] Executing swap FOO -> BAR
+// [INFO] Executing swap BTC -> ATOM
 // [EXPECTED] Swap2 amount0 should be -10007165
 // [EXPECTED] Swap2 amount1 should be 10000000
 //
@@ -376,5 +376,5 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 7. Verify final balances
 // [INFO] Checking final balances
-// [EXPECTED] Alice BAR balance should be 9850029700
-// [EXPECTED] Alice FOO balance should be 9850029700
+// [EXPECTED] Alice ATOM balance should be 9850029700
+// [EXPECTED] Alice BTC balance should be 9850029700

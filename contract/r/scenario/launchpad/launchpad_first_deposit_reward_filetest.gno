@@ -25,7 +25,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var (
@@ -41,9 +41,9 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println()
 
 	println("[SCENARIO] 2. First deposit by Alice")
@@ -66,12 +66,12 @@ func main() {
 	println()
 }
 
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := projectAddr
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -80,9 +80,9 @@ func createOBLProject() {
 	tier180Ratio := int64(70)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -130,22 +130,22 @@ func collectReward(ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
-	beforeOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance before collection: %d\n", beforeOblBalance)
+	beforeEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance before collection: %d\n", beforeEthBalance)
 
 	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
 
-	afterOblBalance := obl.BalanceOf(ownerAddr)
-	ufmt.Printf("[INFO] OBL balance after collection: %d\n", afterOblBalance)
+	afterEthBalance := eth.BalanceOf(ownerAddr)
+	ufmt.Printf("[INFO] ETH balance after collection: %d\n", afterEthBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 // [INFO] Tier 30 reward amount: 100,000,000 (10% of 1,000,000,000)
 //
 // [SCENARIO] 2. First deposit by Alice
@@ -159,13 +159,13 @@ func collectReward(ownerAddr address, depositId string) {
 //
 // [SCENARIO] 4. Alice collects first deposit reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before collection: 0
-// [INFO] OBL balance after collection: 10000192
+// [INFO] ETH balance before collection: 0
+// [INFO] ETH balance after collection: 10000192
 // [INFO] Reward collected: 10000192
 //
 // [SCENARIO] 5. Skip more blocks and collect again
 // [INFO] Skipping 200 blocks (1000 seconds)
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before collection: 10000192
-// [INFO] OBL balance after collection: 10038773
+// [INFO] ETH balance before collection: 10000192
+// [INFO] ETH balance after collection: 10038773
 // [INFO] Reward collected: 38581

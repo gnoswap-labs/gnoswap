@@ -25,8 +25,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -44,8 +44,8 @@ var (
 	bobAddr  = testutils.TestAddress("bob")
 	bobRealm = testing.NewUserRealm(bobAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -80,22 +80,22 @@ func initializeSetup() {
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(5_000_000_000) // 5 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
-	bar.Transfer(cross, bobAddr, testAmount)
-	baz.Transfer(cross, bobAddr, testAmount)
+	atom.Transfer(cross, aliceAddr, testAmount)
+	atone.Transfer(cross, aliceAddr, testAmount)
+	atom.Transfer(cross, bobAddr, testAmount)
+	atone.Transfer(cross, bobAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
 
 	testing.SetRealm(bobRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
 
 	println("[INFO] Setup completed with two test accounts")
 }
@@ -106,8 +106,8 @@ func testRoundingOnMint() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -127,7 +127,7 @@ func testRoundingOnMint() {
 	for _, amount := range oddAmounts {
 		_, _, actualAmount0, actualAmount1 := pn.Mint(
 			cross,
-			barPath, bazPath, 100,
+			atomPath, atonePath, 100,
 			-100, 100,
 			amount, amount,
 			"0", "0",
@@ -158,8 +158,8 @@ func testRoundingOnBurn() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -171,7 +171,7 @@ func testRoundingOnBurn() {
 	// First mint a position with smaller amount
 	posId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath, bazPath, 500,
+		atomPath, atonePath, 500,
 		-100, 100,
 		"100000000", "100000000", // Reduced from 1e9 to 1e8
 		"0", "0",
@@ -193,7 +193,7 @@ func testRoundingOnBurn() {
 		// Create new position for each test
 		posId, _, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			-200, 200,
 			"100000000", "100000000", // Reduced from 1e9 to 1e8
 			"0", "0",
@@ -226,8 +226,8 @@ func testRoundingConsistency() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -236,8 +236,8 @@ func testRoundingConsistency() {
 
 	println("[TEST] Rounding consistency across multiple operations")
 
-	initialBalance0 := bar.BalanceOf(aliceAddr)
-	initialBalance1 := baz.BalanceOf(aliceAddr)
+	initialBalance0 := atom.BalanceOf(aliceAddr)
+	initialBalance1 := atone.BalanceOf(aliceAddr)
 
 	// Perform series of mints and burns with odd amounts
 	operations := []struct {
@@ -255,7 +255,7 @@ func testRoundingConsistency() {
 		if op.action == "mint" {
 			posId, liq, _, _ := pn.Mint(
 				cross,
-				barPath, bazPath, 3000,
+				atomPath, atonePath, 3000,
 				-180, 180,
 				op.amount, op.amount,
 				"0", "0",
@@ -283,14 +283,14 @@ func testRoundingConsistency() {
 		ufmt.Printf("[burn] Position %d: returned amount0=%s, amount1=%s\n", posId, amt0, amt1)
 	}
 
-	finalBalance0 := bar.BalanceOf(aliceAddr)
-	finalBalance1 := baz.BalanceOf(aliceAddr)
+	finalBalance0 := atom.BalanceOf(aliceAddr)
+	finalBalance1 := atone.BalanceOf(aliceAddr)
 
 	// Calculate total loss due to rounding
 	loss0 := initialBalance0 - finalBalance0
 	loss1 := initialBalance1 - finalBalance1
 
-	ufmt.Printf("[FINAL] Total rounding loss: bar=%d, baz=%d\n", loss0, loss1)
+	ufmt.Printf("[FINAL] Total rounding loss: atom=%d, atone=%d\n", loss0, loss1)
 
 	// Loss should be minimal and consistent
 	if loss0 < 0 || loss1 < 0 {
@@ -306,8 +306,8 @@ func testRoundingEdgeAmounts() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -334,7 +334,7 @@ func testRoundingEdgeAmounts() {
 
 		_, liquidity, actualAmount0, actualAmount1 := pn.Mint(
 			cross,
-			barPath, bazPath, 10000,
+			atomPath, atonePath, 10000,
 			-200, 200,
 			edge.amount, edge.amount,
 			"0", "0",
@@ -405,7 +405,7 @@ func testProtocolFeeRounding() {
 // [burn] Position 8: returned amount0=99999998, amount1=99999998
 // [burn] Position 9: returned amount0=111111110, amount1=111111110
 // [burn] Position 10: returned amount0=77777776, amount1=77777776
-// [FINAL] Total rounding loss: bar=3, baz=3
+// [FINAL] Total rounding loss: atom=3, atone=3
 // [PASS] Rounding consistently favors protocol
 //
 // [SCENARIO] 5. Test Rounding in Edge Amount Cases

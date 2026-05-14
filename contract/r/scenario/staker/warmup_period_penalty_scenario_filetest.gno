@@ -30,8 +30,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -45,8 +45,8 @@ var (
 	devOpsAddr, _    = access.GetAddress(prabc.ROLE_DEVOPS.String())
 	communityAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee3000 uint32 = 3000
 
@@ -107,9 +107,9 @@ func initAndSetup() {
 func createPoolAndSetTier() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:3000 pool")
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
-	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	println("[INFO] create atom:atone:3000 pool")
+	pl.CreatePool(cross, atomPath, atonePath, fee3000, "79228162514264337593543950336")
+	poolPath := pl.GetPoolPath(atomPath, atonePath, fee3000)
 
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, poolPath, 1)
@@ -129,14 +129,14 @@ func mintLargePosition() uint64 {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint large position for meaningful rewards")
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,       // token0
-		bazPath,       // token1
+		atomPath,       // token0
+		atonePath,       // token1
 		fee3000,       // fee
 		int32(-18000), // tickLower
 		int32(18000),  // tickUpper
@@ -285,7 +285,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] initialization completed
 //
 // [SCENARIO] 2. Create pool and set tier
-// [INFO] create bar:baz:3000 pool
+// [INFO] create atom:atone:3000 pool
 // [INFO] set pool to tier 1
 // [INFO] set warmup period tiers
 // [EXPECTED] pool created and configured with warmup period

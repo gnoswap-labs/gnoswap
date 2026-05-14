@@ -52,16 +52,16 @@ func TestAssertIsNotEqualsTokens(t *testing.T) {
 	}{
 		{
 			name:        "success - different tokens",
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			shouldPanic: false,
 		},
 		{
 			name:        "fail - same tokens",
-			token0Path:  barPath,
-			token1Path:  barPath,
+			token0Path:  atomPath,
+			token1Path:  atomPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoswap/test_token/atom) != token1Path(gno.land/r/gnoswap/test_token/atom)",
 		},
 	}
 
@@ -147,8 +147,8 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				initPoolTest(t)
 			},
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			fee:         fee3000,
 			shouldPanic: false,
 		},
@@ -160,13 +160,13 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 				mockInstanceSetPoolCreationFee(0)
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceCreatePool(barPath, fooPath, fee3000, "4295128740")
+				mockInstanceCreatePool(atomPath, btcPath, fee3000, "4295128740")
 			},
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			fee:         fee3000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000) not to exist",
 		},
 	}
 
@@ -197,23 +197,23 @@ func TestAssertIsValidTokenOrder(t *testing.T) {
 	}{
 		{
 			name:        "success - tokens in correct order",
-			token0Path:  barPath,
-			token1Path:  fooPath,
+			token0Path:  atomPath,
+			token1Path:  btcPath,
 			shouldPanic: false,
 		},
 		{
 			name:        "fail - tokens not in order (equal)",
-			token0Path:  barPath,
-			token1Path:  barPath,
+			token0Path:  atomPath,
+			token1Path:  atomPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/gnoswap/test_token/atom) < token1Path(gno.land/r/gnoswap/test_token/atom)",
 		},
 		{
 			name:        "fail - tokens in reverse order",
-			token0Path:  fooPath,
-			token1Path:  barPath,
+			token0Path:  btcPath,
+			token1Path:  atomPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/gnoswap/test_token/btc) < token1Path(gno.land/r/gnoswap/test_token/atom)",
 		},
 	}
 

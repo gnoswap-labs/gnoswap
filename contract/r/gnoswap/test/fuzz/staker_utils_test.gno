@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/staker"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 func generateInternalIncentiveTierByRange(ft *fuzz.T, minTier uint64, maxTier uint64) uint64 {
@@ -62,17 +62,17 @@ func setupExternalRewardPool(ft *fuzz.T) (string, string) {
 	incentivizeAmount := int64(1_000_000_000)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	mintTestToken(oblPath, incentivizeAmount)
+	mintTestToken(ethPath, incentivizeAmount)
 
 	stakerAddr := access.MustGetAddress(prabc.ROLE_STAKER.String())
-	obl.Approve(cross, stakerAddr, incentivizeAmount)
+	eth.Approve(cross, stakerAddr, incentivizeAmount)
 	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	incentiveEndTimestamp := incentiveStartTimestamp + 180*24*60*60
 
 	staker.CreateExternalIncentive(
 		cross,
 		poolPath,
-		oblPath,
+		ethPath,
 		incentivizeAmount,
 		incentiveStartTimestamp,
 		incentiveEndTimestamp,

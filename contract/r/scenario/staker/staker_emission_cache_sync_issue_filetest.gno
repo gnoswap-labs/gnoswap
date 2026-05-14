@@ -31,8 +31,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -48,8 +48,8 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	barPath    = "gno.land/r/onbloc/bar"
-	bazPath    = "gno.land/r/onbloc/baz"
+	atomPath    = "gno.land/r/gnoswap/test_token/atom"
+	atonePath    = "gno.land/r/gnoswap/test_token/atone"
 
 	fee3000     uint32 = 3000
 	max_timeout int64  = 9999999999
@@ -115,8 +115,8 @@ func initSystem() {
 	emission.MintAndDistributeGns(cross)
 
 	// Give tokens to user1 for later testing
-	bar.Transfer(cross, user1Addr, 1_000_000)
-	baz.Transfer(cross, user1Addr, 1_000_000)
+	atom.Transfer(cross, user1Addr, 1_000_000)
+	atone.Transfer(cross, user1Addr, 1_000_000)
 
 	println("[EXPECTED] Initial distribution set to 75% for stakers")
 	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", emission.GetStakerEmissionAmountPerSecond())
@@ -125,21 +125,21 @@ func initSystem() {
 func createPoolAndPosition() {
 	testing.SetRealm(adminRealm)
 
-	// Create bar:baz pool
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
+	// Create atom:atone pool
+	pl.CreatePool(cross, atomPath, atonePath, fee3000, "79228162514264337593543950336")
 
 	// Set pool to tier 1
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000", 1)
 
 	// Approve tokens
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	// Mint position
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		int32(-1020),
 		int32(1020),
@@ -250,13 +250,13 @@ func newUserStakes() {
 	testing.SetRealm(user1Realm)
 
 	// User1 creates and stakes a new position
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee3000,
 		int32(-1020),
 		int32(1020),

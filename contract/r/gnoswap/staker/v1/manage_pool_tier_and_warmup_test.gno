@@ -83,7 +83,7 @@ func TestSetPoolTier(t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -146,7 +146,7 @@ func TestChangePoolTier(t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -202,7 +202,7 @@ func TestRemovePoolTier(t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -327,7 +327,7 @@ func TestNotEmissionTargetTier(t *testing.T) {
 
 // Test ChangePoolTier with permission
 func TestChangePoolTierWithPermission(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 
 	tests := []struct {
 		name             string
@@ -365,7 +365,7 @@ func TestChangePoolTierWithPermission(t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+			CreatePool(atomPath, btcPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)
@@ -449,7 +449,7 @@ func TestSetWarmUpWithPermission(t *testing.T) {
 
 // Test RemovePoolTier with permission
 func TestRemovePoolTierWithPermission(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 
 	tests := []struct {
 		name             string
@@ -483,7 +483,7 @@ func TestRemovePoolTierWithPermission(t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+			CreatePool(atomPath, btcPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)

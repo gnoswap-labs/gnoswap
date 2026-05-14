@@ -31,7 +31,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/router/v1"
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 
 	"gno.land/r/gnoswap/common"
 
@@ -55,8 +55,8 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 
 	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	blockTime = int64(5)
 )
@@ -183,13 +183,13 @@ func checkQuorumAmountAndVotingPower(proposalId int64) {
 
 func createLaunchpadProjectByAdmin() string {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, launchpadAddr, 10000000)
+	atom.Approve(cross, launchpadAddr, 10000000)
 	currentTime := time.Now().Unix()
 
 	projectID := launchpad.CreateProject(
 		cross,
 		"Test Project",
-		"gno.land/r/onbloc/bar",
+		"gno.land/r/gnoswap/test_token/atom",
 		aliceAddr,
 		10000000,
 		"",
@@ -252,7 +252,7 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 //
 // [SCENARIO] 4. Create Launchpad project and deposit GNS to launchpad
 // [SCENARIO] 4.1. Create Launchpad project
-// [EXPECTED] Project created: gno.land/r/onbloc/bar:34684
+// [EXPECTED] Project created: gno.land/r/gnoswap/test_token/atom:34684
 //
 // [SCENARIO] 4.2. Skip heights to activate project
 //

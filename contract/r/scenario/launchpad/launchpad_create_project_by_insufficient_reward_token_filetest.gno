@@ -9,7 +9,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	
+
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -48,12 +48,12 @@ func initEnvironment() {}
 func createProjectByInsufficientRewardToken() {
 	testing.SetOriginCaller(adminAddr)
 
-	oblBalance := obl.BalanceOf(adminAddr)
+	ethBalance := eth.BalanceOf(adminAddr)
 
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	recipientAddr := testutils.TestAddress("project-owner")
-	rewardAmount := int64(oblBalance + 1)
+	rewardAmount := int64(ethBalance + 1)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
@@ -74,7 +74,7 @@ func createProjectByInsufficientRewardToken() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-008] insufficient balance"
 	uassert.AbortsContains(t, expectedPanicMessage, func() {
@@ -101,10 +101,10 @@ func createProjectByInsufficientRewardToken() {
 //
 // [SCENARIO] 2. Admin attempts to create project with insufficient reward token
 // [INFO] admin attempting to create project with insufficient reward token
-// [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with project name: ETH Launchpad Project
+// [INFO] create project with reward token path: gno.land/r/gnoswap/test_token/eth
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
-// [INFO] create project with reward amount: 100000000000001
+// [INFO] create project with reward amount: 120000000000001
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
 // [INFO] create project with conditions amount: 1000000
 // [INFO] create project with tier30 ratio: 10

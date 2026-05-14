@@ -10,9 +10,9 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 type DrySwapTestCase struct {
@@ -92,15 +92,15 @@ func setupBasicPools(env *TestEnv) {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
-	env.GivenPoolCreated(barPath, bazPath, 500, "130621891405341611593710811006")
-	env.GivenPoolCreated(bazPath, quxPath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(atomPath, atonePath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(atonePath, solPath, 500, "130621891405341611593710811006")
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
+	sol.Approve(cross, poolAddr, maxApprove)
 
 	positionParams1 := NewPositionBuilder().
-		Tokens(barPath, bazPath).
+		Tokens(atomPath, atonePath).
 		Fee(500).
 		Range(9000, 11000).
 		Amounts("100000", "100000").
@@ -110,7 +110,7 @@ func setupBasicPools(env *TestEnv) {
 	env.AndLiquidityProvided(adminAddr, positionParams1)
 
 	positionParams2 := NewPositionBuilder().
-		Tokens(bazPath, quxPath).
+		Tokens(atonePath, solPath).
 		Fee(500).
 		Range(9000, 11000).
 		Amounts("100000", "100000").
@@ -126,11 +126,11 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			name:    "ExactIn - Single Route",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(bazPath).
+				InputToken(atomPath).
+				OutputToken(atonePath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
@@ -141,11 +141,11 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			name:    "ExactOut - Single Route",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(bazPath).
-				OutputToken(barPath).
+				InputToken(atonePath).
+				OutputToken(atomPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				Route("gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "2727",
@@ -156,11 +156,11 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			name:    "ExactIn - Multi Route",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
@@ -171,11 +171,11 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			name:    "ExactOut - Multi Route within tolerance",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("5").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				TokenAmountLimit("10000").
 				Build(),
 			// Multi-hop ExactOut: requested 5, got 3 (diff=2, swapCount=2 -> within tolerance)
@@ -187,11 +187,11 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 			name:    "ExactOut - Multi Route exceeds tolerance",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				TokenAmountLimit("10000").
 				Build(),
 			expectedAmountIn:  "138",
@@ -232,16 +232,16 @@ func setupMultiRoutePools(env *TestEnv) {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	env.GivenPoolCreated(barPath, bazPath, 500, "130621891405341611593710811006")
-	env.GivenPoolCreated(bazPath, quxPath, 500, "130621891405341611593710811006")
-	env.GivenPoolCreated(barPath, quxPath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(atomPath, atonePath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(atonePath, solPath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(atomPath, solPath, 500, "130621891405341611593710811006")
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
+	sol.Approve(cross, poolAddr, maxApprove)
 
 	positionParams1 := NewPositionBuilder().
-		Tokens(barPath, bazPath).
+		Tokens(atomPath, atonePath).
 		Fee(500).
 		Range(9000, 11000).
 		Amounts("100000", "100000").
@@ -251,7 +251,7 @@ func setupMultiRoutePools(env *TestEnv) {
 	env.AndLiquidityProvided(adminAddr, positionParams1)
 
 	positionParams2 := NewPositionBuilder().
-		Tokens(bazPath, quxPath).
+		Tokens(atonePath, solPath).
 		Fee(500).
 		Range(9000, 11000).
 		Amounts("100000", "100000").
@@ -261,7 +261,7 @@ func setupMultiRoutePools(env *TestEnv) {
 	env.AndLiquidityProvided(adminAddr, positionParams2)
 
 	positionParams3 := NewPositionBuilder().
-		Tokens(barPath, quxPath).
+		Tokens(atomPath, solPath).
 		Fee(500).
 		Range(9000, 11000).
 		Amounts("100000", "100000").
@@ -277,11 +277,11 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 			name:    "ExactOut - Two routes with split quote (50:50) - insufficient liquidity",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				Quote("50,50").
 				TokenAmountLimit("10000").
 				Build(),
@@ -293,11 +293,11 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 			name:    "ExactOut - Three routes mixed hops (1-hop + 2-hop + 1-hop) - insufficient liquidity",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500").
 				Quote("33,34,33").
 				TokenAmountLimit("10000").
 				Build(),
@@ -309,11 +309,11 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 			name:    "ExactIn - Two routes with split quote (70:30) - swapCount=3 total",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				Quote("70,30").
 				TokenAmountLimit("1").
 				Build(),
@@ -623,11 +623,11 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			name:    "ExactIn - Overflow in calculateSwapAmount",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(bazPath).
+				InputToken(atomPath).
+				OutputToken(atonePath).
 				SpecifiedAmount(maxUint256).
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -640,11 +640,11 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			name:    "ExactOut - Overflow in calculateSwapAmount",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(bazPath).
-				OutputToken(barPath).
+				InputToken(atonePath).
+				OutputToken(atomPath).
 				SpecifiedAmount(maxUint256).
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				Route("gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -702,40 +702,40 @@ func TestSwapCountCalculation(t *testing.T) {
 	}{
 		{
 			name:          "Single route - 1 hop",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+			routes:        []string{"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500"},
 			expectedCount: 1,
 		},
 		{
 			name:          "Single route - 2 hops",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"},
+			routes:        []string{"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500"},
 			expectedCount: 2,
 		},
 		{
 			name:          "Single route - 3 hops",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:500"},
+			routes:        []string{"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500*POOL*gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/btc:500"},
 			expectedCount: 3,
 		},
 		{
 			name: "Two routes - 1 hop each (total 2)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
 			},
 			expectedCount: 2,
 		},
 		{
 			name: "Two routes - 2 hops each (total 4)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			},
 			expectedCount: 4,
 		},
 		{
 			name: "Mixed routes - 1 hop + 3 hops (total 4)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500",
+				"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500*POOL*gno.land/r/gnoswap/test_token/sol:gno.land/r/gnoswap/test_token/btc:500",
 			},
 			expectedCount: 4,
 		},
@@ -759,11 +759,11 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 			name:    "ExactIn - Zero amount should panic",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(bazPath).
+				InputToken(atomPath).
+				OutputToken(atonePath).
 				SpecifiedAmount("0").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -776,11 +776,11 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 			name:    "ExactOut - Zero amount should panic",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(bazPath).
-				OutputToken(barPath).
+				InputToken(atonePath).
+				OutputToken(atomPath).
 				SpecifiedAmount("0").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				Route("gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -792,11 +792,11 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 			name:    "ExactIn - Negative amount should panic",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(bazPath).
+				InputToken(atomPath).
+				OutputToken(atonePath).
 				SpecifiedAmount("-100").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -809,11 +809,11 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 			name:    "ExactOut - Negative amount should panic",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(bazPath).
-				OutputToken(barPath).
+				InputToken(atonePath).
+				OutputToken(atomPath).
 				SpecifiedAmount("-100").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				Route("gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/atom:500").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -874,11 +874,11 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
 			name:    "ExactOut - Multi Route exceeds tolerance (DrySwap fails, Swap should fail too)",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(quxPath).
+				InputToken(atomPath).
+				OutputToken(solPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500").
 				TokenAmountLimit("10000").
 				Build(),
 			description: "DrySwap returns success=false due to tolerance exceeded",
@@ -887,11 +887,11 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
 			name:    "ExactIn - Slippage too tight (amountOut below limit)",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
-				InputToken(barPath).
-				OutputToken(bazPath).
+				InputToken(atomPath).
+				OutputToken(atonePath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				Route("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500").
 				TokenAmountLimit("9999999").
 				Build(),
 			description: "DrySwap returns success=false due to slippage",

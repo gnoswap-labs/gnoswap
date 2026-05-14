@@ -13,8 +13,8 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -35,8 +35,8 @@ var (
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = testing.NewUserRealm(routerAddr)
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
+	atomPath        = "gno.land/r/gnoswap/test_token/atom"
+	btcPath        = "gno.land/r/gnoswap/test_token/btc"
 	fee500  uint32 = 500
 )
 
@@ -93,8 +93,8 @@ func initPool() {
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		"130621891405341611593710811006",
 	)
@@ -102,14 +102,14 @@ func initPool() {
 
 func mintInRangePosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	atom.Approve(cross, poolAddr, 18394892)
+	btc.Approve(cross, poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position in range")
 	positionId, _, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		8000,
 		12000,
@@ -129,14 +129,14 @@ func mintInRangePosition() {
 
 func mintLowerRangePosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 0)
-	foo.Approve(cross, poolAddr, 50000000)
+	atom.Approve(cross, poolAddr, 0)
+	btc.Approve(cross, poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position in lower range")
 	positionId, _, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		5000,
 		8000,
@@ -156,14 +156,14 @@ func mintLowerRangePosition() {
 
 func mintUpperRangePosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 50000000)
-	foo.Approve(cross, poolAddr, 0)
+	atom.Approve(cross, poolAddr, 50000000)
+	btc.Approve(cross, poolAddr, 0)
 
 	ufmt.Println("[INFO] Minting position in upper range")
 	positionId, _, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		12000,
 		14000,
@@ -191,15 +191,15 @@ func checkUnclaimedFeesBeforeSwap() {
 
 func executeFirstSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 1234567)
+	atom.Approve(cross, poolAddr, 1234567)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing first swap")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -207,7 +207,7 @@ func executeFirstSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -225,15 +225,15 @@ func checkUnclaimedFeesAfterFirstSwap() {
 
 func executeSecondSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing second swap")
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -241,7 +241,7 @@ func executeSecondSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -259,15 +259,15 @@ func checkUnclaimedFeesAfterSecondSwap() {
 
 func executeThirdSwap() {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing third swap")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,
@@ -275,7 +275,7 @@ func executeThirdSwap() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, false)
 		},
 	)
 

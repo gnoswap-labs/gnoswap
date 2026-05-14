@@ -187,9 +187,9 @@ func TestSplitSingleChar(t *testing.T) {
 		},
 		{
 			name:     "routes path",
-			input:    "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			input:    "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500,gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500",
 			sep:      ',',
-			expected: []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"},
+			expected: []string{"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500", "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500*POOL*gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:500"},
 		},
 	}
 
@@ -1237,11 +1237,11 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 		},
 		{
 			name:         "real gnoswap token paths",
-			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/gnoswap/test_token/usdc:500",
 			expected: []string{
-				"gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500", // first route (already ordered)
+				"gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/usdc:500", // first route (already ordered)
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000", // second route first hop (already ordered)
-				"gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",  // second route second hop (already ordered)
+				"gno.land/r/gnoswap/test_token/usdc:gno.land/r/onbloc/gns:500",  // second route second hop (already ordered)
 			},
 			wantError: false,
 		},

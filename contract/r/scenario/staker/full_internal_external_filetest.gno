@@ -37,10 +37,10 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	_ "gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	_ "gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -62,10 +62,10 @@ var (
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -108,8 +108,8 @@ func main() {
 	mintPos01InRange()
 	println()
 
-	println("[SCENARIO] 5. Create bar:baz:500 pool (tier 2)")
-	createBarBaz500Tier02()
+	println("[SCENARIO] 5. Create atom:atone:500 pool (tier 2)")
+	createAtomAtone500Tier02()
 	println()
 
 	println("[SCENARIO] 6. Mint positions 02-06")
@@ -128,8 +128,8 @@ func main() {
 	performSwaps()
 	println()
 
-	println("[SCENARIO] 10. Create bar:foo:100 pool (tier 3)")
-	createPoolBarFoo100Tier03()
+	println("[SCENARIO] 10. Create atom:btc:100 pool (tier 3)")
+	createPoolAtomBtc100Tier03()
 	println()
 
 	println("[SCENARIO] 11. Mint and stake position 07 (out-range)")
@@ -241,15 +241,15 @@ func mintPos01InRange() {
 	testing.SkipHeights(1)
 }
 
-func createBarBaz500Tier02() {
+func createAtomAtone500Tier02() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:500 pool")
+	println("[INFO] create atom:atone:500 pool")
 	gns.Approve(cross, poolAddr, maxInt64)
-	pl.CreatePool(cross, barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, atomPath, atonePath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500", 2)
 
 	testing.SkipHeights(1)
 }
@@ -257,14 +257,14 @@ func createBarBaz500Tier02() {
 func mintPositions02To06() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] mint position 02 (bar:baz in-range)")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	println("[INFO] mint position 02 (atom:atone in-range)")
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee500,
 		int32(-60),
 		int32(60),
@@ -374,15 +374,15 @@ func performSwaps() {
 	testing.SkipHeights(1)
 }
 
-func createPoolBarFoo100Tier03() {
+func createPoolAtomBtc100Tier03() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:foo:100 pool")
-	pl.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(600000).ToString())
+	println("[INFO] create atom:btc:100 pool")
+	pl.CreatePool(cross, atomPath, btcPath, fee100, common.TickMathGetSqrtRatioAtTick(600000).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:100", 3)
 	testing.SkipHeights(1)
 }
 
@@ -390,15 +390,15 @@ func mintAndStakePos07OutRange() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint and stake position 07 (one-click)")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
-	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:100"))
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee100,
 		int32(-60),
 		int32(60),
@@ -447,17 +447,17 @@ func unstakeToken01() {
 func createPoolExternalOnly() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create baz:qux:3000 pool (external only)")
-	pl.CreatePool(cross, bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atone:sol:3000 pool (external only)")
+	pl.CreatePool(cross, atonePath, solPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 
-	println("[INFO] create external incentive (baz)")
-	baz.Transfer(cross, externalCreator, 2_000_000_000)
+	println("[INFO] create external incentive (atone)")
+	atone.Transfer(cross, externalCreator, 2_000_000_000)
 	gns.Transfer(cross, externalCreator, depositGnsAmount)
 
 	testing.SetRealm(testing.NewUserRealm(externalCreator))
-	baz.Approve(cross, stakerAddr, 2_000_000_000)
+	atone.Approve(cross, stakerAddr, 2_000_000_000)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	startTime := int64(1244332800)
@@ -465,8 +465,8 @@ func createPoolExternalOnly() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-		bazPath,
+		"gno.land/r/gnoswap/test_token/atone:gno.land/r/gnoswap/test_token/sol:3000",
+		atonePath,
 		2_000_000_000,
 		startTime,
 		endTime,
@@ -518,12 +518,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1, liquidity: 333850
 // [EXPECTED] amount0: 1000, amount1: 1000
 //
-// [SCENARIO] 5. Create bar:baz:500 pool (tier 2)
-// [INFO] create bar:baz:500 pool
+// [SCENARIO] 5. Create atom:atone:500 pool (tier 2)
+// [INFO] create atom:atone:500 pool
 // [INFO] set pool tier to 2
 //
 // [SCENARIO] 6. Mint positions 02-06
-// [INFO] mint position 02 (bar:baz in-range)
+// [INFO] mint position 02 (atom:atone in-range)
 // [INFO] mint positions 03-06 (out-range)
 //
 // [SCENARIO] 7. Stake all tokens
@@ -539,8 +539,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] check reward for position 01 after swap
 // [EXPECTED] position 01 reward after swap: 18729873
 //
-// [SCENARIO] 10. Create bar:foo:100 pool (tier 3)
-// [INFO] create bar:foo:100 pool
+// [SCENARIO] 10. Create atom:btc:100 pool (tier 3)
+// [INFO] create atom:btc:100 pool
 // [INFO] set pool tier to 3
 //
 // [SCENARIO] 11. Mint and stake position 07 (out-range)
@@ -556,6 +556,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] reward from unstaking: 38798148
 //
 // [SCENARIO] 13. Create pool with external incentive only
-// [INFO] create baz:qux:3000 pool (external only)
-// [INFO] create external incentive (baz)
+// [INFO] create atone:sol:3000 pool (external only)
+// [INFO] create external incentive (atone)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800

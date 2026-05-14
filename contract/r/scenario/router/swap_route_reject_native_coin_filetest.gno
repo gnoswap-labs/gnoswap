@@ -25,7 +25,7 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
-	quxPath    = "gno.land/r/onbloc/qux"
+	solPath    = "gno.land/r/gnoswap/test_token/sol"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -56,15 +56,15 @@ func main() {
 
 	// Approve tokens
 	wugnot.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	sol.Approve(cross, routerAddr, maxInt64)
 
-	// 2. Create wugnot/qux pool and mint position
+	// 2. Create wugnot/sol pool and mint position
 	pool.CreatePool(
 		cross,
 		wugnotPath,
-		quxPath,
+		solPath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -72,7 +72,7 @@ func main() {
 	pn.Mint(
 		cross,
 		wugnotPath,
-		quxPath,
+		solPath,
 		3000,
 		-887220,
 		887220,
@@ -91,9 +91,9 @@ func main() {
 	router.ExactOutSwapRoute(
 		cross,
 		"ugnot",    // inputToken (native coin)
-		quxPath,    // outputToken
+		solPath,    // outputToken
 		"3",        // amountSpecified
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/test_token/sol:3000", // strRouteArr
 		"100",      // quoteArr
 		"12345",    // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

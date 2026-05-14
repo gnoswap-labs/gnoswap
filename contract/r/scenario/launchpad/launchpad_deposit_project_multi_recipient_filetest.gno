@@ -25,9 +25,9 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -54,10 +54,10 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[SCENARIO] 1. Create ETH launchpad project")
+	createETHProject()
+	projectId := "gno.land/r/gnoswap/test_token/eth:123"
+	projectTier30Id := "gno.land/r/gnoswap/test_token/eth:123:30"
 	println()
 
 	// [SCENARIO] 2. Protocol fee setup
@@ -65,12 +65,12 @@ func main() {
 	setupProtocolFee(1000, 2500)
 	println()
 
-	// [SCENARIO] 3. Deposit GNS to OBL project tier 30
-	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30 by user1")
+	// [SCENARIO] 3. Deposit GNS to ETH project tier 30
+	println("[SCENARIO] 3. Deposit GNS to ETH project tier 30 by user1")
 	depositGnsTo(aliceAddr, projectId, projectTier30Id, 1_000_000)
 	println()
 
-	println("[SCENARIO] 4. Deposit GNS to OBL project tier 30 by user2")
+	println("[SCENARIO] 4. Deposit GNS to ETH project tier 30 by user2")
 	depositGnsTo(bobAddr, projectId, projectTier30Id, 1_000_000)
 	println()
 
@@ -79,13 +79,13 @@ func main() {
 	setupProtocolFee(1000, 2500)
 	println()
 
-	// [SCENARIO] 6. Collect protocol fee for OBL project recipient
-	println("[SCENARIO] 6. Collect protocol fee for OBL project recipient")
-	collectProtocolFeeForOBLProjectRecipient()
+	// [SCENARIO] 6. Collect protocol fee for ETH project recipient
+	println("[SCENARIO] 6. Collect protocol fee for ETH project recipient")
+	collectProtocolFeeForETHProjectRecipient()
 	println()
 
-	// [SCENARIO] 7. Deposit GNS to OBL project tier 30 again
-	println("[SCENARIO] 7. Deposit GNS to OBL project tier 30 again")
+	// [SCENARIO] 7. Deposit GNS to ETH project tier 30 again
+	println("[SCENARIO] 7. Deposit GNS to ETH project tier 30 again")
 	depositGnsTo(aliceAddr, projectId, projectTier30Id, 1_000_000)
 	depositGnsTo(bobAddr, projectId, projectTier30Id, 1_000_000)
 	println()
@@ -95,19 +95,19 @@ func main() {
 	setupProtocolFee(1000, 2500)
 	println()
 
-	// [SCENARIO] 9. Collect protocol fee for OBL project recipient 2
-	println("[SCENARIO] 9. Collect protocol fee for OBL project recipient 2")
-	collectProtocolFeeForOBLProjectRecipient2()
+	// [SCENARIO] 9. Collect protocol fee for ETH project recipient 2
+	println("[SCENARIO] 9. Collect protocol fee for ETH project recipient 2")
+	collectProtocolFeeForETHProjectRecipient2()
 	println()
 }
 
-// Create OBL launchpad project
-func createOBLProject() {
-	println("[INFO] Creating OBL launchpad project")
+// Create ETH launchpad project
+func createETHProject() {
+	println("[INFO] Creating ETH launchpad project")
 
 	recipientAddr := testutils.TestAddress("project-owner")
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
@@ -116,9 +116,9 @@ func createOBLProject() {
 	tier180Ratio := int64(70)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
 		cross,
 		projectName,
@@ -161,36 +161,36 @@ func createOBLProject() {
 }
 
 // Mock protocol fee setup
-func setupProtocolFee(barAmount, quxAmount int64) {
+func setupProtocolFee(atomAmount, solAmount int64) {
 	println("[INFO] Setting up mock protocol fees")
 	// admin > staker, protocol_fee pulls from caller via TransferFrom
 	println("[INFO] Admin transferring tokens to staker caller")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	atom.Transfer(cross, stakerAddr, atomAmount)
+	sol.Transfer(cross, stakerAddr, solAmount)
 
 	println("[INFO] Adding tokens to protocol fee")
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	atom.Approve(cross, protocolFeeAddr, atomAmount)
+	sol.Approve(cross, protocolFeeAddr, solAmount)
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/atom", atomAmount)
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/sol", solAmount)
 	testing.SkipHeights(1)
 
 	println("[INFO] Validating protocol fee balances")
-	println("[EXPECTED] Bar balance:", bar.BalanceOf(protocolFeeAddr))
-	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Atom balance:", atom.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Sol balance:", sol.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(govStakerRealm)
 	reservedTokens := protocol_fee.GetReservedTokens()
 	println("[EXPECTED] Reserved protocol fee token count:", len(reservedTokens))
 }
 
-// Deposit GNS to OBL project tier 30
+// Deposit GNS to ETH project tier 30
 func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
-	println("[INFO] Depositing GNS to OBL project tier 30")
+	println("[INFO] Depositing GNS to ETH project tier 30")
 
 	println("[INFO] Admin transferring GNS to depositor for deposit")
 	testing.SetRealm(adminRealm)
@@ -223,13 +223,13 @@ func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmo
 	testing.SkipHeights(1)
 }
 
-// Collect protocol fee for OBL project recipient
-func collectProtocolFeeForOBLProjectRecipient() {
+// Collect protocol fee for ETH project recipient
+func collectProtocolFeeForETHProjectRecipient() {
 	testing.SetRealm(projectRealm)
 
-	// protocol fee has bar, qux
-	println("[INFO] Bar balance in protocol fee:", bar.BalanceOf(protocolFeeAddr))
-	println("[INFO] Qux balance in protocol fee:", qux.BalanceOf(protocolFeeAddr))
+	// protocol fee has atom, sol
+	println("[INFO] Atom balance in protocol fee:", atom.BalanceOf(protocolFeeAddr))
+	println("[INFO] Sol balance in protocol fee:", sol.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(projectRealm)
 	staker.CollectReward(cross)
@@ -237,45 +237,45 @@ func collectProtocolFeeForOBLProjectRecipient() {
 
 	// 1000 + 1000 - 499 = 1501
 	// 2500 + 2500 - 1249 = 3751
-	println("[EXPECTED] Gov staker bar balance after collection:", bar.BalanceOf(govStakerAddr))
-	println("[EXPECTED] Gov staker qux balance after collection:", qux.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Gov staker atom balance after collection:", atom.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Gov staker sol balance after collection:", sol.BalanceOf(govStakerAddr))
 
 	// 1000 / 2 * 1 = 500
 	// 2500 / 2 * 1 = 1250
-	println("[EXPECTED] Project bar balance after collection:", bar.BalanceOf(projectAddr))
-	println("[EXPECTED] Project qux balance after collection:", qux.BalanceOf(projectAddr))
+	println("[EXPECTED] Project atom balance after collection:", atom.BalanceOf(projectAddr))
+	println("[EXPECTED] Project sol balance after collection:", sol.BalanceOf(projectAddr))
 }
 
-// Collect protocol fee for OBL project recipient 2
-func collectProtocolFeeForOBLProjectRecipient2() {
+// Collect protocol fee for ETH project recipient 2
+func collectProtocolFeeForETHProjectRecipient2() {
 	testing.SetRealm(projectRealm)
 
-	// protocol fee has bar, qux
-	println("[INFO] Bar balance in protocol fee:", bar.BalanceOf(protocolFeeAddr))
-	println("[INFO] Qux balance in protocol fee:", qux.BalanceOf(protocolFeeAddr))
+	// protocol fee has atom, sol
+	println("[INFO] Atom balance in protocol fee:", atom.BalanceOf(protocolFeeAddr))
+	println("[INFO] Sol balance in protocol fee:", sol.BalanceOf(protocolFeeAddr))
 	testing.SkipHeights(1)
 
 	launchpad.CollectProtocolFee(cross)
 
 	// 1501 + 1000 = 2501
 	// 3751 + 2500 = 6251
-	println("[EXPECTED] Gov staker bar balance after collection:", bar.BalanceOf(govStakerAddr))
-	println("[EXPECTED] Gov staker qux balance after collection:", qux.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Gov staker atom balance after collection:", atom.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Gov staker sol balance after collection:", sol.BalanceOf(govStakerAddr))
 
-	println("[EXPECTED] Project bar balance after collection:", bar.BalanceOf(projectAddr))
-	println("[EXPECTED] Project qux balance after collection:", qux.BalanceOf(projectAddr))
+	println("[EXPECTED] Project atom balance after collection:", atom.BalanceOf(projectAddr))
+	println("[EXPECTED] Project sol balance after collection:", sol.BalanceOf(projectAddr))
 
 	testing.SkipHeights(1)
 }
 
 // Output:
-// [SCENARIO] 1. Create OBL launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [SCENARIO] 1. Create ETH launchpad project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
-// [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
+// [EXPECTED] Project name: ETH Launchpad Project
+// [EXPECTED] Project token path: gno.land/r/gnoswap/test_token/eth
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20
@@ -289,12 +289,12 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
-// [EXPECTED] Bar balance: 1000
-// [EXPECTED] Qux balance: 2500
+// [EXPECTED] Atom balance: 1000
+// [EXPECTED] Sol balance: 2500
 // [EXPECTED] Reserved protocol fee token count: 2
 //
-// [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user1
-// [INFO] Depositing GNS to OBL project tier 30
+// [SCENARIO] 3. Deposit GNS to ETH project tier 30 by user1
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -303,8 +303,8 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 //
-// [SCENARIO] 4. Deposit GNS to OBL project tier 30 by user2
-// [INFO] Depositing GNS to OBL project tier 30
+// [SCENARIO] 4. Deposit GNS to ETH project tier 30 by user2
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -318,20 +318,20 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
-// [EXPECTED] Bar balance: 1000
-// [EXPECTED] Qux balance: 2500
+// [EXPECTED] Atom balance: 1000
+// [EXPECTED] Sol balance: 2500
 // [EXPECTED] Reserved protocol fee token count: 2
 //
-// [SCENARIO] 6. Collect protocol fee for OBL project recipient
-// [INFO] Bar balance in protocol fee: 1000
-// [INFO] Qux balance in protocol fee: 2500
-// [EXPECTED] Gov staker bar balance after collection: 1501
-// [EXPECTED] Gov staker qux balance after collection: 3751
-// [EXPECTED] Project bar balance after collection: 499
-// [EXPECTED] Project qux balance after collection: 1249
+// [SCENARIO] 6. Collect protocol fee for ETH project recipient
+// [INFO] Atom balance in protocol fee: 1000
+// [INFO] Sol balance in protocol fee: 2500
+// [EXPECTED] Gov staker atom balance after collection: 1501
+// [EXPECTED] Gov staker sol balance after collection: 3751
+// [EXPECTED] Project atom balance after collection: 499
+// [EXPECTED] Project sol balance after collection: 1249
 //
-// [SCENARIO] 7. Deposit GNS to OBL project tier 30 again
-// [INFO] Depositing GNS to OBL project tier 30
+// [SCENARIO] 7. Deposit GNS to ETH project tier 30 again
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -339,7 +339,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [INFO] Depositing GNS to OBL project tier 30
+// [INFO] Depositing GNS to ETH project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -353,14 +353,14 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
-// [EXPECTED] Bar balance: 1000
-// [EXPECTED] Qux balance: 2500
+// [EXPECTED] Atom balance: 1000
+// [EXPECTED] Sol balance: 2500
 // [EXPECTED] Reserved protocol fee token count: 2
 //
-// [SCENARIO] 9. Collect protocol fee for OBL project recipient 2
-// [INFO] Bar balance in protocol fee: 1000
-// [INFO] Qux balance in protocol fee: 2500
-// [EXPECTED] Gov staker bar balance after collection: 2002
-// [EXPECTED] Gov staker qux balance after collection: 5002
-// [EXPECTED] Project bar balance after collection: 998
-// [EXPECTED] Project qux balance after collection: 2498
+// [SCENARIO] 9. Collect protocol fee for ETH project recipient 2
+// [INFO] Atom balance in protocol fee: 1000
+// [INFO] Sol balance in protocol fee: 2500
+// [EXPECTED] Gov staker atom balance after collection: 2002
+// [EXPECTED] Gov staker sol balance after collection: 5002
+// [EXPECTED] Project atom balance after collection: 998
+// [EXPECTED] Project sol balance after collection: 2498

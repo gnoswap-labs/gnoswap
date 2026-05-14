@@ -22,11 +22,11 @@ import (
 	router_v1 "gno.land/r/gnoswap/router/v1"
 	staker_v1 "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/eth"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 const (
@@ -43,9 +43,9 @@ const (
 	MAX_TICK = int32(887272)
 
 	// Token paths
-	BAR_PATH = "gno.land/r/onbloc/bar"
-	FOO_PATH = "gno.land/r/onbloc/foo"
-	BAZ_PATH = "gno.land/r/onbloc/baz"
+	ATOM_PATH = "gno.land/r/gnoswap/test_token/atom"
+	BTC_PATH = "gno.land/r/gnoswap/test_token/btc"
+	ATONE_PATH = "gno.land/r/gnoswap/test_token/atone"
 
 	MAX_TEST_MINT_AMOUNT = math.MaxInt64 / 1000
 )
@@ -68,18 +68,18 @@ var (
 	minPriceUint256 = u256.MustFromDecimal(MIN_SQRT_RATIO)
 	maxPriceUint256 = u256.MustFromDecimal(MAX_SQRT_RATIO)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
+	ethPath = "gno.land/r/gnoswap/test_token/eth"
 
 	defaultTokenPaths = map[string]bool{
-		barPath: true,
-		bazPath: true,
-		fooPath: true,
-		oblPath: true,
-		quxPath: true,
+		atomPath: true,
+		atonePath: true,
+		btcPath: true,
+		ethPath: true,
+		solPath: true,
 	}
 
 	defaultFeeTiers = []uint32{
@@ -196,16 +196,16 @@ func mintTestToken(tokenPath string, amount int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	switch tokenPath {
-	case barPath:
-		bar.Mint(cross, adminAddr, amount)
-	case bazPath:
-		baz.Mint(cross, adminAddr, amount)
-	case fooPath:
-		foo.Mint(cross, adminAddr, amount)
-	case quxPath:
-		qux.Mint(cross, adminAddr, amount)
-	case oblPath:
-		obl.Mint(cross, adminAddr, amount)
+	case atomPath:
+		atom.Mint(cross, adminAddr, amount)
+	case atonePath:
+		atone.Mint(cross, adminAddr, amount)
+	case btcPath:
+		btc.Mint(cross, adminAddr, amount)
+	case solPath:
+		sol.Mint(cross, adminAddr, amount)
+	case ethPath:
+		eth.Mint(cross, adminAddr, amount)
 	default:
 		return
 	}
@@ -214,16 +214,16 @@ func mintTestToken(tokenPath string, amount int64) {
 // getTokenTotalSupply returns the total supply of a token
 func getTokenTotalSupply(tokenPath string) int64 {
 	switch tokenPath {
-	case barPath:
-		return bar.TotalSupply()
-	case bazPath:
-		return baz.TotalSupply()
-	case fooPath:
-		return foo.TotalSupply()
-	case quxPath:
-		return qux.TotalSupply()
-	case oblPath:
-		return obl.TotalSupply()
+	case atomPath:
+		return atom.TotalSupply()
+	case atonePath:
+		return atone.TotalSupply()
+	case btcPath:
+		return btc.TotalSupply()
+	case solPath:
+		return sol.TotalSupply()
+	case ethPath:
+		return eth.TotalSupply()
 	default:
 		return 0
 	}
@@ -242,11 +242,11 @@ func burnTestTokens(t *testing.T) {
 	addrs := []address{adminAddr, poolAddr, positionAddr, protocolFeeAddr, stakerAddr}
 
 	for _, addr := range addrs {
-		bar.Burn(cross, addr, bar.BalanceOf(addr))
-		baz.Burn(cross, addr, baz.BalanceOf(addr))
-		foo.Burn(cross, addr, foo.BalanceOf(addr))
-		qux.Burn(cross, addr, qux.BalanceOf(addr))
-		obl.Burn(cross, addr, obl.BalanceOf(addr))
+		atom.Burn(cross, addr, atom.BalanceOf(addr))
+		atone.Burn(cross, addr, atone.BalanceOf(addr))
+		btc.Burn(cross, addr, btc.BalanceOf(addr))
+		sol.Burn(cross, addr, sol.BalanceOf(addr))
+		eth.Burn(cross, addr, eth.BalanceOf(addr))
 	}
 }
 

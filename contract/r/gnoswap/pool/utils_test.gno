@@ -135,24 +135,24 @@ func TestGetPoolPath(t *testing.T) {
 	}{
 		{
 			name:       "normal order",
-			token0Path: "gno.land/r/onbloc/bar",
-			token1Path: "gno.land/r/onbloc/foo",
+			token0Path: "gno.land/r/gnoswap/test_token/atom",
+			token1Path: "gno.land/r/gnoswap/test_token/btc",
 			fee:        500,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			want:       "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500",
 		},
 		{
 			name:       "reversed order",
-			token0Path: "gno.land/r/onbloc/foo",
-			token1Path: "gno.land/r/onbloc/bar",
+			token0Path: "gno.land/r/gnoswap/test_token/btc",
+			token1Path: "gno.land/r/gnoswap/test_token/atom",
 			fee:        500,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			want:       "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500",
 		},
 		{
 			name:       "fee 3000",
-			token0Path: "gno.land/r/onbloc/bar",
-			token1Path: "gno.land/r/onbloc/qux",
+			token0Path: "gno.land/r/gnoswap/test_token/atom",
+			token1Path: "gno.land/r/gnoswap/test_token/sol",
 			fee:        3000,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000",
+			want:       "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:3000",
 		},
 	}
 

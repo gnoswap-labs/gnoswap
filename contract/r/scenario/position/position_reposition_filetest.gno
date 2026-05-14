@@ -23,8 +23,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -41,8 +41,8 @@ var (
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = testing.NewUserRealm(routerAddr)
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
+	atomPath        = "gno.land/r/gnoswap/test_token/atom"
+	btcPath        = "gno.land/r/gnoswap/test_token/btc"
 	fee500  uint32 = 500
 )
 
@@ -91,8 +91,8 @@ func initPool() {
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		"130621891405341611593710811006",
 	)
@@ -100,14 +100,14 @@ func initPool() {
 
 func mintInitialPosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		8000,
 		12000,
@@ -137,9 +137,9 @@ func checkInitialPositionState() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
 	// set current realm and origin caller
@@ -147,8 +147,8 @@ func executeSwap() {
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -156,12 +156,12 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	p, _ = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPool(atomPath, btcPath, fee500)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -171,8 +171,8 @@ func executeSwap() {
 func repositionToNewRange() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees before reposition")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
@@ -218,20 +218,20 @@ func checkRepositionedState() {
 
 func executeSwapInNewRange() {
 	testing.SetRealm(adminRealm)
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap in new range")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,
@@ -239,7 +239,7 @@ func executeSwapInNewRange() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, false)
 		},
 	)
 

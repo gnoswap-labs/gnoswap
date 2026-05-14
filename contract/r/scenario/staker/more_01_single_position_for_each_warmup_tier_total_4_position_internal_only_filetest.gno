@@ -31,8 +31,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 var (
@@ -47,15 +47,15 @@ var (
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:100"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 	initAndSetupSinglePool()
 	println()
 
-	println("[SCENARIO] 2. Create bar:baz:100 pool")
+	println("[SCENARIO] 2. Create atom:atone:100 pool")
 	createPool()
 	println()
 
@@ -113,8 +113,8 @@ func initAndSetupSinglePool() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] create atom:atone:100 pool")
+	pl.CreatePool(cross, atomPath, atonePath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, poolPath, 1)
@@ -125,14 +125,14 @@ func createPool() {
 func mintPositions() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	atone.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -30 ~ 30)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -152,8 +152,8 @@ func mintPositions() {
 	println("[INFO] mint position 02 (tick range: -30 ~ 30)")
 	positionId2, liquidity2, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -172,8 +172,8 @@ func mintPositions() {
 	println("[INFO] mint position 03 (tick range: -30 ~ 30)")
 	positionId3, liquidity3, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -192,8 +192,8 @@ func mintPositions() {
 	println("[INFO] mint position 04 (tick range: -30 ~ 30)")
 	positionId4, liquidity4, _, _ := pn.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		fee100,
 		int32(-30),
 		int32(30),
@@ -401,8 +401,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set community pool distribution to 0%
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:baz:100 pool
-// [INFO] create bar:baz:100 pool
+// [SCENARIO] 2. Create atom:atone:100 pool
+// [INFO] create atom:atone:100 pool
 // [INFO] set pool to tier 1
 //
 // [SCENARIO] 3. Mint 4 positions

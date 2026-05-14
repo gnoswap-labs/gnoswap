@@ -21,8 +21,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const (
@@ -44,8 +44,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 
 	// cross is already defined in test environment
 )
@@ -78,14 +78,14 @@ func initializeSetup() {
 
 	// Setup with smaller token amounts for shared test environment
 	largAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, largAmount)
-	baz.Transfer(cross, aliceAddr, largAmount)
+	atom.Transfer(cross, aliceAddr, largAmount)
+	atone.Transfer(cross, aliceAddr, largAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largAmount)
-	baz.Approve(cross, poolAddr, largAmount)
-	bar.Approve(cross, positionAddr, largAmount)
-	baz.Approve(cross, positionAddr, largAmount)
+	atom.Approve(cross, poolAddr, largAmount)
+	atone.Approve(cross, poolAddr, largAmount)
+	atom.Approve(cross, positionAddr, largAmount)
+	atone.Approve(cross, positionAddr, largAmount)
 
 	println("[INFO] Setup completed - simulating flash loan capital")
 }
@@ -96,8 +96,8 @@ func testExactAttackVector() {
 	// Create pool with minimum tick spacing (most vulnerable)
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100, // 0.01% fee, tick spacing 1
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -113,7 +113,7 @@ func testExactAttackVector() {
 
 	_, liquidity1, amount0Used1, _ := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		0, 1, // Extremely narrow range (like [300000, 300200])
 		largeAmount,
 		largeAmount,
@@ -140,7 +140,7 @@ func testExactAttackVector() {
 	// Attack attempt 2: Try to mint with just 1 token (what attacker wants)
 	_, liquidity2, amount0Used2, amount1Used2 := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		10, 11, // Different narrow range
 		"1", "1",
 		"0", "0",
@@ -170,8 +170,8 @@ func testOverflowBoundary192() {
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -186,7 +186,7 @@ func testOverflowBoundary192() {
 
 	_, liquidity, amount0Used, _ := pn.Mint(
 		cross,
-		barPath, bazPath, 500,
+		atomPath, atonePath, 500,
 		-10, 10,
 		largeButSafe,
 		"1000000",
@@ -212,8 +212,8 @@ func testSilentOverflowPrevention() {
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -239,7 +239,7 @@ func testSilentOverflowPrevention() {
 
 		_, liq, amt0, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 3000,
+			atomPath, atonePath, 3000,
 			tc.tickLower, tc.tickUpper,
 			tc.amount, tc.amount,
 			"0", "0",
@@ -268,8 +268,8 @@ func testGetDeltaIntegrity() {
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -284,7 +284,7 @@ func testGetDeltaIntegrity() {
 	// Mint with normal amount first
 	_, _, normalAmt0, _ := pn.Mint(
 		cross,
-		barPath, bazPath, 10000,
+		atomPath, atonePath, 10000,
 		-200, 200,
 		"1000000", "1000000",
 		"0", "0",
@@ -296,7 +296,7 @@ func testGetDeltaIntegrity() {
 	// Now with 1000x the amount in same range
 	_, _, largeAmt0, _ := pn.Mint(
 		cross,
-		barPath, bazPath, 10000,
+		atomPath, atonePath, 10000,
 		400, 600,
 		"1000000000", "1000000000",
 		"0", "0",

@@ -11,9 +11,9 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/pool"
 
@@ -46,9 +46,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 // Test variables
@@ -86,30 +86,30 @@ func setupPools(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	// Create Foo:Bar pool with fee 500
-	println("[INFO] Creating Foo:Bar pool with fee tier 500")
+	// Create Btc:Atom pool with fee 500
+	println("[INFO] Creating Btc:Atom pool with fee tier 500")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
-	// Create Bar:Baz pool with fee 3000
-	println("[INFO] Creating Bar:Baz pool with fee tier 3000")
+	// Create Atom:Atone pool with fee 3000
+	println("[INFO] Creating Atom:Atone pool with fee tier 3000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		FeeTier3000,
 		"130621891405341611593710811006", // tick 10000
 	)
 
 	// Approve tokens for all tests
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
+	atone.Approve(cross, poolAddr, maxApprove)
 
 	poolSetup = true
 	println("[INFO] Pool setup completed")
@@ -123,13 +123,13 @@ func testPoolMinting(t *testing.T) {
 	// Given: Pools exist and tokens are approved
 	println("[INFO] Tokens were approved in setup phase")
 
-	// When: Mint liquidity to Foo:Bar pool
-	println("[INFO] Minting liquidity to Foo:Bar pool")
+	// When: Mint liquidity to Btc:Atom pool
+	println("[INFO] Minting liquidity to Btc:Atom pool")
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		-tickUpper,
 		-tickLower,
@@ -139,17 +139,17 @@ func testPoolMinting(t *testing.T) {
 
 	// Then: Verify minting results
 	println("[EXPECTED] Minted amounts should be positive")
-	println("[INFO] Minted amount0 (foo):", mintAmount0)
-	println("[INFO] Minted amount1 (bar):", mintAmount1)
+	println("[INFO] Minted amount0 (btc):", mintAmount0)
+	println("[INFO] Minted amount1 (atom):", mintAmount1)
 	uassert.NotEqual(t, "0", mintAmount0)
 	uassert.NotEqual(t, "0", mintAmount1)
 
-	// When: Mint liquidity to Bar:Baz pool
-	println("[INFO] Minting liquidity to Bar:Baz pool")
-	mintAmount0Baz, mintAmount1Baz := pool.Mint(
+	// When: Mint liquidity to Atom:Atone pool
+	println("[INFO] Minting liquidity to Atom:Atone pool")
+	mintAmount0Atone, mintAmount1Atone := pool.Mint(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		FeeTier3000,
 		tickLower,
 		tickUpper,
@@ -159,10 +159,10 @@ func testPoolMinting(t *testing.T) {
 
 	// Then: Verify second minting results
 	println("[EXPECTED] Second minted amounts should be positive")
-	println("[INFO] Minted amount0 (bar):", mintAmount0Baz)
-	println("[INFO] Minted amount1 (baz):", mintAmount1Baz)
-	uassert.NotEqual(t, "0", mintAmount0Baz)
-	uassert.NotEqual(t, "0", mintAmount1Baz)
+	println("[INFO] Minted amount0 (atom):", mintAmount0Atone)
+	println("[INFO] Minted amount1 (atone):", mintAmount1Atone)
+	uassert.NotEqual(t, "0", mintAmount0Atone)
+	uassert.NotEqual(t, "0", mintAmount1Atone)
 
 	println("[SCENARIO] Pool Minting Tests - PASSED")
 }
@@ -175,18 +175,18 @@ func testPoolSwapping(t *testing.T) {
 	// Given: Pools have liquidity and tokens are approved for swapping
 	println("[INFO] Approving tokens for swapping")
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
-	foo.Approve(cross, poolAddr, 16000)
+	atom.Approve(cross, poolAddr, 16000)
+	btc.Approve(cross, poolAddr, 16000)
 
-	// When: Swap Bar to Foo in Foo:Bar pool
-	println("[INFO] Performing Bar to Foo swap")
+	// When: Swap Atom to Btc in Btc:Atom pool
+	println("[INFO] Performing Atom to Btc swap")
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		adminAddr,
 		true, // zeroForOne
@@ -194,7 +194,7 @@ func testPoolSwapping(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -205,12 +205,12 @@ func testPoolSwapping(t *testing.T) {
 	uassert.Equal(t, "16000", swapIn)
 	uassert.NotEqual(t, "0", swapOut)
 
-	// When: Swap Foo to Bar in Foo:Bar pool
-	println("[INFO] Performing Foo to Bar swap")
+	// When: Swap Btc to Atom in Btc:Atom pool
+	println("[INFO] Performing Btc to Atom swap")
 	swapIn2, swapOut2 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		FeeTier500,
 		adminAddr,
 		false, // zeroForOne = false
@@ -218,7 +218,7 @@ func testPoolSwapping(t *testing.T) {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -243,8 +243,8 @@ func testPoolFeeCollection(t *testing.T) {
 	testing.SetRealm(posRealm)
 	burnAmount0, burnAmount1 := pool.Burn(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		-tickUpper,
 		-tickLower,
@@ -263,8 +263,8 @@ func testPoolFeeCollection(t *testing.T) {
 	println("[INFO] Collecting accumulated fees")
 	collected0, collected1 := pool.Collect(
 		cross,
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		adminAddr,
 		-tickUpper,
@@ -288,19 +288,19 @@ func testPoolMultiToken(t *testing.T) {
 	println("[INFO] Testing interactions between multiple pools")
 
 	// Given: Multiple pools exist with liquidity
-	println("[INFO] Testing Bar:Baz pool swap")
+	println("[INFO] Testing Atom:Atone pool swap")
 
-	// When: Swap in Bar:Baz pool
-	println("[INFO] Performing Bar to Baz swap")
+	// When: Swap in Atom:Atone pool
+	println("[INFO] Performing Atom to Atone swap")
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	atom.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		FeeTier3000,
 		adminAddr,
 		true, // zeroForOne
@@ -308,7 +308,7 @@ func testPoolMultiToken(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -334,8 +334,8 @@ func testPoolEdgeCases(t *testing.T) {
 	println("[INFO] Attempting swap with amount larger than available liquidity")
 	testing.SetRealm(rouRealm)
 	dryIn, dryOut, _ := pool.DrySwap(
-		fooPath,
-		barPath,
+		btcPath,
+		atomPath,
 		FeeTier500,
 		true,
 		"1000000000", // Very large amount
@@ -373,29 +373,29 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 }
 
 // Output:
-// [INFO] Creating Foo:Bar pool with fee tier 500
-// [INFO] Creating Bar:Baz pool with fee tier 3000
+// [INFO] Creating Btc:Atom pool with fee tier 500
+// [INFO] Creating Atom:Atone pool with fee tier 3000
 // [INFO] Pool setup completed
 // [INFO] ===== Testing Pool Minting =====
 // [INFO] Testing liquidity provision to pools
 // [INFO] Tokens were approved in setup phase
-// [INFO] Minting liquidity to Foo:Bar pool
+// [INFO] Minting liquidity to Btc:Atom pool
 // [EXPECTED] Minted amounts should be positive
-// [INFO] Minted amount0 (foo): 8040315472
-// [INFO] Minted amount1 (bar): 5771772257
-// [INFO] Minting liquidity to Bar:Baz pool
+// [INFO] Minted amount0 (btc): 8040315472
+// [INFO] Minted amount1 (atom): 5771772257
+// [INFO] Minting liquidity to Atom:Atone pool
 // [EXPECTED] Second minted amounts should be positive
-// [INFO] Minted amount0 (bar): 5771772257
-// [INFO] Minted amount1 (baz): 8040315472
+// [INFO] Minted amount0 (atom): 5771772257
+// [INFO] Minted amount1 (atone): 8040315472
 // [SCENARIO] Pool Minting Tests - PASSED
 // [INFO] ===== Testing Pool Swapping =====
 // [INFO] Testing token swaps in both directions
 // [INFO] Approving tokens for swapping
-// [INFO] Performing Bar to Foo swap
+// [INFO] Performing Atom to Btc swap
 // [EXPECTED] Swap should return positive input and negative output
 // [INFO] Swap input amount: 16000
 // [INFO] Swap output amount: -5883
-// [INFO] Performing Foo to Bar swap
+// [INFO] Performing Btc to Atom swap
 // [EXPECTED] Reverse swap should also work
 // [INFO] Reverse swap input amount: -43468
 // [INFO] Reverse swap output amount: 16000
@@ -414,8 +414,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [SCENARIO] Pool Fee Collection Tests - PASSED
 // [INFO] ===== Testing Multi-Token Pool Interactions =====
 // [INFO] Testing interactions between multiple pools
-// [INFO] Testing Bar:Baz pool swap
-// [INFO] Performing Bar to Baz swap
+// [INFO] Testing Atom:Atone pool swap
+// [INFO] Performing Atom to Atone swap
 // [EXPECTED] Multi-token swap should work correctly
 // [INFO] Multi-token swap input: 16000
 // [INFO] Multi-token swap output: -43359

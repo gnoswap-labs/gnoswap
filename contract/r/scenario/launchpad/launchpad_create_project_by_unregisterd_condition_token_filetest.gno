@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 var t *testing.T
@@ -48,11 +48,11 @@ func initEnvironment() {}
 func createProjectByUnregisteredConditionToken() {
 	testing.SetOriginCaller(adminAddr)
 
-	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	projectName := "ETH Launchpad Project"
+	rewardTokenPath := "gno.land/r/gnoswap/test_token/eth"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/v1/token_test/obl"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/v1/token_test/eth"
 	conditionsAmount := "1000000*PAD*0"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -72,9 +72,9 @@ func createProjectByUnregisteredConditionToken() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	eth.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/obl) not registered"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/eth) not registered"
 
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
@@ -100,14 +100,14 @@ func createProjectByUnregisteredConditionToken() {
 //
 // [SCENARIO] 2. Admin attempts to create project with unregistered condition token
 // [INFO] non-admin attempting to create project
-// [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with project name: ETH Launchpad Project
+// [INFO] create project with reward token path: gno.land/r/gnoswap/test_token/eth
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
-// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/v1/token_test/obl
+// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/v1/token_test/eth
 // [INFO] create project with conditions amount: 1000000*PAD*0
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1235172690
-// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/obl) not registered
+// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/gnoswap/v1/token_test/eth) not registered

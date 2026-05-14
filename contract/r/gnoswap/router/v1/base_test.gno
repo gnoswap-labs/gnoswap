@@ -12,8 +12,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -21,8 +21,8 @@ import (
 var errDummy = errors.New("dummy error")
 
 const (
-	foobar500 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
-	barbaz500 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+	btcatom500 = "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:500"
+	atomatone500 = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500"
 )
 
 type mockOperation struct {
@@ -98,17 +98,17 @@ func TestBuildRouteEventAttrs(t *testing.T) {
 	}{
 		{
 			name:     "single route emits one bracketed attr pair",
-			routeArr: foobar500,
+			routeArr: btcatom500,
 			expected: []string{
-				"routes[0]", foobar500,
+				"routes[0]", btcatom500,
 			},
 		},
 		{
 			name:     "multiple routes preserve index order",
-			routeArr: foobar500 + "," + barbaz500,
+			routeArr: btcatom500 + "," + atomatone500,
 			expected: []string{
-				"routes[0]", foobar500,
-				"routes[1]", barbaz500,
+				"routes[0]", btcatom500,
+				"routes[1]", atomatone500,
 			},
 		},
 	}
@@ -132,8 +132,8 @@ func TestProcessRoute(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
-		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
-		route := foobar500
+		common.SafeGRC20Approve(cross, btcPath, routerAddr, 1000000)
+		route := btcatom500
 		toSwap := int64(1000)
 		swapType := ExactIn
 
@@ -153,14 +153,14 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
 		amountSpecified: oddAmount,
-		routes:          []string{foobar500, barbaz500},
+		routes:          []string{btcatom500, atomatone500},
 		// allocate 50% to each route
 		quotes: []string{"50", "50"},
 	}
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross, btcPath, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross, atomPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(t)
 	MakeThirdMintPositionWithoutFee(t)
 	MakeForthMintPositionWithoutFee(t)
@@ -226,7 +226,7 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 			// 50% + 50% = 100% (no remainder)
 			name:            "two routes with perfect split",
 			amountSpecified: 100,
-			routes:          []string{foobar500, barbaz500},
+			routes:          []string{btcatom500, atomatone500},
 			quotes:          []string{"50", "50"},
 			expectedAmounts: []int64{50, 50},
 		},
@@ -234,14 +234,14 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 			// 33% + 33% + remainder(34%) = 100%
 			name:            "three routes with remainder",
 			amountSpecified: 100,
-			routes:          []string{foobar500, barbaz500, foobar500},
+			routes:          []string{btcatom500, atomatone500, btcatom500},
 			quotes:          []string{"33", "33", "34"},
 			expectedAmounts: []int64{33, 33, 34}, // last route gets remainder
 		},
 		{
 			name:            "odd amount with two routes",
 			amountSpecified: 101,
-			routes:          []string{foobar500, barbaz500},
+			routes:          []string{btcatom500, atomatone500},
 			quotes:          []string{"50", "50"},
 			expectedAmounts: []int64{50, 51}, // last route gets 50 + remainder(1)
 		},
@@ -249,7 +249,7 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 			// 24% + 25% + 25% + remainder(26%) = 100%
 			name:            "large amount with multiple routes",
 			amountSpecified: 1000,
-			routes:          []string{foobar500, barbaz500, foobar500, barbaz500},
+			routes:          []string{btcatom500, atomatone500, btcatom500, atomatone500},
 			quotes:          []string{"24", "25", "25", "26"},
 			expectedAmounts: []int64{240, 250, 250, 260}, // last route gets remainder
 		},
@@ -732,7 +732,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
 				amountSpecified: 1000,
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+				routes:          []string{"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:500"},
 				quotes:          []string{"100"},
 			},
 			expectPanic: false,
@@ -745,12 +745,12 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 			gns.Approve(cross, poolAddr, math.MaxInt64)
-			bar.Approve(cross, poolAddr, math.MaxInt64)
-			baz.Approve(cross, poolAddr, math.MaxInt64)
-			bar.Approve(cross, routerAddr, math.MaxInt64)
-			baz.Approve(cross, routerAddr, math.MaxInt64)
-			pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
-			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+			atom.Approve(cross, poolAddr, math.MaxInt64)
+			atone.Approve(cross, poolAddr, math.MaxInt64)
+			atom.Approve(cross, routerAddr, math.MaxInt64)
+			atone.Approve(cross, routerAddr, math.MaxInt64)
+			pl.CreatePool(cross, atomPath, atonePath, 500, "79228162514264337593543950336")
+			pn.Mint(cross, atomPath, atonePath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 
 			router := mockRouter()
 

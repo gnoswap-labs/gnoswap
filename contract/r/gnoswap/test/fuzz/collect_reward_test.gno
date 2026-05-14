@@ -54,7 +54,7 @@ func TestFuzzCollectReward_ExternalIncentive_Stateless(t *testing.T) {
 		incentiveTimestamp := staker.GetIncentiveStartTimestamp(poolPath, incentiveID)
 		params := NewValidCollectRewardParams(ft, positionID, true, incentiveTimestamp)
 		testing.SkipHeights(params.skipBlocks)
-		params.updatePreviousBalances(oblPath)
+		params.updatePreviousBalances(ethPath)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)

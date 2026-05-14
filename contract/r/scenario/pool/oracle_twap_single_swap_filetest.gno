@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -38,8 +38,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 const (
@@ -69,18 +69,18 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
-	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println("[INFO] Creating atom-btc pool (fee: 500, initial tick: 0)")
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 	println()
 
 	// Increase observation cardinality to store multiple observations
 	println("[SCENARIO] 2. Increase Observation Cardinality")
 	println("[INFO] Increasing observation cardinality limit to 100")
-	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 100)
+	pool.IncreaseObservationCardinalityNext(cross, atomPath, btcPath, fee500, 100)
 	println()
 
 	// Add liquidity
@@ -89,8 +89,8 @@ func main() {
 	println("[INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000")
 	pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-5000,
 		5000,
@@ -98,7 +98,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -115,8 +115,8 @@ func main() {
 	println("[INFO] Executing swap: zeroForOne=true, amountSpecified=10000000")
 	pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -124,12 +124,12 @@ func main() {
 		minPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(atomPath, btcPath, fee500)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 
@@ -141,7 +141,7 @@ func main() {
 
 	// Query TWAP at different intervals
 	println("[SCENARIO] 7. TWAP Queries After Price Change")
-	poolPath := barPath + ":" + fooPath + ":" + "500"
+	poolPath := atomPath + ":" + btcPath + ":" + "500"
 
 	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
@@ -178,7 +178,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 1. Pool Creation
 // [INFO] Approving pool creation fee
-// [INFO] Creating bar-foo pool (fee: 500, initial tick: 0)
+// [INFO] Creating atom-btc pool (fee: 500, initial tick: 0)
 // [INFO] Approving tokens for pool operations
 //
 // [SCENARIO] 2. Increase Observation Cardinality

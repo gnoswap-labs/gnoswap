@@ -19,8 +19,8 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -33,8 +33,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -295,31 +295,31 @@ func initializeSetup() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 
 	// Set poolPath for later use
-	poolPath = barPath + ":" + fooPath + ":3000"
+	poolPath = atomPath + ":" + btcPath + ":3000"
 
 	// Set positionKey for later use
 	positionKey = pl.EncodePositionKey(min_tick, max_tick)
 }
 
 func createPool() {
-	println("[INFO] Creating bar-foo pool (fee: 3000)")
+	println("[INFO] Creating atom-btc pool (fee: 3000)")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	btc.Approve(cross, poolAddr, max_approve)
+	atom.Approve(cross, poolAddr, max_approve)
 
-	println("[INFO] Creating bar-foo pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	println("[INFO] Creating atom-btc pool (fee: 3000)")
+	pl.CreatePool(cross, atomPath, btcPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 }
 
 func mintPosition() {
-	println("[INFO] Minting position in bar-foo pool")
+	println("[INFO] Minting position in atom-btc pool")
 	testing.SetRealm(adminRealm)
 
-	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross, atomPath, btcPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPool(atomPath, btcPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }
@@ -328,43 +328,43 @@ func exactInSwapRoute() {
 	println("[INFO] Executing ExactIn swap")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	atom.Approve(cross, routerAddr, max_approve)
+	btc.Approve(cross, routerAddr, max_approve)
 
-	poolToken0Before := bar.BalanceOf(poolAddr)
-	poolToken1Before := foo.BalanceOf(poolAddr)
-	user1Token0Before := bar.BalanceOf(adminAddr)
-	user1Token1Before := foo.BalanceOf(adminAddr)
-	protocolFeeToken0Before := bar.BalanceOf(protocolFeeAddr)
-	protocolFeeToken1Before := foo.BalanceOf(protocolFeeAddr)
+	poolToken0Before := atom.BalanceOf(poolAddr)
+	poolToken1Before := btc.BalanceOf(poolAddr)
+	user1Token0Before := atom.BalanceOf(adminAddr)
+	user1Token1Before := btc.BalanceOf(adminAddr)
+	protocolFeeToken0Before := atom.BalanceOf(protocolFeeAddr)
+	protocolFeeToken1Before := btc.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,   // inputToken
-		barPath,   // outputToken
+		btcPath,   // inputToken
+		atomPath,   // outputToken
 		"1000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/atom:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 
-	poolToken0After := bar.BalanceOf(poolAddr)
-	poolToken1After := foo.BalanceOf(poolAddr)
-	user1Token0After := bar.BalanceOf(adminAddr)
-	user1Token1After := foo.BalanceOf(adminAddr)
-	protocolFeeToken0After := bar.BalanceOf(protocolFeeAddr)
-	protocolFeeToken1After := foo.BalanceOf(protocolFeeAddr)
+	poolToken0After := atom.BalanceOf(poolAddr)
+	poolToken1After := btc.BalanceOf(poolAddr)
+	user1Token0After := atom.BalanceOf(adminAddr)
+	user1Token1After := btc.BalanceOf(adminAddr)
+	protocolFeeToken0After := atom.BalanceOf(protocolFeeAddr)
+	protocolFeeToken1After := btc.BalanceOf(protocolFeeAddr)
 
 	println("[EXPECTED] amountIn:", amountIn)
 	println("[EXPECTED] amountOut:", amountOut)
-	println("[EXPECTED] admin bar balance change:", user1Token0After-user1Token0Before)
-	println("[EXPECTED] admin foo balance change:", user1Token1After-user1Token1Before)
-	println("[EXPECTED] pool bar balance change:", poolToken0After-poolToken0Before)
-	println("[EXPECTED] pool foo balance change:", poolToken1After-poolToken1Before)
-	println("[EXPECTED] protocol fee bar balance change:", protocolFeeToken0After-protocolFeeToken0Before)
-	println("[EXPECTED] protocol fee foo balance change:", protocolFeeToken1After-protocolFeeToken1Before)
+	println("[EXPECTED] admin atom balance change:", user1Token0After-user1Token0Before)
+	println("[EXPECTED] admin btc balance change:", user1Token1After-user1Token1Before)
+	println("[EXPECTED] pool atom balance change:", poolToken0After-poolToken0Before)
+	println("[EXPECTED] pool btc balance change:", poolToken1After-poolToken1Before)
+	println("[EXPECTED] protocol fee atom balance change:", protocolFeeToken0After-protocolFeeToken0Before)
+	println("[EXPECTED] protocol fee btc balance change:", protocolFeeToken1After-protocolFeeToken1Before)
 }
 
 // Getter Methods Tests
@@ -796,7 +796,7 @@ func getPool() {
 	println("[INFO] Check GetPool method")
 	testing.SetRealm(adminRealm)
 
-	pool, err := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, err := pl.GetPool(atomPath, btcPath, FEE_MEDIUM)
 	if err != nil {
 		println("[EXPECTED] GetPool error:", err.Error())
 	} else {
@@ -874,24 +874,24 @@ func getObservationState() {
 // [INFO] Approving pool creation fee
 //
 // [SCENARIO] 1.2. Create Pool
-// [INFO] Creating bar-foo pool (fee: 3000)
+// [INFO] Creating atom-btc pool (fee: 3000)
 // [INFO] Approving tokens for pool operations
-// [INFO] Creating bar-foo pool (fee: 3000)
+// [INFO] Creating atom-btc pool (fee: 3000)
 //
 // [SCENARIO] 1.3. Mint Position
-// [INFO] Minting position in bar-foo pool
+// [INFO] Minting position in atom-btc pool
 // [EXPECTED] pool liquidity: 100000000 expected: 100000000
 //
 // [SCENARIO] 1.4 ExactIn Swap Route for tick changes
 // [INFO] Executing ExactIn swap
 // [EXPECTED] amountIn: 1000000
 // [EXPECTED] amountOut: -985678
-// [EXPECTED] admin bar balance change: 985678
-// [EXPECTED] admin foo balance change: -1000000
-// [EXPECTED] pool bar balance change: -987158
-// [EXPECTED] pool foo balance change: 1000000
-// [EXPECTED] protocol fee bar balance change: 1480
-// [EXPECTED] protocol fee foo balance change: 0
+// [EXPECTED] admin atom balance change: 985678
+// [EXPECTED] admin btc balance change: -1000000
+// [EXPECTED] pool atom balance change: -987158
+// [EXPECTED] pool btc balance change: 1000000
+// [EXPECTED] protocol fee atom balance change: 1480
+// [EXPECTED] protocol fee btc balance change: 0
 //
 // [SCENARIO] 2. Getter Methods
 // [SCENARIO] 2.1. GetPoolCount
@@ -901,7 +901,7 @@ func getObservationState() {
 // [SCENARIO] 2.2. GetPoolPaths
 // [INFO] Check GetPoolPaths method
 // [EXPECTED] pool paths count: 1
-// [EXPECTED] pool path[0]: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] pool path[0]: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 //
 // [SCENARIO] 2.3. ExistsPoolPath
 // [INFO] Check ExistsPoolPath method
@@ -1096,11 +1096,11 @@ func getObservationState() {
 //
 // [SCENARIO] 2.47. GetToken0Path
 // [INFO] Check GetToken0Path method
-// [EXPECTED] token0 path: gno.land/r/onbloc/bar
+// [EXPECTED] token0 path: gno.land/r/gnoswap/test_token/atom
 //
 // [SCENARIO] 2.48. GetToken1Path
 // [INFO] Check GetToken1Path method
-// [EXPECTED] token1 path: gno.land/r/onbloc/foo
+// [EXPECTED] token1 path: gno.land/r/gnoswap/test_token/btc
 //
 // [SCENARIO] 2.49. GetWithdrawalFee
 // [INFO] Check GetWithdrawalFee method
@@ -1112,8 +1112,8 @@ func getObservationState() {
 //
 // [SCENARIO] 2.51. GetPool
 // [INFO] Check GetPool method
-// [EXPECTED] pool token0Path: gno.land/r/onbloc/bar
-// [EXPECTED] pool token1Path: gno.land/r/onbloc/foo
+// [EXPECTED] pool token0Path: gno.land/r/gnoswap/test_token/atom
+// [EXPECTED] pool token1Path: gno.land/r/gnoswap/test_token/btc
 // [EXPECTED] pool fee: 3000
 // [EXPECTED] pool liquidity: 100000000
 //

@@ -21,8 +21,8 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -37,8 +37,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
 )
 
 func main() {
@@ -69,14 +69,14 @@ func initializeSetup() {
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	atom.Transfer(cross, aliceAddr, testAmount)
+	atone.Transfer(cross, aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
 
 	println("[INFO] Setup completed")
 }
@@ -87,8 +87,8 @@ func testMonotonicityUltraTight() {
 	// Create pool with tick spacing 1 (most sensitive)
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -117,7 +117,7 @@ func testMonotonicityUltraTight() {
 
 		_, liquidity, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 100,
+			atomPath, atonePath, 100,
 			tickLower, tickUpper,
 			amount, amount,
 			"0", "0",
@@ -168,8 +168,8 @@ func testMonotonicityScales() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -193,7 +193,7 @@ func testMonotonicityScales() {
 		// Position with base amount
 		_, liq1, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			-100, 100,
 			scale.base, scale.base,
 			"0", "0",
@@ -205,7 +205,7 @@ func testMonotonicityScales() {
 		// Position with incremented amount
 		_, liq2, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 500,
+			atomPath, atonePath, 500,
 			200, 300, // Different range
 			scale.inc, scale.base,
 			"0", "0",
@@ -236,8 +236,8 @@ func testMonotonicityBoundaries() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -267,7 +267,7 @@ func testMonotonicityBoundaries() {
 		for _, amount := range amounts {
 			_, liq, _, _ := pn.Mint(
 				cross,
-				barPath, bazPath, 3000,
+				atomPath, atonePath, 3000,
 				boundary.tickLower, boundary.tickUpper,
 				amount, amount,
 				"0", "0",
@@ -295,8 +295,8 @@ func testNoDiscontinuousJumps() {
 	// Create pool
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -317,7 +317,7 @@ func testNoDiscontinuousJumps() {
 
 		_, liq, _, _ := pn.Mint(
 			cross,
-			barPath, bazPath, 10000,
+			atomPath, atonePath, 10000,
 			-200, 200,
 			ufmt.Sprintf("%d", amount),
 			ufmt.Sprintf("%d", amount), // Use symmetric amounts

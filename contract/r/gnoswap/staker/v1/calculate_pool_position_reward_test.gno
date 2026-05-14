@@ -1614,7 +1614,7 @@ func TestDepositRemoveExternalIncentiveId(t *testing.T) {
 // TestCollectReward_LazyRemoval tests that incentives are removed from
 // deposit's list after they end and user collects rewards.
 func TestCollectReward_LazyRemoval(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1767,7 +1767,7 @@ func TestCollectReward_LazyRemoval(t *testing.T) {
 // TestCollectReward_LazyRemovalBeforeEnd tests that incentives are NOT removed
 // if user hasn't collected after the end time.
 func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1831,7 +1831,7 @@ func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
 // TestCollectReward_LazySync_IterationBounds tests that lazy sync
 // uses correct iteration bounds (lastUpdate, currentTime).
 func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := int64(1000)
 
@@ -1885,7 +1885,7 @@ func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
 // TestLazyRemoval_DeletedIncentive tests that deleted/refunded incentives
 // are properly removed from deposit's incentive list.
 func TestLazyRemoval_DeletedIncentive(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1944,7 +1944,7 @@ func TestLazyRemoval_DeletedIncentive(t *testing.T) {
 // TestLazySync_NotStartedIncentive tests that not-yet-started incentives
 // are added to deposit but don't yield rewards until they start.
 func TestLazySync_NotStartedIncentive(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000"
 	staker := testutils.TestAddress("staker1")
 	creator := testutils.TestAddress("creator")
 	baseTime := time.Now().Unix()

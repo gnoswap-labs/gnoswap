@@ -22,12 +22,12 @@ import (
 var (
 	admin, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	fooPath string = "gno.land/r/onbloc/foo"
-	barPath string = "gno.land/r/onbloc/bar"
-	bazPath string = "gno.land/r/onbloc/baz"
-	quxPath string = "gno.land/r/onbloc/qux"
+	btcPath string = "gno.land/r/gnoswap/test_token/btc"
+	atomPath string = "gno.land/r/gnoswap/test_token/atom"
+	atonePath string = "gno.land/r/gnoswap/test_token/atone"
+	solPath string = "gno.land/r/gnoswap/test_token/sol"
 
-	oblPath string = "gno.land/r/onbloc/obl"
+	ethPath string = "gno.land/r/gnoswap/test_token/eth"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

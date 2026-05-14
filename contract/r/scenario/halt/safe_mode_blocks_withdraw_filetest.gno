@@ -43,8 +43,8 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -60,8 +60,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 	fee     = uint32(3000)
 
 	positionId uint64
@@ -113,34 +113,34 @@ func initPoolAndTokens() {
 
 	// Distribute tokens to alice
 	defaultTokenAmount := int64(100000000)
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	atom.Transfer(cross, aliceAddr, defaultTokenAmount)
+	btc.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	ufmt.Printf("[INFO] Alice BAR balance: %d\n", bar.BalanceOf(aliceAddr))
-	ufmt.Printf("[INFO] Alice FOO balance: %d\n", foo.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Alice ATOM balance: %d\n", atom.BalanceOf(aliceAddr))
+	ufmt.Printf("[INFO] Alice BTC balance: %d\n", btc.BalanceOf(aliceAddr))
 
 	// Create pool
 	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	ufmt.Println("[INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000")
 }
 
 func mintPosition() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	testing.SetOriginSend(chain.Coins{})
 	id, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-960,
 		960,
@@ -183,8 +183,8 @@ func testMintInSafeMode() {
 	testing.SetOriginSend(chain.Coins{})
 	id, liquidity, _, _ := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee,
 		-1920,
 		1920,
@@ -233,18 +233,18 @@ func testCollectFeeBlocked() {
 
 func testRouterSwapInSafeMode() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	atom.Approve(cross, routerAddr, INT64_MAX)
+	btc.Approve(cross, routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Attempting router swap in Safe Mode...")
 
 	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		"100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000",
 		"100",
 		"0",
 		time.Now().Unix()+3600,
@@ -283,9 +283,9 @@ func disableSafeModeAndVerify() {
 // [SCENARIO] Safe Mode blocks withdraw operations
 //
 // [STEP 1] Initialize pool and tokens
-// [INFO] Alice BAR balance: 100000000
-// [INFO] Alice FOO balance: 100000000
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [INFO] Alice ATOM balance: 100000000
+// [INFO] Alice BTC balance: 100000000
+// [INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000
 //
 // [STEP 2] Mint position (before Safe Mode)
 // [INFO] Position minted with ID: 1

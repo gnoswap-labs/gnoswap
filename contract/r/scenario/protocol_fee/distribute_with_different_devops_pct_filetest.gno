@@ -12,7 +12,7 @@ import (
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/onbloc/bar"
+	"gno.land/r/gnoswap/test_token/atom"
 )
 
 var (
@@ -30,12 +30,12 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveBarFromStaker(amount int64) {
+func fundAndApproveAtomFromStaker(amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerRealm.Address(), amount)
+	atom.Transfer(cross, stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	atom.Approve(cross, protocolFeeAddr, amount)
+	atom.Approve(cross, protocolFeeV1Realm.Address(), amount)
 }
 
 func main() {
@@ -64,9 +64,9 @@ func main() {
 }
 
 func prepareRecordedProtocolFee(amount int64) {
-	fundAndApproveBarFromStaker(amount)
+	fundAndApproveAtomFromStaker(amount)
 	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
+	pf.AddToProtocolFee(cross, "gno.land/r/gnoswap/test_token/atom", amount)
 }
 
 func testCase0Percent() {
@@ -75,16 +75,16 @@ func testCase0Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 0%")
 	pf.SetDevOpsPct(cross, 0)
-	println("[INFO] Recording 1000 bar protocol fee")
+	println("[INFO] Recording 1000 atom protocol fee")
 	prepareRecordedProtocolFee(1000)
 
-	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[INFO] Initial balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Final balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 }
 
 func testCase25Percent() {
@@ -93,16 +93,16 @@ func testCase25Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 25%")
 	pf.SetDevOpsPct(cross, 2500)
-	println("[INFO] Recording 1000 bar protocol fee")
+	println("[INFO] Recording 1000 atom protocol fee")
 	prepareRecordedProtocolFee(1000)
 
-	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[INFO] Initial balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Final balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 }
 
 func testCase50Percent() {
@@ -111,16 +111,16 @@ func testCase50Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 50%")
 	pf.SetDevOpsPct(cross, 5000)
-	println("[INFO] Recording 1000 bar protocol fee")
+	println("[INFO] Recording 1000 atom protocol fee")
 	prepareRecordedProtocolFee(1000)
 
-	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[INFO] Initial balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Final balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 }
 
 func testCase100Percent() {
@@ -129,16 +129,16 @@ func testCase100Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 100%")
 	pf.SetDevOpsPct(cross, 10000)
-	println("[INFO] Recording 1000 bar protocol fee")
+	println("[INFO] Recording 1000 atom protocol fee")
 	prepareRecordedProtocolFee(1000)
 
-	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[INFO] Initial balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Final balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 }
 
 func testCase3333Percent() {
@@ -147,32 +147,32 @@ func testCase3333Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 33.33%")
 	pf.SetDevOpsPct(cross, 3333)
-	println("[INFO] Recording 1000 bar protocol fee")
+	println("[INFO] Recording 1000 atom protocol fee")
 	prepareRecordedProtocolFee(1000)
 
-	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[INFO] Initial balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
 	pf.DistributeProtocolFee(cross)
 
-	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
+	println("[EXPECTED] Final balances - protocol_fee:", atom.BalanceOf(protocolFeeAddr), "devOps:", atom.BalanceOf(devOpsAddr), "govStaker:", atom.BalanceOf(govStakerAddr))
 }
 
 func resetBalances() {
 	testing.SetRealm(adminRealm)
 
-	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
-		bar.Transfer(cross, adminAddr, balance)
+	if balance := atom.BalanceOf(protocolFeeAddr); balance > 0 {
+		atom.Transfer(cross, adminAddr, balance)
 	}
-	if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
+	if balance := atom.BalanceOf(devOpsAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(devOpsAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		atom.Transfer(cross, adminAddr, balance)
 		testing.SetRealm(adminRealm)
 	}
-	if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
+	if balance := atom.BalanceOf(govStakerAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(govStakerAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		atom.Transfer(cross, adminAddr, balance)
 		testing.SetRealm(adminRealm)
 	}
 }
@@ -182,35 +182,35 @@ func resetBalances() {
 //
 // [TEST CASE 1] 0% to DevOps (default)
 // [INFO] Setting DevOps percentage to 0%
-// [INFO] Recording 1000 bar protocol fee
+// [INFO] Recording 1000 atom protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
 // [EXPECTED] Final balances - protocol_fee: 0 devOps: 0 govStaker: 1000
 //
 // [TEST CASE 2] 25% to DevOps
 // [INFO] Setting DevOps percentage to 25%
-// [INFO] Recording 1000 bar protocol fee
+// [INFO] Recording 1000 atom protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
 // [EXPECTED] Final balances - protocol_fee: 0 devOps: 250 govStaker: 750
 //
 // [TEST CASE 3] 50% to DevOps
 // [INFO] Setting DevOps percentage to 50%
-// [INFO] Recording 1000 bar protocol fee
+// [INFO] Recording 1000 atom protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
 // [EXPECTED] Final balances - protocol_fee: 0 devOps: 500 govStaker: 500
 //
 // [TEST CASE 4] 100% to DevOps
 // [INFO] Setting DevOps percentage to 100%
-// [INFO] Recording 1000 bar protocol fee
+// [INFO] Recording 1000 atom protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
 // [EXPECTED] Final balances - protocol_fee: 0 devOps: 1000 govStaker: 0
 //
 // [TEST CASE 5] 33.33% to DevOps
 // [INFO] Setting DevOps percentage to 33.33%
-// [INFO] Recording 1000 bar protocol fee
+// [INFO] Recording 1000 atom protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
 // [EXPECTED] Final balances - protocol_fee: 0 devOps: 333 govStaker: 667

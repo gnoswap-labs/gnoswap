@@ -27,8 +27,8 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -42,9 +42,9 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -55,7 +55,7 @@ var (
 	depositGnsAmount int64 = 100000000000
 
 	TIMESTAMP_90DAYS = int64(7776000)
-	poolPath         = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath         = "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100"
 )
 
 func main() {
@@ -67,16 +67,16 @@ func main() {
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint position 01 bar:qux:100")
-	mintBarQux100_1()
+	println("[SCENARIO] 3. Mint position 01 atom:sol:100")
+	mintAtomSol100_1()
 	println()
 
-	println("[SCENARIO] 4. Mint position 02 bar:qux:100")
-	mintBarQux100_2()
+	println("[SCENARIO] 4. Mint position 02 atom:sol:100")
+	mintAtomSol100_2()
 	println()
 
-	println("[SCENARIO] 5. Create external incentive with BAR")
-	createExternalIncentiveBar()
+	println("[SCENARIO] 5. Create external incentive with ATOM")
+	createExternalIncentiveAtom()
 	println()
 
 	println("[SCENARIO] 6. Stake positions 01 and 02")
@@ -121,23 +121,23 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, 3000, "79228162514264337593543950337")
 
 	ufmt.Printf("[EXPECTED] pools created successfully\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintAtomSol100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-50),
 		int32(50),
@@ -159,16 +159,16 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_2() {
+func mintAtomSol100_2() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -190,22 +190,22 @@ func mintBarQux100_2() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentiveBar() {
+func createExternalIncentiveAtom() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath,
-		barPath,
+		atomPath,
 		9_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
 
-	ufmt.Printf("[EXPECTED] external incentive BAR created successfully\n")
+	ufmt.Printf("[EXPECTED] external incentive ATOM created successfully\n")
 	testing.SkipHeights(1)
 }
 
@@ -225,17 +225,17 @@ func stakeToken_1_AND_2() {
 func beforeActive() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 
 	sr.CollectReward(cross, 1)
 	sr.CollectReward(cross, 2)
 
-	newBar := bar.BalanceOf(adminUser)
+	newAtom := atom.BalanceOf(adminUser)
 
-	if newBar-oldBar != 0 {
+	if newAtom-oldAtom != 0 {
 		panic("expected no reward before incentive is active")
 	}
-	ufmt.Printf("[EXPECTED] no rewards before incentive is active: %d BAR\n", newBar-oldBar)
+	ufmt.Printf("[EXPECTED] no rewards before incentive is active: %d ATOM\n", newAtom-oldAtom)
 }
 
 func after50Blocks() {
@@ -259,16 +259,16 @@ func after50Blocks() {
 
 	// both of position is in warm up 70%
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	newBar := bar.BalanceOf(adminUser)
-	diff1 := newBar - oldBar
-	ufmt.Printf("[EXPECTED] position 01 reward: %d BAR\n", diff1)
+	newAtom := atom.BalanceOf(adminUser)
+	diff1 := newAtom - oldAtom
+	ufmt.Printf("[EXPECTED] position 01 reward: %d ATOM\n", diff1)
 
 	sr.CollectReward(cross, 2)
-	newBar2 := bar.BalanceOf(adminUser)
-	diff2 := newBar2 - newBar
-	ufmt.Printf("[EXPECTED] position 02 reward: %d BAR\n", diff2)
+	newAtom2 := atom.BalanceOf(adminUser)
+	diff2 := newAtom2 - newAtom
+	ufmt.Printf("[EXPECTED] position 02 reward: %d ATOM\n", diff2)
 }
 
 func makePosition1OutRange() {
@@ -281,18 +281,18 @@ func makePosition1OutRange() {
 	// ROUTER SWAP
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
-	bar.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	atom.Approve(cross, routerAddr, maxInt64)
+	sol.Approve(cross, routerAddr, maxInt64)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		"100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		"100",
 		"0",
 		max_timeout,
@@ -319,20 +319,20 @@ func rewardNowAfter1Block() {
 
 	testing.SkipHeights(1)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1)
-	newBar := bar.BalanceOf(adminUser)
-	diff1 := newBar - oldBar
+	newAtom := atom.BalanceOf(adminUser)
+	diff1 := newAtom - oldAtom
 
 	if diff1 != 0 {
 		panic("expected no reward for out of range position")
 	}
-	ufmt.Printf("[EXPECTED] position 01 (out of range) reward: %d BAR\n", diff1)
+	ufmt.Printf("[EXPECTED] position 01 (out of range) reward: %d ATOM\n", diff1)
 
 	sr.CollectReward(cross, 2)
-	newBar2 := bar.BalanceOf(adminUser)
-	diff2 := newBar2 - newBar
-	ufmt.Printf("[EXPECTED] position 02 (in range) reward: %d BAR\n", diff2)
+	newAtom2 := atom.BalanceOf(adminUser)
+	diff2 := newAtom2 - newAtom
+	ufmt.Printf("[EXPECTED] position 02 (in range) reward: %d ATOM\n", diff2)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -356,30 +356,30 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 2. Create pool
 // [EXPECTED] pools created successfully
 //
-// [SCENARIO] 3. Mint position 01 bar:qux:100
+// [SCENARIO] 3. Mint position 01 atom:sol:100
 // [EXPECTED] position 01 minted: id=1
 //
-// [SCENARIO] 4. Mint position 02 bar:qux:100
+// [SCENARIO] 4. Mint position 02 atom:sol:100
 // [EXPECTED] position 02 minted: id=2
 //
-// [SCENARIO] 5. Create external incentive with BAR
-// [EXPECTED] external incentive BAR created successfully
+// [SCENARIO] 5. Create external incentive with ATOM
+// [EXPECTED] external incentive ATOM created successfully
 //
 // [SCENARIO] 6. Stake positions 01 and 02
 // [EXPECTED] positions 01 and 02 staked successfully
 //
 // [SCENARIO] 7. Check rewards before incentive is active
-// [EXPECTED] no rewards before incentive is active: 0 BAR
+// [EXPECTED] no rewards before incentive is active: 0 ATOM
 //
 // [SCENARIO] 8. Check rewards after 50 blocks
 // [INFO] making external incentive active
 // [INFO] checking rewards after 50 blocks
-// [EXPECTED] position 01 reward: 6360 BAR
-// [EXPECTED] position 02 reward: 3256379 BAR
+// [EXPECTED] position 01 reward: 6360 ATOM
+// [EXPECTED] position 02 reward: 3256379 ATOM
 //
 // [SCENARIO] 9. Make position 01 out of range via swap
 // [EXPECTED] position 01 made out of range by swap, current tick: -195
 //
 // [SCENARIO] 10. Check rewards after position goes out of range
-// [EXPECTED] position 01 (out of range) reward: 0 BAR
-// [EXPECTED] position 02 (in range) reward: 5784 BAR
+// [EXPECTED] position 01 (out of range) reward: 0 ATOM
+// [EXPECTED] position 02 (in range) reward: 5784 ATOM

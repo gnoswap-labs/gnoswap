@@ -20,8 +20,8 @@ import (
 
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
+	_ "gno.land/r/gnoswap/test_token/atom"
+	_ "gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -34,8 +34,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 
 	delegateeAddr = testutils.TestAddress("delegatee1")
 
@@ -82,8 +82,8 @@ func delegateToDelegatee() {
 func createPoolByProtocolFee() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, math.MaxInt64)
-	pool.CreatePool(cross, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	ufmt.Printf("[INFO] Created %s:%s:%d pool\n", barPath, fooPath, 3000)
+	pool.CreatePool(cross, atomPath, btcPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	ufmt.Printf("[INFO] Created %s:%s:%d pool\n", atomPath, btcPath, 3000)
 }
 
 func getClaimableRewardByAddress(addr address) {
@@ -133,7 +133,7 @@ func collectReward(addr address) {
 // [INFO] Alice delegated 1000000 GNS to delegatee
 //
 // [SCENARIO] 3. Create pool by protocol fee
-// [INFO] Created gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 pool
+// [INFO] Created gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:3000 pool
 //
 // [SCENARIO] 4. Check and collect claimable reward for alice
 // [EXPECTED] claimable reward: emissionReward=0

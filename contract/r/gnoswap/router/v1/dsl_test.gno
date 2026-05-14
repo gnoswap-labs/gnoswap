@@ -12,9 +12,9 @@ import (
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 // TestEnv provides a clean, stateful environment for router tests
@@ -69,12 +69,12 @@ func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tok
 	for _, token := range tokens {
 		TokenFaucet(e.t, token, user)
 		switch token {
-		case barPath:
-			bar.Approve(cross, routerAddr, maxApprove)
-		case bazPath:
-			baz.Approve(cross, routerAddr, maxApprove)
-		case quxPath:
-			qux.Approve(cross, routerAddr, maxApprove)
+		case atomPath:
+			atom.Approve(cross, routerAddr, maxApprove)
+		case atonePath:
+			atone.Approve(cross, routerAddr, maxApprove)
+		case solPath:
+			sol.Approve(cross, routerAddr, maxApprove)
 		}
 	}
 	e.users[user] = true
@@ -213,8 +213,8 @@ type PositionParams struct {
 func NewPositionBuilder() *PositionBuilder {
 	return &PositionBuilder{
 		params: PositionParams{
-			token0:         barPath,
-			token1:         bazPath,
+			token0:         atomPath,
+			token1:         atonePath,
 			fee:            3000,
 			tickLower:      -887220,
 			tickUpper:      887220,
@@ -318,8 +318,8 @@ type SingleSwapParamsBuilder struct {
 func NewSingleSwapParams() *SingleSwapParamsBuilder {
 	return &SingleSwapParamsBuilder{
 		p: SingleSwapParams{
-			tokenIn:         barPath,
-			tokenOut:        bazPath,
+			tokenIn:         atomPath,
+			tokenOut:        atonePath,
 			fee:             3000,
 			amountSpecified: 0,
 		},
@@ -372,8 +372,8 @@ func NewSwapParams() *SwapParamsBuilder {
 		p: SwapParams{
 			recipient: alice,
 			SingleSwapParams: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
+				tokenIn:         atomPath,
+				tokenOut:        atonePath,
 				fee:             3000,
 				amountSpecified: 0,
 			},

@@ -28,8 +28,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 var (
@@ -42,9 +42,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -66,12 +66,12 @@ func main() {
 	createPool()
 	println()
 
-	println("[SCENARIO] 3. Mint position 01 on bar:qux:100")
-	mintBarQux100_1()
+	println("[SCENARIO] 3. Mint position 01 on atom:sol:100")
+	mintAtomSol100_1()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with BAR")
-	createExternalIncentiveBar()
+	println("[SCENARIO] 4. Create external incentive with ATOM")
+	createExternalIncentiveAtom()
 	println()
 
 	println("[SCENARIO] 5. Create external incentive with GNS")
@@ -113,25 +113,25 @@ func createPool() {
 
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	pl.CreatePool(cross, atomPath, solPath, 100, "79228162514264337593543950337")
+	sr.SetPoolTier(cross, "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100", 1)
 
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross, atomPath, atonePath, 3000, "79228162514264337593543950337")
 
-	ufmt.Printf("[EXPECTED] pools created and bar:qux:100 set to tier 1\n")
+	ufmt.Printf("[EXPECTED] pools created and atom:sol:100 set to tier 1\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintAtomSol100_1() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	sol.Approve(cross, poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
 		cross,
-		barPath,
-		quxPath,
+		atomPath,
+		solPath,
 		fee100,
 		int32(-1000),
 		int32(1000),
@@ -157,22 +157,22 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentiveBar() {
+func createExternalIncentiveAtom() {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, stakerAddr, maxInt64)
+	atom.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		barPath,
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
+		atomPath,
 		2_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
 
-	ufmt.Printf("[EXPECTED] external incentive BAR created\n")
+	ufmt.Printf("[EXPECTED] external incentive ATOM created\n")
 	testing.SkipHeights(1)
 }
 
@@ -183,7 +183,7 @@ func createExternalIncentiveGns() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/sol:100",
 		"gno.land/r/gnoswap/gns",
 		5_000_000_000,
 		1234569600,
@@ -220,7 +220,7 @@ func afterActive() {
 func collectRewardSingleBlock() {
 	testing.SetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(adminUser)
+	oldAtom := atom.BalanceOf(adminUser)
 	oldGns := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(1)
@@ -228,11 +228,11 @@ func collectRewardSingleBlock() {
 	// 1 block passed
 	// position warmup is 70%
 
-	newBar := bar.BalanceOf(adminUser)
+	newAtom := atom.BalanceOf(adminUser)
 	newGns := gns.BalanceOf(adminUser)
 
-	barReward := newBar - oldBar
-	ufmt.Printf("[EXPECTED] BAR reward: %d\n", barReward)
+	atomReward := newAtom - oldAtom
+	ufmt.Printf("[EXPECTED] ATOM reward: %d\n", atomReward)
 
 	gnsReward := newGns - oldGns
 	ufmt.Printf("[EXPECTED] GNS reward (internal + external): %d\n", gnsReward)
@@ -257,13 +257,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 1. Initialize and setup
 //
 // [SCENARIO] 2. Create pool
-// [EXPECTED] pools created and bar:qux:100 set to tier 1
+// [EXPECTED] pools created and atom:sol:100 set to tier 1
 //
-// [SCENARIO] 3. Mint position 01 on bar:qux:100
+// [SCENARIO] 3. Mint position 01 on atom:sol:100
 // [EXPECTED] position 01 minted: id=1
 //
-// [SCENARIO] 4. Create external incentive with BAR
-// [EXPECTED] external incentive BAR created
+// [SCENARIO] 4. Create external incentive with ATOM
+// [EXPECTED] external incentive ATOM created
 //
 // [SCENARIO] 5. Create external incentive with GNS
 // [EXPECTED] external incentive GNS created
@@ -275,5 +275,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] incentives are now active, initial rewards cleared
 //
 // [SCENARIO] 8. Collect reward for single block
-// [EXPECTED] BAR reward: 1284
+// [EXPECTED] ATOM reward: 1284
 // [EXPECTED] GNS reward (internal + external): 13380778

@@ -20,10 +20,10 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/atone"
+	"gno.land/r/gnoswap/test_token/btc"
+	"gno.land/r/gnoswap/test_token/sol"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -45,10 +45,10 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	atonePath = "gno.land/r/gnoswap/test_token/atone"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	solPath = "gno.land/r/gnoswap/test_token/sol"
 )
 
 func main() {
@@ -79,20 +79,20 @@ func initializeSetup() {
 
 	// Setup tokens for all test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
-	foo.Transfer(cross, aliceAddr, testAmount)
-	qux.Transfer(cross, aliceAddr, testAmount)
+	atom.Transfer(cross, aliceAddr, testAmount)
+	atone.Transfer(cross, aliceAddr, testAmount)
+	btc.Transfer(cross, aliceAddr, testAmount)
+	sol.Transfer(cross, aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	foo.Approve(cross, poolAddr, testAmount)
-	qux.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
-	foo.Approve(cross, positionAddr, testAmount)
-	qux.Approve(cross, positionAddr, testAmount)
+	atom.Approve(cross, poolAddr, testAmount)
+	atone.Approve(cross, poolAddr, testAmount)
+	btc.Approve(cross, poolAddr, testAmount)
+	sol.Approve(cross, poolAddr, testAmount)
+	atom.Approve(cross, positionAddr, testAmount)
+	atone.Approve(cross, positionAddr, testAmount)
+	btc.Approve(cross, positionAddr, testAmount)
+	sol.Approve(cross, positionAddr, testAmount)
 
 	println("[INFO] Test setup completed with all tokens")
 }
@@ -103,8 +103,8 @@ func testFeeTier100() {
 	// Create pool with fee tier 100 (0.01%)
 	pool.CreatePool(
 		cross,
-		barPath,
-		bazPath,
+		atomPath,
+		atonePath,
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -118,7 +118,7 @@ func testFeeTier100() {
 	println("[TEST] Full range position (-887272 to 887272)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		-887272, 887272,
 		"1000000000", "1000000000",
 		"0", "0",
@@ -132,7 +132,7 @@ func testFeeTier100() {
 	println("[TEST] Single tick at MIN boundary (-887272 to -887271)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		-887272, -887271,
 		"1000000", "1000000",
 		"0", "0",
@@ -146,7 +146,7 @@ func testFeeTier100() {
 	println("[TEST] Single tick at MAX boundary (887271 to 887272)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
 		cross,
-		barPath, bazPath, 100,
+		atomPath, atonePath, 100,
 		887271, 887272,
 		"1000000", "1000000",
 		"0", "0",
@@ -163,8 +163,8 @@ func testFeeTier500() {
 	// Create pool with fee tier 500 (0.05%)
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -178,7 +178,7 @@ func testFeeTier500() {
 	println("[TEST] Full range position (-887270 to 887270)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
 		cross,
-		barPath, fooPath, 500,
+		atomPath, btcPath, 500,
 		-887270, 887270,
 		"1000000000", "1000000000",
 		"0", "0",
@@ -192,7 +192,7 @@ func testFeeTier500() {
 	println("[TEST] Single tick spacing at MIN (-887270 to -887260)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
 		cross,
-		barPath, fooPath, 500,
+		atomPath, btcPath, 500,
 		-887270, -887260,
 		"1000000", "1000000",
 		"0", "0",
@@ -206,7 +206,7 @@ func testFeeTier500() {
 	println("[TEST] Single tick spacing at MAX (887260 to 887270)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
 		cross,
-		barPath, fooPath, 500,
+		atomPath, btcPath, 500,
 		887260, 887270,
 		"1000000", "1000000",
 		"0", "0",
@@ -223,8 +223,8 @@ func testFeeTier3000() {
 	// Create pool with fee tier 3000 (0.3%)
 	pool.CreatePool(
 		cross,
-		bazPath,
-		fooPath,
+		atonePath,
+		btcPath,
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -238,7 +238,7 @@ func testFeeTier3000() {
 	println("[TEST] Full range position (-887220 to 887220)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
 		cross,
-		bazPath, fooPath, 3000,
+		atonePath, btcPath, 3000,
 		-887220, 887220,
 		"1000000000", "1000000000",
 		"0", "0",
@@ -252,7 +252,7 @@ func testFeeTier3000() {
 	println("[TEST] Single tick spacing at MIN (-887220 to -887160)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
 		cross,
-		bazPath, fooPath, 3000,
+		atonePath, btcPath, 3000,
 		-887220, -887160,
 		"1000000", "1000000",
 		"0", "0",
@@ -266,7 +266,7 @@ func testFeeTier3000() {
 	println("[TEST] Single tick spacing at MAX (887160 to 887220)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
 		cross,
-		bazPath, fooPath, 3000,
+		atonePath, btcPath, 3000,
 		887160, 887220,
 		"1000000", "1000000",
 		"0", "0",
@@ -283,8 +283,8 @@ func testFeeTier10000() {
 	// Create pool with fee tier 10000 (1%)
 	pool.CreatePool(
 		cross,
-		fooPath,
-		quxPath,
+		btcPath,
+		solPath,
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
@@ -298,7 +298,7 @@ func testFeeTier10000() {
 	println("[TEST] Full range position (-887200 to 887200)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
 		cross,
-		fooPath, quxPath, 10000,
+		btcPath, solPath, 10000,
 		-887200, 887200,
 		"1000000000", "1000000000",
 		"0", "0",
@@ -312,7 +312,7 @@ func testFeeTier10000() {
 	println("[TEST] Single tick spacing at MIN (-887200 to -887000)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
 		cross,
-		fooPath, quxPath, 10000,
+		btcPath, solPath, 10000,
 		-887200, -887000,
 		"1000000", "1000000",
 		"0", "0",
@@ -326,7 +326,7 @@ func testFeeTier10000() {
 	println("[TEST] Single tick spacing at MAX (887000 to 887200)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
 		cross,
-		fooPath, quxPath, 10000,
+		btcPath, solPath, 10000,
 		887000, 887200,
 		"1000000", "1000000",
 		"0", "0",
@@ -342,7 +342,7 @@ func testFeeTier10000() {
 	println("[TEST] Valid tick spacing at boundary (887000 divisible by 200)")
 	posId4, liq4, amt0_4, amt1_4 := pn.Mint(
 		cross,
-		fooPath, quxPath, 10000,
+		btcPath, solPath, 10000,
 		887000, 887200, // Both divisible by 200
 		"1000000", "1000000",
 		"0", "0",

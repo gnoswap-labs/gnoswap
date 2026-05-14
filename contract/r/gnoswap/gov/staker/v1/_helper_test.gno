@@ -30,12 +30,12 @@ var (
 
 	devOpsAddr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
-	fooPath  string = "gno.land/r/onbloc/foo"
-	barPath  string = "gno.land/r/onbloc/bar"
-	bazPath  string = "gno.land/r/onbloc/baz"
-	quxPath  string = "gno.land/r/onbloc/qux"
-	oblPath  string = "gno.land/r/onbloc/obl"
-	usdcPath string = "gno.land/r/onbloc/usdc"
+	btcPath  string = "gno.land/r/gnoswap/test_token/btc"
+	atomPath  string = "gno.land/r/gnoswap/test_token/atom"
+	atonePath  string = "gno.land/r/gnoswap/test_token/atone"
+	solPath  string = "gno.land/r/gnoswap/test_token/sol"
+	ethPath  string = "gno.land/r/gnoswap/test_token/eth"
+	usdcPath string = "gno.land/r/gnoswap/test_token/usdc"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

@@ -16,8 +16,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var t *testing.T
@@ -39,8 +39,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
 )
 
 var (
@@ -75,12 +75,12 @@ func setupPool() {
 	println("[INFO] Creating pool with fee tier 500")
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, atomPath, btcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	btc.Approve(cross, poolAddr, maxApprove)
+	atom.Approve(cross, poolAddr, maxApprove)
 
-	poolPath = pool.GetPoolPath(barPath, fooPath, fee500)
+	poolPath = pool.GetPoolPath(atomPath, btcPath, fee500)
 	println("[INFO] Pool created:", poolPath)
 
 	initFee0 := pool.GetProtocolFeesToken0(poolPath)
@@ -94,8 +94,8 @@ func testMintPosition() {
 	testing.SetRealm(posRealm)
 	mint0, mint1 := pool.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		-6000,
 		6000,
@@ -112,8 +112,8 @@ func testSwapAndCheckFees() {
 	testing.SetRealm(rouRealm)
 	swap0, swap1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -133,8 +133,8 @@ func testSwapAndCheckFees() {
 	println("[SCENARIO] 3. Swap token1 -> token0")
 	swap0_2, swap1_2 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,
@@ -167,11 +167,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross, atomPath, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross, btcPath, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -184,7 +184,7 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 //
 // [INFO] Setting protocol fee to 10/10
 // [INFO] Creating pool with fee tier 500
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [INFO] Pool created: gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/btc:500
 // [INFO] Initial protocol fees - token0: 0 token1: 0
 //
 // [SCENARIO] 1. Mint liquidity position

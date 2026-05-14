@@ -23,8 +23,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 const (
@@ -39,8 +39,8 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	atomPath = "gno.land/r/gnoswap/test_token/atom"
+	btcPath = "gno.land/r/gnoswap/test_token/btc"
 )
 
 func main() {
@@ -68,26 +68,26 @@ func initPool() {
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		"130621891405341611593710811006",
 	)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[EXPECTED] Current tick should be %d\n", poolInfo.Slot0Tick())
 }
 
 func mintInitialPosition() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position (8000~12000)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		8000,
 		12000,
@@ -108,17 +108,17 @@ func mintInitialPosition() {
 
 func executeSwapForFees() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(atomPath, btcPath, fee500)
 	tickBefore := poolInfo.Slot0Tick()
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		true,
@@ -126,12 +126,12 @@ func executeSwapForFees() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	poolInfo, _ = pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ = pool.GetPool(atomPath, btcPath, fee500)
 	tickAfter := poolInfo.Slot0Tick()
 
 	ufmt.Printf("[EXPECTED] Tick before swap should be %d\n", tickBefore)
@@ -151,19 +151,19 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Current position liquidity should be %s\n", currentLiquidity)
 	ufmt.Printf("[EXPECTED] Current tick range should be [%d, %d]\n", currentTickLower, currentTickUpper)
 
-	barBalanceStart := bar.BalanceOf(adminAddr)
-	fooBalanceStart := foo.BalanceOf(adminAddr)
+	atomBalanceStart := atom.BalanceOf(adminAddr)
+	btcBalanceStart := btc.BalanceOf(adminAddr)
 
-	ufmt.Printf("[EXPECTED] User BAR balance before reposition should be %d\n", barBalanceStart)
-	ufmt.Printf("[EXPECTED] User FOO balance before reposition should be %d\n", fooBalanceStart)
+	ufmt.Printf("[EXPECTED] User ATOM balance before reposition should be %d\n", atomBalanceStart)
+	ufmt.Printf("[EXPECTED] User BTC balance before reposition should be %d\n", btcBalanceStart)
 
 	ufmt.Println("[INFO] Collecting fees")
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing full liquidity")
 	_, _, _, _, decreaseAmount0, decreaseAmount1, _ := position.DecreaseLiquidity(
@@ -182,13 +182,13 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Position liquidity after decrease should be %s\n", pos.Liquidity())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Executing swap to adjust balance")
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		barPath,
-		fooPath,
+		atomPath,
+		btcPath,
 		fee500,
 		adminAddr,
 		false,
@@ -196,7 +196,7 @@ func testRepositionAndBalance() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(atomPath, btcPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -204,12 +204,12 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", swapAmount1)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	atom.Approve(cross, poolAddr, INT64_MAX)
+	btc.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Repositioning to new range (9000~13000)")
-	beforeToken0PoolBalance := bar.BalanceOf(poolAddr)
-	beforeToken1PoolBalance := foo.BalanceOf(poolAddr)
+	beforeToken0PoolBalance := atom.BalanceOf(poolAddr)
+	beforeToken1PoolBalance := btc.BalanceOf(poolAddr)
 	_, newLiquidity, _, _, _, _ := position.Reposition(
 		cross,
 		1,
@@ -222,17 +222,17 @@ func testRepositionAndBalance() {
 		9999999999,
 	)
 
-	afterToken0PoolBalance := bar.BalanceOf(poolAddr)
-	afterToken1PoolBalance := foo.BalanceOf(poolAddr)
+	afterToken0PoolBalance := atom.BalanceOf(poolAddr)
+	afterToken1PoolBalance := btc.BalanceOf(poolAddr)
 
 	ufmt.Printf("[EXPECTED] New liquidity should be %s\n", newLiquidity)
 	ufmt.Printf("[EXPECTED] New tick range should be [%d, %d]\n", 9000, 13000)
 
-	barBalanceFinal := bar.BalanceOf(adminAddr)
-	fooBalanceFinal := foo.BalanceOf(adminAddr)
+	atomBalanceFinal := atom.BalanceOf(adminAddr)
+	btcBalanceFinal := btc.BalanceOf(adminAddr)
 
-	ufmt.Printf("[EXPECTED] User BAR balance after reposition should be %d\n", barBalanceFinal)
-	ufmt.Printf("[EXPECTED] User FOO balance after reposition should be %d\n", fooBalanceFinal)
+	ufmt.Printf("[EXPECTED] User ATOM balance after reposition should be %d\n", atomBalanceFinal)
+	ufmt.Printf("[EXPECTED] User BTC balance after reposition should be %d\n", btcBalanceFinal)
 
 	pos, _ = position.GetPosition(1)
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
@@ -242,32 +242,32 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken0PoolBalance-beforeToken0PoolBalance)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken1PoolBalance-beforeToken1PoolBalance)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(atomPath, btcPath, fee500)
 	ufmt.Printf("[EXPECTED] Final pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Final pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Final pool tick should be %d\n", poolInfo.Slot0Tick())
 
 	// Validate reposition balance changes
-	validateRepositionBalances(barBalanceStart, barBalanceFinal, fooBalanceStart, fooBalanceFinal)
+	validateRepositionBalances(atomBalanceStart, atomBalanceFinal, btcBalanceStart, btcBalanceFinal)
 }
 
-func validateRepositionBalances(barBefore, barAfter, fooBefore, fooAfter int64) {
+func validateRepositionBalances(atomBefore, atomAfter, btcBefore, btcAfter int64) {
 	// Calculate total balance change
-	barChange := barBefore - barAfter
-	fooChange := fooBefore - fooAfter
+	atomChange := atomBefore - atomAfter
+	btcChange := btcBefore - btcAfter
 
 	// After reposition, user should have used tokens (balance decreased)
 	// but exact amounts depend on price movement and liquidity ratios
-	ufmt.Printf("[EXPECTED] Total BAR change during reposition: %d\n", barChange)
-	ufmt.Printf("[EXPECTED] Total FOO change during reposition: %d\n", fooChange)
+	ufmt.Printf("[EXPECTED] Total ATOM change during reposition: %d\n", atomChange)
+	ufmt.Printf("[EXPECTED] Total BTC change during reposition: %d\n", btcChange)
 
 	// Verify balance changes are reasonable (not negative withdrawals)
-	if barBefore < 0 || barAfter < 0 {
-		panic(ufmt.Sprintf("[ERROR] BAR balance became negative: before=%d after=%d", barBefore, barAfter))
+	if atomBefore < 0 || atomAfter < 0 {
+		panic(ufmt.Sprintf("[ERROR] ATOM balance became negative: before=%d after=%d", atomBefore, atomAfter))
 	}
-	if fooBefore < 0 || fooAfter < 0 {
-		panic(ufmt.Sprintf("[ERROR] FOO balance became negative: before=%d after=%d", fooBefore, fooAfter))
+	if btcBefore < 0 || btcAfter < 0 {
+		panic(ufmt.Sprintf("[ERROR] BTC balance became negative: before=%d after=%d", btcBefore, btcAfter))
 	}
 
 	ufmt.Println("[EXPECTED] Reposition balance validation passed")
@@ -309,8 +309,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [SCENARIO] 4. Reposition (decrease full → swap → reposition)
 // [EXPECTED] Current position liquidity should be 318704392
 // [EXPECTED] Current tick range should be [8000, 12000]
-// [EXPECTED] User BAR balance before reposition should be 99999961605108
-// [EXPECTED] User FOO balance before reposition should be 99999999243484
+// [EXPECTED] User ATOM balance before reposition should be 299999961605108
+// [EXPECTED] User BTC balance before reposition should be 2099999999243484
 // [INFO] Collecting fees
 // [EXPECTED] Collected fee0 should be 9900
 // [EXPECTED] Collected fee1 should be 0
@@ -324,8 +324,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Repositioning to new range (9000~13000)
 // [EXPECTED] New liquidity should be 432601712
 // [EXPECTED] New tick range should be [9000, 13000]
-// [EXPECTED] User BAR balance after reposition should be 99999949999899
-// [EXPECTED] User FOO balance after reposition should be 99999999999999
+// [EXPECTED] User ATOM balance after reposition should be 299999949999899
+// [EXPECTED] User BTC balance after reposition should be 2099999999999999
 // [EXPECTED] Final position liquidity should be 432601712
 // [EXPECTED] Final position tick range should be [9000, 13000]
 // [EXPECTED] Final position token0 balance should be 49999999
@@ -336,6 +336,6 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Final pool token1 balance should be 1
 // [EXPECTED] Final pool liquidity should be 0
 // [EXPECTED] Final pool tick should be 8031
-// [EXPECTED] Total BAR change during reposition: 11605209
-// [EXPECTED] Total FOO change during reposition: -756515
+// [EXPECTED] Total ATOM change during reposition: 11605209
+// [EXPECTED] Total BTC change during reposition: -756515
 // [EXPECTED] Reposition balance validation passed

@@ -24,8 +24,8 @@ import (
 	gs "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
+	_ "gno.land/r/gnoswap/test_token/atom"
+	_ "gno.land/r/gnoswap/test_token/btc"
 )
 
 const INT64_MAX int64 = 9223372036854775807

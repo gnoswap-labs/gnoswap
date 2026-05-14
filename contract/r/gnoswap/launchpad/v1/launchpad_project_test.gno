@@ -14,10 +14,10 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
+	_ "gno.land/r/gnoswap/test_token/atom"
+	_ "gno.land/r/gnoswap/test_token/btc"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -25,7 +25,7 @@ import (
 func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	oblPath := "gno.land/r/onbloc/obl"
+	ethPath := "gno.land/r/gnoswap/test_token/eth"
 	tests := []struct {
 		name                 string
 		projectName          string
@@ -47,11 +47,11 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	}{
 		{
 			name:                 "create project failed by start time is in the past",
-			projectName:          "Obl Protocol",
-			tokenPath:            oblPath,
+			projectName:          "Eth Protocol",
+			tokenPath:            ethPath,
 			recipient:            testutils.TestAddress("projectAddr"),
 			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:      "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 			conditionAmounts:     "1000*PAD*2000",
 			tier30Ratio:          10,
 			tier90Ratio:          20,
@@ -63,11 +63,11 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 		},
 		{
 			name:                 "create project failed by start time is less than minimum start delay time",
-			projectName:          "Obl Protocol",
-			tokenPath:            oblPath,
+			projectName:          "Eth Protocol",
+			tokenPath:            ethPath,
 			recipient:            testutils.TestAddress("projectAddr"),
 			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:      "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 			conditionAmounts:     "1000*PAD*2000",
 			tier30Ratio:          10,
 			tier90Ratio:          20,
@@ -85,7 +85,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			initLaunchpadProjectTestAvgBlockTime(t, tt.averageBlockTimeMs)
 			testing.SetOriginCaller(tt.callerAddress)
 
-			obl.Approve(cross, launchpadAddr, int64(tt.depositAmount))
+			eth.Approve(cross, launchpadAddr, int64(tt.depositAmount))
 
 			createProjectFn := func() {
 				launchpad.CreateProject(
@@ -134,7 +134,7 @@ func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
 		launchpad.CreateProject(
 			cross,
 			"Unauthorized Project",
-			"gno.land/r/onbloc/obl",
+			"gno.land/r/gnoswap/test_token/eth",
 			testutils.TestAddress("projectAddr"),
 			1_000_000,
 			"",
@@ -150,7 +150,7 @@ func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
 func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
-	oblPath := "gno.land/r/onbloc/obl"
+	ethPath := "gno.land/r/gnoswap/test_token/eth"
 	tests := []struct {
 		name                 string
 		params               *createProjectParams
@@ -161,11 +161,11 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 		{
 			name: "create project successfully",
 			params: &createProjectParams{
-				name:             "Obl Protocol",
-				tokenPath:        oblPath,
+				name:             "Eth Protocol",
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -174,18 +174,18 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/gnoswap/test_token/eth:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
 		{
 			name: "create project successfully by 30:40:30 ratio",
 			params: &createProjectParams{
-				name:             "Obl Protocol",
-				tokenPath:        oblPath,
+				name:             "Eth Protocol",
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(30),
 				tier90Ratio:      int64(40),
@@ -194,7 +194,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/gnoswap/test_token/eth:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
@@ -202,10 +202,10 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 			name: "create project failed by invalid ratio sum (less than 100%)",
 			params: &createProjectParams{
 				name:             "Invalid Ratio",
-				tokenPath:        oblPath,
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -221,10 +221,10 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 			name: "create project failed by project name is empty",
 			params: &createProjectParams{
 				name:             "",
-				tokenPath:        oblPath,
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -240,10 +240,10 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 			name: "create project failed by project owner address is invalid",
 			params: &createProjectParams{
 				name:             "TTT",
-				tokenPath:        oblPath,
+				tokenPath:        ethPath,
 				recipient:        address("abcdef"),
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -258,11 +258,11 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 		{
 			name: "create project failed by invalid start time",
 			params: &createProjectParams{
-				name:                  "Obl Protocol",
-				tokenPath:             oblPath,
+				name:                  "Eth Protocol",
+				tokenPath:             ethPath,
 				recipient:             projectAddr,
 				depositAmount:         1_000_000_000,
-				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:       "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts:      "1000*PAD*2000",
 				tier30Ratio:           int64(10),
 				tier90Ratio:           int64(20),
@@ -278,11 +278,11 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 		{
 			name: "create project failed by invalid token path",
 			params: &createProjectParams{
-				name:                  "Obl Protocol",
+				name:                  "Eth Protocol",
 				tokenPath:             "gno.land/r/test/token",
 				recipient:             projectAddr,
 				depositAmount:         1_000_000_000,
-				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:       "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts:      "1000*PAD*2000",
 				tier30Ratio:           int64(10),
 				tier90Ratio:           int64(20),
@@ -303,7 +303,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 			lp := getTestImplementation()
 			testing.SetOriginCaller(projectAddr)
 
-			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
+			eth.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
 
 			projectId, err := lp.createProject(tt.params)
 
@@ -320,7 +320,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
-	oblPath := "gno.land/r/onbloc/obl"
+	ethPath := "gno.land/r/gnoswap/test_token/eth"
 	tests := []struct {
 		name                 string
 		setupProjectIds      []string
@@ -332,14 +332,14 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 		{
 			name: "create project successfully",
 			setupProjectIds: []string{
-				"gno.land/r/onbloc/obl:1",
+				"gno.land/r/gnoswap/test_token/eth:1",
 			},
 			params: &createProjectParams{
-				name:             "Obl Protocol",
-				tokenPath:        oblPath,
+				name:             "Eth Protocol",
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -348,21 +348,21 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/gnoswap/test_token/eth:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
 		{
 			name: "create project failed by duplicate project id",
 			setupProjectIds: []string{
-				"gno.land/r/onbloc/obl:123",
+				"gno.land/r/gnoswap/test_token/eth:123",
 			},
 			params: &createProjectParams{
-				name:             "Obl Protocol",
-				tokenPath:        oblPath,
+				name:             "Eth Protocol",
+				tokenPath:        ethPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/gnoswap/test_token/btc*PAD*gno.land/r/gnoswap/test_token/atom",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -372,7 +372,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-006] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-006] cannot create same project in same block || project(gno.land/r/gnoswap/test_token/eth:123) already exists",
 		},
 	}
 
@@ -384,7 +384,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				setupLaunchpadProjectTestEmptyProject(t, projectID)
 			}
 
-			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
+			eth.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
 
 			projectId, err := lp.createProject(tt.params)
 
@@ -406,7 +406,7 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(t *testing.T) {
 	}{
 		{
 			name:          "project name is valid",
-			projectName:   "Obl Protocol",
+			projectName:   "Eth Protocol",
 			expectedError: nil,
 		},
 		{
@@ -446,7 +446,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(t *testing.T) {
 	}{
 		{
 			name:          "token path is valid",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/gnoswap/test_token/eth",
 			expectedError: nil,
 		},
 		{
@@ -665,7 +665,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 }
 
 func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
-	conditionTokensOverMax := strings.Repeat("gno.land/r/onbloc/obl*PAD*", maxProjectConditionCount) + "gno.land/r/onbloc/obl"
+	conditionTokensOverMax := strings.Repeat("gno.land/r/gnoswap/test_token/eth*PAD*", maxProjectConditionCount) + "gno.land/r/gnoswap/test_token/eth"
 	conditionAmountsOverMax := strings.Repeat("1000*PAD*", maxProjectConditionCount) + "1000"
 
 	tests := []struct {
@@ -676,31 +676,31 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 	}{
 		{
 			name:             "conditions are valid",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/gnoswap/test_token/eth*PAD*gno.land/r/gnoswap/test_token/atom",
 			conditionAmounts: "1000*PAD*2000",
 			expectedError:    nil,
 		},
 		{
 			name:             "conditions are invalid by not registered token path",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/test/token",
+			conditionTokens:  "gno.land/r/gnoswap/test_token/eth*PAD*gno.land/r/test/token",
 			conditionAmounts: "1000*PAD*2000",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by zero amount",
-			conditionTokens:  "gno.land/r/onbloc/obl",
+			conditionTokens:  "gno.land/r/gnoswap/test_token/eth",
 			conditionAmounts: "0",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by condition count mismatch",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/gnoswap/test_token/eth*PAD*gno.land/r/gnoswap/test_token/atom",
 			conditionAmounts: "1000*PAD*2000*PAD*3000",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by duplicated token path",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar*PAD*gno.land/r/onbloc/obl",
+			conditionTokens:  "gno.land/r/gnoswap/test_token/eth*PAD*gno.land/r/gnoswap/test_token/atom*PAD*gno.land/r/gnoswap/test_token/eth",
 			conditionAmounts: "1000*PAD*2000*PAD*3000",
 			expectedError:    errInvalidInput,
 		},
@@ -998,7 +998,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(t *testing.T) {
 		initLaunchpadProjectTest(t)
 		lp := getTestImplementation()
 
-		projectID := "gno.land/r/onbloc/obl:123"
+		projectID := "gno.land/r/gnoswap/test_token/eth:123"
 		tierID := projectID + ":30"
 
 		// Create tier
@@ -1034,7 +1034,7 @@ func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.
 	testing.SetRealm(userRealm)
 
 	uassert.AbortsContains(t, "is not admin", func() {
-		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
+		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/gnoswap/test_token/eth:123", testutils.TestAddress("recipient"))
 	})
 }
 
@@ -1109,7 +1109,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/gnoswap/test_token/eth:123"
 			tierID := projectID + ":180"
 
 			// Create project with single tier (180 days for simplicity)
@@ -1119,7 +1119,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			tier.SetTotalWithdrawCount(0)   // No withdrawals yet
 			tier.SetTotalCollectedAmount(0) // No rewards collected yet
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/gnoswap/test_token/eth", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)
@@ -1146,17 +1146,17 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			projectTierRewardManagers.Set(tierID, rm)
 			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
-			// Transfer OBL tokens from admin to launchpad for refund
+			// Transfer ETH tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			eth.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001) // After tier end
-			beforeOblBalance := obl.BalanceOf(recipient)
+			beforeEthBalance := eth.BalanceOf(recipient)
 			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
-			afterOblBalance := obl.BalanceOf(recipient)
-			balanceChange := afterOblBalance - beforeOblBalance
+			afterEthBalance := eth.BalanceOf(recipient)
+			balanceChange := afterEthBalance - beforeEthBalance
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1230,7 +1230,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/gnoswap/test_token/eth:123"
 			tierID := projectID + ":180"
 
 			// Create project with tier
@@ -1240,7 +1240,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 			tier.SetTotalWithdrawCount(0)
 			tier.SetTotalCollectedAmount(0)
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/gnoswap/test_token/eth", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)
@@ -1265,10 +1265,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 			projectTierRewardManagers.Set(tierID, rm)
 			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
-			// Transfer OBL tokens from admin to launchpad for refund
+			// Transfer ETH tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			eth.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001)
@@ -1321,7 +1321,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/gnoswap/test_token/eth:123"
 			tierID := projectID + ":180"
 
 			// Create project with tier - no depositors
@@ -1331,7 +1331,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			tier.SetTotalWithdrawCount(0) // No withdrawals
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/gnoswap/test_token/eth", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)
@@ -1351,10 +1351,10 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			projectTierRewardManagers.Set(tierID, rm)
 			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
-			// Transfer OBL tokens from admin to launchpad for refund
+			// Transfer ETH tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			eth.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001)

@@ -99,7 +99,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:          "Success - Valid ParameterChange proposal with one-sided CollectProtocol",
 			proposalType:  governance.ParameterChange,
-			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",0,100"}),
+			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/btc,500," + testutils.TestAddress("recipient").String() + ",0,100"}),
 			expectedError: false,
 		},
 		{
@@ -133,7 +133,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:                 "Failure - ParameterChange invalid CollectProtocol amount",
 			proposalType:         governance.ParameterChange,
-			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100"}),
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/btc,500," + testutils.TestAddress("recipient").String() + ",invalid,100"}),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[4]: invalid int64 value: invalid",
 		},

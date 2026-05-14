@@ -33,7 +33,7 @@ func setupBasicTestState(t *testing.T) *testState {
 
 	state := &testState{
 		instance:         getMockInstance(),
-		poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000",
+		poolPath:         "gno.land/r/gnoswap/test_token/atom:gno.land/r/gnoswap/test_token/atone:3000",
 		incentiveId:      "test-incentive-1",
 		positionId:       uint64(1),
 		owner:            addr01,
@@ -42,8 +42,8 @@ func setupBasicTestState(t *testing.T) *testState {
 	}
 
 	// Setup allowed tokens via manager method
-	state.instance.AddToken(barPath)
-	state.instance.AddToken(bazPath)
+	state.instance.AddToken(atomPath)
+	state.instance.AddToken(atonePath)
 
 	// Setup config values via manager methods
 	state.instance.SetDepositGnsAmount(1_000_000_000)
@@ -61,7 +61,7 @@ func setupBasicTestState(t *testing.T) *testState {
 	state.incentive = sr.NewExternalIncentive(
 		state.incentiveId,
 		state.poolPath,
-		barPath,
+		atomPath,
 		10_000_000,                // rewardAmount
 		state.fixedTimestamp,      // startTimestamp
 		state.fixedTimestamp+3600, // endTimestamp (1 hour)
@@ -153,7 +153,7 @@ func TestGetterIncentiveBasicProperties(t *testing.T) {
 		{
 			name:     "GetIncentiveRewardToken",
 			getter:   func() any { return state.instance.GetIncentiveRewardToken(state.poolPath, state.incentiveId) },
-			expected: barPath,
+			expected: atomPath,
 		},
 		{
 			name:     "GetIncentiveCreator",
@@ -211,7 +211,7 @@ func TestGetterPoolIncentiveDepositObjects(t *testing.T) {
 
 	incentive := state.instance.GetIncentive(state.poolPath, state.incentiveId)
 	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
-	uassert.Equal(t, barPath, incentive.RewardToken())
+	uassert.Equal(t, atomPath, incentive.RewardToken())
 
 	deposit := state.instance.GetDeposit(state.positionId)
 	uassert.Equal(t, state.owner, deposit.Owner())
@@ -235,7 +235,7 @@ func TestGetterPoolIncentiveIdList(t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		"test-incentive-2",
 		state.poolPath,
-		bazPath,
+		atonePath,
 		5_000_000,
 		state.fixedTimestamp,
 		state.fixedTimestamp+7200,
@@ -403,7 +403,7 @@ func TestGetterPoolsByTier(t *testing.T) {
 	state := setupBasicTestState(t)
 
 	// Add another pool to tier 1
-	pool2Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
+	pool2Path := "gno.land/r/gnoswap/test_token/btc:gno.land/r/gnoswap/test_token/sol:500"
 	state.instance.store.GetPoolTierMemberships().Set(pool2Path, uint64(1))
 
 	pools := state.instance.GetPoolsByTier(1)
@@ -591,7 +591,7 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				tt.incentiveId,
 				poolPath,
-				barPath,
+				atomPath,
 				1_000_000,
 				tt.startTimestamp,
 				tt.endTimestamp,
@@ -646,7 +646,7 @@ func TestGetterPoolIncentive(t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		"test-incentive-2",
 		state.poolPath,
-		bazPath,
+		atonePath,
 		5_000_000,
 		state.fixedTimestamp+100,
 		state.fixedTimestamp+3700,

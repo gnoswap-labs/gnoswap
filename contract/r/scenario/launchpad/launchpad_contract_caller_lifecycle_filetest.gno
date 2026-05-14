@@ -24,7 +24,7 @@ import (
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/obl"
+	"gno.land/r/gnoswap/test_token/eth"
 )
 
 const contractPackagePath = "gno.land/r/test/contract"
@@ -46,7 +46,7 @@ var (
 
 func main() {
 	println("[SCENARIO] 1. Create launchpad project")
-	projectId := createOBLProject()
+	projectId := createETHProject()
 	projectTier30 := projectId + ":30"
 	println()
 
@@ -65,20 +65,20 @@ func main() {
 	println()
 }
 
-func createOBLProject() string {
-	println("[INFO] Creating OBL launchpad project")
+func createETHProject() string {
+	println("[INFO] Creating ETH launchpad project")
 
 	rewardAmount := int64(10_000_000)
 	secondsOf7Days := int64(60 * 60 * 24 * 7)
 	startTime := time.Now().Unix() + secondsOf7Days
 
-	println("[INFO] Admin creating OBL project")
+	println("[INFO] Admin creating ETH project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	eth.Approve(cross, launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
 		cross,
-		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"Test ETH Project",
+		"gno.land/r/gnoswap/test_token/eth",
 		projectAddr,
 		rewardAmount,
 		"",
@@ -118,14 +118,14 @@ func depositGnsFromContract(projectTierId string, depositAmount int64) string {
 func collectRewardAndWithdrawFromContract(depositId string) {
 	testing.SetRealm(contractRealm)
 
-	beforeOblBalance := obl.BalanceOf(contractAddr)
+	beforeEthBalance := eth.BalanceOf(contractAddr)
 	beforeGnsBalance := gns.BalanceOf(contractAddr)
 	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
 	gnsAmount, err := launchpad.CollectDepositGns(cross, depositId)
 	if err != nil {
 		panic(err)
 	}
-	afterOblBalance := obl.BalanceOf(contractAddr)
+	afterEthBalance := eth.BalanceOf(contractAddr)
 	afterGnsBalance := gns.BalanceOf(contractAddr)
 
 	if rewardAmount <= 0 {
@@ -136,16 +136,16 @@ func collectRewardAndWithdrawFromContract(depositId string) {
 	}
 
 	ufmt.Printf("[EXPECTED] Contract reward amount: %d\n", rewardAmount)
-	ufmt.Printf("[EXPECTED] Contract OBL balance delta: %d\n", afterOblBalance-beforeOblBalance)
+	ufmt.Printf("[EXPECTED] Contract ETH balance delta: %d\n", afterEthBalance-beforeEthBalance)
 	ufmt.Printf("[EXPECTED] Contract GNS balance delta: %d\n", afterGnsBalance-beforeGnsBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Create launchpad project
-// [INFO] Creating OBL launchpad project
-// [INFO] Admin creating OBL project
+// [INFO] Creating ETH launchpad project
+// [INFO] Admin creating ETH project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/gnoswap/test_token/eth:123
 //
 // [SCENARIO] 2. Contract deposits GNS in project tier30
 // [EXPECTED] Contract deposit created with ID: 1
@@ -155,5 +155,5 @@ func collectRewardAndWithdrawFromContract(depositId string) {
 //
 // [SCENARIO] 4. Contract collects reward and withdraws GNS
 // [EXPECTED] Contract reward amount: 2999999
-// [EXPECTED] Contract OBL balance delta: 2999999
+// [EXPECTED] Contract ETH balance delta: 2999999
 // [EXPECTED] Contract GNS balance delta: 1000000

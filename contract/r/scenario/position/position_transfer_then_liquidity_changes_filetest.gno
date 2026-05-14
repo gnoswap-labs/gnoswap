@@ -32,8 +32,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/test_token/atom"
+	"gno.land/r/gnoswap/test_token/btc"
 )
 
 var (
@@ -48,8 +48,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/onbloc/bar"
-	token1Path = "gno.land/r/onbloc/foo"
+	token0Path = "gno.land/r/gnoswap/test_token/atom"
+	token1Path = "gno.land/r/gnoswap/test_token/btc"
 	fee        = uint32(3000)
 
 	maxInt64   int64 = 9223372036854775807
@@ -84,14 +84,14 @@ func setup() {
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross, 0)
 
-	bar.Transfer(cross, aliceAddr, int64(100000000))
-	foo.Transfer(cross, aliceAddr, int64(100000000))
-	bar.Transfer(cross, bobAddr, int64(100000000))
-	foo.Transfer(cross, bobAddr, int64(100000000))
+	atom.Transfer(cross, aliceAddr, int64(100000000))
+	btc.Transfer(cross, aliceAddr, int64(100000000))
+	atom.Transfer(cross, bobAddr, int64(100000000))
+	btc.Transfer(cross, bobAddr, int64(100000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
 	pool.CreatePool(
 		cross,
@@ -160,8 +160,8 @@ func aliceLosesRights() {
 
 func bobIncreases() {
 	testing.SetRealm(bobRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	atom.Approve(cross, poolAddr, maxInt64)
+	btc.Approve(cross, poolAddr, maxInt64)
 
 	liquidityBefore := position.GetPositionLiquidity(positionId)
 	_, liquidityAdded, _, _, _ := position.IncreaseLiquidity(
