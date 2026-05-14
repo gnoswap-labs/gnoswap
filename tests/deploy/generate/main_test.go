@@ -23,7 +23,7 @@ func setupTestDirectory(t *testing.T) string {
 		"contract/p/gnoswap/gnsmath",
 		"contract/r/gnoswap/test_token", // This should not be discovered as a package
 		"contract/r/gnoswap/test_token/usdc",
-		"contract/r/gnoswap/test_token/foo",
+		"contract/r/gnoswap/test_token/btc",
 		"contract/r/gnoswap/gns",
 		"contract/r/gnoswap/gnft",
 		"contract/r/gnoswap/pool",
@@ -85,7 +85,7 @@ func TestPackageDiscovery(t *testing.T) {
 		"int256":  false,
 		"gnsmath": false,
 		"usdc":    false,
-		"foo":     false,
+		"btc":     false,
 		"gns":     false,
 		"gnft":    false,
 		"pool":    false,

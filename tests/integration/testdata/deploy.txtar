@@ -14,7 +14,7 @@ loadpkg gno.land/p/onbloc/json
 loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/demo/tokens/grc20
 loadpkg gno.land/p/demo/tokens/grc721
-loadpkg gno.land/r/demo/defi/foo20
+loadpkg gno.land/r/demo/defi/btc20
 
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
@@ -26,37 +26,37 @@ gnoland start
 ## deploy test-tokens
 
 ### deploy usdc (expected gas fee: 16820ugnot, gas wanted: 16820000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/usdc -pkgpath gno.land/r/onbloc/usdc -gas-fee 25230ugnot -gas-wanted 25230000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/usdc -pkgpath gno.land/r/gnoswap/test_token/usdc -gas-fee 25230ugnot -gas-wanted 25230000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
-### deploy foo (expected gas fee: 16999ugnot, gas wanted: 16999000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/foo -pkgpath gno.land/r/onbloc/foo -gas-fee 25498ugnot -gas-wanted 25498000 -broadcast -chainid=tendermint_test test1
+### deploy btc (expected gas fee: 16999ugnot, gas wanted: 16999000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/btc -pkgpath gno.land/r/gnoswap/test_token/btc -gas-fee 25498ugnot -gas-wanted 25498000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
-### deploy bar (expected gas fee: 16914ugnot, gas wanted: 16914000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/bar -pkgpath gno.land/r/onbloc/bar -gas-fee 25371ugnot -gas-wanted 25371000 -broadcast -chainid=tendermint_test test1
+### deploy atom (expected gas fee: 16914ugnot, gas wanted: 16914000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/atom -pkgpath gno.land/r/gnoswap/test_token/atom -gas-fee 25371ugnot -gas-wanted 25371000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
-### deploy baz (expected gas fee: 17060ugnot, gas wanted: 17060000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/baz -pkgpath gno.land/r/onbloc/baz -gas-fee 25590ugnot -gas-wanted 25590000 -broadcast -chainid=tendermint_test test1
+### deploy atone (expected gas fee: 17060ugnot, gas wanted: 17060000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/atone -pkgpath gno.land/r/gnoswap/test_token/atone -gas-fee 25590ugnot -gas-wanted 25590000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
-### deploy qux (expected gas fee: 16916ugnot, gas wanted: 16916000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/qux -pkgpath gno.land/r/onbloc/qux -gas-fee 25374ugnot -gas-wanted 25374000 -broadcast -chainid=tendermint_test test1
+### deploy sol (expected gas fee: 16916ugnot, gas wanted: 16916000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/sol -pkgpath gno.land/r/gnoswap/test_token/sol -gas-fee 25374ugnot -gas-wanted 25374000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
-### deploy obl (expected gas fee: 17061ugnot, gas wanted: 17061000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/obl -pkgpath gno.land/r/onbloc/obl -gas-fee 25591ugnot -gas-wanted 25591000 -broadcast -chainid=tendermint_test test1
+### deploy eth (expected gas fee: 17061ugnot, gas wanted: 17061000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/eth -pkgpath gno.land/r/gnoswap/test_token/eth -gas-fee 25591ugnot -gas-wanted 25591000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'

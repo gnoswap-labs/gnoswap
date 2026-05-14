@@ -1,2 +1,2 @@
-module = "gno.land/r/onbloc/usdc"
+module = "gno.land/r/gnoswap/test_token/usdc"
 gno = "0.9"
