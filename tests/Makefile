@@ -15,7 +15,7 @@ ENV ?= default
 # Load environment-specific configuration
 include scripts/config/$(ENV).mk
 
-# Token Paths
+# Token Paths (keep test_token list aligned with scripts/deploy.mk TEST_TOKEN_NAMES)
 GNS_PATH := gno.land/r/gnoswap/gns
 USDC_PATH := gno.land/r/gnoswap/test_token/usdc
 BAZ_PATH := gno.land/r/gnoswap/test_token/baz
@@ -23,6 +23,15 @@ BAR_PATH := gno.land/r/gnoswap/test_token/bar
 OBL_PATH := gno.land/r/gnoswap/test_token/obl
 QUX_PATH := gno.land/r/gnoswap/test_token/qux
 FOO_PATH := gno.land/r/gnoswap/test_token/foo
+ATONE_PATH := gno.land/r/gnoswap/test_token/atone
+ATOM_PATH := gno.land/r/gnoswap/test_token/atom
+ETH_PATH := gno.land/r/gnoswap/test_token/eth
+SOL_PATH := gno.land/r/gnoswap/test_token/sol
+BTC_PATH := gno.land/r/gnoswap/test_token/btc
+DAI_PATH := gno.land/r/gnoswap/test_token/dai
+PHOTON_PATH := gno.land/r/gnoswap/test_token/photon
+TRX_PATH := gno.land/r/gnoswap/test_token/trx
+USDT_PATH := gno.land/r/gnoswap/test_token/usdt
 
 # Color output for better readability
 RED := \033[0;31m
