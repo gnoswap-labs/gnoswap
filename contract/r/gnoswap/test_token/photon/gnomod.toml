@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test_token/photon"
+gno = "0.9"

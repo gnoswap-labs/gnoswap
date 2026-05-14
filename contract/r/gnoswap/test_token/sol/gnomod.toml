@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test_token/sol"
+gno = "0.9"
