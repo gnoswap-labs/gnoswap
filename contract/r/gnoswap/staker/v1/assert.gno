@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	TIMESTAMP_90DAYS  = int64(7776000)
-	TIMESTAMP_180DAYS = int64(15552000)
-	TIMESTAMP_365DAYS = int64(31536000)
+	// QA: shortened from 90/180/365 days to 1/2/3 days for testing.
+	TIMESTAMP_90DAYS  = int64(86400)  // QA: 1 day
+	TIMESTAMP_180DAYS = int64(172800) // QA: 2 days
+	TIMESTAMP_365DAYS = int64(259200) // QA: 3 days
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 )
@@ -175,6 +176,7 @@ func assertIsValidIncentiveEndTime(endTimestamp int64) {
 }
 
 // assertIsValidIncentiveDuration ensures the duration is 90, 180, or 365 days.
+// QA: durations correspond to 1, 2, 3 days while constant names are retained.
 func assertIsValidIncentiveDuration(externalDuration int64) {
 	switch externalDuration {
 	case TIMESTAMP_90DAYS, TIMESTAMP_180DAYS, TIMESTAMP_365DAYS:
@@ -183,7 +185,7 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 
 	panic(makeErrorWithDetails(
 		errInvalidIncentiveDuration,
-		ufmt.Sprintf("externalDuration(%d) must be 90, 180, 365 days", externalDuration),
+		ufmt.Sprintf("externalDuration(%d) must be 1, 2, 3 days (QA)", externalDuration),
 	))
 }
 

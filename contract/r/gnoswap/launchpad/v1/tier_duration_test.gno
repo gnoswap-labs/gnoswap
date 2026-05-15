@@ -194,45 +194,46 @@ func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
 		expectedDurationDays int64
 		description          string
 	}{
+		// QA: tier distribution durations shortened to 1 day for all tiers.
 		{
 			name:                 "30 day tier standard",
 			tierType:             30,
 			startTime:            1000000,
 			averageBlockTimeMs:   5000, // 5 seconds per block
-			expectedDurationDays: 30,
-			description:          "30 day tier should always be 30 days regardless of block time",
+			expectedDurationDays: 1,
+			description:          "30 day tier (QA: 1 day) regardless of block time",
 		},
 		{
 			name:                 "30 day tier with fast blocks",
 			tierType:             30,
 			startTime:            1000000,
 			averageBlockTimeMs:   1000, // 1 second per block
-			expectedDurationDays: 30,
-			description:          "30 day tier should still be 30 days with fast blocks",
+			expectedDurationDays: 1,
+			description:          "30 day tier (QA: 1 day) with fast blocks",
 		},
 		{
 			name:                 "30 day tier with slow blocks",
 			tierType:             30,
 			startTime:            1000000,
 			averageBlockTimeMs:   20000, // 20 seconds per block
-			expectedDurationDays: 30,
-			description:          "30 day tier should still be 30 days with slow blocks",
+			expectedDurationDays: 1,
+			description:          "30 day tier (QA: 1 day) with slow blocks",
 		},
 		{
 			name:                 "90 day tier",
 			tierType:             90,
 			startTime:            1000000,
 			averageBlockTimeMs:   5000,
-			expectedDurationDays: 90,
-			description:          "90 day tier should be 90 days",
+			expectedDurationDays: 1,
+			description:          "90 day tier (QA: 1 day)",
 		},
 		{
 			name:                 "180 day tier",
 			tierType:             180,
 			startTime:            1000000,
 			averageBlockTimeMs:   5000,
-			expectedDurationDays: 180,
-			description:          "180 day tier should be 180 days",
+			expectedDurationDays: 1,
+			description:          "180 day tier (QA: 1 day)",
 		},
 	}
 

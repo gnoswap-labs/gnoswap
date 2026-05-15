@@ -601,10 +601,10 @@ func TestAssertIsValidPoolTier_AllValues(t *testing.T) {
 }
 
 func TestIncentiveDuration_Constants(t *testing.T) {
-	// Verify the duration constants are correct
-	uassert.Equal(t, int64(7776000), TIMESTAMP_90DAYS)   // 90 * 24 * 60 * 60
-	uassert.Equal(t, int64(15552000), TIMESTAMP_180DAYS) // 180 * 24 * 60 * 60
-	uassert.Equal(t, int64(31536000), TIMESTAMP_365DAYS) // 365 * 24 * 60 * 60
+	// QA: durations shortened to 1/2/3 days while constant names are retained.
+	uassert.Equal(t, int64(86400), TIMESTAMP_90DAYS)   // QA: 1 day
+	uassert.Equal(t, int64(172800), TIMESTAMP_180DAYS) // QA: 2 days
+	uassert.Equal(t, int64(259200), TIMESTAMP_365DAYS) // QA: 3 days
 
 	// Test that all three constants work
 	uassert.NotPanics(t, func() {
