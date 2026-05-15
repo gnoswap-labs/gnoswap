@@ -18,6 +18,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -429,7 +430,7 @@ func burnObl(addr address) {
 
 func burnUsdc(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	test_usdc.Burn(cross, addr, test_usdc.BalanceOf(addr))
+	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
 }
 
 func initPoolTest(t *testing.T) {

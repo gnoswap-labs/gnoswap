@@ -21,6 +21,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/obl"
 )
 
@@ -99,11 +100,11 @@ func main() {
 func getBalanceSnapshot() BalanceSnapshot {
 	return BalanceSnapshot{
 		userObl:         obl.BalanceOf(adminAddr),
-		userUsdc:        test_usdc.BalanceOf(adminAddr),
+		userUsdc:        usdc.BalanceOf(adminAddr),
 		poolObl:         obl.BalanceOf(poolAddr),
-		poolUsdc:        test_usdc.BalanceOf(poolAddr),
+		poolUsdc:        usdc.BalanceOf(poolAddr),
 		protocolFeeObl:  obl.BalanceOf(protocolFeeAddr),
-		protocolFeeUsdc: test_usdc.BalanceOf(protocolFeeAddr),
+		protocolFeeUsdc: usdc.BalanceOf(protocolFeeAddr),
 	}
 }
 
@@ -124,7 +125,7 @@ func setupWideRangePool() BalanceSnapshot {
 	// token0/token1 must be in lexicographical order: usdcPath < oblPath
 	pool.CreatePool(cross, usdcPath, oblPath, fee500, "79228162514264337593543950336")
 
-	test_usdc.Approve(cross, poolAddr, maxApprove)
+	usdc.Approve(cross, poolAddr, maxApprove)
 	obl.Approve(cross, poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
@@ -191,7 +192,7 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)")
 
-	test_usdc.Approve(cross, poolAddr, 5000000)
+	usdc.Approve(cross, poolAddr, 5000000)
 
 	testing.SetRealm(routerRealm)
 	// token0=usdc, token1=obl: swapping usdc(token0) for obl(token1) -> zeroForOne=true
