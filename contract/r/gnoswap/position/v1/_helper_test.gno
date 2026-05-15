@@ -18,12 +18,12 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/rbac"
 

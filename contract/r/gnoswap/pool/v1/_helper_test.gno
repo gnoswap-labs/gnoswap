@@ -7,12 +7,12 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/onbloc/usdc"
 
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"

@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test_token/test_eth"
+gno = "0.9"

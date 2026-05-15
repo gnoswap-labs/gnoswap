@@ -21,6 +21,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -31,7 +32,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/onbloc/usdc"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	usdcPath   = "gno.land/r/onbloc/usdc"
+	usdcPath   = "gno.land/r/gnoswap/test_token/test_usdc"
 
 	gnotPath = "gno.land/r/gnoland/wugnot"
 
@@ -269,7 +269,7 @@ func testMultiHopGnotToUsdc() {
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/test_usdc:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -306,7 +306,7 @@ func testMultiHopUsdcToGnot() {
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/test_token/test_usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),

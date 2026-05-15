@@ -21,8 +21,8 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/obl"
-	"gno.land/r/onbloc/usdc"
 )
 
 const (
@@ -43,7 +43,7 @@ var (
 
 var (
 	oblPath  = "gno.land/r/onbloc/obl"
-	usdcPath = "gno.land/r/onbloc/usdc"
+	usdcPath = "gno.land/r/gnoswap/test_token/test_usdc"
 )
 
 const (
@@ -58,11 +58,11 @@ func init() {
 }
 
 type BalanceSnapshot struct {
-	userObl        int64
-	userUsdc       int64
-	poolObl        int64
-	poolUsdc       int64
-	protocolFeeObl int64
+	userObl         int64
+	userUsdc        int64
+	poolObl         int64
+	poolUsdc        int64
+	protocolFeeObl  int64
 	protocolFeeUsdc int64
 }
 
@@ -122,7 +122,8 @@ func setupWideRangePool() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, oblPath, usdcPath, fee500, "79228162514264337593543950336")
+	// token0/token1 must be in lexicographical order: usdcPath < oblPath
+	pool.CreatePool(cross, usdcPath, oblPath, fee500, "79228162514264337593543950336")
 
 	usdc.Approve(cross, poolAddr, maxApprove)
 	obl.Approve(cross, poolAddr, maxApprove)
@@ -130,8 +131,8 @@ func setupWideRangePool() BalanceSnapshot {
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
 		cross,
-		oblPath,
 		usdcPath,
+		oblPath,
 		fee500,
 		-10000,
 		10000,
@@ -139,9 +140,9 @@ func setupWideRangePool() BalanceSnapshot {
 		adminAddr,
 	)
 
-	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
 	println("[INFO] Pool created with wide-range position (-10000 to 10000)")
-	println("[INFO] Minted amounts - obl:", amount0, "usdc:", amount1)
+	println("[INFO] Minted amounts - usdc:", amount0, "obl:", amount1)
 	println("[INFO] Initial tick:", pools.Slot0Tick())
 
 	return getBalanceSnapshot()
@@ -150,7 +151,7 @@ func setupWideRangePool() BalanceSnapshot {
 func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)")
@@ -158,22 +159,23 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 	obl.Approve(cross, poolAddr, 10000000)
 
 	testing.SetRealm(routerRealm)
+	// token0=usdc, token1=obl: swapping obl(token1) for usdc(token0) -> zeroForOne=false
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		oblPath,
 		usdcPath,
+		oblPath,
 		fee500,
 		adminAddr,
-		true,
+		false,
 		"10000000",
-		MIN_PRICE,
+		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(oblPath, usdcPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(usdcPath, oblPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
@@ -185,7 +187,7 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)")
@@ -193,22 +195,23 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 	usdc.Approve(cross, poolAddr, 5000000)
 
 	testing.SetRealm(routerRealm)
+	// token0=usdc, token1=obl: swapping usdc(token0) for obl(token1) -> zeroForOne=true
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		oblPath,
 		usdcPath,
+		oblPath,
 		fee500,
 		adminAddr,
-		false,
+		true,
 		"5000000",
-		MAX_PRICE,
+		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(oblPath, usdcPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(usdcPath, oblPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
@@ -220,7 +223,7 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 20000000 OBL -> USDC (maximum slippage)")
@@ -228,22 +231,23 @@ func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 	obl.Approve(cross, poolAddr, 20000000)
 
 	testing.SetRealm(routerRealm)
+	// token0=usdc, token1=obl: swapping obl(token1) for usdc(token0) -> zeroForOne=false
 	swapAmount0, swapAmount1 := pool.Swap(
 		cross,
-		oblPath,
 		usdcPath,
+		oblPath,
 		fee500,
 		adminAddr,
-		true,
+		false,
 		"20000000",
-		MIN_PRICE,
+		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(oblPath, usdcPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(usdcPath, oblPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
@@ -302,11 +306,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 1. Setup - Create Pool with Wide Range
 // [INFO] Pool created with wide-range position (-10000 to 10000)
-// [INFO] Minted amounts - obl: 3934541779 usdc: 3934541779
+// [INFO] Minted amounts - usdc: 3934541779 obl: 3934541779
 // [INFO] Initial tick: 0
 // [INFO] After Pool Setup
 // [EXPECTED] User OBL balance: 99996065458221
-// [EXPECTED] User USDC balance: 99996065458221
+// [EXPECTED] User USDC balance: 69999996065458221
 // [EXPECTED] Pool OBL balance: 3934541779
 // [EXPECTED] Pool USDC balance: 3934541779
 // [EXPECTED] Protocol fee OBL balance: 0
@@ -314,11 +318,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 2. Extreme Downward Price Movement
 // [INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)
-// [INFO] Swap - In: 10000000 Out: -9985019
-// [INFO] Tick moved from 0 to -20
+// [INFO] Swap - In: -9985019 Out: 10000000
+// [INFO] Tick moved from 0 to 19
 // [INFO] After Extreme Down
 // [EXPECTED] User OBL balance: 99996055458221
-// [EXPECTED] User USDC balance: 99996075443240
+// [EXPECTED] User USDC balance: 69999996075443240
 // [EXPECTED] Pool OBL balance: 3944541779
 // [EXPECTED] Pool USDC balance: 3924556760
 // [EXPECTED] Protocol fee OBL balance: 0
@@ -334,19 +338,19 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 3. Extreme Upward Price Movement
 // [INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)
-// [INFO] Swap - In: -5004988 Out: 5000000
-// [INFO] Tick moved from -20 to -10
+// [INFO] Swap - In: 5000000 Out: -5004991
+// [INFO] Tick moved from 19 to 9
 // [INFO] After Extreme Up
-// [EXPECTED] User OBL balance: 99996060463209
-// [EXPECTED] User USDC balance: 99996070443240
-// [EXPECTED] Pool OBL balance: 3939536791
+// [EXPECTED] User OBL balance: 99996060463212
+// [EXPECTED] User USDC balance: 69999996070443240
+// [EXPECTED] Pool OBL balance: 3939536788
 // [EXPECTED] Pool USDC balance: 3929556760
 // [EXPECTED] Protocol fee OBL balance: 0
 // [EXPECTED] Protocol fee USDC balance: 0
 // [INFO] Validating balance changes for Extreme Up
-// [EXPECTED] User OBL change: 5004988
+// [EXPECTED] User OBL change: 5004991
 // [EXPECTED] User USDC change: -5000000
-// [EXPECTED] Pool OBL change: -5004988
+// [EXPECTED] Pool OBL change: -5004991
 // [EXPECTED] Pool USDC change: 5000000
 // [EXPECTED] Protocol Fee OBL change: 0
 // [EXPECTED] Protocol Fee USDC change: 0
@@ -354,12 +358,12 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 4. Maximum Slippage Test
 // [INFO] Swapping 20000000 OBL -> USDC (maximum slippage)
-// [INFO] Swap - In: 20000000 Out: -19930244
-// [INFO] Tick moved from -10 to -50
+// [INFO] Swap - In: -19930244 Out: 20000000
+// [INFO] Tick moved from 9 to 49
 // [INFO] After Maximum Slippage
-// [EXPECTED] User OBL balance: 99996040463209
-// [EXPECTED] User USDC balance: 99996090373484
-// [EXPECTED] Pool OBL balance: 3959536791
+// [EXPECTED] User OBL balance: 99996040463212
+// [EXPECTED] User USDC balance: 69999996090373484
+// [EXPECTED] Pool OBL balance: 3959536788
 // [EXPECTED] Pool USDC balance: 3909626516
 // [EXPECTED] Protocol fee OBL balance: 0
 // [EXPECTED] Protocol fee USDC balance: 0

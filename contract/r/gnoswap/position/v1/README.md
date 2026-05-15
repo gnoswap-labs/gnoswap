@@ -124,7 +124,7 @@ amount1 = L * (sqrtCurrent - sqrtLower)
 // Mint new position
 tokenId, liquidity, amount0, amount1 := Mint(
     "gno.land/r/onbloc/weth",  // token0
-    "gno.land/r/onbloc/usdc",  // token1
+    "gno.land/r/gnoswap/test_token/test_usdc",  // token1
     3000,                      // fee
     -887220,                   // tickLower
     887220,                    // tickUpper
