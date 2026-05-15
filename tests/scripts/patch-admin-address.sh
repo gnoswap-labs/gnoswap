@@ -18,7 +18,7 @@ TARGET_FILES=(
     "contract/r/gnoswap/test_token/test_photon/photon.gno"
     "contract/r/gnoswap/test_token/test_sol/sol.gno"
     "contract/r/gnoswap/test_token/test_trx/trx.gno"
-    "contract/r/gnoswap/test_token/test_usdc/test_usdc.gno"
+    "contract/r/gnoswap/test_token/test_usdc/usdc.gno"
     "contract/r/gnoswap/test_token/test_usdt/usdt.gno"
 )
 
