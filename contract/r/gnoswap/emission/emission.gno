@@ -56,8 +56,12 @@ func setLastExecutedTimestamp(timestamp int64) {
 // to trigger periodic GNS emission. It mints new tokens based on elapsed time since
 // last distribution and distributes them to predefined targets (staker, devops, etc.).
 //
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//
 // Returns:
-//   - int64: Total amount of GNS distributed in this call
+//   - distributedAmount: total amount of GNS distributed in this call
+//   - success: false only when emission is halted; true when processing completes, even if no tokens are distributed
 //
 // Note: Distribution only occurs if start timestamp is set and reached.
 // Any undistributed tokens from previous calls are carried forward.
@@ -210,6 +214,9 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 // SetOnDistributionPctChangeCallback sets a callback function to be called when distribution percentages change.
 // This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
+//
+// Parameters:
+//   - callback: function to call with emission amount per second when percentages change
 //
 // Only callable by the staker contract.
 func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {

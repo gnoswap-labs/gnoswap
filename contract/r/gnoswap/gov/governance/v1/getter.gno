@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -8,24 +9,34 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-
 // GetLatestConfigVersion returns the current config version.
+//
+// Returns:
+//   - configVersion: latest governance config version
 func (gv *governanceV1) GetLatestConfigVersion() int64 {
 	return gv.getCurrentConfigVersion()
 }
 
 // GetCurrentProposalID returns the current proposal ID counter.
+//
+// Returns:
+//   - proposalID: current proposal ID counter
 func (gv *governanceV1) GetCurrentProposalID() int64 {
 	return gv.getCurrentProposalID()
 }
 
 // GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+//
+// Returns:
+//   - period: maximum smoothing period in seconds
 func (gv *governanceV1) GetMaxSmoothingPeriod() int64 {
 	return maxSmoothingPeriod
 }
 
-
 // GetLatestConfig returns the latest governance configuration.
+//
+// Returns:
+//   - config: latest governance configuration
 func (gv *governanceV1) GetLatestConfig() governance.Config {
 	currentVersion := gv.getCurrentConfigVersion()
 	config, ok := gv.getConfig(currentVersion)
@@ -37,6 +48,13 @@ func (gv *governanceV1) GetLatestConfig() governance.Config {
 }
 
 // GetConfig returns a specific governance configuration by version.
+//
+// Parameters:
+//   - configVersion: config version to query
+//
+// Returns:
+//   - config: governance configuration for the version
+//   - err: nil on success, or an error if the config version does not exist
 func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error) {
 	config, ok := gv.getConfig(configVersion)
 	if !ok {
@@ -46,13 +64,22 @@ func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error
 	return config, nil
 }
 
-
 // GetProposalCount returns the total number of proposals.
+//
+// Returns:
+//   - count: total number of proposals
 func (gv *governanceV1) GetProposalCount() int {
 	return gv.store.GetProposals().Size()
 }
 
 // GetProposalIDs returns a paginated list of proposal IDs.
+//
+// Parameters:
+//   - offset: starting offset
+//   - count: maximum number of IDs to return
+//
+// Returns:
+//   - proposalIDs: paginated proposal IDs
 func (gv *governanceV1) GetProposalIDs(offset, count int) []int64 {
 	proposals := gv.store.GetProposals()
 	size := proposals.Size()
@@ -77,12 +104,25 @@ func (gv *governanceV1) GetProposalIDs(offset, count int) []int64 {
 }
 
 // ExistsProposal checks if a proposal exists.
+//
+// Parameters:
+//   - proposalID: proposal ID to check
+//
+// Returns:
+//   - exists: true if the proposal exists
 func (gv *governanceV1) ExistsProposal(proposalID int64) bool {
 	_, exists := gv.store.GetProposal(proposalID)
 	return exists
 }
 
 // GetProposal returns a proposal by ID.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//
+// Returns:
+//   - proposal: proposal data
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetProposal(proposalID int64) (*governance.Proposal, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
@@ -92,6 +132,13 @@ func (gv *governanceV1) GetProposal(proposalID int64) (*governance.Proposal, err
 }
 
 // GetProposerByProposalId returns the proposer address of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - proposer: proposer address
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetProposerByProposalId(proposalId int64) (address, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -101,6 +148,13 @@ func (gv *governanceV1) GetProposerByProposalId(proposalId int64) (address, erro
 }
 
 // GetProposalTypeByProposalId returns the type of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - proposalType: type of the proposal
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetProposalTypeByProposalId(proposalId int64) (governance.ProposalType, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -110,6 +164,13 @@ func (gv *governanceV1) GetProposalTypeByProposalId(proposalId int64) (governanc
 }
 
 // GetYeaByProposalId returns the yes vote weight of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - yesWeight: total weight of yes votes
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetYeaByProposalId(proposalId int64) (int64, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -119,6 +180,13 @@ func (gv *governanceV1) GetYeaByProposalId(proposalId int64) (int64, error) {
 }
 
 // GetNayByProposalId returns the no vote weight of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - noWeight: total weight of no votes
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetNayByProposalId(proposalId int64) (int64, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -128,6 +196,13 @@ func (gv *governanceV1) GetNayByProposalId(proposalId int64) (int64, error) {
 }
 
 // GetConfigVersionByProposalId returns the config version used by a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - configVersion: governance config version used by the proposal
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetConfigVersionByProposalId(proposalId int64) (int64, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -137,6 +212,13 @@ func (gv *governanceV1) GetConfigVersionByProposalId(proposalId int64) (int64, e
 }
 
 // GetQuorumAmountByProposalId returns the quorum requirement for a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - quorumAmount: quorum requirement for the proposal
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetQuorumAmountByProposalId(proposalId int64) (int64, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -146,6 +228,13 @@ func (gv *governanceV1) GetQuorumAmountByProposalId(proposalId int64) (int64, er
 }
 
 // GetTitleByProposalId returns the title of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - title: proposal title
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetTitleByProposalId(proposalId int64) (string, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -155,6 +244,13 @@ func (gv *governanceV1) GetTitleByProposalId(proposalId int64) (string, error) {
 }
 
 // GetDescriptionByProposalId returns the description of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - description: proposal description
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) (string, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -164,6 +260,13 @@ func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) (string, er
 }
 
 // GetProposalStatusByProposalId returns the current status of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
+//
+// Returns:
+//   - status: current proposal status
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -173,14 +276,17 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
-
 // GetVoteStatus returns the vote status of a proposal.
+//
+// Parameters:
+//   - proposalId: proposal ID to query
 //
 // Returns:
 //   - quorum: minimum vote weight required for proposal to pass
 //   - maxVotingWeight: maximum possible voting weight
 //   - yesWeight: total weight of "yes" votes
 //   - noWeight: total weight of "no" votes
+//   - err: nil on success, or an error if the proposal does not exist
 func (gv *governanceV1) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeight int64, err error) {
 	proposal, exists := gv.store.GetProposal(proposalId)
 	if !exists {
@@ -191,6 +297,12 @@ func (gv *governanceV1) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight
 }
 
 // GetVotingInfoCount returns the number of voters for a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//
+// Returns:
+//   - count: number of voters for the proposal
 func (gv *governanceV1) GetVotingInfoCount(proposalID int64) int {
 	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
 	if !exists {
@@ -200,6 +312,14 @@ func (gv *governanceV1) GetVotingInfoCount(proposalID int64) int {
 }
 
 // GetVotingInfoAddresses returns a paginated list of voter addresses for a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - offset: starting offset
+//   - count: maximum number of addresses to return
+//
+// Returns:
+//   - addrs: paginated voter addresses
 func (gv *governanceV1) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
 	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
 	if !exists {
@@ -226,12 +346,27 @@ func (gv *governanceV1) GetVotingInfoAddresses(proposalID int64, offset, count i
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - addr: voter address to check
+//
+// Returns:
+//   - exists: true if voting info exists for the voter
 func (gv *governanceV1) ExistsVotingInfo(proposalID int64, addr address) bool {
 	_, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	return exists
 }
 
 // GetVotingInfo returns the voting info for a user on a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - addr: voter address to query
+//
+// Returns:
+//   - votingInfo: voting information for the voter
+//   - err: nil on success, or an error if voting info does not exist
 func (gv *governanceV1) GetVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, error) {
 	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
@@ -241,6 +376,14 @@ func (gv *governanceV1) GetVotingInfo(proposalID int64, addr address) (*governan
 }
 
 // GetVoteWeight returns the voting weight of an address for a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - addr: voter address to query
+//
+// Returns:
+//   - voteWeight: voting weight applied by the voter
+//   - err: nil on success, or an error if voting info does not exist
 func (gv *governanceV1) GetVoteWeight(proposalID int64, addr address) (int64, error) {
 	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
@@ -250,6 +393,14 @@ func (gv *governanceV1) GetVoteWeight(proposalID int64, addr address) (int64, er
 }
 
 // GetVotedHeight returns the block height when an address voted on a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - addr: voter address to query
+//
+// Returns:
+//   - height: block height when the voter voted
+//   - err: nil on success, or an error if voting info does not exist
 func (gv *governanceV1) GetVotedHeight(proposalID int64, addr address) (int64, error) {
 	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
@@ -259,6 +410,14 @@ func (gv *governanceV1) GetVotedHeight(proposalID int64, addr address) (int64, e
 }
 
 // GetVotedAt returns the timestamp when an address voted on a proposal.
+//
+// Parameters:
+//   - proposalID: proposal ID to query
+//   - addr: voter address to query
+//
+// Returns:
+//   - timestamp: unix timestamp when the voter voted
+//   - err: nil on success, or an error if voting info does not exist
 func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error) {
 	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
@@ -267,8 +426,13 @@ func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error
 	return votingInfo.VotedAt(), nil
 }
 
-
 // GetUserProposalCount returns the number of proposals created by a user.
+//
+// Parameters:
+//   - user: proposer address to query
+//
+// Returns:
+//   - count: number of proposals created by the user
 func (gv *governanceV1) GetUserProposalCount(user address) int {
 	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
 	if !exists {
@@ -278,6 +442,14 @@ func (gv *governanceV1) GetUserProposalCount(user address) int {
 }
 
 // GetUserProposalIDs returns a paginated list of proposal IDs created by a user.
+//
+// Parameters:
+//   - user: proposer address to query
+//   - offset: starting offset
+//   - count: maximum number of IDs to return
+//
+// Returns:
+//   - proposalIDs: paginated proposal IDs created by the user
 func (gv *governanceV1) GetUserProposalIDs(user address, offset, count int) []int64 {
 	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
 	if !exists {
@@ -297,10 +469,13 @@ func (gv *governanceV1) GetUserProposalIDs(user address, offset, count int) []in
 	return proposalIDs[offset:end]
 }
 
-
 // GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
 // This is used by gov/staker to prevent cleanup of delegation history that is still needed
 // by active proposals for voting weight calculation.
+//
+// Returns:
+//   - oldestSnapshotTime: oldest snapshot time among currently active proposals
+//   - hasActiveProposal: true if at least one active proposal exists
 func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	currentTime := time.Now().Unix()
 	currentProposalID := gv.getCurrentProposalID()
@@ -330,13 +505,17 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	return oldestSnapshotTime, hasActiveProposal
 }
 
-
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
+//
+// Returns:
+//   - currentVotingWeight: current total voting weight snapshot
+//   - maxVotingWeight: current maximum voting weight snapshot
+//   - err: nil on success, or an error if the current config does not exist
 func (gv *governanceV1) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
 	current := time.Now().Unix()
 	config, ok := gv.getCurrentConfig()
 	if !ok {
-		return 0, 0, ufmt.Errorf("current config not found")
+		return 0, 0, errors.New("current config not found")
 	}
 
 	return gv.getVotingWeightSnapshot(current, config.VotingWeightSmoothingDuration)

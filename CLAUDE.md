@@ -39,7 +39,7 @@ contract/
 **Proxy pattern**: `User → Proxy (permanent) → Implementation v1 → Storage (KV, shared across versions)`
 
 - Proxy holds write permission. Implementation does NOT.
-- On `ChangeImplementation`: old write revoked. Dependent modules must manually re-register write access.
+- `ChangeImplementation` swaps the active implementation only; KVStore grants remain unchanged.
 - `r/rbac/` = authoritative role map. `r/access/` = synchronized mirror.
 - `r/halt/` pauses pool / staker / router / position / withdrawals independently.
 
@@ -161,7 +161,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | Transfer before state update | CEI violated; re-entry with stale state |
 | `Mul`/`lsh` without range check | Silent overflow corrupts AMM math |
 | Finite final warmup tier | Panic when block time passes it |
-| Upgrade without permission re-registration | Dependent modules lose write access |
+| Assuming upgrade rewrites permissions | `ChangeImplementation` leaves KVStore grants unchanged |
 | Halted emission not tolerated | Halt cascades to unrelated modules |
 | Fee transfer without `AddToProtocolFee` | Fees permanently locked |
 | Slippage on owed amounts (not received) | User receives less than minimum |

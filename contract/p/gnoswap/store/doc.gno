@@ -13,8 +13,8 @@
 //  1. **KVStore Interface**: Defines the contract for domain-specific storage operations.
 //  2. **kvStore Implementation**: Concrete implementation of the KVStore interface with
 //     permission management and data storage.
-//  3. **Permission System**: Three-level permission model (None, ReadOnly, Write) for
-//     controlling access to storage operations.
+//  3. **Permission System**: Domain-owned write access with optional Write grants
+//     for authorized callers.
 //  4. **Type-Safe Getters**: Strongly-typed getter methods with runtime type casting
 //     and validation.
 //
@@ -22,24 +22,25 @@
 //
 //   - **Domain Isolation**: Each domain has its own isolated storage space identified
 //     by its domain address.
-//   - **Permission-Based Access Control**: Fine-grained permissions (None, ReadOnly, Write)
-//     for authorized callers beyond the domain owner.
+//   - **Permission-Based Access Control**: Write permission for authorized callers
+//     beyond the domain owner.
 //   - **Type-Safe Operations**: Specialized getter methods (GetInt64, GetString, GetAddress,
 //     etc.) with automatic type casting and error handling.
-//   - **Runtime Permission Checks**: Automatic permission verification using runtime.CurrentRealm()
-//     to ensure only authorized callers can read or write data.
+//   - **Runtime Permission Checks**: Automatic write permission verification using
+//     runtime.CurrentRealm() for mutating operations.
 //   - **Authorized Caller Management**: Dynamic addition, update, and removal of authorized
 //     callers with specific permissions.
 //
 // ## Permission Model
 //
-// The package defines three permission levels:
+// The package defines one assignable permission level:
 //
-//   - **None (0)**: No access to the store.
-//   - **ReadOnly (1)**: Can read data but cannot modify.
-//   - **Write (2)**: Can both read and write data.
+//   - **Write (1)**: Can mutate data through Set/Delete.
 //
-// The domain address (owner) always has full Write permission and cannot be removed.
+// Zero-value or unknown permissions are invalid for registration. Callers not in
+// the authorized-caller table have no write access. Read methods do not enforce
+// caller permissions; realm-level APIs must gate sensitive reads themselves.
+// The domain address (owner) always has Write permission and cannot be removed.
 //
 // ## Workflow
 //
@@ -85,8 +86,8 @@
 //	        panic(err)
 //	    }
 //
-//	    // Update permission to write access
-//	    if err := kvStore.UpdateAuthorizedCaller(routerAddr, store.Write); err != nil {
+//	    // Grant write access to another authorized caller
+//	    if err := kvStore.AddAuthorizedCaller(routerAddr, store.Write); err != nil {
 //	        panic(err)
 //	    }
 //
@@ -113,7 +114,7 @@
 //
 // The store automatically verifies permissions during operations:
 //
-//   - **Read Operations**: `Get`, `GetInt64`, `GetString`, etc. check ReadOnly or Write permission.
+//   - **Read Operations**: `Get`, `GetInt64`, `GetString`, etc. do not check caller permission.
 //   - **Write Operations**: `Set` and `Delete` require Write permission.
 //   - **Management Operations**: `AddAuthorizedCaller`, `UpdateAuthorizedCaller`, and
 //     `RemoveAuthorizedCaller` can only be called by the domain address itself.
@@ -131,7 +132,7 @@
 // The package defines several error types:
 //
 //   - ErrKeyNotFound: Requested key does not exist in the store.
-//   - ErrReadPermissionDenied: Caller lacks read permission.
+//   - ErrReadPermissionDenied: Retained for compatibility; current read paths do not emit it.
 //   - ErrWritePermissionDenied: Caller lacks write permission.
 //   - ErrUpdatePermissionDenied: Only domain address can manage authorized callers.
 //   - ErrAuthorizedCallerAlreadyRegistered: Attempting to add an already registered caller.
@@ -154,6 +155,7 @@
 // ## Limitations and Considerations
 //
 //   - All stored values are of type `any`, requiring runtime type casting for retrieval.
+//   - Read methods are not permission-gated. Add realm-level checks for sensitive reads.
 //   - Permission management can only be performed by the domain address itself.
 //   - The domain address always has Write permission and cannot be removed from
 //     authorized callers.

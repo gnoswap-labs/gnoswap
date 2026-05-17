@@ -3,6 +3,7 @@ package position
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - token0: path of the first token
 //   - token1: path of the second token
 //   - fee: pool fee tier
@@ -42,6 +43,7 @@ func Mint(
 // IncreaseLiquidity adds liquidity to an existing position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - amount0DesiredStr: desired amount of token0
 //   - amount1DesiredStr: desired amount of token1
@@ -51,7 +53,7 @@ func Mint(
 //
 // Returns:
 //   - uint64: position ID
-//   - string: new liquidity amount
+//   - string: liquidity amount added
 //   - string: amount of token0 added
 //   - string: amount of token1 added
 //   - string: pool path
@@ -70,6 +72,7 @@ func IncreaseLiquidity(
 // DecreaseLiquidity removes liquidity from a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - liquidityStr: amount of liquidity to remove
 //   - amount0MinStr: minimum amount of token0
@@ -79,11 +82,11 @@ func IncreaseLiquidity(
 // Returns:
 //   - uint64: position ID
 //   - string: removed liquidity amount
-//   - string: amount of token0 removed
-//   - string: amount of token1 removed
+//   - string: token0 fee amount collected during the decrease
+//   - string: token1 fee amount collected during the decrease
+//   - string: token0 principal amount collected
+//   - string: token1 principal amount collected
 //   - string: pool path
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -98,6 +101,7 @@ func DecreaseLiquidity(
 // Reposition changes the tick range of a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - tickLower: new lower tick boundary
 //   - tickUpper: new upper tick boundary
@@ -131,6 +135,7 @@ func Reposition(
 // CollectFee collects accumulated fees from a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //
 // Returns:
@@ -138,8 +143,8 @@ func Reposition(
 //   - string: amount of token0 collected
 //   - string: amount of token1 collected
 //   - string: pool path
-//   - string: token0 path
-//   - string: token1 path
+//   - string: raw token0 amount before withdrawal fee
+//   - string: raw token1 amount before withdrawal fee
 func CollectFee(
 	cur realm,
 	positionId uint64,
@@ -150,6 +155,7 @@ func CollectFee(
 // SetPositionOperator sets an operator for a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - operator: address of the operator
 func SetPositionOperator(

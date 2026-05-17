@@ -59,7 +59,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "router has read permission",
+			name:                          "router can read without write permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/router"),
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
@@ -67,7 +67,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "position has read permission",
+			name:                          "position can read without write permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
@@ -75,7 +75,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "staker has read permission",
+			name:                          "staker can read without write permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,

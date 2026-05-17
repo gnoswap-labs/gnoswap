@@ -19,16 +19,24 @@ import (
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
-//   - token0, token1: token contract paths
+//   - token0: token0 contract path
+//   - token1: token1 contract path
 //   - fee: pool fee tier
-//   - tickLower, tickUpper: price range boundaries
-//   - amount0Desired, amount1Desired: desired token amounts
-//   - amount0Min, amount1Min: minimum acceptable amounts
+//   - tickLower: lower tick boundary
+//   - tickUpper: upper tick boundary
+//   - amount0Desired: desired token0 amount
+//   - amount1Desired: desired token1 amount
+//   - amount0Min: minimum acceptable token0 amount
+//   - amount1Min: minimum acceptable token1 amount
 //   - deadline: transaction deadline
 //   - mintTo: position NFT recipient
 //   - referrer: referral address
 //
-// Returns tokenId, liquidity, amount0, amount1.
+// Returns:
+//   - positionId: newly minted position NFT ID
+//   - liquidity: liquidity amount minted for the position
+//   - amount0: token0 amount actually deposited
+//   - amount1: token1 amount actually deposited
 // Note: Slippage protection via amount0Min/amount1Min.
 func (p *positionV1) Mint(
 	token0 string,
@@ -234,8 +242,10 @@ func (p *positionV1) IncreaseLiquidity(
 // Returns:
 //   - positionId: Same NFT ID
 //   - liquidity: Amount of liquidity removed (the delta)
-//   - fee0, fee1: Fees collected
-//   - amount0, amount1: Principal collected
+//   - fee0: Token0 fee amount collected during the decrease
+//   - fee1: Token1 fee amount collected during the decrease
+//   - amount0: Token0 principal collected
+//   - amount1: Token1 principal collected
 //   - poolPath: Pool identifier
 //
 // Note: Applies withdrawal fee on collected amounts.

@@ -21,7 +21,8 @@ import (
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
 //   - routeArr: Swap route (max 3 hops per path, multiple paths separated by comma)
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
@@ -78,14 +79,15 @@ func (r *routerV1) ExactInSwapRoute(
 
 // ExactInSingleSwapRoute swaps an exact amount of input tokens for output tokens through a single route.
 //
-// Executes single-hop swaps through a single specified route.
+// Executes a single-hop swap through a single specified route.
 // Allows price limit control via sqrtPriceLimitX96 parameter.
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
-//   - routeArr: Single swap route (just 1 hop)
+//   - routeArr: Single-hop route path
 //   - amountOutMin: Minimum acceptable output (slippage protection)
 //   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
 //   - deadline: Unix timestamp for expiration

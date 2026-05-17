@@ -38,7 +38,8 @@ import (
 //   - Sufficient GNS balance
 //   - Approval for GNS transfer
 //
-// Returns delegated amount.
+// Returns:
+//   - delegatedAmount: amount of GNS delegated and mirrored as xGNS
 func (gs *govStakerV1) Delegate(
 	to address,
 	amount int64,
@@ -117,7 +118,9 @@ func (gs *govStakerV1) Delegate(
 //   - Sufficient delegated amount
 //
 // After lockup period ends, use CollectUndelegatedGns() to claim GNS.
-// Returns undelegated amount.
+//
+// Returns:
+//   - undelegatedAmount: amount moved out of active delegation into undelegation lockup
 func (gs *govStakerV1) Undelegate(
 	from address,
 	amount int64,
@@ -186,7 +189,9 @@ func (gs *govStakerV1) Undelegate(
 //   - Cannot redelegate to same address
 //
 // No lockup period - instant redelegation.
-// Returns redelegated amount.
+//
+// Returns:
+//   - redelegatedAmount: amount moved from the current delegatee to the new delegatee
 func (gs *govStakerV1) Redelegate(
 	delegatee,
 	newDelegatee address,
@@ -247,6 +252,9 @@ func (gs *govStakerV1) Redelegate(
 // CollectUndelegatedGns collects undelegated GNS tokens.
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
+//
+// Returns:
+//   - collectedAmount: amount of undelegated GNS released to the caller after lockup expiry
 func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	halt.AssertIsNotHaltedWithdraw()
 
