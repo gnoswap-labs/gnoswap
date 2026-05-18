@@ -129,91 +129,95 @@ func main() {
 	testProtocolFeeDistributeAllowed()
 	println()
 
-	println("[SCENARIO] 8. gov_staker.CollectReward remains allowed")
+	println("[SCENARIO] 8. gov_staker.Undelegate remains allowed")
+	testGovStakerUndDelegateAllowed()
+	println()
+
+	println("[SCENARIO] 9. gov_staker.CollectReward remains allowed")
 	testGovStakerCollectAllowed()
 	println()
 
-	println("[SCENARIO] 9. gov_staker.CollectUndelegatedGns remains allowed")
+	println("[SCENARIO] 10. gov_staker.CollectUndelegatedGns remains allowed")
 	testGovStakerCollectUndelegatedAllowed()
 	println()
 
-	println("[SCENARIO] 10. launchpad.CollectRewardByDepositId remains allowed")
+	println("[SCENARIO] 11. launchpad.CollectRewardByDepositId remains allowed")
 	testLaunchpadCollectRewardAllowed()
 	println()
 
-	println("[SCENARIO] 11. launchpad.CollectDepositGns remains allowed")
+	println("[SCENARIO] 12. launchpad.CollectDepositGns remains allowed")
 	testLaunchpadCollectDepositAllowed()
 	println()
 
-	println("[SCENARIO] 12. launchpad.CollectProtocolFee remains allowed")
+	println("[SCENARIO] 13. launchpad.CollectProtocolFee remains allowed")
 	testLaunchpadCollectProtocolFeeAllowed()
 	println()
 
-	println("[SCENARIO] 13. community_pool.TransferToken remains allowed")
+	println("[SCENARIO] 14. community_pool.TransferToken remains allowed")
 	testCommunityPoolTransferAllowed()
 	println()
 
-	println("[SCENARIO] 14. pool.Burn remains allowed")
+	println("[SCENARIO] 15. pool.Burn remains allowed")
 	testPoolBurnAllowed()
 	println()
 
-	println("[SCENARIO] 15. pool.Collect remains allowed")
+	println("[SCENARIO] 16. pool.Collect remains allowed")
 	testPoolCollectAllowed()
 	println()
 
-	println("[SCENARIO] 16. pool.HandleWithdrawalFee remains allowed")
+	println("[SCENARIO] 17. pool.HandleWithdrawalFee remains allowed")
 	testPoolHandleWithdrawalFeeAllowed()
 	println()
 
-	println("[SCENARIO] 17. pool.CollectProtocol remains allowed")
+	println("[SCENARIO] 18. pool.CollectProtocol remains allowed")
 	testPoolCollectProtocolAllowed()
 	println()
 
-	println("[SCENARIO] 18. staker.EndExternalIncentive remains allowed")
+	println("[SCENARIO] 19. staker.EndExternalIncentive remains allowed")
 	testStakerEndExternalIncentiveAllowed()
 	println()
 
-	println("[SCENARIO] 19. staker.CollectExternalIncentivePenalty remains allowed")
+	println("[SCENARIO] 20. staker.CollectExternalIncentivePenalty remains allowed")
 	testStakerCollectExternalIncentivePenaltyAllowed()
 	println()
 
-	println("[SCENARIO] 20. gov_staker.CollectRewardFromLaunchPad remains allowed")
+	println("[SCENARIO] 21. gov_staker.CollectRewardFromLaunchPad remains allowed")
 	testGovStakerCollectRewardFromLaunchPadAllowed()
 	println()
 
-	println("[SCENARIO] 21. gov_staker.SetAmountByProjectWallet(add=false) remains allowed")
+	println("[SCENARIO] 22. gov_staker.SetAmountByProjectWallet(add=false) remains allowed")
 	testGovStakerSetAmountByProjectWalletRemoveAllowed()
 	println()
 
-	println("[SCENARIO] 22. xgns.Burn remains allowed")
+	println("[SCENARIO] 23. xgns.Burn remains allowed")
 	testXGnsBurnAllowed()
 	println()
 
-	println("[SCENARIO] 23. governance.ProposeText remains allowed")
+	println("[SCENARIO] 24. governance.ProposeText remains allowed")
 	testGovernanceProposeTextAllowed()
 	println()
 
-	println("[SCENARIO] 24. governance.Cancel remains allowed")
+	println("[SCENARIO] 25. governance.Cancel remains allowed")
 	testGovernanceCancelAllowed()
 	println()
 
-	println("[SCENARIO] 25. governance.ProposeCommunityPoolSpend remains allowed")
+	println("[SCENARIO] 26. governance.ProposeCommunityPoolSpend remains allowed")
 	testGovernanceProposeCommunityPoolSpendAllowed()
 	println()
 
-	println("[SCENARIO] 26. governance.ProposeParameterChange remains allowed")
+	println("[SCENARIO] 27. governance.ProposeParameterChange remains allowed")
 	testGovernanceProposeParameterChangeAllowed()
 	println()
 
-	println("[SCENARIO] 27. governance.Vote remains allowed")
+	println("[SCENARIO] 28. governance.Vote remains allowed")
 	testGovernanceVoteAllowed()
 	println()
 
-	println("[SCENARIO] 28. governance.Execute remains allowed")
+	println("[SCENARIO] 29. governance.Execute remains allowed")
 	testGovernanceExecuteAllowed()
 	println()
 
-	println("[SCENARIO] 29. governance.Reconfigure remains allowed")
+	println("[SCENARIO] 30. governance.Reconfigure remains allowed")
 	testGovernanceReconfigureAllowed()
 	println()
 }
@@ -376,6 +380,12 @@ func testStakerUnstakeAllowed() {
 	ufmt.Println("[EXPECTED] staker.UnStakeToken succeeded in emergency mode")
 }
 
+func testGovStakerUndDelegateAllowed() {
+	testing.SetRealm(bobRealm2)
+	govstaker.Undelegate(cross, bobAddr2, undelegatedAmount)
+	ufmt.Println("[EXPECTED] gov_staker.Undelegate succeeded in emergency mode")
+}
+
 func testGovStakerCollectAllowed() {
 	testing.SetRealm(bobRealm2)
 	beforeGnsBalance := gns.BalanceOf(bobAddr2)
@@ -391,8 +401,8 @@ func testGovStakerCollectUndelegatedAllowed() {
 	testing.SetRealm(bobRealm2)
 	beforeGnsBalance := gns.BalanceOf(bobAddr2)
 	collectedAmount := govstaker.CollectUndelegatedGns(cross)
-	uassert.Equal(t, undelegatedAmount, collectedAmount)
-	uassert.Equal(t, beforeGnsBalance+undelegatedAmount, gns.BalanceOf(bobAddr2))
+	afterGnsBalance := gns.BalanceOf(bobAddr2)
+	uassert.Equal(t, afterGnsBalance-beforeGnsBalance, collectedAmount)
 	ufmt.Printf("[EXPECTED] gov_staker.CollectUndelegatedGns amount: %d\n", collectedAmount)
 	ufmt.Println("[EXPECTED] gov_staker.CollectUndelegatedGns succeeded in emergency mode")
 }
@@ -649,90 +659,93 @@ func assertPositiveString(value string, label string) {
 // [EXPECTED] protocol_fee.DistributeProtocolFee BAR amount: 1000000
 // [EXPECTED] protocol_fee.DistributeProtocolFee succeeded in emergency mode
 //
-// [SCENARIO] 8. gov_staker.CollectReward remains allowed
+// [SCENARIO] 8. gov_staker.Undelegate remains allowed
+// [EXPECTED] gov_staker.Undelegate succeeded in emergency mode
+//
+// [SCENARIO] 9. gov_staker.CollectReward remains allowed
 // [EXPECTED] gov_staker.CollectReward GNS delta: 0, BAR delta: 500
 // [EXPECTED] gov_staker.CollectReward succeeded in emergency mode
 //
-// [SCENARIO] 9. gov_staker.CollectUndelegatedGns remains allowed
-// [EXPECTED] gov_staker.CollectUndelegatedGns amount: 1000000
+// [SCENARIO] 10. gov_staker.CollectUndelegatedGns remains allowed
+// [EXPECTED] gov_staker.CollectUndelegatedGns amount: 2000000
 // [EXPECTED] gov_staker.CollectUndelegatedGns succeeded in emergency mode
 //
-// [SCENARIO] 10. launchpad.CollectRewardByDepositId remains allowed
+// [SCENARIO] 11. launchpad.CollectRewardByDepositId remains allowed
 // [EXPECTED] launchpad.CollectRewardByDepositId OBL amount: 99999999
 // [EXPECTED] launchpad.CollectRewardByDepositId succeeded in emergency mode
 //
-// [SCENARIO] 11. launchpad.CollectDepositGns remains allowed
+// [SCENARIO] 12. launchpad.CollectDepositGns remains allowed
 // [EXPECTED] launchpad.CollectDepositGns amount: 1000000000
 // [EXPECTED] launchpad.CollectDepositGns succeeded in emergency mode
 //
-// [SCENARIO] 12. launchpad.CollectProtocolFee remains allowed
+// [SCENARIO] 13. launchpad.CollectProtocolFee remains allowed
 // [EXPECTED] launchpad.CollectProtocolFee BAR delta: 125062
 // [EXPECTED] launchpad.CollectProtocolFee succeeded in emergency mode
 //
-// [SCENARIO] 13. community_pool.TransferToken remains allowed
+// [SCENARIO] 14. community_pool.TransferToken remains allowed
 // [EXPECTED] community_pool.TransferToken amount: 1
 // [EXPECTED] community_pool.TransferToken succeeded in emergency mode
 //
-// [SCENARIO] 14. pool.Burn remains allowed
+// [SCENARIO] 15. pool.Burn remains allowed
 // [EXPECTED] pool.Burn amount0: 5, amount1: 5
 // [EXPECTED] pool.Burn succeeded in emergency mode
 //
-// [SCENARIO] 15. pool.Collect remains allowed
+// [SCENARIO] 16. pool.Collect remains allowed
 // [EXPECTED] pool.Collect amount0: 17, amount1: 17
 // [EXPECTED] pool.Collect succeeded in emergency mode
 //
-// [SCENARIO] 16. pool.HandleWithdrawalFee remains allowed
+// [SCENARIO] 17. pool.HandleWithdrawalFee remains allowed
 // [EXPECTED] pool.HandleWithdrawalFee fee0: 10, fee1: 10, net0: 990, net1: 990
 // [EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode
 //
-// [SCENARIO] 17. pool.CollectProtocol remains allowed
+// [SCENARIO] 18. pool.CollectProtocol remains allowed
 // [EXPECTED] pool.CollectProtocol amount0: 1000, amount1: 1000
 // [EXPECTED] pool.CollectProtocol succeeded in emergency mode
 //
-// [SCENARIO] 18. staker.EndExternalIncentive remains allowed
+// [SCENARIO] 19. staker.EndExternalIncentive remains allowed
 // [EXPECTED] staker.EndExternalIncentive BAR delta: 1000000000, GNS delta: 1000000000
 // [EXPECTED] staker.EndExternalIncentive succeeded in emergency mode
 //
-// [SCENARIO] 19. staker.CollectExternalIncentivePenalty remains allowed
+// [SCENARIO] 20. staker.CollectExternalIncentivePenalty remains allowed
 // [EXPECTED] staker.CollectExternalIncentivePenalty amount: 0
 // [EXPECTED] staker.CollectExternalIncentivePenalty succeeded in emergency mode
 //
-// [SCENARIO] 20. gov_staker.CollectRewardFromLaunchPad remains allowed
+// [SCENARIO] 21. gov_staker.CollectRewardFromLaunchPad remains allowed
 // [EXPECTED] gov_staker.CollectRewardFromLaunchPad BAR delta: 125062, GNS delta: 0
 // [EXPECTED] gov_staker.CollectRewardFromLaunchPad succeeded in emergency mode
 //
-// [SCENARIO] 21. gov_staker.SetAmountByProjectWallet(add=false) remains allowed
+// [SCENARIO] 22. gov_staker.SetAmountByProjectWallet(add=false) remains allowed
 // [EXPECTED] gov_staker.SetAmountByProjectWallet(add=false) amount: 1
 // [EXPECTED] gov_staker.SetAmountByProjectWallet(add=false) succeeded in emergency mode
 //
-// [SCENARIO] 22. xgns.Burn remains allowed
+// [SCENARIO] 23. xgns.Burn remains allowed
 // [EXPECTED] xgns.Burn amount: 1
 // [EXPECTED] xgns.Burn succeeded in emergency mode
 //
-// [SCENARIO] 23. governance.ProposeText remains allowed
+// [SCENARIO] 24. governance.ProposeText remains allowed
 // [EXPECTED] governance.ProposeText proposalId: 1
 // [EXPECTED] governance.ProposeText succeeded in emergency mode
 //
-// [SCENARIO] 24. governance.Cancel remains allowed
+// [SCENARIO] 25. governance.Cancel remains allowed
 // [EXPECTED] governance.Cancel proposalId: 1
 // [EXPECTED] governance.Cancel succeeded in emergency mode
 //
-// [SCENARIO] 25. governance.ProposeCommunityPoolSpend remains allowed
+// [SCENARIO] 26. governance.ProposeCommunityPoolSpend remains allowed
 // [EXPECTED] governance.ProposeCommunityPoolSpend proposalId: 2
 // [EXPECTED] governance.ProposeCommunityPoolSpend succeeded in emergency mode
 //
-// [SCENARIO] 26. governance.ProposeParameterChange remains allowed
+// [SCENARIO] 27. governance.ProposeParameterChange remains allowed
 // [EXPECTED] governance.ProposeParameterChange proposalId: 3
 // [EXPECTED] governance.ProposeParameterChange succeeded in emergency mode
 //
-// [SCENARIO] 27. governance.Vote remains allowed
+// [SCENARIO] 28. governance.Vote remains allowed
 // [EXPECTED] governance.Vote alice: 1000000000, carol: 1000000000
 // [EXPECTED] governance.Vote succeeded in emergency mode
 //
-// [SCENARIO] 28. governance.Execute remains allowed
+// [SCENARIO] 29. governance.Execute remains allowed
 // [EXPECTED] governance.Execute proposalId: 3
 // [EXPECTED] governance.Execute succeeded in emergency mode
 //
-// [SCENARIO] 29. governance.Reconfigure remains allowed
+// [SCENARIO] 30. governance.Reconfigure remains allowed
 // [EXPECTED] governance.Reconfigure version: 3
 // [EXPECTED] governance.Reconfigure succeeded in emergency mode

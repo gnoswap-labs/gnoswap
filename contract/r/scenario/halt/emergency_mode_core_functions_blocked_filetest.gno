@@ -233,12 +233,6 @@ func testBlockedEntriesOneByOne() {
 	})
 	printBlockedExpected("gov_staker", "Delegate", "gov_staker")
 
-	printBlockedScenario("gov_staker", "Undelegate")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.Undelegate(cross, bobAddr, 1000000)
-	})
-	printBlockedExpected("gov_staker", "Undelegate", "gov_staker")
-
 	printBlockedScenario("gov_staker", "Redelegate")
 	uassert.AbortsContains(t, "halted: gov_staker", func() {
 		govstaker.Redelegate(cross, bobAddr, aliceAddr, 1000000)
@@ -500,95 +494,92 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 18. gov_staker.Delegate is blocked
 // [EXPECTED] gov_staker.Delegate blocked by gov_staker halt
 //
-// [SCENARIO] 19. gov_staker.Undelegate is blocked
-// [EXPECTED] gov_staker.Undelegate blocked by gov_staker halt
-//
-// [SCENARIO] 20. gov_staker.Redelegate is blocked
+// [SCENARIO] 19. gov_staker.Redelegate is blocked
 // [EXPECTED] gov_staker.Redelegate blocked by gov_staker halt
 //
-// [SCENARIO] 21. launchpad.CreateProject is blocked
+// [SCENARIO] 20. launchpad.CreateProject is blocked
 // [EXPECTED] launchpad.CreateProject blocked by launchpad halt
 //
-// [SCENARIO] 22. launchpad.DepositGns is blocked
+// [SCENARIO] 21. launchpad.DepositGns is blocked
 // [EXPECTED] launchpad.DepositGns blocked by launchpad halt
 //
-// [SCENARIO] 23. launchpad.TransferLeftFromProjectByAdmin is blocked
+// [SCENARIO] 22. launchpad.TransferLeftFromProjectByAdmin is blocked
 // [EXPECTED] launchpad.TransferLeftFromProjectByAdmin blocked by launchpad halt
 //
-// [SCENARIO] 24. pool.SetPoolCreationFee is blocked
+// [SCENARIO] 23. pool.SetPoolCreationFee is blocked
 // [EXPECTED] pool.SetPoolCreationFee blocked by pool halt
 //
-// [SCENARIO] 25. pool.SetWithdrawalFee is blocked
+// [SCENARIO] 24. pool.SetWithdrawalFee is blocked
 // [EXPECTED] pool.SetWithdrawalFee blocked by pool halt
 //
-// [SCENARIO] 26. pool.SetFeeProtocol is blocked
+// [SCENARIO] 25. pool.SetFeeProtocol is blocked
 // [EXPECTED] pool.SetFeeProtocol blocked by pool halt
 //
-// [SCENARIO] 27. router.SetSwapFee is blocked
+// [SCENARIO] 26. router.SetSwapFee is blocked
 // [EXPECTED] router.SetSwapFee blocked by router halt
 //
-// [SCENARIO] 28. staker.SetPoolTier is blocked
+// [SCENARIO] 27. staker.SetPoolTier is blocked
 // [EXPECTED] staker.SetPoolTier blocked by staker halt
 //
-// [SCENARIO] 29. staker.ChangePoolTier is blocked
+// [SCENARIO] 28. staker.ChangePoolTier is blocked
 // [EXPECTED] staker.ChangePoolTier blocked by staker halt
 //
-// [SCENARIO] 30. staker.RemovePoolTier is blocked
+// [SCENARIO] 29. staker.RemovePoolTier is blocked
 // [EXPECTED] staker.RemovePoolTier blocked by staker halt
 //
-// [SCENARIO] 31. staker.SetWarmUp is blocked
+// [SCENARIO] 30. staker.SetWarmUp is blocked
 // [EXPECTED] staker.SetWarmUp blocked by staker halt
 //
-// [SCENARIO] 32. staker.SetDepositGnsAmount is blocked
+// [SCENARIO] 31. staker.SetDepositGnsAmount is blocked
 // [EXPECTED] staker.SetDepositGnsAmount blocked by staker halt
 //
-// [SCENARIO] 33. staker.SetMinimumRewardAmount is blocked
+// [SCENARIO] 32. staker.SetMinimumRewardAmount is blocked
 // [EXPECTED] staker.SetMinimumRewardAmount blocked by staker halt
 //
-// [SCENARIO] 34. staker.SetTokenMinimumRewardAmount is blocked
+// [SCENARIO] 33. staker.SetTokenMinimumRewardAmount is blocked
 // [EXPECTED] staker.SetTokenMinimumRewardAmount blocked by staker halt
 //
-// [SCENARIO] 35. staker.SetUnStakingFee is blocked
+// [SCENARIO] 34. staker.SetUnStakingFee is blocked
 // [EXPECTED] staker.SetUnStakingFee blocked by staker halt
 //
-// [SCENARIO] 36. protocol_fee.SetDevOpsPct is blocked
+// [SCENARIO] 35. protocol_fee.SetDevOpsPct is blocked
 // [EXPECTED] protocol_fee.SetDevOpsPct blocked by protocol_fee halt
 //
-// [SCENARIO] 37. protocol_fee.SetGovStakerPct is blocked
+// [SCENARIO] 36. protocol_fee.SetGovStakerPct is blocked
 // [EXPECTED] protocol_fee.SetGovStakerPct blocked by protocol_fee halt
 //
-// [SCENARIO] 38. protocol_fee.AddToProtocolFee is blocked
+// [SCENARIO] 37. protocol_fee.AddToProtocolFee is blocked
 // [EXPECTED] protocol_fee.AddToProtocolFee blocked by protocol_fee halt
 //
-// [SCENARIO] 39. gov_staker.SetAmountByProjectWallet is blocked
+// [SCENARIO] 38. gov_staker.SetAmountByProjectWallet is blocked
 // [EXPECTED] gov_staker.SetAmountByProjectWallet blocked by gov_staker halt
 //
-// [SCENARIO] 40. gov_staker.CleanStakerDelegationSnapshotByAdmin is blocked
+// [SCENARIO] 39. gov_staker.CleanStakerDelegationSnapshotByAdmin is blocked
 // [EXPECTED] gov_staker.CleanStakerDelegationSnapshotByAdmin blocked by gov_staker halt
 //
-// [SCENARIO] 41. gov_staker.SetUnDelegationLockupPeriodByAdmin is blocked
+// [SCENARIO] 40. gov_staker.SetUnDelegationLockupPeriodByAdmin is blocked
 // [EXPECTED] gov_staker.SetUnDelegationLockupPeriodByAdmin blocked by gov_staker halt
 //
-// [SCENARIO] 42. emission.SetDistributionStartTime is blocked
+// [SCENARIO] 41. emission.SetDistributionStartTime is blocked
 // [EXPECTED] emission.SetDistributionStartTime blocked by emission halt
 //
-// [SCENARIO] 43. emission.ChangeDistributionPct is blocked
+// [SCENARIO] 42. emission.ChangeDistributionPct is blocked
 // [EXPECTED] emission.ChangeDistributionPct blocked by emission halt
 //
-// [SCENARIO] 44. position.IncreaseLiquidity is blocked
+// [SCENARIO] 43. position.IncreaseLiquidity is blocked
 // [EXPECTED] position.IncreaseLiquidity blocked by position halt
 //
-// [SCENARIO] 45. position.Reposition is blocked
+// [SCENARIO] 44. position.Reposition is blocked
 // [EXPECTED] position.Reposition blocked by position halt
 //
-// [SCENARIO] 46. staker.CreateExternalIncentive is blocked
+// [SCENARIO] 45. staker.CreateExternalIncentive is blocked
 // [EXPECTED] staker.CreateExternalIncentive blocked by staker halt
 //
-// [SCENARIO] 47. staker.AddToken is blocked
+// [SCENARIO] 46. staker.AddToken is blocked
 // [EXPECTED] staker.AddToken blocked by staker halt
 //
-// [SCENARIO] 48. staker.RemoveToken is blocked
+// [SCENARIO] 47. staker.RemoveToken is blocked
 // [EXPECTED] staker.RemoveToken blocked by staker halt
 //
-// [SCENARIO] 49. xgns.Mint is blocked
+// [SCENARIO] 48. xgns.Mint is blocked
 // [EXPECTED] xgns.Mint blocked by xgns halt
