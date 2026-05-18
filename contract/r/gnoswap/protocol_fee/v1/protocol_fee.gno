@@ -184,6 +184,14 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 
+	chain.Emit(
+		"AddToProtocolFee",
+		"prevAddr", caller.String(),
+		"prevRealm", runtime.PreviousRealm().PkgPath(),
+		"tokenPath", tokenPath,
+		"amount", strconv.FormatInt(amount, 10),
+	)
+
 	return nil
 }
 
