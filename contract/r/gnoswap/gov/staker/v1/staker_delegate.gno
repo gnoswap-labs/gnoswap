@@ -122,7 +122,7 @@ func (gs *govStakerV1) Undelegate(
 	from address,
 	amount int64,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
 
 	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
