@@ -23,7 +23,7 @@ TEST_TOKEN_NAMES := atom atone btc dai eth photon sol trx usdc usdt
 deploy-test-tokens: $(addprefix deploy-,$(TEST_TOKEN_NAMES))
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-store deploy-version_manager
+deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-store deploy-version_manager deploy-deps-tokens-grc721
 
 .PHONY: deploy-base-contracts
 deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission deploy-common deploy-community_pool deploy-gnft deploy-xgns
@@ -33,6 +33,11 @@ deploy-gnoswap-realms: deploy-protocol_fee deploy-pool deploy-position deploy-ro
 
 .PHONY: deploy-gnoswap-impl-v1
 deploy-gnoswap-impl-v1: deploy-protocol_fee-v1 deploy-pool-v1 deploy-position-v1 deploy-router-v1 deploy-staker-v1 deploy-gov-staker-v1 deploy-governance-v1 deploy-launchpad-v1
+
+deploy-deps-tokens-grc721:
+	$(info ************ deploy deps-token-grc721 ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/deps/tokens/grc721 -pkgpath gno.land/p/gnoswap/deps/grc721 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 54914ugnot -gas-wanted 54914000 -memo "" gnoswap_admin
+	@echo
 
 deploy-gnsmath:
 	$(info ************ deploy gnsmath ************)
