@@ -44,6 +44,7 @@ Refunds unclaimed rewards to project.
 ```go
 // Create project
 projectId := CreateProject(
+    cross,
     name, tokenPath, recipient, amount,
     conditionTokens, conditionAmounts,
     tier30Ratio, tier90Ratio, tier180Ratio,
@@ -51,13 +52,13 @@ projectId := CreateProject(
 )
 
 // Stake GNS
-depositId := DepositGns(projectTierId, amount, referrer)
+depositId := DepositGns(cross, projectTierId, amount, referrer)
 
 // Collect rewards
-CollectRewardByDepositId(depositId)
+CollectRewardByDepositId(cross, depositId)
 
 // Withdraw after lock period
-CollectDepositGns(depositId)
+CollectDepositGns(cross, depositId)
 ```
 
 ## Security

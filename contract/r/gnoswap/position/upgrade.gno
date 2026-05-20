@@ -61,6 +61,9 @@ func UpgradeImpl(cur realm, packagePath string) {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: package path of the active implementation
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

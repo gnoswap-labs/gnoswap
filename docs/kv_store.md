@@ -2,25 +2,27 @@
 
 ## KV Store
 
-Permission model: `None(0)` → `ReadOnly(1)` → `Write(2)`.
+Permission model: unregistered callers have no write access; registered callers can only be granted `Write`.
 
 ### Rules
 
-- `UpdateAuthorizedCaller` accepts `ReadOnly` and `Write` only. `None` must use `RemoveAuthorizedCaller` — passing `None` to update escalates `None` to `ReadOnly`.
+- `AddAuthorizedCaller` and `UpdateAuthorizedCaller` accept `Write` only. Any zero or unknown permission value returns `ErrInvalidPermission`.
+- `Get` and typed getters do not enforce read permissions. Sensitive read restrictions must be implemented by the realm exposing the data.
+- Use `RemoveAuthorizedCaller` to revoke write access completely.
 - Implementation realms must NOT receive `Write` permission (proxy already holds it).
-- After every upgrade, audit the full authorized-caller table for each domain store.
+- Upgrades do not change the authorized-caller table; audit it only when introducing new cross-domain writers.
 
 ## Version Manager
 
 ### Rules
 
-- `ChangeImplementation` revokes write from all previous callers, then grants write to new implementation. This is the single source of permission change — do not bypass it.
+- `ChangeImplementation` swaps the active implementation instance. Storage write access remains with the domain proxy realm through preserved realm context.
 - Same-version upgrade triggers re-initialization. Ensure initializer handles this without corrupting existing state.
 - Rollback is possible (activate a previous registered version). Test rollback paths.
-- On upgrade: dependent modules (e.g., staker → emission) must manually re-register write access.
+- Dependent modules keep existing write grants across implementation switches; re-register only when the set of authorized writers actually changes.
 
 ## Pitfalls
 
-- `UpdateAuthorizedCaller` with `None` → silent permission escalation.
-- Upgrade without permission re-registration → dependent modules lose write access.
+- Granting implementation realms direct `Write` access → bypasses the proxy-mediated storage model.
+- Assuming implementation switches repair permission mistakes → `ChangeImplementation` does not change KVStore grants.
 - Re-initialization on same-version upgrade → potential state corruption if not idempotent.

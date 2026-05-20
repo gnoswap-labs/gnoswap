@@ -36,13 +36,14 @@ type ProtocolFee interface {
 // protocol_fee/protocol_fee.gno
 package protocol_fee
 
-import "gno.land/p/gnoswap/version_manager"
 import "gno.land/p/gnoswap/store"
+import "gno.land/p/gnoswap/version_manager"
+import "chain/runtime"
 
 var manager version_manager.VersionManager
 
 func init() {
-    kvStore := store.NewKVStore("protocol_fee")
+    kvStore := store.NewKVStore(runtime.CurrentRealm().Address())
 
     manager = version_manager.NewVersionManager(
         "gno.land/r/gnoswap/protocol_fee",

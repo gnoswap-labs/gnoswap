@@ -21,7 +21,8 @@ import (
 //   - depositAmount: amount of GNS to deposit
 //   - referrer: referral address (optional)
 //
-// Returns deposit ID.
+// Returns:
+//   - depositID: newly created deposit ID
 func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int64, referrer string) string {
 	halt.AssertIsNotHaltedLaunchpad()
 

@@ -51,7 +51,8 @@ func (k *kvStore) Has(key string) bool {
 }
 
 // Get retrieves a value by key
-// Checks read permission before returning the value
+// Read access is not permission-gated; realms exposing sensitive values must
+// enforce their own read policy before calling into the store.
 func (k *kvStore) Get(key string) (any, error) {
 	value, exists := k.data[k.makeKey(key)]
 	if !exists {
@@ -263,7 +264,7 @@ func (k *kvStore) makeKey(key string) string {
 	return string(k.domainAddress) + ":" + key
 }
 
-// isValidPermission ensures only ReadOnly and Write permissions are assignable via registration APIs.
+// isValidPermission ensures only Write permission is assignable via registration APIs.
 func isValidPermission(permission Permission) bool {
 	return permission == Write
 }

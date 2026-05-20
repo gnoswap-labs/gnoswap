@@ -228,10 +228,10 @@ The executor acts as both LP (losing value to slippage) and arbitrageur (gaining
 
 ```
 // Atomic recovery for griefed pool
-1. position.Mint(fullRange, largeAmount)  // Add liquidity
-2. router.Swap(correctPrice)               // Fix price via arbitrage
-3. position.Burn(positionId)               // Remove liquidity
-4. position.Collect(positionId)            // Collect tokens
+1. position.Mint(cross, ..., fullRange, largeAmount, ...)  // Add liquidity
+2. router.ExactInSwapRoute(cross, ..., targetRoute, ...)    // Fix price via arbitrage
+3. position.DecreaseLiquidity(cross, positionId, ...)       // Remove liquidity and collect principal
+4. position.CollectFee(cross, positionId)                   // Collect any remaining fees
 ```
 
 **Prevention**:

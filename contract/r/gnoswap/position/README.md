@@ -10,7 +10,7 @@ Each liquidity position is a unique GRC721 NFT containing pool identifier, price
 
 - **Withdrawal Fee**: 1% on collected fees
 - **Max Position Size**: No limit
-- **Transfer Restrictions**: Non-transferable NFTs
+- **Transfer Restrictions**: User transfers are disabled; only staker-mediated transfers are allowed
 
 ## Core Functions
 
@@ -41,7 +41,8 @@ Removes liquidity while keeping NFT.
 Claims accumulated swap fees.
 
 - No liquidity removal required
-- 1% protocol fees applied
+- Returns net collected amounts plus the raw pre-withdrawal-fee amounts
+- 1% withdrawal fee applied to collected fees
 
 ### `Reposition`
 
@@ -123,6 +124,7 @@ amount1 = L * (sqrtCurrent - sqrtLower)
 ```go
 // Mint new position
 tokenId, liquidity, amount0, amount1 := Mint(
+    cross,
     "gno.land/r/onbloc/weth",  // token0
     "gno.land/r/gnoswap/test_token/test_usdc",  // token1
     3000,                      // fee
@@ -138,7 +140,8 @@ tokenId, liquidity, amount0, amount1 := Mint(
 )
 
 // Add liquidity
-positionId, liquidity, amount0, amount1, refund := IncreaseLiquidity(
+positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
+    cross,
     tokenId,
     "500000",
     "1000000000",
@@ -148,13 +151,14 @@ positionId, liquidity, amount0, amount1, refund := IncreaseLiquidity(
 )
 
 // Collect fees
-positionId, token0Path, token1Path, fee0, fee1, poolPath := CollectFee(
+positionId, collected0, collected1, poolPath, rawAmount0, rawAmount1 := CollectFee(
+    cross,
     tokenId,
-    false,  // unwrapResult
 )
 
 // Reposition to new range (requires cleared position)
 positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
+    cross,
     tokenId,
     -443610,                   // new tickLower
     443610,                    // new tickUpper
@@ -171,5 +175,5 @@ positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
 - Tick range validation prevents invalid positions
 - Slippage protection on all operations
 - Deadline prevents stale transactions
-- Position NFTs are non-transferable
-- Only owner can manage their positions
+- Position NFTs can only move through staker-mediated transfer flows
+- Liquidity changes and repositioning require the owner; fee collection also allows an approved operator

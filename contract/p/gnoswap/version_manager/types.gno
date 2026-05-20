@@ -8,7 +8,7 @@ package version_manager
 //   - Enable zero-downtime upgrades through hot-swapping implementations
 //   - Maintain a single source of truth for storage across all versions
 //   - Enforce security through domain-scoped registration
-//   - Support backward compatibility by keeping old versions available in read-only mode
+//   - Support rollback by keeping old versions registered for later activation
 //
 // Implementation Note:
 // The actual implementations of each version must satisfy a common domain interface
@@ -16,12 +16,12 @@ package version_manager
 type VersionManager interface {
 	// RegisterInitializer registers a version's implementation.
 	// Must be called by each version package during initialization.
-	// First registration becomes the active implementation with write access.
-	// Subsequent registrations are granted read-only access.
+	// First registration becomes the active implementation.
+	// Subsequent registrations are stored for later activation.
 	RegisterInitializer(initializer func(store any) any) error
 
 	// ChangeImplementation switches the active version at runtime.
-	// The new active version gets write access, while others remain read-only.
+	// KVStore permissions remain with the domain proxy realm; implementations are not granted direct write access.
 	// This enables hot-swapping without downtime or data migration.
 	ChangeImplementation(packagePath string) error
 

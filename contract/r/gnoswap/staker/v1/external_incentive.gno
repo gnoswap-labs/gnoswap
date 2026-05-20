@@ -128,8 +128,8 @@ func (s *stakerV1) CreateExternalIncentive(
 // Process:
 //  1. Validates incentive end time reached
 //  2. Calculates remaining and unclaimable rewards
-//  3. Refunds rewards to original creator
-//  4. Returns 100 GNS deposit
+//  3. Refunds rewards to the provided refund address
+//  4. Returns the configured GNS deposit to the provided refund address
 //  5. Removes incentive from active list
 //
 // Only callable by Creator or Admin.

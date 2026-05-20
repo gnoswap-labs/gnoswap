@@ -12,9 +12,9 @@ type Config struct {
 	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
 	// for proposal creation and cancellation threshold calculations (in seconds)
 	VotingWeightSmoothingDuration int64
-	// Quorum is the percentage of total GNS supply required for proposal approval
+	// Quorum is the percentage of the proposal's snapshotted maximum voting weight required for approval.
 	Quorum int64
-	// ProposalCreationThreshold is the minimum average voting weight required to create a proposal
+	// ProposalCreationThreshold is the minimum GNS balance required for a proposer to create a proposal.
 	ProposalCreationThreshold int64
 	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
 	ExecutionDelay int64

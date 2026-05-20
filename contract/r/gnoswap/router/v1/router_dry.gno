@@ -127,8 +127,10 @@ func (p *SwapProcessor) ValidateSwapResults(
 // AddSwapResults safely adds swap result amounts, checking for overflow.
 //
 // Parameters:
-//   - resultAmountIn, resultAmountOut: Accumulated results from previous routes
-//   - amountIn, amountOut: Results from current route
+//   - resultAmountIn: Accumulated input amount from previous routes
+//   - resultAmountOut: Accumulated output amount from previous routes
+//   - amountIn: Input amount from the current route
+//   - amountOut: Output amount from the current route
 //
 // Returns:
 //   - newAmountIn: resultAmountIn + amountIn
@@ -149,7 +151,8 @@ func (p *SwapProcessor) AddSwapResults(
 // Useful for price quotes, UI previews, and slippage estimation.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - specifiedAmount: Input amount (ExactIn) or output amount (ExactOut)
 //   - swapTypeStr: "EXACT_IN" or "EXACT_OUT"
 //   - strRouteArr: Swap routes (comma-separated, max 7)
