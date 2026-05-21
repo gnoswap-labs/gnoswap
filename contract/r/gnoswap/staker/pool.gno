@@ -14,11 +14,11 @@ import (
 
 const AllTierCount = 4 // 0, 1, 2, 3
 
-// q128Pool is 2^128, used to scale rewardPerSecond so that sub-integer rates
+// q128 is 2^128, used to scale rewardPerSecond so that sub-integer rates
 // (e.g. 10_000_000 / 3600 = 2777.77...) do not lose precision over the
 // lifetime of an incentive. Mirrors the q128 constant used by the v1 reward
 // calculator; kept package-local here because staker depends on neither.
-var q128Pool = u256.MustFromDecimal("340282366920938463463374607431768211456")
+var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pool is a struct for storing an incentivized pool information
 // Each pool stores Incentives and Ticks associated with it.
@@ -548,7 +548,7 @@ func NewExternalIncentive(
 	// Consumers must divide by 2^128 when materializing back to a plain integer.
 	rewardPerSecondX128 := u256.MulDiv(
 		u256.NewUintFromInt64(rewardAmount),
-		q128Pool,
+		q128,
 		u256.NewUintFromInt64(incentiveDuration),
 	)
 
