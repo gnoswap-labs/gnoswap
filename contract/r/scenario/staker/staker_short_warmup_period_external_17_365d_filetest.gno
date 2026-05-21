@@ -304,7 +304,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] collecting reward for position 01
 // [EXPECTED] position 01 reward: 2139690 QUX
 // [INFO] collecting reward for position 02
-// [EXPECTED] position 02 reward: 13243164 QUX
+// [EXPECTED] position 02 reward: 13243165 QUX
 // [INFO] collecting reward for position 03
 // [EXPECTED] position 03 reward: 312398 QUX
 // [INFO] collecting reward for position 04

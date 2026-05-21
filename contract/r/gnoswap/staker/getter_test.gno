@@ -58,7 +58,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				incentive := result.(*ExternalIncentive)
 				incentive.SetRewardToken("mutated")
 				incentive.SetRewardAmount(2000)
-				incentive.SetRewardPerSecond(3000)
+				incentive.SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
 				incentive.SetDistributedRewardAmount(4000)
 				incentive.SetRefunded(true)
 			},
@@ -150,7 +150,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				values := result.([]ExternalIncentive)
 				values[0].SetRewardToken("mutated")
 				values[0].SetRewardAmount(2000)
-				values[0].SetRewardPerSecond(3000)
+				values[0].SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
 				values[0].SetDistributedRewardAmount(4000)
 				values[0].SetRefunded(true)
 			},

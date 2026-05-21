@@ -366,5 +366,5 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [EXPECTED] first non-zero reward (1 bar) collected
 //
 // [SCENARIO] 14. Collect after 86,400 sec (1 day) → expect accumulated bar reward
-// [INFO] bar reward after 1 day: 6622
+// [INFO] bar reward after 1 day: 6653
 // [EXPECTED] accumulated reward collected successfully after 1 day

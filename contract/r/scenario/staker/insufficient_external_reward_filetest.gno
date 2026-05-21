@@ -348,29 +348,29 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [STEP 5] Drain incentive through multiple collections
 // [INFO] skip 50,000 blocks for EXTREME reward accumulation
 // [INFO] collect rewards from all 50 positions - this should drain most of the incentive
-// [INFO] position 1 collected: 192003 bar
-// [INFO] position 2 collected: 192003 bar
-// [INFO] position 3 collected: 192003 bar
-// [INFO] position 4 collected: 192003 bar
-// [INFO] position 5 collected: 192003 bar
+// [INFO] position 1 collected: 192904 bar
+// [INFO] position 2 collected: 192904 bar
+// [INFO] position 3 collected: 192904 bar
+// [INFO] position 4 collected: 192904 bar
+// [INFO] position 5 collected: 192904 bar
 // [INFO] ... collecting from positions 6-49 ...
-// [INFO] position 50 collected: 192003 bar
-// [INFO] total collected in first massive round: 9600150 bar
+// [INFO] position 50 collected: 192904 bar
+// [INFO] total collected in first massive round: 9645200 bar
 // [INFO] skip another 30,000 blocks and collect again to fully deplete
-// [INFO] second round collected: 5759950 bar
-// [INFO] TOTAL drained from incentive: 15360100 bar (should be close to 1 billion)
+// [INFO] second round collected: 5787000 bar
+// [INFO] TOTAL drained from incentive: 15432200 bar (should be close to 1 billion)
 // [WARNING] May not have fully depleted the incentive, but continuing...
 //
 // [STEP 6] Demonstrate bug: permanent reward loss after fund depletion
 // [INFO] skip 10,000 blocks - HUGE time gap for reward accumulation
 // [INFO] attempt to collect rewards when incentive should be depleted
 // [EXPECTED] InsufficientExternalReward events should be emitted for all positions
-// [RESULT] position 1 reward: 47618 bar
-// [RESULT] position 2 reward: 47618 bar
-// [RESULT] position 3 reward: 47618 bar
-// [RESULT] position 4 reward: 47618 bar
-// [RESULT] position 5 reward: 47618 bar
-// [RESULT] position 50 reward: 47618 bar
+// [RESULT] position 1 reward: 47841 bar
+// [RESULT] position 2 reward: 47841 bar
+// [RESULT] position 3 reward: 47841 bar
+// [RESULT] position 4 reward: 47841 bar
+// [RESULT] position 5 reward: 47841 bar
+// [RESULT] position 50 reward: 47841 bar
 //
 // [INFO] 0 positions received ZERO rewards due to depleted incentive
 // [INFO] Estimated total unclaimed rewards: 0 bar

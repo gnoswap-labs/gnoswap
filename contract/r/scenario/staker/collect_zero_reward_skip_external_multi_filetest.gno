@@ -374,5 +374,5 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [EXPECTED] both bar and qux collected (non-zero)
 //
 // [SCENARIO] 8. Collect after 86,400 sec (1 day) → expect bar=6,622, qux=66,532
-// [INFO] after 1 day → bar: 6622, qux: 66532
+// [INFO] after 1 day → bar: 6653, qux: 66533
 // [EXPECTED] both external rewards accumulated after 1 day

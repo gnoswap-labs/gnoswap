@@ -427,25 +427,25 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [INFO] Temporary position 21 created and staked
 // [INFO] Skip blocks and collect multiple rounds to drain incentives
 // [INFO] Collection round 1
-// [INFO] Round 1: Collected 5709458 bar from position 2
-// [INFO] Round 1: Collected 5709458 bar from position 3
-// [INFO] Round 1: Collected 5709458 bar from position 21
+// [INFO] Round 1: Collected 5709496 bar from position 2
+// [INFO] Round 1: Collected 5709496 bar from position 3
+// [INFO] Round 1: Collected 5709496 bar from position 21
 // [INFO] Collection round 2
-// [INFO] Round 2: Collected 8679627 bar from position 2
-// [INFO] Round 2: Collected 8679627 bar from position 3
-// [INFO] Round 2: Collected 8679627 bar from position 21
+// [INFO] Round 2: Collected 8679684 bar from position 2
+// [INFO] Round 2: Collected 8679684 bar from position 3
+// [INFO] Round 2: Collected 8679684 bar from position 21
 // [INFO] Collection round 3
-// [INFO] Round 3: Collected 9373998 bar from position 2
-// [INFO] Round 3: Collected 9373998 bar from position 3
-// [INFO] Round 3: Collected 9373998 bar from position 21
-// [SUCCESS] Total bar drained: 475261660 (should be close to 30000000000)
+// [INFO] Round 3: Collected 9374055 bar from position 2
+// [INFO] Round 3: Collected 9374055 bar from position 3
+// [INFO] Round 3: Collected 9374055 bar from position 21
+// [SUCCESS] Total bar drained: 475264700 (should be close to 30000000000)
 // [WARNING] May not have sufficiently drained bar incentive
 //
 // [STEP 6] Collect rewards - partial success expected
 // [INFO] Skip 5,000 more blocks to accumulate new rewards
 // [ACTION] Collect rewards from main position (ID=1)
-// [RESULT] bar reward collected: 19348260
-// [RESULT] baz reward collected: 19312691
+// [RESULT] bar reward collected: 19348384
+// [RESULT] baz reward collected: 19312814
 // [INFO] baz incentive provided rewards
 //
 // [STEP 7] Verify reward collection behavior after time passes

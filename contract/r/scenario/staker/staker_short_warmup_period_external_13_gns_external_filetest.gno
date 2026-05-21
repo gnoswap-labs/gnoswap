@@ -320,7 +320,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect rewards for BAR and GNS
 // [INFO] collect reward for position 01
-// [EXPECTED] BAR reward collected: 981739
-// [EXPECTED] GNS reward collected: 981739
+// [EXPECTED] BAR reward collected: 982510
+// [EXPECTED] GNS reward collected: 982510
 // [INFO] BAR + GNS external incentive test completed successfully
 // [INFO] confirmed: both BAR and GNS external rewards were distributed correctly

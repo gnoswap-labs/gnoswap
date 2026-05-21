@@ -275,5 +275,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] incentives are now active, initial rewards cleared
 //
 // [SCENARIO] 8. Collect reward for single block
-// [EXPECTED] BAR reward: 1284
-// [EXPECTED] GNS reward (internal + external): 13380778
+// [EXPECTED] BAR reward: 1286
+// [EXPECTED] GNS reward (internal + external): 13380779

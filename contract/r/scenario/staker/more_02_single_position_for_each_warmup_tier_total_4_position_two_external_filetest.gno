@@ -487,17 +487,17 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Stake position 01 and test warm-up to 100%
 // [INFO] stake position 01
 // [INFO] collect reward for 30% warm-up
-// [EXPECTED] bar reward (30% warm-up): 17360
-// [EXPECTED] baz reward (30% warm-up): 172
+// [EXPECTED] bar reward (30% warm-up): 17361
+// [EXPECTED] baz reward (30% warm-up): 173
 // [INFO] progress to 50% warm-up
 // [EXPECTED] bar reward (50% warm-up): 28935
-// [EXPECTED] baz reward (50% warm-up): 287
+// [EXPECTED] baz reward (50% warm-up): 289
 // [INFO] progress to 70% warm-up
 // [EXPECTED] bar reward (70% warm-up): 40509
-// [EXPECTED] baz reward (70% warm-up): 402
+// [EXPECTED] baz reward (70% warm-up): 404
 // [INFO] progress to 100% warm-up
-// [EXPECTED] bar reward (100% warm-up): 57869
-// [EXPECTED] baz reward (100% warm-up): 574
+// [EXPECTED] bar reward (100% warm-up): 57870
+// [EXPECTED] baz reward (100% warm-up): 578
 //
 // [SCENARIO] 6. Stake positions 02-04 with different warm-up levels
 // [INFO] stake position 02 (will be 70% warm-up)
@@ -508,10 +508,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Test single block reward distribution
 // [INFO] test reward distribution for single block
 // [EXPECTED] position 01 bar reward (100% warm-up): 14467
-// [EXPECTED] position 01 baz reward (100% warm-up): 143
+// [EXPECTED] position 01 baz reward (100% warm-up): 144
 // [EXPECTED] position 02 bar reward (70% warm-up): 10126
 // [EXPECTED] position 02 baz reward (70% warm-up): 100
 // [EXPECTED] position 03 bar reward (50% warm-up): 7233
-// [EXPECTED] position 03 baz reward (50% warm-up): 71
+// [EXPECTED] position 03 baz reward (50% warm-up): 72
 // [EXPECTED] position 04 bar reward (30% warm-up): 4340
-// [EXPECTED] position 04 baz reward (30% warm-up): 42
+// [EXPECTED] position 04 baz reward (30% warm-up): 43

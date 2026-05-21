@@ -385,7 +385,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. First external reward collection period
 // [INFO] skip 5 blocks for first external reward accumulation
 // [INFO] collect first external reward
-// [EXPECTED] first external reward (5 blocks): 104165
+// [EXPECTED] first external reward (5 blocks): 104166
 // [INFO] first external reward collection completed
 //
 // [SCENARIO] 6. Second external reward collection period
@@ -403,26 +403,26 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Compare external reward accumulation patterns
 // [INFO] analyze external reward accumulation patterns
 // [INFO] test pattern: frequent small external collections
-// [INFO] small external collection 1 (2 blocks): 34721
+// [INFO] small external collection 1 (2 blocks): 34722
 // [INFO] small external collection 2 (2 blocks): 34722
 // [INFO] small external collection 3 (2 blocks): 34722
-// [INFO] small external collection 4 (2 blocks): 34721
+// [INFO] small external collection 4 (2 blocks): 34722
 // [INFO] small external collection 5 (2 blocks): 34722
-// [EXPECTED] total from frequent external collections (10 blocks): 173608
+// [EXPECTED] total from frequent external collections (10 blocks): 173610
 // [INFO] test pattern: single large external collection
-// [EXPECTED] single large external collection (10 blocks): 173609
+// [EXPECTED] single large external collection (10 blocks): 173610
 // [INFO] external reward pattern analysis:
-// [INFO] - Frequent external collections total: 173608
-// [INFO] - Single large external collection: 173609
-// [INFO] external reward amounts may vary due to incentive timing and block-based calculations
+// [INFO] - Frequent external collections total: 173610
+// [INFO] - Single large external collection: 173610
+// [INFO] external reward amounts are consistent regardless of collection frequency
 //
 // [SCENARIO] 9. Final verification with multiple external collections
 // [INFO] final verification with multiple rapid external collections
-// [INFO] initial BAR balance: 99910000710797
+// [INFO] initial BAR balance: 99910000710801
 // [INFO] perform 3 consecutive external collections
-// [EXPECTED] consecutive external collection 1: 260415
+// [EXPECTED] consecutive external collection 1: 260416
 // [EXPECTED] consecutive external collection 2: 0
 // [EXPECTED] consecutive external collection 3: 0
-// [EXPECTED] total BAR gained in this test: 260415
+// [EXPECTED] total BAR gained in this test: 260416
 // [INFO] external reward collection pattern scenario completed successfully
 // [INFO] confirmed: external rewards accumulate over time and are collected when requested

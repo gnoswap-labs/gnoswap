@@ -317,33 +317,33 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //
 // [SCENARIO] 5. Collect rewards (accumulates penalty)
 // [INFO] after CollectReward:
-//   - accumulatedPenaltyAmount: 1299542400
-//   - distributedRewardAmount: 1699401599
+//   - accumulatedPenaltyAmount: 1300000000
+//   - distributedRewardAmount: 1699999999
 // [EXPECTED] penalty accumulated during CollectReward
 //
 // [SCENARIO] 6. End external incentive
 // [INFO] external incentive ended
 //
 // [SCENARIO] 7. Collect penalty
-// [INFO] penalty before collection: 1299542400
-// [INFO] penalty collected: 1299542400
+// [INFO] penalty before collection: 1300000000
+// [INFO] penalty collected: 1300000000
 // [INFO] penalty remaining: 0
-// [INFO] creator QUX before: 3173785
-// [INFO] creator QUX after: 1302716185
-// [INFO] creator QUX increase: 1299542400
+// [INFO] creator QUX before: 5788
+// [INFO] creator QUX after: 1300005788
+// [INFO] creator QUX increase: 1300000000
 // [EXPECTED] penalty successfully collected to creator
 // [EXPECTED] accumulatedPenaltyAmount reset to 0
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 5997882216
+// [EXPECTED] staker qux balance: 5999994213
 //
 // [SCENARIO] 8. Collect reward after external incentive ends
 // [INFO] after CollectReward:
-//   - accumulatedPenaltyAmount: 449841600
-//   - distributedRewardAmount: 7250615998
+//   - accumulatedPenaltyAmount: 450000000
+//   - distributedRewardAmount: 7249999998
 // [EXPECTED] penalty accumulated during CollectReward
 //
 // [SCENARIO] 9. Verify new penalty accrues and can be collected again
-// [INFO] second collection returned: 449841600
+// [INFO] second collection returned: 450000000
 // [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
 // [EXPECTED] staker qux balance: 2

@@ -387,7 +387,7 @@ func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentive
 	return t.instance.GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) *u256.Uint {
 	if !t.isActive("GetIncentiveRewardPerSecond") {
 		panic("test implementation: GetIncentiveRewardPerSecond not supported")
 	}

@@ -632,7 +632,6 @@ func TestCalcPositionReward(t *testing.T) {
 					baseHeight,
 					baseTime-100,
 				)
-				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
 				poolResolver.IncentivesResolver().create(incentive)
@@ -713,7 +712,6 @@ func TestCalcPositionReward(t *testing.T) {
 						baseHeight,
 						baseTime-100,
 					)
-					incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 					poolResolver.IncentivesResolver().create(incentive)
 
 					// Add incentive ID to deposit (required for reward calculation)
@@ -866,7 +864,6 @@ func TestCalcPositionReward(t *testing.T) {
 					baseHeight,
 					baseTime,
 				)
-				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
 				poolResolver.IncentivesResolver().create(incentive)
@@ -927,7 +924,6 @@ func TestCalcPositionReward(t *testing.T) {
 					baseHeight,
 					baseTime-2000,
 				)
-				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
 				poolResolver.IncentivesResolver().create(incentive)
@@ -992,7 +988,6 @@ func TestCalcPositionReward(t *testing.T) {
 					baseHeight,
 					baseTime-100,
 				)
-				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
 				poolResolver.IncentivesResolver().create(incentive)
@@ -1497,7 +1492,6 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 			baseHeight,
 			baseTime-100,
 		)
-		incentive.SetRewardPerSecond(int64(1000 * (i + 1) / 1050))
 		poolResolver.IncentivesResolver().create(incentive)
 	}
 

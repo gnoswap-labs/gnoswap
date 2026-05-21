@@ -192,9 +192,13 @@ func TestGetterIncentiveRewardAmounts(t *testing.T) {
 	uassert.Equal(t, int64(10_000_000), remainingReward)
 
 	// Test reward per second
-	rewardPerSecond := state.instance.GetIncentiveRewardPerSecond(state.poolPath, state.incentiveId)
-	// rewardPerSecond = 10_000_000 / 3600 = 2777
-	uassert.Equal(t, int64(2777), rewardPerSecond)
+	// GetIncentiveRewardPerSecond now returns the Q128-scaled value so that
+	// sub-integer rates (here 10_000_000 / 3600 = 2777.77...) survive without
+	// the truncation that the previous int64 representation forced. Floor of
+	// rewardPerSecondX128 >> 128 should still equal the legacy value 2777.
+	rewardPerSecondX128 := state.instance.GetIncentiveRewardPerSecond(state.poolPath, state.incentiveId)
+	floor := u256.Zero().Rsh(rewardPerSecondX128, 128)
+	uassert.Equal(t, "2777", floor.ToString())
 
 	// Test u256 variants
 	rewardAmount := state.instance.GetIncentiveRewardAmount(state.poolPath, state.incentiveId)

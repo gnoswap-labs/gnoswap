@@ -479,10 +479,11 @@ func newExternalIncentiveBy(
 	currentTimestamp int64,
 ) *sr.ExternalIncentive {
 	caller := runtime.OriginCaller()
-	rewardPerSecond := rewardAmount / (endTimestamp - startTimestamp)
 
 	incentiveId := getMockInstance().store.NextIncentiveID(caller, currentHeight)
 
+	// NewExternalIncentive already derives the Q128-scaled per-second rate from
+	// (rewardAmount, startTimestamp, endTimestamp); no extra Set call needed.
 	externalIncentive := sr.NewExternalIncentive(
 		incentiveId,
 		targetPoolPath,
@@ -495,8 +496,6 @@ func newExternalIncentiveBy(
 		currentHeight,
 		currentTimestamp,
 	)
-
-	externalIncentive.SetRewardPerSecond(rewardPerSecond)
 
 	return externalIncentive
 }

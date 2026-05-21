@@ -537,7 +537,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] perform exact-in swaps
 // [EXPECTED] swap result - tokenIn: 500, tokenOut: -497
 // [INFO] check reward for position 01 after swap
-// [EXPECTED] position 01 reward after swap: 18729873
+// [EXPECTED] position 01 reward after swap: 18729875
 //
 // [SCENARIO] 10. Create bar:foo:100 pool (tier 3)
 // [INFO] create bar:foo:100 pool
@@ -553,7 +553,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
-// [EXPECTED] reward from unstaking: 38798148
+// [EXPECTED] reward from unstaking: 38798151
 //
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)
