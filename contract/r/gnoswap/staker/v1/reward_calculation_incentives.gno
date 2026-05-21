@@ -1,6 +1,7 @@
 package v1
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -147,7 +148,15 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 		return false
 	})
 
-	return safeMulInt64(timeDiff, incentive.RewardPerSecond())
+	// rewardPerSecondX128 = rps << 128, so dividing by q128 here recovers the
+	// floor of (timeDiff * rps) without the truncation that an int64 rps would
+	// have introduced at incentive-creation time.
+	unclaimable := u256.MulDiv(
+		u256.NewUintFromInt64(timeDiff),
+		incentive.RewardPerSecondX128(),
+		q128,
+	)
+	return safeConvertToInt64(unclaimable)
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period
