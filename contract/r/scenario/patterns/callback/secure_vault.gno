@@ -1,9 +1,5 @@
 package callback
 
-import (
-	"chain/runtime"
-)
-
 type CallbackMarker struct{}
 
 type SecureVault struct {
@@ -38,8 +34,8 @@ func (v *SecureVault) resetState() {
 }
 
 func SecureAdminResetBalance(cur realm, amount int64) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	secureVault.setLastCaller(caller)
 	secureVault.setLastRealm(pkgPath)
@@ -50,8 +46,8 @@ func SecureAdminResetBalance(cur realm, amount int64) (string, string, error) {
 }
 
 func SecureLegitimateCallback(cur realm, amount int64, marker *CallbackMarker) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	if marker == nil {
 		panic("invalid callback marker")

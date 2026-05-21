@@ -147,7 +147,7 @@ func testBasicUnwrapPre() {
 	wugnot.Approve(cross, routerAddr, 1000000)
 
 	// Record balances before unwrap
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	unwrapPrevGnotBalance = banker_.GetCoins(user2Addr).AmountOf("ugnot")
 	unwrapPrevWugnotBalance = int64(wugnot.BalanceOf(user2Addr))
 	// Withdraw is done in main()
@@ -157,7 +157,7 @@ func testBasicUnwrapPost() {
 	amountUnwrapped := int64(1000000)
 
 	// Check balances after unwrap
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	afterGnotBalance := banker_.GetCoins(user2Addr).AmountOf("ugnot")
 	afterWugnotBalance := int64(wugnot.BalanceOf(user2Addr))
 

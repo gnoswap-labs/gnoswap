@@ -1,9 +1,5 @@
 package callback
 
-import (
-	"chain/runtime"
-)
-
 var adminAddr address = "g1admin0000000000000000000000000000000000"
 
 type VulnerableVault struct {
@@ -38,8 +34,8 @@ func (v *VulnerableVault) resetState() {
 }
 
 func AdminResetBalance(cur realm, amount int64) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	vulnerableVault.setLastCaller(caller)
 	vulnerableVault.setLastRealm(pkgPath)
@@ -50,8 +46,8 @@ func AdminResetBalance(cur realm, amount int64) (string, string, error) {
 }
 
 func LegitimateCallback(cur realm, amount int64) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	vulnerableVault.setLastCaller(caller)
 	vulnerableVault.setLastRealm(pkgPath)

@@ -1,11 +1,9 @@
 package access
 
 import (
-    "chain"
-	"chain/runtime"
-	"strings"
-
+	"chain"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"strings"
 )
 
 var roleAddresses map[string]address
@@ -24,7 +22,7 @@ func init() {
 //
 // Only callable by RBAC contract.
 func SetRoleAddress(cur realm, roleName string, roleAddress address) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	assertIsRBAC(caller)
 
 	// capture old value for event
@@ -67,7 +65,7 @@ func setRoleAddress(roleName string, roleAddress address) error {
 //
 // Only callable by RBAC contract.
 func RemoveRole(cur realm, roleName string) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	assertIsRBAC(caller)
 
 	// Validate role name

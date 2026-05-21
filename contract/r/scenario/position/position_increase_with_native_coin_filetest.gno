@@ -65,7 +65,7 @@ func initPool() {
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000}})
 
-	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
+	currentBanker := banker.NewReadonlyBanker()
 	println("[INFO] GNOT balance of admin", currentBanker.GetCoins(adminAddr).AmountOf("ugnot"))
 
 	ufmt.Println("[INFO] Creating pool at tick 100")
@@ -170,14 +170,14 @@ func increasePositionLiquidity() {
 }
 
 func checkBalanceChanges(callback func()) {
-	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
+	currentBanker := banker.NewReadonlyBanker()
 	gnotBalanceBefore := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceBefore := wugnot.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
 
 	callback()
 
-	currentBanker = banker.NewBanker(banker.BankerTypeReadonly)
+	currentBanker = banker.NewReadonlyBanker()
 	gnotBalanceAfter := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceAfter := wugnot.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)

@@ -1,10 +1,6 @@
 package governance
 
-import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/access"
-)
+import "gno.land/r/gnoswap/access"
 
 func RegisterInitializer(cur realm, initializer func(governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance) {
 	initializerFunc := func(domainStore any) any {
@@ -34,7 +30,7 @@ func RegisterInitializer(cur realm, initializer func(governanceStore IGovernance
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, targetPackagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(targetPackagePath)

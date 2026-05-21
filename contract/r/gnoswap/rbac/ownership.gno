@@ -1,11 +1,8 @@
 package rbac
 
 import (
-	"chain/runtime"
-
-	ufmt "gno.land/p/nt/ufmt/v0"
-
 	prbac "gno.land/p/gnoswap/rbac"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -32,7 +29,7 @@ func GetPendingOwner() address {
 // AcceptOwnership completes the ownership transfer process.
 // Only callable by pending owner.
 func AcceptOwnership(cur realm) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	assertIsPendingOwner(caller)
 
 	err := manager.AcceptOwnershipBy(caller)
@@ -60,7 +57,7 @@ func AcceptOwnership(cur realm) {
 //
 // Only callable by current owner.
 func TransferOwnership(cur realm, addr address) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	assertIsOwner(caller)
 	assertIsValidAddress(addr)
 

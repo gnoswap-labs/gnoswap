@@ -2,10 +2,8 @@ package halt
 
 import (
 	"chain"
-	"chain/runtime"
-	"strconv"
-
 	"gno.land/r/gnoswap/access"
+	"strconv"
 )
 
 var haltStates HaltStateManager
@@ -21,7 +19,7 @@ func init() {
 //
 // Only callable by admin or governance.
 func SetHaltLevel(cur realm, level HaltLevel) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := setHaltLevel(level)
@@ -45,7 +43,7 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 //
 // Only callable by admin or governance.
 func SetOperationStatus(cur realm, op OpType, halted bool) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if !op.IsValid() {

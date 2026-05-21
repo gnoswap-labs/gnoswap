@@ -2,18 +2,14 @@ package gns
 
 import (
 	"chain"
-	"chain/runtime"
-	"strings"
-	"time"
-
 	"gno.land/p/demo/tokens/grc20"
+	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-
-	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+	"strings"
+	"time"
 )
 
 const (
@@ -80,7 +76,7 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // to allow graceful handling. This function assumes caller has already verified
 // halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
@@ -131,7 +127,7 @@ func MintGns(cur realm, address address) int64 {
 //   - amount: amount to transfer
 func Transfer(cur realm, to address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.Transfer(to, amount))
+	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
 
 // Approve allows spender to transfer GNS tokens from caller's account.
@@ -141,7 +137,7 @@ func Transfer(cur realm, to address, amount int64) {
 //   - amount: maximum amount spender can transfer
 func Approve(cur realm, spender address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.Approve(spender, amount))
+	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
 
 // TransferFrom transfers GNS tokens on behalf of owner.
@@ -152,7 +148,7 @@ func Approve(cur realm, spender address, amount int64) {
 //   - amount: amount to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.TransferFrom(from, to, amount))
+	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
 // Render returns token information for web interface.

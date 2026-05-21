@@ -82,7 +82,7 @@ func (r *routerV1) swapInner(
 		data.payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			// assert is pool to prevent unauthorized callback
-			caller := runtime.PreviousRealm().Address()
+			caller := cur.Previous().Address()
 			access.AssertIsPool(caller)
 
 			return router.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, data.payer)

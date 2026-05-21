@@ -125,7 +125,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
@@ -166,7 +166,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if startTimestamp <= 0 {
@@ -213,7 +213,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 //
 // Only callable by the staker contract.
 func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
 	onDistributionPctChangeCallback = callback

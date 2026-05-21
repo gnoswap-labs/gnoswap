@@ -201,7 +201,7 @@ func exactInSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
@@ -250,7 +250,7 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] maxAmountIn:", maxAmountIn)
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)

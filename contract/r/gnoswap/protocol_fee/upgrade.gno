@@ -1,10 +1,6 @@
 package protocol_fee
 
-import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/access"
-)
+import "gno.land/r/gnoswap/access"
 
 // RegisterInitializer registers a new pool implementation version.
 // This function is called by each version (v1, v2, etc.) during initialization
@@ -46,7 +42,7 @@ func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolF
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(packagePath)

@@ -73,7 +73,7 @@ func MustOwnerOf(tid grc721.TokenID) address {
 //
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	assertIsValidTokenURI(tid)
@@ -194,7 +194,7 @@ func IsApprovedForAll(owner, operator address) bool {
 // Returns minted token ID.
 // Only callable by position contract.
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
@@ -223,7 +223,7 @@ func Exists(tid grc721.TokenID) bool {
 //
 // Only callable by position.
 func Burn(cur realm, tid grc721.TokenID) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	checkErr(nft.Burn(tid))

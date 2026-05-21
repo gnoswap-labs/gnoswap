@@ -496,7 +496,7 @@ func unstakeToken01() {
 }
 
 func ugnotBalanceOf(addr address) uint64 {
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }

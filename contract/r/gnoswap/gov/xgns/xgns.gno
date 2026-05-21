@@ -2,18 +2,14 @@ package xgns
 
 import (
 	"chain"
-	"chain/runtime"
 	"errors"
-	"strings"
-
 	"gno.land/p/demo/tokens/grc20"
+	prbac "gno.land/p/gnoswap/rbac"
 	ownable "gno.land/p/nt/ownable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
-
-	prbac "gno.land/p/gnoswap/rbac"
+	"strings"
 )
 
 var (
@@ -65,7 +61,7 @@ func Render(path string) string {
 func Mint(cur realm, to address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Mint(to, amount))
@@ -81,7 +77,7 @@ func Mint(cur realm, to address, amount int64) {
 func Burn(cur realm, from address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Burn(from, amount))

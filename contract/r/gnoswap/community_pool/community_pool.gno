@@ -2,14 +2,11 @@ package community_pool
 
 import (
 	"chain"
-	"chain/runtime"
-	"strconv"
-
 	prbac "gno.land/p/gnoswap/rbac"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
+	"strconv"
 )
 
 // GetBalanceOf returns the balance of a specific token held by the community pool.
@@ -35,7 +32,7 @@ func GetBalanceOf(tokenPath string) int64 {
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := runtime.PreviousRealm()
+	prevRealm := cur.Previous()
 	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 

@@ -1,9 +1,6 @@
 package referral
 
-import (
-	"chain"
-	"chain/runtime"
-)
+import "chain"
 
 var gReferralKeeper ReferralKeeper
 
@@ -62,7 +59,7 @@ func TryRegister(cur realm, addr address, referral string) string {
 		return GetReferral(addr.String())
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	assertValidCaller(caller)
 
 	result, err := gReferralKeeper.register(addr, address(referral))

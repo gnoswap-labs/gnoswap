@@ -1,10 +1,6 @@
 package staker
 
-import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/access"
-)
+import "gno.land/r/gnoswap/access"
 
 // RegisterInitializer registers an implementation
 // This function is called by each implementation version during init
@@ -33,7 +29,7 @@ func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerSt
 // Only admin or governance can call this function
 func UpgradeImpl(cur realm, packagePath string) {
 	// Check admin or governance permission
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(packagePath)

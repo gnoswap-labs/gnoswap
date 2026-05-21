@@ -137,7 +137,7 @@ func setupPoolsAndLiquidity() {
 
 	// Verify user balances
 	testing.SetRealm(userRealm)
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	userGnsBalance := gns.BalanceOf(userAddr)
 	userUsdcBalance := usdc.BalanceOf(userAddr)
