@@ -384,8 +384,8 @@ func (m *MockStaker) GetIncentiveRewardAmountAsString(poolPath string, incentive
 	return res[0].(string)
 }
 
-func (m *MockStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) *u256.Uint {
-	res, ok := m.Response.Get("GetIncentiveRewardPerSecond")
+func (m *MockStaker) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
+	res, ok := m.Response.Get("GetIncentiveRewardPerSecondX128")
 	if !ok {
 		return u256.Zero()
 	}

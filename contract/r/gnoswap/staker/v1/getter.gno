@@ -181,10 +181,10 @@ func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId
 	return rewardAmount.ToString()
 }
 
-// GetIncentiveRewardPerSecond returns the Q128-scaled reward per second of an
-// incentive (i.e. actual rate = value / 2^128). The Q128 form preserves
+// GetIncentiveRewardPerSecondX128 returns the Q128-scaled reward per second of
+// an incentive (i.e. actual rate = value / 2^128). The Q128 form preserves
 // sub-second precision that would otherwise be lost to int64 truncation.
-func (s *stakerV1) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) *u256.Uint {
+func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
 	incentive := s.getIncentive(poolPath, incentiveId)
 
 	return incentive.RewardPerSecondX128()

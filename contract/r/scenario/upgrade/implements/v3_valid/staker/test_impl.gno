@@ -222,8 +222,8 @@ func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentive
 	return t.instance.GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) *u256.Uint {
-	return t.instance.GetIncentiveRewardPerSecond(poolPath, incentiveId)
+func (t *TestStaker) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
+	return t.instance.GetIncentiveRewardPerSecondX128(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardToken(poolPath string, incentiveId string) string {
