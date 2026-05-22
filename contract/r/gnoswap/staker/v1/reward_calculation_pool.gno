@@ -414,9 +414,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+			if overflow {
+				panic(errOverflow)
+			}
 
-			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			if overflow {
+				panic(errOverflow)
+			}
+
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
@@ -425,9 +432,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+		if overflow {
+			panic(errOverflow)
+		}
 
-		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		if overflow {
+			panic(errOverflow)
+		}
+
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
@@ -460,9 +474,16 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+			if overflow {
+				panic(errOverflow)
+			}
 
-			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			if overflow {
+				panic(errOverflow)
+			}
+
 			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
 			rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
@@ -472,9 +493,16 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+		if overflow {
+			panic(errOverflow)
+		}
 
-		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		if overflow {
+			panic(errOverflow)
+		}
+
 		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
 		rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
