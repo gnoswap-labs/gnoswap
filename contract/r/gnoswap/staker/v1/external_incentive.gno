@@ -256,15 +256,13 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	// With Q128 scaling the truncation per second collapses to at most 1 wei
 	// across the entire duration, so `remainder` is effectively zero and the
 	// refund accounts only for unclaimable periods.
-	distributableX256, overflow := u256.Zero().MulOverflow(
+	distributableU256 := u256.MulDiv(
 		incentiveResolver.RewardPerSecondX128(),
 		u256.NewUintFromInt64(duration),
+		q128,
 	)
-	if overflow {
-		panic(errOverflow)
-	}
 
-	distributable := safeConvertToInt64(u256.Zero().Rsh(distributableX256, 128))
+	distributable := safeConvertToInt64(distributableU256)
 	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
 	refund := safeAddInt64(unclaimableReward, remainder)
