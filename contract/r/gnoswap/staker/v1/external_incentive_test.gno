@@ -1449,7 +1449,7 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T)
 	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeB, 0)
 
 	expectedDuration := (stakeTimeA - startTime) + (stakeTimeB - zeroTime)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
 	if got != expected {

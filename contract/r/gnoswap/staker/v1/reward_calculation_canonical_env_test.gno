@@ -50,7 +50,7 @@ func (self *canonicalPool) ExternalReward(currentTimestamp int64) map[string]int
 			continue
 		}
 
-		reward[incentive.RewardToken()] += incentive.RewardPerSecond()
+		reward[incentive.RewardToken()] += rewardPerSecondFromX128(incentive)
 	}
 
 	return reward

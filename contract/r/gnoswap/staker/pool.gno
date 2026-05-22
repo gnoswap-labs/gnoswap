@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"math"
 	"strconv"
 	"time"
 
@@ -439,27 +438,6 @@ func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
 // SetRewardPerSecondX128 sets the Q128-scaled reward per second.
 func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
 	e.rewardPerSecondX128 = rewardPerSecondX128
-}
-
-// RewardPerSecond returns the floor of the Q128-scaled reward per second.
-// Use RewardPerSecondX128 for precise on-chain calculations; this getter exists
-// for external observability where sub-second precision is not required.
-func (e *ExternalIncentive) RewardPerSecond() int64 {
-	if e.rewardPerSecondX128 == nil {
-		return 0
-	}
-
-	rewardPerSecond := u256.Zero().Rsh(e.rewardPerSecondX128, 128)
-	if !rewardPerSecond.IsUint64() {
-		panic("rewardPerSecond overflows int64")
-	}
-
-	rewardPerSecondUint64 := rewardPerSecond.Uint64()
-	if rewardPerSecondUint64 > uint64(math.MaxInt64) {
-		panic("rewardPerSecond overflows int64")
-	}
-
-	return int64(rewardPerSecondUint64)
 }
 
 // DistributedRewardAmount returns the distributed reward amount
