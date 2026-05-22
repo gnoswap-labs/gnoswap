@@ -13,6 +13,12 @@ import (
 
 const AllTierCount = 4 // 0, 1, 2, 3
 
+// q128 is 2^128, used to scale rewardPerSecond so that sub-integer rates
+// (e.g. 10_000_000 / 3600 = 2777.77...) do not lose precision over the
+// lifetime of an incentive. Mirrors the q128 constant used by the v1 reward
+// calculator; kept package-local here because staker depends on neither.
+var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
+
 // Pool is a struct for storing an incentivized pool information
 // Each pool stores Incentives and Ticks associated with it.
 //
@@ -303,20 +309,20 @@ func NewIncentives(targetPoolPath string) *Incentives {
 }
 
 type ExternalIncentive struct {
-	incentiveId              string  // incentive id
-	startTimestamp           int64   // start time for external reward
-	endTimestamp             int64   // end time for external reward
-	createdHeight            int64   // block height when the incentive was created
-	createdTimestamp         int64   // timestamp when the incentive was created
-	depositGnsAmount         int64   // deposited gns amount
-	targetPoolPath           string  // external reward target pool path
-	rewardToken              string  // external reward token path
-	totalRewardAmount        int64   // total reward amount
-	rewardAmount             int64   // to be distributed reward amount
-	rewardPerSecond          int64   // reward per second
-	distributedRewardAmount  int64   // distributed reward amount, when un-staked and refunded
-	accumulatedPenaltyAmount int64   // accumulated warmup penalty from CollectReward
-	creator                  address // creator address
+	incentiveId              string     // incentive id
+	startTimestamp           int64      // start time for external reward
+	endTimestamp             int64      // end time for external reward
+	createdHeight            int64      // block height when the incentive was created
+	createdTimestamp         int64      // timestamp when the incentive was created
+	depositGnsAmount         int64      // deposited gns amount
+	targetPoolPath           string     // external reward target pool path
+	rewardToken              string     // external reward token path
+	totalRewardAmount        int64      // total reward amount
+	rewardAmount             int64      // to be distributed reward amount
+	rewardPerSecondX128      *u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
+	distributedRewardAmount  int64      // distributed reward amount, when un-staked and refunded
+	accumulatedPenaltyAmount int64      // accumulated warmup penalty from CollectReward
+	creator                  address    // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
@@ -423,14 +429,15 @@ func (e *ExternalIncentive) SetRewardAmount(rewardAmount int64) {
 	e.rewardAmount = rewardAmount
 }
 
-// RewardPerSecond returns the reward per second
-func (e *ExternalIncentive) RewardPerSecond() int64 {
-	return e.rewardPerSecond
+// RewardPerSecondX128 returns the Q128-scaled reward per second.
+// The underlying value is (rewardAmount << 128) / duration.
+func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
+	return e.rewardPerSecondX128
 }
 
-// SetRewardPerSecond sets the reward per second
-func (e *ExternalIncentive) SetRewardPerSecond(rewardPerSecond int64) {
-	e.rewardPerSecond = rewardPerSecond
+// SetRewardPerSecondX128 sets the Q128-scaled reward per second.
+func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
+	e.rewardPerSecondX128 = rewardPerSecondX128
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -474,6 +481,12 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 }
 
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
+	rewardPerSecondX128 := u256.Zero()
+
+	if e.rewardPerSecondX128 != nil {
+		rewardPerSecondX128 = e.rewardPerSecondX128.Clone()
+	}
+
 	return &ExternalIncentive{
 		incentiveId:              e.incentiveId,
 		startTimestamp:           e.startTimestamp,
@@ -485,7 +498,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardToken:              e.rewardToken,
 		totalRewardAmount:        e.totalRewardAmount,
 		rewardAmount:             e.rewardAmount,
-		rewardPerSecond:          e.rewardPerSecond,
+		rewardPerSecondX128:      rewardPerSecondX128,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
 		distributedRewardAmount:  e.distributedRewardAmount,
@@ -507,7 +520,15 @@ func NewExternalIncentive(
 	currentTime int64, // current time in unix time(seconds)
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
-	rewardPerSecond := rewardAmount / incentiveDuration
+
+	// Compute reward per second scaled by 2^128 to preserve sub-second precision.
+	// rewardPerSecondX128 = (rewardAmount << 128) / incentiveDuration.
+	// Consumers must divide by 2^128 when materializing back to a plain integer.
+	rewardPerSecondX128 := u256.MulDiv(
+		u256.NewUintFromInt64(rewardAmount),
+		q128,
+		u256.NewUintFromInt64(incentiveDuration),
+	)
 
 	return &ExternalIncentive{
 		incentiveId:              incentiveId,
@@ -517,7 +538,7 @@ func NewExternalIncentive(
 		rewardAmount:             rewardAmount,
 		startTimestamp:           startTimestamp,
 		endTimestamp:             endTimestamp,
-		rewardPerSecond:          rewardPerSecond,
+		rewardPerSecondX128:      rewardPerSecondX128,
 		distributedRewardAmount:  0,
 		accumulatedPenaltyAmount: 0,
 		creator:                  creator,

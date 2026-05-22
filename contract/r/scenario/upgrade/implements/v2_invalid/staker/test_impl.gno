@@ -382,11 +382,11 @@ func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentive
 	return t.instance.GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
-	if !t.isActive("GetIncentiveRewardPerSecond") {
-		panic("test implementation: GetIncentiveRewardPerSecond not supported")
+func (t *TestStaker) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
+	if !t.isActive("GetIncentiveRewardPerSecondX128") {
+		panic("test implementation: GetIncentiveRewardPerSecondX128 not supported")
 	}
-	return t.instance.GetIncentiveRewardPerSecond(poolPath, incentiveId)
+	return t.instance.GetIncentiveRewardPerSecondX128(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardToken(poolPath string, incentiveId string) string {

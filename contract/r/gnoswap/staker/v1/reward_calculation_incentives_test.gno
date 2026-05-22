@@ -300,7 +300,7 @@ func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
 	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
 
 	expectedDuration := int64(30) // (20-10) + (60-40)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	if got != expected {
 		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
@@ -435,7 +435,7 @@ func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
 
 	// Expected: from currentTime+30 to incentive end (currentTime+100), which is 70 seconds
 	expectedDuration := int64(70)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	if got != expected {
 		t.Fatalf("expected unclaimable reward %d for ongoing period, got %d", expected, got)
@@ -483,7 +483,7 @@ func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
 	// Expected: Two windows [10,30] = 20 seconds and [20,40] = 20 seconds
 	// Total unclaimable duration = 40 seconds (not 30 as overlap is counted)
 	expectedDuration := int64(40) // Both periods contribute fully
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	if got != expected {
 		t.Fatalf("expected unclaimable reward %d for overlapping periods, got %d", expected, got)
@@ -531,7 +531,7 @@ func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
 	// Expected: [10,20] = 10 seconds and [20,30] = 10 seconds
 	// Total = 20 seconds (no overlap, no gap)
 	expectedDuration := int64(20)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	if got != expected {
 		t.Fatalf("expected unclaimable reward %d for adjacent periods, got %d", expected, got)
@@ -586,7 +586,7 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 	// Expected: Only the overlapping part [140,150] = 10 seconds
 	// The periods [10,30] and [200,250] contribute 0
 	expectedDuration := int64(10)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	if got != expected {
 		t.Fatalf("expected unclaimable reward %d for outside-range periods, got %d", expected, got)

@@ -326,45 +326,45 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 //
 // [SCENARIO] 5. Collect rewards (accumulates penalty)
 // [INFO] position 1 CollectReward:
-//   - accumulatedPenaltyAmount: 433181379
-//   - distributedRewardAmount: 566468547
-//   - qux collected: 566468547
+//   - accumulatedPenaltyAmount: 433333913
+//   - distributedRewardAmount: 566668015
+//   - qux collected: 566668015
 // [INFO] position 2 CollectReward:
-//   - accumulatedPenaltyAmount: 866362758
-//   - distributedRewardAmount: 1132937094
-//   - qux collected: 566468547
+//   - accumulatedPenaltyAmount: 866667826
+//   - distributedRewardAmount: 1133336030
+//   - qux collected: 566668015
 //
 // [SCENARIO] 6. End external incentive
 // [INFO] external incentive ended
 //
 // [SCENARIO] 7. Collect penalty
-// [INFO] penalty before collection: 866362758
-// [INFO] penalty collected: 866362758
+// [INFO] penalty before collection: 866667826
+// [INFO] penalty collected: 866667826
 // [INFO] penalty remaining: 0
-// [INFO] creator QUX before: 3173785
-// [INFO] creator QUX after: 869536543
-// [INFO] creator QUX increase: 866362758
+// [INFO] creator QUX before: 5788
+// [INFO] creator QUX after: 866673614
+// [INFO] creator QUX increase: 866667826
 // [EXPECTED] penalty successfully collected to creator
 // [EXPECTED] accumulatedPenaltyAmount reset to 0
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 6997526363
+// [EXPECTED] staker qux balance: 6999990356
 //
 // [SCENARIO] 8. Collect reward after external incentive ends
 // [INFO] position 1 CollectReward:
-//   - accumulatedPenaltyAmount: 149946622
-//   - distributedRewardAmount: 2985456399
-//   - qux collected: 1849345520
+//   - accumulatedPenaltyAmount: 149999421
+//   - distributedRewardAmount: 2983338537
+//   - qux collected: 1849996719
 // [INFO] position 2 CollectReward:
-//   - accumulatedPenaltyAmount: 299893244
-//   - distributedRewardAmount: 4834801919
-//   - qux collected: 1849345520
+//   - accumulatedPenaltyAmount: 299998842
+//   - distributedRewardAmount: 4833335256
+//   - qux collected: 1849996719
 // [INFO] position 3 CollectReward:
-//   - accumulatedPenaltyAmount: 883021244
-//   - distributedRewardAmount: 7250615987
-//   - qux collected: 2415814068
+//   - accumulatedPenaltyAmount: 883332176
+//   - distributedRewardAmount: 7249999990
+//   - qux collected: 2416664734
 //
 // [SCENARIO] 9. Verify new penalty accrues and can be collected again
-// [INFO] second collection returned: 883021244
+// [INFO] second collection returned: 883332176
 // [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 11
+// [EXPECTED] staker qux balance: 8

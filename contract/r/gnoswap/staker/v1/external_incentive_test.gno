@@ -103,6 +103,114 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 	pools.tree.Remove(poolPath)
 }
 
+// Test ExternalIncentiveRefundAmount through the public entrypoint with full preconditions.
+func TestExternalIncentiveRefundAmount(t *testing.T) {
+	creator := testutils.TestAddress("creator")
+	refundee := testutils.TestAddress("refundee")
+
+	calculateLegacyRefundAmount := func(depositRewardAmount int64, startTimestamp int64, endTimestamp int64) int64 {
+		duration := endTimestamp - startTimestamp
+		rewardPerSecond := depositRewardAmount / duration
+		return depositRewardAmount - (rewardPerSecond * duration)
+	}
+
+	calculateRefundAmount := func(depositRewardAmount int64, startTimestamp int64, endTimestamp int64) int64 {
+		duration := endTimestamp - startTimestamp
+		rewardPerSecondX128 := u256.MulDiv(
+			u256.NewUintFromInt64(depositRewardAmount),
+			q128,
+			u256.NewUintFromInt64(duration),
+		)
+
+		distributedAmountX128 := u256.Zero().Mul(
+			rewardPerSecondX128,
+			u256.NewUintFromInt64(duration),
+		)
+		distributedAmount := safeConvertToInt64(u256.Zero().Rsh(distributedAmountX128, 128))
+
+		return depositRewardAmount - distributedAmount
+	}
+
+	tests := []struct {
+		name                       string
+		caller                     address
+		refundAddress              address
+		startTimestamp             int64
+		endTimestamp               int64
+		depositRewardAmount        int64
+		expectedLegacyRefundAmount int64
+		expectedRefundAmount       int64
+	}{
+		{
+			name:                       "external incentive refund amount by 1,000,000,000 amount and 90 days duration",
+			caller:                     creator,
+			refundAddress:              refundee,
+			startTimestamp:             0,
+			endTimestamp:               86400 * 90, // 90 days duration
+			depositRewardAmount:        1_000_000_000,
+			expectedLegacyRefundAmount: 4672000,
+			expectedRefundAmount:       1,
+		},
+		{
+			name:                       "external incentive refund amount by 1,234,456,789 amount and 90 days duration",
+			caller:                     creator,
+			refundAddress:              refundee,
+			startTimestamp:             0,
+			endTimestamp:               86400 * 90, // 90 days duration
+			depositRewardAmount:        1_234_456_789,
+			expectedLegacyRefundAmount: 5848789,
+			expectedRefundAmount:       1,
+		},
+		{
+			name:                       "external incentive refund amount by 9,999,999,999 amount and 90 days duration",
+			caller:                     creator,
+			refundAddress:              refundee,
+			startTimestamp:             0,
+			endTimestamp:               86400 * 90, // 90 days duration
+			depositRewardAmount:        9_999_999_999,
+			expectedLegacyRefundAmount: 63999,
+			expectedRefundAmount:       1,
+		},
+		{
+			name:                       "external incentive refund amount by 1,000,000,000,000,000 amount and 180 days duration",
+			caller:                     creator,
+			refundAddress:              refundee,
+			startTimestamp:             0,
+			endTimestamp:               86400 * 180, // 180 days duration
+			depositRewardAmount:        1_000_000_000_000_000,
+			expectedLegacyRefundAmount: 8128000,
+			expectedRefundAmount:       1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create ended or active incentive based on the test case.
+			incentiveId := "test-incentive-1"
+			incentive := sr.NewExternalIncentive(
+				incentiveId,
+				"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+				barPath,
+				tt.depositRewardAmount,
+				tt.startTimestamp,
+				tt.endTimestamp,
+				creator,
+				100_000_000, // depositGnsAmount
+				0,
+				0,
+			)
+
+			t.Logf("refund amount: , legacy: %d, q128: %d",
+				calculateLegacyRefundAmount(incentive.TotalRewardAmount(), incentive.StartTimestamp(), incentive.EndTimestamp()),
+				calculateRefundAmount(tt.depositRewardAmount, tt.startTimestamp, tt.endTimestamp),
+			)
+
+			uassert.Equal(t, tt.expectedLegacyRefundAmount, calculateLegacyRefundAmount(incentive.TotalRewardAmount(), incentive.StartTimestamp(), incentive.EndTimestamp()))
+			uassert.Equal(t, tt.expectedRefundAmount, calculateRefundAmount(tt.depositRewardAmount, tt.startTimestamp, tt.endTimestamp))
+		})
+	}
+}
+
 // Test EndExternalIncentive through the public entrypoint with full preconditions.
 func TestEndExternalIncentive(t *testing.T) {
 	creator := testutils.TestAddress("creator")
@@ -1341,7 +1449,7 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T)
 	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeB, 0)
 
 	expectedDuration := (stakeTimeA - startTime) + (stakeTimeB - zeroTime)
-	expected := expectedDuration * incentive.RewardPerSecond()
+	expected := expectedDuration * rewardPerSecondFromX128(incentive)
 
 	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
 	if got != expected {

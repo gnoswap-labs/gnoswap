@@ -335,13 +335,13 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [EXPECTED] minted and staked positions: 1 and 2
 //
 // [SCENARIO] 5. Verify rewards accumulate with external incentive
-// [EXPECTED] external rewards accumulated: 447038022 BAR tokens
+// [EXPECTED] external rewards accumulated: 447040883 BAR tokens
 //
 // [SCENARIO] 6. Wait for external incentive to expire
 // [EXPECTED] waited for external incentive to expire
 //
 // [SCENARIO] 7. Verify pool has no incentives
-// [INFO] rewards after incentive end - BAR: 24513533, GNS: 0 (should be minimal)
+// [INFO] rewards after incentive end - BAR: 24513690, GNS: 0 (should be minimal)
 // [EXPECTED] pool has no tier and external incentive ended
 //
 // [SCENARIO] 8. Unstake positions after incentive ended

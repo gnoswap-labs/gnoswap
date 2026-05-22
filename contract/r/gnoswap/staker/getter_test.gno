@@ -34,8 +34,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		assertRaw func(t *testing.T, m *MockStaker)
 	}{
 		{
-			name: "GetPool",
-			setup: func(m *MockStaker) { m.Response.Set("GetPool", newStakerPool()) },
+			name:   "GetPool",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPool", newStakerPool()) },
 			getter: func() any { return GetPool("foo:bar:500") },
 			mutate: func(result any) {
 				pool := result.(*Pool)
@@ -51,14 +51,14 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetIncentive",
-			setup: func(m *MockStaker) { incentive := newExternalIncentive(); m.Response.Set("GetIncentive", &incentive) },
+			name:   "GetIncentive",
+			setup:  func(m *MockStaker) { incentive := newExternalIncentive(); m.Response.Set("GetIncentive", &incentive) },
 			getter: func() any { return GetIncentive("foo:bar:500", "incentive-1") },
 			mutate: func(result any) {
 				incentive := result.(*ExternalIncentive)
 				incentive.SetRewardToken("mutated")
 				incentive.SetRewardAmount(2000)
-				incentive.SetRewardPerSecond(3000)
+				incentive.SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
 				incentive.SetDistributedRewardAmount(4000)
 				incentive.SetRefunded(true)
 			},
@@ -66,14 +66,15 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				incentive := m.Response.data["GetIncentive"][0].(*ExternalIncentive)
 				uassert.Equal(t, "reward-token", incentive.RewardToken())
 				uassert.Equal(t, int64(1000), incentive.RewardAmount())
-				uassert.Equal(t, int64(100), incentive.RewardPerSecond())
+				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), q128)
+				uassert.Equal(t, expectedRPSX128.ToString(), incentive.RewardPerSecondX128().ToString())
 				uassert.Equal(t, int64(0), incentive.DistributedRewardAmount())
 				uassert.Equal(t, false, incentive.Refunded())
 			},
 		},
 		{
-			name: "GetDeposit",
-			setup: func(m *MockStaker) { m.Response.Set("GetDeposit", newStakerDeposit()) },
+			name:   "GetDeposit",
+			setup:  func(m *MockStaker) { m.Response.Set("GetDeposit", newStakerDeposit()) },
 			getter: func() any { return GetDeposit(1) },
 			mutate: func(result any) {
 				deposit := result.(*Deposit)
@@ -101,8 +102,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetDepositLiquidity",
-			setup: func(m *MockStaker) { m.Response.Set("GetDepositLiquidity", u256.MustFromDecimal("1000")) },
+			name:   "GetDepositLiquidity",
+			setup:  func(m *MockStaker) { m.Response.Set("GetDepositLiquidity", u256.MustFromDecimal("1000")) },
 			getter: func() any { return GetDepositLiquidity(1) },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
 			assertRaw: func(t *testing.T, m *MockStaker) {
@@ -112,7 +113,9 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetDepositWarmUp",
-			setup: func(m *MockStaker) { m.Response.Set("GetDepositWarmUp", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
+			setup: func(m *MockStaker) {
+				m.Response.Set("GetDepositWarmUp", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}})
+			},
 			getter: func() any { return GetDepositWarmUp(1) },
 			mutate: func(result any) {
 				warmups := result.([]Warmup)
@@ -128,8 +131,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetDepositExternalIncentiveIdList",
-			setup: func(m *MockStaker) { m.Response.Set("GetDepositExternalIncentiveIdList", []string{"a", "b"}) },
+			name:   "GetDepositExternalIncentiveIdList",
+			setup:  func(m *MockStaker) { m.Response.Set("GetDepositExternalIncentiveIdList", []string{"a", "b"}) },
 			getter: func() any { return GetDepositExternalIncentiveIdList(1) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -144,13 +147,15 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetExternalIncentiveByPoolPath",
-			setup: func(m *MockStaker) { m.Response.Set("GetExternalIncentiveByPoolPath", []ExternalIncentive{newExternalIncentive()}) },
+			setup: func(m *MockStaker) {
+				m.Response.Set("GetExternalIncentiveByPoolPath", []ExternalIncentive{newExternalIncentive()})
+			},
 			getter: func() any { return GetExternalIncentiveByPoolPath("foo:bar:500") },
 			mutate: func(result any) {
 				values := result.([]ExternalIncentive)
 				values[0].SetRewardToken("mutated")
 				values[0].SetRewardAmount(2000)
-				values[0].SetRewardPerSecond(3000)
+				values[0].SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
 				values[0].SetDistributedRewardAmount(4000)
 				values[0].SetRefunded(true)
 			},
@@ -158,14 +163,15 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				values := m.Response.data["GetExternalIncentiveByPoolPath"][0].([]ExternalIncentive)
 				uassert.Equal(t, "reward-token", values[0].RewardToken())
 				uassert.Equal(t, int64(1000), values[0].RewardAmount())
-				uassert.Equal(t, int64(100), values[0].RewardPerSecond())
+				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), q128)
+				uassert.Equal(t, expectedRPSX128.ToString(), values[0].RewardPerSecondX128().ToString())
 				uassert.Equal(t, int64(0), values[0].DistributedRewardAmount())
 				uassert.Equal(t, false, values[0].Refunded())
 			},
 		},
 		{
-			name: "GetIncentiveRewardAmount",
-			setup: func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", u256.MustFromDecimal("3000")) },
+			name:   "GetIncentiveRewardAmount",
+			setup:  func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", u256.MustFromDecimal("3000")) },
 			getter: func() any { return GetIncentiveRewardAmount("foo:bar:500", "incentive-1") },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
 			assertRaw: func(t *testing.T, m *MockStaker) {
@@ -174,8 +180,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolIncentiveIdList",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIdList", []string{"incentive-1", "incentive-2"}) },
+			name:   "GetPoolIncentiveIdList",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIdList", []string{"incentive-1", "incentive-2"}) },
 			getter: func() any { return GetPoolIncentiveIdList("foo:bar:500") },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -189,8 +195,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolsByTier",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolsByTier", []string{"foo:bar:500", "baz:qux:3000"}) },
+			name:   "GetPoolsByTier",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolsByTier", []string{"foo:bar:500", "baz:qux:3000"}) },
 			getter: func() any { return GetPoolsByTier(1) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -204,8 +210,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetAllowedTokens",
-			setup: func(m *MockStaker) { m.Response.Set("GetAllowedTokens", []string{"foo", "bar"}) },
+			name:   "GetAllowedTokens",
+			setup:  func(m *MockStaker) { m.Response.Set("GetAllowedTokens", []string{"foo", "bar"}) },
 			getter: func() any { return GetAllowedTokens() },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -220,7 +226,9 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetWarmupTemplate",
-			setup: func(m *MockStaker) { m.Response.Set("GetWarmupTemplate", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
+			setup: func(m *MockStaker) {
+				m.Response.Set("GetWarmupTemplate", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}})
+			},
 			getter: func() any { return GetWarmupTemplate() },
 			mutate: func(result any) {
 				warmups := result.([]Warmup)
@@ -236,8 +244,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolRewardCacheIDs",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolRewardCacheIDs", []int64{10, 20}) },
+			name:   "GetPoolRewardCacheIDs",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolRewardCacheIDs", []int64{10, 20}) },
 			getter: func() any { return GetPoolRewardCacheIDs("foo:bar:500", 0, 10) },
 			mutate: func(result any) {
 				values := result.([]int64)
@@ -251,8 +259,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolIncentiveIDs",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIDs", []string{"one", "two"}) },
+			name:   "GetPoolIncentiveIDs",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIDs", []string{"one", "two"}) },
 			getter: func() any { return GetPoolIncentiveIDs("foo:bar:500", 0, 10) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -266,8 +274,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolGlobalRewardRatioAccumulationIDs",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulationIDs", []uint64{10, 20}) },
+			name:   "GetPoolGlobalRewardRatioAccumulationIDs",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulationIDs", []uint64{10, 20}) },
 			getter: func() any { return GetPoolGlobalRewardRatioAccumulationIDs("foo:bar:500", 0, 10) },
 			mutate: func(result any) {
 				values := result.([]uint64)
@@ -281,8 +289,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolGlobalRewardRatioAccumulation",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulation", "5000") },
+			name:   "GetPoolGlobalRewardRatioAccumulation",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulation", "5000") },
 			getter: func() any { return GetPoolGlobalRewardRatioAccumulation("foo:bar:500", 10) },
 			mutate: func(result any) { result = "6000" },
 			assertRaw: func(t *testing.T, m *MockStaker) {
@@ -291,8 +299,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolHistoricalTickIDs",
-			setup: func(m *MockStaker) { m.Response.Set("GetPoolHistoricalTickIDs", []int32{-10, 10}) },
+			name:   "GetPoolHistoricalTickIDs",
+			setup:  func(m *MockStaker) { m.Response.Set("GetPoolHistoricalTickIDs", []int32{-10, 10}) },
 			getter: func() any { return GetPoolHistoricalTickIDs("foo:bar:500", 0, 10) },
 			mutate: func(result any) {
 				values := result.([]int32)

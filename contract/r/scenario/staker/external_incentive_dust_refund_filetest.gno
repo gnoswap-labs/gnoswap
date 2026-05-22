@@ -7,10 +7,14 @@
 // 1. in-range position
 
 // SCENARIO:
-// This test demonstrates that the rewardDust mechanism correctly handles
-// precision loss from integer division when calculating rewardPerSecond.
-// The dust amount (remainder from division) is properly tracked and refunded
-// when the external incentive ends.
+// This test demonstrates that Q128-scaled rewardPerSecond drastically
+// reduces the dust (precision loss) that previously resulted from int64
+// integer division. With the legacy formula rewardAmount=10_000_000_007 /
+// duration=7_776_000 produced a dust of 64_007 BAR; under Q128 scaling
+// the residual dust is bounded by the number of collect() calls (~1 wei
+// per call), so the refund's dust component is orders of magnitude
+// smaller. The unallocated rewards portion (~6_424 BAR from unclaimable
+// periods) dominates the refund.
 
 package main
 
@@ -275,9 +279,9 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	ufmt.Printf("[RESULT] bar tokens refunded: %d\n", barRefunded)
 	ufmt.Printf("[RESULT] gns tokens refunded: %d\n", gnsRefunded)
 
-	// The refund should include:
-	// 1. Unallocated rewards (rewards that weren't distributed)
-	// 2. The dust amount (64007 in this case based on 10000000007 % 7776000)
+	// The refund consists of:
+	// 1. Unallocated rewards from unclaimable periods (dominant component)
+	// 2. Residual dust from Q128 precision loss (~ #collect-calls wei)
 	// 3. The full GNS deposit (1_000_000_000)
 
 	// Verify GNS refund
@@ -285,23 +289,23 @@ func endExternalIncentiveAndVerifyDustRefund() {
 		panic(ufmt.Sprintf("Expected GNS refund of %d, but got %d", depositGnsAmount, gnsRefunded))
 	}
 
-	// Calculate expected dust
-	rewardAmount := int64(10000000007)
-	duration := int64(90 * 24 * 60 * 60)
-	expectedDust := rewardAmount - (rewardAmount/duration)*duration
-
-	// Verify that dust was included in the refund
-	// The refund should be at least the dust amount
-	if barRefunded < expectedDust {
-		panic(ufmt.Sprintf("Expected refund to include at least dust amount of %d, but got %d", expectedDust, barRefunded))
+	// Under the legacy int64 rps formula the dust would have been
+	// rewardAmount % duration = 64_007 BAR. Q128 scaling should
+	// collapse this by at least an order of magnitude.
+	legacyDust := int64(10000000007) % int64(90*24*60*60)
+	if barRefunded >= legacyDust {
+		panic(ufmt.Sprintf(
+			"Q128 scaling should reduce dust below the legacy bound (%d), but refund was %d",
+			legacyDust, barRefunded,
+		))
 	}
 
-	// Check if the refund amount makes sense (dust + unallocated rewards)
-	if barRefunded > 0 && barRefunded >= expectedDust {
-		ufmt.Printf("[SUCCESS] Dust refund mechanism verified - dust amount (%d) properly included in total refund (%d)!\n", expectedDust, barRefunded)
-	} else {
-		panic(ufmt.Sprintf("Unexpected refund amount: %d (expected dust: %d)", barRefunded, expectedDust))
+	if barRefunded <= 0 {
+		panic(ufmt.Sprintf("Refund should be positive (unclaimable rewards exist), got %d", barRefunded))
 	}
+
+	ufmt.Printf("[SUCCESS] Q128 scaling reduced dust: legacy bound=%d, actual refund=%d (%dx smaller)\n",
+		legacyDust, barRefunded, legacyDust/barRefunded)
 }
 
 func collectRewardStakedPosition() {
@@ -374,19 +378,19 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] bar balance before ending: 100000000
 // [INFO] gns balance before ending: 0
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100070437
+// [INFO] bar balance after ending: 100006431
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 70437
+// [RESULT] bar tokens refunded: 6431
 // [RESULT] gns tokens refunded: 1000000000
-// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70437)!
+// [SUCCESS] Q128 scaling reduced dust: legacy bound=64007, actual refund=6431 (9x smaller)
 //
 // [SCENARIO] 8. Collect reward staked position
 // [INFO] collect reward staked position
-// [EXPECTED] bar reward: 7974942592
+// [EXPECTED] bar reward: 7974993637
 //
 // [SCENARIO] 9. Collect external incentive penalty
 // [INFO] collect external incentive penalty g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
-// [EXPECTED] bar penalty: 1944432000
-// [EXPECTED] staker bar balance: 3
+// [EXPECTED] bar penalty: 1944444446
+// [EXPECTED] staker bar balance: 2
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -251,7 +252,17 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
 	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
-	distributable := safeMulInt64(incentiveResolver.RewardPerSecond(), duration)
+	// distributable = floor((rewardPerSecondX128 * duration) / 2^128).
+	// With Q128 scaling the truncation per second collapses to at most 1 wei
+	// across the entire duration, so `remainder` is effectively zero and the
+	// refund accounts only for unclaimable periods.
+	distributableU256 := u256.MulDiv(
+		incentiveResolver.RewardPerSecondX128(),
+		u256.NewUintFromInt64(duration),
+		q128,
+	)
+
+	distributable := safeConvertToInt64(distributableU256)
 	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
 	refund := safeAddInt64(unclaimableReward, remainder)

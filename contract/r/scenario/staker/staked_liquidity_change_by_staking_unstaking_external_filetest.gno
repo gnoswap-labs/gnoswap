@@ -368,6 +368,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect external rewards after unstaking
 // [INFO] collect external reward for position 01 after position 02 unstaked
-// [EXPECTED] position 01 external reward after unstaking pos 02: 17360
-// [WARNING] expected around 1000000000, got 17360
+// [EXPECTED] position 01 external reward after unstaking pos 02: 17361
+// [WARNING] expected around 1000000000, got 17361
 // [INFO] position 01 now receives full external rewards since position 02 is unstaked

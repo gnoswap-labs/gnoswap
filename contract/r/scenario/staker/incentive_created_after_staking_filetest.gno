@@ -384,17 +384,17 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] skipped 30 days
 //
 // [SCENARIO] 7. User1 collects rewards (lazy sync should discover incentive)
-// [INFO] user1 collected 188583553 GNS (lazy sync discovered incentive)
+// [INFO] user1 collected 188976625 GNS (lazy sync discovered incentive)
 //
 // [SCENARIO] 8. User2 collects rewards (lazy sync should discover incentive)
-// [INFO] user2 collected 188583297 GNS (lazy sync discovered incentive)
+// [INFO] user2 collected 188976368 GNS (lazy sync discovered incentive)
 //
 // [SCENARIO] 9. User3 collects rewards (already knows about incentive)
-// [INFO] user3 collected 188495998 GNS (already knew about incentive)
+// [INFO] user3 collected 188888887 GNS (already knew about incentive)
 //
 // [SCENARIO] 10. Skip to end and collect final rewards
 // [INFO] skipped to end of incentive
-// [INFO] user1 final rewards: 615448808 GNS
-// [INFO] user2 final rewards: 615448614 GNS
-// [INFO] user3 final rewards: 615383357 GNS
-// [VERIFIED] all users collected final rewards, total: 1846280779 GNS
+// [INFO] user1 final rewards: 616731609 GNS
+// [INFO] user2 final rewards: 616731416 GNS
+// [INFO] user3 final rewards: 616666022 GNS
+// [VERIFIED] all users collected final rewards, total: 1850129047 GNS

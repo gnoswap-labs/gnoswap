@@ -549,40 +549,40 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] wugnot balance before collect: 49999005
 // [INFO] ugnot balance before collect: 20050001005
 // [INFO] collect reward for token 01 (no unwrap)
-// [EXPECTED] wugnot balance after collect: 52217355
+// [EXPECTED] wugnot balance after collect: 52217369
 // [EXPECTED] ugnot balance after collect: 20050001005
-// [EXPECTED] wugnot increase: 2218350
+// [EXPECTED] wugnot increase: 2218364
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 01
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 52217355
+// [INFO] wugnot balance before unstake: 52217369
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 53297594
+// [EXPECTED] wugnot balance after unstake: 53297615
 // [EXPECTED] ugnot balance after unstake: 20050001005
-// [EXPECTED] wugnot increase from unstake: 1080239
+// [EXPECTED] wugnot increase from unstake: 1080246
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. Unstake token 02
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 53297594
+// [INFO] wugnot balance before unstake: 53297615
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 58756663
+// [EXPECTED] wugnot balance after unstake: 58756719
 // [EXPECTED] ugnot balance after unstake: 20050001005
-// [EXPECTED] wugnot increase from unstake: 5459069
+// [EXPECTED] wugnot increase from unstake: 5459104
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 11. End external incentive
 // [INFO] approve wugnot for unwrapping
-// [INFO] wugnot balance before end: 58756663
+// [INFO] wugnot balance before end: 58756719
 // [INFO] ugnot balance before end: 20050001005
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
 // [EXPECTED] wugnot balance after end: 10049999003
 // [EXPECTED] ugnot balance after end: 20050001005
-// [EXPECTED] wugnot change: 9991242340
+// [EXPECTED] wugnot change: 9991242284
 // [EXPECTED] ugnot refund: 0

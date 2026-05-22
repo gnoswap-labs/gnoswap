@@ -361,9 +361,9 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining QUX
 // [INFO] QUX balance before ending: 0
-// [INFO] QUX balance after ending: 3173785
-// [INFO] staker QUX before ending: 8999996530
-// [EXPECTED] creator receives remaining reward token: 3173785
+// [INFO] QUX balance after ending: 5788
+// [INFO] staker QUX before ending: 8999996529
+// [EXPECTED] creator receives remaining reward token: 5788
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends

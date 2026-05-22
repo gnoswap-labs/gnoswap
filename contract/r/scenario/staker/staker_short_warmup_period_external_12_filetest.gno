@@ -334,7 +334,7 @@ func milliToSec(ms int64) int64 {
 //
 // [SCENARIO] 8. Collect rewards for both tokens
 // [INFO] collect reward for position 01
-// [EXPECTED] BAR reward collected: 981739
-// [EXPECTED] QUX reward collected: 981739
+// [EXPECTED] BAR reward collected: 982510
+// [EXPECTED] QUX reward collected: 982510
 // [INFO] two external incentive test completed successfully
 // [INFO] confirmed: both BAR and QUX rewards were distributed

@@ -581,40 +581,40 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] wugnot balance before collect: 49999005
 // [INFO] ugnot balance before collect: 20050001005
 // [INFO] collect reward for token 01 (no unwrap)
-// [EXPECTED] wugnot balance after collect: 52217355
+// [EXPECTED] wugnot balance after collect: 52217369
 // [EXPECTED] ugnot balance after collect: 20050001005
-// [EXPECTED] wugnot increase: 2218350
+// [EXPECTED] wugnot increase: 2218364
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 02
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 52217355
+// [INFO] wugnot balance before unstake: 52217369
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token 02 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 55515944
+// [EXPECTED] wugnot balance after unstake: 55515980
 // [EXPECTED] ugnot balance after unstake: 20050001005
-// [EXPECTED] wugnot increase from unstake: 3298589
+// [EXPECTED] wugnot increase from unstake: 3298611
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. End external incentive
 // [INFO] approve wugnot for unwrapping
-// [INFO] wugnot balance before end: 55515944
+// [INFO] wugnot balance before end: 55515980
 // [INFO] ugnot balance before end: 20050001005
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
-// [EXPECTED] wugnot balance after end: 55579944
+// [EXPECTED] wugnot balance after end: 55515981
 // [EXPECTED] ugnot balance after end: 20050001005
-// [EXPECTED] wugnot change: 64000
+// [EXPECTED] wugnot change: 1
 // [EXPECTED] ugnot refund: 0
 //
 // [SCENARIO] 11. Unstake token 01 after external incentive
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 55579944
+// [INFO] wugnot balance before unstake: 55515981
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token 01 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 10049999003
+// [EXPECTED] wugnot balance after unstake: 10049999005
 // [EXPECTED] ugnot balance after unstake: 20050001005
-// [EXPECTED] wugnot increase from unstake: 9994419059
+// [EXPECTED] wugnot increase from unstake: 9994483024
 // [EXPECTED] ugnot change from unstake: 0

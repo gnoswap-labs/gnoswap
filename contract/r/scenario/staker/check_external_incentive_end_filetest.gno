@@ -284,9 +284,9 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] external incentive ended via refund path
 //
 // [SCENARIO] 7. User collects after end (should clean up incentive)
-// [INFO] position 1 collectable external incentive: 601458046 GNS
-// [INFO] position 2 collectable external incentive: 601343517 GNS
+// [INFO] position 1 collectable external incentive: 604281247 GNS
+// [INFO] position 2 collectable external incentive: 604166181 GNS
 //
 // [SCENARIO] 8. User collects external incentive
-// [INFO] position 1 collected 601458046 GNS after incentive end (incentive should be removed)
-// [INFO] position 2 collected 601343517 GNS after incentive end (incentive should be removed)
+// [INFO] position 1 collected 604281247 GNS after incentive end (incentive should be removed)
+// [INFO] position 2 collected 604166181 GNS after incentive end (incentive should be removed)

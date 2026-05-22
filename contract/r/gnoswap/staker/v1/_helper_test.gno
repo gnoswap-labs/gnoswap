@@ -7,12 +7,14 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
@@ -517,4 +519,11 @@ func mockInstanceCollectExternalIncentivePenalty(poolPath string, incentiveId st
 func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
 	return pn.GetPositionOperator(positionId)
+}
+
+// rewardPerSecondFromX128 returns the floored integer reward-per-second
+// derived from the Q128-scaled value. Used in tests for expected calculations.
+func rewardPerSecondFromX128(incentive *sr.ExternalIncentive) int64 {
+	rps := u256.Zero().Rsh(incentive.RewardPerSecondX128(), 128)
+	return int64(rps.Uint64())
 }

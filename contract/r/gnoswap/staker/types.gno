@@ -83,7 +83,7 @@ type IStakerGetter interface {
 	GetIncentiveCreator(poolPath string, incentiveId string) address
 	GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint
 	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string
-	GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64
+	GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint
 	GetIncentiveRewardToken(poolPath string, incentiveId string) string
 	GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64
 	GetMinimumRewardAmount() int64

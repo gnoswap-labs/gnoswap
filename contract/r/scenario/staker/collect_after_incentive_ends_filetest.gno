@@ -275,13 +275,13 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] user staked position 1
 //
 // [SCENARIO] 5. Collect rewards during incentive period (day 45/90)
-// [INFO] collected 304127998 GNS during incentive period (day 45/90)
+// [INFO] collected 305555554 GNS during incentive period (day 45/90)
 //
 // [SCENARIO] 6. Skip time until incentive ends
 // [INFO] incentive has ended
 //
 // [SCENARIO] 7. Collect rewards after end (lazy removal should occur)
-// [INFO] collected 497663359 GNS after incentive end
+// [INFO] collected 499999356 GNS after incentive end
 // [INFO] lazy removal should have removed incentive ID from deposit
 //
 // [SCENARIO] 8. Verify second collection yields zero (incentive removed)

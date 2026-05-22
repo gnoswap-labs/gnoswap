@@ -346,7 +346,7 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 		return nil // Already ended
 	}
 
-	return self.rewardPerWarmup(startTime, endTime, incentive.RewardPerSecond())
+	return self.rewardPerWarmupX128(startTime, endTime, incentive.RewardPerSecondX128())
 }
 
 // calculateCollectableExternalReward calculates the calculated external reward for the deposit.
@@ -395,6 +395,7 @@ func (self *RewardState) applyWarmup() {
 }
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
+// Used by the internal reward path where rewardPerSecond is an int64 emission rate.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
 	// Return early if startTime equals endTime to avoid unnecessary computation
 	if startTime == endTime {
@@ -413,9 +414,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+			if overflow {
+				panic(errOverflow)
+			}
 
-			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			if overflow {
+				panic(errOverflow)
+			}
+
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
@@ -424,10 +432,79 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
+		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+		if overflow {
+			panic(errOverflow)
+		}
 
-		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		if overflow {
+			panic(errOverflow)
+		}
+
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
+		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+
+		startTime = warmup.NextWarmupTime
+		startTick = endTick
+		startRaw = endRaw
+	}
+
+	return nil
+}
+
+// rewardPerWarmupX128 calculates the reward for each warmup using a Q128-scaled
+// per-second rate. Used by the external incentive path; the per-second rate is
+// stored as `(rewardAmount << 128) / duration` in ExternalIncentive, so an
+// extra `>> 128` is needed after the standard `MulDiv(rewardAcc, rps, q128)`
+// to materialize the integer result.
+func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPerSecondX128 *u256.Uint) error {
+	if startTime == endTime {
+		return nil
+	}
+
+	startTick := self.pool.CurrentTick(startTime)
+	startRaw := self.pool.CalculateRawRewardForPosition(startTime, startTick, self.deposit.Deposit)
+
+	for i, warmup := range self.deposit.Warmups() {
+		if startTime >= warmup.NextWarmupTime {
+			continue
+		}
+
+		if endTime < warmup.NextWarmupTime {
+			endTick := self.pool.CurrentTick(endTime)
+			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
+			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+			if overflow {
+				panic(errOverflow)
+			}
+
+			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			if overflow {
+				panic(errOverflow)
+			}
+
+			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+			rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
+			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+
+			break
+		}
+
+		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
+		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
+		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
+		if overflow {
+			panic(errOverflow)
+		}
+
+		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		if overflow {
+			panic(errOverflow)
+		}
+
+		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+		rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
