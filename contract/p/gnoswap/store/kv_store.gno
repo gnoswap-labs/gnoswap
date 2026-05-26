@@ -157,8 +157,6 @@ func (k *kvStore) Delete(_ int, rlm realm, key string) error {
 	}
 
 	caller := rlm.Previous().Address()
-	println("cur", caller, rlm.Address(), rlm.PkgPath())
-	println("prev", rlm.Previous().Address(), rlm.Previous().Address(), rlm.Previous().PkgPath())
 
 	if !k.IsWriteAuthorized(caller) {
 		return ErrWritePermissionDenied
