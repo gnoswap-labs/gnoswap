@@ -73,7 +73,7 @@ func TestGetAddress(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			roleAddresses = make(map[string]address)
 
 			// Setup
@@ -145,7 +145,7 @@ func TestGetRoleAddresses(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -246,7 +246,7 @@ func TestIsAuthorized(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Reset state at start of each test case
 			roleAddresses = make(map[string]address)
 
@@ -583,7 +583,7 @@ func TestAccess_MustGetAddress(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			if tt.setupRole != "" {
