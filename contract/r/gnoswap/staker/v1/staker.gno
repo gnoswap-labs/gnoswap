@@ -541,27 +541,24 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		)
 	}
 
-	internalReward := int64(0)
-	internalRewardToUser := int64(0)
-	internalRewardToFee := int64(0)
-	internalRewardPenalty := int64(0)
+	totalEmissionSent := s.store.GetTotalEmissionSent()
 
 	// Skip internal reward state update when user reward is zero (only penalty).
 	// Do not update last collect time so the reward accrues until the next
 	// collection where a non-zero amount can be delivered.
-	skipInternalUpdate := reward.Internal == 0
+	hasInternalReward := reward.Internal > 0
 
 	// internal reward to user
-	if !skipInternalUpdate {
+	if hasInternalReward {
 		toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		internalReward = reward.Internal
-		internalRewardToUser = toUser
-		internalRewardToFee = feeAmount
-		internalRewardPenalty = reward.InternalPenalty
+		internalReward := reward.Internal
+		internalRewardToUser := toUser
+		internalRewardToFee := feeAmount
+		internalRewardPenalty := reward.InternalPenalty
 
 		chain.Emit(
 			"ProtocolFeeInternalReward",
@@ -574,61 +571,55 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"currentTime", formatAnyInt(currentTime),
 			"currentHeight", formatAnyInt(blockHeight),
 		)
-	}
 
-	totalEmissionSent := s.store.GetTotalEmissionSent()
+		if internalRewardToUser > 0 {
+			// internal reward to user
+			totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardToUser)
+			depositResolver.addCollectedInternalReward(reward.Internal)
+		}
 
-	if internalRewardToUser > 0 {
-		// internal reward to user
-		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardToUser)
-		depositResolver.addCollectedInternalReward(reward.Internal)
-	}
+		if internalRewardPenalty > 0 {
+			// internal penalty to community pool
+			totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardPenalty)
+			depositResolver.addCollectedInternalReward(internalRewardPenalty)
+		}
 
-	if internalRewardPenalty > 0 {
-		// internal penalty to community pool
-		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardPenalty)
-		depositResolver.addCollectedInternalReward(internalRewardPenalty)
-	}
+		// Unclaimable must be processed after regular rewards so that accumulated
+		// unclaimable amounts are reset in the same collect window.
+		unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
+		if unClaimableInternal > 0 {
+			totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
+		}
 
-	// Unclaimable must be processed after regular rewards so that accumulated
-	// unclaimable amounts are reset in the same collect window.
-	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
-	if unClaimableInternal > 0 {
-		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-	}
+		err = s.store.SetTotalEmissionSent(totalEmissionSent)
+		if err != nil {
+			panic(err)
+		}
 
-	err := s.store.SetTotalEmissionSent(totalEmissionSent)
-	if err != nil {
-		panic(err)
-	}
-
-	if !skipInternalUpdate {
 		// Update lastCollectTime for internal rewards (GNS emissions)
 		err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
 		if err != nil {
 			panic(err)
 		}
-	}
 
-	deposits := s.getDeposits()
-	deposits.set(positionId, deposit)
+		deposits := s.getDeposits()
+		deposits.set(positionId, deposit)
 
-	if internalRewardToUser > 0 {
-		gns.Transfer(cross, deposit.Owner(), internalRewardToUser)
-	}
+		if internalRewardToUser > 0 {
+			gns.Transfer(cross, deposit.Owner(), internalRewardToUser)
+		}
 
-	if internalRewardPenalty > 0 {
-		gns.Transfer(cross, communityPoolAddr, internalRewardPenalty)
-	}
+		if internalRewardPenalty > 0 {
+			gns.Transfer(cross, communityPoolAddr, internalRewardPenalty)
+		}
 
-	if unClaimableInternal > 0 {
-		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
-	}
+		if unClaimableInternal > 0 {
+			gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
+		}
 
-	rewardToUser := formatAnyInt(internalRewardToUser)
-	rewardPenalty := formatAnyInt(internalRewardPenalty)
+		rewardToUser := formatAnyInt(internalRewardToUser)
+		rewardPenalty := formatAnyInt(internalRewardPenalty)
 
-	if !skipInternalUpdate {
 		poolPath := depositResolver.TargetPoolPath()
 		pool, _ := s.getPools().Get(poolPath)
 		poolResolver := NewPoolResolver(pool)
@@ -661,9 +652,30 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 		)
+
+		return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 	}
 
-	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
+	// Unclaimable must still be processed when regular internal rewards are
+	// skipped so accrued pool state is cleared for the collect window.
+	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
+	if unClaimableInternal > 0 {
+		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
+	}
+
+	err := s.store.SetTotalEmissionSent(totalEmissionSent)
+	if err != nil {
+		panic(err)
+	}
+
+	deposits := s.getDeposits()
+	deposits.set(positionId, deposit)
+
+	if unClaimableInternal > 0 {
+		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
+	}
+
+	return "0", "0", toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards

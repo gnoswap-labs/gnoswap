@@ -87,11 +87,24 @@ func (self *DepositResolver) addCollectedExternalReward(incentiveID string, rewa
 	self.SetCollectedExternalReward(incentiveID, collectedExternalReward)
 }
 
+// assertMonotonicCollectTime enforces that currentTime is not earlier than the
+// last observed collect time. label is used only to distinguish diagnostics.
+func (self *DepositResolver) assertMonotonicCollectTime(lastCollectTime, currentTime int64, label string) error {
+	if lastCollectTime > currentTime {
+		return makeErrorWithDetails(
+			errNotAvailableUpdateCollectTime,
+			"currentTime must be greater than "+label+" last collect time",
+		)
+	}
+
+	return nil
+}
+
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
 // It returns an error if the current time is less than the last collect time for the internal reward.
 func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int64) error {
-	if self.InternalRewardLastCollectTime() > currentTime {
-		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than internal reward last collect time")
+	if err := self.assertMonotonicCollectTime(self.InternalRewardLastCollectTime(), currentTime, "internal reward"); err != nil {
+		return err
 	}
 
 	self.SetInternalRewardLastCollectTime(currentTime)
@@ -102,13 +115,8 @@ func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int
 // updateExternalRewardLastCollectTime lazily updates the last collect time for the external reward for the given incentive ID.
 // It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
 func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID string, currentTime int64) error {
-	if self.ExternalRewardLastCollectTimes() == nil {
-		self.SetExternalRewardLastCollectTimes(make(map[string]int64))
-	}
-
-	externalLastCollectTime, exists := self.Deposit.GetExternalRewardLastCollectTime(incentiveID)
-	if exists && externalLastCollectTime > currentTime {
-		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than external reward last collect time")
+	if err := self.assertMonotonicCollectTime(self.ExternalRewardLastCollectTime(incentiveID), currentTime, "external reward"); err != nil {
+		return err
 	}
 
 	self.Deposit.SetExternalRewardLastCollectTime(incentiveID, currentTime)
