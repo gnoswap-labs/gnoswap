@@ -8,7 +8,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-func TestGetAddress(t *testing.T) {
+func TestGetAddress(cur realm, t *testing.T) {
 	// Setup test data
 	testAddr := testutils.TestAddress("test")
 	testRole := "test_role"
@@ -100,7 +100,7 @@ func TestGetAddress(t *testing.T) {
 	}
 }
 
-func TestGetRoleAddresses(t *testing.T) {
+func TestGetRoleAddresses(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -181,7 +181,7 @@ func TestGetRoleAddresses(t *testing.T) {
 	}
 }
 
-func TestIsAuthorized(t *testing.T) {
+func TestIsAuthorized(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	otherAddr := testutils.TestAddress("other")
 	testRole := "test_role"
@@ -262,7 +262,7 @@ func TestIsAuthorized(t *testing.T) {
 	}
 }
 
-func TestSetRoleAddress(t *testing.T) {
+func TestSetRoleAddress(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -377,7 +377,7 @@ func TestSetRoleAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup initial roles
 			roleAddresses = make(map[string]address)
 			for k, v := range tt.setupRoles {
@@ -392,11 +392,11 @@ func TestSetRoleAddress(t *testing.T) {
 			}
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, tt.abortMsg, func() {
-					SetRoleAddress(cross, tt.roleName, tt.roleAddress)
+				uassert.AbortsContains(t, cur, tt.abortMsg, func() {
+					SetRoleAddress(cross(cur), tt.roleName, tt.roleAddress)
 				})
 			} else {
-				SetRoleAddress(cross, tt.roleName, tt.roleAddress)
+				SetRoleAddress(cross(cur), tt.roleName, tt.roleAddress)
 				addr, ok := GetAddress(tt.roleName)
 				uassert.True(t, ok, ufmt.Sprintf("Role %s should exist after set", tt.roleName))
 				uassert.True(t, addr == tt.roleAddress, ufmt.Sprintf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr))
@@ -405,7 +405,7 @@ func TestSetRoleAddress(t *testing.T) {
 	}
 }
 
-func TestRemoveRole(t *testing.T) {
+func TestRemoveRole(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -499,7 +499,7 @@ func TestRemoveRole(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup roles
 			roleAddresses = make(map[string]address)
 			for k, v := range tt.setupRoles {
@@ -514,11 +514,11 @@ func TestRemoveRole(t *testing.T) {
 			}
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, tt.abortMsg, func() {
-					RemoveRole(cross, tt.roleName)
+				uassert.AbortsContains(t, cur, tt.abortMsg, func() {
+					RemoveRole(cross(cur), tt.roleName)
 				})
 			} else {
-				RemoveRole(cross, tt.roleName)
+				RemoveRole(cross(cur), tt.roleName)
 				_, ok := GetAddress(tt.roleName)
 				uassert.False(t, ok, ufmt.Sprintf("Role %s should not exist after removal", tt.roleName))
 			}
@@ -526,7 +526,7 @@ func TestRemoveRole(t *testing.T) {
 	}
 }
 
-func TestAccess_MustGetAddress(t *testing.T) {
+func TestAccess_MustGetAddress(cur realm, t *testing.T) {
 	testRole := "test_role"
 	testAddr := testutils.TestAddress("test")
 
@@ -591,7 +591,7 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					MustGetAddress(tt.queryRole)
 				})
 			} else {
