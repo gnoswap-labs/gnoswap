@@ -11,7 +11,7 @@ var (
 	// Data access errors
 	ErrKeyNotFound            = errors.New("key not found")
 	ErrWritePermissionDenied  = errors.New("write permission denied")
-	ErrReadPermissionDenied   = errors.New("read permission denied")
 	ErrUpdatePermissionDenied = errors.New("update permission denied")
 	ErrFailedCast             = errors.New("failed to cast")
+	errSpoofedRealm           = errors.New("rlm does not match the current crossing frame")
 )

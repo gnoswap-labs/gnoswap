@@ -45,10 +45,10 @@ type KVStore interface {
 	GetBPTree(key string) (*bptree.BPTree, error)
 
 	// Set stores a value with the given key
-	Set(key string, value any) error
+	Set(_ int, rlm realm, key string, value any) error
 
 	// Delete removes a key
-	Delete(key string) error
+	Delete(_ int, rlm realm, key string) error
 
 	// IsWriteAuthorized checks if the caller has write permission
 	IsWriteAuthorized(caller address) bool
@@ -57,11 +57,11 @@ type KVStore interface {
 	GetAuthorizedCallers() (map[address]Permission, error)
 
 	// AddAuthorizedCaller adds a new authorized caller
-	AddAuthorizedCaller(caller address, permission Permission) error
+	AddAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error
 
 	// UpdateAuthorizedCaller updates an existing caller's permission
-	UpdateAuthorizedCaller(caller address, permission Permission) error
+	UpdateAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error
 
 	// RemoveAuthorizedCaller removes an authorized caller
-	RemoveAuthorizedCaller(caller address) error
+	RemoveAuthorizedCaller(_ int, rlm realm, caller address) error
 }
