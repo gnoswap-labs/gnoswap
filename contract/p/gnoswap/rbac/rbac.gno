@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"chain/runtime"
 	"strings"
 )
 
@@ -11,14 +10,6 @@ type RBAC struct {
 	ownable *Ownable2Step
 	// roles maps role names to their respective `Role` objects
 	roles map[string]*Role
-}
-
-// New creates a new RBAC instance with the origin caller as owner.
-func New() *RBAC {
-	return &RBAC{
-		ownable: newOwnable2StepWithAddress(runtime.OriginCaller()),
-		roles:   make(map[string]*Role),
-	}
 }
 
 // NewRBACWithAddress creates a new RBAC instance with addr as owner.
