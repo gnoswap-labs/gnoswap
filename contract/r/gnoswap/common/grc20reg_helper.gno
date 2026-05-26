@@ -104,7 +104,7 @@ func Allowance(path string, owner, spender address) int64 {
 //
 // Returns an error if the transfer fails, nil otherwise.
 func Transfer(cur realm, path string, to address, amount int64) error {
-	return GetTokenTeller(path).Transfer(to, amount)
+	return GetTokenTeller(path).Transfer(0, cur, to, amount)
 }
 
 // TransferFrom transfers tokens from one address to another using grc20.Teller.TransferFrom.
@@ -118,7 +118,7 @@ func Transfer(cur realm, path string, to address, amount int64) error {
 //
 // Returns an error if the transfer fails, nil otherwise.
 func TransferFrom(cur realm, path string, from, to address, amount int64) error {
-	return GetTokenTeller(path).TransferFrom(from, to, amount)
+	return GetTokenTeller(path).TransferFrom(0, cur, from, to, amount)
 }
 
 // Approve approves tokens for the specified spender using grc20.Teller.Approve.
@@ -131,7 +131,7 @@ func TransferFrom(cur realm, path string, from, to address, amount int64) error 
 //
 // Returns an error if the approval fails, nil otherwise.
 func Approve(cur realm, path string, spender address, amount int64) error {
-	return GetTokenTeller(path).Approve(spender, amount)
+	return GetTokenTeller(path).Approve(0, cur, spender, amount)
 }
 
 // SafeGRC20Transfer performs a token transfer and panics if it fails.
@@ -144,7 +144,7 @@ func Approve(cur realm, path string, spender address, amount int64) error {
 //
 // Panics if the transfer fails.
 func SafeGRC20Transfer(cur realm, path string, to address, amount int64) {
-	if err := GetTokenTeller(path).Transfer(to, amount); err != nil {
+	if err := GetTokenTeller(path).Transfer(0, cur, to, amount); err != nil {
 		panic(err)
 	}
 }
@@ -160,7 +160,7 @@ func SafeGRC20Transfer(cur realm, path string, to address, amount int64) {
 //
 // Panics if the transfer fails.
 func SafeGRC20TransferFrom(cur realm, path string, from, to address, amount int64) {
-	if err := GetTokenTeller(path).TransferFrom(from, to, amount); err != nil {
+	if err := GetTokenTeller(path).TransferFrom(0, cur, from, to, amount); err != nil {
 		panic(err)
 	}
 }
@@ -175,7 +175,7 @@ func SafeGRC20TransferFrom(cur realm, path string, from, to address, amount int6
 //
 // Panics if the approval fails.
 func SafeGRC20Approve(cur realm, path string, spender address, amount int64) {
-	if err := GetTokenTeller(path).Approve(spender, amount); err != nil {
+	if err := GetTokenTeller(path).Approve(0, cur, spender, amount); err != nil {
 		panic(err)
 	}
 }

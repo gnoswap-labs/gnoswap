@@ -8,7 +8,7 @@ import (
 )
 
 // TestAssert_IsNotHandleNativeCoin tests the AssertIsNotHandleNativeCoin function with various scenarios
-func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
+func TestAssert_IsNotHandleNativeCoin(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		sendCoins        map[string]int64
@@ -75,7 +75,7 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup banker environment
 			coins := make(chain.Coins, 0)
 			for denom, amount := range tt.sendCoins {
@@ -85,11 +85,11 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					AssertIsNotHandleNativeCoin()
 				}, tt.description)
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHandleNativeCoin()
 				}, tt.description)
 			}
