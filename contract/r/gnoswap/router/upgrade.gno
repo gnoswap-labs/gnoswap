@@ -25,7 +25,7 @@ func RegisterInitializer(cur realm, initializer func(routerStore IRouterStore) I
 		return initializer(currentRouterStore)
 	}
 
-	err := versionManager.RegisterInitializer(initializerFunc)
+	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +47,7 @@ func UpgradeImpl(cur realm, packagePath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := versionManager.ChangeImplementation(packagePath)
+	err := versionManager.ChangeImplementation(0, cur, packagePath)
 	if err != nil {
 		panic(err)
 	}

@@ -2,7 +2,6 @@ package access
 
 import (
     "chain"
-	"chain/runtime"
 	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -24,8 +23,8 @@ func init() {
 //
 // Only callable by RBAC contract.
 func SetRoleAddress(cur realm, roleName string, roleAddress address) {
-	caller := runtime.PreviousRealm().Address()
-	assertIsRBAC(caller)
+	prev := cur.Previous()
+	assertIsRBAC(prev.Address())
 
 	// capture old value for event
 	oldAddr, _ := roleAddresses[strings.TrimSpace(roleName)]
@@ -36,7 +35,7 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 
 	chain.Emit(
 	    "SetRoleAddress",
-		"prevAddr", caller.String(),
+		"prevAddr", prev.Address().String(),
 		"role", roleName,
 		"prevRoleAddr", oldAddr.String(),
 		"roleAddress", roleAddress.String(),
@@ -67,8 +66,8 @@ func setRoleAddress(roleName string, roleAddress address) error {
 //
 // Only callable by RBAC contract.
 func RemoveRole(cur realm, roleName string) {
-	caller := runtime.PreviousRealm().Address()
-	assertIsRBAC(caller)
+	prev := cur.Previous()
+	assertIsRBAC(prev.Address())
 
 	// Validate role name
 	roleName = strings.TrimSpace(roleName)
@@ -84,7 +83,7 @@ func RemoveRole(cur realm, roleName string) {
 
 	chain.Emit(
 		"RemoveRole",
-		"prevAddr", caller.String(),
+		"prevAddr", prev.Address().String(),
 		"role", roleName,
 	)
 }

@@ -12,7 +12,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestAssertIsAdminOrGovernance(t *testing.T) {
+func TestAssertIsAdminOrGovernance(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -71,7 +71,7 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -80,11 +80,11 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertIsAdminOrGovernance(tt.testAddr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsAdminOrGovernance(tt.testAddr)
 				})
 			}
@@ -92,7 +92,7 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 	}
 }
 
-func TestAssertFunctions(t *testing.T) {
+func TestAssertFunctions(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -284,7 +284,7 @@ func TestAssertFunctions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup role - now using []std.Address
 			roleAddresses = make(map[string]address)
 			roleAddresses[tt.role] = tt.authorizedAddr
@@ -292,11 +292,11 @@ func TestAssertFunctions(t *testing.T) {
 			for _, tc := range tt.testCases {
 				if tc.shouldPanic {
 					expectedMsg := "unauthorized: caller " + tc.testAddr.String() + " is not " + tt.role
-					uassert.PanicsWithMessage(t, expectedMsg, func() {
+					uassert.PanicsWithMessage(t, cur, expectedMsg, func() {
 						tt.assertFunc(tc.testAddr)
 					})
 				} else {
-					uassert.NotPanics(t, func() {
+					uassert.NotPanics(t, cur, func() {
 						tt.assertFunc(tc.testAddr)
 					})
 				}
@@ -305,7 +305,7 @@ func TestAssertFunctions(t *testing.T) {
 	}
 }
 
-func TestAssertIsAuthorized(t *testing.T) {
+func TestAssertIsAuthorized(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -367,7 +367,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -376,11 +376,11 @@ func TestAssertIsAuthorized(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertIsAuthorized(tt.testRole, tt.testAddr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsAuthorized(tt.testRole, tt.testAddr)
 				})
 			}
@@ -388,7 +388,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 	}
 }
 
-func TestAssertIsAdminReflectsRoleUpdate(t *testing.T) {
+func TestAssertIsAdminReflectsRoleUpdate(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -405,24 +405,24 @@ func TestAssertIsAdminReflectsRoleUpdate(t *testing.T) {
 	err := setRoleAddress(prbac.ROLE_ADMIN.String(), adminAddr)
 	uassert.NoError(t, err)
 
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		AssertIsAdmin(adminAddr)
 	})
 
 	err = setRoleAddress(prbac.ROLE_ADMIN.String(), newAdminAddr)
 	uassert.NoError(t, err)
 
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		AssertIsAdmin(newAdminAddr)
 	})
 
 	expectedMsg := "unauthorized: caller " + adminAddr.String() + " is not " + prbac.ROLE_ADMIN.String()
-	uassert.PanicsWithMessage(t, expectedMsg, func() {
+	uassert.PanicsWithMessage(t, cur, expectedMsg, func() {
 		AssertIsAdmin(adminAddr)
 	})
 }
 
-func TestAssertHasAnyRole(t *testing.T) {
+func TestAssertHasAnyRole(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -509,7 +509,7 @@ func TestAssertHasAnyRole(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -518,11 +518,11 @@ func TestAssertHasAnyRole(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
 				})
 			}
@@ -530,7 +530,7 @@ func TestAssertHasAnyRole(t *testing.T) {
 	}
 }
 
-func TestAssertHasAnyRole_EdgeCases(t *testing.T) {
+func TestAssertHasAnyRole_EdgeCases(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -582,7 +582,7 @@ func TestAssertHasAnyRole_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -591,11 +591,11 @@ func TestAssertHasAnyRole_EdgeCases(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
 				})
 			}
@@ -603,7 +603,7 @@ func TestAssertHasAnyRole_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
+func TestAssertIsAuthorized_EdgeCases(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
@@ -675,7 +675,7 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
@@ -684,11 +684,11 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 
 			// Test
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertIsAuthorized(tt.testRole, tt.testAddr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsAuthorized(tt.testRole, tt.testAddr)
 				})
 			}
@@ -696,7 +696,7 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestAssertIsValidAddress(t *testing.T) {
+func TestAssertIsValidAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		addr        address
@@ -723,13 +723,13 @@ func TestAssertIsValidAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertIsValidAddress(tt.addr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsValidAddress(tt.addr)
 				})
 			}
@@ -737,7 +737,7 @@ func TestAssertIsValidAddress(t *testing.T) {
 	}
 }
 
-func TestAssertIsUser(t *testing.T) {
+func TestAssertIsUser(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		realm       runtime.Realm
@@ -758,13 +758,13 @@ func TestAssertIsUser(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					AssertIsUser(tt.realm)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsUser(tt.realm)
 				})
 			}
@@ -772,7 +772,7 @@ func TestAssertIsUser(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsRBAC(t *testing.T) {
+func TestAssert_assertIsRBAC(cur realm, t *testing.T) {
 	rbacAddress := chain.PackageAddress("gno.land/r/gnoswap/rbac")
 	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
@@ -786,14 +786,14 @@ func TestAssert_assertIsRBAC(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not rbac", tt.caller.String())
-				uassert.PanicsWithMessage(t, expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, expectedMsg, func() {
 					assertIsRBAC(tt.caller)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsRBAC(tt.caller)
 				})
 			}

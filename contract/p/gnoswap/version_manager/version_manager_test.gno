@@ -11,7 +11,7 @@ import (
 // Mock domain address for testing
 const mockDomainAddr = address("g1domain")
 
-func TestNewVersionManager(t *testing.T) {
+func TestNewVersionManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		domainPath              string
@@ -47,7 +47,7 @@ func TestNewVersionManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			kvStore := store.NewKVStore(mockDomainAddr)
 			vm := NewVersionManager(
 				tt.domainPath,
@@ -88,7 +88,7 @@ func TestNewVersionManager(t *testing.T) {
 	}
 }
 
-func TestVersionManager_InitialState(t *testing.T) {
+func TestVersionManager_InitialState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                      string
 		domainPath                string
@@ -136,7 +136,7 @@ func TestVersionManager_InitialState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			kvStore := store.NewKVStore(mockDomainAddr)
 			vm := NewVersionManager(
 				tt.domainPath,
@@ -173,7 +173,7 @@ func TestVersionManager_InitialState(t *testing.T) {
 }
 
 // TestChangeImplementation_Errors tests all error cases in ChangeImplementation
-func TestChangeImplementation_Errors(t *testing.T) {
+func TestChangeImplementation_Errors(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupFunc     func() (*versionManager, string)
@@ -227,9 +227,9 @@ func TestChangeImplementation_Errors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			vm, packagePath := tt.setupFunc()
-			err := vm.ChangeImplementation(packagePath)
+			err := vm.ChangeImplementation(0, cur, packagePath)
 			uassert.ErrorContains(t, err, tt.errorContains)
 		})
 	}
@@ -257,7 +257,7 @@ func mockInitializeDomainStoreFn(kvStore store.KVStore) any {
 }
 
 // TestVersionManager_StoragePermission verifies that only domain address has storage permission
-func TestVersionManager_StoragePermission(t *testing.T) {
+func TestVersionManager_StoragePermission(cur realm, t *testing.T) {
 	kvStore := store.NewKVStore(mockDomainAddr)
 	vm := NewVersionManager(
 		"gno.land/r/gnoswap/protocol_fee",
@@ -266,7 +266,7 @@ func TestVersionManager_StoragePermission(t *testing.T) {
 	)
 
 	// Attempt to change to non-existent package (should fail)
-	_ = vm.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
+	_ = vm.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v1")
 
 	// Verify kvStore has only domain address as authorized caller
 	authorizedCallers, err := kvStore.GetAuthorizedCallers()
@@ -286,7 +286,7 @@ func TestVersionManager_StoragePermission(t *testing.T) {
 }
 
 // TestVersionManager_DomainPath tests edge cases for domain paths
-func TestVersionManager_GetDomainPath(t *testing.T) {
+func TestVersionManager_GetDomainPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		domainPath string
@@ -315,7 +315,7 @@ func TestVersionManager_GetDomainPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.wantPanic {
@@ -338,7 +338,7 @@ func TestVersionManager_GetDomainPath(t *testing.T) {
 }
 
 // TestChangeImplementation_Success tests successful implementation changes
-func TestChangeImplementation_Success(t *testing.T) {
+func TestChangeImplementation_Success(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		domainPath       string
@@ -388,7 +388,7 @@ func TestChangeImplementation_Success(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			kvStore := store.NewKVStore(mockDomainAddr)
 			vmInternal := &versionManager{
 				domainPath:              tt.domainPath,
@@ -403,7 +403,7 @@ func TestChangeImplementation_Success(t *testing.T) {
 				vmInternal.initializers[pkg] = mockInitializer(pkg)
 			}
 
-			err := vmInternal.ChangeImplementation(tt.changeToPackage)
+			err := vmInternal.ChangeImplementation(0, cur, tt.changeToPackage)
 
 			if tt.expectError {
 				uassert.NotNil(t, err, "ChangeImplementation() should return error")
@@ -421,8 +421,8 @@ func TestChangeImplementation_Success(t *testing.T) {
 	}
 }
 
-func TestGetInitializers(t *testing.T) {
-	t.Run("single initializer", func(t *testing.T) {
+func TestGetInitializers(cur realm, t *testing.T) {
+	t.Run("single initializer", func(cur realm, t *testing.T) {
 		kvStore := store.NewKVStore(mockDomainAddr)
 		vm := &versionManager{
 			domainPath:              "gno.land/r/gnoswap/protocol_fee",
@@ -443,7 +443,7 @@ func TestGetInitializers(t *testing.T) {
 		uassert.NotNil(t, result, "initializer should not be nil")
 	})
 
-	t.Run("multiple initializers", func(t *testing.T) {
+	t.Run("multiple initializers", func(cur realm, t *testing.T) {
 		kvStore := store.NewKVStore(mockDomainAddr)
 		vm := &versionManager{
 			domainPath:              "gno.land/r/gnoswap/pool",
@@ -469,7 +469,7 @@ func TestGetInitializers(t *testing.T) {
 		}
 	})
 
-	t.Run("empty initializers", func(t *testing.T) {
+	t.Run("empty initializers", func(cur realm, t *testing.T) {
 		kvStore := store.NewKVStore(mockDomainAddr)
 		vm := &versionManager{
 			domainPath:              "gno.land/r/gnoswap/position",
@@ -485,7 +485,7 @@ func TestGetInitializers(t *testing.T) {
 }
 
 // TestMakeInitializerSafe_InvalidType tests panic on invalid type
-func TestMakeInitializerSafe_InvalidType(t *testing.T) {
+func TestMakeInitializerSafe_InvalidType(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		input     any
@@ -516,7 +516,7 @@ func TestMakeInitializerSafe_InvalidType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.wantPanic {
@@ -534,7 +534,7 @@ func TestMakeInitializerSafe_InvalidType(t *testing.T) {
 // Note: The previousRealm.IsUser() check in RegisterInitializer is tested in integration tests:
 //   - tests/integration/testdata/upgradable/initializer_security.txtar
 //   - tests/integration/testdata/upgradable/user_cannot_register_initializer.txtar
-func TestIsContainDomainPath(t *testing.T) {
+func TestIsContainDomainPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		domainPath string
@@ -622,7 +622,7 @@ func TestIsContainDomainPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			kvStore := store.NewKVStore(mockDomainAddr)
 			vm := &versionManager{
 				domainPath:              tt.domainPath,
@@ -639,7 +639,7 @@ func TestIsContainDomainPath(t *testing.T) {
 }
 
 // TestChangeImplementation_StateConsistency tests state consistency during changes
-func TestChangeImplementation_StateConsistency(t *testing.T) {
+func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		domainPath       string
@@ -685,7 +685,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			kvStore := store.NewKVStore(mockDomainAddr)
 			vmInternal := &versionManager{
 				domainPath:              tt.domainPath,
@@ -705,7 +705,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 			// Execute change sequence
 			for _, pkg := range tt.changeSequence {
 				fullPath := tt.domainPath + "/" + pkg
-				err := vmInternal.ChangeImplementation(fullPath)
+				err := vmInternal.ChangeImplementation(0, cur, fullPath)
 				uassert.Nil(t, err,
 				    ufmt.Sprintf("unexpected error during change to %s: %v", pkg, err))
 			}
@@ -733,15 +733,15 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 // See:
 //   - tests/integration/testdata/upgradable/initializer_security.txtar
 //   - tests/integration/testdata/upgradable/user_cannot_register_initializer.txtar
-func TestRegisterInitializer_ErrorBranches(t *testing.T) {
-	t.Run("nil initializer", func(t *testing.T) {
+func TestRegisterInitializer_ErrorBranches(cur realm, t *testing.T) {
+	t.Run("nil initializer", func(cur realm, t *testing.T) {
 		kvStore := store.NewKVStore(mockDomainAddr)
 		vm := NewVersionManager(
 			"gno.land/r/gnoswap/protocol_fee",
 			kvStore,
 			mockInitializeDomainStoreFn,
 		)
-		err := vm.RegisterInitializer(nil)
+		err := vm.RegisterInitializer(0, cur, nil)
 		uassert.ErrorContains(t, err, "initializer cannot be nil")
 	})
 }

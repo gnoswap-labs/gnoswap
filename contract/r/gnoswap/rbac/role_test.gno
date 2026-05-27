@@ -6,7 +6,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestDefaultRoleAddresses(t *testing.T) {
+func TestDefaultRoleAddresses(cur realm, t *testing.T) {
 	// Test that all default role addresses are properly defined
 	expectedRoles := []prbac.SystemRole{
 		prbac.ROLE_ADMIN,
@@ -62,7 +62,7 @@ func TestDefaultRoleAddresses(t *testing.T) {
 	}
 }
 
-func TestDefaultRoleAddressesCompleteness(t *testing.T) {
+func TestDefaultRoleAddressesCompleteness(cur realm, t *testing.T) {
 	// Test that all addresses are valid (non-empty)
 	for role, addr := range DefaultRoleAddresses {
 		if addr == "" {
@@ -75,7 +75,7 @@ func TestDefaultRoleAddressesCompleteness(t *testing.T) {
 	}
 }
 
-func TestDefaultRoleAddressesMapping(t *testing.T) {
+func TestDefaultRoleAddressesMapping(cur realm, t *testing.T) {
 	// Test specific role-address mappings
 	tests := []struct {
 		role         prbac.SystemRole
@@ -150,7 +150,7 @@ func TestDefaultRoleAddressesMapping(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
+		t.Run(tt.description, func(cur realm, t *testing.T) {
 			actualAddr, exists := DefaultRoleAddresses[tt.role]
 			if !exists {
 				t.Errorf("Role %s not found in DefaultRoleAddresses", tt.role.String())
@@ -165,7 +165,7 @@ func TestDefaultRoleAddressesMapping(t *testing.T) {
 	}
 }
 
-func TestRoleStringRepresentation(t *testing.T) {
+func TestRoleStringRepresentation(cur realm, t *testing.T) {
 	// Test that all roles have proper string representation
 	expectedStrings := map[prbac.SystemRole]string{
 		prbac.ROLE_ADMIN:          "admin",
@@ -194,7 +194,7 @@ func TestRoleStringRepresentation(t *testing.T) {
 	}
 }
 
-func TestSystemRoleValidation(t *testing.T) {
+func TestSystemRoleValidation(cur realm, t *testing.T) {
 	// Test that all roles in DefaultRoleAddresses are system roles
 	for role := range DefaultRoleAddresses {
 		if !prbac.IsSystemRole(role.String()) {
@@ -219,7 +219,7 @@ func TestSystemRoleValidation(t *testing.T) {
 	}
 }
 
-func TestRoleAddressUniqueness(t *testing.T) {
+func TestRoleAddressUniqueness(cur realm, t *testing.T) {
 	// Test that all role addresses are unique (no two roles share the same address)
 	addressToRole := make(map[address]prbac.SystemRole)
 
@@ -233,10 +233,10 @@ func TestRoleAddressUniqueness(t *testing.T) {
 	}
 }
 
-func TestDefaultRoleAddressesIntegrationWithManager(t *testing.T) {
+func TestDefaultRoleAddressesIntegrationWithManager(cur realm, t *testing.T) {
 	// Test that DefaultRoleAddresses works correctly with RBAC manager
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	initRbac()
+	initRbac(cur)
 
 	// Test that all roles from DefaultRoleAddresses are properly registered in manager
 	for role, expectedAddr := range DefaultRoleAddresses {

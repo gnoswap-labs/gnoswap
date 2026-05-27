@@ -7,10 +7,10 @@ import (
 )
 
 // TestHalvingEmissionScenarios tests various scenarios for halving emission behavior
-func TestHalvingEmissionScenarios(t *testing.T) {
+func TestHalvingEmissionScenarios(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		testFunc func(t *testing.T)
+		testFunc func(cur realm, t *testing.T)
 	}{
 		{
 			name:     "Basic Emission Update Flow",
@@ -48,9 +48,9 @@ Expected behavior:
 - Emission values should be based on timestamp
 - Different years should have different emission rates
 */
-func testBasicEmissionUpdateFlow(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func testBasicEmissionUpdateFlow(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	// Setup initial state
 	testing.SetRealm(adminRealm)
@@ -83,9 +83,9 @@ Expected behavior:
 - Emissions for years should use the correct year's emission rate
 - Different years should return same emission rates for years 1-2
 */
-func testHistoricalBlockEmissionAccuracy(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func testHistoricalBlockEmissionAccuracy(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginCaller(adminAddr)
@@ -121,9 +121,9 @@ Expected behavior:
 - Years 1-2 should have same emission rates
 - Both emission rates should be positive
 */
-func testCacheRewardIntegration(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func testCacheRewardIntegration(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginCaller(adminAddr)
@@ -159,9 +159,9 @@ Expected behavior:
 
 Note: Halving reduces emission rate by half every 2 years
 */
-func testMultipleBlockTimeChanges(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func testMultipleBlockTimeChanges(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginCaller(adminAddr)
