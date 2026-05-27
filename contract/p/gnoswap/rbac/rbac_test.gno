@@ -32,7 +32,7 @@ func editorChecker(caller address) error {
 }
 
 func TestRbac_New(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	uassert.NotNil(t, manager)
 	uassert.NotNil(t, manager.ownable)
@@ -121,7 +121,7 @@ func TestRbac_RegisterRole(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			manager := New()
+			manager := NewRBACWithAddress(adminAddr)
 
 			err := manager.RegisterRole(tt.roleName, tt.addr)
 
@@ -144,7 +144,7 @@ func TestRbac_RegisterRole(t *testing.T) {
 }
 
 func TestRbac_RegisterRoleDuplicate(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	err := manager.RegisterRole(adminRole, adminAddr)
 	uassert.NoError(t, err)
@@ -156,7 +156,7 @@ func TestRbac_RegisterRoleDuplicate(t *testing.T) {
 }
 
 func TestRbac_IsAuthorized(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	// Register admin role
 	err := manager.RegisterRole(adminRole, adminAddr)
@@ -285,7 +285,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			manager := New()
+			manager := NewRBACWithAddress(adminAddr)
 			tt.setup(manager)
 
 			err := manager.UpdateRoleAddress(tt.roleName, tt.newAddr)
@@ -309,7 +309,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 
 func TestRbac_RemoveRole(t *testing.T) {
 	t.Run("success remove non-system role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// First register role
 		err := manager.RegisterRole(editorRole, editorAddr)
 		uassert.NoError(t, err)
@@ -324,14 +324,14 @@ func TestRbac_RemoveRole(t *testing.T) {
 	})
 
 	t.Run("fail to remove non-existent role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("non_existent_role")
 		uassert.Error(t, err)
 		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
 	})
 
 	t.Run("fail to remove system role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// Register system role
 		err := manager.RegisterRole(adminRole, adminAddr)
 		uassert.NoError(t, err)
@@ -343,7 +343,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 	})
 
 	t.Run("remove role twice fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// Register and remove once
 		err := manager.RegisterRole(editorRole, editorAddr)
 		uassert.NoError(t, err)
@@ -357,21 +357,21 @@ func TestRbac_RemoveRole(t *testing.T) {
 	})
 
 	t.Run("remove role with empty name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("")
 		uassert.Error(t, err)
 		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
 	})
 
 	t.Run("remove role with whitespace-only name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("   ")
 		uassert.Error(t, err)
 		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
 	})
 
 	t.Run("remove role with tab and space name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole(" \t ")
 		uassert.Error(t, err)
 		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
@@ -379,7 +379,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 }
 
 func TestRbac_GetAllRoleAddresses(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	t.Run("empty roles returns empty map", func(t *testing.T) {
 		addresses := manager.GetAllRoleAddresses()
@@ -402,7 +402,7 @@ func TestRbac_GetAllRoleAddresses(t *testing.T) {
 }
 
 func TestRbac_GetRoleAddress(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 	err := manager.RegisterRole(adminRole, adminAddr)
 	uassert.NoError(t, err)
 
@@ -493,7 +493,7 @@ func TestRbac_DropOwnership(t *testing.T) {
 }
 
 func TestRbac_existsRole(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	// Initially role doesn't exist
 	exists := manager.existsRole(adminRole)

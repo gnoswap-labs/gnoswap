@@ -93,7 +93,7 @@ func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
 func TestDropOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	err := o.DropOwnershipBy(alice)
 	urequire.NoError(t, err, "DropOwnership failed")
@@ -104,7 +104,7 @@ func TestDropOwnership(t *testing.T) {
 
 func TestDropOwnershipVulnerability(t *testing.T) {
 	testing.SetOriginCaller(alice)
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	// alice initiates ownership transfer to bob
 	err := o.TransferOwnershipBy(bob, alice)
@@ -130,7 +130,7 @@ func TestDropOwnershipVulnerability(t *testing.T) {
 func TestErrUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	testing.SetOriginCaller(bob)
 
@@ -141,7 +141,7 @@ func TestErrUnauthorized(t *testing.T) {
 func TestErrInvalidAddress(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	err := o.TransferOwnershipBy("", alice)
 	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
@@ -153,7 +153,7 @@ func TestErrInvalidAddress(t *testing.T) {
 func TestErrNoPendingOwner(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	err := o.AcceptOwnershipBy(alice)
 	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
@@ -162,7 +162,7 @@ func TestErrNoPendingOwner(t *testing.T) {
 func TestErrPendingUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
-	o := New()
+	o := NewRBACWithAddress(alice)
 
 	err := o.TransferOwnershipBy(bob, alice)
 	urequire.NoError(t, err)
