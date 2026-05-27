@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetters_IsHaltedPool(t *testing.T) {
+func TestGetters_IsHaltedPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -19,7 +19,7 @@ func TestGetters_IsHaltedPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedPool()
@@ -28,7 +28,7 @@ func TestGetters_IsHaltedPool(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedPosition(t *testing.T) {
+func TestGetters_IsHaltedPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -41,7 +41,7 @@ func TestGetters_IsHaltedPosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedPosition()
@@ -50,7 +50,7 @@ func TestGetters_IsHaltedPosition(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedProtocolFee(t *testing.T) {
+func TestGetters_IsHaltedProtocolFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -63,7 +63,7 @@ func TestGetters_IsHaltedProtocolFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedProtocolFee()
@@ -72,7 +72,7 @@ func TestGetters_IsHaltedProtocolFee(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedRouter(t *testing.T) {
+func TestGetters_IsHaltedRouter(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -85,7 +85,7 @@ func TestGetters_IsHaltedRouter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedRouter()
@@ -94,7 +94,7 @@ func TestGetters_IsHaltedRouter(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedStaker(t *testing.T) {
+func TestGetters_IsHaltedStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -107,7 +107,7 @@ func TestGetters_IsHaltedStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedStaker()
@@ -116,7 +116,7 @@ func TestGetters_IsHaltedStaker(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedLaunchpad(t *testing.T) {
+func TestGetters_IsHaltedLaunchpad(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -129,7 +129,7 @@ func TestGetters_IsHaltedLaunchpad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedLaunchpad()
@@ -138,7 +138,7 @@ func TestGetters_IsHaltedLaunchpad(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedGovernance(t *testing.T) {
+func TestGetters_IsHaltedGovernance(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -151,7 +151,7 @@ func TestGetters_IsHaltedGovernance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedGovernance()
@@ -160,7 +160,7 @@ func TestGetters_IsHaltedGovernance(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedGovStaker(t *testing.T) {
+func TestGetters_IsHaltedGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -173,7 +173,7 @@ func TestGetters_IsHaltedGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedGovStaker()
@@ -182,7 +182,7 @@ func TestGetters_IsHaltedGovStaker(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedXGns(t *testing.T) {
+func TestGetters_IsHaltedXGns(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -195,7 +195,7 @@ func TestGetters_IsHaltedXGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedXGns()
@@ -204,7 +204,7 @@ func TestGetters_IsHaltedXGns(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedCommunityPool(t *testing.T) {
+func TestGetters_IsHaltedCommunityPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -217,7 +217,7 @@ func TestGetters_IsHaltedCommunityPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedCommunityPool()
@@ -226,7 +226,7 @@ func TestGetters_IsHaltedCommunityPool(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedEmission(t *testing.T) {
+func TestGetters_IsHaltedEmission(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -239,7 +239,7 @@ func TestGetters_IsHaltedEmission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedEmission()
@@ -248,7 +248,7 @@ func TestGetters_IsHaltedEmission(t *testing.T) {
 	}
 }
 
-func TestGetters_IsHaltedWithdraw(t *testing.T) {
+func TestGetters_IsHaltedWithdraw(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		haltLevel HaltLevel
@@ -261,7 +261,7 @@ func TestGetters_IsHaltedWithdraw(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := IsHaltedWithdraw()
@@ -270,7 +270,7 @@ func TestGetters_IsHaltedWithdraw(t *testing.T) {
 	}
 }
 
-func TestGetters_isHaltedOperation(t *testing.T) {
+func TestGetters_isHaltedOperation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		opType    OpType
@@ -285,7 +285,7 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 			result := isHaltedOperation(tt.opType)
@@ -294,16 +294,16 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 	}
 }
 
-func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {
+func TestGetters_isHaltedOperation_InvalidOpType(cur realm, t *testing.T) {
 	err := setHaltLevel(HaltLevelNone)
 	uassert.NoError(t, err)
 
-	uassert.PanicsWithMessage(t, "invalid operation type: invalid_op", func() {
+	uassert.PanicsWithMessage(t, cur, "invalid operation type: invalid_op", func() {
 		isHaltedOperation(OpType("invalid_op"))
 	})
 }
 
-func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
+func TestGetters_IsHalted_InvalidOpType(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		opTypes          []OpType
@@ -340,7 +340,7 @@ func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(HaltLevelNone)
 			uassert.NoError(t, err)
 			halted, err := IsHalted(tt.opTypes...)

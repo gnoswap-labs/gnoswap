@@ -10,7 +10,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-func TestHalt_SetHaltLevel_Internal(t *testing.T) {
+func TestHalt_SetHaltLevel_Internal(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		inputLevel       HaltLevel
@@ -59,7 +59,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// when
@@ -83,7 +83,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	}
 }
 
-func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
+func TestHalt_SetHaltLevel_Idempotency(cur realm, t *testing.T) {
 	tests := []struct {
 		name  string
 		level HaltLevel
@@ -95,7 +95,7 @@ func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given - set level once
@@ -118,7 +118,7 @@ func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
 	}
 }
 
-func TestHalt_GetHaltConfig(t *testing.T) {
+func TestHalt_GetHaltConfig(cur realm, t *testing.T) {
 	cleanup(t)
 
 	// given - set a specific configuration
@@ -148,7 +148,7 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	uassert.Equal(t, halted, false) // Should still be false (not halted) in the clone
 }
 
-func TestHalt_IsHalted(t *testing.T) {
+func TestHalt_IsHalted(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		initialLevel   HaltLevel
@@ -222,7 +222,7 @@ func TestHalt_IsHalted(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
@@ -243,7 +243,7 @@ func TestHalt_IsHalted(t *testing.T) {
 	}
 }
 
-func TestHalt_IndividualOperationStatus(t *testing.T) {
+func TestHalt_IndividualOperationStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		initialLevel     HaltLevel
@@ -297,7 +297,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
@@ -306,7 +306,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 			// when/then
 			if tc.expectedPanic {
-				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.AbortsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					isHaltedOperation(tc.operation)
 				})
 			} else {
@@ -317,7 +317,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 	}
 }
 
-func TestHalt_GetHaltConfigJson(t *testing.T) {
+func TestHalt_GetHaltConfigJson(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		initialLevel         HaltLevel
@@ -375,7 +375,7 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
@@ -406,7 +406,7 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 	}
 }
 
-func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
+func TestHalt_SetHaltLevel_WithAuthorization(cur realm, t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
@@ -453,18 +453,18 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
-					SetHaltLevel(cross, tc.inputLevel)
+				uassert.AbortsContains(t, cur, tc.expectedAbortMessage, func() {
+					SetHaltLevel(cross(cur), tc.inputLevel)
 				})
 			} else {
-				SetHaltLevel(cross, tc.inputLevel)
+				SetHaltLevel(cross(cur), tc.inputLevel)
 
 				// Verify the level was set correctly by checking specific operations
 				config := GetHaltConfig()
@@ -490,7 +490,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 	}
 }
 
-func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
+func TestHalt_SetOperationStatus_WithAuthorization(cur realm, t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
@@ -537,18 +537,18 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
-					SetOperationStatus(cross, tc.operationType, tc.halted)
+				uassert.AbortsContains(t, cur, tc.expectedAbortMessage, func() {
+					SetOperationStatus(cross(cur), tc.operationType, tc.halted)
 				})
 			} else {
-				SetOperationStatus(cross, tc.operationType, tc.halted)
+				SetOperationStatus(cross(cur), tc.operationType, tc.halted)
 
 				// Verify the operation status was set correctly
 				config := GetHaltConfig()
@@ -560,7 +560,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 	}
 }
 
-func TestHalt_IntegrationScenarios(t *testing.T) {
+func TestHalt_IntegrationScenarios(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		initialLevel         HaltLevel
@@ -598,7 +598,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// Set initial level
@@ -625,8 +625,8 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 	}
 }
 
-func TestHalt_EdgeCases(t *testing.T) {
-	t.Run("GetHaltConfig independence", func(t *testing.T) {
+func TestHalt_EdgeCases(cur realm, t *testing.T) {
+	t.Run("GetHaltConfig independence", func(cur realm, t *testing.T) {
 		cleanup(t)
 
 		configByGetter := GetHaltConfig()
@@ -644,7 +644,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		uassert.Equal(t, getterHalted, false)
 	})
 
-	t.Run("IsHalted with no operations", func(t *testing.T) {
+	t.Run("IsHalted with no operations", func(cur realm, t *testing.T) {
 		cleanup(t)
 		err := setHaltLevel(HaltLevelComplete)
 		uassert.NoError(t, err)
@@ -655,7 +655,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		uassert.Equal(t, halted, false)
 	})
 
-	t.Run("Multiple halt level changes", func(t *testing.T) {
+	t.Run("Multiple halt level changes", func(cur realm, t *testing.T) {
 		cleanup(t)
 
 		// Start with emergency
@@ -675,7 +675,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		uassert.Equal(t, isHaltedOperation(OpTypeGovernance), true)
 	})
 
-	t.Run("HaltConfig Clone method", func(t *testing.T) {
+	t.Run("HaltConfig Clone method", func(cur realm, t *testing.T) {
 		cleanup(t)
 
 		original := newSafeModeConfig()
@@ -695,7 +695,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		uassert.Equal(t, clonedHalted, false)
 	})
 
-	t.Run("HaltConfig IsHalted method", func(t *testing.T) {
+	t.Run("HaltConfig IsHalted method", func(cur realm, t *testing.T) {
 		cleanup(t)
 
 		config := newNoneConfig()
@@ -709,7 +709,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 }
 
-func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
+func TestHalt_NewHaltStateManagerByConfig(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		configFunc             func() HaltConfig
@@ -815,7 +815,7 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			config := tc.configFunc()
 
@@ -853,7 +853,7 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 	}
 }
 
-func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
+func TestHalt_NewHaltStateManagerByConfig_Independence(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		configFunc         func() HaltConfig
@@ -902,7 +902,7 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			config := tc.configFunc()
 			manager := newHaltStateManagerByConfig(config)
@@ -924,7 +924,7 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 }
 
-func TestHaltStateManager_GetOperationHalted_NotFound(t *testing.T) {
+func TestHaltStateManager_GetOperationHalted_NotFound(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		manager        HaltStateManager
@@ -954,7 +954,7 @@ func TestHaltStateManager_GetOperationHalted_NotFound(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			halted, err := tc.manager.getOperationHalted(tc.op)
 
@@ -966,7 +966,7 @@ func TestHaltStateManager_GetOperationHalted_NotFound(t *testing.T) {
 	}
 }
 
-func TestHaltStateManager_SetOperationHalted_InvalidOpType(t *testing.T) {
+func TestHaltStateManager_SetOperationHalted_InvalidOpType(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		op             OpType
@@ -994,7 +994,7 @@ func TestHaltStateManager_SetOperationHalted_InvalidOpType(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := newHaltStateManagerByConfig(newNoneConfig())
 
