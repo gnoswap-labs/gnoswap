@@ -12,7 +12,7 @@ tests/
 │   │   ├── dev.mk       # Development environment configuration
 │   │   ├── staging.mk   # Staging environment configuration
 │   │   └── production.mk # Production environment configuration
-│   ├── deploy.mk        # Deployment script
+│   ├── deploy.mk        # Deployment scripts
 │   └── test.mk          # Test scripts
 ├── Makefile             # Main entry point
 └── README.md            # This file
