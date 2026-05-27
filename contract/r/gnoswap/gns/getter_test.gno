@@ -9,7 +9,7 @@ import (
 
 // TestGetHalvingYearInfo verifies that GetHalvingYearInfo correctly calculates
 // year-specific start and end timestamps and maintains consistency with other functions.
-func TestGetHalvingYearInfo(t *testing.T) {
+func TestGetHalvingYearInfo(cur realm, t *testing.T) {
 	const testStartTimestamp = int64(1000)
 	emissionState = NewEmissionState(1, testStartTimestamp)
 	halvingData := emissionState.getHalvingData()
@@ -66,7 +66,7 @@ func TestGetHalvingYearInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			year, startTime, endTime := GetHalvingYearInfo(tt.timestamp)
 
 			if year != tt.expectedYear {
@@ -112,7 +112,7 @@ func TestGetHalvingYearInfo(t *testing.T) {
 	}
 }
 
-func TestValidYearEdgeCases(t *testing.T) {
+func TestValidYearEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		year        int64
@@ -128,7 +128,7 @@ func TestValidYearEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validYear(tt.year)
 
 			if tt.shouldError {
@@ -140,7 +140,7 @@ func TestValidYearEdgeCases(t *testing.T) {
 	}
 }
 
-func TestValidEmissionAmountEdgeCases(t *testing.T) {
+func TestValidEmissionAmountEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		currentMinted    int64
@@ -158,7 +158,7 @@ func TestValidEmissionAmountEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			setMintedEmissionAmount(tt.currentMinted)
 
 			err := validEmissionAmount(tt.amountToValidate)
@@ -172,9 +172,9 @@ func TestValidEmissionAmountEdgeCases(t *testing.T) {
 	}
 }
 
-func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
+func TestGetEmissionAmountPerSecondInRangeEdgeCases(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	year3Start := GetHalvingYearStartTimestamp(3)
 
@@ -193,7 +193,7 @@ func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			times, emissions := GetEmissionAmountPerSecondInRange(tt.fromTime, tt.toTime)
 
 			uassert.Equal(t, tt.expectedLength, len(times))
@@ -211,9 +211,9 @@ func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 	}
 }
 
-func TestGetEmissionAmountPerSecondInRangeBoundary(t *testing.T) {
+func TestGetEmissionAmountPerSecondInRangeBoundary(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	year3Start := GetHalvingYearStartTimestamp(3)
 	year4Start := GetHalvingYearStartTimestamp(4)
@@ -232,44 +232,44 @@ func TestGetEmissionAmountPerSecondInRangeBoundary(t *testing.T) {
 		}
 	}
 
-	t.Run("fromTime at year start includes that year", func(t *testing.T) {
+	t.Run("fromTime at year start includes that year", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5End)
 		verifyResult(t, times, emissions, 3)
 		uassert.Equal(t, year3Start, times[0])
 	})
 
-	t.Run("fromTime after year start excludes that year", func(t *testing.T) {
+	t.Run("fromTime after year start excludes that year", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start+1, year5End)
 		verifyResult(t, times, emissions, 2)
 		uassert.Equal(t, year4Start, times[0])
 	})
 
-	t.Run("fromTime in middle of year to next year start-1 returns empty", func(t *testing.T) {
+	t.Run("fromTime in middle of year to next year start-1 returns empty", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(midYear3, year4Start-1)
 		verifyResult(t, times, emissions, 0)
 	})
 
-	t.Run("fromTime in middle of year to next year start includes only next year", func(t *testing.T) {
+	t.Run("fromTime in middle of year to next year start includes only next year", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(midYear3, year4Start)
 		verifyResult(t, times, emissions, 1)
 		uassert.Equal(t, year4Start, times[0])
 	})
 
-	t.Run("toTime at year start includes that year", func(t *testing.T) {
+	t.Run("toTime at year start includes that year", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start)
 		verifyResult(t, times, emissions, 3)
 		uassert.Equal(t, year5Start, times[2])
 	})
 
-	t.Run("toTime one second before year start excludes that year", func(t *testing.T) {
+	t.Run("toTime one second before year start excludes that year", func(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start-1)
 		verifyResult(t, times, emissions, 2)
 	})
 }
 
-func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
+func TestGetEmissionFunctionsWithInvalidTimestamps(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	tests := []struct {
 		name      string
@@ -284,24 +284,24 @@ func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name+" - GetEmissionAmountPerSecondByTimestamp", func(t *testing.T) {
+		t.Run(tt.name+" - GetEmissionAmountPerSecondByTimestamp", func(cur realm, t *testing.T) {
 			result := GetEmissionAmountPerSecondByTimestamp(tt.timestamp)
 			uassert.Equal(t, int64(0), result)
 		})
 
-		t.Run(tt.name+" - GetEmissionLeftAmountByTimestamp", func(t *testing.T) {
+		t.Run(tt.name+" - GetEmissionLeftAmountByTimestamp", func(cur realm, t *testing.T) {
 			result := GetEmissionLeftAmountByTimestamp(tt.timestamp)
 			uassert.Equal(t, int64(0), result)
 		})
 
-		t.Run(tt.name+" - GetEmissionAccumulatedAmountByTimestamp", func(t *testing.T) {
+		t.Run(tt.name+" - GetEmissionAccumulatedAmountByTimestamp", func(cur realm, t *testing.T) {
 			result := GetEmissionAccumulatedAmountByTimestamp(tt.timestamp)
 			uassert.Equal(t, int64(0), result)
 		})
 	}
 }
 
-func TestEmissionActiveBoundaries(t *testing.T) {
+func TestEmissionActiveBoundaries(cur realm, t *testing.T) {
 	const testStartTimestamp = int64(1000000)
 	emissionState = NewEmissionState(1, testStartTimestamp)
 
@@ -359,7 +359,7 @@ func TestEmissionActiveBoundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			es := getEmissionState()
 
 			actualActive := es.isActive(tt.timestamp)
@@ -382,7 +382,7 @@ func TestEmissionActiveBoundaries(t *testing.T) {
 // for timestamps >= 0 within the 12-year range because the calculation is:
 // (timestamp - startTimestamp) / SECONDS_IN_YEAR + 1 = (timestamp - 0) / SECONDS_IN_YEAR + 1
 // However, isActive returns false because isInitialized() is false (startBlock == 0).
-func TestEmissionStateUninitializedBoundaries(t *testing.T) {
+func TestEmissionStateUninitializedBoundaries(cur realm, t *testing.T) {
 	emissionState = NewEmissionState(0, 0)
 	endTimestamp := getEmissionState().getEndTimestamp()
 
@@ -424,7 +424,7 @@ func TestEmissionStateUninitializedBoundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			es := getEmissionState()
 
 			uassert.Equal(t, tt.expectedActive, es.isActive(tt.timestamp),
@@ -437,7 +437,7 @@ func TestEmissionStateUninitializedBoundaries(t *testing.T) {
 	}
 }
 
-func TestYearTransitionBoundaries(t *testing.T) {
+func TestYearTransitionBoundaries(cur realm, t *testing.T) {
 	const testStartTimestamp = int64(1000000)
 	emissionState = NewEmissionState(1, testStartTimestamp)
 
@@ -445,7 +445,7 @@ func TestYearTransitionBoundaries(t *testing.T) {
 		yearEndTimestamp := testStartTimestamp + (SECONDS_IN_YEAR * year) - 1
 		nextYearStartTimestamp := testStartTimestamp + (SECONDS_IN_YEAR * year)
 
-		t.Run(ufmt.Sprintf("year %d to %d transition", year, year+1), func(t *testing.T) {
+		t.Run(ufmt.Sprintf("year %d to %d transition", year, year+1), func(cur realm, t *testing.T) {
 			es := getEmissionState()
 
 			// Last second of current year
@@ -465,9 +465,9 @@ func TestYearTransitionBoundaries(t *testing.T) {
 	}
 }
 
-func TestGetEmissionAmountPerSecondInRangeIsolation(t *testing.T) {
+func TestGetEmissionAmountPerSecondInRangeIsolation(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	fromTime := GetHalvingYearStartTimestamp(3)
 	toTime := GetHalvingYearEndTimestamp(5)
@@ -485,9 +485,9 @@ func TestGetEmissionAmountPerSecondInRangeIsolation(t *testing.T) {
 	uassert.Equal(t, 3, len(reFetchedEmissions))
 }
 
-func TestGetHalvingInfoIsolation(t *testing.T) {
+func TestGetHalvingInfoIsolation(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	halvingInfo := GetHalvingInfo()
 	halvingInfo.startTimestamps[0] = -1

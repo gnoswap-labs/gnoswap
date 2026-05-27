@@ -2,7 +2,6 @@ package gns
 
 import (
 	"chain"
-	"chain/runtime"
 	"strings"
 	"time"
 
@@ -23,22 +22,26 @@ const (
 )
 
 var (
-	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-	UserTeller           = token.CallerTeller()
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	UserTeller    grc20.Teller
 
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
 )
 
-func init() {
+func init(cur realm) {
+	token, privateLedger = grc20.NewToken(0, cur, "Gnoswap", "GNS", 6)
+	UserTeller = token.CallerTeller()
+
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	grc20reg.Register(cross, token, "")
+	grc20reg.Register(cross(cur), token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
 	// leftEmissionAmount will decrease as tokens are minted.
@@ -80,7 +83,7 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // to allow graceful handling. This function assumes caller has already verified
 // halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
@@ -131,7 +134,7 @@ func MintGns(cur realm, address address) int64 {
 //   - amount: amount to transfer
 func Transfer(cur realm, to address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.Transfer(to, amount))
+	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
 
 // Approve allows spender to transfer GNS tokens from caller's account.
@@ -141,7 +144,7 @@ func Transfer(cur realm, to address, amount int64) {
 //   - amount: maximum amount spender can transfer
 func Approve(cur realm, spender address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.Approve(spender, amount))
+	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
 
 // TransferFrom transfers GNS tokens on behalf of owner.
@@ -152,7 +155,7 @@ func Approve(cur realm, spender address, amount int64) {
 //   - amount: amount to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
 	userTeller := token.CallerTeller()
-	checkErr(userTeller.TransferFrom(from, to, amount))
+	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
 // Render returns token information for web interface.
