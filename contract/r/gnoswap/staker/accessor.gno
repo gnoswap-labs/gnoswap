@@ -12,9 +12,9 @@ type PoolAccessor interface {
 	GetSlot0Tick(poolPath string) int32
 	GetSlot0SqrtPriceX96(poolPath string) string
 
-	SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
-	SetSwapStartHook(hook func(poolPath string, timestamp int64))
-	SetSwapEndHook(hook func(poolPath string) error)
+	SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64))
+	SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error)
 }
 
 type poolAccessor struct{}
@@ -31,21 +31,33 @@ func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (p *poolAccessor) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	pool.SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(poolPath, tickId, zeroForOne, timestamp)
+func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	pool.SetTickCrossHook(cross(rlm), func(hookCur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(hookCur, poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
-func (p *poolAccessor) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
-	pool.SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {
-		hook(poolPath, timestamp)
+func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	pool.SetSwapStartHook(cross(rlm), func(hookCur realm, poolPath string, timestamp int64) {
+		hook(hookCur, poolPath, timestamp)
 	})
 }
 
-func (p *poolAccessor) SetSwapEndHook(hook func(poolPath string) error) {
-	pool.SetSwapEndHook(cross, func(cur realm, poolPath string) error {
-		return hook(poolPath)
+func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	pool.SetSwapEndHook(cross(rlm), func(hookCur realm, poolPath string) error {
+		return hook(hookCur, poolPath)
 	})
 }
 
@@ -54,21 +66,20 @@ func newPoolAccessor() PoolAccessor {
 }
 
 type EmissionAccessor interface {
-	MintAndDistributeGns() (int64, bool)
+	MintAndDistributeGns(_ int, rlm realm) (int64, bool)
 	GetStakerEmissionAmountPerSecond() int64
 	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64)
-	SetOnDistributionPctChangeCallback(callback func(emissionAmountPerSecond int64))
+	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(emissionAmountPerSecond int64))
 }
 
 type emissionAccessor struct{}
 
-func (e *emissionAccessor) MintAndDistributeGns() (int64, bool) {
-	var amount int64
-	var ok bool
-	func(cur realm) {
-		amount, ok = emission.MintAndDistributeGns(cross)
-	}(cross)
-	return amount, ok
+func (e *emissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	return emission.MintAndDistributeGns(cross(rlm))
 }
 
 func (e *emissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
@@ -79,16 +90,12 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *emissionAccessor) SetOnDistributionPctChangeCallback(callback func(emissionAmountPerSecond int64)) {
-	callbackWithCross := func(emissionAmountPerSecond int64) {
-		func(cur realm) {
-			callback(emissionAmountPerSecond)
-		}(cross)
+func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(emissionAmountPerSecond int64)) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
 	}
 
-	func(cur realm) {
-		emission.SetOnDistributionPctChangeCallback(cross, callbackWithCross)
-	}(cross)
+	emission.SetOnDistributionPctChangeCallback(cross(rlm), callback)
 }
 
 func newEmissionAccessor() EmissionAccessor {
@@ -96,10 +103,10 @@ func newEmissionAccessor() EmissionAccessor {
 }
 
 type NFTAccessor interface {
-	Approve(approved address, tid grc721.TokenID) error
-	Mint(to address, tid grc721.TokenID) grc721.TokenID
-	Burn(tid grc721.TokenID)
-	TransferFrom(from, to address, tid grc721.TokenID) error
+	Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error
+	Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID
+	Burn(_ int, rlm realm, tid grc721.TokenID)
+	TransferFrom(_ int, rlm realm, from, to address, tid grc721.TokenID) error
 	TotalSupply() int64
 	Exists(tid grc721.TokenID) bool
 	MustOwnerOf(tid grc721.TokenID) address
@@ -108,20 +115,36 @@ type NFTAccessor interface {
 
 type gnftAccessor struct{}
 
-func (n *gnftAccessor) Approve(approved address, tid grc721.TokenID) error {
-	return gnft.Approve(cross, approved, tid)
+func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return gnft.Approve(cross(rlm), approved, tid)
 }
 
-func (n *gnftAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
-	return gnft.Mint(cross, to, tid)
+func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	return gnft.Mint(cross(rlm), to, tid)
 }
 
-func (n *gnftAccessor) Burn(tid grc721.TokenID) {
-	gnft.Burn(cross, tid)
+func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+
+	gnft.Burn(cross(rlm), tid)
 }
 
-func (n *gnftAccessor) TransferFrom(from, to address, tid grc721.TokenID) error {
-	return gnft.TransferFrom(cross, from, to, tid)
+func (n *gnftAccessor) TransferFrom(_ int, rlm realm, from, to address, tid grc721.TokenID) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return gnft.TransferFrom(cross(rlm), from, to, tid)
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {

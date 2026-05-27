@@ -389,21 +389,33 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	}(cross)
 }
 
-func (p *mockPoolAccessor) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	pool.SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(poolPath, tickId, zeroForOne, timestamp)
+func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	pool.SetTickCrossHook(cross(rlm), func(hookCur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(hookCur, poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
-	pool.SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {
-		hook(poolPath, timestamp)
+func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	pool.SetSwapStartHook(cross(rlm), func(hookCur realm, poolPath string, timestamp int64) {
+		hook(hookCur, poolPath, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapEndHook(hook func(poolPath string) error) {
-	pool.SetSwapEndHook(cross, func(cur realm, poolPath string) error {
-		return hook(poolPath)
+func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	pool.SetSwapEndHook(cross(rlm), func(hookCur realm, poolPath string) error {
+		return hook(hookCur, poolPath)
 	})
 }
 
@@ -413,13 +425,12 @@ func newMockPoolAccessor() sr.PoolAccessor {
 
 type mockEmissionAccessor struct{}
 
-func (e *mockEmissionAccessor) MintAndDistributeGns() (int64, bool) {
-	var amount int64
-	var ok bool
-	func(cur realm) {
-		amount, ok = emission.MintAndDistributeGns(cross)
-	}(cross)
-	return amount, ok
+func (e *mockEmissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	return emission.MintAndDistributeGns(cross(rlm))
 }
 
 func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
@@ -430,10 +441,12 @@ func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, en
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(callback func(emissionAmountPerSecond int64)) {
-	func(cur realm) {
-		emission.SetOnDistributionPctChangeCallback(cross, callback)
-	}(cross)
+func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(emissionAmountPerSecond int64)) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	emission.SetOnDistributionPctChangeCallback(cross(rlm), callback)
 }
 
 func newMockEmissionAccessor() sr.EmissionAccessor {
@@ -446,7 +459,7 @@ type mockNFTAccessor struct {
 	owners   map[grc721.TokenID]address
 }
 
-func (n *mockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
+func (n *mockNFTAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	if _, ok := n.approved[tid]; !ok {
 		n.approved[tid] = make(map[address]bool)
 	}
@@ -454,13 +467,13 @@ func (n *mockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
 	return nil
 }
 
-func (n *mockNFTAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
+func (n *mockNFTAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
 	n.owners[tid] = to
 	n.approved[tid] = make(map[address]bool)
 	return tid
 }
 
-func (n *mockNFTAccessor) Burn(tid grc721.TokenID) {
+func (n *mockNFTAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 	delete(n.owners, tid)
 	delete(n.approved, tid)
 }
@@ -485,7 +498,7 @@ func (n *mockNFTAccessor) MustOwnerOf(tid grc721.TokenID) address {
 	return n.owners[tid]
 }
 
-func (n *mockNFTAccessor) TransferFrom(_ address, to address, tid grc721.TokenID) error {
+func (n *mockNFTAccessor) TransferFrom(_ int, rlm realm, _ address, to address, tid grc721.TokenID) error {
 	n.owners[tid] = to
 	return nil
 }

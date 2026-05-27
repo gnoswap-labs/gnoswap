@@ -28,15 +28,21 @@ import (
 //
 // Only callable by users.
 func (s *stakerV1) CreateExternalIncentive(
+	_ int,
+	rlm realm,
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	prevRealm := runtime.PreviousRealm()
+	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
 	access.AssertIsUser(prevRealm)
 
@@ -50,17 +56,17 @@ func (s *stakerV1) CreateExternalIncentive(
 	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
 
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 	// transfer reward token from user to staker
-	common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
+	common.SafeGRC20TransferFrom(cross(rlm), rewardToken, caller, stakerAddr, rewardAmount)
 
 	depositGnsAmount := s.store.GetDepositGnsAmount()
 
 	// deposit gns amount
-	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
+	gns.TransferFrom(cross(rlm), caller, stakerAddr, depositGnsAmount)
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
@@ -134,7 +140,11 @@ func (s *stakerV1) CreateExternalIncentive(
 //  5. Removes incentive from active list
 //
 // Only callable by Creator or Admin.
-func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
 	// checks pool registry
@@ -170,7 +180,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 		))
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 
 	// Process ending
 	incentive, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, caller, time.Now().Unix())
@@ -181,7 +191,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
-		previousRealm := runtime.PreviousRealm()
+		previousRealm := rlm.Previous()
 		chain.Emit(
 			"EndExternalIncentiveShortfall",
 			"prevAddr", previousRealm.Address().String(),
@@ -205,12 +215,12 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	incentivesResolver.update(incentive)
 
 	// refund reward token to refundee
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, refund)
+	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, refund)
 
 	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross, refundAddress, incentiveResolver.DepositGnsAmount())
+	gns.Transfer(cross(rlm), refundAddress, incentiveResolver.DepositGnsAmount())
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"EndExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
@@ -290,10 +300,16 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 //
 // Only callable by the incentive creator or admin.
 func (s *stakerV1) CollectExternalIncentivePenalty(
+	_ int,
+	rlm realm,
 	targetPoolPath string,
 	incentiveId string,
 	refundAddress address,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsPoolExists(s, targetPoolPath)
@@ -325,7 +341,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 		))
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Creator() {
 		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		panic(makeErrorWithDetails(
@@ -343,7 +359,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	balance := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if balance < penaltyAmount {
-		previousRealm := runtime.PreviousRealm()
+		previousRealm := rlm.Previous()
 		chain.Emit(
 			"CollectExternalIncentivePenaltyShortfall",
 			"prevAddr", previousRealm.Address().String(),
@@ -364,9 +380,9 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	incentivesResolver.update(incentiveResolver.ExternalIncentive)
 
 	// Transfer penalty to refund address
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
+	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CollectExternalIncentivePenalty",
 		"prevAddr", previousRealm.Address().String(),

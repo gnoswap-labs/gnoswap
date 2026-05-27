@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"chain/runtime"
 	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -14,8 +13,7 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 
 	kvStore store.KVStore
 
@@ -23,9 +21,9 @@ var (
 	implementation IStaker
 )
 
-func init() {
+func init(cur realm) {
 	// Create a new KV store instance for this domain
-	kvStore = store.NewKVStore(currentAddress)
+	kvStore = store.NewKVStore(cur.Address())
 	initRegisterWritableContract()
 
 	// Initialize the initializers map to store implementation registration functions
@@ -72,4 +70,13 @@ func updateImplementation() error {
 	implementation = impl
 
 	return nil
+}
+
+func registerImplementationHooks(cur realm) {
+	hookRegistrar, ok := implementation.(IStakerHookRegistrar)
+	if !ok {
+		return
+	}
+
+	hookRegistrar.RegisterHooks(0, cur)
 }

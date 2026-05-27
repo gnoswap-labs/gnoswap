@@ -1,23 +1,23 @@
 package staker
 
 import (
-	"chain/runtime"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
-	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac"
 )
 
-var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+var (
+	stakerAddr = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+)
 
 // Helper functions for testing
 func resetTestState(t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(stakerAddr)
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/staker",
 		kvStore,

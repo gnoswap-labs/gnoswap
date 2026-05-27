@@ -422,63 +422,63 @@ func getMockInstance() *stakerV1 {
 func mockInstanceSetDepositGnsAmount(amount int64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetDepositGnsAmount(amount)
+		getMockInstance().SetDepositGnsAmount(0, cur, amount)
 	}(cross)
 }
 
 func mockInstanceSetMinimumRewardAmount(amount int64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetMinimumRewardAmount(amount)
+		getMockInstance().SetMinimumRewardAmount(0, cur, amount)
 	}(cross)
 }
 
 func mockInstanceStakeToken(positionId uint64, referrer string) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().StakeToken(positionId, referrer)
+		getMockInstance().StakeToken(0, cur, positionId, referrer)
 	}(cross)
 }
 
 func mockInstanceCollectReward(positionId uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CollectReward(positionId)
+		getMockInstance().CollectReward(0, cur, positionId)
 	}(cross)
 }
 
 func mockInstanceAddToken(tokenPath string) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().AddToken(tokenPath)
+		getMockInstance().AddToken(0, cur, tokenPath)
 	}(cross)
 }
 
 func mockInstanceRemoveToken(tokenPath string) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().RemoveToken(tokenPath)
+		getMockInstance().RemoveToken(0, cur, tokenPath)
 	}(cross)
 }
 
 func mockInstanceSetUnstakingFee(fee uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetUnStakingFee(fee)
+		getMockInstance().SetUnStakingFee(0, cur, fee)
 	}(cross)
 }
 
 func mockInstanceCreateExternalIncentive(poolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CreateExternalIncentive(poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
+		getMockInstance().CreateExternalIncentive(0, cur, poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 	}(cross)
 }
 
 func mockInstanceSetPoolTier(poolPath string, tier uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetPoolTier(poolPath, tier)
+		getMockInstance().SetPoolTier(0, cur, poolPath, tier)
 	}(cross)
 }
 
@@ -487,7 +487,7 @@ func mockInstanceSetWarmupPeriod(poolPath string, warmupPeriod int64) {
 	// For test purposes, we'll use 30% and the provided warmup period as duration
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetWarmUp(30, warmupPeriod)
+		getMockInstance().SetWarmUp(0, cur, 30, warmupPeriod)
 	}(cross)
 }
 
@@ -495,7 +495,7 @@ func mockInstanceUnStakeToken(positionId uint64) string {
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		poolPath = getMockInstance().UnStakeToken(positionId)
+		poolPath = getMockInstance().UnStakeToken(0, cur, positionId)
 	}(cross)
 	return poolPath
 }
@@ -503,7 +503,7 @@ func mockInstanceUnStakeToken(positionId uint64) string {
 func mockInstanceEndExternalIncentive(poolPath string, incentiveId string, refundAddress address) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().EndExternalIncentive(poolPath, incentiveId, refundAddress)
+		getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 	}(cross)
 }
 
@@ -511,9 +511,23 @@ func mockInstanceCollectExternalIncentivePenalty(poolPath string, incentiveId st
 	var result int64
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		result = getMockInstance().CollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+		result = getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
 	}(cross)
 	return result
+}
+
+func mockNFTMint(to address, positionId uint64) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().nftAccessor.Mint(0, cur, to, positionIdFrom(positionId))
+	}(cross)
+}
+
+func mockNFTApprove(approved address, positionId uint64) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().nftAccessor.Approve(0, cur, approved, positionIdFrom(positionId))
+	}(cross)
 }
 
 func getPositionOperator(positionId uint64) address {

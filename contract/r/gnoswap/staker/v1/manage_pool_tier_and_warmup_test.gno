@@ -432,14 +432,14 @@ func TestSetWarmUpWithPermission(t *testing.T) {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().SetWarmUp(tt.pct, tt.duration)
+						getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().SetWarmUp(tt.pct, tt.duration)
+						getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
 					}(cross)
 				})
 			}
@@ -499,14 +499,14 @@ func TestRemovePoolTierWithPermission(t *testing.T) {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().RemovePoolTier(poolPath)
+						getMockInstance().RemovePoolTier(0, cur, poolPath)
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().RemovePoolTier(poolPath)
+						getMockInstance().RemovePoolTier(0, cur, poolPath)
 					}(cross)
 				})
 

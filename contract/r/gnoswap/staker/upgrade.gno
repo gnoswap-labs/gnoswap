@@ -1,10 +1,6 @@
 package staker
 
-import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/access"
-)
+import "gno.land/r/gnoswap/access"
 
 // RegisterInitializer registers a new staker implementation version.
 // This function is called by each version (v1, v2, etc.) during initialization
@@ -34,6 +30,8 @@ func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, p
 	if err != nil {
 		panic(err)
 	}
+
+	registerImplementationHooks(cur)
 }
 
 // UpgradeImpl switches the active staker implementation to a different version.
@@ -44,7 +42,7 @@ func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, p
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(0, cur, packagePath)
@@ -56,6 +54,8 @@ func UpgradeImpl(cur realm, packagePath string) {
 	if err != nil {
 		panic(err)
 	}
+
+	registerImplementationHooks(cur)
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.

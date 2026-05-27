@@ -10,32 +10,39 @@ type IStaker interface {
 	IStakerGetter
 }
 
-type IStakerManager interface {
-	StakeToken(positionId uint64, referrer string) string
-	UnStakeToken(positionId uint64) string
-	CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64)
+// IStakerHookRegistrar is implemented by versions that need to register external hooks.
+type IStakerHookRegistrar interface {
+	RegisterHooks(_ int, rlm realm)
+}
 
-	SetPoolTier(poolPath string, tier uint64)
-	ChangePoolTier(poolPath string, tier uint64)
-	RemovePoolTier(poolPath string)
+type IStakerManager interface {
+	StakeToken(_ int, rlm realm, positionId uint64, referrer string) string
+	UnStakeToken(_ int, rlm realm, positionId uint64) string
+	CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64)
+
+	SetPoolTier(_ int, rlm realm, poolPath string, tier uint64)
+	ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64)
+	RemovePoolTier(_ int, rlm realm, poolPath string)
 
 	CreateExternalIncentive(
+		_ int,
+		rlm realm,
 		targetPoolPath string,
 		rewardToken string,
 		rewardAmount int64,
 		startTimestamp int64,
 		endTimestamp int64,
 	)
-	EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address)
-	CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64
-	AddToken(tokenPath string)
-	RemoveToken(tokenPath string)
+	EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address)
+	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
+	AddToken(_ int, rlm realm, tokenPath string)
+	RemoveToken(_ int, rlm realm, tokenPath string)
 
-	SetWarmUp(pct, timeDuration int64)
-	SetDepositGnsAmount(amount int64)
-	SetMinimumRewardAmount(amount int64)
-	SetTokenMinimumRewardAmount(paramsStr string)
-	SetUnStakingFee(fee uint64)
+	SetWarmUp(_ int, rlm realm, pct, timeDuration int64)
+	SetDepositGnsAmount(_ int, rlm realm, amount int64)
+	SetMinimumRewardAmount(_ int, rlm realm, amount int64)
+	SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string)
+	SetUnStakingFee(_ int, rlm realm, fee uint64)
 }
 
 type IStakerGetter interface {
