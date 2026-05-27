@@ -226,6 +226,12 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			var beforeCallerBalance, beforeRecipientBalance int64
+			if !tt.expectedError && !tt.shouldAbort {
+				beforeCallerBalance = BalanceOf(tt.path, tt.caller)
+				beforeRecipientBalance = BalanceOf(tt.path, tt.to)
+			}
+
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -238,6 +244,8 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 					uassert.Error(t, err)
 				} else {
 					uassert.NoError(t, err)
+					uassert.Equal(t, beforeCallerBalance-tt.amount, BalanceOf(tt.path, tt.caller))
+					uassert.Equal(t, beforeRecipientBalance+tt.amount, BalanceOf(tt.path, tt.to))
 				}
 			}
 		})
@@ -335,7 +343,15 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 			// Setup approval if needed - as the token owner (from address)
 			if tt.setupApproval {
 				testing.SetRealm(testing.NewUserRealm(tt.from))
-				Approve(cross(cur), tt.path, tt.caller, tt.approvalAmt)
+				err := Approve(cross(cur), tt.path, tt.caller, tt.approvalAmt)
+				uassert.NoError(t, err)
+			}
+
+			var beforeOwnerBalance, beforeRecipientBalance, beforeAllowance int64
+			if !tt.expectedError && !tt.shouldAbort {
+				beforeOwnerBalance = BalanceOf(tt.path, tt.from)
+				beforeRecipientBalance = BalanceOf(tt.path, tt.to)
+				beforeAllowance = Allowance(tt.path, tt.from, tt.caller)
 			}
 
 			// Now perform TransferFrom as the caller
@@ -351,6 +367,9 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 					uassert.Error(t, err)
 				} else {
 					uassert.NoError(t, err)
+					uassert.Equal(t, beforeOwnerBalance-tt.amount, BalanceOf(tt.path, tt.from))
+					uassert.Equal(t, beforeRecipientBalance+tt.amount, BalanceOf(tt.path, tt.to))
+					uassert.Equal(t, beforeAllowance-tt.amount, Allowance(tt.path, tt.from, tt.caller))
 				}
 			}
 		})
@@ -433,6 +452,7 @@ func TestGrc20regHelper_Approve(cur realm, t *testing.T) {
 					uassert.Error(t, err)
 				} else {
 					uassert.NoError(t, err)
+					uassert.Equal(t, tt.amount, Allowance(tt.path, tt.caller, tt.spender))
 				}
 			}
 		})
