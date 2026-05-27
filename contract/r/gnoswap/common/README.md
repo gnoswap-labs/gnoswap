@@ -58,9 +58,19 @@ Liquidity (L) represents the relationship between token amounts and price:
 
 ### GRC20 Registry Helpers
 
+The write helpers are crossing adapters and should be called as
+`common.Transfer(cross(cur), ...)`, `common.SafeGRC20Transfer(cross(cur), ...)`,
+and so on. They intentionally keep `cur realm` as the first parameter so the
+helper runs in common's crossing frame, then forward that live `cur` to
+`grc20.Teller` as `Transfer(0, cur, ...)`. Because `GetTokenTeller` returns a
+`CallerTeller`, the token actor is derived from `cur.Previous()`, which is the
+realm that crossed into common. Do not convert these helpers to
+`_ int, rlm realm`; that would remove the common crossing boundary and change
+which realm `CallerTeller` treats as the actor.
+
 **Token Operations:**
 - **GetToken**: Retrieves GRC20 token instance
-- **GetTokenTeller**: Gets teller interface for token operations
+- **GetTokenTeller**: Gets a CallerTeller for token operations
 - **IsRegistered**: Checks token registration status
 - **MustRegistered**: Validates multiple tokens are registered
 

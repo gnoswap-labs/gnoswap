@@ -17,7 +17,7 @@ var (
 	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970342"
 )
 
-func TestTickMath_GetSqrtRatioAtTick(t *testing.T) {
+func TestTickMath_GetSqrtRatioAtTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		tick                 int32
@@ -182,9 +182,9 @@ func TestTickMath_GetSqrtRatioAtTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					TickMathGetSqrtRatioAtTick(tt.tick)
 				})
 			} else {
@@ -195,7 +195,7 @@ func TestTickMath_GetSqrtRatioAtTick(t *testing.T) {
 	}
 }
 
-func TestTickMath_GetTickAtSqrtRatio(t *testing.T) {
+func TestTickMath_GetTickAtSqrtRatio(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		sqrtPriceX96         string
@@ -346,14 +346,14 @@ func TestTickMath_GetTickAtSqrtRatio(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var sqrtPriceX96 *u256.Uint
 			if tt.sqrtPriceX96 != "" {
 				sqrtPriceX96 = u256.MustFromDecimal(tt.sqrtPriceX96)
 			}
 
 			if tt.expectedHasPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 				})
 			} else {
@@ -378,7 +378,7 @@ func TestTickMath_PrecisionValidation(t *testing.T) {
 				continue
 			}
 
-			t.Run(ufmt.Sprintf("precision_tick_%d", tick), func(t *testing.T) {
+			t.Run(ufmt.Sprintf("precision_tick_%d", tick), func(cur realm, t *testing.T) {
 				result := TickMathGetSqrtRatioAtTick(tick)
 
 				// Basic validation: result should be within valid range
@@ -416,7 +416,7 @@ func TestTickMath_Constants(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			sqrtRatio := TickMathGetSqrtRatioAtTick(tt.tick)
 			expectedSqrtRatio := u256.MustFromDecimal(tt.expectedRatio)
 
@@ -492,7 +492,7 @@ func TestTickMath_RatioValidation(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			sqrtRatio := u256.MustFromDecimal(test.sqrtRatio)
 
 			if test.expectValid {
@@ -520,7 +520,7 @@ func TestTickMath_RatioValidation(t *testing.T) {
 	}
 }
 
-func TestTickMath_BoundaryConditions(t *testing.T) {
+func TestTickMath_BoundaryConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tick             int32
@@ -552,9 +552,9 @@ func TestTickMath_BoundaryConditions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			if test.expectedPanic {
-				uassert.PanicsWithMessage(t, test.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, test.expectedPanicMsg, func() {
 					TickMathGetSqrtRatioAtTick(test.tick)
 				})
 			} else {
@@ -569,7 +569,7 @@ func TestTickMath_BoundaryConditions(t *testing.T) {
 	}
 }
 
-func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
+func TestTickMath_SqrtRatioBoundaryConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		sqrtRatio        string
@@ -601,11 +601,11 @@ func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			sqrtRatio := u256.MustFromDecimal(test.sqrtRatio)
 
 			if test.expectedPanic {
-				uassert.PanicsWithMessage(t, test.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, test.expectedPanicMsg, func() {
 					TickMathGetTickAtSqrtRatio(sqrtRatio)
 				})
 			} else {
@@ -619,7 +619,7 @@ func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 }
 
 // TestTickMath_MaxTickBoundaryBehavior explicitly tests MAX_TICK boundary behavior
-func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
+func TestTickMath_MaxTickBoundaryBehavior(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tick             int32
@@ -642,9 +642,9 @@ func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					TickMathGetSqrtRatioAtTick(tt.tick)
 				})
 			} else {
@@ -668,22 +668,22 @@ func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
 	}
 
 	// Explicitly test that MAX_SQRT_RATIO is rejected by TickMathGetTickAtSqrtRatio
-	t.Run("MAX_SQRT_RATIO_rejected_by_GetTickAtSqrtRatio", func(t *testing.T) {
+	t.Run("MAX_SQRT_RATIO_rejected_by_GetTickAtSqrtRatio", func(cur realm, t *testing.T) {
 		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 		// This should panic because TickMathGetTickAtSqrtRatio uses strict inequality (sqrtPriceX96 >= maxSqrtPriceX96)
-		uassert.PanicsContains(t, "out of range", func() {
+		uassert.PanicsContains(t, cur, "out of range", func() {
 			TickMathGetTickAtSqrtRatio(maxSqrtRatio)
 		})
 	})
 
 	// Test that MAX_SQRT_RATIO - 1 is accepted
-	t.Run("MAX_SQRT_RATIO_minus_1_accepted", func(t *testing.T) {
+	t.Run("MAX_SQRT_RATIO_minus_1_accepted", func(cur realm, t *testing.T) {
 		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 		almostMaxSqrtRatio := u256.Zero().Sub(maxSqrtRatio, u256.One())
 
 		// This should NOT panic
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			tick := TickMathGetTickAtSqrtRatio(almostMaxSqrtRatio)
 			// Should return MAX_TICK - 1
 			uassert.Equal(t, MAX_TICK-1, tick,
@@ -735,7 +735,7 @@ func TestTickMath_ExtendedRoundtripAccuracy(t *testing.T) {
 	}
 
 	for _, tick := range testTicks {
-		t.Run(ufmt.Sprintf("tick_%d", tick), func(t *testing.T) {
+		t.Run(ufmt.Sprintf("tick_%d", tick), func(cur realm, t *testing.T) {
 			// Convert tick to sqrt ratio
 			sqrtRatio := TickMathGetSqrtRatioAtTick(tick)
 
