@@ -1,8 +1,6 @@
 package store
 
 import (
-	"chain/runtime"
-
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -50,8 +48,8 @@ func (k *kvStore) Has(key string) bool {
 	return exists
 }
 
-// Get retrieves a value by key
-// Checks read permission before returning the value
+// Get retrieves a value by key.
+// Reads are public within the package; only writes are gated by the ACL.
 func (k *kvStore) Get(key string) (any, error) {
 	value, exists := k.data[k.makeKey(key)]
 	if !exists {
@@ -127,12 +125,19 @@ func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
 	return castToBPTree(result)
 }
 
-// Set stores a value with the given key
-// Checks write permission before setting the value
-func (k *kvStore) Set(key string, value any) error {
-	currentRealm := runtime.CurrentRealm()
+// Set stores a value with the given key.
+//
+// rlm.IsCurrent() must hold (rejects spoofed/stale realm tokens). When the
+// caller is code, rlm.Address() -- the caller realm -- must be in
+// the authorized writers set. EOA / user-realm callers (IsCode == false)
+// bypass the ACL so deploy and test flows can populate state without prior
+// registration.
+func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
 
-	if currentRealm.IsCode() && !k.IsWriteAuthorized(currentRealm.Address()) {
+	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Address()) {
 		return ErrWritePermissionDenied
 	}
 
@@ -141,18 +146,18 @@ func (k *kvStore) Set(key string, value any) error {
 	return nil
 }
 
-// Delete removes a key from the store
-// Checks write permission before deleting
-func (k *kvStore) Delete(key string) error {
-	caller := runtime.CurrentRealm().Address()
+// Delete removes a key from the store.
+//
+// Unlike Set, Delete has no IsCode bypass: rlm.Address() is always
+// consulted against the ACL. Delete is destructive, so the relaxed path Set
+// offers for EOA / test callers is intentionally not extended here.
+func (k *kvStore) Delete(_ int, rlm realm, key string) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
 
-	// Unlike `Get` and `Set`, this function does not perform `IsCode` checks.
-	// As a package providing generic storage functionality,
-	// `kvStore` focuses on namespace-based data isolation to prevent data
-	// contamination across domains.
-	//
-	// More permission controls (e.g., restricting which keys can be deleted)
-	// should be implemented at the realm level based on specific requirements.
+	caller := rlm.Address()
+
 	if !k.IsWriteAuthorized(caller) {
 		return ErrWritePermissionDenied
 	}
@@ -194,8 +199,12 @@ func (k *kvStore) GetAuthorizedCallers() (map[address]Permission, error) {
 }
 
 // AddAuthorizedCaller adds a new authorized caller with the specified permission
-func (k *kvStore) AddAuthorizedCaller(caller address, permission Permission) error {
-	if !k.isUpdatableAuthorizedCaller() {
+func (k *kvStore) AddAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
 		return ErrUpdatePermissionDenied
 	}
 
@@ -213,8 +222,12 @@ func (k *kvStore) AddAuthorizedCaller(caller address, permission Permission) err
 }
 
 // UpdateAuthorizedCaller updates the permission of an existing authorized caller
-func (k *kvStore) UpdateAuthorizedCaller(caller address, permission Permission) error {
-	if !k.isUpdatableAuthorizedCaller() {
+func (k *kvStore) UpdateAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
 		return ErrUpdatePermissionDenied
 	}
 
@@ -232,8 +245,12 @@ func (k *kvStore) UpdateAuthorizedCaller(caller address, permission Permission) 
 }
 
 // RemoveAuthorizedCaller removes an authorized caller
-func (k *kvStore) RemoveAuthorizedCaller(caller address) error {
-	if !k.isUpdatableAuthorizedCaller() {
+func (k *kvStore) RemoveAuthorizedCaller(_ int, rlm realm, caller address) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
 		return ErrUpdatePermissionDenied
 	}
 
@@ -254,8 +271,8 @@ func (k *kvStore) isRegisteredAuthorizedCaller(caller address) bool {
 }
 
 // isUpdatableAuthorizedCaller checks if the current realm is the same as the domain address
-func (k *kvStore) isUpdatableAuthorizedCaller() bool {
-	return runtime.CurrentRealm().Address() == k.domainAddress
+func (k *kvStore) isUpdatableAuthorizedCaller(currentRealmAddress address) bool {
+	return currentRealmAddress == k.domainAddress
 }
 
 // makeKey creates a prefixed key with the domain address to ensure isolation
@@ -263,7 +280,8 @@ func (k *kvStore) makeKey(key string) string {
 	return string(k.domainAddress) + ":" + key
 }
 
-// isValidPermission ensures only ReadOnly and Write permissions are assignable via registration APIs.
+// isValidPermission ensures only Write is assignable via registration APIs.
+// The zero value is rejected so callers must spell out an explicit permission.
 func isValidPermission(permission Permission) bool {
 	return permission == Write
 }
