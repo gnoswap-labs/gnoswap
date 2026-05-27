@@ -7,7 +7,7 @@ import (
 )
 
 // Test HaltConfig methods
-func TestHaltConfig_IsHalted(t *testing.T) {
+func TestHaltConfig_IsHalted(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		config   HaltConfig
@@ -35,7 +35,7 @@ func TestHaltConfig_IsHalted(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.config.IsHalted(tc.op)
 
@@ -45,7 +45,7 @@ func TestHaltConfig_IsHalted(t *testing.T) {
 	}
 }
 
-func TestHaltConfig_Get(t *testing.T) {
+func TestHaltConfig_Get(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		config        HaltConfig
@@ -77,7 +77,7 @@ func TestHaltConfig_Get(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result, err := tc.config.get(tc.op)
 
@@ -92,7 +92,7 @@ func TestHaltConfig_Get(t *testing.T) {
 	}
 }
 
-func TestHaltConfig_Set(t *testing.T) {
+func TestHaltConfig_Set(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		config        HaltConfig
@@ -124,7 +124,7 @@ func TestHaltConfig_Set(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			err := tc.config.set(tc.op, tc.value)
 
@@ -143,7 +143,7 @@ func TestHaltConfig_Set(t *testing.T) {
 	}
 }
 
-func TestHaltConfig_Get_NotFound(t *testing.T) {
+func TestHaltConfig_Get_NotFound(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		config           HaltConfig
@@ -174,7 +174,7 @@ func TestHaltConfig_Get_NotFound(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			_, err := tc.config.get(tc.op)
 
@@ -189,7 +189,7 @@ func TestHaltConfig_Get_NotFound(t *testing.T) {
 	}
 }
 
-func TestHaltConfig_Clone(t *testing.T) {
+func TestHaltConfig_Clone(cur realm, t *testing.T) {
 	// given
 	original := HaltConfig{
 		OpTypePool:   true,
@@ -219,7 +219,7 @@ func TestHaltConfig_Clone(t *testing.T) {
 }
 
 // Test config factory functions
-func TestNewNoneConfig(t *testing.T) {
+func TestNewNoneConfig(cur realm, t *testing.T) {
 	// when
 	config := newNoneConfig()
 
@@ -237,7 +237,7 @@ func TestNewNoneConfig(t *testing.T) {
 	}
 }
 
-func TestNewSafeModeConfig(t *testing.T) {
+func TestNewSafeModeConfig(cur realm, t *testing.T) {
 	// when
 	config := newSafeModeConfig()
 
@@ -261,7 +261,7 @@ func TestNewSafeModeConfig(t *testing.T) {
 	uassert.Equal(t, withdrawHalted, true)
 }
 
-func TestNewEmergencyConfig(t *testing.T) {
+func TestNewEmergencyConfig(cur realm, t *testing.T) {
 	// when
 	config := newEmergencyConfig()
 
@@ -295,7 +295,7 @@ func TestNewEmergencyConfig(t *testing.T) {
 	}
 }
 
-func TestNewCompleteConfig(t *testing.T) {
+func TestNewCompleteConfig(cur realm, t *testing.T) {
 	// when
 	config := newCompleteConfig()
 
@@ -313,7 +313,7 @@ func TestNewCompleteConfig(t *testing.T) {
 	}
 }
 
-func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
+func TestConfig_AllConfigLevelsIntegration(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		configFunc    func() HaltConfig
@@ -363,7 +363,7 @@ func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			config := tc.configFunc()
 
@@ -378,8 +378,8 @@ func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
 }
 
 // Test edge cases and validation
-func TestHaltConfig_EdgeCases(t *testing.T) {
-	t.Run("Empty config", func(t *testing.T) {
+func TestHaltConfig_EdgeCases(cur realm, t *testing.T) {
+	t.Run("Empty config", func(cur realm, t *testing.T) {
 		config := make(HaltConfig)
 
 		// Non-existing operation should return false and error
@@ -388,7 +388,7 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 		uassert.Equal(t, halted, false)
 	})
 
-	t.Run("IsHalted with non-existing operation", func(t *testing.T) {
+	t.Run("IsHalted with non-existing operation", func(cur realm, t *testing.T) {
 		config := make(HaltConfig)
 
 		// IsHalted should return false for non-existing operations
@@ -396,7 +396,7 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 		uassert.Equal(t, halted, false)
 	})
 
-	t.Run("Set and get consistency", func(t *testing.T) {
+	t.Run("Set and get consistency", func(cur realm, t *testing.T) {
 		config := make(HaltConfig)
 
 		// Set a value to halted
@@ -412,7 +412,7 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 		uassert.Equal(t, config.IsHalted(OpTypePool), true)
 	})
 
-	t.Run("Override existing value", func(t *testing.T) {
+	t.Run("Override existing value", func(cur realm, t *testing.T) {
 		config := HaltConfig{OpTypePool: true}
 
 		// Override with false (not halted)
@@ -425,7 +425,7 @@ func TestHaltConfig_EdgeCases(t *testing.T) {
 		uassert.Equal(t, halted, false)
 	})
 
-	t.Run("Clone independence", func(t *testing.T) {
+	t.Run("Clone independence", func(cur realm, t *testing.T) {
 		original := HaltConfig{
 			OpTypePool:   true,
 			OpTypeRouter: false,
