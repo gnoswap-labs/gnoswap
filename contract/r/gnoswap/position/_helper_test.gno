@@ -21,7 +21,7 @@ func resetTestState(t *testing.T) {
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/position",
 		kvStore,
-		func(_ store.KVStore) any {
+		func(_ int, rlm realm, _ store.KVStore) any {
 			return NewPositionStore(kvStore)
 		},
 	)

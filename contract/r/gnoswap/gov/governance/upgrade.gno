@@ -7,7 +7,7 @@ import (
 )
 
 func RegisterInitializer(cur realm, initializer func(governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance) {
-	initializerFunc := func(domainStore any) any {
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentGovernanceStore, ok := domainStore.(IGovernanceStore)
 		if !ok {
 			panic("domainStore is not an IGovernanceStore")

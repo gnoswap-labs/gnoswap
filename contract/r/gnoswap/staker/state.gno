@@ -46,7 +46,7 @@ func initRegisterWritableContract() {
 	}
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewStakerStore(kvStore)
 }
 
