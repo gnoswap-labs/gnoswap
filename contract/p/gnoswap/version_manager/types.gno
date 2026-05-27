@@ -24,7 +24,7 @@ type VersionManager interface {
 	// visible to the reader, and rlm is the live crossing-frame token that
 	// the implementation validates via rlm.IsCurrent() and reads via
 	// rlm.Previous() to identify the version package.
-	RegisterInitializer(_ int, rlm realm, initializer func(store any) any) error
+	RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error
 
 	// ChangeImplementation switches the active version at runtime.
 	// The new active version gets write access, while others remain read-only.
@@ -39,7 +39,7 @@ type VersionManager interface {
 	GetDomainPath() string
 
 	// GetInitializers returns all registered version initializers
-	GetInitializers() map[string]func(store any) any
+	GetInitializers() map[string]func(_ int, rlm realm, store any) any
 
 	// GetCurrentPackagePath returns the package path of the active implementation
 	GetCurrentPackagePath() string

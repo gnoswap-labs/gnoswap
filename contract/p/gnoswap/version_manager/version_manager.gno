@@ -35,7 +35,7 @@ var ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame"
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
-	initializers map[string]func(store any) any
+	initializers map[string]func(_ int, rlm realm, store any) any
 
 	// domainKVStore is the shared storage layer accessible by all versions
 	// The domain (proxy) realm is the owner and has write permission
@@ -43,7 +43,7 @@ type versionManager struct {
 
 	// initializeDomainStoreFn wraps the KVStore into domain-specific storage interface
 	// This abstraction decouples the version manager from domain-specific storage implementations
-	initializeDomainStoreFn func(kvStore store.KVStore) any
+	initializeDomainStoreFn func(_ int, rlm realm, kvStore store.KVStore) any
 
 	// domainPath defines the base path for this domain (e.g., "gno.land/r/gnoswap/protocol_fee")
 	// Used for security validation to ensure only authorized packages can register
@@ -75,7 +75,7 @@ type versionManager struct {
 //   - error: If realm token is spoofed, caller is unauthorized, already registered, or initializer is nil
 //
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath).
-func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func(store any) any) error {
+func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error {
 	if !rlm.IsCurrent() {
 		return ErrSpoofedRealm
 	}
@@ -114,7 +114,7 @@ func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func
 	// Initialize the current implementation if it hasn't been done yet
 	if vm.currentPackagePath == "" || vm.currentImplementation == nil {
 		vm.currentPackagePath = targetPackagePath
-		vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+		vm.currentImplementation = initializer(0, rlm, vm.initializeDomainStoreFn(0, rlm, vm.domainKVStore))
 
 		chain.Emit(
 			"InitializeImplementation",
@@ -162,7 +162,7 @@ func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath str
 
 	prevPackagePath := vm.currentPackagePath
 	vm.currentPackagePath = packagePath
-	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+	vm.currentImplementation = initializer(0, rlm, vm.initializeDomainStoreFn(0, rlm, vm.domainKVStore))
 
 	chain.Emit(
 		"ChangeImplementation",
@@ -183,7 +183,7 @@ func (vm *versionManager) GetDomainPath() string {
 // GetInitializers returns the map containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
-func (vm *versionManager) GetInitializers() map[string]func(store any) any {
+func (vm *versionManager) GetInitializers() map[string]func(_ int, rlm realm, store any) any {
 	return vm.initializers
 }
 
@@ -243,13 +243,13 @@ func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
 func NewVersionManager(
 	domainPath string,
 	kvStore store.KVStore,
-	initializeDomainStoreFn func(kvStore store.KVStore) any,
+	initializeDomainStoreFn func(_ int, rlm realm, kvStore store.KVStore) any,
 ) VersionManager {
 	return &versionManager{
 		domainPath:              domainPath,
 		domainKVStore:           kvStore,
 		initializeDomainStoreFn: initializeDomainStoreFn,
-		initializers:            make(map[string]func(store any) any),
+		initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}
@@ -258,13 +258,13 @@ func NewVersionManager(
 // makeInitializerSafe creates a safe copy of an initializer function.
 // Used to verify stored initializer types during inspection.
 func makeInitializerSafe(data any) any {
-	fn, ok := data.(func(store any) any)
+	fn, ok := data.(func(_ int, rlm realm, store any) any)
 	if !ok {
-		panic(ufmt.Sprintf("expected func(store any) any, got %T", data))
+		panic(ufmt.Sprintf("expected func(_ int, rlm realm, store any) any, got %T", data))
 	}
 
-	cpy := func(store any) any {
-		return fn(store)
+	cpy := func(_ int, rlm realm, store any) any {
+		return fn(0, rlm, store)
 	}
 
 	return cpy
