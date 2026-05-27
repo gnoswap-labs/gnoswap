@@ -24,7 +24,7 @@ const (
 var (
 	token         *grc20.Token
 	privateLedger *grc20.PrivateLedger
-	UserTeller    grc20.Teller
+	userTeller    grc20.Teller
 
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
@@ -33,7 +33,7 @@ var (
 
 func init(cur realm) {
 	token, privateLedger = grc20.NewToken(0, cur, "Gnoswap", "GNS", 6)
-	UserTeller = token.CallerTeller()
+	userTeller = token.CallerTeller()
 
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
@@ -133,7 +133,6 @@ func MintGns(cur realm, address address) int64 {
 //   - to: recipient address
 //   - amount: amount to transfer
 func Transfer(cur realm, to address, amount int64) {
-	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
 
@@ -143,7 +142,6 @@ func Transfer(cur realm, to address, amount int64) {
 //   - spender: address authorized to spend
 //   - amount: maximum amount spender can transfer
 func Approve(cur realm, spender address, amount int64) {
-	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
 
@@ -154,7 +152,6 @@ func Approve(cur realm, spender address, amount int64) {
 //   - to: recipient address
 //   - amount: amount to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
-	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
