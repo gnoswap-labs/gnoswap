@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestSafeAddInt64(t *testing.T) {
+func TestSafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -143,9 +143,9 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeAddInt64(tt.a, tt.b)
 				})
 			} else {
@@ -156,7 +156,7 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 }
 
-func TestSafeSubInt64(t *testing.T) {
+func TestSafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -300,9 +300,9 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeSubInt64(tt.a, tt.b)
 				})
 			} else {
@@ -313,7 +313,7 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 }
 
-func TestSafeMulInt64(t *testing.T) {
+func TestSafeMulInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -523,9 +523,9 @@ func TestSafeMulInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeMulInt64(tt.a, tt.b)
 				})
 			} else {
@@ -537,7 +537,7 @@ func TestSafeMulInt64(t *testing.T) {
 }
 
 // TestValidEmissionAmountOverflow tests overflow protection in validEmissionAmount
-func TestValidEmissionAmountOverflow(t *testing.T) {
+func TestValidEmissionAmountOverflow(cur realm, t *testing.T) {
 	// Save original values to restore after test
 	originalMinted := mintedEmissionAmount
 
@@ -587,12 +587,12 @@ func TestValidEmissionAmountOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Set minted amount for test
 			mintedEmissionAmount = tt.mintedAmount
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					validEmissionAmount(tt.amount)
 				})
 			} else {
@@ -612,7 +612,7 @@ func TestValidEmissionAmountOverflow(t *testing.T) {
 }
 
 // TestSafeMulInt64InCalculateAmountToMint tests safeMulInt64 with realistic emission values
-func TestSafeMulInt64InCalculateAmountToMint(t *testing.T) {
+func TestSafeMulInt64InCalculateAmountToMint(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountPerSecond int64
@@ -655,9 +655,9 @@ func TestSafeMulInt64InCalculateAmountToMint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeMulInt64(tt.amountPerSecond, tt.seconds)
 				})
 			} else {

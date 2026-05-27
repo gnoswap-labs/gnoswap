@@ -9,9 +9,9 @@ import (
 
 // TestEmissionDistributionAcrossYears verifies that emission distribution is correct
 // for each year based on the halving schedule
-func TestEmissionDistributionAcrossYears(t *testing.T) {
+func TestEmissionDistributionAcrossYears(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	// Test emission amounts for each year
 	scenarios := []struct {
@@ -47,7 +47,7 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 	}
 
 	for _, sc := range scenarios {
-		t.Run(sc.name, func(t *testing.T) {
+		t.Run(sc.name, func(cur realm, t *testing.T) {
 			// Test emission rate at different points in the year
 			startTs := GetHalvingYearStartTimestamp(sc.year)
 			endTs := GetHalvingYearEndTimestamp(sc.year)
@@ -77,9 +77,9 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 }
 
 // TestEmissionHalvingSchedule verifies the halving schedule is correct
-func TestEmissionHalvingSchedule(t *testing.T) {
+func TestEmissionHalvingSchedule(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	// Verify halving amounts
 	halvingTests := []struct {
@@ -97,7 +97,7 @@ func TestEmissionHalvingSchedule(t *testing.T) {
 	}
 
 	for _, tt := range halvingTests {
-		t.Run(tt.description, func(t *testing.T) {
+		t.Run(tt.description, func(cur realm, t *testing.T) {
 			amount1 := GetHalvingAmountsPerYear(tt.fromYear)
 			amount2 := GetHalvingAmountsPerYear(tt.toYear)
 
