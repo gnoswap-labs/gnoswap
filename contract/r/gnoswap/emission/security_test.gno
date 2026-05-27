@@ -6,12 +6,10 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 )
 
-func TestCalculateAmount_SecurityValidation(t *testing.T) {
+func TestCalculateAmount_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -72,7 +70,7 @@ func TestCalculateAmount_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -94,7 +92,7 @@ func TestCalculateAmount_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
+func TestSetLeftGNSAmount_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -120,7 +118,7 @@ func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -144,7 +142,7 @@ func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
+func TestSetLastExecutedHeight_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		timestamp            int64
@@ -170,7 +168,7 @@ func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -194,7 +192,7 @@ func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
+func TestAssertValidDistributionPct_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		pct01                int64
@@ -251,7 +249,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -275,7 +273,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 }
 
 // Test the calculateAmount function in isolation
-func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
+func TestCalculateAmount_IsolatedSecurity(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -319,7 +317,7 @@ func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -343,7 +341,7 @@ func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
 	}
 }
 
-func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
+func TestAssertValidDistributionPct_IsolatedSecurity(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		pct01                int64
@@ -372,7 +370,7 @@ func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -404,7 +402,7 @@ func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
 }
 
 // TestAssertValidDistributionTarget tests validation of single distribution targets
-func TestAssertValidDistributionTarget(t *testing.T) {
+func TestAssertValidDistributionTarget(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		target      int
@@ -464,15 +462,17 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertValidDistributionTarget(tt.target)
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						assertValidDistributionTarget(tt.target)
+					})
 			} else {
-				uassert.NotPanics(t, func() {
-					assertValidDistributionTarget(tt.target)
-				})
+				uassert.NotPanics(
+					t, cur, func() {
+						assertValidDistributionTarget(tt.target)
+					})
 			}
 		})
 	}
@@ -480,7 +480,7 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 
 // TestTransferToTarget_CEIPattern tests the Checks-Effects-Interactions pattern
 // This verifies that state is updated BEFORE external calls (gns.Transfer)
-func TestTransferToTarget_CEIPattern(t *testing.T) {
+func TestTransferToTarget_CEIPattern(cur realm, t *testing.T) {
 	tests := []struct {
 		name                         string
 		description                  string
@@ -596,7 +596,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetObject(t)
 
 			// Setup initial state based on target
@@ -617,9 +617,8 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 
 			// Setup balance for emission
 			if tt.setupBalance {
-				emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, emissionAddr, tt.balanceToSetup)
+				gns.Transfer(cross(cur), emissionAddr, tt.balanceToSetup)
 			}
 
 			// Execute transfer
@@ -628,7 +627,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			var err error
 
 			transferToTargetFunc := func(cur realm) error {
-				testing.SetRealm(testing.NewUserRealm(emissionAddr))
+				testing.SetRealm(emissionRealm)
 				targets := map[int]int64{tt.target: tt.amount}
 				amountByAddress, err := applyDistribution(targets)
 				if err != nil {
@@ -637,7 +636,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 
 				beforeBalance := gns.BalanceOf(emissionAddr)
 
-				err = transferToTarget(amountByAddress)
+				err = transferToTarget(0, cur, amountByAddress)
 				if err != nil {
 					return err
 				}
@@ -648,13 +647,13 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			}
 
 			if !tt.setupBalance {
-				uassert.AbortsContains(t, "overflow", func() {
-					transferToTargetFunc(cross)
+				uassert.AbortsContains(t, cur, "overflow", func() {
+					_ = transferToTargetFunc(cross(cur))
 				})
 
 				return
 			} else {
-				err = transferToTargetFunc(cross)
+				err = transferToTargetFunc(cross(cur))
 			}
 
 			uassert.NoError(t, err)
@@ -681,7 +680,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 }
 
 // TestAccumulatedDistribution_SafeMath tests safe math for accumulated distribution values
-func TestAccumulatedDistribution_SafeMath(t *testing.T) {
+func TestAccumulatedDistribution_SafeMath(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		description             string
@@ -760,7 +759,7 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetObject(t)
 
 			// Setup initial state
@@ -780,14 +779,14 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 			}
 
 			// Setup balance for emission
-			emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 			testing.SetRealm(adminRealm)
-			gns.Transfer(cross, emissionAddr, 1000000000)
+			gns.Transfer(cross(cur), emissionAddr, 1000000000)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMessage, func() {
-					_, _ = applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMessage, func() {
+						_, _ = applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
+					})
 			} else {
 				_, err := applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
 				uassert.NoError(t, err)
@@ -813,7 +812,7 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 }
 
 // TestFormatInt tests formatInt function with edge cases
-func TestFormatInt(t *testing.T) {
+func TestFormatInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		value       any
@@ -878,7 +877,7 @@ func TestFormatInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					if r := recover(); r == nil {
@@ -895,7 +894,7 @@ func TestFormatInt(t *testing.T) {
 }
 
 // TestSafeAddInt64 tests the safeAddInt64 function for overflow and underflow protection
-func TestSafeAddInt64(t *testing.T) {
+func TestSafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -1015,23 +1014,25 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeAddInt64(tt.a, tt.b)
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						safeAddInt64(tt.a, tt.b)
+					})
 			} else {
-				uassert.NotPanics(t, func() {
-					result := safeAddInt64(tt.a, tt.b)
-					uassert.Equal(t, tt.expected, result)
-				})
+				uassert.NotPanics(
+					t, cur, func() {
+						result := safeAddInt64(tt.a, tt.b)
+						uassert.Equal(t, tt.expected, result)
+					})
 			}
 		})
 	}
 }
 
 // TestSafeSubInt64 tests the safeSubInt64 function for overflow and underflow protection
-func TestSafeSubInt64(t *testing.T) {
+func TestSafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -1157,16 +1158,18 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeSubInt64(tt.a, tt.b)
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						safeSubInt64(tt.a, tt.b)
+					})
 			} else {
-				uassert.NotPanics(t, func() {
-					result := safeSubInt64(tt.a, tt.b)
-					uassert.Equal(t, tt.expected, result)
-				})
+				uassert.NotPanics(
+					t, cur, func() {
+						result := safeSubInt64(tt.a, tt.b)
+						uassert.Equal(t, tt.expected, result)
+					})
 			}
 		})
 	}
