@@ -11,52 +11,52 @@ import (
 )
 
 var (
-	token, privateLedger = grc20.NewToken("Obl", "OBL", 6)
-	owner                = ownable.NewWithAddressByPrevious("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	userTeller    grc20.Teller
+
+	owner = ownable.NewWithAddress("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
 )
 
-func init() {
+func init(cur realm) {
+	token, privateLedger = grc20.NewToken(0, cur, "Obl", "OBL", 6)
+	userTeller = token.CallerTeller()
+
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
-	grc20reg.Register(cross, token, "")
+	grc20reg.Register(cross(cur), token, "")
 }
 
 func TotalSupply() int64 {
-	userTeller := token.CallerTeller()
 	return userTeller.TotalSupply()
 }
 
 func BalanceOf(owner address) int64 {
-	userTeller := token.CallerTeller()
 	return userTeller.BalanceOf(owner)
 }
 
 func Allowance(owner, spender address) int64 {
-	userTeller := token.CallerTeller()
 	return userTeller.Allowance(owner, spender)
 }
 
 func Transfer(cur realm, to address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.Transfer(to, amount))
+	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
 
 func Approve(cur realm, spender address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.Approve(spender, amount))
+	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
 
 func TransferFrom(cur realm, from, to address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.TransferFrom(from, to, amount))
+	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
 func Mint(cur realm, to address, amount int64) {
-	owner.AssertOwned()
+	owner.AssertOwnedBy(cur.Address())
 	checkErr(privateLedger.Mint(to, amount))
 }
 
 func Burn(cur realm, from address, amount int64) {
-	owner.AssertOwned()
+	owner.AssertOwnedBy(cur.Address())
 	checkErr(privateLedger.Burn(from, amount))
 }
 
@@ -69,7 +69,6 @@ func Render(path string) string {
 		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := address(parts[1])
-		userTeller := token.CallerTeller()
 		balance := userTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
