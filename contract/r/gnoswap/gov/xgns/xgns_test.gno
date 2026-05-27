@@ -21,7 +21,7 @@ var (
 	launchpadAddress = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func TestXgns_TotalSupply(t *testing.T) {
+func TestXgns_TotalSupply(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		mintAmount     int64
@@ -45,13 +45,13 @@ func TestXgns_TotalSupply(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			if tc.mintAmount > 0 {
 				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-				Mint(cross, govStakerAddress, tc.mintAmount)
+				Mint(cross(cur), govStakerAddress, tc.mintAmount)
 			}
 
 			// when
@@ -63,7 +63,7 @@ func TestXgns_TotalSupply(t *testing.T) {
 	}
 }
 
-func TestXgns_Mint(t *testing.T) {
+func TestXgns_Mint(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		caller          address
@@ -119,13 +119,13 @@ func TestXgns_Mint(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			if tc.setupAmount > 0 {
 				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-				Mint(cross, govStakerAddress, tc.setupAmount)
+				Mint(cross(cur), govStakerAddress, tc.setupAmount)
 			}
 
 			initialSupply := TotalSupply()
@@ -133,13 +133,13 @@ func TestXgns_Mint(t *testing.T) {
 
 			// when & then
 			if tc.expectedPanic {
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewUserRealm(tc.caller))
-					Mint(cross, tc.to, tc.amount)
+				testing.SetRealm(testing.NewUserRealm(tc.caller))
+				uassert.AbortsWithMessage(t, cur, tc.expectedMessage, func() {
+					Mint(cross(cur), tc.to, tc.amount)
 				})
 			} else {
 				testing.SetRealm(testing.NewUserRealm(tc.caller))
-				Mint(cross, tc.to, tc.amount)
+				Mint(cross(cur), tc.to, tc.amount)
 
 				expectedSupply := initialSupply + tc.amount
 				actualSupply := TotalSupply()
@@ -153,7 +153,7 @@ func TestXgns_Mint(t *testing.T) {
 	}
 }
 
-func TestXgns_Burn(t *testing.T) {
+func TestXgns_Burn(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		caller          address
@@ -214,24 +214,24 @@ func TestXgns_Burn(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			initialSupply := TotalSupply()
 			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-			Mint(cross, govStakerAddress, tc.mintAmount)
+			Mint(cross(cur), govStakerAddress, tc.mintAmount)
 			initialBalance := BalanceOf(tc.from)
 
 			// when & then
 			if tc.expectedPanic {
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewUserRealm(tc.caller))
-					Burn(cross, tc.from, tc.burnAmount)
+				testing.SetRealm(testing.NewUserRealm(tc.caller))
+				uassert.AbortsWithMessage(t, cur, tc.expectedMessage, func() {
+					Burn(cross(cur), tc.from, tc.burnAmount)
 				})
 			} else {
 				testing.SetRealm(testing.NewUserRealm(tc.caller))
-				Burn(cross, tc.from, tc.burnAmount)
+				Burn(cross(cur), tc.from, tc.burnAmount)
 
 				expectedBalance := initialBalance - tc.burnAmount
 				actualBalance := BalanceOf(tc.from)
@@ -245,7 +245,7 @@ func TestXgns_Burn(t *testing.T) {
 	}
 }
 
-func TestXgns_BalanceOf(t *testing.T) {
+func TestXgns_BalanceOf(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		targetAddr      address
@@ -285,13 +285,13 @@ func TestXgns_BalanceOf(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			if tc.mintAmount > 0 {
 				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-				Mint(cross, tc.targetAddr, tc.mintAmount)
+				Mint(cross(cur), tc.targetAddr, tc.mintAmount)
 			}
 
 			// when
@@ -303,7 +303,7 @@ func TestXgns_BalanceOf(t *testing.T) {
 	}
 }
 
-func TestXgns_Render(t *testing.T) {
+func TestXgns_Render(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -338,13 +338,13 @@ func TestXgns_Render(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			if tc.mintAmount > 0 {
 				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-				Mint(cross, govStakerAddress, tc.mintAmount)
+				Mint(cross(cur), govStakerAddress, tc.mintAmount)
 			}
 
 			// when
@@ -362,7 +362,7 @@ func TestXgns_Render(t *testing.T) {
 	}
 }
 
-func TestXgns_Halted(t *testing.T) {
+func TestXgns_Halted(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		operation       string
@@ -387,45 +387,43 @@ func TestXgns_Halted(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
-			resetHalt(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
+			resetHalt(cur, t)
 
 			// given
 			if tc.setupMint {
 				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-				Mint(cross, govStakerAddress, 100)
+				Mint(cross(cur), govStakerAddress, 100)
 
-				Mint(cross, launchpadAddress, 100)
+				Mint(cross(cur), launchpadAddress, 100)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			halt.SetOperationStatus(cross, halt.OpTypeXGns, true)
+			halt.SetOperationStatus(cross(cur), halt.OpTypeXGns, true)
+
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 
 			// when & then
 			switch tc.operation {
 			case "Mint":
 				if tc.shouldPanic {
-					uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-						Mint(cross, govStakerAddress, 100)
+					uassert.AbortsWithMessage(t, cur, tc.expectedMessage, func() {
+						Mint(cross(cur), govStakerAddress, 100)
 					})
 				} else {
-					uassert.NotPanics(t, func() {
-						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-						Mint(cross, govStakerAddress, 100)
+					uassert.NotPanics(t, cur, func() {
+						Mint(cross(cur), govStakerAddress, 100)
 					})
 				}
 			case "Burn":
 				if tc.shouldPanic {
-					uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-						Burn(cross, govStakerAddress, 50)
+					uassert.AbortsWithMessage(t, cur, tc.expectedMessage, func() {
+						Burn(cross(cur), govStakerAddress, 50)
 					})
 				} else {
-					uassert.NotPanics(t, func() {
-						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-						Burn(cross, govStakerAddress, 50)
+					uassert.NotPanics(t, cur, func() {
+						Burn(cross(cur), govStakerAddress, 50)
 					})
 				}
 			}
@@ -434,7 +432,7 @@ func TestXgns_Halted(t *testing.T) {
 }
 
 // TestXgns_MintThenBurnAll tests minting and then burning the entire amount
-func TestXgns_MintThenBurnAll(t *testing.T) {
+func TestXgns_MintThenBurnAll(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		mintAmount           int64
@@ -473,13 +471,13 @@ func TestXgns_MintThenBurnAll(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
-			resetHalt(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
+			resetHalt(cur, t)
 
 			// given - mint tokens
 			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-			Mint(cross, govStakerAddress, tc.mintAmount)
+			Mint(cross(cur), govStakerAddress, tc.mintAmount)
 
 			// verify mint
 			uassert.Equal(t, tc.mintAmount, BalanceOf(govStakerAddress))
@@ -487,7 +485,7 @@ func TestXgns_MintThenBurnAll(t *testing.T) {
 
 			// when - burn tokens
 			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-			Burn(cross, govStakerAddress, tc.burnAmount)
+			Burn(cross(cur), govStakerAddress, tc.burnAmount)
 
 			// then
 			uassert.Equal(t, tc.expectedFinalBalance, BalanceOf(govStakerAddress))
@@ -496,7 +494,7 @@ func TestXgns_MintThenBurnAll(t *testing.T) {
 	}
 }
 
-func TestXgns_SupplyInfo(t *testing.T) {
+func TestXgns_SupplyInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name                       string
 		mintToGovStaker            int64
@@ -556,17 +554,17 @@ func TestXgns_SupplyInfo(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			cleanup(cur, t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 
 			if tc.mintToGovStaker > 0 {
-				Mint(cross, govStakerAddress, tc.mintToGovStaker)
+				Mint(cross(cur), govStakerAddress, tc.mintToGovStaker)
 			}
 			if tc.mintToLaunchpad > 0 {
-				Mint(cross, launchpadAddress, tc.mintToLaunchpad)
+				Mint(cross(cur), launchpadAddress, tc.mintToLaunchpad)
 			}
 
 			// when
@@ -594,15 +592,15 @@ func getContractAddress(roleName string) address {
 	return addr
 }
 
-func cleanup(t *testing.T) {
+func cleanup(cur realm, t *testing.T) {
 	admin = ownable.NewWithAddress(testutils.TestAddress("admin"))
-	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
+	token, ledger = grc20.NewToken(0, cur, "XGNS", "xGNS", 6)
 }
 
-func resetHalt(t *testing.T) {
+func resetHalt(cur realm, t *testing.T) {
 	t.Helper()
 	if adminAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String()); ok {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		halt.SetOperationStatus(cross, halt.OpTypeXGns, false)
+		halt.SetOperationStatus(cross(cur), halt.OpTypeXGns, false)
 	}
 }

@@ -2,7 +2,6 @@ package xgns
 
 import (
 	"chain"
-	"chain/runtime"
 	"errors"
 	"strings"
 
@@ -17,9 +16,15 @@ import (
 )
 
 var (
-	admin         = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
-	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
+	admin  *ownable.Ownable
+	token  *grc20.Token
+	ledger *grc20.PrivateLedger
 )
+
+func init(cur realm) {
+	admin = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
+	token, ledger = grc20.NewToken(0, cur, "XGNS", "xGNS", 6)
+}
 
 // TotalSupply returns the total supply of xGNS tokens.
 func TotalSupply() int64 {
@@ -65,7 +70,7 @@ func Render(path string) string {
 func Mint(cur realm, to address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Mint(to, amount))
@@ -81,7 +86,7 @@ func Mint(cur realm, to address, amount int64) {
 func Burn(cur realm, from address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Burn(from, amount))
