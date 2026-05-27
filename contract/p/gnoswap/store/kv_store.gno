@@ -128,7 +128,7 @@ func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
 // Set stores a value with the given key.
 //
 // rlm.IsCurrent() must hold (rejects spoofed/stale realm tokens). When the
-// caller is code, rlm.Previous().Address() -- the caller realm -- must be in
+// caller is code, rlm.Address() -- the caller realm -- must be in
 // the authorized writers set. EOA / user-realm callers (IsCode == false)
 // bypass the ACL so deploy and test flows can populate state without prior
 // registration.
@@ -137,7 +137,7 @@ func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 		return ErrSpoofedRealm
 	}
 
-	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Previous().Address()) {
+	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Address()) {
 		return ErrWritePermissionDenied
 	}
 
@@ -148,7 +148,7 @@ func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 
 // Delete removes a key from the store.
 //
-// Unlike Set, Delete has no IsCode bypass: rlm.Previous().Address() is always
+// Unlike Set, Delete has no IsCode bypass: rlm.Address() is always
 // consulted against the ACL. Delete is destructive, so the relaxed path Set
 // offers for EOA / test callers is intentionally not extended here.
 func (k *kvStore) Delete(_ int, rlm realm, key string) error {
@@ -156,7 +156,7 @@ func (k *kvStore) Delete(_ int, rlm realm, key string) error {
 		return ErrSpoofedRealm
 	}
 
-	caller := rlm.Previous().Address()
+	caller := rlm.Address()
 
 	if !k.IsWriteAuthorized(caller) {
 		return ErrWritePermissionDenied

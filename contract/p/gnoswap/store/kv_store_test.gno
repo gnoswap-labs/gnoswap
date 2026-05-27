@@ -421,7 +421,7 @@ func TestKeyNotFound(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(domainAddr))
 			store := NewKVStore(domainAddr)
 
-			tc.verifyFn(cross(cur), t, store)
+			tc.verifyFn(cur, t, store)
 		})
 	}
 }
@@ -656,10 +656,8 @@ func TestDomainAddress_HasFullAccess(cur realm, t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, "value", value)
 
-	func(cur realm) {
-		err = store.Delete(0, cur, "key")
-		uassert.NoError(t, err)
-	}(cross(cur))
+	err = store.Delete(0, cur, "key")
+	uassert.NoError(t, err)
 }
 
 func TestAllTypedGetters_Success(cur realm, t *testing.T) {
