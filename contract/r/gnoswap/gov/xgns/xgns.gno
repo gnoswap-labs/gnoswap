@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	admin  *ownable.Ownable
+	admin = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
+
 	token  *grc20.Token
 	ledger *grc20.PrivateLedger
 )
 
 func init(cur realm) {
-	admin = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
 	token, ledger = grc20.NewToken(0, cur, "XGNS", "xGNS", 6)
 }
 
