@@ -119,7 +119,7 @@
 //	func init() {
 //	    // Register this version during package initialization
 //	    manager := protocol_fee.GetManager()
-//	    manager.RegisterInitializer(func(store any) any {
+//	    manager.RegisterInitializer(func(_ int, rlm realm, store any) any {
 //	        return &protocolFeeV1{store: store}
 //	    })
 //	}
@@ -153,7 +153,7 @@
 //	func init() {
 //	    // Register v2 - will be read-only until explicitly activated
 //	    manager := protocol_fee.GetManager()
-//	    manager.RegisterInitializer(func(store any) any {
+//	    manager.RegisterInitializer(func(_ int, rlm realm, store any) any {
 //	        return &protocolFeeV2{store: store}
 //	    })
 //	}
