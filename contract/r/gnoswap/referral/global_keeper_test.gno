@@ -18,7 +18,7 @@ var (
 	userRealm   = testing.NewCodeRealm("gno.land/r/demo/users")
 )
 
-func TestGlobalKeeper_TryRegister(t *testing.T) {
+func TestGlobalKeeper_TryRegister(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		callerRealm          runtime.Realm
@@ -102,29 +102,29 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
 
 			if tc.existingReferral != "" {
-				setupExistingReferral(t, tc.addr, address(tc.existingReferral))
+				setupExistingReferral(0, cur, t, tc.addr, address(tc.existingReferral))
 			}
 
 			if tc.expectedPanics {
-				uassert.AbortsContains(t, tc.expectedPanicMessage, func() {
-					TryRegister(cross, tc.addr, tc.referral)
+				uassert.AbortsContains(t, cur, tc.expectedPanicMessage, func() {
+					TryRegister(cross(cur), tc.addr, tc.referral)
 				})
 			} else {
-				result := TryRegister(cross, tc.addr, tc.referral)
+				result := TryRegister(cross(cur), tc.addr, tc.referral)
 				uassert.Equal(t, tc.expectedReferrer, result)
 			}
 		})
 	}
 }
 
-func TestGlobalKeeper_GetReferral(t *testing.T) {
+func TestGlobalKeeper_GetReferral(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		addr             string
@@ -164,14 +164,14 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -183,7 +183,7 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_HasReferral(t *testing.T) {
+func TestGlobalKeeper_HasReferral(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		addr          string
@@ -223,14 +223,14 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -242,7 +242,7 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_IsEmpty(t *testing.T) {
+func TestGlobalKeeper_IsEmpty(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		setupReferrals  map[string]string
@@ -271,14 +271,14 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			for addr, referral := range tc.setupReferrals {
-				setupExistingReferral(t, address(addr), address(referral))
+				setupExistingReferral(0, cur, t, address(addr), address(referral))
 			}
 
 			// when
@@ -290,7 +290,7 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
+func TestGlobalKeeper_GetLastOpTimestamp(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		addr           string
@@ -324,7 +324,7 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			testing.SetRealm(routerRealm)
@@ -334,7 +334,7 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 				userAddr := address(tc.addr)
 				refAddr := testutils.TestAddress("referrer1")
 				before = time.Now().Unix()
-				uassert.Equal(t, refAddr.String(), TryRegister(cross, userAddr, refAddr.String()))
+				uassert.Equal(t, refAddr.String(), TryRegister(cross(cur), userAddr, refAddr.String()))
 				after = time.Now().Unix()
 			}
 
@@ -350,7 +350,7 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
+func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		caller           address
@@ -386,15 +386,15 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 			testing.SetRealm(routerRealm)
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, tc.caller, address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, tc.caller, address(tc.setupReferral))
 			}
 
-			result := TryRegister(cross, tc.caller, tc.referrer)
+			result := TryRegister(cross(cur), tc.caller, tc.referrer)
 
 			uassert.Equal(t, tc.expectedReferrer, result)
 			uassert.Equal(t, tc.expectedHas, HasReferral(tc.caller.String()))
@@ -402,7 +402,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_getKeeper(t *testing.T) {
+func TestGlobalKeeper_getKeeper(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		expectedNotNil bool
@@ -414,7 +414,7 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// when
@@ -437,7 +437,7 @@ func cleanup(t *testing.T) {
 	gReferralKeeper = NewKeeper()
 }
 
-func setupExistingReferral(t *testing.T, addr, referralAddr address) {
+func setupExistingReferral(_ int, rlm realm, t *testing.T, addr, referralAddr address) {
 	t.Helper()
-	TryRegister(cross, addr, referralAddr.String())
+	TryRegister(cross(rlm), addr, referralAddr.String())
 }

@@ -1,15 +1,13 @@
 package referral
 
-import "chain/runtime"
-
 var (
 	zeroAddress = address("")
 	// selfAddress is cached at package initialization to ensure consistent comparison.
 	selfAddress address
 )
 
-func init() {
-	selfAddress = runtime.CurrentRealm().Address()
+func init(cur realm) {
+	selfAddress = cur.Address()
 }
 
 // contractAddress returns the address of the referral contract.

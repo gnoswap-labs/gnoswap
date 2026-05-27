@@ -37,8 +37,8 @@ import (
 
 // RegisterUserReferral registers a referral relationship for a user.
 // Must be called from an authorized realm (router, staker, etc.)
-func RegisterUserReferral(userAddr, referrerAddr address) bool {
-    return referral.TryRegister(cross, userAddr, referrerAddr.String())
+func RegisterUserReferral(cur realm, userAddr, referrerAddr address) bool {
+    return referral.TryRegister(cross(cur), userAddr, referrerAddr.String())
 }
 ```
 
@@ -53,8 +53,8 @@ import (
 
 // RemoveUserReferral removes the referral relationship for a user.
 // Pass the contract's own address as the referral to indicate removal.
-func RemoveUserReferral(userAddr address) bool {
-    return referral.TryRegister(cross, userAddr, referral.ContractAddress())
+func RemoveUserReferral(cur realm, userAddr address) bool {
+    return referral.TryRegister(cross(cur), userAddr, referral.ContractAddress())
 }
 ```
 
