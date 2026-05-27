@@ -32,7 +32,7 @@ GNFT represents each liquidity position as a unique NFT with dynamically generat
 
 - Position contract mints NFTs for new positions
 - Staker contract locks NFTs during staking
-- Access control via the position role mirrored from RBAC
+- GRC721 owner/approval checks for transfers and operator management
 
 ## Key Functions
 
@@ -136,25 +136,24 @@ Example: "10,12,125,123,#FF5733,#33B5FF"
 import "gno.land/r/gnoswap/gnft"
 
 // Mint NFT for new position
-tokenId := gnft.Mint(cross, ownerAddress, positionId)
+tokenId := gnft.Mint(cross(cur), ownerAddress, positionId)
 
 // Get token URI with SVG
 imageURI, err := gnft.TokenURI(tokenId)
 // Returns: "data:image/svg+xml;base64,..." for generated GNFT images
 
 // Transfer NFT
-gnft.TransferFrom(cross, fromAddress, toAddress, tokenId)
+gnft.TransferFrom(cross(cur), fromAddress, toAddress, tokenId)
 
 // Burn NFT when closing position
-gnft.Burn(cross, tokenId)
+gnft.Burn(cross(cur), tokenId)
 ```
 
 ## Security
 
-- Only position contract can mint NFTs
-- Only position contract can set token URIs and burn NFTs
+- Position contract mints NFTs for new positions
+- Transfers and approvals require the caller to be the owner or approved for the token
 - Tokens held by the staker contract can only be moved by the staker
-- RBAC-backed role access through the access realm
 - Validated parameter ranges
 - Secure random generation
 
@@ -173,6 +172,5 @@ gnft.Burn(cross, tokenId)
 
 ### Access Control
 
-- `access.AssertIsPosition(cur.Previous().Address())`: Only position contract
-- `cur.Previous().Address()`: Caller propagated to GRC721 transfer and approval checks
+- `owner.AssertOwnedByPrevious()`: Checks that the caller owns the GNFT before owner-only operations
 - `checkErr()`: Panic on errors
