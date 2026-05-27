@@ -134,7 +134,7 @@ func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
 // registration.
 func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return ErrSpoofedRealm
 	}
 
 	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Previous().Address()) {
@@ -153,7 +153,7 @@ func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 // offers for EOA / test callers is intentionally not extended here.
 func (k *kvStore) Delete(_ int, rlm realm, key string) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return ErrSpoofedRealm
 	}
 
 	caller := rlm.Previous().Address()
@@ -201,7 +201,7 @@ func (k *kvStore) GetAuthorizedCallers() (map[address]Permission, error) {
 // AddAuthorizedCaller adds a new authorized caller with the specified permission
 func (k *kvStore) AddAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return ErrSpoofedRealm
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
@@ -224,7 +224,7 @@ func (k *kvStore) AddAuthorizedCaller(_ int, rlm realm, caller address, permissi
 // UpdateAuthorizedCaller updates the permission of an existing authorized caller
 func (k *kvStore) UpdateAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return ErrSpoofedRealm
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
@@ -247,7 +247,7 @@ func (k *kvStore) UpdateAuthorizedCaller(_ int, rlm realm, caller address, permi
 // RemoveAuthorizedCaller removes an authorized caller
 func (k *kvStore) RemoveAuthorizedCaller(_ int, rlm realm, caller address) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return ErrSpoofedRealm
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {

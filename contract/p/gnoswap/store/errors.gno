@@ -13,5 +13,5 @@ var (
 	ErrWritePermissionDenied  = errors.New("write permission denied")
 	ErrUpdatePermissionDenied = errors.New("update permission denied")
 	ErrFailedCast             = errors.New("failed to cast")
-	errSpoofedRealm           = errors.New("rlm does not match the current crossing frame")
+	ErrSpoofedRealm           = errors.New("rlm does not match the current crossing frame")
 )
