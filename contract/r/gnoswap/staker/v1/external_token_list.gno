@@ -2,11 +2,11 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
@@ -19,10 +19,14 @@ var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 //
 // Panics:
 //   - If the caller is not the admin
-func (s *stakerV1) AddToken(tokenPath string) {
+func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -48,10 +52,14 @@ func (s *stakerV1) AddToken(tokenPath string) {
 //
 // Panics:
 //   - If the caller is not the admin
-func (s *stakerV1) RemoveToken(tokenPath string) {
+func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 

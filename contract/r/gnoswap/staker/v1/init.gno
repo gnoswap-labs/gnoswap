@@ -18,23 +18,18 @@ const (
 	defaultUnstakingFee = uint64(100) // 1%
 )
 
-func init() {
-	registerStakerV1()
+func init(cur realm) {
+	registerStakerV1(cur)
 }
 
-func registerStakerV1() {
-	sr.RegisterInitializer(cross, func(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
+func registerStakerV1(cur realm) {
+	sr.RegisterInitializer(cross(cur), func(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
 		err := initStoreData(stakerStore, emissionAccessor)
 		if err != nil {
 			panic(err)
 		}
 
-		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
-
-		instance.setupSwapHooks()
-		emissionAccessor.SetOnDistributionPctChangeCallback(instance.emissionCacheUpdateHook)
-
-		return instance
+		return NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
 	})
 }
 

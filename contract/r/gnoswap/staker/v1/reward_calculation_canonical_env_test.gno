@@ -4,7 +4,6 @@ package v1
 // Used for testing and reference.
 
 import (
-	"chain/runtime"
 	"errors"
 	"math"
 	"testing"
@@ -478,9 +477,7 @@ func newExternalIncentiveBy(
 	currentHeight int64,
 	currentTimestamp int64,
 ) *sr.ExternalIncentive {
-	caller := runtime.OriginCaller()
-
-	incentiveId := getMockInstance().store.NextIncentiveID(caller, currentHeight)
+	incentiveId := getMockInstance().store.NextIncentiveID(creator, currentHeight)
 
 	// NewExternalIncentive already derives the Q128-scaled per-second rate from
 	// (rewardAmount, startTimestamp, endTimestamp); no extra Set call needed.

@@ -2,13 +2,13 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
@@ -18,13 +18,19 @@ func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
 func (s *stakerV1) handleStakingRewardFee(
+	_ int,
+	rlm realm,
 	tokenPath string,
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
-		s.addToProtocolFee()
+		s.addToProtocolFee(0, rlm)
 		return amount, 0, nil
 	}
 
@@ -35,7 +41,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
-		s.addToProtocolFee()
+		s.addToProtocolFee(0, rlm)
 		return amount, 0, nil
 	}
 
@@ -44,7 +50,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	s.addPendingProtocolFee(tokenPath, feeAmount)
-	s.addToProtocolFee()
+	s.addToProtocolFee(0, rlm)
 
 	return safeSubInt64(amount, feeAmount), feeAmount, nil
 }
@@ -69,7 +75,11 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (s *stakerV1) addToProtocolFee() {
+func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	pendingProtocolFees := s.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
@@ -82,8 +92,8 @@ func (s *stakerV1) addToProtocolFee() {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
 			remainingProtocolFees[tokenPath] = amount
 			continue
 		}
@@ -96,10 +106,14 @@ func (s *stakerV1) addToProtocolFee() {
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetUnStakingFee(fee uint64) {
+func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 

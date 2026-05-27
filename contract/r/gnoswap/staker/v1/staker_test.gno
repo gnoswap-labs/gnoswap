@@ -85,8 +85,8 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 		// Stake position
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+		mockNFTMint(addr01, positionId)
+		mockNFTApprove(stakerAddr, positionId)
 
 		mockInstanceStakeToken(positionId, "")
 
@@ -154,8 +154,8 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 			addr02,
 		)
 
-		getMockInstance().nftAccessor.Mint(addr02, positionIdFrom(positionId2))
-		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId2))
+		mockNFTMint(addr02, positionId2)
+		mockNFTApprove(stakerAddr, positionId2)
 		mockInstanceStakeToken(positionId2, "")
 
 		// Create external incentive with very small amount
@@ -205,8 +205,8 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	// Create an external incentive
@@ -284,8 +284,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	// Fund caller for incentive creation.
@@ -406,8 +406,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	startTimestamp := int64(1234569600)
@@ -518,8 +518,8 @@ func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	// Create warmup period that will consume rewards
@@ -602,8 +602,8 @@ func TestUnStakeToken(t *testing.T) {
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 
 	// Stake the position
 	mockInstanceStakeToken(positionId, "")
@@ -711,8 +711,8 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(t *testing.T) {
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
@@ -769,8 +769,8 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(t *testing.T) {
 		addr01,
 	)
 
-	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
-	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockNFTMint(addr01, positionId)
+	mockNFTApprove(stakerAddr, positionId)
 	mockInstanceStakeToken(positionId, "")
 
 	testing.SetRealm(testing.NewUserRealm(addr01))

@@ -41,17 +41,21 @@ func setupBasicTestState(t *testing.T) *testState {
 		fixedBlockHeight: int64(100),
 	}
 
-	// Setup allowed tokens via manager method
-	state.instance.AddToken(barPath)
-	state.instance.AddToken(bazPath)
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 
-	// Setup config values via manager methods
-	state.instance.SetDepositGnsAmount(1_000_000_000)
-	state.instance.SetMinimumRewardAmount(500_000)
-	state.instance.SetUnStakingFee(100) // 1%
+		// Setup allowed tokens via manager method
+		state.instance.AddToken(0, cur, barPath)
+		state.instance.AddToken(0, cur, bazPath)
 
-	// Setup warmup template via manager method
-	state.instance.SetWarmUp(30, 86400*5) // 30%, 5 days
+		// Setup config values via manager methods
+		state.instance.SetDepositGnsAmount(0, cur, 1_000_000_000)
+		state.instance.SetMinimumRewardAmount(0, cur, 500_000)
+		state.instance.SetUnStakingFee(0, cur, 100) // 1%
+
+		// Setup warmup template via manager method
+		state.instance.SetWarmUp(0, cur, 30, 86400*5) // 30%, 5 days
+	}(cross)
 
 	// Direct store access for complex state: Pool
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)

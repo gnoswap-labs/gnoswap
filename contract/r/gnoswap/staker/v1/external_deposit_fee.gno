@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"strconv"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
@@ -43,10 +43,14 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetDepositGnsAmount(amount int64) {
+func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -66,10 +70,14 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
+func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -89,10 +97,14 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 
 // SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
+func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 

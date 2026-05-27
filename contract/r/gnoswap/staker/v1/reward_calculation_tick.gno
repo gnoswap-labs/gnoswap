@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -69,7 +68,7 @@ func NewTickResolver(tick *sr.Tick) *TickResolver {
 
 // swapStartHook is called when a swap starts
 // This hook initializes the batch processor for accumulating tick crosses
-func (s *stakerV1) swapStartHook(poolPath string, timestamp int64) {
+func (s *stakerV1) swapStartHook(cur realm, poolPath string, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
 		return
@@ -90,7 +89,7 @@ func (s *stakerV1) swapStartHook(poolPath string, timestamp int64) {
 // 1. O(1) pool state updates instead of O(n) where n = number of tick crosses
 // 2. Reduced computational overhead for reward calculations
 // 3. Atomic processing ensuring consistency across all tick updates
-func (s *stakerV1) swapEndHook(poolPath string) error {
+func (s *stakerV1) swapEndHook(cur realm, poolPath string) error {
 	// Validate batch processor state
 	currentSwapBatch := s.store.GetCurrentSwapBatch()
 
@@ -104,7 +103,7 @@ func (s *stakerV1) swapEndHook(poolPath string) error {
 	// Process all accumulated tick crosses in a single batch
 	// This is where the optimization happens - instead of processing
 	// each tick cross individually, we calculate cumulative effects
-	err := s.processBatchedTickCrosses()
+	err := s.processBatchedTickCrosses(0, cur)
 	if err != nil {
 		return err
 	}
@@ -123,7 +122,7 @@ func (s *stakerV1) swapEndHook(poolPath string) error {
 // - During swaps: accumulates tick crosses for batch processing at swap end
 // - Outside swaps: processes tick crosses immediately for real-time updates
 // The hybrid approach optimizes for both swap performance and non-swap responsiveness
-func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+func (s *stakerV1) tickCrossHook(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
 		return
@@ -188,7 +187,11 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 // This is the core optimization function that processes multiple tick crosses in a single operation.
 // Instead of updating pool state for each tick cross individually (O(n) operations),
 // it calculates the cumulative effect and applies it once (O(1) pool updates + O(n) tick updates).
-func (s *stakerV1) processBatchedTickCrosses() error {
+func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
+	if !rlm.IsCurrent() {
+		return sr.ErrSpoofedRealm
+	}
+
 	// Early exit for empty batches
 	currentSwapBatch := s.store.GetCurrentSwapBatch()
 	if currentSwapBatch == nil || len(currentSwapBatch.Crosses()) == 0 {
@@ -252,7 +255,7 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	}
 
 	// Emit event with staker-side tick cross information
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(timestamp)
 
 	chain.Emit(
@@ -268,13 +271,26 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	return nil
 }
 
-func (s *stakerV1) setupSwapHooks() {
+func (s *stakerV1) RegisterHooks(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
+	s.setupSwapHooks(0, rlm)
+	s.emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, s.emissionCacheUpdateHook)
+}
+
+func (s *stakerV1) setupSwapHooks(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(sr.ErrSpoofedRealm)
+	}
+
 	// Set tick cross hook for pool contract
-	s.poolAccessor.SetTickCrossHook(s.tickCrossHook)
+	s.poolAccessor.SetTickCrossHook(0, rlm, s.tickCrossHook)
 
 	// Set swap start/end hooks for batch processing
-	s.poolAccessor.SetSwapStartHook(s.swapStartHook)
+	s.poolAccessor.SetSwapStartHook(0, rlm, s.swapStartHook)
 
 	// Set swap end hook for batch processing
-	s.poolAccessor.SetSwapEndHook(s.swapEndHook)
+	s.poolAccessor.SetSwapEndHook(0, rlm, s.swapEndHook)
 }
