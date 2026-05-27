@@ -1,7 +1,6 @@
 package gnft
 
 import (
-	"chain/runtime"
 	"math/rand"
 	"time"
 
@@ -26,12 +25,10 @@ func checkErr(err error) {
 }
 
 // checkTransferErr wraps transfer errors with more specific context.
-func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
+func checkTransferErr(caller address, err error, from, to address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
-
-	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)
@@ -70,13 +67,12 @@ func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
 }
 
 // checkApproveErr wraps approve errors with more specific context.
-func checkApproveErr(err error, approved address, tid grc721.TokenID) {
+func checkApproveErr(caller address, err error, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
 
 	errMsg := err.Error()
-	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)

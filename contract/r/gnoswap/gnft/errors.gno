@@ -19,6 +19,7 @@ var (
 	errInvalidTokenParamsRange = errors.New("[GNOSWAP-GNFT-007] token parameters out of range")
 	errInvalidColorFormat      = errors.New("[GNOSWAP-GNFT-008] invalid color format")
 	errStakedTokenLocked       = errors.New("[GNOSWAP-GNFT-009] staked token is locked")
+	errSpoofedRealm            = errors.New("[GNOSWAP-GNFT-010] rlm does not match the current crossing frame")
 )
 
 // makeErrorWithDetails creates an error with additional context.

@@ -32,8 +32,7 @@ GNFT represents each liquidity position as a unique NFT with dynamically generat
 
 - Position contract mints NFTs for new positions
 - Staker contract locks NFTs during staking
-- Access control via RBAC system
-- Halt mechanism for emergency stops
+- Access control via the position role mirrored from RBAC
 
 ## Key Functions
 
@@ -68,12 +67,12 @@ Transfers NFT ownership.
 
 ### `TokenURI`
 
-Returns token metadata with SVG image.
+Returns the token URI, rendering stored SVG parameters as a base64 image data URI.
 
 **Parameters:**
 - `tid grc721.TokenID`: Token ID
 
-**Returns:** Metadata JSON with base64-encoded SVG
+**Returns:** Token URI string, using a base64-encoded SVG data URI for generated GNFT images
 
 ### `Approve`
 
@@ -137,25 +136,25 @@ Example: "10,12,125,123,#FF5733,#33B5FF"
 import "gno.land/r/gnoswap/gnft"
 
 // Mint NFT for new position
-tokenId := gnft.Mint(cur, ownerAddress, positionId)
+tokenId := gnft.Mint(cross, ownerAddress, positionId)
 
-// Get token metadata with SVG
-metadata := gnft.TokenURI(tokenId)
-// Returns: {"name":"Position #1","image":"data:image/svg+xml;base64,..."}
+// Get token URI with SVG
+imageURI, err := gnft.TokenURI(tokenId)
+// Returns: "data:image/svg+xml;base64,..." for generated GNFT images
 
 // Transfer NFT
-gnft.TransferFrom(cur, fromAddress, toAddress, tokenId)
+gnft.TransferFrom(cross, fromAddress, toAddress, tokenId)
 
 // Burn NFT when closing position
-gnft.Burn(cur, tokenId)
+gnft.Burn(cross, tokenId)
 ```
 
 ## Security
 
 - Only position contract can mint NFTs
-- Transfers blocked during staking
-- RBAC-based access control
-- Halt mechanism for emergencies
+- Only position contract can set token URIs and burn NFTs
+- Tokens held by the staker contract can only be moved by the staker
+- RBAC-backed role access through the access realm
 - Validated parameter ranges
 - Secure random generation
 
@@ -163,17 +162,17 @@ gnft.Burn(cur, tokenId)
 
 ### Dependencies
 
-- `gno.land/p/demo/grc/grc721`: GRC721 interface
+- `gno.land/p/demo/tokens/grc721`: GRC721 implementation
 - `gno.land/r/gnoswap/rbac`: Access control
-- `gno.land/r/gnoswap/halt`: Emergency stops
+- `gno.land/r/gnoswap/access`: Position role mirror
 
 ### State Variables
 
-- `nft *grc721.AdminToken`: GRC721 token instance
-- `tokenURIs avl.Tree`: TokenID → parameter string mapping
+- `nft`: GRC721 token instance
+- Token URIs are stored by the GRC721 token as compact SVG parameter strings
 
 ### Access Control
 
-- `owner.AssertOwnedByPrevious()`: Only position contract
+- `access.AssertIsPosition(cur.Previous().Address())`: Only position contract
+- `cur.Previous().Address()`: Caller propagated to GRC721 transfer and approval checks
 - `checkErr()`: Panic on errors
-- `halt.AssertIsNotHalted*()`: Check halt status
