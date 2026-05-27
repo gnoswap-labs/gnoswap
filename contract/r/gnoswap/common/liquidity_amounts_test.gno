@@ -49,7 +49,7 @@ func TestLiquidityAmounts_ToAscendingOrder(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			min, max := toAscendingOrder(tt.a, tt.b)
 
 			if min.ToString() != tt.expectedA {
@@ -90,7 +90,7 @@ func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					if r := recover(); r == nil {
@@ -163,7 +163,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount0(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if !tc.expectPanic {
@@ -186,7 +186,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount0(t *testing.T) {
 	}
 }
 
-func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
+func TestLiquidityAmounts_ComputeLiquidityForAmount1(cur realm, t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96)
 
 	tests := []struct {
@@ -242,9 +242,9 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					_ = computeLiquidityForAmount1(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.amount1)
 				})
 			} else {
@@ -318,7 +318,7 @@ func TestLiquidityAmounts_GetLiquidityForAmounts(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			sqrtRatioX96 := u256.MustFromDecimal(tc.sqrtRatioX96)
 			sqrtRatioAX96 := u256.MustFromDecimal(tc.sqrtRatioAX96)
 			sqrtRatioBX96 := u256.MustFromDecimal(tc.sqrtRatioBX96)
@@ -381,7 +381,7 @@ func TestLiquidityAmounts_ComputeAmount0ForLiquidity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			sqrtRatioAX96 := u256.MustFromDecimal(tc.sqrtRatioAX96)
 			sqrtRatioBX96 := u256.MustFromDecimal(tc.sqrtRatioBX96)
 			liquidity := u256.MustFromDecimal(tc.liquidity)
@@ -444,7 +444,7 @@ func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := computeAmount1ForLiquidity(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 			uassert.Equal(t, tt.expectedAmount, result.ToString(), ufmt.Sprintf("expected %s but got %s", tt.expectedAmount, result.ToString()))
 		})
@@ -538,7 +538,7 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			amount0, amount1 := GetAmountsForLiquidity(tt.sqrtRatioX96, tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 			uassert.Equal(t, tt.expectedAmount0, amount0.ToString(), ufmt.Sprintf("expected %s but got %s for amount0", tt.expectedAmount0, amount0))
 			uassert.Equal(t, tt.expectedAmount1, amount1.ToString(), ufmt.Sprintf("expected %s but got %s for amount1", tt.expectedAmount1, amount1))
@@ -582,7 +582,7 @@ func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.testFunc()
 			if tt.expected != "" {
 				uassert.Equal(t, tt.expected, result)
@@ -591,7 +591,7 @@ func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 	}
 }
 
-func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
+func TestLiquidityAmounts_MulDivOverflowProtection(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		value            *u256.Uint
@@ -618,9 +618,9 @@ func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					_ = computeLiquidityForAmount0(tt.sqrtRatioA, tt.sqrtRatioB, tt.value)
 				})
 			} else {
@@ -633,7 +633,7 @@ func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
 	}
 }
 
-func TestLiquidityAmounts_LiquidityMathAddDelta(t *testing.T) {
+func TestLiquidityAmounts_LiquidityMathAddDelta(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		fn        func()
@@ -721,9 +721,9 @@ func TestLiquidityAmounts_LiquidityMathAddDelta(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.wantPanic != "" {
-				uassert.PanicsContains(t, tt.wantPanic, tt.fn)
+				uassert.PanicsContains(t, cur, tt.wantPanic, tt.fn)
 			} else {
 				tt.fn()
 			}
@@ -797,7 +797,7 @@ func TestLiquidityAmounts_NilParameterHandling(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.wantPanic {
 				defer func() {
 					if r := recover(); r == nil {
