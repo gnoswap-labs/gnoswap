@@ -28,16 +28,16 @@ var (
 	dummyReceiver = testutils.TestAddress("dummyReceiver")
 )
 
-func resetCommunityPoolState(t *testing.T) {
+func resetCommunityPoolState(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
-	gns.Transfer(cross, communityPoolAddr, 10_000)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 }
 
-func TestCommunityPool_TransferToken(t *testing.T) {
+func TestCommunityPool_TransferToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func()
+		setup       func(cur realm)
 		caller      runtime.Realm
 		tokenPath   string
 		to          address
@@ -47,9 +47,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 	}{
 		{
 			name: "panic if halted with complete level",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			},
 			tokenPath:   gnsPath,
 			to:          dummyReceiver,
@@ -59,9 +59,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic if halted with safe mode (withdraw blocked only)",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 			},
 			tokenPath:   gnsPath,
 			to:          dummyReceiver,
@@ -71,22 +71,22 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic if caller is not admin or governance",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-				testing.SetRealm(dummyCaller)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			},
+			caller:      dummyCaller,
 			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 is not admin or governance",
+			panicMsg:    "unauthorized: caller g1v36k6mtegdskcmr9wf047h6lta047h6ljmnks7 is not admin or governance",
 		},
 		{
 			name: "success transfer with enough balance",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
 			tokenPath: gnsPath,
@@ -95,9 +95,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "admin can transfer community pool token",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
 			tokenPath: gnsPath,
@@ -106,9 +106,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "governance can transfer community pool token",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:    govRealm,
 			tokenPath: gnsPath,
@@ -117,9 +117,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "success transfer zero amount",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
 			tokenPath: gnsPath,
@@ -128,9 +128,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "success transfer exact balance",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:    adminRealm,
 			tokenPath: gnsPath,
@@ -139,9 +139,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic with negative amount",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   gnsPath,
@@ -152,9 +152,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic with insufficient balance",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   gnsPath,
@@ -165,9 +165,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic with empty token path",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   "",
@@ -178,9 +178,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic with unregistered token path",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   "gno.land/r/demo/not_registered",
@@ -191,9 +191,9 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 		},
 		{
 			name: "panic with empty to address",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 10_000)
 			},
 			caller:      adminRealm,
 			tokenPath:   gnsPath,
@@ -205,11 +205,12 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetCommunityPoolState(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+
+			resetCommunityPoolState(cur, t)
 
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 
 			if tt.caller != (runtime.Realm{}) {
@@ -217,12 +218,12 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsContains(t, tt.panicMsg, func() {
-					TransferToken(cross, tt.tokenPath, tt.to, tt.amount)
+				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
+					TransferToken(cross(cur), tt.tokenPath, tt.to, tt.amount)
 				})
 			} else {
 				receiverOldBalance := gns.BalanceOf(tt.to)
-				TransferToken(cross, tt.tokenPath, tt.to, tt.amount)
+				TransferToken(cross(cur), tt.tokenPath, tt.to, tt.amount)
 				receiverNewBalance := gns.BalanceOf(tt.to)
 				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
 			}
@@ -230,23 +231,23 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 	}
 }
 
-func TestCommunityPool_GetBalanceOf(t *testing.T) {
+func TestCommunityPool_GetBalanceOf(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
-		setup           func()
+		setup           func(cur realm)
 		tokenPath       string
 		expectedBalance int64
-		shouldPanic     bool
+		shouldAbort     bool
 		panicMsg        string
 	}{
 		{
 			name: "returns zero when pool has no tokens",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 				// transfer all tokens from community pool to admin first
 				currentBalance := gns.BalanceOf(communityPoolAddr)
 				if currentBalance > 0 {
-					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+					TransferToken(cross(cur), gnsPath, adminAddr, currentBalance)
 				}
 			},
 			tokenPath:       gnsPath,
@@ -254,64 +255,64 @@ func TestCommunityPool_GetBalanceOf(t *testing.T) {
 		},
 		{
 			name: "returns correct balance after transfer to pool",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 				// clear pool first
 				currentBalance := gns.BalanceOf(communityPoolAddr)
 				if currentBalance > 0 {
-					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+					TransferToken(cross(cur), gnsPath, adminAddr, currentBalance)
 				}
 				// transfer tokens to pool
-				gns.Transfer(cross, communityPoolAddr, 5_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 5_000)
 			},
 			tokenPath:       gnsPath,
 			expectedBalance: 5_000,
 		},
 		{
 			name: "returns updated balance after multiple transfers",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 				// clear pool first
 				currentBalance := gns.BalanceOf(communityPoolAddr)
 				if currentBalance > 0 {
-					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+					TransferToken(cross(cur), gnsPath, adminAddr, currentBalance)
 				}
 				// transfer tokens to pool multiple times
-				gns.Transfer(cross, communityPoolAddr, 1_000)
-				gns.Transfer(cross, communityPoolAddr, 2_000)
-				gns.Transfer(cross, communityPoolAddr, 3_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 1_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 2_000)
+				gns.Transfer(cross(cur), communityPoolAddr, 3_000)
 			},
 			tokenPath:       gnsPath,
 			expectedBalance: 6_000,
 		},
 		{
 			name: "panics with unregistered token path",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 			},
 			tokenPath:   "gno.land/r/demo/unregistered_token",
-			shouldPanic: true,
+			shouldAbort: true,
 			panicMsg:    "unknown token",
 		},
 		{
 			name: "panics with empty token path",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 			},
 			tokenPath:   "",
-			shouldPanic: true,
+			shouldAbort: true,
 			panicMsg:    "unknown token",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
 					GetBalanceOf(tt.tokenPath)
 				})
 			} else {

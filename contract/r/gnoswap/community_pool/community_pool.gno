@@ -26,6 +26,7 @@ func GetBalanceOf(tokenPath string) int64 {
 // TransferToken transfers tokens from the community pool.
 //
 // Parameters:
+//   - cur: current realm
 //   - tokenPath: token contract path
 //   - to: recipient address
 //   - amount: transfer amount
