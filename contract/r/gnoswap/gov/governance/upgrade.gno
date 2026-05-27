@@ -15,7 +15,7 @@ func RegisterInitializer(cur realm, initializer func(governanceStore IGovernance
 		return initializer(currentGovernanceStore, newGovStakerAccessor())
 	}
 
-	err := versionManager.RegisterInitializer(initializerFunc)
+	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func UpgradeImpl(cur realm, targetPackagePath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := versionManager.ChangeImplementation(targetPackagePath)
+	err := versionManager.ChangeImplementation(0, cur, targetPackagePath)
 	if err != nil {
 		panic(err)
 	}

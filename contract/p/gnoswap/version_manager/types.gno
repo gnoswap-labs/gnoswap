@@ -18,12 +18,22 @@ type VersionManager interface {
 	// Must be called by each version package during initialization.
 	// First registration becomes the active implementation with write access.
 	// Subsequent registrations are granted read-only access.
-	RegisterInitializer(initializer func(store any) any) error
+	//
+	// The leading `_ int, rlm realm` is the v2 interrealm-spec marker pattern:
+	// the `0` sentinel surfaces at every call site so the realm threading is
+	// visible to the reader, and rlm is the live crossing-frame token that
+	// the implementation validates via rlm.IsCurrent() and reads via
+	// rlm.Previous() to identify the version package.
+	RegisterInitializer(_ int, rlm realm, initializer func(store any) any) error
 
 	// ChangeImplementation switches the active version at runtime.
 	// The new active version gets write access, while others remain read-only.
 	// This enables hot-swapping without downtime or data migration.
-	ChangeImplementation(packagePath string) error
+	//
+	// The leading `_ int, rlm realm` is the v2 interrealm-spec marker pattern;
+	// rlm is validated via rlm.IsCurrent() to reject spoofed/stale tokens.
+	// Upgrade ACLs live in the wrapping /r/ realm, not here.
+	ChangeImplementation(_ int, rlm realm, packagePath string) error
 
 	// GetDomainPath returns the base domain path (e.g., "gno.land/r/gnoswap/protocol_fee")
 	GetDomainPath() string
