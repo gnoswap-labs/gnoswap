@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"chain/runtime"
 	"errors"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
@@ -11,8 +10,11 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	// Package-init reads use chain/runtime/unsafe.CurrentRealm because there
+	// is no `cur realm` in scope at package-initialization time. The values
+	// captured here describe the governance realm itself, not any caller.
+	currentAddress address
+	domainPath     string
 
 	kvStore store.KVStore
 
@@ -20,7 +22,10 @@ var (
 	implementation IGovernance
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+	domainPath = cur.PkgPath()
+
 	kvStore = store.NewKVStore(currentAddress)
 	versionManager = version_manager.NewVersionManager(domainPath, kvStore, initializeDomainStore)
 

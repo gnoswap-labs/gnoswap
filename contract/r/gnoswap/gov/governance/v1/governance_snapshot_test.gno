@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-func TestGetVotingWeightSnapshot(t *testing.T) {
+func TestGetVotingWeightSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		current              int64
@@ -67,7 +67,7 @@ func TestGetVotingWeightSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovernanceStore()
 			mockAccessor := newMockGovStakerAccessor()
 			mockAccessor.SetTotalDelegation(tt.totalDelegation)
@@ -90,7 +90,7 @@ func TestGetVotingWeightSnapshot(t *testing.T) {
 	}
 }
 
-func TestGetProposalUserVotingInfo(t *testing.T) {
+func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupVotingInfos func() *mockGovernanceStore
@@ -152,7 +152,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := tt.setupVotingInfos()
 			gv := &governanceV1{
 				store:          store,
@@ -169,7 +169,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 	}
 }
 
-func TestUpdateProposalUserVotes(t *testing.T) {
+func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalID    int64
@@ -197,7 +197,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovernanceStore()
 			gv := &governanceV1{
 				store:          store,

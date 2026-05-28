@@ -8,7 +8,7 @@ import (
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
-func TestRegistryHandler_Execute(t *testing.T) {
+func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		params           []string
@@ -82,9 +82,9 @@ func TestRegistryHandler_Execute(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					_ = tc.handlerFactory()
 				})
 				return
@@ -108,7 +108,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 }
 
 // TestParameterRegistryHandler_registerHandlers tests the private registerHandlers function
-func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
+func TestParameterRegistryHandler_registerHandlers(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupHandlers func() ([]*ParameterHandlerOptions, []string)
@@ -167,7 +167,7 @@ func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			registry := NewParameterRegistry()
 			handlers, keys := tt.setupHandlers()

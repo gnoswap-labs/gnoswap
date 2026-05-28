@@ -26,7 +26,7 @@ func newVotingInfoFixture() *VotingInfo {
 	return votingInfo
 }
 
-func TestMutableGovernanceGetterIsolation(t *testing.T) {
+func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setup     func(m *MockGovernance)
@@ -186,7 +186,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			mockGovernance := newMockGovernance("v1")
 			implementation = mockGovernance
