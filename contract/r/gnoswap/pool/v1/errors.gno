@@ -34,6 +34,7 @@ var (
 	errInsufficientPayment       = errors.New("[GNOSWAP-POOL-024] insufficient payment")
 	errNotInitializedObservation = errors.New("[GNOSWAP-POOL-025] not initialized observation")
 	errObservationTooOld         = errors.New("[GNOSWAP-POOL-026] target timestamp before oldest observation")
+	errSpoofedRealm              = errors.New("[GNOSWAP-POOL-027] rlm does not match the current crossing frame")
 )
 
 // newErrorWithDetail adds detail to an error message.
