@@ -11,8 +11,8 @@ import (
 )
 
 // Test ProtocolFeeRewardManager creation
-func TestNewProtocolFeeRewardManager(t *testing.T) {
-	t.Run("Create new protocol fee reward manager", func(t *testing.T) {
+func TestNewProtocolFeeRewardManager(cur realm, t *testing.T) {
+	t.Run("Create new protocol fee reward manager", func(cur realm, t *testing.T) {
 		// When: Create new protocol fee reward manager
 		manager := staker.NewProtocolFeeRewardManager()
 		resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -26,7 +26,7 @@ func TestNewProtocolFeeRewardManager(t *testing.T) {
 }
 
 // Test GetAccumulatedProtocolFeeX128PerStake
-func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testing.T) {
+func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func(*ProtocolFeeRewardManagerResolver)
@@ -52,7 +52,7 @@ func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testi
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward manager
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -75,7 +75,7 @@ func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testi
 }
 
 // Test GetClaimableRewardAmounts
-func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
+func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		setupManager       func(*ProtocolFeeRewardManagerResolver)
@@ -126,7 +126,7 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward manager setup
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -146,7 +146,7 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 }
 
 // Test addStake
-func TestProtocolFeeRewardManager_addStake(t *testing.T) {
+func TestProtocolFeeRewardManager_addStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		address          string
@@ -190,7 +190,7 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: New protocol fee reward manager for each test
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -224,7 +224,7 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 }
 
 // Test removeStake
-func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
+func TestProtocolFeeRewardManager_removeStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		initialAmount    int64
@@ -284,7 +284,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Manager with initial stake
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -310,7 +310,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 }
 
 // Test claimRewards
-func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
+func TestProtocolFeeRewardManager_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupManager     func(*ProtocolFeeRewardManagerResolver)
@@ -341,14 +341,14 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward manager setup
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
 			tt.setupManager(resolver)
 
 			// When: Claim rewards
-			rewards, err := resolver.claimRewards(tt.address, tt.currentTimestamp)
+			rewards, err := resolver.claimRewards(0, cur, tt.address, tt.currentTimestamp)
 
 			// Then: Check result
 			if tt.expectError {
@@ -362,8 +362,8 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeRewardManager_claimRewards_Multipletimes(t *testing.T) {
-	t.Run("Claim rewards multiple times", func(t *testing.T) {
+func TestProtocolFeeRewardManager_claimRewards_Multipletimes(cur realm, t *testing.T) {
+	t.Run("Claim rewards multiple times", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewProtocolFeeRewardManager()
 		resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -374,10 +374,10 @@ func TestProtocolFeeRewardManager_claimRewards_Multipletimes(t *testing.T) {
 		resolver.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 20)
 
 		// when - claim rewards multiple times
-		claimed1, err1 := resolver.claimRewards("user1", 30)
+		claimed1, err1 := resolver.claimRewards(0, cur, "user1", 30)
 		uassert.NoError(t, err1)
 
-		claimed2, err2 := resolver.claimRewards("user1", 40)
+		claimed2, err2 := resolver.claimRewards(0, cur, "user1", 40)
 		uassert.NoError(t, err2)
 
 		// then - second claim should return zero amounts (no new rewards)
@@ -391,7 +391,7 @@ func TestProtocolFeeRewardManager_claimRewards_Multipletimes(t *testing.T) {
 }
 
 // Test calculateAccumulatedRewardX128PerStake
-func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *testing.T) {
+func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		setupManager       func(*ProtocolFeeRewardManagerResolver)
@@ -514,7 +514,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward manager setup
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -571,7 +571,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 }
 
 // Test updateAccumulatedProtocolFeeX128PerStake
-func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *testing.T) {
+func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		setupManager       func(*ProtocolFeeRewardManagerResolver)
@@ -627,7 +627,7 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward manager setup
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
@@ -650,7 +650,7 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 	}
 }
 
-func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
+func TestProtocolFeeRewardManager_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupTest   func(*ProtocolFeeRewardManagerResolver)
@@ -732,7 +732,7 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Fresh protocol fee reward manager
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)

@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func TestNewProtocolFeeRewardState(t *testing.T) {
+func TestNewProtocolFeeRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                               string
 		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
@@ -40,7 +40,7 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Create new protocol fee reward state
 			state := staker.NewProtocolFeeRewardState(tt.accumulatedProtocolFeeX128PerStake)
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -63,7 +63,7 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 }
 
 // Test IsClaimable
-func TestProtocolFeeRewardState_IsClaimable(t *testing.T) {
+func TestProtocolFeeRewardState_IsClaimable(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		claimedTimestamp int64
@@ -97,7 +97,7 @@ func TestProtocolFeeRewardState_IsClaimable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state with claimed height
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -113,7 +113,7 @@ func TestProtocolFeeRewardState_IsClaimable(t *testing.T) {
 }
 
 // Test GetClaimableRewardAmounts
-func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
+func TestProtocolFeeRewardState_GetClaimableRewardAmounts(cur realm, t *testing.T) {
 	tests := []struct {
 		name                           string
 		setupState                     func(*ProtocolFeeRewardStateResolver)
@@ -171,7 +171,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state setup
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -195,7 +195,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeRewardState_GetClaimableRewardAmounts_SubtractsClaimedRewards(t *testing.T) {
+func TestProtocolFeeRewardState_GetClaimableRewardAmounts_SubtractsClaimedRewards(cur realm, t *testing.T) {
 	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 	resolver := NewProtocolFeeRewardStateResolver(state)
 	resolver.SetAccumulatedTimestamp(50)
@@ -222,7 +222,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts_SubtractsClaimedReward
 }
 
 // Test addStake
-func TestProtocolFeeRewardState_addStake(t *testing.T) {
+func TestProtocolFeeRewardState_addStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialStake  int64
@@ -250,7 +250,7 @@ func TestProtocolFeeRewardState_addStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -266,7 +266,7 @@ func TestProtocolFeeRewardState_addStake(t *testing.T) {
 }
 
 // Test removeStake
-func TestProtocolFeeRewardState_removeStake(t *testing.T) {
+func TestProtocolFeeRewardState_removeStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialStake  int64
@@ -294,7 +294,7 @@ func TestProtocolFeeRewardState_removeStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -310,7 +310,7 @@ func TestProtocolFeeRewardState_removeStake(t *testing.T) {
 }
 
 // Test claimRewards including idempotent no-op cases.
-func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
+func TestProtocolFeeRewardState_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name                      string
 		setupState                func(*ProtocolFeeRewardStateResolver)
@@ -449,14 +449,14 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state setup
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 
 			// When: Claim rewards
-			claimedRewards, err := resolver.claimRewards(tt.currentTimestamp)
+			claimedRewards, err := resolver.claimRewards(0, cur, tt.currentTimestamp)
 
 			// Then: Check result
 			if tt.expectError {
@@ -487,7 +487,7 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 }
 
 // Test that consecutive claimRewards calls within the same Unix second
-func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T) {
+func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t *testing.T) {
 	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 	resolver := NewProtocolFeeRewardStateResolver(state)
 
@@ -503,19 +503,19 @@ func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T
 	})
 
 	// First claim at ts=100 captures the pending delta.
-	first, err := resolver.claimRewards(100)
+	first, err := resolver.claimRewards(0, cur, 100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, first["token1"], int64(800))
 	uassert.Equal(t, first["token2"], int64(300))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 
 	// Second and third calls at the same ts=100 must be no-ops.
-	second, err := resolver.claimRewards(100)
+	second, err := resolver.claimRewards(0, cur, 100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, len(second), 0)
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 
-	third, err := resolver.claimRewards(100)
+	third, err := resolver.claimRewards(0, cur, 100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, len(third), 0)
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
@@ -531,7 +531,7 @@ func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T
 		"token1": 1500,
 		"token2": 300,
 	})
-	fourth, err := resolver.claimRewards(101)
+	fourth, err := resolver.claimRewards(0, cur, 101)
 	uassert.NoError(t, err)
 	uassert.Equal(t, fourth["token1"], int64(500))
 	uassert.Equal(t, fourth["token2"], int64(0))
@@ -539,7 +539,7 @@ func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T
 }
 
 // Test updateRewardDebtX128
-func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
+func TestProtocolFeeRewardState_updateRewardDebtX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                               string
 		setupState                         func(*ProtocolFeeRewardStateResolver)
@@ -588,7 +588,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Protocol fee reward state setup
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
@@ -609,7 +609,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 }
 
 // Test combined operations
-func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
+func TestProtocolFeeRewardState_CombinedOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		operations  func(*ProtocolFeeRewardStateResolver)
@@ -665,7 +665,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.operations(resolver)
@@ -674,7 +674,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 }
 
 // Test edge cases
-func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
+func TestProtocolFeeRewardState_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupTest   func(*ProtocolFeeRewardStateResolver)
@@ -709,7 +709,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				})
 
 				// First claim returns the full accumulated reward
-				rewards1, err1 := s.claimRewards(100)
+				rewards1, err1 := s.claimRewards(0, cur, 100)
 				uassert.NoError(t, err1)
 				if rewards1["token1"] != 1000 {
 					t.Errorf("Expected 1000, got %d", rewards1["token1"])
@@ -717,7 +717,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 
 				// Second claim at the same timestamp is an idempotent no-op:
 				// it must not error, and must return no additional rewards.
-				rewards2, err2 := s.claimRewards(100)
+				rewards2, err2 := s.claimRewards(0, cur, 100)
 				uassert.NoError(t, err2)
 				if rewards2["token1"] != 0 {
 					t.Errorf("Expected 0 on second claim, got %d", rewards2["token1"])
@@ -743,7 +743,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupTest(resolver)
@@ -752,8 +752,8 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 }
 
 // Test boundary conditions for safe arithmetic in protocol fee reward operations
-func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
-	t.Run("AddStake boundary - large staked amount", func(t *testing.T) {
+func TestProtocolFeeRewardState_BoundaryConditions(cur realm, t *testing.T) {
+	t.Run("AddStake boundary - large staked amount", func(cur realm, t *testing.T) {
 		// given: protocol fee reward state with large staked amount
 		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 		resolver := NewProtocolFeeRewardStateResolver(state)
@@ -771,7 +771,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, state.GetStakedAmount(), expected)
 	})
 
-	t.Run("AddStake boundary - overflow", func(t *testing.T) {
+	t.Run("AddStake boundary - overflow", func(cur realm, t *testing.T) {
 		// given: protocol fee reward state near max staked amount
 		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 		resolver := NewProtocolFeeRewardStateResolver(state)
@@ -794,7 +794,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 		uassert.True(t, didPanic)
 	})
 
-	t.Run("RemoveStake boundary - clamping to zero", func(t *testing.T) {
+	t.Run("RemoveStake boundary - clamping to zero", func(cur realm, t *testing.T) {
 		// given: protocol fee reward state with some staked amount
 		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 		resolver := NewProtocolFeeRewardStateResolver(state)
@@ -810,7 +810,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, state.GetStakedAmount(), int64(0))
 	})
 
-	t.Run("ClaimRewards boundary - exact subtraction", func(t *testing.T) {
+	t.Run("ClaimRewards boundary - exact subtraction", func(cur realm, t *testing.T) {
 		// given: protocol fee reward state with accumulated and claimed equal
 		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 		resolver := NewProtocolFeeRewardStateResolver(state)
@@ -824,7 +824,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 		state.SetClaimedTimestamp(500)
 
 		// when: claim rewards (uses safeSubInt64 in claimRewards)
-		claimed, err := resolver.claimRewards(currentTimestamp)
+		claimed, err := resolver.claimRewards(0, cur, currentTimestamp)
 
 		// then: should result in zero claimable
 		uassert.NoError(t, err)

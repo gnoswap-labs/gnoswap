@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func() *LaunchpadProjectDepositsResolver
@@ -56,7 +56,7 @@ func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -70,7 +70,7 @@ func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func() *LaunchpadProjectDepositsResolver
@@ -125,12 +125,12 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
 			// when
-			result := resolver.setLaunchpadProjectDeposit(tc.ownerAddress, tc.depositAmount)
+			result := resolver.setLaunchpadProjectDeposit(0, cur, tc.ownerAddress, tc.depositAmount)
 
 			// then
 			uassert.True(t, result)
@@ -141,7 +141,7 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_addDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func() *LaunchpadProjectDepositsResolver
@@ -210,7 +210,7 @@ func TestLaunchpadProjectDeposits_addDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -224,7 +224,7 @@ func TestLaunchpadProjectDeposits_addDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_removeDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		setup          func() *LaunchpadProjectDepositsResolver
@@ -299,7 +299,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -314,7 +314,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_GetDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_GetDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		setup          func() *LaunchpadProjectDepositsResolver
@@ -347,7 +347,7 @@ func TestLaunchpadProjectDeposits_GetDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -361,7 +361,7 @@ func TestLaunchpadProjectDeposits_GetDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_SetDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_SetDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		ownerAddress  string
@@ -389,7 +389,7 @@ func TestLaunchpadProjectDeposits_SetDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			deposits := staker.NewLaunchpadProjectDeposits()
 			resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -405,7 +405,7 @@ func TestLaunchpadProjectDeposits_SetDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProjectDeposits_RemoveDeposit(t *testing.T) {
+func TestLaunchpadProjectDeposits_RemoveDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func() *LaunchpadProjectDepositsResolver
@@ -451,7 +451,7 @@ func TestLaunchpadProjectDeposits_RemoveDeposit(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -466,8 +466,8 @@ func TestLaunchpadProjectDeposits_RemoveDeposit(t *testing.T) {
 	}
 }
 // Test boundary conditions for safe arithmetic in launchpad project deposits
-func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
-	t.Run("AddDeposit boundary - overflow panic", func(t *testing.T) {
+func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
+	t.Run("AddDeposit boundary - overflow panic", func(cur realm, t *testing.T) {
 		// given: deposit near max with attempt to overflow
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -490,7 +490,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
 		uassert.True(t, didPanic)
 	})
 
-	t.Run("AddDeposit boundary - large amounts near max", func(t *testing.T) {
+	t.Run("AddDeposit boundary - large amounts near max", func(cur realm, t *testing.T) {
 		// given: deposit with large amount
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -507,7 +507,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, value, expected)
 	})
 
-	t.Run("AddDeposit boundary - negative result clamped to zero", func(t *testing.T) {
+	t.Run("AddDeposit boundary - negative result clamped to zero", func(cur realm, t *testing.T) {
 		// given: deposit with positive amount
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -523,7 +523,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, value, int64(0))
 	})
 
-	t.Run("RemoveDeposit boundary - underflow with clamping", func(t *testing.T) {
+	t.Run("RemoveDeposit boundary - underflow with clamping", func(cur realm, t *testing.T) {
 		// given: deposit with some amount
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -540,7 +540,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, value, int64(0))
 	})
 
-	t.Run("RemoveDeposit boundary - exact subtraction", func(t *testing.T) {
+	t.Run("RemoveDeposit boundary - exact subtraction", func(cur realm, t *testing.T) {
 		// given: deposit with specific amount
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
@@ -558,7 +558,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, value, int64(0))
 	})
 
-	t.Run("RemoveDeposit boundary - large amounts", func(t *testing.T) {
+	t.Run("RemoveDeposit boundary - large amounts", func(cur realm, t *testing.T) {
 		// given: deposit with large amount
 		deposits := staker.NewLaunchpadProjectDeposits()
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)

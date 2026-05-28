@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func TestCleanTotalDelegationHistory(t *testing.T) {
+func TestCleanTotalDelegationHistory(cur realm, t *testing.T) {
 	tests := []struct {
 		name                       string
 		setupHistory               func() *staker.UintTree
@@ -93,12 +93,12 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			store.totalDelegationHistory = tt.setupHistory()
 
 			gs := &govStakerV1{store: store}
-			gs.cleanTotalDelegationHistory(tt.cutoffTimestamp)
+			gs.cleanTotalDelegationHistory(0, cur, tt.cutoffTimestamp)
 
 			resultHistory := store.GetTotalDelegationHistory()
 			uassert.Equal(t, tt.expectedEntries, resultHistory.Size())
@@ -118,7 +118,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 	}
 }
 
-func TestCleanUserDelegationHistoryForAddress(t *testing.T) {
+func TestCleanUserDelegationHistoryForAddress(cur realm, t *testing.T) {
 	user1 := address("g1user0000000000000000000000000000000001")
 	user2 := address("g1user0000000000000000000000000000000002")
 
@@ -212,12 +212,12 @@ func TestCleanUserDelegationHistoryForAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			store.userDelegationHistory = tt.setupHistory()
 
 			gs := &govStakerV1{store: store}
-			gs.cleanUserDelegationHistoryForAddress(tt.target, tt.cutoffTimestamp)
+			gs.cleanUserDelegationHistoryForAddress(0, cur, tt.target, tt.cutoffTimestamp)
 
 			// Verify total entry count across all users
 			uassert.Equal(t, tt.expectedTotalEntries, store.userDelegationHistory.Size())

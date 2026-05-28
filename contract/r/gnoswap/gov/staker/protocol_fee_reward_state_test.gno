@@ -8,7 +8,7 @@ import (
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
-func TestNewProtocolFeeRewardState(t *testing.T) {
+func TestNewProtocolFeeRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                              string
 		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
@@ -38,7 +38,7 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			state := NewProtocolFeeRewardState(tc.accumulatedProtocolFeeX128PerStake)
 
@@ -63,7 +63,7 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 }
 
 // TestProtocolFeeRewardState_SettersAndGetters tests all setter and getter methods
-func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
+func TestProtocolFeeRewardState_SettersAndGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		rewardDebtX128       map[string]*u256.Uint
@@ -103,7 +103,7 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 
@@ -127,7 +127,7 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 }
 
 // TestProtocolFeeRewardState_TokenSpecificGetters tests token-specific getter methods
-func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
+func TestProtocolFeeRewardState_TokenSpecificGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		token              string
@@ -145,7 +145,7 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := NewProtocolFeeRewardState(map[string]*u256.Uint{
 				tc.token: tc.rewardDebtX128,
@@ -164,7 +164,7 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 }
 
 // TestProtocolFeeRewardState_TokenSpecificSetters tests token-specific setter methods
-func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
+func TestProtocolFeeRewardState_TokenSpecificSetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		token             string
@@ -182,7 +182,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 
@@ -202,7 +202,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 }
 
 // TestProtocolFeeRewardState_NilMapHandling tests handling of nil maps
-func TestProtocolFeeRewardState_NilMapHandling(t *testing.T) {
+func TestProtocolFeeRewardState_NilMapHandling(cur realm, t *testing.T) {
 	tests := []struct {
 		name  string
 		token string
@@ -214,7 +214,7 @@ func TestProtocolFeeRewardState_NilMapHandling(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := &ProtocolFeeRewardState{
 				rewardDebtX128:     nil,
@@ -235,7 +235,7 @@ func TestProtocolFeeRewardState_NilMapHandling(t *testing.T) {
 }
 
 // TestProtocolFeeRewardState_Clone tests that reward debt is cloned
-func TestProtocolFeeRewardState_Clone(t *testing.T) {
+func TestProtocolFeeRewardState_Clone(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		token         string
@@ -251,7 +251,7 @@ func TestProtocolFeeRewardState_Clone(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			original := map[string]*u256.Uint{
 				tc.token: tc.originalValue,

@@ -15,6 +15,12 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
+// Spoofed-realm guards on entry points reject any caller that fabricates a
+// realm value distinct from the current crossing frame. The proxy in
+// gno.land/r/gnoswap/gov/staker always forwards its own `cur`, so a mismatch
+// here means somebody bypassed the proxy and threaded a fake realm directly
+// into the implementation.
+
 // Delegate delegates GNS tokens to an address.
 //
 // Converts GNS to xGNS and assigns voting power.
@@ -40,26 +46,33 @@ import (
 //
 // Returns delegated amount.
 func (gs *govStakerV1) Delegate(
+	_ int,
+	rlm realm,
 	to address,
 	amount int64,
 	referrer string,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovStaker()
 
-	prevRealm := runtime.PreviousRealm()
+	prev := rlm.Previous()
 	access.AssertIsValidAddress(to)
 
 	assertIsValidDelegateAmount(amount)
 
-	caller := prevRealm.Address()
+	caller := prev.Address()
 	from := caller
-	currentRealm := runtime.CurrentRealm()
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	delegation, err := gs.delegate(
+		0,
+		rlm,
 		from,
 		to,
 		amount,
@@ -70,24 +83,24 @@ func (gs *govStakerV1) Delegate(
 		panic(err)
 	}
 
-	if err := gs.increaseTotalDelegatedAmount(amount); err != nil {
+	if err := gs.increaseTotalDelegatedAmount(0, rlm, amount); err != nil {
 		panic(err)
 	}
-	if err := gs.increaseTotalLockedAmount(amount); err != nil {
+	if err := gs.increaseTotalLockedAmount(0, rlm, amount); err != nil {
 		panic(err)
 	}
 
-	gns.TransferFrom(cross, from, currentRealm.Address(), amount)
-	xgns.Mint(cross, from, amount)
+	gns.TransferFrom(cross(rlm), from, rlm.Address(), amount)
+	xgns.Mint(cross(rlm), from, amount)
 
-	registeredReferrer := referral.TryRegister(cross, caller, referrer)
+	registeredReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
 	resolver := NewDelegationResolver(delegation)
 
 	chain.Emit(
 		"Delegate",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"from", resolver.delegation.DelegateFrom().String(),
 		"to", resolver.delegation.DelegateTo().String(),
 		"amount", formatInt(resolver.DelegatedAmount()),
@@ -119,13 +132,19 @@ func (gs *govStakerV1) Delegate(
 // After lockup period ends, use CollectUndelegatedGns() to claim GNS.
 // Returns undelegated amount.
 func (gs *govStakerV1) Undelegate(
+	_ int,
+	rlm realm,
 	from address,
 	amount int64,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := runtime.PreviousRealm()
-	caller := prevRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
@@ -133,9 +152,11 @@ func (gs *govStakerV1) Undelegate(
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	unDelegationAmount, err := gs.unDelegate(
+		0,
+		rlm,
 		caller,
 		from,
 		amount,
@@ -146,14 +167,14 @@ func (gs *govStakerV1) Undelegate(
 		panic(err)
 	}
 
-	if err := gs.decreaseTotalDelegatedAmount(unDelegationAmount); err != nil {
+	if err := gs.decreaseTotalDelegatedAmount(0, rlm, unDelegationAmount); err != nil {
 		panic(err)
 	}
 
 	chain.Emit(
 		"Undelegate",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"from", caller.String(),
 		"to", from.String(),
 		"amount", formatInt(unDelegationAmount),
@@ -188,14 +209,20 @@ func (gs *govStakerV1) Undelegate(
 // No lockup period - instant redelegation.
 // Returns redelegated amount.
 func (gs *govStakerV1) Redelegate(
+	_ int,
+	rlm realm,
 	delegatee,
 	newDelegatee address,
 	amount int64,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovStaker()
 
-	prevRealm := runtime.PreviousRealm()
-	caller := prevRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
@@ -206,9 +233,11 @@ func (gs *govStakerV1) Redelegate(
 	currentTimestamp := time.Now().Unix()
 	delegator := caller
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	unDelegationAmount, err := gs.unDelegateWithoutLockup(
+		0,
+		rlm,
 		delegator,
 		delegatee,
 		amount,
@@ -220,6 +249,8 @@ func (gs *govStakerV1) Redelegate(
 	}
 
 	delegation, err := gs.delegate(
+		0,
+		rlm,
 		delegator,
 		newDelegatee,
 		unDelegationAmount,
@@ -233,8 +264,8 @@ func (gs *govStakerV1) Redelegate(
 	resolver := NewDelegationResolver(delegation)
 	chain.Emit(
 		"Redelegate",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"from", delegator.String(),
 		"previousDelegatee", delegatee.String(),
 		"newDelegatee", newDelegatee.String(),
@@ -247,16 +278,20 @@ func (gs *govStakerV1) Redelegate(
 // CollectUndelegatedGns collects undelegated GNS tokens.
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
-func (gs *govStakerV1) CollectUndelegatedGns() int64 {
+func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := runtime.PreviousRealm()
-	caller := prevRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	currentTime := time.Now().Unix()
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
-	collectedAmount, err := gs.collectDelegations(caller, currentTime)
+	collectedAmount, err := gs.collectDelegations(0, rlm, caller, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -265,18 +300,18 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 		return 0
 	}
 
-	if err := gs.decreaseTotalLockedAmount(collectedAmount); err != nil {
+	if err := gs.decreaseTotalLockedAmount(0, rlm, collectedAmount); err != nil {
 		panic(err)
 	}
 
-	xgns.Burn(cross, caller, collectedAmount)
-	gns.Transfer(cross, caller, collectedAmount)
+	xgns.Burn(cross(rlm), caller, collectedAmount)
+	gns.Transfer(cross(rlm), caller, collectedAmount)
 
 	chain.Emit(
 		"CollectUndelegatedGns",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
-		"from", prevRealm.Address().String(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
+		"from", prev.Address().String(),
 		"to", caller.String(),
 		"collectedAmount", formatInt(collectedAmount),
 	)
@@ -287,6 +322,8 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 // delegate processes delegation operations.
 // Validates delegation amount, creates delegation records, and updates reward tracking.
 func (gs *govStakerV1) delegate(
+	_ int,
+	rlm realm,
 	from address,
 	to address,
 	amount,
@@ -308,10 +345,10 @@ func (gs *govStakerV1) delegate(
 		return nil, errors.New("delegated amount cannot be negative")
 	}
 
-	gs.addDelegation(delegationID, delegation)
-	gs.addDelegationRecord(to, delegatedAmount, currentTimestamp)
-	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
-	gs.addStakeProtocolFeeReward(from.String(), amount, currentTimestamp)
+	gs.addDelegation(0, rlm, delegationID, delegation)
+	gs.addDelegationRecord(0, rlm, to, delegatedAmount, currentTimestamp)
+	gs.addStakeEmissionReward(0, rlm, from.String(), amount, currentTimestamp)
+	gs.addStakeProtocolFeeReward(0, rlm, from.String(), amount, currentTimestamp)
 
 	return delegation, nil
 }
@@ -319,6 +356,8 @@ func (gs *govStakerV1) delegate(
 // unDelegate processes undelegation operations with lockup.
 // Validates undelegation amount, processes withdrawals, and updates reward tracking.
 func (gs *govStakerV1) unDelegate(
+	_ int,
+	rlm realm,
 	delegator,
 	delegatee address,
 	amount,
@@ -353,7 +392,7 @@ func (gs *govStakerV1) unDelegate(
 	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
+			gs.removeDelegation(0, rlm, delegation.ID())
 			continue
 		}
 
@@ -374,10 +413,10 @@ func (gs *govStakerV1) unDelegate(
 			lockupPeriod,
 		)
 
-		gs.setDelegation(delegation.ID(), delegation)
-		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		gs.setDelegation(0, rlm, delegation.ID(), delegation)
+		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTimestamp)
+		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
@@ -391,6 +430,8 @@ func (gs *govStakerV1) unDelegate(
 // unDelegateWithoutLockup processes undelegation without lockup.
 // Used for redelegation where tokens are immediately available.
 func (gs *govStakerV1) unDelegateWithoutLockup(
+	_ int,
+	rlm realm,
 	delegator,
 	delegatee address,
 	amount,
@@ -424,7 +465,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
+			gs.removeDelegation(0, rlm, delegation.ID())
 			continue
 		}
 
@@ -441,13 +482,13 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		)
 
 		if resolver.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
+			gs.removeDelegation(0, rlm, delegation.ID())
 		} else {
-			gs.setDelegation(delegation.ID(), delegation)
+			gs.setDelegation(0, rlm, delegation.ID(), delegation)
 		}
-		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
-		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTime)
-		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTime)
+		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTime)
+		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
+		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
@@ -458,48 +499,48 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	return amount, nil
 }
 
-func (gs *govStakerV1) increaseTotalDelegatedAmount(amount int64) error {
+func (gs *govStakerV1) increaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(0, rlm, safeAddInt64(currentDelegated, amount)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (gs *govStakerV1) decreaseTotalDelegatedAmount(amount int64) error {
+func (gs *govStakerV1) decreaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}
-	if err := gs.store.SetTotalDelegatedAmount(newDelegated); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(0, rlm, newDelegated); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (gs *govStakerV1) increaseTotalLockedAmount(amount int64) error {
+func (gs *govStakerV1) increaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
+	if err := gs.store.SetTotalLockedAmount(0, rlm, safeAddInt64(currentLocked, amount)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (gs *govStakerV1) decreaseTotalLockedAmount(amount int64) error {
+func (gs *govStakerV1) decreaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
 	newLocked := safeSubInt64(currentLocked, amount)
 	if newLocked < 0 {
 		newLocked = 0
 	}
-	if err := gs.store.SetTotalLockedAmount(newLocked); err != nil {
+	if err := gs.store.SetTotalLockedAmount(0, rlm, newLocked); err != nil {
 		return err
 	}
 
@@ -508,7 +549,7 @@ func (gs *govStakerV1) decreaseTotalLockedAmount(amount int64) error {
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
+func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, currentTime int64) (int64, error) {
 	totalCollectedAmount := int64(0)
 
 	delegationTree := gs.getUserDelegations(user)
@@ -552,7 +593,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			if resolver.IsEmpty() {
 				idsToRemove = append(idsToRemove, delegation.ID())
 			} else {
-				gs.setDelegation(delegation.ID(), delegation)
+				gs.setDelegation(0, rlm, delegation.ID(), delegation)
 			}
 		}
 
@@ -560,7 +601,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 	})
 
 	for _, id := range idsToRemove {
-		gs.removeDelegation(id)
+		gs.removeDelegation(0, rlm, id)
 	}
 
 	if err != nil {
