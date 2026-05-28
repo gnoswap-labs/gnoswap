@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"chain"
 	"errors"
 
 	"gno.land/p/gnoswap/store"
@@ -11,10 +10,10 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-const domainPath = "gno.land/r/gnoswap/pool"
-
 var (
-	currentAddress = chain.PackageAddress(domainPath)
+	domainPath string
+
+	currentAddress address
 
 	// kvStore is the core storage instance for the pool domain.
 	// All pool implementations share this single storage instance,
@@ -33,7 +32,10 @@ var (
 
 // init initializes the pool domain state.
 // This function is called when the pool domain contract is first deployed.
-func init() {
+func init(cur realm) {
+	domainPath = cur.PkgPath()
+	currentAddress = cur.Address()
+
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
 
