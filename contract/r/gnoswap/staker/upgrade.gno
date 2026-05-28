@@ -11,14 +11,18 @@ import "gno.land/r/gnoswap/access"
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
+		if !rlm.IsCurrent() {
+			panic(ErrSpoofedRealm)
+		}
+
 		currentStakerStore, ok := domainStore.(IStakerStore)
 		if !ok {
 			panic("domainStore is not an IStakerStore")
 		}
 
-		return initializer(currentStakerStore, newPoolAccessor(), newEmissionAccessor(), newNFTAccessor())
+		return initializer(0, rlm, currentStakerStore, newPoolAccessor(), newEmissionAccessor(), newNFTAccessor())
 	}
 
 	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
@@ -30,8 +34,6 @@ func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, p
 	if err != nil {
 		panic(err)
 	}
-
-	registerImplementationHooks(cur)
 }
 
 // UpgradeImpl switches the active staker implementation to a different version.
@@ -54,8 +56,6 @@ func UpgradeImpl(cur realm, packagePath string) {
 	if err != nil {
 		panic(err)
 	}
-
-	registerImplementationHooks(cur)
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.

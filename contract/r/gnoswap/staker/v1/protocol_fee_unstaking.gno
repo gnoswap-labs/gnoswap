@@ -24,10 +24,6 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		s.addToProtocolFee(0, rlm)
@@ -76,10 +72,6 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
 func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	pendingProtocolFees := s.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
