@@ -25,6 +25,8 @@ type IPool interface {
 type IPoolManager interface {
 	// CreatePool creates a new concentrated liquidity pool.
 	CreatePool(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -32,9 +34,11 @@ type IPoolManager interface {
 	)
 
 	// SetPoolCreationFee sets the pool creation fee.
-	SetPoolCreationFee(fee int64)
+	SetPoolCreationFee(_ int, rlm realm, fee int64)
 
 	IncreaseObservationCardinalityNext(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -47,6 +51,8 @@ type IPoolManager interface {
 type IPoolPosition interface {
 	// Mint adds liquidity to a pool position.
 	Mint(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -58,6 +64,8 @@ type IPoolPosition interface {
 
 	// Burn removes liquidity from a position.
 	Burn(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -69,6 +77,8 @@ type IPoolPosition interface {
 
 	// Collect transfers owed tokens from a position to recipient.
 	Collect(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -79,9 +89,11 @@ type IPoolPosition interface {
 		amount1Requested string,
 	) (string, string)
 
-	SetWithdrawalFee(fee uint64)
+	SetWithdrawalFee(_ int, rlm realm, fee uint64)
 
 	HandleWithdrawalFee(
+		_ int,
+		rlm realm,
 		token0Path string,
 		amount0 string,
 		token1Path string,
@@ -94,6 +106,8 @@ type IPoolPosition interface {
 // These methods handle token swaps and protocol fee management.
 type IPoolSwap interface {
 	Swap(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -114,13 +128,15 @@ type IPoolSwap interface {
 		sqrtPriceLimitX96 string,
 	) (string, string, bool)
 
-	SetSwapEndHook(hook func(cur realm, poolPath string) error)
+	SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error)
 
-	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
+	SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64))
 
-	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
 
 	CollectProtocol(
+		_ int,
+		rlm realm,
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -129,7 +145,7 @@ type IPoolSwap interface {
 		amount1Requested string,
 	) (string, string)
 
-	SetFeeProtocol(feeProtocol0, feeProtocol1 uint8)
+	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
 }
 
 // IPoolGetter interface defines data retrieval operations.
@@ -235,43 +251,43 @@ type IPoolGetter interface {
 type IPoolStore interface {
 	HasPools() bool
 	GetPools() *bptree.BPTree
-	SetPools(pools *bptree.BPTree) error
+	SetPools(_ int, rlm realm, pools *bptree.BPTree) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
-	SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error
+	SetFeeAmountTickSpacing(_ int, rlm realm, feeAmountTickSpacing map[uint32]int32) error
 
 	HasSlot0FeeProtocol() bool
 	GetSlot0FeeProtocol() uint8
-	SetSlot0FeeProtocol(slot0FeeProtocol uint8) error
+	SetSlot0FeeProtocol(_ int, rlm realm, slot0FeeProtocol uint8) error
 
 	HasPoolCreationFee() bool
 	GetPoolCreationFee() int64
-	SetPoolCreationFee(poolCreationFee int64) error
+	SetPoolCreationFee(_ int, rlm realm, poolCreationFee int64) error
 
 	HasPendingProtocolFees() bool
 	GetPendingProtocolFees() map[string]int64
-	SetPendingProtocolFees(pendingProtocolFees map[string]int64) error
+	SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error
 
 	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64
-	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error
+	SetWithdrawalFeeBPS(_ int, rlm realm, withdrawalFeeBPS uint64) error
 
 	HasUnlocked() bool
 	GetUnlocked() bool
-	SetUnlocked(unlocked bool) error
+	SetUnlocked(_ int, rlm realm, unlocked bool) error
 
 	HasSwapStartHook() bool
 	GetSwapStartHook() func(cur realm, poolPath string, timestamp int64)
-	SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error
+	SetSwapStartHook(_ int, rlm realm, swapStartHook func(cur realm, poolPath string, timestamp int64)) error
 
 	HasSwapEndHook() bool
 	GetSwapEndHook() func(cur realm, poolPath string) error
-	SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error
+	SetSwapEndHook(_ int, rlm realm, swapEndHook func(cur realm, poolPath string) error) error
 
 	HasTickCrossHook() bool
 	GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
-	SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
+	SetTickCrossHook(_ int, rlm realm, tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
 }
 
 type CallbackMarker struct{}

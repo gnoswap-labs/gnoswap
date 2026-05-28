@@ -24,7 +24,7 @@ const (
 	StoreKeyPoolCreationFee     StoreKey = "poolCreationFee"     // Pool creation fee amount
 	StoreKeyPendingProtocolFees StoreKey = "pendingProtocolFees" // tokenPath -> amount held locally for protocol_fee
 	StoreKeyWithdrawalFeeBPS    StoreKey = "withdrawalFeeBPS"    // Withdrawal fee in basis points
-	StoreKeyUnlocked            StoreKey = "unlocked"         // Global pool reentrancy lock
+	StoreKeyUnlocked            StoreKey = "unlocked"            // Global pool reentrancy lock
 
 	// Swap hook storage keys
 	StoreKeySwapStartHook StoreKey = "swapStartHook" // Swap start hook function
@@ -58,12 +58,12 @@ func (s *poolStore) GetPools() *bptree.BPTree {
 }
 
 // SetPools stores the map containing all pool data.
-func (s *poolStore) SetPools(pools *bptree.BPTree) error {
+func (s *poolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	if pools == nil {
 		panic("pools is nil")
 	}
 
-	return s.kvStore.Set(StoreKeyPools.String(), pools)
+	return s.kvStore.Set(0, rlm, StoreKeyPools.String(), pools)
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {
@@ -91,12 +91,12 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
-func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
+func (s *poolStore) SetFeeAmountTickSpacing(_ int, rlm realm, feeAmountTickSpacing map[uint32]int32) error {
 	if feeAmountTickSpacing == nil {
 		panic("feeAmountTickSpacing is nil")
 	}
 
-	return s.kvStore.Set(StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
+	return s.kvStore.Set(0, rlm, StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
 }
 
 func (s *poolStore) HasSlot0FeeProtocol() bool {
@@ -119,8 +119,8 @@ func (s *poolStore) GetSlot0FeeProtocol() uint8 {
 }
 
 // SetSlot0FeeProtocol stores the protocol fee percentage for slot0.
-func (s *poolStore) SetSlot0FeeProtocol(slot0FeeProtocol uint8) error {
-	return s.kvStore.Set(StoreKeySlot0FeeProtocol.String(), slot0FeeProtocol)
+func (s *poolStore) SetSlot0FeeProtocol(_ int, rlm realm, slot0FeeProtocol uint8) error {
+	return s.kvStore.Set(0, rlm, StoreKeySlot0FeeProtocol.String(), slot0FeeProtocol)
 }
 
 func (s *poolStore) HasPoolCreationFee() bool {
@@ -143,8 +143,8 @@ func (s *poolStore) GetPoolCreationFee() int64 {
 }
 
 // SetPoolCreationFee stores the pool creation fee amount.
-func (s *poolStore) SetPoolCreationFee(poolCreationFee int64) error {
-	return s.kvStore.Set(StoreKeyPoolCreationFee.String(), poolCreationFee)
+func (s *poolStore) SetPoolCreationFee(_ int, rlm realm, poolCreationFee int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolCreationFee.String(), poolCreationFee)
 }
 
 func (s *poolStore) HasPendingProtocolFees() bool {
@@ -165,8 +165,8 @@ func (s *poolStore) GetPendingProtocolFees() map[string]int64 {
 	return pendingProtocolFees
 }
 
-func (s *poolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
-	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), pendingProtocolFees)
+func (s *poolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), pendingProtocolFees)
 }
 
 func (s *poolStore) HasWithdrawalFeeBPS() bool {
@@ -189,8 +189,8 @@ func (s *poolStore) GetWithdrawalFeeBPS() uint64 {
 }
 
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
-func (s *poolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
-	return s.kvStore.Set(StoreKeyWithdrawalFeeBPS.String(), withdrawalFeeBPS)
+func (s *poolStore) SetWithdrawalFeeBPS(_ int, rlm realm, withdrawalFeeBPS uint64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyWithdrawalFeeBPS.String(), withdrawalFeeBPS)
 }
 
 func (s *poolStore) HasUnlocked() bool {
@@ -211,8 +211,8 @@ func (s *poolStore) GetUnlocked() bool {
 	return unlocked
 }
 
-func (s *poolStore) SetUnlocked(unlocked bool) error {
-	return s.kvStore.Set(StoreKeyUnlocked.String(), unlocked)
+func (s *poolStore) SetUnlocked(_ int, rlm realm, unlocked bool) error {
+	return s.kvStore.Set(0, rlm, StoreKeyUnlocked.String(), unlocked)
 }
 
 // HasSwapStartHook checks if the swap start hook is set.
@@ -236,8 +236,8 @@ func (s *poolStore) GetSwapStartHook() func(cur realm, poolPath string, timestam
 }
 
 // SetSwapStartHook stores the swap start hook function.
-func (s *poolStore) SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
-	return s.kvStore.Set(StoreKeySwapStartHook.String(), swapStartHook)
+func (s *poolStore) SetSwapStartHook(_ int, rlm realm, swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
+	return s.kvStore.Set(0, rlm, StoreKeySwapStartHook.String(), swapStartHook)
 }
 
 // HasSwapEndHook checks if the swap end hook is set.
@@ -261,8 +261,8 @@ func (s *poolStore) GetSwapEndHook() func(cur realm, poolPath string) error {
 }
 
 // SetSwapEndHook stores the swap end hook function.
-func (s *poolStore) SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error {
-	return s.kvStore.Set(StoreKeySwapEndHook.String(), swapEndHook)
+func (s *poolStore) SetSwapEndHook(_ int, rlm realm, swapEndHook func(cur realm, poolPath string) error) error {
+	return s.kvStore.Set(0, rlm, StoreKeySwapEndHook.String(), swapEndHook)
 }
 
 // HasTickCrossHook checks if the tick cross hook is set.
@@ -286,8 +286,8 @@ func (s *poolStore) GetTickCrossHook() func(cur realm, poolPath string, tickId i
 }
 
 // SetTickCrossHook stores the tick cross hook function.
-func (s *poolStore) SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
-	return s.kvStore.Set(StoreKeyTickCrossHook.String(), tickCrossHook)
+func (s *poolStore) SetTickCrossHook(_ int, rlm realm, tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
+	return s.kvStore.Set(0, rlm, StoreKeyTickCrossHook.String(), tickCrossHook)
 }
 
 // NewPoolStore creates a new pool store instance with the provided KV store.

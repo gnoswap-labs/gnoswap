@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"chain/runtime"
+	"chain"
 	"errors"
 
 	"gno.land/p/gnoswap/store"
@@ -11,9 +11,10 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
+const domainPath = "gno.land/r/gnoswap/pool"
+
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	currentAddress = chain.PackageAddress(domainPath)
 
 	// kvStore is the core storage instance for the pool domain.
 	// All pool implementations share this single storage instance,

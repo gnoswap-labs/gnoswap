@@ -12,7 +12,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestcalculateMaxLiquidityPerTick(t *testing.T) {
+func TestcalculateMaxLiquidityPerTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tickSpacing int32
@@ -51,7 +51,7 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := calculateMaxLiquidityPerTick(tt.tickSpacing)
 			if got.ToString() != tt.want {
 				t.Errorf("calculateMaxLiquidityPerTick() = %v, want %v", got.ToString(), tt.want)
@@ -60,7 +60,7 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 	}
 }
 
-func TestCalculateFeeGrowthInside(t *testing.T) {
+func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
 		ticks: bptree.NewBPTreeN(32),
@@ -228,7 +228,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.preconditions != nil {
 				tt.preconditions()
 			}
@@ -248,7 +248,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 	}
 }
 
-func TestTickUpdate(t *testing.T) {
+func TestTickUpdate(cur realm, t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
 		ticks: bptree.NewBPTreeN(32),
 	})
@@ -436,7 +436,7 @@ func TestTickUpdate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.preconditions != nil {
 				tt.preconditions()
 			}
@@ -481,7 +481,7 @@ func TestTickUpdate(t *testing.T) {
 	}
 }
 
-func TestTickCross(t *testing.T) {
+func TestTickCross(cur realm, t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
 		ticks: bptree.NewBPTreeN(32),
 	})
@@ -515,7 +515,7 @@ func TestTickCross(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gotLiquidityNet := tickCross(
 				pool,
 				tt.tick,
@@ -533,7 +533,7 @@ func TestTickCross(t *testing.T) {
 	}
 }
 
-func TestGetTick(t *testing.T) {
+func TestGetTick(cur realm, t *testing.T) {
 	pool := &pl.Pool{}
 
 	ticks := bptree.NewBPTreeN(32)
@@ -566,7 +566,7 @@ func TestGetTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := getTick(pool, tt.tick)
 			if got.Initialized() != tt.wantInit {
 				t.Errorf("getTick() initialized = %v, want %v", got.Initialized(), tt.wantInit)
@@ -575,7 +575,7 @@ func TestGetTick(t *testing.T) {
 	}
 }
 
-func TestGetFeeGrowthBelowX128(t *testing.T) {
+func TestGetFeeGrowthBelowX128(cur realm, t *testing.T) {
 	// Setup test data
 	globalFeeGrowth0 := u256.NewUint(1000) // Global fee growth for token 0
 	globalFeeGrowth1 := u256.NewUint(2000) // Global fee growth for token 1
@@ -616,7 +616,7 @@ func TestGetFeeGrowthBelowX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Call the function
 			feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
 				tt.tickLower, tt.tickCurrent,
@@ -633,7 +633,7 @@ func TestGetFeeGrowthBelowX128(t *testing.T) {
 	}
 }
 
-func TestGetFeeGrowthAboveX128(t *testing.T) {
+func TestGetFeeGrowthAboveX128(cur realm, t *testing.T) {
 	// Setup test data
 	globalFeeGrowth0 := u256.NewUint(1000) // Global fee growth for token 0
 	globalFeeGrowth1 := u256.NewUint(2000) // Global fee growth for token 1
@@ -674,7 +674,7 @@ func TestGetFeeGrowthAboveX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Call the function
 			feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
 				tt.tickUpper, tt.tickCurrent,
@@ -786,7 +786,7 @@ func deleteMockPoolTick(pool *pl.Pool, tick int32) {
 }
 
 // TestValidateTicks tests tick validation with edge cases
-func TestValidateTicks(t *testing.T) {
+func TestValidateTicks(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tickLower   int32
@@ -861,7 +861,7 @@ func TestValidateTicks(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validateTicks(tt.tickLower, tt.tickUpper)
 			if tt.shouldError {
 				uassert.NotNil(t, err, "Expected error but got none")
@@ -876,22 +876,22 @@ func TestValidateTicks(t *testing.T) {
 }
 
 // TestTickBoundaries tests tick boundary constants
-func TestTickBoundaries(t *testing.T) {
-	t.Run("MIN_TICK constant", func(t *testing.T) {
+func TestTickBoundaries(cur realm, t *testing.T) {
+	t.Run("MIN_TICK constant", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int32(-887272), MIN_TICK)
 	})
 
-	t.Run("MAX_TICK constant", func(t *testing.T) {
+	t.Run("MAX_TICK constant", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int32(887272), MAX_TICK)
 	})
 
-	t.Run("MIN_TICK is negative of MAX_TICK", func(t *testing.T) {
+	t.Run("MIN_TICK is negative of MAX_TICK", func(cur realm, t *testing.T) {
 		uassert.Equal(t, -MIN_TICK, MAX_TICK)
 	})
 }
 
 // TestCheckTickSpacingWithPoolTicks tests tick spacing validation
-func TestCheckTickSpacingWithPoolTicks(t *testing.T) {
+func TestCheckTickSpacingWithPoolTicks(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tick        int32
@@ -943,16 +943,16 @@ func TestCheckTickSpacingWithPoolTicks(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t,
+				uassert.PanicsWithMessage(t, cur,
 					ufmt.Sprintf("[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(%d) MOD tickSpacing(%d) != 0(%d)",
 						tt.tick, tt.tickSpacing, tt.tick%tt.tickSpacing),
 					func() {
 						checkTickSpacing(tt.tick, tt.tickSpacing)
 					})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					checkTickSpacing(tt.tick, tt.tickSpacing)
 				})
 			}

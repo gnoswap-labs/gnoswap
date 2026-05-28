@@ -70,7 +70,7 @@ func (e *PoolTestEnv) AsAdmin() *PoolTestEnv {
 }
 
 // GivenPoolCreated creates a pool with specified parameters
-func (e *PoolTestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX96 string) *PoolTestEnv {
+func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uint32, sqrtPriceX96 string) *PoolTestEnv {
 	e.t.Helper()
 
 	poolKey := GetPoolPath(token0, token1, fee)
@@ -81,10 +81,10 @@ func (e *PoolTestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPr
 	// Set pool creation fee to 0 for testing
 	e.AsAdmin()
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(cur, 0)
 
 	// Create the pool
-	mockInstanceCreatePool(token0, token1, fee, sqrtPriceX96)
+	mockInstanceCreatePool(cur, token0, token1, fee, sqrtPriceX96)
 	pool := getMockInstance().mustGetPool(poolKey)
 	e.pools[poolKey] = pool
 
@@ -116,7 +116,7 @@ func (e *PoolTestEnv) AndTokensApproved(user address, tokens ...string) *PoolTes
 }
 
 // AndLiquidityProvided adds liquidity to a pool
-func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv {
+func (e *PoolTestEnv) AndLiquidityProvided(cur realm, params LiquidityParams) *PoolTestEnv {
 	e.t.Helper()
 
 	pool := e.getPool(params.token0, params.token1, params.fee)
@@ -127,6 +127,7 @@ func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv 
 	// Add liquidity
 	testing.SetRealm(posRealm)
 	amount0, amount1 := mockInstanceMint(
+		cur,
 		params.token0,
 		params.token1,
 		params.fee,
@@ -152,7 +153,7 @@ func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv 
 }
 
 // WhenSwapExecuted performs a swap operation
-func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uint) {
+func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint, *u256.Uint) {
 	e.t.Helper()
 
 	pool := e.getPool(params.token0, params.token1, params.fee)
@@ -163,9 +164,9 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 		testing.SetRealm(adminRealm)
 		if params.zeroForOne {
-			common.SafeGRC20Transfer(cross, params.token0, e.currentAddress, math.MaxInt64)
+			common.SafeGRC20Transfer(cross(cur), params.token0, e.currentAddress, math.MaxInt64)
 		} else {
-			common.SafeGRC20Transfer(cross, params.token1, e.currentAddress, math.MaxInt64)
+			common.SafeGRC20Transfer(cross(cur), params.token1, e.currentAddress, math.MaxInt64)
 		}
 
 		return nil
@@ -174,6 +175,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 	// Execute swap
 	testing.SetRealm(rouRealm)
 	amount0Str, amount1Str := mockInstanceSwap(
+		cur,
 		params.token0,
 		params.token1,
 		params.fee,
@@ -390,8 +392,8 @@ func (b *PoolBuilder) AtPrice(sqrtPriceX96 string) *PoolBuilder {
 }
 
 // Create creates the pool in the test environment
-func (b *PoolBuilder) Create(env *PoolTestEnv) *PoolTestEnv {
-	return env.GivenPoolCreated(b.token0, b.token1, b.fee, b.sqrtPriceX96)
+func (b *PoolBuilder) Create(cur realm, env *PoolTestEnv) *PoolTestEnv {
+	return env.GivenPoolCreated(cur, b.token0, b.token1, b.fee, b.sqrtPriceX96)
 }
 
 // Assertion helpers

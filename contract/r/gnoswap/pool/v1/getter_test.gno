@@ -11,9 +11,9 @@ import (
 )
 
 // create mock data for getters
-func testInitData(t *testing.T) {
+func testInitData(cur realm, t *testing.T) {
 	t.Helper()
-	resetObject(t)
+	resetObject(cur, t)
 
 	params := createMockPoolParams{
 		token0Path: "token0",
@@ -69,124 +69,124 @@ func testInitData(t *testing.T) {
 
 	pools := getMockInstance().store.GetPools()
 	pools.Set("token0:token1:3000", mockPool)
-	err := getMockInstance().store.SetPools(pools)
+	err := getMockInstance().store.SetPools(0, cur, pools)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func TestGetters(t *testing.T) {
-	testInitData(t)
+func TestGetters(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("valid pool path", func(t *testing.T) {
+	t.Run("valid pool path", func(cur realm, t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 
-		t.Run("get token0 path", func(t *testing.T) {
+		t.Run("get token0 path", func(cur realm, t *testing.T) {
 			token0Path := getMockInstance().GetToken0Path(validPoolPath)
 			if token0Path != "token0" {
 				t.Errorf("Expected token0 path [%s], got %s", "token0", token0Path)
 			}
 		})
 
-		t.Run("get token1 path", func(t *testing.T) {
+		t.Run("get token1 path", func(cur realm, t *testing.T) {
 			token1Path := getMockInstance().GetToken1Path(validPoolPath)
 			if token1Path != "token1" {
 				t.Errorf("Expected token1 path [%s], got %s", "token1", token1Path)
 			}
 		})
 
-		t.Run("get fee", func(t *testing.T) {
+		t.Run("get fee", func(cur realm, t *testing.T) {
 			fee := getMockInstance().GetFee(validPoolPath)
 			if fee != 3000 {
 				t.Errorf("Expected fee [%d], got %d", 3000, fee)
 			}
 		})
 
-		t.Run("get balance token0", func(t *testing.T) {
+		t.Run("get balance token0", func(cur realm, t *testing.T) {
 			balanceToken0 := getMockInstance().GetBalanceToken0(validPoolPath)
 			if balanceToken0 != 1000 {
 				t.Errorf("Expected balance token0 [%d], got %d", 1000, balanceToken0)
 			}
 		})
 
-		t.Run("get balance token1", func(t *testing.T) {
+		t.Run("get balance token1", func(cur realm, t *testing.T) {
 			balanceToken1 := getMockInstance().GetBalanceToken1(validPoolPath)
 			if balanceToken1 != 2000 {
 				t.Errorf("Expected balance token1 [%d], got %d", 2000, balanceToken1)
 			}
 		})
 
-		t.Run("get tick spacing", func(t *testing.T) {
+		t.Run("get tick spacing", func(cur realm, t *testing.T) {
 			tickSpacing := getMockInstance().GetTickSpacing(validPoolPath)
 			if tickSpacing != 10 {
 				t.Errorf("Expected tick spacing [%d], got %d", 10, tickSpacing)
 			}
 		})
 
-		t.Run("get max liquidity per tick", func(t *testing.T) {
+		t.Run("get max liquidity per tick", func(cur realm, t *testing.T) {
 			maxLiquidityPerTick := getMockInstance().GetMaxLiquidityPerTick(validPoolPath)
 			if maxLiquidityPerTick != "1917569901783203986719870431555990" {
 				t.Errorf("Expected max liquidity per tick [%s], got %s", "1917569901783203986719870431555990", maxLiquidityPerTick)
 			}
 		})
 
-		t.Run("get slot0 sqrt price x96", func(t *testing.T) {
+		t.Run("get slot0 sqrt price x96", func(cur realm, t *testing.T) {
 			sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(validPoolPath)
 			if sqrtPriceX96.ToString() != "1000000000000000000" {
 				t.Errorf("Expected sqrt price x96 [%s], got %s", "1000000000000000000", sqrtPriceX96.ToString())
 			}
 		})
 
-		t.Run("get slot0 tick", func(t *testing.T) {
+		t.Run("get slot0 tick", func(cur realm, t *testing.T) {
 			tick := getMockInstance().GetSlot0Tick(validPoolPath)
 			if tick != 5 {
 				t.Errorf("Expected tick [%d], got %d", 5, tick)
 			}
 		})
 
-		t.Run("get slot0 fee protocol", func(t *testing.T) {
+		t.Run("get slot0 fee protocol", func(cur realm, t *testing.T) {
 			feeProtocol := getMockInstance().GetSlot0FeeProtocol(validPoolPath)
 			if feeProtocol != 6 {
 				t.Errorf("Expected fee protocol [%d], got %d", 6, feeProtocol)
 			}
 		})
 
-		t.Run("get slot0 unlocked", func(t *testing.T) {
+		t.Run("get slot0 unlocked", func(cur realm, t *testing.T) {
 			unlocked := getMockInstance().GetSlot0Unlocked(validPoolPath)
 			if unlocked != false {
 				t.Errorf("Expected unlocked [%t], got %t", false, unlocked)
 			}
 		})
 
-		t.Run("get fee growth global0x128", func(t *testing.T) {
+		t.Run("get fee growth global0x128", func(cur realm, t *testing.T) {
 			feeGrowthGlobal0X128 := getMockInstance().GetFeeGrowthGlobal0X128(validPoolPath)
 			if feeGrowthGlobal0X128.ToString() != "1000000000000000000" {
 				t.Errorf("Expected fee growth global 0 x128 [%s], got %s", "1000000000000000000", feeGrowthGlobal0X128.ToString())
 			}
 		})
 
-		t.Run("get fee growth global1x128", func(t *testing.T) {
+		t.Run("get fee growth global1x128", func(cur realm, t *testing.T) {
 			feeGrowthGlobal1X128 := getMockInstance().GetFeeGrowthGlobal1X128(validPoolPath)
 			if feeGrowthGlobal1X128.ToString() != "2000000000000000000" {
 				t.Errorf("Expected fee growth global 1 x128 [%s], got %s", "2000000000000000000", feeGrowthGlobal1X128.ToString())
 			}
 		})
 
-		t.Run("get protocol fees token0", func(t *testing.T) {
+		t.Run("get protocol fees token0", func(cur realm, t *testing.T) {
 			protocolFeesToken0 := getMockInstance().GetProtocolFeesToken0(validPoolPath)
 			if protocolFeesToken0 != 1000 {
 				t.Errorf("Expected protocol fees token0 [%d], got %d", 1000, protocolFeesToken0)
 			}
 		})
 
-		t.Run("get protocol fees token1", func(t *testing.T) {
+		t.Run("get protocol fees token1", func(cur realm, t *testing.T) {
 			protocolFeesToken1 := getMockInstance().GetProtocolFeesToken1(validPoolPath)
 			if protocolFeesToken1 != 2000 {
 				t.Errorf("Expected protocol fees token1 [%d], got %d", 2000, protocolFeesToken1)
 			}
 		})
 
-		t.Run("get liquidity", func(t *testing.T) {
+		t.Run("get liquidity", func(cur realm, t *testing.T) {
 			liquidity := getMockInstance().GetLiquidity(validPoolPath)
 			if liquidity.ToString() != "1000000" {
 				t.Errorf("Expected liquidity [%s], got %s", "1000000", liquidity.ToString())
@@ -194,106 +194,106 @@ func TestGetters(t *testing.T) {
 		})
 	})
 
-	t.Run("invalid pool path - should panic", func(t *testing.T) {
+	t.Run("invalid pool path - should panic", func(cur realm, t *testing.T) {
 		invalidPoolPath := "invalid/pool/path"
 
-		t.Run("get token0 path", func(t *testing.T) {
+		t.Run("get token0 path", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetToken0Path(invalidPoolPath)
 			})
 		})
 
-		t.Run("get token1 path", func(t *testing.T) {
+		t.Run("get token1 path", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetToken1Path(invalidPoolPath)
 			})
 		})
 
-		t.Run("get fee", func(t *testing.T) {
+		t.Run("get fee", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetFee(invalidPoolPath)
 			})
 		})
 
-		t.Run("get balance token0", func(t *testing.T) {
+		t.Run("get balance token0", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetBalanceToken0(invalidPoolPath)
 			})
 		})
 
-		t.Run("get balance token1", func(t *testing.T) {
+		t.Run("get balance token1", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetBalanceToken1(invalidPoolPath)
 			})
 		})
 
-		t.Run("get tick spacing", func(t *testing.T) {
+		t.Run("get tick spacing", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickSpacing(invalidPoolPath)
 			})
 		})
 
-		t.Run("get liquidity", func(t *testing.T) {
+		t.Run("get liquidity", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetLiquidity(invalidPoolPath)
 			})
 		})
 
-		t.Run("get max liquidity per tick", func(t *testing.T) {
+		t.Run("get max liquidity per tick", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetMaxLiquidityPerTick(invalidPoolPath)
 			})
 		})
 
-		t.Run("get slot0 sqrt price x96", func(t *testing.T) {
+		t.Run("get slot0 sqrt price x96", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetSlot0SqrtPriceX96(invalidPoolPath)
 			})
 		})
 
-		t.Run("get slot0 tick", func(t *testing.T) {
+		t.Run("get slot0 tick", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetSlot0Tick(invalidPoolPath)
 			})
 		})
 
-		t.Run("get slot0 fee protocol", func(t *testing.T) {
+		t.Run("get slot0 fee protocol", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetSlot0FeeProtocol(invalidPoolPath)
 			})
 		})
 
-		t.Run("get slot0 unlocked", func(t *testing.T) {
+		t.Run("get slot0 unlocked", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetSlot0Unlocked(invalidPoolPath)
 			})
 		})
 
-		t.Run("get fee growth global0x128", func(t *testing.T) {
+		t.Run("get fee growth global0x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetFeeGrowthGlobal0X128(invalidPoolPath)
 			})
 		})
 
-		t.Run("get fee growth global1x128", func(t *testing.T) {
+		t.Run("get fee growth global1x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetFeeGrowthGlobal1X128(invalidPoolPath)
 			})
 		})
 
-		t.Run("get protocol fees token0", func(t *testing.T) {
+		t.Run("get protocol fees token0", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetProtocolFeesToken0(invalidPoolPath)
 			})
 		})
 
-		t.Run("get protocol fees token1", func(t *testing.T) {
+		t.Run("get protocol fees token1", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetProtocolFeesToken1(invalidPoolPath)
 			})
 		})
 
-		t.Run("get liquidity", func(t *testing.T) {
+		t.Run("get liquidity", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetLiquidity(invalidPoolPath)
 			})
@@ -301,7 +301,7 @@ func TestGetters(t *testing.T) {
 	})
 }
 
-func TestPositionGetters(t *testing.T) {
+func TestPositionGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                             string
 		poolPath                         string
@@ -340,8 +340,8 @@ func TestPositionGetters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testInitData(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testInitData(cur, t)
 
 			var liquidity string
 			var feeGrowthInside0LastX128 string
@@ -350,19 +350,19 @@ func TestPositionGetters(t *testing.T) {
 			var tokensOwed1 int64
 
 			if tt.expectedHasPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					getMockInstance().GetPositionLiquidity(tt.poolPath, tt.positionKey)
 				})
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					getMockInstance().GetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
 				})
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					getMockInstance().GetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
 				})
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					getMockInstance().GetPositionTokensOwed0(tt.poolPath, tt.positionKey)
 				})
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					getMockInstance().GetPositionTokensOwed1(tt.poolPath, tt.positionKey)
 				})
 
@@ -383,35 +383,35 @@ func TestPositionGetters(t *testing.T) {
 		})
 	}
 
-	t.Run("invalid position", func(t *testing.T) {
+	t.Run("invalid position", func(cur realm, t *testing.T) {
 		validPoolPath := "token0:token1:3000"        // pool must valid
 		invalidPositionKey := "invalid/position/key" // but position must not
 
-		t.Run("get position liquidity", func(t *testing.T) {
+		t.Run("get position liquidity", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetPositionLiquidity(validPoolPath, invalidPositionKey)
 			})
 		})
 
-		t.Run("get position fee growth inside0 last x128", func(t *testing.T) {
+		t.Run("get position fee growth inside0 last x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetPositionFeeGrowthInside0LastX128(validPoolPath, invalidPositionKey)
 			})
 		})
 
-		t.Run("get position fee growth inside1 last x128", func(t *testing.T) {
+		t.Run("get position fee growth inside1 last x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetPositionFeeGrowthInside1LastX128(validPoolPath, invalidPositionKey)
 			})
 		})
 
-		t.Run("get position tokens owed0", func(t *testing.T) {
+		t.Run("get position tokens owed0", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetPositionTokensOwed0(validPoolPath, invalidPositionKey)
 			})
 		})
 
-		t.Run("get position tokens owed1", func(t *testing.T) {
+		t.Run("get position tokens owed1", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetPositionTokensOwed1(validPoolPath, invalidPositionKey)
 			})
@@ -419,62 +419,62 @@ func TestPositionGetters(t *testing.T) {
 	})
 }
 
-func TestTickGetters(t *testing.T) {
-	testInitData(t)
-	t.Run("valid tick", func(t *testing.T) {
+func TestTickGetters(cur realm, t *testing.T) {
+	testInitData(cur, t)
+	t.Run("valid tick", func(cur realm, t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 		validTick := int32(0)
 
-		t.Run("get tick liquidity gross", func(t *testing.T) {
+		t.Run("get tick liquidity gross", func(cur realm, t *testing.T) {
 			liquidityGross := getMockInstance().GetTickLiquidityGross(validPoolPath, validTick)
 			if liquidityGross != "1000000" {
 				t.Errorf("Expected liquidity gross [%s], got %s", "1000000", liquidityGross)
 			}
 		})
 
-		t.Run("get tick liquidity net", func(t *testing.T) {
+		t.Run("get tick liquidity net", func(cur realm, t *testing.T) {
 			liquidityNet := getMockInstance().GetTickLiquidityNet(validPoolPath, validTick)
 			if liquidityNet != "2000000" {
 				t.Errorf("Expected liquidity net [%s], got %s", "2000000", liquidityNet)
 			}
 		})
 
-		t.Run("get tick fee growth outside0 x128", func(t *testing.T) {
+		t.Run("get tick fee growth outside0 x128", func(cur realm, t *testing.T) {
 			feeGrowthOutside0X128 := getMockInstance().GetTickFeeGrowthOutside0X128(validPoolPath, validTick)
 			if feeGrowthOutside0X128 != "3000000" {
 				t.Errorf("Expected fee growth outside0 x128 [%s], got %s", "3000000", feeGrowthOutside0X128)
 			}
 		})
 
-		t.Run("get tick fee growth outside1 x128", func(t *testing.T) {
+		t.Run("get tick fee growth outside1 x128", func(cur realm, t *testing.T) {
 			feeGrowthOutside1X128 := getMockInstance().GetTickFeeGrowthOutside1X128(validPoolPath, validTick)
 			if feeGrowthOutside1X128 != "4000000" {
 				t.Errorf("Expected fee growth outside1 x128 [%s], got %s", "4000000", feeGrowthOutside1X128)
 			}
 		})
 
-		t.Run("get tick cumulative outside", func(t *testing.T) {
+		t.Run("get tick cumulative outside", func(cur realm, t *testing.T) {
 			tickCumulativeOutside := getMockInstance().GetTickCumulativeOutside(validPoolPath, validTick)
 			if tickCumulativeOutside != 5 {
 				t.Errorf("Expected tick cumulative outside [%d], got %d", 5, tickCumulativeOutside)
 			}
 		})
 
-		t.Run("get tick seconds per liquidity outside x128", func(t *testing.T) {
+		t.Run("get tick seconds per liquidity outside x128", func(cur realm, t *testing.T) {
 			secondsPerLiquidityOutsideX128 := getMockInstance().GetTickSecondsPerLiquidityOutsideX128(validPoolPath, validTick)
 			if secondsPerLiquidityOutsideX128 != "6000000" {
 				t.Errorf("Expected seconds per liquidity outside x128 [%s], got %s", "6000000", secondsPerLiquidityOutsideX128)
 			}
 		})
 
-		t.Run("get tick seconds outside", func(t *testing.T) {
+		t.Run("get tick seconds outside", func(cur realm, t *testing.T) {
 			secondsOutside := getMockInstance().GetTickSecondsOutside(validPoolPath, validTick)
 			if secondsOutside != 7 {
 				t.Errorf("Expected seconds outside [%d], got %d", 7, secondsOutside)
 			}
 		})
 
-		t.Run("get tick initialized", func(t *testing.T) {
+		t.Run("get tick initialized", func(cur realm, t *testing.T) {
 			initialized := getMockInstance().GetTickInitialized(validPoolPath, validTick)
 			if initialized != true {
 				t.Errorf("Expected initialized [%t], got %t", true, initialized)
@@ -482,47 +482,47 @@ func TestTickGetters(t *testing.T) {
 		})
 	})
 
-	t.Run("invalid tick", func(t *testing.T) {
+	t.Run("invalid tick", func(cur realm, t *testing.T) {
 		validPoolPath := "token0:token1:3000" // pool must valid
 		invalidTick := int32(-1)              // but tick must not
 
-		t.Run("get tick liquidity gross", func(t *testing.T) {
+		t.Run("get tick liquidity gross", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickLiquidityGross(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick liquidity net", func(t *testing.T) {
+		t.Run("get tick liquidity net", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickLiquidityNet(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick fee growth outside0 x128", func(t *testing.T) {
+		t.Run("get tick fee growth outside0 x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickFeeGrowthOutside0X128(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick cumulative outside", func(t *testing.T) {
+		t.Run("get tick cumulative outside", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickCumulativeOutside(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick seconds per liquidity outside x128", func(t *testing.T) {
+		t.Run("get tick seconds per liquidity outside x128", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickSecondsPerLiquidityOutsideX128(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick seconds outside", func(t *testing.T) {
+		t.Run("get tick seconds outside", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickSecondsOutside(validPoolPath, invalidTick)
 			})
 		})
 
-		t.Run("get tick initialized", func(t *testing.T) {
+		t.Run("get tick initialized", func(cur realm, t *testing.T) {
 			shouldPanic(t, func() {
 				getMockInstance().GetTickInitialized(validPoolPath, invalidTick)
 			})
@@ -539,49 +539,49 @@ func shouldPanic(t *testing.T, fn func()) {
 	fn()
 }
 
-func TestGetPoolCount(t *testing.T) {
+func TestGetPoolCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		expected int
 	}{
 		{
 			name: "empty store returns zero",
-			setup: func(t *testing.T) {
-				resetObject(t)
+			setup: func(cur realm, t *testing.T) {
+				resetObject(cur, t)
 			},
 			expected: 0,
 		},
 		{
 			name: "returns correct count after adding pool",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			expected: 1,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			count := getMockInstance().GetPoolCount()
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetPoolPaths(t *testing.T) {
+func TestGetPoolPaths(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		offset         int
 		count          int
 		expectedLength int
 	}{
 		{
 			name: "empty store returns empty slice",
-			setup: func(t *testing.T) {
-				resetObject(t)
+			setup: func(cur realm, t *testing.T) {
+				resetObject(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -589,8 +589,8 @@ func TestGetPoolPaths(t *testing.T) {
 		},
 		{
 			name: "returns pool paths",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -598,8 +598,8 @@ func TestGetPoolPaths(t *testing.T) {
 		},
 		{
 			name: "offset beyond range returns empty",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			offset:         100,
 			count:          10,
@@ -608,33 +608,33 @@ func TestGetPoolPaths(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			paths := getMockInstance().GetPoolPaths(tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(paths))
 		})
 	}
 }
 
-func TestExistsPoolPath(t *testing.T) {
+func TestExistsPoolPath(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		poolPath string
 		expected bool
 	}{
 		{
 			name: "existing pool returns true",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath: "token0:token1:3000",
 			expected: true,
 		},
 		{
 			name: "non-existent pool returns false",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath: "nonexistent:pool:path",
 			expected: false,
@@ -642,35 +642,35 @@ func TestExistsPoolPath(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			exists := getMockInstance().ExistsPoolPath(tc.poolPath)
 			uassert.Equal(t, tc.expected, exists)
 		})
 	}
 }
 
-func TestGetFeeAmountTickSpacings(t *testing.T) {
-	testInitData(t)
+func TestGetFeeAmountTickSpacings(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns all fee tier mappings", func(t *testing.T) {
+	t.Run("returns all fee tier mappings", func(cur realm, t *testing.T) {
 		mappings := getMockInstance().GetFeeAmountTickSpacings()
 		uassert.True(t, len(mappings) > 0)
 	})
 }
 
-func TestGetFeeAmountTickSpacing(t *testing.T) {
+func TestGetFeeAmountTickSpacing(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		fee         uint32
 		expected    int32
 		shouldPanic bool
 	}{
 		{
 			name: "valid fee tier 500 returns tick spacing 10",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			fee:         500,
 			expected:    10,
@@ -678,8 +678,8 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 		},
 		{
 			name: "valid fee tier 3000 returns tick spacing 60",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			fee:         3000,
 			expected:    60,
@@ -687,8 +687,8 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 		},
 		{
 			name: "invalid fee tier panics",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			fee:         9999,
 			expected:    0,
@@ -697,8 +697,8 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			if tc.shouldPanic {
 				shouldPanic(t, func() {
 					getMockInstance().GetFeeAmountTickSpacing(tc.fee)
@@ -711,25 +711,25 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 	}
 }
 
-func TestGetPoolPositionCount(t *testing.T) {
+func TestGetPoolPositionCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		poolPath string
 		expected int
 	}{
 		{
 			name: "valid pool with positions",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath: "token0:token1:3000",
 			expected: 1,
 		},
 		{
 			name: "non-existent pool returns zero",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath: "nonexistent:pool:path",
 			expected: 0,
@@ -737,18 +737,18 @@ func TestGetPoolPositionCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			count := getMockInstance().GetPoolPositionCount(tc.poolPath)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetPoolPositionKeys(t *testing.T) {
+func TestGetPoolPositionKeys(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		poolPath       string
 		offset         int
 		count          int
@@ -756,8 +756,8 @@ func TestGetPoolPositionKeys(t *testing.T) {
 	}{
 		{
 			name: "valid pool returns position keys",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:       "token0:token1:3000",
 			offset:         0,
@@ -766,8 +766,8 @@ func TestGetPoolPositionKeys(t *testing.T) {
 		},
 		{
 			name: "non-existent pool returns empty",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:       "nonexistent:pool:path",
 			offset:         0,
@@ -777,18 +777,18 @@ func TestGetPoolPositionKeys(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			keys := getMockInstance().GetPoolPositionKeys(tc.poolPath, tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(keys))
 		})
 	}
 }
 
-func TestGetInitializedTicksInRange(t *testing.T) {
+func TestGetInitializedTicksInRange(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		poolPath       string
 		tickLower      int32
 		tickUpper      int32
@@ -796,8 +796,8 @@ func TestGetInitializedTicksInRange(t *testing.T) {
 	}{
 		{
 			name: "valid range with initialized tick",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:       "token0:token1:3000",
 			tickLower:      -10,
@@ -806,8 +806,8 @@ func TestGetInitializedTicksInRange(t *testing.T) {
 		},
 		{
 			name: "range without initialized ticks",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:       "token0:token1:3000",
 			tickLower:      100,
@@ -816,8 +816,8 @@ func TestGetInitializedTicksInRange(t *testing.T) {
 		},
 		{
 			name: "non-existent pool returns empty",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:       "nonexistent:pool:path",
 			tickLower:      -10,
@@ -827,18 +827,18 @@ func TestGetInitializedTicksInRange(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			ticks := getMockInstance().GetInitializedTicksInRange(tc.poolPath, tc.tickLower, tc.tickUpper)
 			uassert.Equal(t, tc.expectedLength, len(ticks))
 		})
 	}
 }
 
-func TestGetPoolWithError(t *testing.T) {
+func TestGetPoolWithError(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		token0Path  string
 		token1Path  string
 		fee         uint32
@@ -846,8 +846,8 @@ func TestGetPoolWithError(t *testing.T) {
 	}{
 		{
 			name: "valid pool returns no error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			token0Path:  "token0",
 			token1Path:  "token1",
@@ -856,8 +856,8 @@ func TestGetPoolWithError(t *testing.T) {
 		},
 		{
 			name: "non-existent pool returns error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			token0Path:  "nonexistent",
 			token1Path:  "pool",
@@ -867,8 +867,8 @@ func TestGetPoolWithError(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			pool, err := getMockInstance().GetPool(tc.token0Path, tc.token1Path, tc.fee)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -880,18 +880,18 @@ func TestGetPoolWithError(t *testing.T) {
 	}
 }
 
-func TestGetTickInfoWithError(t *testing.T) {
+func TestGetTickInfoWithError(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		poolPath    string
 		tick        int32
 		expectError bool
 	}{
 		{
 			name: "valid tick returns no error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "token0:token1:3000",
 			tick:        0,
@@ -899,8 +899,8 @@ func TestGetTickInfoWithError(t *testing.T) {
 		},
 		{
 			name: "non-existent tick returns error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "token0:token1:3000",
 			tick:        999,
@@ -908,8 +908,8 @@ func TestGetTickInfoWithError(t *testing.T) {
 		},
 		{
 			name: "non-existent pool returns error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "nonexistent:pool:path",
 			tick:        0,
@@ -918,8 +918,8 @@ func TestGetTickInfoWithError(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			tickInfo, err := getMockInstance().GetTickInfo(tc.poolPath, tc.tick)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -931,18 +931,18 @@ func TestGetTickInfoWithError(t *testing.T) {
 	}
 }
 
-func TestGetPositionWithError(t *testing.T) {
+func TestGetPositionWithError(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		poolPath    string
 		key         string
 		expectError bool
 	}{
 		{
 			name: "valid position returns no error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "token0:token1:3000",
 			key:         "test_position",
@@ -950,8 +950,8 @@ func TestGetPositionWithError(t *testing.T) {
 		},
 		{
 			name: "non-existent position returns error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "token0:token1:3000",
 			key:         "nonexistent_position",
@@ -959,8 +959,8 @@ func TestGetPositionWithError(t *testing.T) {
 		},
 		{
 			name: "non-existent pool returns error",
-			setup: func(t *testing.T) {
-				testInitData(t)
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
 			},
 			poolPath:    "nonexistent:pool:path",
 			key:         "test_position",
@@ -969,8 +969,8 @@ func TestGetPositionWithError(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			positionInfo, err := getMockInstance().GetPosition(tc.poolPath, tc.key)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -982,49 +982,49 @@ func TestGetPositionWithError(t *testing.T) {
 	}
 }
 
-func TestGetFeeGrowthGlobalX128(t *testing.T) {
-	testInitData(t)
+func TestGetFeeGrowthGlobalX128(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns both fee growth values", func(t *testing.T) {
+	t.Run("returns both fee growth values", func(cur realm, t *testing.T) {
 		feeGrowth0, feeGrowth1 := getMockInstance().GetFeeGrowthGlobalX128("token0:token1:3000")
 		uassert.Equal(t, "1000000000000000000", feeGrowth0.ToString())
 		uassert.Equal(t, "2000000000000000000", feeGrowth1.ToString())
 	})
 }
 
-func TestGetTickFeeGrowthOutsideX128(t *testing.T) {
-	testInitData(t)
+func TestGetTickFeeGrowthOutsideX128(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns both fee growth outside values", func(t *testing.T) {
+	t.Run("returns both fee growth outside values", func(cur realm, t *testing.T) {
 		feeGrowth0, feeGrowth1 := getMockInstance().GetTickFeeGrowthOutsideX128("token0:token1:3000", 0)
 		uassert.Equal(t, "3000000", feeGrowth0)
 		uassert.Equal(t, "4000000", feeGrowth1)
 	})
 }
 
-func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
-	testInitData(t)
+func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns both fee growth inside values", func(t *testing.T) {
+	t.Run("returns both fee growth inside values", func(cur realm, t *testing.T) {
 		feeGrowth0, feeGrowth1 := getMockInstance().GetPositionFeeGrowthInsideLastX128("token0:token1:3000", "test_position")
 		uassert.Equal(t, "2000000", feeGrowth0)
 		uassert.Equal(t, "3000000", feeGrowth1)
 	})
 }
 
-func TestGetPoolCreationFee(t *testing.T) {
-	testInitData(t)
+func TestGetPoolCreationFee(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns pool creation fee", func(t *testing.T) {
+	t.Run("returns pool creation fee", func(cur realm, t *testing.T) {
 		fee := getMockInstance().GetPoolCreationFee()
 		uassert.True(t, fee >= 0)
 	})
 }
 
-func TestGetWithdrawalFee(t *testing.T) {
-	testInitData(t)
+func TestGetWithdrawalFee(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	t.Run("returns withdrawal fee", func(t *testing.T) {
+	t.Run("returns withdrawal fee", func(cur realm, t *testing.T) {
 		fee := getMockInstance().GetWithdrawalFee()
 		uassert.True(t, fee >= 0)
 	})

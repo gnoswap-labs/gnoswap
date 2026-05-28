@@ -1,13 +1,11 @@
 package v1
 
 import (
-	"chain/runtime"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func assertIsNotUserCall(previousRealm runtime.Realm) {
+func assertIsNotUserCall(previousRealm realm) {
 	if previousRealm.IsUserCall() {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,

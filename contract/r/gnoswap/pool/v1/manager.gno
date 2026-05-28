@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -14,7 +13,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"
-
 )
 
 const GNS_PATH string = "gno.land/r/gnoswap/gns"
@@ -55,19 +53,21 @@ const GNS_PATH string = "gno.land/r/gnoswap/gns"
 //	3. Remove the liquidity
 //	The executor's LP losses offset arbitrage gains (minus fees).
 func (i *poolV1) CreatePool(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
 	assertIsSupportedFeeTier(fee)
 	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)
 
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
 	slot0FeeProtocol := i.store.GetSlot0FeeProtocol()
 
@@ -97,7 +97,7 @@ func (i *poolV1) CreatePool(
 	pools := i.store.GetPools()
 	pools.Set(poolPath, pool)
 
-	err = i.store.SetPools(pools)
+	err = i.store.SetPools(0, rlm, pools)
 	if err != nil {
 		panic(err)
 	}
@@ -105,11 +105,11 @@ func (i *poolV1) CreatePool(
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
-		previousRealm := runtime.PreviousRealm()
+		previousRealm := rlm.Previous()
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-		gns.TransferFrom(cross, previousRealmAddr, poolAddr, poolCreationFee)
-		i.addPendingProtocolFee(GNS_PATH, poolCreationFee)
+		gns.TransferFrom(cross(rlm), previousRealmAddr, poolAddr, poolCreationFee)
+		i.addPendingProtocolFee(rlm, GNS_PATH, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
@@ -120,9 +120,9 @@ func (i *poolV1) CreatePool(
 			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
-	i.addToProtocolFee()
+	i.addToProtocolFee(rlm)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CreatePool",
 		"prevAddr", previousRealm.Address().String(),
@@ -143,26 +143,26 @@ func (i *poolV1) CreatePool(
 //   - feeProtocol0, feeProtocol1: fee percentages (0-10)
 //
 // Only callable by admin or governance.
-func (i *poolV1) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
+func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := i.setFeeProtocolInternal(feeProtocol0, feeProtocol1)
+	err := i.setFeeProtocolInternal(rlm, feeProtocol0, feeProtocol1)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
-func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
+func (i *poolV1) setFeeAmountTickSpacing(cur realm, fee uint32, tickSpacing int32) error {
 	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
 	feeAmountTickSpacing[fee] = tickSpacing
 
-	return i.store.SetFeeAmountTickSpacing(feeAmountTickSpacing)
+	return i.store.SetFeeAmountTickSpacing(0, cur, feeAmountTickSpacing)
 }
 
 func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
@@ -198,17 +198,17 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 
 // savePool updates a pool in the pools map and persists to storage.
 // This ensures that modifications to pool objects are properly saved.
-func (i *poolV1) savePool(pool *pl.Pool) error {
+func (i *poolV1) savePool(cur realm, pool *pl.Pool) error {
 	pools := i.store.GetPools()
 	pools.Set(pool.PoolPath(), pool)
 
-	return i.store.SetPools(pools)
+	return i.store.SetPools(0, cur, pools)
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
-func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8) error {
+func (i *poolV1) setFeeProtocolInternal(cur realm, feeProtocol0, feeProtocol1 uint8) error {
 	oldFee := i.store.GetSlot0FeeProtocol()
-	newFee, err := i.setFeeProtocol(feeProtocol0, feeProtocol1)
+	newFee, err := i.setFeeProtocol(cur, feeProtocol0, feeProtocol1)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8) error 
 	feeProtocol0Old := oldFee % 16
 	feeProtocol1Old := oldFee >> 4
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"SetFeeProtocol",
 		"prevAddr", previousRealm.Address().String(),
@@ -260,7 +260,7 @@ func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8) error 
 //   - This function ensures that all pools under management are updated to use the same fee protocol.
 //   - Caller restrictions (e.g., admin or governance) are not enforced in this function.
 //   - Ensure the system is not halted before updating fees.
-func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error) {
+func (i *poolV1) setFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) (uint8, error) {
 	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
 		return 0, err
 	}
@@ -287,7 +287,7 @@ func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error)
 	})
 
 	// update slot0
-	err := i.store.SetSlot0FeeProtocol(newFee)
+	err := i.store.SetSlot0FeeProtocol(0, cur, newFee)
 	if err != nil {
 		return 0, err
 	}

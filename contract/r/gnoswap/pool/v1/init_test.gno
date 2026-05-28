@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/mock"
 )
 
-func TestInit_initStoreDataUsesFreshFeeAmountTickSpacingPerStore(t *testing.T) {
+func TestInit_initStoreDataUsesFreshFeeAmountTickSpacingPerStore(cur realm, t *testing.T) {
 	firstStore := mock.NewMockPoolStore()
 	err := initStoreData(firstStore)
 	uassert.Nil(t, err)

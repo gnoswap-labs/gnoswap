@@ -9,10 +9,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestOracleInitialize(t *testing.T) {
+func TestOracleInitialize(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(cur realm, t *testing.T)
 	}{
 		{"index is 0", testInitializeIndexIsZero},
 		{"cardinality is 1", testInitializeCardinalityIsOne},
@@ -21,7 +21,7 @@ func TestOracleInitialize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -56,10 +56,10 @@ func testInitializeSetsFirstSlot(t *testing.T) {
 	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 }
 
-func TestOracleGrow(t *testing.T) {
+func TestOracleGrow(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(cur realm, t *testing.T)
 	}{
 		{"increases the cardinality next for the first call", testGrowIncreasesCardinalityNext},
 		{"does not touch the first slot", testGrowDoesNotTouchFirstSlot},
@@ -68,7 +68,7 @@ func TestOracleGrow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -129,10 +129,10 @@ func testGrowAddsDataToSlots(t *testing.T) {
 	}
 }
 
-func TestOracleWrite(t *testing.T) {
+func TestOracleWrite(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(cur realm, t *testing.T)
 	}{
 		{"single element array gets overwritten", testSingleElementOverwrite},
 		{"does nothing if time has not changed", testDoesNothingIfTimeUnchanged},
@@ -143,7 +143,7 @@ func TestOracleWrite(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -325,10 +325,10 @@ func testAccumulatesLiquidity(t *testing.T) {
 	}
 }
 
-func TestOracleObserve(t *testing.T) {
+func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(cur realm, t *testing.T)
 	}{
 		{"fails if an older observation does not exist", testObserveFailsIfOlderNotExist},
 		{"interpolates correctly at max liquidity", testObserveInterpolatesMaxLiquidity},
@@ -350,7 +350,7 @@ func TestOracleObserve(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -786,10 +786,10 @@ func testObserveFetchMultiple(t *testing.T) {
 	uassert.Equal(t, "0", secondsPerLiquidityX128s[5])
 }
 
-func TestOracleFiveObservations(t *testing.T) {
+func TestOracleFiveObservations(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(cur realm, t *testing.T)
 	}{
 		{"index cardinality cardinality next", testFiveObservationsIndexCardinality},
 		{"latest observation same time as latest", testFiveObservationsLatestSameTime},
@@ -802,7 +802,7 @@ func TestOracleFiveObservations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
