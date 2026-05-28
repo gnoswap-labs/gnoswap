@@ -9,11 +9,11 @@ import (
 )
 
 // TestRegisterInitializer tests the position upgrade system with table-driven approach
-func TestRegisterInitializer(t *testing.T) {
+func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
-		initializer          func(s IPositionStore) IPosition
+		setup                func(cur realm, t *testing.T)
+		initializer          func(_ int, rlm realm, s IPositionStore) IPosition
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -27,9 +27,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register multiple different initializers",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"),
 			initializer:     makeMockInitializer("new_version"),
@@ -37,9 +37,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
 			initializer:          makeMockInitializer("v1"),
@@ -60,18 +60,18 @@ func TestRegisterInitializer(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				RegisterInitializer(cross, tt.initializer)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				RegisterInitializer(cross(cur), tt.initializer)
 			})
 		} else {
-			RegisterInitializer(cross, tt.initializer)
+			RegisterInitializer(cross(cur), tt.initializer)
 
 			impl := implementation.(*MockPosition)
 			uassert.Equal(t, impl.Version, tt.expectedVersion)
@@ -79,11 +79,40 @@ func TestRegisterInitializer(t *testing.T) {
 	}
 }
 
+func TestRegisterInitializerLiveRealmBootstrap(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	initializerCalls := 0
+	initializer := func(_ int, rlm realm, s IPositionStore) IPosition {
+		if !rlm.IsCurrent() {
+			panic(ErrSpoofedRealm)
+		}
+
+		initializerCalls++
+		err := s.SetPositionNextID(0, rlm, uint64(initializerCalls))
+		if err != nil {
+			panic(err)
+		}
+
+		return newMockPosition("v1")
+	}
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
+	RegisterInitializer(cross(cur), initializer)
+	uassert.Equal(t, 1, initializerCalls)
+	uassert.Equal(t, uint64(1), NewPositionStore(kvStore).GetPositionNextID())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
+	uassert.Equal(t, 2, initializerCalls)
+	uassert.Equal(t, uint64(2), NewPositionStore(kvStore).GetPositionNextID())
+}
+
 // TestUpgradeImpl tests the position upgrade implementation
-func TestUpgradeImpl(t *testing.T) {
+func TestUpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		packagePath          string
 		callerRealm          runtime.Realm
 		expectedVersion      string
@@ -92,12 +121,12 @@ func TestUpgradeImpl(t *testing.T) {
 	}{
 		{
 			name: "upgrade impl is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:     "gno.land/r/gnoswap/position/new_version",
 			callerRealm:     testing.NewUserRealm(adminAddr),
@@ -105,12 +134,12 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:          "gno.land/r/gnoswap/position/new_version",
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
@@ -120,9 +149,9 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by initializer not found",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			packagePath:          "gno.land/r/gnoswap/position/nonexistent",
 			callerRealm:          testing.NewUserRealm(adminAddr),
@@ -137,18 +166,18 @@ func TestUpgradeImpl(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				UpgradeImpl(cross, tt.packagePath)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				UpgradeImpl(cross(cur), tt.packagePath)
 			})
 		} else {
-			UpgradeImpl(cross, tt.packagePath)
+			UpgradeImpl(cross(cur), tt.packagePath)
 		}
 
 		impl := implementation.(*MockPosition)
@@ -157,20 +186,20 @@ func TestUpgradeImpl(t *testing.T) {
 }
 
 // TestGetImplementation tests the implementation getter
-func TestGetImplementation(t *testing.T) {
+func TestGetImplementation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
 			name: "get impl is success when implementation is set",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 		},
 		{
@@ -185,12 +214,12 @@ func TestGetImplementation(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.PanicsContains(t, tt.expectedAbortMessage, func() {
+			uassert.PanicsContains(t, cur, tt.expectedAbortMessage, func() {
 				getImplementation()
 			})
 		} else {
@@ -203,10 +232,10 @@ func TestGetImplementation(t *testing.T) {
 }
 
 // TestMint tests the Mint proxy function
-func TestMint(t *testing.T) {
+func TestMint(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		token0         string
 		token1         string
 		fee            uint32
@@ -223,11 +252,11 @@ func TestMint(t *testing.T) {
 	}{
 		{
 			name: "mint is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			token0:         "gno.land/r/gnoswap/test_token/token0",
 			token1:         "gno.land/r/gnoswap/test_token/token1",
@@ -250,13 +279,13 @@ func TestMint(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Mint(cross, tt.token0, tt.token1, tt.fee, tt.tickLower, tt.tickUpper, tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min, tt.deadline, tt.mintTo, tt.referrer)
+		Mint(cross(cur), tt.token0, tt.token1, tt.fee, tt.tickLower, tt.tickUpper, tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min, tt.deadline, tt.mintTo, tt.referrer)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -267,10 +296,10 @@ func TestMint(t *testing.T) {
 }
 
 // TestIncreaseLiquidity tests the IncreaseLiquidity proxy function
-func TestIncreaseLiquidity(t *testing.T) {
+func TestIncreaseLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
-		setup             func(t *testing.T)
+		setup             func(cur realm, t *testing.T)
 		positionId        uint64
 		amount0DesiredStr string
 		amount1DesiredStr string
@@ -281,11 +310,11 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name: "increase liquidity is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:        1,
 			amount0DesiredStr: "1000000",
@@ -302,13 +331,13 @@ func TestIncreaseLiquidity(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		IncreaseLiquidity(cross, tt.positionId, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
+		IncreaseLiquidity(cross(cur), tt.positionId, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -319,10 +348,10 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 // TestDecreaseLiquidity tests the DecreaseLiquidity proxy function
-func TestDecreaseLiquidity(t *testing.T) {
+func TestDecreaseLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func(t *testing.T)
+		setup         func(cur realm, t *testing.T)
 		positionId    uint64
 		liquidityStr  string
 		amount0MinStr string
@@ -332,11 +361,11 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name: "decrease liquidity is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:    1,
 			liquidityStr:  "1000000",
@@ -352,13 +381,13 @@ func TestDecreaseLiquidity(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		DecreaseLiquidity(cross, tt.positionId, tt.liquidityStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
+		DecreaseLiquidity(cross(cur), tt.positionId, tt.liquidityStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -369,10 +398,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 // TestReposition tests the Reposition proxy function
-func TestReposition(t *testing.T) {
+func TestReposition(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
-		setup             func(t *testing.T)
+		setup             func(cur realm, t *testing.T)
 		positionId        uint64
 		tickLower         int32
 		tickUpper         int32
@@ -385,11 +414,11 @@ func TestReposition(t *testing.T) {
 	}{
 		{
 			name: "reposition is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:        1,
 			tickLower:         -200,
@@ -408,13 +437,13 @@ func TestReposition(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Reposition(cross, tt.positionId, tt.tickLower, tt.tickUpper, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
+		Reposition(cross(cur), tt.positionId, tt.tickLower, tt.tickUpper, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -425,20 +454,20 @@ func TestReposition(t *testing.T) {
 }
 
 // TestCollectFee tests the CollectFee proxy function
-func TestCollectFee(t *testing.T) {
+func TestCollectFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "collect fee is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
@@ -450,13 +479,13 @@ func TestCollectFee(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		CollectFee(cross, tt.positionId)
+		CollectFee(cross(cur), tt.positionId)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -467,21 +496,21 @@ func TestCollectFee(t *testing.T) {
 }
 
 // TestSetPositionOperator tests the SetPositionOperator proxy function
-func TestSetPositionOperator(t *testing.T) {
+func TestSetPositionOperator(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		operator    address
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "set position operator is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			operator:    "gno1operator",
@@ -494,13 +523,13 @@ func TestSetPositionOperator(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		SetPositionOperator(cross, tt.positionId, tt.operator)
+		SetPositionOperator(cross(cur), tt.positionId, tt.operator)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -511,20 +540,20 @@ func TestSetPositionOperator(t *testing.T) {
 }
 
 // TestGetPosition tests the GetPosition proxy function
-func TestGetPosition(t *testing.T) {
+func TestGetPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
@@ -536,7 +565,7 @@ func TestGetPosition(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -555,21 +584,21 @@ func TestGetPosition(t *testing.T) {
 }
 
 // TestIsBurned tests the IsBurned proxy function
-func TestIsBurned(t *testing.T) {
+func TestIsBurned(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    bool
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "is burned is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    false,
@@ -582,7 +611,7 @@ func TestIsBurned(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -604,21 +633,21 @@ func TestIsBurned(t *testing.T) {
 }
 
 // TestIsInRange tests the IsInRange proxy function
-func TestIsInRange(t *testing.T) {
+func TestIsInRange(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    bool
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "is in range is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    true,
@@ -631,7 +660,7 @@ func TestIsInRange(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -653,21 +682,21 @@ func TestIsInRange(t *testing.T) {
 }
 
 // TestGetPositionFeeGrowthInside0LastX128 tests the GetPositionFeeGrowthInside0LastX128 proxy function
-func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
+func TestGetPositionFeeGrowthInside0LastX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position fee growth inside 0 last x128 is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "1000",
@@ -680,7 +709,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -702,21 +731,21 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 }
 
 // TestGetPositionFeeGrowthInside1LastX128 tests the GetPositionFeeGrowthInside1LastX128 proxy function
-func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
+func TestGetPositionFeeGrowthInside1LastX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position fee growth inside 1 last x128 is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "1000",
@@ -729,7 +758,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -751,21 +780,21 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 }
 
 // TestGetPositionLiquidity tests the GetPositionLiquidity proxy function
-func TestGetPositionLiquidity(t *testing.T) {
+func TestGetPositionLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position liquidity is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "1000000",
@@ -778,7 +807,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -800,21 +829,21 @@ func TestGetPositionLiquidity(t *testing.T) {
 }
 
 // TestGetPositionOperator tests the GetPositionOperator proxy function
-func TestGetPositionOperator(t *testing.T) {
+func TestGetPositionOperator(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    address
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position operator is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "gno1operator",
@@ -827,7 +856,7 @@ func TestGetPositionOperator(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -849,21 +878,21 @@ func TestGetPositionOperator(t *testing.T) {
 }
 
 // TestGetPositionPoolKey tests the GetPositionPoolKey proxy function
-func TestGetPositionPoolKey(t *testing.T) {
+func TestGetPositionPoolKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position pool key is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "gno.land/r/gnoswap/test_token/token0:gno.land/r/gnoswap/test_token/token1:3000",
@@ -876,7 +905,7 @@ func TestGetPositionPoolKey(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -898,21 +927,21 @@ func TestGetPositionPoolKey(t *testing.T) {
 }
 
 // TestGetPositionTickLower tests the GetPositionTickLower proxy function
-func TestGetPositionTickLower(t *testing.T) {
+func TestGetPositionTickLower(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    int32
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position tick lower is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    -100,
@@ -925,7 +954,7 @@ func TestGetPositionTickLower(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -947,21 +976,21 @@ func TestGetPositionTickLower(t *testing.T) {
 }
 
 // TestGetPositionTickUpper tests the GetPositionTickUpper proxy function
-func TestGetPositionTickUpper(t *testing.T) {
+func TestGetPositionTickUpper(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    int32
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position tick upper is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    100,
@@ -974,7 +1003,7 @@ func TestGetPositionTickUpper(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -996,21 +1025,21 @@ func TestGetPositionTickUpper(t *testing.T) {
 }
 
 // TestGetPositionTokensOwed0 tests the GetPositionTokensOwed0 proxy function
-func TestGetPositionTokensOwed0(t *testing.T) {
+func TestGetPositionTokensOwed0(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position tokens owed 0 is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    1000,
@@ -1023,7 +1052,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -1045,21 +1074,21 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 }
 
 // TestGetPositionTokensOwed1 tests the GetPositionTokensOwed1 proxy function
-func TestGetPositionTokensOwed1(t *testing.T) {
+func TestGetPositionTokensOwed1(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position tokens owed 1 is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    1000,
@@ -1072,7 +1101,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -1094,10 +1123,10 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 }
 
 // TestGetUnclaimedFee tests the GetUnclaimedFee proxy function
-func TestGetUnclaimedFee(t *testing.T) {
+func TestGetUnclaimedFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setup        func(t *testing.T)
+		setup        func(cur realm, t *testing.T)
 		positionId   uint64
 		expectedFee0 string
 		expectedFee1 string
@@ -1105,11 +1134,11 @@ func TestGetUnclaimedFee(t *testing.T) {
 	}{
 		{
 			name: "get unclaimed fee is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:   1,
 			expectedFee0: "1000",
@@ -1123,7 +1152,7 @@ func TestGetUnclaimedFee(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)
@@ -1145,21 +1174,21 @@ func TestGetUnclaimedFee(t *testing.T) {
 }
 
 // TestGetPositionOwner tests the GetPositionOwner proxy function
-func TestGetPositionOwner(t *testing.T) {
+func TestGetPositionOwner(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		expected    address
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "get position owner is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
 			expected:    "gno1owner",
@@ -1172,7 +1201,7 @@ func TestGetPositionOwner(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockPosition := implementation.(*MockPosition)

@@ -1,7 +1,7 @@
 package position
 
 import (
-	"chain/runtime"
+	"chain"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -17,7 +17,7 @@ var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 func resetTestState(t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(chain.PackageAddress("gno.land/r/gnoswap/position"))
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/position",
 		kvStore,
@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IPositionStore) IPosition {
-	return func(_ IPositionStore) IPosition {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IPositionStore) IPosition {
+	return func(_ int, _ realm, _ IPositionStore) IPosition {
 		return newMockPosition(version)
 	}
 }

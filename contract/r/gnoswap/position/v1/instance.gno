@@ -19,9 +19,9 @@ func NewPositionV1(positionStore position.IPositionStore, accessor NFTAccessor) 
 }
 
 type NFTAccessor interface {
-	Approve(approved address, tid grc721.TokenID) error
-	Mint(to address, tid grc721.TokenID) grc721.TokenID
-	Burn(tid grc721.TokenID)
+	Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error
+	Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID
+	Burn(_ int, rlm realm, tid grc721.TokenID)
 	TotalSupply() int64
 	Exists(tid grc721.TokenID) bool
 	OwnerOf(tid grc721.TokenID) (address, error)
@@ -29,16 +29,28 @@ type NFTAccessor interface {
 
 type gnftAccessor struct{}
 
-func (n *gnftAccessor) Approve(approved address, tid grc721.TokenID) error {
-	return gnft.Approve(cross, approved, tid)
+func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
+	if !rlm.IsCurrent() {
+		return position.ErrSpoofedRealm
+	}
+
+	return gnft.Approve(cross(rlm), approved, tid)
 }
 
-func (n *gnftAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
-	return gnft.Mint(cross, to, tid)
+func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	return gnft.Mint(cross(rlm), to, tid)
 }
 
-func (n *gnftAccessor) Burn(tid grc721.TokenID) {
-	gnft.Burn(cross, tid)
+func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	gnft.Burn(cross(rlm), tid)
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {

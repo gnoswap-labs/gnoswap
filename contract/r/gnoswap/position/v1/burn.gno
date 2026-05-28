@@ -13,11 +13,11 @@ import (
 
 // decreaseLiquidity reduces position liquidity and collects fees.
 // Returns positionId, liquidity, fee0, fee1, amount0, amount1, poolPath.
-func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
+func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
-	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.caller)
+	_, fee0Str, fee1Str, _, _, _ := p.collectFee(0, rlm, params.positionId, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
 	positionLiquidity := u256.MustFromDecimal(position.Liquidity())
@@ -50,7 +50,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	pToken0, pToken1, pFee := splitOf(position.PoolKey())
-	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
+	burn0, burn1 := pl.Burn(cross(rlm), pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
 	burnedAmount0 := safeParseInt64(burn0)
 	burnedAmount1 := safeParseInt64(burn1)
@@ -77,10 +77,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
 	position.SetLiquidity(newLiquidity.ToString())
 
-	p.mustUpdatePosition(params.positionId, *position)
+	p.mustUpdatePosition(0, rlm, params.positionId, *position)
 
 	collect0, collect1 := pl.Collect(
-		cross,
+		cross(rlm),
 		pToken0,
 		pToken1,
 		pFee,
@@ -134,10 +134,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		position.SetBurned(true) // just update flag (we don't want to burn actual position)
 	}
 
-	p.mustUpdatePosition(params.positionId, *position)
+	p.mustUpdatePosition(0, rlm, params.positionId, *position)
 
-	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0Int64)
-	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1Int64)
+	common.SafeGRC20TransferFrom(cross(rlm), pToken0, poolAddr, caller, collectAmount0Int64)
+	common.SafeGRC20TransferFrom(cross(rlm), pToken1, poolAddr, caller, collectAmount1Int64)
 
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }
