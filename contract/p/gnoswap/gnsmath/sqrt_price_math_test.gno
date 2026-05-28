@@ -107,7 +107,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
 }
 
 // TestGetNextPriceAmount0Remove tests the internal helper for removing token0
-func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 	tiny := u256.One()
 	medium := u256.MustFromDecimal("100000000000000000")
 	huge := u256.MustFromDecimal("1000000000000000000000000000000")
@@ -214,7 +214,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			before := tt.current.Clone()
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					_ = getNextPriceAmount0Remove(tt.current, tt.liquidity, tt.amountToRemove)
 				})
 				return
@@ -226,7 +226,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromAmount0RoundingUp tests price calculation when adding/removing token0
-func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -319,7 +319,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromAmount0RoundingUp(tt.sqrtPX96, tt.liquidity, tt.amount, tt.add)
 				})
 				return
@@ -332,7 +332,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 }
 
 // TestGetNextPriceAmount1Add tests the internal helper for adding token1
-func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount1Add(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -412,7 +412,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextPriceAmount1Add(tt.sqrtPX96, tt.liquidity, tt.amount)
 				})
 				return
@@ -461,7 +461,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
 }
 
 // TestGetNextPriceAmount1Remove tests the internal helper for removing token1
-func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount1Remove(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -618,7 +618,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
 				})
 				return
@@ -661,7 +661,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromAmount1RoundingDown tests price calculation when adding/removing token1
-func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -701,7 +701,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromAmount1RoundingDown(tt.sqrtPX96, tt.liquidity, tt.amount, tt.add)
 				})
 				return
@@ -714,7 +714,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromInput tests input swap calculations
-func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromInput(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -772,7 +772,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromInput(tt.sqrtPX96, tt.liquidity, tt.amountIn, tt.zeroForOne)
 				})
 				return
@@ -785,7 +785,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromOutput tests output swap calculations
-func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromOutput(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -852,7 +852,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromOutput(tt.sqrtPX96, tt.liquidity, tt.amountOut, tt.zeroForOne)
 				})
 				return
@@ -865,7 +865,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 }
 
 // TestGetAmount0DeltaHelper tests amount0 calculation helper
-func TestSqrtPriceMath_getAmount0DeltaHelper(t *testing.T) {
+func TestSqrtPriceMath_getAmount0DeltaHelper(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -959,7 +959,7 @@ func TestSqrtPriceMath_getAmount0DeltaHelper(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getAmount0DeltaHelper(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity, tt.roundUp)
 				})
 				return
@@ -1060,7 +1060,7 @@ func TestSqrtPriceMath_getAmount1DeltaHelper(t *testing.T) {
 }
 
 // TestGetAmount0Delta tests string representation with signed liquidity
-func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
+func TestSqrtPriceMath_GetAmount0Delta(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -1131,7 +1131,7 @@ func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					GetAmount0Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return
@@ -1144,7 +1144,7 @@ func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
 }
 
 // TestGetAmount1Delta tests string representation with signed liquidity
-func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
+func TestSqrtPriceMath_GetAmount1Delta(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -1229,7 +1229,7 @@ func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					GetAmount1Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return

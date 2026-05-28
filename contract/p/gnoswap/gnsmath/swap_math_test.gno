@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
+func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 	tests := []struct {
 		name                           string
 		currentX96, targetX96          *u256.Uint
@@ -282,7 +282,7 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.shouldPanic {
-				uassert.PanicsWithMessage(t, test.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, test.panicMsg, func() {
 					SwapMathComputeSwapStep(
 						test.currentX96, test.targetX96, test.liquidity, test.amountRemaining, test.feePips,
 					)
