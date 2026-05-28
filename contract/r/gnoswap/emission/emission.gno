@@ -21,7 +21,7 @@ var (
 	lastExecutedTimestamp int64
 
 	// emissionAddr is the address of the emission realm
-	emissionAddr = runtime.CurrentRealm().Address()
+	emissionAddr address
 
 	// distributionStartTimestamp is the timestamp from which emission distribution starts
 	// Default is 0, meaning distribution is not started until explicitly set
@@ -31,6 +31,10 @@ var (
 	// This allows external contracts (like staker) to update their caches
 	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
 )
+
+func init(cur realm) {
+	emissionAddr = cur.Address()
+}
 
 // setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) {
@@ -89,7 +93,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
+	mintedEmissionRewardAmount := gns.MintGns(cross(cur), emissionAddr)
 
 	// Validate minted amount
 	if mintedEmissionRewardAmount < 0 {
@@ -121,11 +125,11 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		panic(err)
 	}
 
-	if err := transferToTarget(amountByAddress); err != nil {
+	if err := transferToTarget(0, cur, amountByAddress); err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
@@ -166,7 +170,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if startTimestamp <= 0 {
@@ -193,7 +197,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	if gns.MintedEmissionAmount() == 0 {
 		currentHeight := runtime.ChainHeight()
-		gns.InitEmissionState(cross, currentHeight, startTimestamp)
+		gns.InitEmissionState(cross(cur), currentHeight, startTimestamp)
 	}
 
 	distributionStartTimestamp = startTimestamp
@@ -213,7 +217,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 //
 // Only callable by the staker contract.
 func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
 	onDistributionPctChangeCallback = callback
