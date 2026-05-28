@@ -36,20 +36,26 @@ import (
 //
 // Returns executed proposal ID.
 // Callable by anyone once proposal is executable.
-func (gv *governanceV1) Execute(proposalID int64) int64 {
+func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and current blockchain state
-	caller := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the execution process
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Attempt to execute the proposal with current context
 	proposal, err := gv.executeProposal(
+		0, rlm,
 		proposalID,
 		currentAt,
 		currentHeight,
@@ -60,11 +66,10 @@ func (gv *governanceV1) Execute(proposalID int64) int64 {
 	}
 
 	// Emit execution event for tracking and auditing
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Execute",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"proposalId", formatInt(proposalID),
 	)
 
@@ -73,6 +78,7 @@ func (gv *governanceV1) Execute(proposalID int64) int64 {
 
 // executeProposal handles core logic of proposal execution.
 func (gv *governanceV1) executeProposal(
+	_ int, rlm realm,
 	proposalID int64,
 	executedAt int64,
 	executedHeight int64,
@@ -106,13 +112,13 @@ func (gv *governanceV1) executeProposal(
 	switch proposal.Type() {
 	case governance.CommunityPoolSpend:
 		// Execute community pool spending (token transfers)
-		err = executeCommunityPoolSpend(proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
+		err = executeCommunityPoolSpend(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
 			return nil, err
 		}
 	case governance.ParameterChange:
 		// Execute parameter changes (governance configuration updates)
-		err = executeParameterChange(proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
+		err = executeParameterChange(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
 			return nil, err
 		}
@@ -144,10 +150,15 @@ func (gv *governanceV1) executeProposal(
 //
 // Returns cancelled proposal ID.
 // Only callable by original proposer before voting begins.
-func (gv *governanceV1) Cancel(proposalID int64) int64 {
+func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
-	caller := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	assertCallerIsProposer(gv, proposalID, caller)
 
 	// Get current blockchain state and caller information
@@ -155,7 +166,7 @@ func (gv *governanceV1) Cancel(proposalID int64) int64 {
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the process
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Attempt to cancel the proposal
 	proposal, err := gv.cancel(proposalID, currentAt, currentHeight, caller)
@@ -164,11 +175,10 @@ func (gv *governanceV1) Cancel(proposalID int64) int64 {
 	}
 
 	// Emit cancellation event for tracking
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Cancel",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"proposalId", formatInt(proposalID),
 	)
 
@@ -201,6 +211,7 @@ func (gv *governanceV1) cancel(
 // executeCommunityPoolSpend executes community pool spending proposals.
 // Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
+	_ int, rlm realm,
 	proposal *governance.Proposal,
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
@@ -227,7 +238,7 @@ func executeCommunityPoolSpend(
 		}
 
 		// Execute the parameter change with provided parameters
-		err = handler.Execute(parameterChangeInfo.Params())
+		err = handler.Execute(0, rlm, parameterChangeInfo.Params())
 		if err != nil {
 			return err
 		}
@@ -239,6 +250,7 @@ func executeCommunityPoolSpend(
 // executeParameterChange executes parameter change proposals.
 // Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
+	_ int, rlm realm,
 	proposal *governance.Proposal,
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
@@ -260,7 +272,7 @@ func executeParameterChange(
 		}
 
 		// Execute the parameter change with provided parameters
-		err = handler.Execute(parameterChangeInfo.Params())
+		err = handler.Execute(0, rlm, parameterChangeInfo.Params())
 		if err != nil {
 			return err
 		}

@@ -11,7 +11,7 @@ import (
 )
 
 // TestAssert_assertCallerIsProposer tests the private assertCallerIsProposer function
-func TestAssert_assertCallerIsProposer(t *testing.T) {
+func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupProposal    func(*governanceV1) int64
@@ -97,18 +97,18 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gv := newMockGovernance()
 			tt.setupProposal(gv)
 
 			// when & then
 			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			}

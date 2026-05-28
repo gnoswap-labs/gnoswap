@@ -25,7 +25,7 @@ func (m *mockGovernanceStore) GetConfigCounter() *governance.Counter {
 	return m.configCounter
 }
 
-func (m *mockGovernanceStore) SetConfigCounter(counter *governance.Counter) error {
+func (m *mockGovernanceStore) SetConfigCounter(_ int, rlm realm, counter *governance.Counter) error {
 	m.configCounter = counter
 	return nil
 }
@@ -38,7 +38,7 @@ func (m *mockGovernanceStore) GetProposalCounter() *governance.Counter {
 	return m.proposalCounter
 }
 
-func (m *mockGovernanceStore) SetProposalCounter(counter *governance.Counter) error {
+func (m *mockGovernanceStore) SetProposalCounter(_ int, rlm realm, counter *governance.Counter) error {
 	m.proposalCounter = counter
 	return nil
 }
@@ -48,7 +48,7 @@ func (m *mockGovernanceStore) HasConfigsStoreKey() bool {
 	return m.configs != nil
 }
 
-func (m *mockGovernanceStore) SetConfigs(configs *bptree.BPTree) error {
+func (m *mockGovernanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTree) error {
 	m.configs = configs
 	return nil
 }
@@ -64,7 +64,7 @@ func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool)
 	return result.(governance.Config), true
 }
 
-func (m *mockGovernanceStore) SetConfig(version int64, config governance.Config) error {
+func (m *mockGovernanceStore) SetConfig(_ int, rlm realm, version int64, config governance.Config) error {
 	if m.configs == nil {
 		m.configs = bptree.NewBPTreeN(16)
 	}
@@ -92,7 +92,7 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	return proposal.(*governance.Proposal), true
 }
 
-func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal *governance.Proposal) error {
+func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *governance.Proposal) error {
 	if m.proposals == nil {
 		m.proposals = bptree.NewBPTreeN(16)
 	}
@@ -100,7 +100,7 @@ func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal *governance
 	return nil
 }
 
-func (m *mockGovernanceStore) SetProposals(proposals *bptree.BPTree) error {
+func (m *mockGovernanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error {
 	m.proposals = proposals
 	return nil
 }
@@ -125,7 +125,7 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.
 	return result.(*bptree.BPTree), true
 }
 
-func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error {
+func (m *mockGovernanceStore) SetProposalVotingInfos(_ int, rlm realm, proposalID int64, votingInfos *bptree.BPTree) error {
 	if m.setProposalVotingInfosErr != nil {
 		return m.setProposalVotingInfosErr
 	}
@@ -140,7 +140,7 @@ func (m *mockGovernanceStore) HasProposalUserVotingInfosStoreKey() bool {
 	return m.proposalUserVotingInfos != nil
 }
 
-func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error {
+func (m *mockGovernanceStore) SetProposalUserVotingInfos(_ int, rlm realm, votingInfos *bptree.BPTree) error {
 	m.proposalUserVotingInfos = votingInfos
 	return nil
 }
@@ -161,7 +161,7 @@ func (m *mockGovernanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	return result.([]int64), true
 }
 
-func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) error {
+func (m *mockGovernanceStore) AddUserProposal(_ int, rlm realm, user string, proposalID int64) error {
 	if m.userProposals == nil {
 		m.userProposals = bptree.NewBPTreeN(16)
 	}
@@ -175,7 +175,7 @@ func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) err
 	return nil
 }
 
-func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) error {
+func (m *mockGovernanceStore) RemoveUserProposal(_ int, rlm realm, user string, proposalID int64) error {
 	if m.userProposals == nil {
 		return nil
 	}
@@ -205,7 +205,7 @@ func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) 
 	return nil
 }
 
-func (m *mockGovernanceStore) SetUserProposals(userProposals *bptree.BPTree) error {
+func (m *mockGovernanceStore) SetUserProposals(_ int, rlm realm, userProposals *bptree.BPTree) error {
 	m.userProposals = userProposals
 	return nil
 }
