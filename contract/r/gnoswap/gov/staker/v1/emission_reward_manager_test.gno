@@ -11,7 +11,7 @@ import (
 )
 
 // Test EmissionRewardManager creation
-func TestNewEmissionRewardManager(t *testing.T) {
+func TestNewEmissionRewardManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -21,7 +21,7 @@ func TestNewEmissionRewardManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Create new emission reward manager
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -37,7 +37,7 @@ func TestNewEmissionRewardManager(t *testing.T) {
 }
 
 // Test GetAccumulatedRewardX128PerStake
-func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
+func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func(*EmissionRewardManagerResolver)
@@ -58,7 +58,7 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward manager
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -74,7 +74,7 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 }
 
 // Test GetClaimableRewardAmount
-func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
+func TestEmissionRewardManager_GetClaimableRewardAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		setupManager             func(*EmissionRewardManagerResolver)
@@ -117,7 +117,7 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -137,7 +137,7 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 }
 
 // Test addStake
-func TestEmissionRewardManager_addStake(t *testing.T) {
+func TestEmissionRewardManager_addStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		address          string
@@ -181,7 +181,7 @@ func TestEmissionRewardManager_addStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: New emission reward manager for each test
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -215,7 +215,7 @@ func TestEmissionRewardManager_addStake(t *testing.T) {
 }
 
 // Test removeStake
-func TestEmissionRewardManager_removeStake(t *testing.T) {
+func TestEmissionRewardManager_removeStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		initialAmount    int64
@@ -267,7 +267,7 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Manager with initial stake
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -293,7 +293,7 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 }
 
 // Test claimRewards
-func TestEmissionRewardManager_claimRewards(t *testing.T) {
+func TestEmissionRewardManager_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		setupManager   func(*EmissionRewardManagerResolver)
@@ -324,7 +324,7 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -334,7 +334,7 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 			println("=== Before claiming rewards ===")
 			claimableReward, _ := resolver.GetClaimableRewardAmount(resolver.GetDistributedAmount(), tt.address, tt.currentHeight)
 			println("Claimable reward amount:", claimableReward)
-			reward, err := resolver.claimRewards(tt.address, tt.currentHeight)
+			reward, err := resolver.claimRewards(0, cur, tt.address, tt.currentHeight)
 			println("Actual claimed reward:", reward)
 
 			// Then: Check result
@@ -349,8 +349,8 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 
 }
 
-func TestEmissionRewardManager_claimRewards_MultipleTimes(t *testing.T) {
-	t.Run("Claim rewards multiple times", func(t *testing.T) {
+func TestEmissionRewardManager_claimRewards_MultipleTimes(cur realm, t *testing.T) {
+	t.Run("Claim rewards multiple times", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -358,10 +358,10 @@ func TestEmissionRewardManager_claimRewards_MultipleTimes(t *testing.T) {
 		resolver.updateAccumulatedRewardX128PerStake(1000, 20)
 
 		// when - claim rewards multiple times
-		claimed1, err1 := resolver.claimRewards("user1", 30)
+		claimed1, err1 := resolver.claimRewards(0, cur, "user1", 30)
 		uassert.NoError(t, err1)
 
-		claimed2, err2 := resolver.claimRewards("user1", 40)
+		claimed2, err2 := resolver.claimRewards(0, cur, "user1", 40)
 		uassert.NoError(t, err2)
 
 		// then - second claim should return zero (no new rewards)
@@ -371,7 +371,7 @@ func TestEmissionRewardManager_claimRewards_MultipleTimes(t *testing.T) {
 }
 
 // Test calculateAccumulatedRewardX128PerStake
-func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing.T) {
+func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		setupManager             func(*EmissionRewardManagerResolver)
@@ -439,7 +439,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -468,7 +468,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 }
 
 // Test updateAccumulatedRewardX128PerStake
-func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T) {
+func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		setupManager             func(*EmissionRewardManagerResolver)
@@ -521,7 +521,7 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
@@ -553,7 +553,7 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 // internally a NewEmissionRewardState(...) is created. If rewardStates.Set(...) is missing,
 // the new state is not persisted in the tree, and this was a bug.
 // With the fixed code, the state should be saved correctly.
-func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing.T) {
+func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(cur realm, t *testing.T) {
 	manager := staker.NewEmissionRewardManager()
 	resolver := NewEmissionRewardManagerResolver(manager)
 
@@ -585,7 +585,7 @@ func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing
 // the updated staked amount must be persisted in the tree.
 // In the buggy version, this may rely on pointer aliasing instead of Set persistence.
 // This test ensures round-trip read/write correctness.
-func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
+func TestEmissionRewardManager_removeStake_updatesPersistedState(cur realm, t *testing.T) {
 	manager := staker.NewEmissionRewardManager()
 	resolver := NewEmissionRewardManagerResolver(manager)
 
@@ -609,7 +609,7 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
 	uassert.Equal(t, rs.GetStakedAmount(), int64(700))
 
 	// Extra check: subsequent operations should remain consistent
-	claimed, err := resolver.claimRewards(addr, 120)
+	claimed, err := resolver.claimRewards(0, cur, addr, 120)
 	uassert.NoError(t, err)
 	// Since no rewards were distributed, claimed amount should be zero
 	uassert.Equal(t, claimed, int64(0))
@@ -617,8 +617,8 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
 
 // TestEmissionRewardManager_DistributeWithZeroTotalStake tests distribution when totalStakedAmount is zero
 // Critical: Validates safe handling of division by zero in reward calculations
-func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
-	t.Run("distribute with zero total stake - returns zero without panic", func(t *testing.T) {
+func TestEmissionRewardManager_DistributeWithZeroTotalStake(cur realm, t *testing.T) {
+	t.Run("distribute with zero total stake - returns zero without panic", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -639,7 +639,7 @@ func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
 		uassert.Equal(t, accumulatedReward.ToString(), "0")
 	})
 
-	t.Run("distribute after all stakes removed", func(t *testing.T) {
+	t.Run("distribute after all stakes removed", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -669,7 +669,7 @@ func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
 		uassert.Equal(t, accumulatedReward.ToString(), "0")
 	})
 
-	t.Run("add stake after zero stake period", func(t *testing.T) {
+	t.Run("add stake after zero stake period", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -695,8 +695,8 @@ func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
 }
 
 // TestEmissionRewardManager_ZeroStakeEdgeCases tests additional edge cases with zero stakes
-func TestEmissionRewardManager_ZeroStakeEdgeCases(t *testing.T) {
-	t.Run("multiple users all remove stakes", func(t *testing.T) {
+func TestEmissionRewardManager_ZeroStakeEdgeCases(cur realm, t *testing.T) {
+	t.Run("multiple users all remove stakes", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -722,7 +722,7 @@ func TestEmissionRewardManager_ZeroStakeEdgeCases(t *testing.T) {
 		uassert.Equal(t, accumulatedReward.ToString(), "0")
 	})
 
-	t.Run("claim rewards when total stake becomes zero", func(t *testing.T) {
+	t.Run("claim rewards when total stake becomes zero", func(cur realm, t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -738,7 +738,7 @@ func TestEmissionRewardManager_ZeroStakeEdgeCases(t *testing.T) {
 		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 
 		// when - Try to claim rewards after stake removal
-		claimed, err := resolver.claimRewards(addr, 40)
+		claimed, err := resolver.claimRewards(0, cur, addr, 40)
 
 		// then - Should successfully claim earned rewards
 		uassert.NoError(t, err)

@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -17,7 +17,7 @@ var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 func resetTestState(t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(unsafe.CurrentRealm().Address())
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/gov/staker",
 		kvStore,
@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IGovStakerStore) IGovStaker {
-	return func(_ IGovStakerStore) IGovStaker {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IGovStakerStore) IGovStaker {
+	return func(_ int, rlm realm, _ IGovStakerStore) IGovStaker {
 		return newMockGovStaker(version)
 	}
 }

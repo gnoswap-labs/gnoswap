@@ -8,7 +8,7 @@ import (
 )
 
 // TestNewLaunchpadProjectDeposits tests creating a new launchpad project deposits
-func TestNewLaunchpadProjectDeposits(t *testing.T) {
+func TestNewLaunchpadProjectDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -18,7 +18,7 @@ func TestNewLaunchpadProjectDeposits(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			lpd := NewLaunchpadProjectDeposits()
 
@@ -31,7 +31,7 @@ func TestNewLaunchpadProjectDeposits(t *testing.T) {
 }
 
 // TestLaunchpadProjectDeposits_SetAndGetDeposits tests setter and getter
-func TestLaunchpadProjectDeposits_SetAndGetDeposits(t *testing.T) {
+func TestLaunchpadProjectDeposits_SetAndGetDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		depositsToSet     map[string]int64
@@ -61,7 +61,7 @@ func TestLaunchpadProjectDeposits_SetAndGetDeposits(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			lpd := NewLaunchpadProjectDeposits()
 			newTree := bptree.NewBPTreeN(16)
@@ -88,7 +88,7 @@ func TestLaunchpadProjectDeposits_SetAndGetDeposits(t *testing.T) {
 }
 
 // TestLaunchpadProjectDeposits_Operations tests tree operations
-func TestLaunchpadProjectDeposits_Operations(t *testing.T) {
+func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -98,7 +98,7 @@ func TestLaunchpadProjectDeposits_Operations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			lpd := NewLaunchpadProjectDeposits()
 			deposits := lpd.GetDeposits()

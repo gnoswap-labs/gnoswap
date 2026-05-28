@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func TestAddDelegationRecord_Comprehensive(t *testing.T) {
+func TestAddDelegationRecord_Comprehensive(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		delegations []struct {
@@ -123,12 +123,12 @@ func TestAddDelegationRecord_Comprehensive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Add all delegation records
 			for _, d := range tt.delegations {
-				gs.addDelegationRecord(d.delegatee, d.amount, d.timestamp)
+				gs.addDelegationRecord(0, cur, d.delegatee, d.amount, d.timestamp)
 			}
 
 			// Verify total delegation history
@@ -151,7 +151,7 @@ func TestAddDelegationRecord_Comprehensive(t *testing.T) {
 	}
 }
 
-func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
+func TestUpdateTotalDelegationHistory_Comprehensive(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		initialHistory func() *staker.UintTree
@@ -215,12 +215,12 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			store.totalDelegationHistory = tt.initialHistory()
 
 			gs := &govStakerV1{store: store}
-			gs.updateTotalDelegationHistory(tt.amount, tt.timestamp)
+			gs.updateTotalDelegationHistory(0, cur, tt.amount, tt.timestamp)
 
 			// Verify the new total at timestamp
 			amount, found := gs.GetTotalDelegationAmountAtSnapshot(tt.timestamp)
@@ -230,7 +230,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 	}
 }
 
-func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
+func TestUpdateUserDelegationHistory_Comprehensive(cur realm, t *testing.T) {
 	user1 := address("g1user0000000000000000000000000000000001")
 
 	tests := []struct {
@@ -290,12 +290,12 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			store.userDelegationHistory = tt.initialHistory()
 
 			gs := &govStakerV1{store: store}
-			gs.updateUserDelegationHistory(tt.delegatee, tt.amount, tt.timestamp)
+			gs.updateUserDelegationHistory(0, cur, tt.delegatee, tt.amount, tt.timestamp)
 
 			// Verify the new amount at timestamp
 			amount, found := gs.GetUserDelegationAmountAtSnapshot(tt.delegatee, tt.timestamp)
@@ -305,7 +305,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 	}
 }
 
-func TestGetLatestTotalDelegation(t *testing.T) {
+func TestGetLatestTotalDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		setupHistory   func() *staker.UintTree
@@ -352,7 +352,7 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := &govStakerV1{store: newMockGovStakerStore()}
 			history := tt.setupHistory()
 
@@ -363,7 +363,7 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 	}
 }
 
-func TestGetLatestUserDelegationByAddress(t *testing.T) {
+func TestGetLatestUserDelegationByAddress(cur realm, t *testing.T) {
 	addr := "g1user0000000000000000000000000000000001"
 
 	tests := []struct {
@@ -411,7 +411,7 @@ func TestGetLatestUserDelegationByAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := &govStakerV1{store: newMockGovStakerStore()}
 			history := tt.setupHistory()
 

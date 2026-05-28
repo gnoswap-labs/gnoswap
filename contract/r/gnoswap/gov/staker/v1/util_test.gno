@@ -10,7 +10,7 @@ import (
 )
 
 // TestFormatUint tests uint64 formatting
-func TestFormatUint(t *testing.T) {
+func TestFormatUint(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    uint64
@@ -34,7 +34,7 @@ func TestFormatUint(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := formatUint(tc.input)
 
@@ -45,7 +45,7 @@ func TestFormatUint(t *testing.T) {
 }
 
 // TestFormatInt tests int64 formatting
-func TestFormatInt(t *testing.T) {
+func TestFormatInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int64
@@ -79,7 +79,7 @@ func TestFormatInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := formatInt(tc.input)
 
@@ -90,7 +90,7 @@ func TestFormatInt(t *testing.T) {
 }
 
 // TestUtil_marshal tests JSON marshalling
-func TestUtil_marshal(t *testing.T) {
+func TestUtil_marshal(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func() *json.Node
@@ -126,7 +126,7 @@ func TestUtil_marshal(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			data := tc.setup()
 
@@ -140,7 +140,7 @@ func TestUtil_marshal(t *testing.T) {
 }
 
 // TestUtil_getUint64FromTree tests retrieving uint64 from BPTree
-func TestUtil_getUint64FromTree(t *testing.T) {
+func TestUtil_getUint64FromTree(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func() (*bptree.BPTree, string)
@@ -187,13 +187,13 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			tree, key := tc.setup()
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					getUint64FromTree(tree, key)
 				})
 			} else {
@@ -205,7 +205,7 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 }
 
 // TestUtil_updateUint64InTree tests updating uint64 in BPTree
-func TestUtil_updateUint64InTree(t *testing.T) {
+func TestUtil_updateUint64InTree(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func() (*bptree.BPTree, string, uint64, bool)
@@ -281,13 +281,13 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			tree, key, delta, add := tc.setup()
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					updateUint64InTree(tree, key, delta, add)
 				})
 			} else {
@@ -299,7 +299,7 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 }
 
 // TestUtil_getOrCreateInnerTree tests getting or creating inner BPTree
-func TestUtil_getOrCreateInnerTree(t *testing.T) {
+func TestUtil_getOrCreateInnerTree(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func() (*bptree.BPTree, string)
@@ -336,13 +336,13 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			tree, key := tc.setup()
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, "failed to cast value to *bptree.BPTree: uint64", func() {
+				uassert.PanicsWithMessage(t, cur, "failed to cast value to *bptree.BPTree: uint64", func() {
 					getOrCreateInnerTree(tree, "key1")
 				})
 			} else {
@@ -362,7 +362,7 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 }
 
 // TestUtil_milliToSec tests milliseconds to seconds conversion
-func TestUtil_milliToSec(t *testing.T) {
+func TestUtil_milliToSec(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int64
@@ -401,7 +401,7 @@ func TestUtil_milliToSec(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := milliToSec(tc.input)
 
@@ -412,7 +412,7 @@ func TestUtil_milliToSec(t *testing.T) {
 }
 
 // TestUtil_safeConvertToInt64 tests safe conversion from uint256 to int64
-func TestUtil_safeConvertToInt64(t *testing.T) {
+func TestUtil_safeConvertToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                *u256.Uint
@@ -449,11 +449,11 @@ func TestUtil_safeConvertToInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					safeConvertToInt64(tc.input)
 				})
 			} else {

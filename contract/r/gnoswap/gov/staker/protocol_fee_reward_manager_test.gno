@@ -9,8 +9,8 @@ import (
 )
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
-func TestNewProtocolFeeRewardManager(t *testing.T) {
-	t.Run("Create new protocol fee reward manager", func(t *testing.T) {
+func TestNewProtocolFeeRewardManager(cur realm, t *testing.T) {
+	t.Run("Create new protocol fee reward manager", func(cur realm, t *testing.T) {
 		// when
 		manager := NewProtocolFeeRewardManager()
 
@@ -24,7 +24,7 @@ func TestNewProtocolFeeRewardManager(t *testing.T) {
 }
 
 // TestProtocolFeeRewardManager_SettersAndGetters tests all setter and getter methods
-func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
+func TestProtocolFeeRewardManager_SettersAndGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                               string
 		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
@@ -55,7 +55,7 @@ func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
 
@@ -86,7 +86,7 @@ func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 }
 
 // TestProtocolFeeRewardManager_RewardState tests reward state management
-func TestProtocolFeeRewardManager_RewardState(t *testing.T) {
+func TestProtocolFeeRewardManager_RewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		address string
@@ -98,7 +98,7 @@ func TestProtocolFeeRewardManager_RewardState(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
 			rewardState := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
@@ -116,7 +116,7 @@ func TestProtocolFeeRewardManager_RewardState(t *testing.T) {
 }
 
 // TestProtocolFeeRewardManager_GetRewardState_NonExistent tests getting non-existent state
-func TestProtocolFeeRewardManager_GetRewardState_NonExistent(t *testing.T) {
+func TestProtocolFeeRewardManager_GetRewardState_NonExistent(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		address string
@@ -128,7 +128,7 @@ func TestProtocolFeeRewardManager_GetRewardState_NonExistent(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
 
@@ -143,7 +143,7 @@ func TestProtocolFeeRewardManager_GetRewardState_NonExistent(t *testing.T) {
 }
 
 // TestProtocolFeeRewardManager_SetRewardStates tests setting entire reward states tree
-func TestProtocolFeeRewardManager_SetRewardStates(t *testing.T) {
+func TestProtocolFeeRewardManager_SetRewardStates(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		addresses []string
@@ -155,7 +155,7 @@ func TestProtocolFeeRewardManager_SetRewardStates(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
 			newTree := bptree.NewBPTreeN(16)

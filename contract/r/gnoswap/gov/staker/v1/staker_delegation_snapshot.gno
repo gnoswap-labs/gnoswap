@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -25,23 +24,27 @@ import (
 //   - if period is negative
 //
 // Note: This change affects all future undelegation operations
-func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
+func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovStaker()
 
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsAdmin(caller)
 
 	if period < 0 {
 		panic("period must be greater than 0")
 	}
 
-	gs.setUnDelegationLockupPeriod(period)
+	gs.setUnDelegationLockupPeriod(0, rlm, period)
 
 	chain.Emit(
 		"SetUnDelegationLockupPeriod",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"period", formatInt(period),
 	)
 }
@@ -64,26 +67,30 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 //   - if caller is not admin
 //   - if snapshotTime is invalid (negative or too recent)
 //   - if active proposals have snapshotTime older than the cleanup threshold
-func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, target address) {
+func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, snapshotTime int64, target address) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovStaker()
 
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsAdmin(caller)
 
 	assertIsValidSnapshotTime(snapshotTime)
 	assertIsAvailableCleanupSnapshotTime(snapshotTime)
 
 	// Clean total delegation history
-	gs.cleanTotalDelegationHistory(snapshotTime)
+	gs.cleanTotalDelegationHistory(0, rlm, snapshotTime)
 
 	// Clean user delegation history
-	gs.cleanUserDelegationHistoryForAddress(target, snapshotTime)
+	gs.cleanUserDelegationHistoryForAddress(0, rlm, target, snapshotTime)
 
 	chain.Emit(
 		"CleanStakerDelegationSnapshot",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"snapshotTime", formatInt(snapshotTime),
 		"target", target.String(),
 	)
@@ -91,7 +98,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, 
 
 // cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.
 // Keeps the most recent entry before cutoff to preserve state continuity.
-func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
+func (gs *govStakerV1) cleanTotalDelegationHistory(_ int, rlm realm, cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
 
 	// First, find the most recent entry before cutoff to preserve state
@@ -121,7 +128,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 		history.Remove(key)
 	}
 
-	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
+	if err := gs.store.SetTotalDelegationHistory(0, rlm, history); err != nil {
 		panic(err)
 	}
 }
@@ -130,7 +137,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 // older than cutoff time for a single target address.
 // Keeps the most recent entry strictly before cutoff
 // in place so range-based snapshot lookups continue to resolve correctly.
-func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(target address, cutoffTimestamp int64) {
+func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(_ int, rlm realm, target address, cutoffTimestamp int64) {
 	if cutoffTimestamp <= 0 {
 		return
 	}
@@ -171,7 +178,7 @@ func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(target address, cuto
 		history.Remove(key)
 	}
 
-	if err := gs.store.SetUserDelegationHistory(history); err != nil {
+	if err := gs.store.SetUserDelegationHistory(0, rlm, history); err != nil {
 		panic(err)
 	}
 }
