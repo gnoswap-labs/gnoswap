@@ -47,7 +47,9 @@ func init() {
     manager = version_manager.NewVersionManager(
         "gno.land/r/gnoswap/protocol_fee",
         kvStore,
-        func(kv store.KVStore) any {
+        // initializeDomainStoreFn carries the v2 interrealm marker (`_ int, rlm realm`):
+        // the leading 0 surfaces realm-threading at the call site.
+        func(_ int, rlm realm, kv store.KVStore) any {
             return NewProtocolFeeStore(kv)
         },
     )
@@ -55,6 +57,24 @@ func init() {
 
 func GetManager() version_manager.VersionManager {
     return manager
+}
+
+// RegisterInitializer is the crossing entry point each version package calls.
+// `cur` is the live crossing-frame realm token; it is threaded straight into the
+// version manager (the leading 0 is the v2 sentinel) so the manager can reject
+// spoofed/stale tokens via rlm.IsCurrent() and identify the caller via rlm.Previous().
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, store any) any) {
+    if err := manager.RegisterInitializer(0, cur, initializer); err != nil {
+        panic(err)
+    }
+}
+
+// UpgradeImpl switches the active version. Authorization (admin / governance) is
+// enforced here in the /r/ realm; version_manager only rejects spoofed tokens.
+func UpgradeImpl(cur realm, packagePath string) {
+    if err := manager.ChangeImplementation(0, cur, packagePath); err != nil {
+        panic(err)
+    }
 }
 ```
 
@@ -71,9 +91,10 @@ type protocolFeeV1 struct {
 }
 
 func init() {
-    // Register this version during package initialization
-    manager := protocol_fee.GetManager()
-    manager.RegisterInitializer(func(store any) any {
+    // Register this version during package initialization.
+    // `cross` invokes the domain's crossing entry point, which threads the
+    // live realm token into the version manager.
+    protocol_fee.RegisterInitializer(cross, func(_ int, rlm realm, store any) any {
         return &protocolFeeV1{store: store}
     })
 }
@@ -96,9 +117,8 @@ type protocolFeeV2 struct {
 }
 
 func init() {
-    // Register v2
-    manager := protocol_fee.GetManager()
-    manager.RegisterInitializer(func(store any) any {
+    // Register v2 — read-only until explicitly activated.
+    protocol_fee.RegisterInitializer(cross, func(_ int, rlm realm, store any) any {
         return &protocolFeeV2{store: store}
     })
 }
@@ -130,12 +150,11 @@ func UseFee() {
 ### Step 5: Switch Versions at Runtime
 
 ```go
-// governance or admin function
-func UpgradeToV2() error {
-    manager := protocol_fee.GetManager()
-
-    // Hot-swap to v2 - zero downtime
-    return manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v2")
+// governance or admin entry point
+func UpgradeToV2(cur realm) {
+    // Hot-swap to v2 — zero downtime. `cross` enters UpgradeImpl's crossing
+    // frame; UpgradeImpl threads the realm token into the version manager.
+    protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v2")
 }
 ```
 
@@ -146,11 +165,12 @@ func UpgradeToV2() error {
 ```
 1. Domain package initializes version manager with KVStore
    ↓
-2. v1 package calls RegisterInitializer during init()
+2. v1 package calls RegisterInitializer (via the domain's crossing wrapper) during init()
+   → Manager validates the realm token (rlm.IsCurrent()) and caller domain path
    → Becomes active implementation
    ↓
 3. v2 package calls RegisterInitializer during init()
-   → Registered
+   → Registered (read-only until activated)
    ↓
 4. v3 package calls RegisterInitializer during init()
    → Registered
@@ -159,22 +179,25 @@ func UpgradeToV2() error {
 ### Version Switching Flow
 
 ```
-1. Admin calls ChangeImplementation("path/to/v2")
+1. Admin/governance calls ChangeImplementation (via the domain's UpgradeImpl wrapper)
+   → Authorization is enforced in the /r/ wrapper
    ↓
-2. Version Manager retrieves v2's initializer
+2. Version Manager validates the realm token (rlm.IsCurrent()), rejecting spoofed/stale tokens
    ↓
-3. Executes v2 initializer with shared KVStore
+3. Version Manager retrieves v2's initializer
    ↓
-4. Updates currentImplementation pointer to v2
+4. Executes v2 initializer with shared KVStore
    ↓
-5. v2 is now the active implementation
+5. Updates currentImplementation pointer to v2
+   ↓
+6. v2 is now the active implementation
 ```
 
 ### Storage Access Model
 
 - **Domain Ownership**: The domain (proxy) realm owns the KVStore and has write permission
-- **Realm Context Preservation**: When domain calls implementation, `runtime.CurrentRealm()` remains the domain realm
-- **No Direct Permission Grants**: Implementation realms do not receive storage permissions directly
+- **Explicit Realm Threading**: Registration/upgrade calls thread the live crossing-frame token (`rlm`) into the manager instead of relying on `runtime.CurrentRealm()`. The manager validates it with `rlm.IsCurrent()` (rejecting spoofed/stale tokens) and identifies the registering version package via `rlm.Previous()`
+- **No Direct Permission Grants**: Implementation realms do not receive storage permissions directly; the proxy realm drives all storage access
 - **Security by Design**: External callers cannot invoke implementation realms to modify storage
 
 ### Best Practices
@@ -189,6 +212,7 @@ func UpgradeToV2() error {
 
 The package returns errors for:
 
+- A spoofed or stale realm token (`rlm.IsCurrent() == false` → `ErrSpoofedRealm`)
 - Unauthorized caller attempting to register (not in domain path)
 - Duplicate registration of the same package path
 - Attempting to switch to an unregistered version
@@ -202,7 +226,7 @@ Upgrade DeFi protocol logic without disrupting active users:
 
 ```go
 // Upgrade fee calculation algorithm
-manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v2")
+protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v2")
 ```
 
 ### A/B Testing
@@ -211,10 +235,10 @@ Test new implementations before full rollout:
 
 ```go
 // Switch to experimental version
-manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/experimental")
+protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/experimental")
 
 // Rollback if issues detected
-manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
+protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v1")
 ```
 
 ### Emergency Response
@@ -223,14 +247,14 @@ Quickly switch to a patched version during security incidents:
 
 ```go
 // Deploy fixed version and immediately activate
-manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
+protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 ```
 
 ## Implementation Notes
 
 - Built on Strategy Pattern for runtime algorithm swapping
 - Uses Plugin Architecture for dynamic version loading
-- Storage access controlled via realm context (`runtime.CurrentRealm()`)
+- Storage access is driven by the proxy realm; the live realm token is threaded explicitly (the v2 `_ int, rlm realm` marker) and validated via `rlm.IsCurrent()`
 - No data migration required - all versions share the same storage
 - Type assertions required when retrieving current implementation
 - Map used for efficient initializer storage and lookup
