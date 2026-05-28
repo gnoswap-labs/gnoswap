@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -41,11 +40,12 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Caller is not admin/governance
 //   - Fee > 1000 bps (10%)
 //   - Router or ProtocolFee is halted
-func (r *routerV1) SetSwapFee(fee uint64) {
+func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	// max swap fee is 1000 (bps)
@@ -61,7 +61,6 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
@@ -73,12 +72,13 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func (r *routerV1) handleSwapFee(
+	rlm realm,
 	outputToken string,
 	amount int64,
 ) int64 {
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
-		r.addToProtocolFee()
+		r.addToProtocolFee(rlm)
 		return amount
 	}
 
@@ -86,9 +86,9 @@ func (r *routerV1) handleSwapFee(
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
-	r.addToProtocolFee()
+	r.addToProtocolFee(rlm)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
@@ -120,7 +120,7 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (r *routerV1) addToProtocolFee() {
+func (r *routerV1) addToProtocolFee(rlm realm) {
 	pendingProtocolFees := r.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
@@ -133,8 +133,8 @@ func (r *routerV1) addToProtocolFee() {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
 			remainingProtocolFees[tokenPath] = amount
 			continue
 		}

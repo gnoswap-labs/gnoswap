@@ -9,10 +9,10 @@ import (
 )
 
 // TestSwapCallback tests the SwapCallback function with various scenarios
-func TestSwapCallback(t *testing.T) {
+func TestSwapCallback(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupFunc        func(t *testing.T) address // returns payer address
+		setupFunc        func(cur realm, t *testing.T) address // returns payer address
 		amount0Delta     string
 		amount1Delta     string
 		callerRealmPath  string
@@ -21,12 +21,12 @@ func TestSwapCallback(t *testing.T) {
 	}{
 		{
 			name: "success with token0 payment",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				TokenFaucet(t, barPath, routerAddr)
-				TokenFaucet(t, bazPath, routerAddr)
+				CreatePoolWithoutFee(cur, t)
+				MakeMintPositionWithoutFee(cur, t)
+				TokenFaucet(cur, t, barPath, routerAddr)
+				TokenFaucet(cur, t, bazPath, routerAddr)
 				return routerAddr
 			},
 			amount0Delta:    "1000",
@@ -36,12 +36,12 @@ func TestSwapCallback(t *testing.T) {
 		},
 		{
 			name: "success with token1 payment",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				TokenFaucet(t, barPath, routerAddr)
-				TokenFaucet(t, bazPath, routerAddr)
+				CreatePoolWithoutFee(cur, t)
+				MakeMintPositionWithoutFee(cur, t)
+				TokenFaucet(cur, t, barPath, routerAddr)
+				TokenFaucet(cur, t, bazPath, routerAddr)
 				return routerAddr
 			},
 			amount0Delta:    "0",
@@ -51,9 +51,9 @@ func TestSwapCallback(t *testing.T) {
 		},
 		{
 			name: "success with both deltas zero",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
+				CreatePoolWithoutFee(cur, t)
 				return routerAddr
 			},
 			amount0Delta:    "0",
@@ -63,15 +63,15 @@ func TestSwapCallback(t *testing.T) {
 		},
 		{
 			name: "success with user as payer",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
+				CreatePoolWithoutFee(cur, t)
+				MakeMintPositionWithoutFee(cur, t)
 				testUser := testutils.TestAddress("testUser")
-				TokenFaucet(t, barPath, testUser)
-				TokenFaucet(t, bazPath, testUser)
-				TokenApprove(t, barPath, testUser, routerAddr, maxApprove)
-				TokenApprove(t, bazPath, testUser, routerAddr, maxApprove)
+				TokenFaucet(cur, t, barPath, testUser)
+				TokenFaucet(cur, t, bazPath, testUser)
+				TokenApprove(cur, t, barPath, testUser, routerAddr, maxApprove)
+				TokenApprove(cur, t, bazPath, testUser, routerAddr, maxApprove)
 				return testUser
 			},
 			amount0Delta:    "1000",
@@ -81,9 +81,9 @@ func TestSwapCallback(t *testing.T) {
 		},
 		{
 			name: "fail with invalid caller",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
+				CreatePoolWithoutFee(cur, t)
 				return routerAddr
 			},
 			amount0Delta:     "1000",
@@ -94,10 +94,10 @@ func TestSwapCallback(t *testing.T) {
 		},
 		{
 			name: "fail with insufficient balance",
-			setupFunc: func(t *testing.T) address {
+			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(t)
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
+				CreatePoolWithoutFee(cur, t)
+				MakeMintPositionWithoutFee(cur, t)
 				poorUser := testutils.TestAddress("poorUser")
 				return poorUser
 			},
@@ -110,7 +110,7 @@ func TestSwapCallback(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			payer := tt.setupFunc(t)
 
@@ -119,7 +119,7 @@ func TestSwapCallback(t *testing.T) {
 
 			// Execute
 			if tt.shouldError {
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
 					mockInstanceSwapCallback(
 						barPath,
 						bazPath,
@@ -143,7 +143,7 @@ func TestSwapCallback(t *testing.T) {
 }
 
 // TestSwapCallback_AssertIsRouterV1 tests the assertIsRouterV1 function with various caller types
-func TestSwapCallback_AssertIsRouterV1(t *testing.T) {
+func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		callerAddress    address
@@ -194,10 +194,10 @@ func TestSwapCallback_AssertIsRouterV1(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute and verify
 			if tt.shouldError {
-				uassert.PanicsContains(t, tt.expectedErrorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedErrorMsg, func() {
 					assertIsRouterV1(tt.callerAddress)
 				})
 			} else {

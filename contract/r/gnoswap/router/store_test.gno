@@ -8,20 +8,20 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestStoreInitialization(t *testing.T) {
+func TestStoreInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(*testing.T)
 	}{
 		{
 			name: "kvStore should be initialized",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 			},
 		},
 		{
 			name: "domain address should not be empty",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				domainAddr := kvStore.GetDomainAddress()
 				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
 			},
@@ -29,14 +29,14 @@ func TestStoreInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			tt.verifyFn(t)
 		})
 	}
 }
 
-func TestStore_AuthorizedCallers(t *testing.T) {
+func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		callerRealm                   runtime.Realm
@@ -74,7 +74,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			rs := NewRouterStore(kvStore)
@@ -86,7 +86,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
-				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+				uassert.PanicsContains(t, cur, tc.expectedErrorMessageWithRead, func() {
 					rs.GetSwapFee()
 				})
 			} else {
@@ -103,7 +103,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 }
 
-func TestStoreSwapFee(t *testing.T) {
+func TestStoreSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFn      func(IRouterStore)
@@ -160,7 +160,7 @@ func TestStoreSwapFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			rs := NewRouterStore(kvStore)
 
@@ -180,7 +180,7 @@ func TestStoreSwapFee(t *testing.T) {
 	}
 }
 
-func TestStoreUpdateSwapFee(t *testing.T) {
+func TestStoreUpdateSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		initialFee uint64
@@ -209,7 +209,7 @@ func TestStoreUpdateSwapFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			rs := NewRouterStore(kvStore)

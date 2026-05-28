@@ -32,12 +32,14 @@ var (
 // singleSwap executes a swap within a single pool using the provided parameters.
 // It processes a token swap within two assets using a specific fee tier and
 // automatically sets the recipient to the caller's address.
-func (r *routerV1) singleSwap(p *SingleSwapParams) (int64, int64) {
-	return r.executeSwap(&RealSwapExecutor{router: r}, p)
+func (r *routerV1) singleSwap(rlm realm, p *SingleSwapParams) (int64, int64) {
+	return r.executeSwap(&RealSwapExecutor{rlm: rlm, router: r}, p)
 }
 
 // singleDrySwap simulates a single-token swap operation without executing it.
-// It performs a dry run simulation and does not alter the state.
-func (r *routerV1) singleDrySwap(p *SingleSwapParams) (int64, int64) {
-	return r.executeSwap(&DrySwapExecutor{router: r}, p)
+// It performs a dry run simulation and does not alter the state. The payer is
+// the address resolved at the entry point (DrySwapRoute) since dry-run paths
+// do not have realm context.
+func (r *routerV1) singleDrySwap(payer address, p *SingleSwapParams) (int64, int64) {
+	return r.executeSwap(&DrySwapExecutor{router: r, payer: payer}, p)
 }
