@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -104,7 +103,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver.IncentivesResolver().create(incentive)
 
 	// add incentive to time-based index for lazy discovery during CollectReward
-	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
+	s.addIncentiveIdByCreationTime(0, rlm, targetPoolPath, incentiveId, currentTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -400,7 +399,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 //
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveIds
-func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+func (s *stakerV1) addIncentiveIdByCreationTime(_ int, rlm realm, poolPath, incentiveId string, creationTime int64) {
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
 	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
@@ -427,5 +426,5 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
 	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
 
-	s.updateExternalIncentivesByCreationTime(incentivesByTime)
+	s.updateExternalIncentivesByCreationTime(0, rlm, incentivesByTime)
 }

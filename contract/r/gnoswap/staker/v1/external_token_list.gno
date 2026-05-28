@@ -30,7 +30,7 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
+	if err := modifyTokenList(0, rlm, s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
@@ -63,7 +63,7 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	if err := modifyTokenList(0, rlm, s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
@@ -82,7 +82,7 @@ type TokenValidator func(tokenPath string) error
 type TokenExecutor func(tokenPath string, tokens []string) []string
 
 // modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(s *stakerV1, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
+func modifyTokenList(_ int, rlm realm, s *stakerV1, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
 	// validate token operation if validator is provided
 	if validator != nil {
 		if err := validator(tokenPath); err != nil {
@@ -92,7 +92,7 @@ func modifyTokenList(s *stakerV1, tokenPath string, validator TokenValidator, ex
 
 	allowedTokens := s.store.GetAllowedTokens()
 	allowedTokens = executor(tokenPath, allowedTokens)
-	s.store.SetAllowedTokens(allowedTokens)
+	s.store.SetAllowedTokens(0, rlm, allowedTokens)
 	return nil
 }
 

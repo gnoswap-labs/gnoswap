@@ -149,7 +149,7 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 
 // emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
+func (s *stakerV1) emissionCacheUpdateHook(cur realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
@@ -164,7 +164,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 		// Now apply the new emission rate to each pool individually
 		poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
 
-		s.updatePoolTier(poolTier)
+		s.updatePoolTier(0, cur, poolTier)
 	}
 }
 
@@ -276,7 +276,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(currentTime, pools)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, cur, poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
@@ -605,7 +605,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err := s.store.SetTotalEmissionSent(totalEmissionSent)
+	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}

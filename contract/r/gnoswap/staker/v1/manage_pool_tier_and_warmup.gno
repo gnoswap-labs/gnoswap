@@ -138,7 +138,7 @@ func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, c
 	}
 	poolTier := s.getPoolTier()
 	poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
@@ -148,7 +148,7 @@ func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64
 	previousTier := poolTier.CurrentTier(poolPath)
 
 	poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 
 	return previousTier, tier
 }
@@ -159,7 +159,7 @@ func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime
 
 	poolTier := s.getPoolTier()
 	poolTier.changeTier(currentTime, s.getPools(), poolPath, NOT_EMISSION_TARGET_TIER)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 }
 
 // setWarmUp internally sets the warm-up parameters.
@@ -169,7 +169,7 @@ func (s *stakerV1) setWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	warmupTemplate := s.store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, pctToIndex(pct), timeDuration)
 
-	err := s.store.SetWarmupTemplate(warmupTemplate)
+	err := s.store.SetWarmupTemplate(0, rlm, warmupTemplate)
 	if err != nil {
 		panic(err)
 	}

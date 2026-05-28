@@ -105,7 +105,7 @@ func ChangeDistributionPct(
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
 		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
 
 	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)

@@ -36,8 +36,8 @@ func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, p
 		panic(ErrSpoofedRealm)
 	}
 
-	pool.SetTickCrossHook(cross(rlm), func(hookCur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(hookCur, poolPath, tickId, zeroForOne, timestamp)
+	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(cross(cur), poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
@@ -46,8 +46,8 @@ func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, p
 		panic(ErrSpoofedRealm)
 	}
 
-	pool.SetSwapStartHook(cross(rlm), func(hookCur realm, poolPath string, timestamp int64) {
-		hook(hookCur, poolPath, timestamp)
+	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
+		hook(cross(cur), poolPath, timestamp)
 	})
 }
 
@@ -56,8 +56,8 @@ func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poo
 		panic(ErrSpoofedRealm)
 	}
 
-	pool.SetSwapEndHook(cross(rlm), func(hookCur realm, poolPath string) error {
-		return hook(hookCur, poolPath)
+	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
+		return hook(cross(cur), poolPath)
 	})
 }
 
@@ -69,7 +69,7 @@ type EmissionAccessor interface {
 	MintAndDistributeGns(_ int, rlm realm) (int64, bool)
 	GetStakerEmissionAmountPerSecond() int64
 	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64)
-	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(emissionAmountPerSecond int64))
+	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(cur realm, emissionAmountPerSecond int64))
 }
 
 type emissionAccessor struct{}
@@ -90,7 +90,7 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(emissionAmountPerSecond int64)) {
+func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(cur realm, emissionAmountPerSecond int64)) {
 	if !rlm.IsCurrent() {
 		panic(ErrSpoofedRealm)
 	}

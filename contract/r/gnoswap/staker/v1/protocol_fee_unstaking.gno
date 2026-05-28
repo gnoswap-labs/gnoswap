@@ -45,13 +45,13 @@ func (s *stakerV1) handleStakingRewardFee(
 		tokenPath = GNS_PATH
 	}
 
-	s.addPendingProtocolFee(tokenPath, feeAmount)
+	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
 	s.addToProtocolFee(0, rlm)
 
 	return safeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
-func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
@@ -62,7 +62,7 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	if err := s.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -91,7 +91,7 @@ func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
 		}
 	}
 
-	if err := s.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+	if err := s.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -113,7 +113,7 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 
 	prevUnStakingFee := s.GetUnstakingFee()
 
-	err := s.setUnStakingFee(fee)
+	err := s.setUnStakingFee(0, rlm, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -128,6 +128,6 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 }
 
 // setUnStakingFee internally updates the unstaking fee.
-func (s *stakerV1) setUnStakingFee(fee uint64) error {
-	return s.store.SetUnstakingFee(fee)
+func (s *stakerV1) setUnStakingFee(_ int, rlm realm, fee uint64) error {
+	return s.store.SetUnstakingFee(0, rlm, fee)
 }
