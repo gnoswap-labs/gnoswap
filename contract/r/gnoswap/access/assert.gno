@@ -126,8 +126,8 @@ func AssertIsValidAddress(addr address) {
 
 // AssertIsUser panics if the caller is not a user realm.
 // Used to ensure calls come from user accounts, not other contracts.
-func AssertIsUser(cur realm) {
-	if !cur.IsUser() {
+func AssertIsUser(_ int, rlm realm) {
+	if !rlm.IsUser() {
 		panic(errCallerNotUser)
 	}
 }
