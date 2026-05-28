@@ -104,7 +104,7 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	assertIsAllowedTransfer(caller, tid)
 
 	err := nft.SafeTransferFrom(caller, from, to, tid)
-	checkTransferErr(caller, err, from, to, tid)
+	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
 
@@ -130,7 +130,7 @@ func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	assertIsAllowedTransfer(caller, tid)
 
 	err := nft.TransferFrom(caller, from, to, tid)
-	checkTransferErr(caller, err, from, to, tid)
+	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
 
@@ -146,7 +146,7 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 
 	caller := cur.Previous().Address()
 	err := nft.Approve(caller, approved, tid)
-	checkApproveErr(caller, err, approved, tid)
+	checkApproveErr(err, caller, approved, tid)
 	return nil
 }
 

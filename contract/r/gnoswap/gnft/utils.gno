@@ -25,7 +25,7 @@ func checkErr(err error) {
 }
 
 // checkTransferErr wraps transfer errors with more specific context.
-func checkTransferErr(caller address, err error, from, to address, tid grc721.TokenID) {
+func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
@@ -67,7 +67,7 @@ func checkTransferErr(caller address, err error, from, to address, tid grc721.To
 }
 
 // checkApproveErr wraps approve errors with more specific context.
-func checkApproveErr(caller address, err error, approved address, tid grc721.TokenID) {
+func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
