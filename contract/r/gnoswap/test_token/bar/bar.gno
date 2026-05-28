@@ -3,6 +3,9 @@ package bar
 import (
 	"strings"
 
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/common"
+
 	"gno.land/p/demo/tokens/grc20"
 	ownable "gno.land/p/nt/ownable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -58,6 +61,10 @@ func Mint(cur realm, to address, amount int64) {
 func Burn(cur realm, from address, amount int64) {
 	owner.AssertOwnedBy(cur.Previous().Address())
 	checkErr(privateLedger.Burn(from, amount))
+}
+
+func CommonTickMathGetTickAtSqrtRatio(cur realm) {
+	println(common.TickMathGetTickAtSqrtRatio(u256.MustFromDecimal("4295128740")))
 }
 
 func Render(path string) string {
