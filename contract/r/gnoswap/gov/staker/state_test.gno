@@ -8,13 +8,13 @@ import (
 )
 
 // TestState_initializeDomainStore tests the private initializeDomainStore function
-func TestState_initializeDomainStore(t *testing.T) {
+func TestState_initializeDomainStore(cur realm, t *testing.T) {
 	t.Run("initialize domain store", func(t *testing.T) {
 		// given
 		testKvStore := store.NewKVStore(currentAddress)
 
 		// when
-		result := initializeDomainStore(testKvStore)
+		result := initializeDomainStore(0, cur, testKvStore)
 
 		// then
 		uassert.NotNil(t, result)

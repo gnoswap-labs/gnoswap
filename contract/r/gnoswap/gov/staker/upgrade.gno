@@ -9,7 +9,7 @@ import (
 // RegisterInitializer registers an implementation
 // This function is called by each implementation version during init
 func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerStore) IGovStaker) {
-	initializerFunc := func(domainStore any) any {
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentGovStakerStore, ok := domainStore.(IGovStakerStore)
 		if !ok {
 			panic("domainStore is not an IGovStakerStore")

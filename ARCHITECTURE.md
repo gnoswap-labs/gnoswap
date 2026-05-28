@@ -425,6 +425,7 @@ No data migration required
 - Role-based storage permissions
 - Namespace isolation
 - Admin-only upgrade functions
+- Realm tokens are threaded explicitly into the version manager and validated via `rlm.IsCurrent()`, rejecting spoofed or stale crossing-frame tokens
 
 ### 3. Emergency Halt
 
@@ -459,14 +460,18 @@ func init() {
 // In pool/upgrade.gno
 func UpgradeImpl(cur realm, packagePath string) {
     caller := runtime.PreviousRealm().Address()
-    access.AssertIsAdmin(caller)
+    access.AssertIsAdminOrGovernance(caller)
 
-    if _, ok := initializers[packagePath]; !ok {
-        panic("Initializer not found")
+    // Thread the live crossing-frame token into the version manager. The
+    // leading 0 is the v2 interrealm sentinel; the manager validates
+    // rlm.IsCurrent() to reject spoofed/stale tokens before switching.
+    if err := versionManager.ChangeImplementation(0, cur, packagePath); err != nil {
+        panic(err)
     }
 
-    poolImpl = initializers[packagePath](NewPoolStore(kvStore))
-    // Update storage permissions...
+    if err := updateImplementation(); err != nil {
+        panic(err)
+    }
 }
 ```
 
