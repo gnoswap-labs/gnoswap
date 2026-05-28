@@ -10,26 +10,33 @@ func init() {
 }
 
 func registerPositionV1() {
-	position.RegisterInitializer(cross, func(positionStore position.IPositionStore) position.IPosition {
-		err := initStoreData(positionStore)
-		if err != nil {
-			panic(err)
-		}
+	position.RegisterInitializer(
+		cross,
+		func(_ int, rlm realm, positionStore position.IPositionStore) position.IPosition {
+			if !rlm.IsCurrent() {
+				panic(position.ErrSpoofedRealm)
+			}
 
-		return NewPositionV1(positionStore, newGNFTAccessor())
-	})
+			err := initStoreData(rlm, positionStore)
+			if err != nil {
+				panic(err)
+			}
+
+			return NewPositionV1(positionStore, newGNFTAccessor())
+		},
+	)
 }
 
-func initStoreData(positionStore position.IPositionStore) error {
+func initStoreData(rlm realm, positionStore position.IPositionStore) error {
 	if !positionStore.HasPositionNextIDStoreKey() {
-		err := positionStore.SetPositionNextID(uint64(1))
+		err := positionStore.SetPositionNextID(0, rlm, uint64(1))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !positionStore.HasPositionsStoreKey() {
-		err := positionStore.SetPositions(bptree.NewBPTreeN(16))
+		err := positionStore.SetPositions(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

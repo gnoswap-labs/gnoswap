@@ -21,7 +21,7 @@ func assertPanic(t *testing.T, expectedMsg string, fn func()) {
 	fn()
 }
 
-func TestAssertValidNumberString(t *testing.T) {
+func TestAssertValidNumberString(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                string
@@ -94,11 +94,11 @@ func TestAssertValidNumberString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertValidNumberString(tt.input)
 				})
 			} else {
@@ -109,36 +109,36 @@ func TestAssertValidNumberString(t *testing.T) {
 	}
 }
 
-func TestPositionIdFrom(t *testing.T) {
+func TestPositionIdFrom(cur realm, t *testing.T) {
 	tests := []struct {
-		name        string
-		input       uint64
-		expected    string
+		name     string
+		input    uint64
+		expected string
 	}{
 		{
-			name:        "positionIdFrom preserves uint64 min",
-			input:       uint64(0),
-			expected:    "0",
+			name:     "positionIdFrom preserves uint64 min",
+			input:    uint64(0),
+			expected: "0",
 		},
 		{
-			name:        "positionIdFrom is success by uint64",
-			input:       uint64(1),
-			expected:    "1",
+			name:     "positionIdFrom is success by uint64",
+			input:    uint64(1),
+			expected: "1",
 		},
 		{
-			name:        "positionIdFrom preserves uint64 1<<63",
-			input:       uint64(9223372036854775808),
-			expected:    "9223372036854775808",
+			name:     "positionIdFrom preserves uint64 1<<63",
+			input:    uint64(9223372036854775808),
+			expected: "9223372036854775808",
 		},
 		{
-			name:        "positionIdFrom preserves uint64 max",
-			input:       uint64(18446744073709551615),
-			expected:    "18446744073709551615",
+			name:     "positionIdFrom preserves uint64 max",
+			input:    uint64(18446744073709551615),
+			expected: "18446744073709551615",
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			got := positionIdFrom(tc.input)
 			uassert.Equal(t, tc.expected, string(got))
@@ -146,7 +146,7 @@ func TestPositionIdFrom(t *testing.T) {
 	}
 }
 
-func TestIsOwner(t *testing.T) {
+func TestIsOwner(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
@@ -167,11 +167,11 @@ func TestIsOwner(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			testing.SetRealm(posRealm)
-			mockInstance.nftAccessor.Mint(adminAddr, positionIdFrom(tc.positionId))
+			mockInstance.nftAccessor.Mint(0, cur, adminAddr, positionIdFrom(tc.positionId))
 
 			got := mockInstance.isOwner(tc.positionId, tc.addr)
 
@@ -180,7 +180,7 @@ func TestIsOwner(t *testing.T) {
 	}
 }
 
-func TestIsOperator(t *testing.T) {
+func TestIsOperator(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
@@ -201,13 +201,13 @@ func TestIsOperator(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			// given
 			position := newDummyPosition(tc.positionId)
 			position.SetOperator(alice)
-			mockInstance.mustUpdatePosition(tc.positionId, position)
+			mockInstance.mustUpdatePosition(0, cur, tc.positionId, position)
 
 			// when
 			got := mockInstance.isOperator(tc.positionId, tc.addr)
@@ -218,7 +218,7 @@ func TestIsOperator(t *testing.T) {
 	}
 }
 
-func TestPoolKeyDivide(t *testing.T) {
+func TestPoolKeyDivide(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		poolKey       string
@@ -250,8 +250,8 @@ func TestPoolKeyDivide(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			defer func() {
 				r := recover()
@@ -288,7 +288,7 @@ func TestPoolKeyDivide(t *testing.T) {
 	}
 }
 
-func TestSplitOf(t *testing.T) {
+func TestSplitOf(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		poolKey       string
@@ -355,7 +355,7 @@ func TestSplitOf(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.shouldPanic {
 				assertPanic(t, tc.expectedError, func() {
 					splitOf(tc.poolKey)
@@ -370,7 +370,7 @@ func TestSplitOf(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToInt64(t *testing.T) {
+func TestSafeConvertToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		value         *u256.Uint
@@ -429,7 +429,7 @@ func TestSafeConvertToInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -458,7 +458,7 @@ func legacySubUint256ForTest(x, y *u256.Uint) *u256.Uint {
 	return u256.Zero().Sub(x, y)
 }
 
-func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
+func TestSubUint256EquivalenceWithLegacyFormula(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		x    string
@@ -502,7 +502,7 @@ func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			x := u256.MustFromDecimal(tc.x)
 			y := u256.MustFromDecimal(tc.y)
 
@@ -525,7 +525,7 @@ func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 //
 // Each case checks the intermediate and final results against both the expected
 // value and the legacy formula.
-func TestSubUint256DoubleUnderflow(t *testing.T) {
+func TestSubUint256DoubleUnderflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		a             string // first operand
@@ -557,7 +557,7 @@ func TestSubUint256DoubleUnderflow(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			a := u256.MustFromDecimal(tc.a)
 			b := u256.MustFromDecimal(tc.b)
 			c := u256.MustFromDecimal(tc.c)
