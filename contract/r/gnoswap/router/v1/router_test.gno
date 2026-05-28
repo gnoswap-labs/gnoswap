@@ -22,7 +22,7 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-func TestFinalizeSwap(t *testing.T) {
+func TestFinalizeSwap(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		inputToken       string
@@ -126,16 +126,16 @@ func TestFinalizeSwap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
 
 			router := mockRouter()
 			// set swap fee to 0 to focus on slippage validation
-			router.SetSwapFee(0)
+			router.SetSwapFee(0, cur, 0)
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.errorMessage, func() {
-					router.finalizeSwap(
+				uassert.PanicsContains(t, cur, tt.errorMessage, func() {
+					router.finalizeSwap(cur, 
 						tt.inputToken,
 						tt.outputToken,
 						tt.resultAmountIn,
@@ -148,7 +148,7 @@ func TestFinalizeSwap(t *testing.T) {
 					)
 				})
 			} else {
-				amountIn, amountOut := router.finalizeSwap(
+				amountIn, amountOut := router.finalizeSwap(cur, 
 					tt.inputToken,
 					tt.outputToken,
 					tt.resultAmountIn,
@@ -169,7 +169,7 @@ func TestFinalizeSwap(t *testing.T) {
 	}
 }
 
-func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
+func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T) {
 	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
@@ -228,35 +228,35 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFee(cross, 0)
+			pl.SetPoolCreationFee(cross(cur), 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+				pl.CreatePool(cross(cur), tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
+				pl.SetFeeProtocol(cross(cur), tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross(cur), tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			gns.Transfer(cross(cur), tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
+			gns.Approve(cross(cur), poolContract, maxApprove)
 
 			// Position Creation
 			pn.Mint(
-				cross,
+				cross(cur),
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -274,14 +274,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			bar.Transfer(cross(cur), routerContract, 20000000)
+			gns.Transfer(cross(cur), routerContract, 20000000)
+			bar.Approve(cross(cur), routerContract, maxApprove)
+			gns.Approve(cross(cur), routerContract, maxApprove)
 			beforeBarBalance := bar.BalanceOf(tt.recipient)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -300,7 +300,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -327,12 +327,12 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
 				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
 				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeBarBalance-afterBarBalance), 10), "amountIn is not equal to expectedAmount0")
-			}(cross)
+			}(cross(cur))
 		})
 	}
 }
 
-func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
+func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T) {
 	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
@@ -391,38 +391,38 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	}
 
 	// Fund alice with bar tokens for IncreaseLiquidity
-	TokenFaucet(t, barPath, alice)
+	TokenFaucet(cur, t, barPath, alice)
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFee(cross, 0)
+			pl.SetPoolCreationFee(cross(cur), 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+				pl.CreatePool(cross(cur), tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
+				pl.SetFeeProtocol(cross(cur), tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross(cur), tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			gns.Transfer(cross(cur), tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
+			gns.Approve(cross(cur), poolContract, maxApprove)
 
 			// Position Creation
 			positionId, _, _, _ := pn.Mint(
-				cross,
+				cross(cur),
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -441,12 +441,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			// Add Liquidity
 			testing.SetOriginCaller(tt.recipient)
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
-			bar.Approve(cross, positionAddr, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
+			bar.Approve(cross(cur), positionAddr, maxApprove)
+			gns.Approve(cross(cur), poolContract, maxApprove)
 
 			pn.IncreaseLiquidity(
-				cross,
+				cross(cur),
 				positionId,
 				tt.amount0Requested,
 				tt.amount1Requested,
@@ -457,12 +457,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			bar.Transfer(cross(cur), routerContract, 20000000)
+			gns.Transfer(cross(cur), routerContract, 20000000)
+			bar.Approve(cross(cur), routerContract, maxApprove)
+			gns.Approve(cross(cur), routerContract, maxApprove)
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -480,7 +480,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetOriginSend(chain.Coins{})
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				_, amountOut := router.ExactInSwapRoute(
+				_, amountOut := router.ExactInSwapRoute(0, cur, 
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -493,12 +493,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				testing.SkipHeights(1)
 
 				uassert.Equal(t, tt.expectedAmount1, amountOut)
-			}(cross)
+			}(cross(cur))
 		})
 	}
 }
 
-func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
+func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing.T) {
 	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
@@ -557,35 +557,35 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			pl.SetPoolCreationFee(cross, 0)
+			pl.SetPoolCreationFee(cross(cur), 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
+				pl.CreatePool(cross(cur), tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
 			}
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
-				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
+				pl.SetFeeProtocol(cross(cur), tt.feeProtocol0, tt.feeProtocol1)
 			}
 
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				bar.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross(cur), tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			gns.Transfer(cross(cur), tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			bar.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
+			gns.Approve(cross(cur), poolContract, maxApprove)
 
 			// Position Creation
 			pn.Mint(
-				cross,
+				cross(cur),
 				tt.tokenPath0,
 				tt.tokenPath1,
 				tt.feeTier,
@@ -603,13 +603,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			bar.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			bar.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			bar.Transfer(cross(cur), routerContract, 20000000)
+			gns.Transfer(cross(cur), routerContract, 20000000)
+			bar.Approve(cross(cur), routerContract, maxApprove)
+			gns.Approve(cross(cur), routerContract, maxApprove)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			bar.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross(cur), poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -622,14 +622,14 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			router.handleSwapFee(tt.outputToken, safeParseInt64(drySwapAmountOut))
+			router.handleSwapFee(cur, tt.outputToken, safeParseInt64(drySwapAmountOut))
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -643,12 +643,12 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 				uassert.Equal(t, tt.expectedAmount0, amountIn)
 				uassert.Equal(t, tt.expectedAmount1, amountOut)
-			}(cross)
+			}(cross(cur))
 		})
 	}
 }
 
-func TestValidateQuoteSum(t *testing.T) {
+func TestValidateQuoteSum(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 
 	tests := []struct {
@@ -712,7 +712,7 @@ func TestValidateQuoteSum(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := parser.ValidateQuoteSum(tt.quotes)
 			if tt.wantError {
 				if err == nil {
@@ -731,7 +731,7 @@ func TestValidateQuoteSum(t *testing.T) {
 	}
 }
 
-func TestHandleMultiSwap(t *testing.T) {
+func TestHandleMultiSwap(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		inputToken        string
@@ -792,20 +792,20 @@ func TestHandleMultiSwap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
-			createMultiHopPools(t)
+			createMultiHopPools(cur, t)
 
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross, tt.inputToken, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(cross(cur), tt.inputToken, routerAddr, math.MaxInt64)
 
 			amountSpecified := safeParseInt64(tt.amountSpecified)
 
 			router := mockRouter()
 
 			handleMultiSwapFn := func(cur realm) (int64, int64) {
-				return router.handleMultiSwap(
+				return router.handleMultiSwap(cur, 
 					tt.swapType,
 					tt.route,
 					tt.numHops,
@@ -814,11 +814,11 @@ func TestHandleMultiSwap(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					handleMultiSwapFn(cross)
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func() {
+					handleMultiSwapFn(cross(cur))
 				})
 			} else {
-				amountIn, amountOut := handleMultiSwapFn(cross)
+				amountIn, amountOut := handleMultiSwapFn(cross(cur))
 
 				uassert.Equal(t, tt.expectedAmountIn, strconv.FormatInt(amountIn, 10))
 				uassert.Equal(t, tt.expectedAmountOut, strconv.FormatInt(amountOut, 10))
@@ -827,7 +827,7 @@ func TestHandleMultiSwap(t *testing.T) {
 	}
 }
 
-func TestProcessRoute_MultiHops(t *testing.T) {
+func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		route             string
@@ -897,9 +897,9 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initRouterTest(t)
-			createMultiHopPools(t)
+			createMultiHopPools(cur, t)
 
 			op := &baseSwapOperation{
 				amountSpecified: safeParseInt64(tt.toSwap),
@@ -908,7 +908,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			toSwapAmount := safeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
@@ -916,11 +916,11 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			}
 
 			if tt.expectError {
-				uassert.AbortsWithMessage(t, tt.errorMsg, func() {
-					processRouteFn(cross)
+				uassert.AbortsWithMessage(t, cur, tt.errorMsg, func() {
+					processRouteFn(cross(cur))
 				})
 			} else {
-				amountIn, amountOut, err := processRouteFn(cross)
+				amountIn, amountOut, err := processRouteFn(cross(cur))
 
 				uassert.Equal(t, tt.expectedAmountIn, strconv.FormatInt(amountIn, 10))
 				uassert.Equal(t, tt.expectedAmountOut, strconv.FormatInt(amountOut, 10))
@@ -930,28 +930,28 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 	}
 }
 
-func createMultiHopPools(t *testing.T) {
+func createMultiHopPools(cur realm, t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, quxPath, fooPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross(cur), barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross(cur), bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	pl.CreatePool(cross(cur), quxPath, fooPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
+	qux.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
-	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross(cur), bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross(cur), quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 }
 
 // Test GetSwapFee
-func TestGetSwapFee(t *testing.T) {
+func TestGetSwapFee(cur realm, t *testing.T) {
 	router := mockRouter()
 
 	// Default fee should be 0 or set value
@@ -960,7 +960,7 @@ func TestGetSwapFee(t *testing.T) {
 }
 
 // Test calculateRouterFee
-func TestCalculateRouterFee(t *testing.T) {
+func TestCalculateRouterFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		amount   int64
@@ -1000,7 +1000,7 @@ func TestCalculateRouterFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateRouterFee(tt.amount, tt.swapFee)
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -1008,7 +1008,7 @@ func TestCalculateRouterFee(t *testing.T) {
 }
 
 // Test calculateExactOutWithRouterFee
-func TestCalculateExactOutWithRouterFee(t *testing.T) {
+func TestCalculateExactOutWithRouterFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		amount   int64
@@ -1042,7 +1042,7 @@ func TestCalculateExactOutWithRouterFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateExactOutWithRouterFee(tt.amount, tt.swapFee)
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -1052,7 +1052,7 @@ func TestCalculateExactOutWithRouterFee(t *testing.T) {
 // ========== Router Dry Swap Tests ==========
 
 // Test SwapProcessor calculateSwapAmountByQuote
-func TestSwapProcessor_calculateSwapAmountByQuote(t *testing.T) {
+func TestSwapProcessor_calculateSwapAmountByQuote(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -1084,7 +1084,7 @@ func TestSwapProcessor_calculateSwapAmountByQuote(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
@@ -1098,7 +1098,7 @@ func TestSwapProcessor_calculateSwapAmountByQuote(t *testing.T) {
 }
 
 // Test SwapProcessor ValidateSwapResults
-func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
+func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 	router := mockRouter()
 	processor := &SwapProcessor{router: router}
 
@@ -1185,7 +1185,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			_, _, success := processor.ValidateSwapResults(
 				tt.swapType,
 				tt.resultAmountIn,
@@ -1201,7 +1201,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 }
 
 // Test SwapProcessor AddSwapResults
-func TestSwapProcessor_AddSwapResults(t *testing.T) {
+func TestSwapProcessor_AddSwapResults(cur realm, t *testing.T) {
 	router := mockRouter()
 	processor := &SwapProcessor{router: router}
 
@@ -1248,7 +1248,7 @@ func TestSwapProcessor_AddSwapResults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			newIn, newOut, err := processor.AddSwapResults(
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -1270,13 +1270,13 @@ func TestSwapProcessor_AddSwapResults(t *testing.T) {
 // ========== Router Parser and Validator Tests ==========
 
 // Test RouteParser creation
-func TestNewRouteParser(t *testing.T) {
+func TestNewRouteParser(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 	uassert.NotNil(t, parser)
 }
 
 // Test RouteParser ParseRoutes
-func TestRouteParser_ParseRoutes(t *testing.T) {
+func TestRouteParser_ParseRoutes(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 
 	tests := []struct {
@@ -1329,7 +1329,7 @@ func TestRouteParser_ParseRoutes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			routes, quotes, err := parser.ParseRoutes(tt.routes, tt.quotes)
 
 			if tt.expectError {
@@ -1348,7 +1348,7 @@ func TestRouteParser_ParseRoutes(t *testing.T) {
 }
 
 // Test RouteParser ValidateQuoteSum
-func TestRouteParser_ValidateQuoteSum(t *testing.T) {
+func TestRouteParser_ValidateQuoteSum(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 
 	tests := []struct {
@@ -1400,7 +1400,7 @@ func TestRouteParser_ValidateQuoteSum(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := parser.ValidateQuoteSum(tt.quotes)
 
 			if tt.expectError {
@@ -1417,7 +1417,7 @@ func TestRouteParser_ValidateQuoteSum(t *testing.T) {
 }
 
 // Test RouteParser ValidateRoutesAndQuotes
-func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
+func TestRouteParser_ValidateRoutesAndQuotes(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 
 	tests := []struct {
@@ -1456,7 +1456,7 @@ func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := parser.ValidateRoutesAndQuotes(tt.routes, tt.quotes)
 
 			if tt.expectError {
@@ -1473,7 +1473,7 @@ func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
 }
 
 // Test SwapValidator amount
-func TestSwapValidator_Amount(t *testing.T) {
+func TestSwapValidator_Amount(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -1507,7 +1507,7 @@ func TestSwapValidator_Amount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := validator.amount(tt.amount)
 
 			if tt.expectError {
@@ -1521,7 +1521,7 @@ func TestSwapValidator_Amount(t *testing.T) {
 }
 
 // Test SwapValidator amountLimit
-func TestSwapValidator_AmountLimit(t *testing.T) {
+func TestSwapValidator_AmountLimit(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -1549,7 +1549,7 @@ func TestSwapValidator_AmountLimit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := validator.amountLimit(tt.amountLimit)
 
 			if tt.expectError {
@@ -1563,7 +1563,7 @@ func TestSwapValidator_AmountLimit(t *testing.T) {
 }
 
 // Test SwapValidator swapType
-func TestSwapValidator_SwapType(t *testing.T) {
+func TestSwapValidator_SwapType(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -1597,7 +1597,7 @@ func TestSwapValidator_SwapType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := validator.swapType(tt.swapTypeStr)
 
 			if tt.expectError {
@@ -1612,7 +1612,7 @@ func TestSwapValidator_SwapType(t *testing.T) {
 }
 
 // Test SwapValidator slippage
-func TestSwapValidator_Slippage(t *testing.T) {
+func TestSwapValidator_Slippage(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -1658,7 +1658,7 @@ func TestSwapValidator_Slippage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validator.slippage(tt.swapType, tt.amountIn, tt.amountOut, tt.limit)
 
 			if tt.expectError {
@@ -1671,7 +1671,7 @@ func TestSwapValidator_Slippage(t *testing.T) {
 }
 
 // Test SwapValidator exactOutAmount
-func TestSwapValidator_ExactOutAmount(t *testing.T) {
+func TestSwapValidator_ExactOutAmount(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -1705,7 +1705,7 @@ func TestSwapValidator_ExactOutAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
 
 			if tt.expectError {
@@ -1719,7 +1719,7 @@ func TestSwapValidator_ExactOutAmount(t *testing.T) {
 
 
 // Test validateRoutesAndQuotes convenience function
-func TestValidateRoutesAndQuotes(t *testing.T) {
+func TestValidateRoutesAndQuotes(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		routes      string
@@ -1747,7 +1747,7 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			routes, quotes, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
 
 			if tt.expectError {
@@ -1764,7 +1764,7 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 // ========== Edge Cases and Integration Tests ==========
 
 // Test protocol fee with boundary values
-func TestCalculateRouterFee_BoundaryValues(t *testing.T) {
+func TestCalculateRouterFee_BoundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		amount   int64
@@ -1792,7 +1792,7 @@ func TestCalculateRouterFee_BoundaryValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateRouterFee(tt.amount, tt.swapFee)
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -1800,7 +1800,7 @@ func TestCalculateRouterFee_BoundaryValues(t *testing.T) {
 }
 
 // Test quote validation with edge cases
-func TestRouteParser_ValidateQuoteSum_EdgeCases(t *testing.T) {
+func TestRouteParser_ValidateQuoteSum_EdgeCases(cur realm, t *testing.T) {
 	parser := NewRouteParser()
 
 	tests := []struct {
@@ -1826,7 +1826,7 @@ func TestRouteParser_ValidateQuoteSum_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := parser.ValidateQuoteSum(tt.quotes)
 
 			if tt.expectError {
@@ -1839,7 +1839,7 @@ func TestRouteParser_ValidateQuoteSum_EdgeCases(t *testing.T) {
 }
 
 // Test swap processor with extreme amounts
-func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
+func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -1871,7 +1871,7 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {

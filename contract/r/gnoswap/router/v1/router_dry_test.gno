@@ -90,14 +90,14 @@ func (b *DrySwapBuilder) Build() DrySwapParams {
 func setupBasicPools(env *TestEnv) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+	gns.Approve(cross1, poolAddr, pl.GetPoolCreationFee()*2)
 
 	env.GivenPoolCreated(barPath, bazPath, 500, "130621891405341611593710811006")
 	env.GivenPoolCreated(bazPath, quxPath, 500, "130621891405341611593710811006")
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross1, poolAddr, maxApprove)
+	baz.Approve(cross1, poolAddr, maxApprove)
+	qux.Approve(cross1, poolAddr, maxApprove)
 
 	positionParams1 := NewPositionBuilder().
 		Tokens(barPath, bazPath).
@@ -120,7 +120,7 @@ func setupBasicPools(env *TestEnv) {
 	env.AndLiquidityProvided(adminAddr, positionParams2)
 }
 
-func TestDrySwapRoute_Basic(t *testing.T) {
+func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 	tests := []DrySwapTestCase{
 		{
 			name:    "ExactIn - Single Route",
@@ -201,7 +201,7 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {
@@ -230,15 +230,15 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 func setupMultiRoutePools(env *TestEnv) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross1, poolAddr, pl.GetPoolCreationFee()*3)
 
 	env.GivenPoolCreated(barPath, bazPath, 500, "130621891405341611593710811006")
 	env.GivenPoolCreated(bazPath, quxPath, 500, "130621891405341611593710811006")
 	env.GivenPoolCreated(barPath, quxPath, 500, "130621891405341611593710811006")
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross1, poolAddr, maxApprove)
+	baz.Approve(cross1, poolAddr, maxApprove)
+	qux.Approve(cross1, poolAddr, maxApprove)
 
 	positionParams1 := NewPositionBuilder().
 		Tokens(barPath, bazPath).
@@ -271,7 +271,7 @@ func setupMultiRoutePools(env *TestEnv) {
 	env.AndLiquidityProvided(adminAddr, positionParams3)
 }
 
-func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
+func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 	tests := []DrySwapTestCase{
 		{
 			name:    "ExactOut - Two routes with split quote (50:50) - insufficient liquidity",
@@ -324,7 +324,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {
@@ -350,7 +350,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 	}
 }
 
-func TestValidateSwapResults_ExactOutTolerance(t *testing.T) {
+func TestValidateSwapResults_ExactOutTolerance(cur realm, t *testing.T) {
 	processor := &SwapProcessor{}
 
 	tests := []struct {
@@ -428,7 +428,7 @@ func TestValidateSwapResults_ExactOutTolerance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			_, _, success := processor.ValidateSwapResults(
 				ExactOut,
 				tt.resultAmountIn,
@@ -442,7 +442,7 @@ func TestValidateSwapResults_ExactOutTolerance(t *testing.T) {
 	}
 }
 
-func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(t *testing.T) {
+func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(cur realm, t *testing.T) {
 	processor := &SwapProcessor{}
 
 	tests := []struct {
@@ -544,7 +544,7 @@ func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(t *testing.T
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			_, _, success := processor.ValidateSwapResults(
 				ExactOut,
 				1000, // resultAmountIn doesn't matter for this test
@@ -558,7 +558,7 @@ func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(t *testing.T
 	}
 }
 
-func TestValidateSwapResults_ExactIn(t *testing.T) {
+func TestValidateSwapResults_ExactIn(cur realm, t *testing.T) {
 	processor := &SwapProcessor{}
 
 	tests := []struct {
@@ -600,7 +600,7 @@ func TestValidateSwapResults_ExactIn(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			_, _, success := processor.ValidateSwapResults(
 				ExactIn,
 				tt.resultAmountIn,
@@ -614,7 +614,7 @@ func TestValidateSwapResults_ExactIn(t *testing.T) {
 	}
 }
 
-func TestDrySwapRouteOverflow(t *testing.T) {
+func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 	// maxUint256 exceeds int64 max, so parsing it as int64 will overflow
 	maxUint256 := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
@@ -655,7 +655,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {
@@ -665,7 +665,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
 					router.DrySwapRoute(
 						tt.swapParams.inputToken,
 						tt.swapParams.outputToken,
@@ -694,7 +694,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 	}
 }
 
-func TestSwapCountCalculation(t *testing.T) {
+func TestSwapCountCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		routes        []string
@@ -742,7 +742,7 @@ func TestSwapCountCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var totalCount int64
 			for _, route := range tt.routes {
 				numHops := strings.Count(route, POOL_SEPARATOR) + 1
@@ -753,7 +753,7 @@ func TestSwapCountCalculation(t *testing.T) {
 	}
 }
 
-func TestDrySwapRouteZeroAmount(t *testing.T) {
+func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 	tests := []DrySwapTestCase{
 		{
 			name:    "ExactIn - Zero amount should panic",
@@ -824,7 +824,7 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {
@@ -834,7 +834,7 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
 					router.DrySwapRoute(
 						tt.swapParams.inputToken,
 						tt.swapParams.outputToken,
@@ -863,7 +863,7 @@ func TestDrySwapRouteZeroAmount(t *testing.T) {
 	}
 }
 
-func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
+func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFn      func(*TestEnv)
@@ -899,7 +899,7 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {

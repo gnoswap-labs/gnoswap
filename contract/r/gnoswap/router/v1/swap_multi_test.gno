@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestMultiSwap(t *testing.T) {
+func TestMultiSwap(cur realm, t *testing.T) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	tests := []struct {
@@ -45,20 +45,20 @@ func TestMultiSwap(t *testing.T) {
 		},
 		// {
 		// 	name: "multi hop swap (BAR -> BAZ -> QUX)",
-		// 	setupFn: func(t *testing.T) {
+		// 	setupFn: func(cur realm, t *testing.T) {
 		// 		// BAR -> BAZ
-		// 		CreatePoolWithoutFee(t)
-		// 		MakeMintPositionWithoutFee(t)
+		// 		CreatePoolWithoutFee(cur, t)
+		// 		MakeMintPositionWithoutFee(cur, t)
 
 		// 		// BAZ -> QUX
-		// 		CreateSecondPoolWithoutFee(t)
-		// 		MakeSecondMintPositionWithoutFee(t)
+		// 		CreateSecondPoolWithoutFee(cur, t)
+		// 		MakeSecondMintPositionWithoutFee(cur, t)
 
 		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
+		// 		bar.Approve(cross(cur), routerAddr, maxApprove)
+		// 		baz.Approve(cross(cur), routerAddr, maxApprove)
+		// 		qux.Approve(cross(cur), routerAddr, maxApprove)
+		// 		TokenFaucet(cur, t, barPath, user1Addr)
 		// 	},
 		// 	params: SwapParams{
 		// 		recipient: alice,
@@ -77,18 +77,18 @@ func TestMultiSwap(t *testing.T) {
 		// },
 		// {
 		// 	name: "multi hop swap with exact output",
-		// 	setupFn: func(t *testing.T) {
+		// 	setupFn: func(cur realm, t *testing.T) {
 		// 		// BAR -> BAZ -> QUX
-		// 		CreatePoolWithoutFee(t)
-		// 		MakeMintPositionWithoutFee(t)
-		// 		CreateSecondPoolWithoutFee(t)
-		// 		MakeSecondMintPositionWithoutFee(t)
+		// 		CreatePoolWithoutFee(cur, t)
+		// 		MakeMintPositionWithoutFee(cur, t)
+		// 		CreateSecondPoolWithoutFee(cur, t)
+		// 		MakeSecondMintPositionWithoutFee(cur, t)
 
 		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
+		// 		bar.Approve(cross(cur), routerAddr, maxApprove)
+		// 		baz.Approve(cross(cur), routerAddr, maxApprove)
+		// 		qux.Approve(cross(cur), routerAddr, maxApprove)
+		// 		TokenFaucet(cur, t, barPath, user1Addr)
 		// 	},
 		// 	params: SwapParams{
 		// 		recipient: alice,
@@ -108,7 +108,7 @@ func TestMultiSwap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			env := NewTestEnv(t)
 
 			if tt.setupFn != nil {
@@ -117,7 +117,7 @@ func TestMultiSwap(t *testing.T) {
 
 			router := mockRouter()
 
-			firstAmountIn, lastAmountOut := router.multiSwap(
+			firstAmountIn, lastAmountOut := router.multiSwap(cur, 
 				tt.params,
 				tt.numPools,
 				tt.swapPath,

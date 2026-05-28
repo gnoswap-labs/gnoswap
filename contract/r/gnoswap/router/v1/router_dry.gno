@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"chain/runtime"
 	"strings"
+
+	"chain/runtime/unsafe"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -27,6 +28,10 @@ const (
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
+	// payer identifies the user for dry-run simulations. It is resolved once at
+	// the entry point via unsafe.PreviousRealm since dry-run paths are
+	// read-only and carry no realm value to thread.
+	payer address
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -48,7 +53,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut = p.router.singleDrySwap(&singleParams)
+	amountIn, amountOut = p.router.singleDrySwap(p.payer, &singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -70,7 +75,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	numHops int,
 	amountSpecified int64,
 ) (int64, int64, error) {
-	recipient := runtime.PreviousRealm().Address()
+	recipient := p.payer
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
@@ -78,9 +83,9 @@ func (p *SwapProcessor) ProcessMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(*swapParams, numHops, route)
+		return p.router.multiDrySwap(p.payer, *swapParams, numHops, route)
 	case ExactOut:
-		return p.router.multiDrySwapNegative(*swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(p.payer, *swapParams, numHops, route)
 	default:
 		return 0, 0, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}
@@ -193,7 +198,7 @@ func (r *routerV1) drySwapRoute(
 	common.MustRegistered(inputToken, outputToken)
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{router: r}
+	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)

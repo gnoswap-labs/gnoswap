@@ -8,12 +8,12 @@ const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
 )
 
-func init() {
-	registerRouterV1()
+func init(cur realm) {
+	registerRouterV1(cur)
 }
 
-func registerRouterV1() {
-	router.RegisterInitializer(cross, func(routerStore router.IRouterStore) router.IRouter {
+func registerRouterV1(cur realm) {
+	router.RegisterInitializer(cross(cur), func(routerStore router.IRouterStore) router.IRouter {
 		err := initStoreData(routerStore)
 		if err != nil {
 			panic(err)

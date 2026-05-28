@@ -1,8 +1,6 @@
 package router
 
 import (
-	"chain/runtime"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -44,7 +42,7 @@ func RegisterInitializer(cur realm, initializer func(routerStore IRouterStore) I
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(0, cur, packagePath)

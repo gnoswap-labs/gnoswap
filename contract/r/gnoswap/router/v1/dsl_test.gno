@@ -42,7 +42,12 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	}
 }
 
-// GivenPoolCreated creates a pool with specified parameters
+// GivenPoolCreated creates a pool with specified parameters.
+//
+// TestEnv methods cannot be crossing functions (they have a receiver), so
+// SetRealm cannot mutate a threaded cur (see migration guide §11). Instead we
+// rely on the cross1 legacy sentinel, which mints a fresh cur from the
+// SetRealm'd origin caller — preserving the original bare-cross semantics.
 func (e *TestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX96 string) *TestEnv {
 	e.t.Helper()
 
@@ -52,9 +57,9 @@ func (e *TestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX
 	}
 
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross1, 0)
 
-	CreatePool(e.t, token0, token1, fee, sqrtPriceX96, adminAddr)
+	CreatePool(cross1, e.t, token0, token1, fee, sqrtPriceX96, adminAddr)
 	e.pools[poolKey] = true
 
 	return e
@@ -67,14 +72,14 @@ func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tok
 	testing.SetRealm(userRealm)
 
 	for _, token := range tokens {
-		TokenFaucet(e.t, token, user)
+		TokenFaucet(cross1, e.t, token, user)
 		switch token {
 		case barPath:
-			bar.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross1, routerAddr, maxApprove)
 		case bazPath:
-			baz.Approve(cross, routerAddr, maxApprove)
+			baz.Approve(cross1, routerAddr, maxApprove)
 		case quxPath:
-			qux.Approve(cross, routerAddr, maxApprove)
+			qux.Approve(cross1, routerAddr, maxApprove)
 		}
 	}
 	e.users[user] = true
@@ -85,7 +90,7 @@ func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tok
 // AndPositionMinted creates a position with liquidity
 func (e *TestEnv) AndPositionMinted() *TestEnv {
 	e.t.Helper()
-	MakeMintPositionWithoutFee(e.t)
+	MakeMintPositionWithoutFee(cross1, e.t)
 	return e
 }
 
@@ -98,7 +103,7 @@ func (e *TestEnv) AndLiquidityProvided(provider address, params PositionParams) 
 
 	// Create position with provided parameters
 	tokenId, _, _, _ := pn.Mint(
-		cross,
+		cross1,
 		params.token0,
 		params.token1,
 		params.fee,
@@ -304,9 +309,9 @@ func assertSwapOK(t *testing.T, expectedIn, expectedOut string, actualIn, actual
 	uassert.Equal(t, expectedOut, actualOut.ToString())
 }
 
-func assertSwapFails(t *testing.T, expectedMsg string, swapFn func()) {
+func assertSwapFails(cur realm, t *testing.T, expectedMsg string, swapFn func()) {
 	t.Helper()
-	uassert.PanicsWithMessage(t, expectedMsg, swapFn)
+	uassert.PanicsWithMessage(t, cur, expectedMsg, swapFn)
 }
 
 // SingleSwapParamsBuilder provides fluent interface for building swap parameters
