@@ -8,7 +8,7 @@ import (
 )
 
 // TestProposalScheduleStatus_TimeChecks tests all time-related checks
-func TestProposalScheduleStatus_TimeChecks(t *testing.T) {
+func TestProposalScheduleStatus_TimeChecks(cur realm, t *testing.T) {
 	// Base time values for testing
 	baseTime := time.Unix(1000, 0)
 	votingStartDelay := int64(100)
@@ -79,7 +79,7 @@ func TestProposalScheduleStatus_TimeChecks(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := NewProposalScheduleStatus(
 				votingStartDelay,
@@ -113,7 +113,7 @@ func TestProposalScheduleStatus_TimeChecks(t *testing.T) {
 }
 
 // TestNewProposalScheduleStatus tests the creation of new schedule status
-func TestNewProposalScheduleStatus(t *testing.T) {
+func TestNewProposalScheduleStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		votingStartDelay int64
@@ -141,7 +141,7 @@ func TestNewProposalScheduleStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			status := NewProposalScheduleStatus(
 				tc.votingStartDelay,

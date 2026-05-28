@@ -14,7 +14,7 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-func TestGovernancePropose_ProposeText(t *testing.T) {
+func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
@@ -170,7 +170,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -186,20 +186,16 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeText(tt.title, tt.description)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeText(0, cur, tt.title, tt.description)
 				})
 				return
 			}
 
 			var proposalId int64
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeText(tt.title, tt.description)
-			}(cross)
+			testing.SetRealm(govRealm)
+			proposalId = gov.ProposeText(0, cur, tt.title, tt.description)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -214,7 +210,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 	}
 }
 
-func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
+func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
 	invalidTokenPath := "gno.land/r/not/registered"
 
@@ -370,7 +366,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -386,19 +382,15 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
+					gov.ProposeCommunityPoolSpend(0, cur, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 				})
 				return
 			}
 
 			var proposalId int64
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
-			}(cross)
+			testing.SetRealm(govRealm)
+			proposalId = gov.ProposeCommunityPoolSpend(0, cur, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -413,7 +405,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 	}
 }
 
-func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
+func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
@@ -660,7 +652,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -676,20 +668,16 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeParameterChange(0, cur, tt.title, tt.description, tt.numToExecute, tt.executions)
 				})
 				return
 			}
 
 			var proposalId int64
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
-			}(cross)
+			testing.SetRealm(govRealm)
+			proposalId = gov.ProposeParameterChange(0, cur, tt.title, tt.description, tt.numToExecute, tt.executions)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -703,7 +691,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 	}
 }
 
-func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
+func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		title         string
@@ -764,7 +752,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -788,18 +776,14 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeText(tt.title, tt.description)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeText(0, cur, tt.title, tt.description)
 				})
 			} else {
 				var proposalId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					proposalId = gov.ProposeText(tt.title, tt.description)
-				}(cross)
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeText(0, cur, tt.title, tt.description)
 
 				uassert.Equal(t, int64(1), proposalId)
 
@@ -813,7 +797,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 }
 
 // Test proposal state validation
-func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
+func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		setupActiveProposal func() *governance.Proposal
@@ -982,7 +966,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -1010,25 +994,21 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeText("New Proposal", "New Description")
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeText(0, cur, "New Proposal", "New Description")
 				})
 			} else {
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					proposalID := gov.ProposeText("New Proposal", "New Description")
-					uassert.Equal(t, proposalID, gov.getCurrentProposalID())
-				}(cross)
+				testing.SetRealm(govRealm)
+				proposalID := gov.ProposeText(0, cur, "New Proposal", "New Description")
+				uassert.Equal(t, proposalID, gov.getCurrentProposalID())
 			}
 		})
 	}
 }
 
 // Test comprehensive community pool spend validation
-func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
+func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T) {
 	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
 	invalidTokenPath := "gno.land/r/not/registered"
 
@@ -1097,7 +1077,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -1121,18 +1101,14 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeCommunityPoolSpend(0, cur, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 				})
 			} else {
 				var proposalId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					proposalId = gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
-				}(cross)
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeCommunityPoolSpend(0, cur, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 				uassert.Equal(t, proposalId, gov.getCurrentProposalID())
 
 				proposal, ok := gov.getProposal(proposalId)
@@ -1144,7 +1120,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 }
 
 // Test comprehensive parameter change validation
-func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
+func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		numToExecute  int64
@@ -1310,7 +1286,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -1334,19 +1310,15 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.ProposeParameterChange("Parameter Change", "Description", tt.numToExecute, tt.executions)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.ProposeParameterChange(0, cur, "Parameter Change", "Description", tt.numToExecute, tt.executions)
 				})
 			} else {
 				var proposalId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					proposalId = gov.ProposeParameterChange("Parameter Change", "Description", tt.numToExecute, tt.executions)
-					uassert.Equal(t, proposalId, gov.getCurrentProposalID())
-				}(cross)
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeParameterChange(0, cur, "Parameter Change", "Description", tt.numToExecute, tt.executions)
+				uassert.Equal(t, proposalId, gov.getCurrentProposalID())
 
 				proposal, ok := gov.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
@@ -1357,8 +1329,8 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 }
 
 // Test proposal ID generation and active proposal limits
-func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
-	t.Run("sequential ID generation", func(t *testing.T) {
+func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
+	t.Run("sequential ID generation", func(cur realm, t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
@@ -1391,24 +1363,18 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 		// when - create first proposal
 		testing.SetRealm(testing.NewUserRealm(caller1))
 
-		func(cur realm) {
-			testing.SetRealm(govRealm)
-			proposalId1 = gov.ProposeText("Proposal 1", "Description 1")
-		}(cross)
+		testing.SetRealm(govRealm)
+		proposalId1 = gov.ProposeText(0, cur, "Proposal 1", "Description 1")
 
 		// when - create second proposal from same user
 		testing.SetRealm(testing.NewUserRealm(caller2))
-		func(cur realm) {
-			testing.SetRealm(govRealm)
-			proposalId2 = gov.ProposeText("Proposal 2", "Description 2")
-		}(cross)
+		testing.SetRealm(govRealm)
+		proposalId2 = gov.ProposeText(0, cur, "Proposal 2", "Description 2")
 
 		// when - create third proposal from different user
 		testing.SetRealm(testing.NewUserRealm(caller3))
-		func(cur realm) {
-			testing.SetRealm(govRealm)
-			proposalId3 = gov.ProposeText("Proposal 3", "Description 3")
-		}(cross)
+		testing.SetRealm(govRealm)
+		proposalId3 = gov.ProposeText(0, cur, "Proposal 3", "Description 3")
 
 		// then
 		uassert.Equal(t, proposalId1, int64(1))
@@ -1417,20 +1383,20 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 	})
 }
 
-func setupTestConfig(t *testing.T, gov *governanceV1, config *governance.Config) {
+func setupTestConfig(_ int, cur realm, t *testing.T, gov *governanceV1, config *governance.Config) {
 	if config == nil {
 		return
 	}
-	nextVersion := gov.nextConfigVersion()
-	gov.setConfig(nextVersion, *config)
+	nextVersion := gov.nextConfigVersion(0, cur)
+	gov.setConfig(0, cur, nextVersion, *config)
 }
 
-func setupTestGnsBalance(t *testing.T, address address, balance int64) {
+func setupTestGnsBalance(_ int, cur realm, t *testing.T, address address, balance int64) {
 	// Mock GNS balance setup
 	// In actual implementation, this would set up the GNS token balance
 	testing.SetRealm(adminRealm)
 
-	gns.Transfer(cross, address, balance)
+	gns.Transfer(cross(cur), address, balance)
 }
 
 func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {

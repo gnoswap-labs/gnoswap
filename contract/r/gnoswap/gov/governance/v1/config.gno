@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -40,6 +39,7 @@ func makeConfig(
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
 func (gv *governanceV1) Reconfigure(
+	_ int, rlm realm,
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,
@@ -48,11 +48,15 @@ func (gv *governanceV1) Reconfigure(
 	executionDelay int64,
 	executionWindow int64,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	// Check if system is halted before proceeding
 	halt.AssertIsNotHaltedGovernance()
 
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidSmoothingPeriod(votingWeightSmoothingDuration)
@@ -75,18 +79,18 @@ func (gv *governanceV1) Reconfigure(
 	}
 
 	// Mint and distribute GNS tokens as part of the process
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
 	// Store previous version for event emission
 	previousVersion := gv.getCurrentConfigVersion()
 
 	// Apply the new configuration
-	nextVersion := gv.reconfigure(newCfg)
+	nextVersion := gv.reconfigure(0, rlm, newCfg)
 
 	chain.Emit(
 		"Reconfigure",
 		"prevAddr", caller.String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevRealm", prev.PkgPath(),
 		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
 		"votingPeriod", formatInt(newCfg.VotingPeriod),
 		"votingWeightSmoothingDuration", formatInt(newCfg.VotingWeightSmoothingDuration),
@@ -102,12 +106,12 @@ func (gv *governanceV1) Reconfigure(
 }
 
 // reconfigure stores the validated configuration with incremented version number.
-func (gv *governanceV1) reconfigure(cfg governance.Config) int64 {
+func (gv *governanceV1) reconfigure(_ int, rlm realm, cfg governance.Config) int64 {
 	// Generate next version number
-	nextVersion := gv.nextConfigVersion()
+	nextVersion := gv.nextConfigVersion(0, rlm)
 
 	// Store the new configuration with version
-	err := gv.setConfig(nextVersion, cfg)
+	err := gv.setConfig(0, rlm, nextVersion, cfg)
 	if err != nil {
 		panic("failed to set config: " + err.Error())
 	}

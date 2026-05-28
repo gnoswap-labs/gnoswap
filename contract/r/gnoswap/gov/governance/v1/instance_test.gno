@@ -9,7 +9,7 @@ import (
 )
 
 // TestInstance_NewGovernanceV1 tests the creation of governance v1 instance
-func TestInstance_NewGovernanceV1(t *testing.T) {
+func TestInstance_NewGovernanceV1(cur realm, t *testing.T) {
 	// given
 	store := createMockGovernanceStore()
 
@@ -34,7 +34,7 @@ func TestInstance_NewGovernanceV1(t *testing.T) {
 }
 
 // TestInstance_RemoveInactiveUserProposals tests the removeInactiveUserProposals function
-func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
+func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 	config := governance.Config{
 		VotingStartDelay: 100,
 		VotingPeriod:     200,
@@ -240,7 +240,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			gv := newMockGovernance()
 			tc.setup(gv)
