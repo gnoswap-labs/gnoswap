@@ -17,13 +17,16 @@ var defaultConfig = governance.Config{
 	ExecutionWindow:               2592000,       // 30 days - window for executing proposals
 }
 
-func init() {
-	registerGovernanceV1()
+func init(cur realm) {
+	registerGovernanceV1(cur)
 }
 
-func registerGovernanceV1() {
-	governance.RegisterInitializer(cross, func(governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
-		err := initStoreData(governanceStore)
+func registerGovernanceV1(cur realm) {
+	governance.RegisterInitializer(cross(cur), func(_ int, rlm realm, governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+		// `rlm` here is the governance proxy realm threaded in by
+		// governance.RegisterInitializer. Per-version store bootstrap
+		// writes therefore pass the proxy's KV-store ACL.
+		err := initStoreData(0, rlm, governanceStore)
 		if err != nil {
 			panic(err)
 		}
@@ -32,17 +35,17 @@ func registerGovernanceV1() {
 	})
 }
 
-func initStoreData(governanceStore governance.IGovernanceStore) error {
+func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore) error {
 	// Initialize counters if not already set
 	if !governanceStore.HasConfigCounterStoreKey() {
-		err := governanceStore.SetConfigCounter(governance.NewCounter())
+		err := governanceStore.SetConfigCounter(0, rlm, governance.NewCounter())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalCounterStoreKey() {
-		err := governanceStore.SetProposalCounter(governance.NewCounter())
+		err := governanceStore.SetProposalCounter(0, rlm, governance.NewCounter())
 		if err != nil {
 			return err
 		}
@@ -51,32 +54,38 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 	// Initialize Configs with default configuration if not already set
 	if !governanceStore.HasConfigsStoreKey() {
 		configs := bptree.NewBPTreeN(16)
-		nextConfigVersion := governanceStore.GetConfigCounter().Next()
+		counter := governanceStore.GetConfigCounter()
+		nextConfigVersion := counter.Next()
 
 		configs.Set(formatConfigKey(nextConfigVersion), defaultConfig)
 
-		err := governanceStore.SetConfigs(configs)
+		err := governanceStore.SetConfigs(0, rlm, configs)
 		if err != nil {
+			return err
+		}
+		// Persist the mutated counter so the bumped version survives the
+		// boundary into the proxy's KV store.
+		if err := governanceStore.SetConfigCounter(0, rlm, counter); err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalsStoreKey() {
-		err := governanceStore.SetProposals(bptree.NewBPTreeN(16))
+		err := governanceStore.SetProposals(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
-		err := governanceStore.SetProposalUserVotingInfos(bptree.NewBPTreeN(16))
+		err := governanceStore.SetProposalUserVotingInfos(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasUserProposalsStoreKey() {
-		err := governanceStore.SetUserProposals(bptree.NewBPTreeN(16))
+		err := governanceStore.SetUserProposals(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

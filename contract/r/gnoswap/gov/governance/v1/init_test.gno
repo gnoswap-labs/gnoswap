@@ -9,7 +9,7 @@ import (
 )
 
 // TestInit_formatConfigKey tests the private formatConfigKey function
-func TestInit_formatConfigKey(t *testing.T) {
+func TestInit_formatConfigKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		version  int64
@@ -43,7 +43,7 @@ func TestInit_formatConfigKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// when
 			result := formatConfigKey(tt.version)
 
@@ -54,7 +54,7 @@ func TestInit_formatConfigKey(t *testing.T) {
 }
 
 // TestInit_initStoreData tests the private initStoreData function
-func TestInit_initStoreData(t *testing.T) {
+func TestInit_initStoreData(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupStore    func() governance.IGovernanceStore
@@ -124,7 +124,7 @@ func TestInit_initStoreData(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			store := tt.setupStore()
 

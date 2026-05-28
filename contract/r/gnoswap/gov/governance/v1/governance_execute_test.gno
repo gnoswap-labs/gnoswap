@@ -22,7 +22,7 @@ var testConfig = governance.Config{
 	ExecutionWindow:               2592000,       // 30 days
 }
 
-func TestGovernanceExecute_Execute(t *testing.T) {
+func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
@@ -178,7 +178,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -191,22 +191,18 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Execute(tt.proposalId)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, tt.proposalId)
 				})
 				return
 			}
 
 			var resultId int64
-			func(cur realm) {
-				testing.SetRealm(govRealm)
+			testing.SetRealm(govRealm)
 
-				resultId = gov.Execute(tt.proposalId)
-				uassert.Equal(t, tt.expectedProposalId, resultId)
-			}(cross)
+			resultId = gov.Execute(0, cur, tt.proposalId)
+			uassert.Equal(t, tt.expectedProposalId, resultId)
 
 			proposal, _ := gov.getProposal(tt.proposalId)
 			statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -215,7 +211,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 	}
 }
 
-func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
+func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
@@ -354,7 +350,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -364,30 +360,28 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 			}
 
 			// when
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				proposal, err := gov.executeProposal(
-					tt.proposalId,
-					tt.executedAt,
-					tt.executedHeight,
-					tt.executedBy,
-				)
+			testing.SetRealm(govRealm)
+			proposal, err := gov.executeProposal(
+				tt.proposalId,
+				tt.executedAt,
+				tt.executedHeight,
+				tt.executedBy,
+			)
 
-				// then
-				if tt.expectedHasError {
-					uassert.ErrorContains(t, err, tt.expectedErrorMessage)
-				} else {
-					uassert.NoError(t, err)
-					uassert.NotEqual(t, nil, proposal)
-					statusResolver := NewProposalStatusResolver(proposal.Status())
-					uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
-				}
-			}(cross)
+			// then
+			if tt.expectedHasError {
+				uassert.ErrorContains(t, err, tt.expectedErrorMessage)
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotEqual(t, nil, proposal)
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
+			}
 		})
 	}
 }
 
-func TestGovernanceExecute_Cancel(t *testing.T) {
+func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	executableDelay := int64(0)
@@ -522,7 +516,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -535,20 +529,16 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Cancel(tt.proposalId)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(govRealm)
+					gov.Cancel(0, cur, tt.proposalId)
 				})
 				return
 			}
 
 			var resultId int64
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				resultId = gov.Cancel(tt.proposalId)
-			}(cross)
+			testing.SetRealm(govRealm)
+			resultId = gov.Cancel(0, cur, tt.proposalId)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, resultId)
@@ -561,7 +551,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 }
 
 // Test comprehensive execution validation
-func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
+func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	tests := []struct {
@@ -748,7 +738,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -761,25 +751,21 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Execute(tt.proposalId)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, tt.proposalId)
 				})
 			} else {
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					resultId := gov.Execute(tt.proposalId)
-					uassert.Equal(t, tt.proposalId, resultId)
-				}(cross)
+				testing.SetRealm(govRealm)
+				resultId := gov.Execute(0, cur, tt.proposalId)
+				uassert.Equal(t, tt.proposalId, resultId)
 			}
 		})
 	}
 }
 
 // Test execution timing validation
-func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
+func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	tests := []struct {
@@ -830,7 +816,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -853,25 +839,21 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 
 			// when & then
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Execute(1)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, 1)
 				})
 			} else {
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					resultId := gov.Execute(1)
-					uassert.Equal(t, int64(1), resultId)
-				}(cross)
+				testing.SetRealm(govRealm)
+				resultId := gov.Execute(0, cur, 1)
+				uassert.Equal(t, int64(1), resultId)
 			}
 		})
 	}
 }
 
 // Test community pool spend execution scenarios
-func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
+func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	tests := []struct {
@@ -931,7 +913,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -961,18 +943,14 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 
 			// when & then
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Execute(1)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, 1)
 				})
 			} else {
 				var resultId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					resultId = gov.Execute(1)
-				}(cross)
+				testing.SetRealm(govRealm)
+				resultId = gov.Execute(0, cur, 1)
 				uassert.Equal(t, int64(1), resultId)
 
 				// Verify execution state
@@ -985,7 +963,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 }
 
 // Test parameter change execution scenarios
-func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
+func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	tests := []struct {
@@ -1048,7 +1026,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -1071,18 +1049,14 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 
 			// when & then
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Execute(1)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, 1)
 				})
 			} else {
 				var resultId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					resultId = gov.Execute(1)
-				}(cross)
+				testing.SetRealm(govRealm)
+				resultId = gov.Execute(0, cur, 1)
 				uassert.Equal(t, int64(1), resultId)
 
 				// Verify execution state
@@ -1094,7 +1068,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 	}
 }
 
-func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
+func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	now := time.Now()
@@ -1160,7 +1134,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -1187,18 +1161,14 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 
 			// when & then
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Cancel(proposalId)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					testing.SetRealm(govRealm)
+					gov.Cancel(0, cur, proposalId)
 				})
 			} else {
 				var resultId int64
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					resultId = gov.Cancel(proposalId)
-				}(cross)
+				testing.SetRealm(govRealm)
+				resultId = gov.Cancel(0, cur, proposalId)
 				uassert.Equal(t, proposalId, resultId)
 
 				// Verify cancellation state
@@ -1211,10 +1181,10 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 }
 
 // Test re-execution prevention
-func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
+func TestGovernanceExecute_ReExecutionPrevention(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
-	t.Run("prevent double execution", func(t *testing.T) {
+	t.Run("prevent double execution", func(cur realm, t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
@@ -1236,26 +1206,22 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 
 		// when - first execution
 		errInvalidRangeMsg := "invalid uint64 value: -1"
-		uassert.AbortsContains(t, errInvalidRangeMsg, func() {
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				gov.Execute(1)
-			}(cross)
+		uassert.AbortsContains(t, cur, errInvalidRangeMsg, func() {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 1)
 		})
 
 		// then - second execution should fail
 		errNotExecutableMsg := "[GNOSWAP-GOVERNANCE-013] proposal not executable"
-		uassert.AbortsContains(t, errNotExecutableMsg, func() {
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				gov.Execute(1)
-			}(cross)
+		uassert.AbortsContains(t, cur, errNotExecutableMsg, func() {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 1)
 		})
 	})
 }
 
 // TestGovernanceExecute_executeCommunityPoolSpend tests the private executeCommunityPoolSpend function
-func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
+func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 	setupGovernanceExecuteTestCommunityPoolBalance(t)
 
 	tests := []struct {
@@ -1298,7 +1264,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			proposal := tt.setupProposal()
@@ -1306,16 +1272,14 @@ func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
 
 			// when
 			var err error
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				err = executeCommunityPoolSpend(
-					proposal,
-					registry,
-					tt.executedAt,
-					tt.executedHeight,
-					tt.executedBy,
-				)
-			}(cross)
+			testing.SetRealm(govRealm)
+			err = executeCommunityPoolSpend(
+				proposal,
+				registry,
+				tt.executedAt,
+				tt.executedHeight,
+				tt.executedBy,
+			)
 
 			// then
 			if tt.expectedHasError {
@@ -1329,7 +1293,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
 }
 
 // TestGovernanceExecute_executeParameterChange tests the private executeParameterChange function
-func TestGovernanceExecute_executeParameterChange(t *testing.T) {
+func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupProposal    func() *governance.Proposal
@@ -1437,23 +1401,21 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			proposal := tt.setupProposal()
 			registry := tt.setupRegistry()
 
 			// when
 			var err error
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				err = executeParameterChange(
-					proposal,
-					registry,
-					tt.executedAt,
-					tt.executedHeight,
-					tt.executedBy,
-				)
-			}(cross)
+			testing.SetRealm(govRealm)
+			err = executeParameterChange(
+				proposal,
+				registry,
+				tt.executedAt,
+				tt.executedHeight,
+				tt.executedBy,
+			)
 
 			// then
 			if tt.expectedHasError {

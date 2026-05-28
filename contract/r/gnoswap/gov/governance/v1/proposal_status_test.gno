@@ -10,7 +10,7 @@ import (
 )
 
 // TestProposalStatus_StatusType tests status type determination
-func TestProposalStatus_StatusType(t *testing.T) {
+func TestProposalStatus_StatusType(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
 	config := governance.Config{
 		VotingStartDelay: 100,
@@ -154,7 +154,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
 			resolver := NewProposalStatusResolver(status)
@@ -185,7 +185,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 }
 
 // TestProposalStatus_VotingOperations tests voting operations
-func TestProposalStatus_VotingOperations(t *testing.T) {
+func TestProposalStatus_VotingOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		maxVotingWeight int64
@@ -221,7 +221,7 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			config := governance.Config{
 				VotingStartDelay: 100,
@@ -252,7 +252,7 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 }
 
 // TestProposalStatusResolver_PrivateMethods tests private methods of proposal status resolver
-func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
+func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
 	config := governance.Config{
 		VotingStartDelay: 100,
@@ -383,7 +383,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -397,7 +397,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 }
 
 // TestProposalStatus_NewProposalStatus tests the NewProposalStatus constructor
-func TestProposalStatus_NewProposalStatus(t *testing.T) {
+func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		config          governance.Config
@@ -460,7 +460,7 @@ func TestProposalStatus_NewProposalStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			status := NewProposalStatus(tc.config, tc.maxVotingWeight, tc.executable, tc.createdAt)
 

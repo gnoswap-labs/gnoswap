@@ -10,7 +10,7 @@ import (
 )
 
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval
-func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
+func TestParameterRegistry_RegisterAndHandler(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		pkgPath          string
@@ -42,7 +42,7 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			registry := NewParameterRegistry()
 
@@ -73,7 +73,7 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 }
 
 // TestParameterHandlerOptions_Execute tests parameter handler execution
-func TestParameterHandlerOptions_Execute(t *testing.T) {
+func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		paramCount       int
@@ -114,7 +114,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			handler := NewParameterHandlerOptions(
 				"test/pkg",
@@ -138,7 +138,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 }
 
 // TestCreateParameterHandlers tests the creation of all parameter handlers
-func TestCreateParameterHandlers(t *testing.T) {
+func TestCreateParameterHandlers(cur realm, t *testing.T) {
 	// given & when
 	registry := CreateParameterHandlers()
 
@@ -165,7 +165,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 }
 
 // TestParseNumber tests number parsing
-func TestParseNumber(t *testing.T) {
+func TestParseNumber(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                string
@@ -209,9 +209,9 @@ func TestParseNumber(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					parseNumber(tc.input, tc.kind)
 				})
 			} else {
@@ -223,7 +223,7 @@ func TestParseNumber(t *testing.T) {
 }
 
 // TestParseBool tests boolean parsing
-func TestParseBool(t *testing.T) {
+func TestParseBool(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                string
@@ -250,9 +250,9 @@ func TestParseBool(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					parseBool(tc.input)
 				})
 			} else {
@@ -263,7 +263,7 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
-func TestValidateExecutions(t *testing.T) {
+func TestValidateExecutions(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		numToExecute          int64
@@ -649,7 +649,7 @@ func TestValidateExecutions(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			err := validateExecutions(tc.numToExecute, splitExecutionsRaw(tc.executions))
 
 			if tc.expectedError {
@@ -662,7 +662,7 @@ func TestValidateExecutions(t *testing.T) {
 	}
 }
 
-func TestSplitExecutionsRaw(t *testing.T) {
+func TestSplitExecutionsRaw(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		raw      string
@@ -686,7 +686,7 @@ func TestSplitExecutionsRaw(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			actual := splitExecutionsRaw(tc.raw)
 			uassert.Equal(t, len(actual), len(tc.expected))
 			for i := range tc.expected {

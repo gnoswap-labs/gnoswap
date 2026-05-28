@@ -61,7 +61,7 @@ func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
 // Store Data Getter Tests
 // ==================================
 
-func TestGetLatestConfigVersion(t *testing.T) {
+func TestGetLatestConfigVersion(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(t *testing.T) *governanceV1
@@ -77,7 +77,7 @@ func TestGetLatestConfigVersion(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			version := gv.GetLatestConfigVersion()
 			uassert.Equal(t, tc.expected, version)
@@ -85,7 +85,7 @@ func TestGetLatestConfigVersion(t *testing.T) {
 	}
 }
 
-func TestGetCurrentProposalID(t *testing.T) {
+func TestGetCurrentProposalID(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(t *testing.T) *governanceV1
@@ -108,7 +108,7 @@ func TestGetCurrentProposalID(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			id := gv.GetCurrentProposalID()
 			uassert.Equal(t, tc.expected, id)
@@ -116,10 +116,10 @@ func TestGetCurrentProposalID(t *testing.T) {
 	}
 }
 
-func TestGetMaxSmoothingPeriod(t *testing.T) {
+func TestGetMaxSmoothingPeriod(cur realm, t *testing.T) {
 	gv := setupGetterTest(t)
 
-	t.Run("returns max smoothing period", func(t *testing.T) {
+	t.Run("returns max smoothing period", func(cur realm, t *testing.T) {
 		period := gv.GetMaxSmoothingPeriod()
 		uassert.Equal(t, int64(maxSmoothingPeriod), period)
 	})
@@ -129,10 +129,10 @@ func TestGetMaxSmoothingPeriod(t *testing.T) {
 // Config Getter Tests
 // ==================================
 
-func TestGetLatestConfig(t *testing.T) {
+func TestGetLatestConfig(cur realm, t *testing.T) {
 	gv := setupGetterTest(t)
 
-	t.Run("returns latest config", func(t *testing.T) {
+	t.Run("returns latest config", func(cur realm, t *testing.T) {
 		config := gv.GetLatestConfig()
 		uassert.Equal(t, int64(100), config.VotingStartDelay)
 		uassert.Equal(t, int64(200), config.VotingPeriod)
@@ -140,7 +140,7 @@ func TestGetLatestConfig(t *testing.T) {
 	})
 }
 
-func TestGetConfig(t *testing.T) {
+func TestGetConfig(cur realm, t *testing.T) {
 	testCases := []struct {
 		name          string
 		setup         func(t *testing.T) *governanceV1
@@ -166,7 +166,7 @@ func TestGetConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			config, err := gv.GetConfig(tc.configVersion)
 			if tc.expectError {
@@ -183,7 +183,7 @@ func TestGetConfig(t *testing.T) {
 // Proposal Getter Tests
 // ==================================
 
-func TestGetProposalCount(t *testing.T) {
+func TestGetProposalCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(t *testing.T) *governanceV1
@@ -206,7 +206,7 @@ func TestGetProposalCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			count := gv.GetProposalCount()
 			uassert.Equal(t, tc.expected, count)
@@ -214,7 +214,7 @@ func TestGetProposalCount(t *testing.T) {
 	}
 }
 
-func TestGetProposalIDs(t *testing.T) {
+func TestGetProposalIDs(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(t *testing.T) *governanceV1
@@ -252,7 +252,7 @@ func TestGetProposalIDs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			ids := gv.GetProposalIDs(tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(ids))
@@ -260,7 +260,7 @@ func TestGetProposalIDs(t *testing.T) {
 	}
 }
 
-func TestExistsProposal(t *testing.T) {
+func TestExistsProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
 		setup      func(t *testing.T) *governanceV1
@@ -286,7 +286,7 @@ func TestExistsProposal(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			exists := gv.ExistsProposal(tc.proposalID)
 			uassert.Equal(t, tc.expected, exists)
@@ -294,7 +294,7 @@ func TestExistsProposal(t *testing.T) {
 	}
 }
 
-func TestGetProposal(t *testing.T) {
+func TestGetProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -320,7 +320,7 @@ func TestGetProposal(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			proposal, err := gv.GetProposal(tc.proposalID)
 			if tc.expectError {
@@ -333,7 +333,7 @@ func TestGetProposal(t *testing.T) {
 	}
 }
 
-func TestGetProposerByProposalId(t *testing.T) {
+func TestGetProposerByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -362,7 +362,7 @@ func TestGetProposerByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			proposer, err := gv.GetProposerByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -375,7 +375,7 @@ func TestGetProposerByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetProposalTypeByProposalId(t *testing.T) {
+func TestGetProposalTypeByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -404,7 +404,7 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			proposalType, err := gv.GetProposalTypeByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -417,7 +417,7 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetYeaByProposalId(t *testing.T) {
+func TestGetYeaByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -446,7 +446,7 @@ func TestGetYeaByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			yea, err := gv.GetYeaByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -459,7 +459,7 @@ func TestGetYeaByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetNayByProposalId(t *testing.T) {
+func TestGetNayByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -488,7 +488,7 @@ func TestGetNayByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			nay, err := gv.GetNayByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -501,7 +501,7 @@ func TestGetNayByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetTitleByProposalId(t *testing.T) {
+func TestGetTitleByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -530,7 +530,7 @@ func TestGetTitleByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			title, err := gv.GetTitleByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -543,7 +543,7 @@ func TestGetTitleByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetDescriptionByProposalId(t *testing.T) {
+func TestGetDescriptionByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -572,7 +572,7 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			description, err := gv.GetDescriptionByProposalId(tc.proposalID)
 			if tc.expectError {
@@ -589,7 +589,7 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 // Vote Getter Tests
 // ==================================
 
-func TestGetVoteStatus(t *testing.T) {
+func TestGetVoteStatus(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -615,7 +615,7 @@ func TestGetVoteStatus(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			quorum, maxVotingWeight, yesWeight, noWeight, err := gv.GetVoteStatus(tc.proposalID)
 			if tc.expectError {
@@ -631,7 +631,7 @@ func TestGetVoteStatus(t *testing.T) {
 	}
 }
 
-func TestGetVotingInfoCount(t *testing.T) {
+func TestGetVotingInfoCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
 		setup      func(t *testing.T) *governanceV1
@@ -657,7 +657,7 @@ func TestGetVotingInfoCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			count := gv.GetVotingInfoCount(tc.proposalID)
 			uassert.Equal(t, tc.expected, count)
@@ -665,7 +665,7 @@ func TestGetVotingInfoCount(t *testing.T) {
 	}
 }
 
-func TestGetVotingInfoAddresses(t *testing.T) {
+func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(t *testing.T) *governanceV1
@@ -697,7 +697,7 @@ func TestGetVotingInfoAddresses(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			addrs := gv.GetVotingInfoAddresses(tc.proposalID, tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(addrs))
@@ -705,7 +705,7 @@ func TestGetVotingInfoAddresses(t *testing.T) {
 	}
 }
 
-func TestExistsVotingInfo(t *testing.T) {
+func TestExistsVotingInfo(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
 		setup      func(t *testing.T) *governanceV1
@@ -725,7 +725,7 @@ func TestExistsVotingInfo(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			exists := gv.ExistsVotingInfo(tc.proposalID, tc.addr)
 			uassert.Equal(t, tc.expected, exists)
@@ -733,7 +733,7 @@ func TestExistsVotingInfo(t *testing.T) {
 	}
 }
 
-func TestGetVotingInfo(t *testing.T) {
+func TestGetVotingInfo(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -753,7 +753,7 @@ func TestGetVotingInfo(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			_, err := gv.GetVotingInfo(tc.proposalID, tc.addr)
 			if tc.expectError {
@@ -769,7 +769,7 @@ func TestGetVotingInfo(t *testing.T) {
 // User Proposal Getter Tests
 // ==================================
 
-func TestGetUserProposalCount(t *testing.T) {
+func TestGetUserProposalCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(t *testing.T) *governanceV1
@@ -795,7 +795,7 @@ func TestGetUserProposalCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			count := gv.GetUserProposalCount(tc.user)
 			uassert.Equal(t, tc.expected, count)
@@ -803,7 +803,7 @@ func TestGetUserProposalCount(t *testing.T) {
 	}
 }
 
-func TestGetUserProposalIDs(t *testing.T) {
+func TestGetUserProposalIDs(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(t *testing.T) *governanceV1
@@ -845,7 +845,7 @@ func TestGetUserProposalIDs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			ids := gv.GetUserProposalIDs(tc.user, tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(ids))
@@ -857,7 +857,7 @@ func TestGetUserProposalIDs(t *testing.T) {
 // Active Proposal Query Tests
 // ==================================
 
-func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
+func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 	testCases := []struct {
 		name            string
 		setup           func(t *testing.T) *governanceV1
@@ -880,7 +880,7 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
 			uassert.Equal(t, tc.expectHasActive, hasActive)
@@ -895,7 +895,7 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 // Voting Weight Snapshot Getter Tests
 // ==================================
 
-func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
+func TestGetCurrentVotingWeightSnapshot(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(t *testing.T) *governanceV1
@@ -931,7 +931,7 @@ func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(t)
 			_, _, err := gv.GetCurrentVotingWeightSnapshot()
 			if tc.expectError {
