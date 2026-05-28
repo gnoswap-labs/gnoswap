@@ -46,8 +46,12 @@ func (s *launchpadStore) GetProjects() *bptree.BPTree {
 }
 
 // SetProjects stores the projects tree.
-func (s *launchpadStore) SetProjects(projects *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyProjects.String(), projects)
+func (s *launchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProjects.String(), projects)
 }
 
 // HasProjectTierRewardManagersKey checks if the project tier reward managers key exists in the store.
@@ -71,8 +75,12 @@ func (s *launchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 }
 
 // SetProjectTierRewardManagers stores the project tier reward managers tree.
-func (s *launchpadStore) SetProjectTierRewardManagers(managers *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyProjectTierRewardManagers.String(), managers)
+func (s *launchpadStore) SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProjectTierRewardManagers.String(), managers)
 }
 
 // HasDepositCounterStoreKey checks if the deposit counter key exists in the store.
@@ -95,8 +103,12 @@ func (s *launchpadStore) GetDepositCounter() *Counter {
 	return counter
 }
 
-func (s *launchpadStore) SetDepositCounter(counter *Counter) error {
-	return s.kvStore.Set(StoreKeyDepositCounter.String(), counter)
+func (s *launchpadStore) SetDepositCounter(_ int, rlm realm, counter *Counter) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyDepositCounter.String(), counter)
 }
 
 func (s *launchpadStore) NextDepositID() string {
@@ -127,8 +139,12 @@ func (s *launchpadStore) GetDeposits() *bptree.BPTree {
 }
 
 // SetDeposits stores the deposits tree.
-func (s *launchpadStore) SetDeposits(deposits *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
+func (s *launchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)
 }
 
 // NewLaunchpadStore creates a new launchpad store instance with the provided KV store.

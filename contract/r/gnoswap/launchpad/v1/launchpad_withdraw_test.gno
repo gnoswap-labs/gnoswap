@@ -18,7 +18,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	userAddr := testutils.TestAddress("user1")
@@ -59,12 +59,12 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadWithdrawTest(t, userAddr)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initLaunchpadWithdrawTest(cur, t, userAddr)
 			lp := getTestImplementation()
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			gns.Transfer(cross, launchpadAddr, 1000000000)
+			gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 			testing.SkipHeights(60*60*24*180/5 + 2)
@@ -72,10 +72,10 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 			if tt.expectedHasAbort {
 				collectDepositFn := func() {
 					func(cur realm) {
-						lp.CollectDepositGns(tt.depositID)
-					}(cross)
+						lp.CollectDepositGns(0, cur, tt.depositID)
+					}(cross(cur))
 				}
-				uassert.AbortsContains(t, tt.expectedAbortMessage, collectDepositFn)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, collectDepositFn)
 				return
 			}
 
@@ -85,8 +85,8 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 			testing.SetOriginCaller(tt.callerAddress)
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				amount, err = lp.CollectDepositGns(tt.depositID)
-			}(cross)
+				amount, err = lp.CollectDepositGns(0, cur, tt.depositID)
+			}(cross(cur))
 
 			testing.SkipHeights(-(60*60*24*180/5 + 2))
 			uassert.NoError(t, err)
@@ -95,7 +95,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	const contractPackagePath = "gno.land/r/test/contract"
 
@@ -103,11 +103,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(t, contractAddr)
+	initLaunchpadWithdrawTest(cur, t, contractAddr)
 	lp := getTestImplementation()
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, launchpadAddr, 1000000000)
+	gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 	testing.SkipHeights(60*60*24*180/5 + 2)
@@ -116,14 +116,14 @@ func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(t *testing.T) {
 	var err error
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		amount, err = lp.CollectDepositGns("1")
-	}(cross)
+		amount, err = lp.CollectDepositGns(0, cur, "1")
+	}(cross(cur))
 
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(1000000000), amount)
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsContractNonOwner(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsContractNonOwner(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	const contractPackagePath = "gno.land/r/test/contract"
 
@@ -131,26 +131,26 @@ func TestLaunchpadWithdraw_CollectDepositGnsContractNonOwner(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(t, userAddr)
+	initLaunchpadWithdrawTest(cur, t, userAddr)
 	lp := getTestImplementation()
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, launchpadAddr, 1000000000)
+	gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 	testing.SkipHeights(60*60*24*180/5 + 2)
 
-	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
+	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			lp.CollectDepositGns("1")
-		}(cross)
+			lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
 	})
 }
 
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
 // including both success and error cases across different tier durations.
-func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
+func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 	userAddr := testutils.TestAddress("user_withdraw")
 
 	// Skip heights constants for different tier durations
@@ -268,8 +268,8 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initLaunchpadWithdrawTestWithTier(cur, t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
 
 			if tt.skipHeights > 0 {
@@ -288,7 +288,7 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 
 			if tt.withdrawTwice {
 				// First withdrawal should succeed
-				_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+				_, _, err = lp.withdrawDeposit(0, cur, deposit, runtime.ChainHeight(), currentTime)
 				uassert.NoError(t, err)
 
 				// Refresh deposit to get updated state
@@ -297,7 +297,7 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 			}
 
 			// Execute withdrawal (or second withdrawal for withdrawTwice case)
-			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, amount, err := lp.withdrawDeposit(0, cur, deposit, runtime.ChainHeight(), currentTime)
 
 			if tt.expectedErr {
 				uassert.Error(t, err)
@@ -310,18 +310,18 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
 	userAddr := testutils.TestAddress("user3")
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(t, userAddr)
+	initLaunchpadWithdrawTest(cur, t, userAddr)
 	lp := getTestImplementation()
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, launchpadAddr, 1000000000)
+	gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 	// Set caller as user and skip to withdrawal time
 	testing.SetRealm(testing.NewUserRealm(userAddr))
@@ -338,10 +338,10 @@ func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
 	testing.SetOriginCaller(userAddr)
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		amount, err = lp.CollectDepositGns("1")
+		amount, err = lp.CollectDepositGns(0, cur, "1")
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(1000000000), amount)
-	}(cross)
+	}(cross(cur))
 
 	// Check final balances
 	userBalanceAfter := gns.BalanceOf(userAddr)
@@ -351,19 +351,19 @@ func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
 	// 1. User's GNS balance should increase by the deposit amount
 	// 2. Launchpad's GNS balance should decrease by the same amount
 
-	t.Run("user_receives_gns_correctly", func(t *testing.T) {
+	t.Run("user_receives_gns_correctly", func(cur realm, t *testing.T) {
 		expectedUserBalance := int64(userBalanceBefore + amount)
 		uassert.Equal(t, expectedUserBalance, userBalanceAfter,
 			"User should receive GNS tokens back")
 	})
 
-	t.Run("launchpad_transfers_gns_correctly", func(t *testing.T) {
+	t.Run("launchpad_transfers_gns_correctly", func(cur realm, t *testing.T) {
 		expectedLaunchpadBalance := launchpadBalanceBefore - amount
 		uassert.Equal(t, expectedLaunchpadBalance, launchpadBalanceAfter,
 			"Launchpad should transfer GNS tokens out")
 	})
 
-	t.Run("tokens_are_properly_returned", func(t *testing.T) {
+	t.Run("tokens_are_properly_returned", func(cur realm, t *testing.T) {
 		userBalanceChange := userBalanceAfter - userBalanceBefore
 		launchpadBalanceChange := launchpadBalanceAfter - launchpadBalanceBefore
 
@@ -375,7 +375,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
 }
 
 // This test verifies complete balance restoration after deposit and withdrawal
-func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t *testing.T) {
 	// init test environment
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
@@ -391,8 +391,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
-	project, _ := lp.createProject(
-		&createProjectParams{
+	project, _ := lp.createProject(0, cur, &createProjectParams{
 			name:          "Test Project",
 			tokenPath:     "gno.land/r/onbloc/obl",
 			depositAmount: 1000000,
@@ -408,14 +407,14 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)
-	lp.store.SetProjects(projects)
+	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)
 
 	// Give user initial GNS balance
 	initialUserBalance := int64(5000000000) // 5000 GNS
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, userAddr, initialUserBalance)
+	gns.Transfer(cross(cur), userAddr, initialUserBalance)
 
 	// Record initial balance
 	userBalanceBeforeDeposit := gns.BalanceOf(userAddr)
@@ -427,14 +426,14 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 
 	// Need to approve GNS before deposit
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 
 	// Use public DepositGns function to properly handle token transfer
 	var depositID string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		depositID = lp.DepositGns(project.ID()+":30", depositAmount, "")
-	}(cross)
+		depositID = lp.DepositGns(0, cur, project.ID()+":30", depositAmount, "")
+	}(cross(cur))
 
 	// Check balance after deposit
 	userBalanceAfterDeposit := gns.BalanceOf(userAddr)
@@ -446,11 +445,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := testing.NewUserRealm(govStakerAddr)
 	testing.SetRealm(govStakerRealm)
-	xgns.Mint(cross, launchpadAddr, depositAmount)
+	xgns.Mint(cross(cur), launchpadAddr, depositAmount)
 
 	// Give launchpad GNS for withdrawal
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, launchpadAddr, depositAmount)
+	gns.Transfer(cross(cur), launchpadAddr, depositAmount)
 
 	// Skip to end of tier period
 	projectTier, _ := getProjectTier(project, 30)
@@ -463,21 +462,21 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	var err error
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		withdrawnAmount, err = lp.CollectDepositGns(depositID)
-	}(cross)
+		withdrawnAmount, err = lp.CollectDepositGns(0, cur, depositID)
+	}(cross(cur))
 	uassert.NoError(t, err)
 	uassert.Equal(t, depositAmount, withdrawnAmount, "Withdrawn amount should match deposit")
 
 	// Verify complete balance restoration
 	userBalanceFinal := gns.BalanceOf(userAddr)
 
-	t.Run("exact_balance_restoration", func(t *testing.T) {
+	t.Run("exact_balance_restoration", func(cur realm, t *testing.T) {
 		// User should have exactly the initial balance after withdrawal
 		uassert.Equal(t, initialUserBalance, userBalanceFinal,
 			"User balance should be fully restored to initial amount")
 	})
 
-	t.Run("deposit_withdrawal_symmetry", func(t *testing.T) {
+	t.Run("deposit_withdrawal_symmetry", func(cur realm, t *testing.T) {
 		// The amount lost during deposit should equal amount gained during withdrawal
 		depositLoss := userBalanceBeforeDeposit - userBalanceAfterDeposit
 		withdrawalGain := userBalanceFinal - userBalanceAfterDeposit
@@ -490,7 +489,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 			"Withdrawal gain should equal withdrawn amount")
 	})
 
-	t.Run("verify_no_tokens_lost", func(t *testing.T) {
+	t.Run("verify_no_tokens_lost", func(cur realm, t *testing.T) {
 		netChange := userBalanceFinal - userBalanceBeforeDeposit
 		uassert.Equal(t, int64(0), netChange,
 			"Net change in user balance should be zero (no tokens lost)")
@@ -498,7 +497,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 }
 
 // TestLaunchpadWithdraw_RewardStateRemoval tests that reward state is removed after withdrawal
-func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
+func TestLaunchpadWithdraw_RewardStateRemoval(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		depositID                     string
@@ -518,9 +517,9 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			userAddr := testutils.TestAddress("user5")
-			initLaunchpadWithdrawTest(t, userAddr)
+			initLaunchpadWithdrawTest(cur, t, userAddr)
 			lp := getTestImplementation()
 
 			// Get deposit to retrieve project info
@@ -546,7 +545,7 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 			// Perform withdrawal
 			testing.SkipHeights(tt.skipHeight)
 			currentTime := time.Now().Unix()
-			_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, _, err = lp.withdrawDeposit(0, cur, deposit, runtime.ChainHeight(), currentTime)
 			uassert.NoError(t, err)
 
 			// Verify reward state is removed after withdrawal
@@ -567,7 +566,7 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 
 // TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits tests reward state removal
 // when multiple deposits exist in the same tier
-func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) {
+func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name                         string
 		numDeposits                  int
@@ -592,7 +591,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetHeight(123)
 			resetTestStore()
 			lp := getTestImplementation()
@@ -601,7 +600,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			currentTime := time.Now().Unix()
 			currentHeight := runtime.ChainHeight()
 
-			project, _ := lp.createProject(&createProjectParams{
+			project, _ := lp.createProject(0, cur, &createProjectParams{
 				name:          "Test Project",
 				tokenPath:     "gno.land/r/onbloc/obl",
 				depositAmount: 1000000,
@@ -615,7 +614,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			})
 			projects := lp.store.GetProjects()
 			projects.Set(project.ID(), project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 
 			testing.SkipHeights(10)
 
@@ -626,7 +625,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			for i := 0; i < tt.numDeposits; i++ {
 				userAddr := testutils.TestAddress("multiuser" + formatInt(int64(i)))
 				testing.SetOriginCaller(userAddr)
-				deposit, _, _, _, _ := lp.depositGns(project, 30, depositAmount, userAddr)
+				deposit, _, _, _, _ := lp.depositGns(0, cur, project, 30, depositAmount, userAddr)
 				depositIDs[i] = deposit.ID()
 			}
 
@@ -635,7 +634,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 			govStakerRealm := testing.NewUserRealm(govStakerAddr)
 			testing.SetRealm(govStakerRealm)
-			xgns.Mint(cross, launchpadAddr, depositAmount*int64(tt.numDeposits))
+			xgns.Mint(cross(cur), launchpadAddr, depositAmount*int64(tt.numDeposits))
 
 			// Skip to end of tier
 			projectTier, _ := getProjectTier(project, 30)
@@ -653,7 +652,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			withdrawDepositID := depositIDs[tt.withdrawDepositIndex]
 			deposit, _ := getDeposit(withdrawDepositID)
 			currentTime = time.Now().Unix()
-			_, _, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, _, err := lp.withdrawDeposit(0, cur, deposit, runtime.ChainHeight(), currentTime)
 			uassert.NoError(t, err)
 
 			// Verify reward state count after withdrawal
@@ -675,7 +674,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	userAddr := testutils.TestAddress("edge_user")
@@ -684,30 +683,30 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	t.Run("fail - empty deposit ID", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - empty deposit ID", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, "not exist deposit", func() {
+		uassert.AbortsContains(t, cur, "not exist deposit", func() {
 			func(cur realm) {
-				lp.CollectDepositGns("")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("fail - double collection attempt", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - double collection attempt", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 2000000000) // Extra for second attempt
-		obl.Transfer(cross, launchpadAddr, 2000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 2000000000) // Extra for second attempt
+		obl.Transfer(cross(cur), launchpadAddr, 2000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
@@ -718,82 +717,82 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 		testing.SetOriginCaller(userAddr)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			firstAmount, firstErr = lp.CollectDepositGns("1")
-		}(cross)
+			firstAmount, firstErr = lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
 		uassert.NoError(t, firstErr)
 		uassert.Equal(t, int64(1000000000), firstAmount)
 
 		// Second collection should fail
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		uassert.AbortsContains(t, "not exist deposit", func() {
+		uassert.AbortsContains(t, cur, "not exist deposit", func() {
 			testing.SetOriginCaller(userAddr)
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				lp.CollectDepositGns("1")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "1")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("fail - collection before tier ends", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - collection before tier ends", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
-		obl.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
+		obl.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		// Don't skip heights - tier hasn't ended yet
 		testing.SkipHeights(60*60*24*3/5 + 2)
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 
-		uassert.AbortsContains(t, "project lock period is not over yet", func() {
+		uassert.AbortsContains(t, cur, "project lock period is not over yet", func() {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				lp.CollectDepositGns("1")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "1")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("fail - collection with numeric but invalid deposit ID", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - collection with numeric but invalid deposit ID", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, "not exist deposit", func() {
+		uassert.AbortsContains(t, cur, "not exist deposit", func() {
 			func(cur realm) {
-				lp.CollectDepositGns("99999")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "99999")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("fail - collection with special characters in deposit ID", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - collection with special characters in deposit ID", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, "not exist deposit", func() {
+		uassert.AbortsContains(t, cur, "not exist deposit", func() {
 			func(cur realm) {
-				lp.CollectDepositGns("1; DROP TABLE deposits;--")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "1; DROP TABLE deposits;--")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("success - collection at exact end time boundary", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("success - collection at exact end time boundary", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		// Get the exact tier end time
 		deposit, _ := getDeposit("1")
@@ -813,32 +812,32 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 		testing.SetOriginCaller(userAddr)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			amount, err = lp.CollectDepositGns("1")
-		}(cross)
+			amount, err = lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
 
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(1000000000), amount)
 	})
 
-	t.Run("fail - collection by different user than depositor", func(t *testing.T) {
-		initLaunchpadWithdrawTest(t, userAddr)
+	t.Run("fail - collection by different user than depositor", func(cur realm, t *testing.T) {
+		initLaunchpadWithdrawTest(cur, t, userAddr)
 		lp := getTestImplementation()
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		gns.Transfer(cross, launchpadAddr, 1000000000)
+		gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 		testing.SetRealm(testing.NewUserRealm(otherAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, "invalid owner", func() {
+		uassert.AbortsContains(t, cur, "invalid owner", func() {
 			func(cur realm) {
-				lp.CollectDepositGns("1")
-			}(cross)
+				lp.CollectDepositGns(0, cur, "1")
+			}(cross(cur))
 		})
 	})
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -867,13 +866,13 @@ func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(t *testing.T) {
 	}
 
 	for _, tt := range tierTests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			userAddr := testutils.TestAddress("tier_user_" + formatInt(tt.tierDuration))
-			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
+			initLaunchpadWithdrawTestWithTier(cur, t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			gns.Transfer(cross, launchpadAddr, 1000000000)
+			gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 			testing.SetRealm(testing.NewUserRealm(userAddr))
 			testing.SkipHeights(tt.skipHeight)
@@ -883,8 +882,8 @@ func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(t *testing.T) {
 			testing.SetOriginCaller(userAddr)
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				amount, err = lp.CollectDepositGns("1")
-			}(cross)
+				amount, err = lp.CollectDepositGns(0, cur, "1")
+			}(cross(cur))
 
 			uassert.NoError(t, err)
 			uassert.Equal(t, int64(1000000000), amount)
@@ -892,7 +891,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(t *testing.T) {
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(cur realm, t *testing.T) {
 	partialTests := []struct {
 		name         string
 		tierDuration int64
@@ -926,17 +925,17 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 	}
 
 	for _, tt := range partialTests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			userAddr := testutils.TestAddress("partial_user")
-			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
+			initLaunchpadWithdrawTestWithTier(cur, t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
 
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 			adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			gns.Transfer(cross, launchpadAddr, 1000000000)
-			obl.Transfer(cross, launchpadAddr, 1000000000)
+			gns.Transfer(cross(cur), launchpadAddr, 1000000000)
+			obl.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 			if tt.skipHeight > 0 {
 				testing.SkipHeights(tt.skipHeight)
@@ -945,29 +944,29 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(userAddr))
 
 			if tt.shouldFail {
-				uassert.AbortsContains(t, "project lock period is not over yet", func() {
+				uassert.AbortsContains(t, cur, "project lock period is not over yet", func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-						lp.CollectDepositGns("1")
-					}(cross)
+						lp.CollectDepositGns(0, cur, "1")
+					}(cross(cur))
 				})
 			}
 		})
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	userAddr := testutils.TestAddress("state_user")
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(t, userAddr)
+	initLaunchpadWithdrawTest(cur, t, userAddr)
 	lp := getTestImplementation()
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, launchpadAddr, 1000000000)
+	gns.Transfer(cross(cur), launchpadAddr, 1000000000)
 
 	// Get deposit state before collection
 	depositBefore, err := getDeposit("1")
@@ -981,8 +980,8 @@ func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(t *testing.T)
 	testing.SetOriginCaller(userAddr)
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		lp.CollectDepositGns("1")
-	}(cross)
+		lp.CollectDepositGns(0, cur, "1")
+	}(cross(cur))
 
 	// Get deposit state after collection
 	depositAfter, err := getDeposit("1")
@@ -990,14 +989,14 @@ func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(t *testing.T)
 	uassert.True(t, depositAfter.IsWithdrawn(), "deposit should be withdrawn after collection")
 }
 
-func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
+func initLaunchpadWithdrawTest(cur realm, t *testing.T, depositor address) {
 	t.Helper()
-	initLaunchpadWithdrawTestWithTier(t, depositor, 30)
+	initLaunchpadWithdrawTestWithTier(cur, t, depositor, 30)
 }
 
 // initLaunchpadWithdrawTestWithTier initializes the test environment with a specific tier duration.
 // tierDuration should be 30, 90, or 180.
-func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDuration int64) {
+func initLaunchpadWithdrawTestWithTier(cur realm, t *testing.T, depositor address, tierDuration int64) {
 	t.Helper()
 	testing.SetHeight(123)
 
@@ -1012,8 +1011,7 @@ func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDura
 	currentHeight := runtime.ChainHeight()
 
 	// Setup test project with equal distribution across all tiers
-	project, _ := lp.createProject(
-		&createProjectParams{
+	project, _ := lp.createProject(0, cur, &createProjectParams{
 			name:          "Test Project",
 			tokenPath:     "gno.land/r/onbloc/obl",
 			depositAmount: 1000000,
@@ -1028,21 +1026,21 @@ func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDura
 	)
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)
-	lp.store.SetProjects(projects)
+	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)
 
 	depositAmount := int64(1000000000)
 
 	testing.SetOriginCaller(depositor)
-	lp.depositGns(project, tierDuration, depositAmount, depositor)
+	lp.depositGns(0, cur, project, tierDuration, depositAmount, depositor)
 
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := testing.NewUserRealm(govStakerAddr)
 	testing.SetRealm(govStakerRealm)
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	xgns.Mint(cross, launchpadAddr, depositAmount)
+	xgns.Mint(cross(cur), launchpadAddr, depositAmount)
 
 	projectTier, _ := getProjectTier(project, tierDuration)
 	testing.SetHeight(projectTier.EndTime() + 1)

@@ -21,7 +21,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
+func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		currentTime   int64
@@ -65,7 +65,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			resetTestStore()
 			lp := getTestImplementation()
@@ -105,7 +105,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			deposit := launchpad.NewDeposit("deposit_1", tt.projectID, tt.tier, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
 
 			// Execute
-			_, _, err := lp.collectDepositReward(deposit, runtime.ChainHeight(), tt.currentTime)
+			_, _, err := lp.collectDepositReward(0, cur, deposit, runtime.ChainHeight(), tt.currentTime)
 
 			// Verify
 			if tt.expectedError != "" {
@@ -118,7 +118,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 	}
 }
 
-func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
+func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(cur realm, t *testing.T) {
 	const secondsPerDay = int64(60 * 60 * 24)
 
 	tests := []struct {
@@ -258,7 +258,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			resetTestStore()
 
@@ -269,9 +269,10 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 			launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
-			gns.Approve(cross, launchpadAddr, math.MaxInt64)
+			gns.Approve(cross(cur), launchpadAddr, math.MaxInt64)
 
 			projectID := createProjectTest(
+				cur,
 				t,
 				"Test Project",
 				GNS_PATH,
@@ -288,18 +289,18 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 
 			// Create deposit
 			projectTierID := ufmt.Sprintf("%s:%d", projectID, tt.tier)
-			depositID := depositGnsTest(t, projectTierID, tt.depositAmount)
+			depositID := depositGnsTest(cur, t, projectTierID, tt.depositAmount)
 
 			// Skip to test time
 			testing.SkipHeights(tt.skipBeforeCollect / 5) // 5 seconds per block
 
 			// Execute
 			if tt.expectedHasPanic {
-				uassert.AbortsContains(t, tt.expectedPanicMessage, func() {
-					collectRewardTest(t, depositID)
+				uassert.AbortsContains(t, cur, tt.expectedPanicMessage, func() {
+					collectRewardTest(cur, t, depositID)
 				})
 			} else {
-				rewardAmount := collectRewardTest(t, depositID)
+				rewardAmount := collectRewardTest(cur, t, depositID)
 				uassert.True(t, rewardAmount > 0, "reward amount should be > 0")
 			}
 		})
@@ -307,7 +308,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 }
 
 // TestCollectRewardByDepositId_Success tests successful reward collection scenarios
-func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_Success(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		env                testEnvConfig
@@ -406,16 +407,16 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup environment
-			launchpadAddr, adminRealm := setupTestEnvironment(t, tt.env)
+			launchpadAddr, adminRealm := setupTestEnvironment(cur, t, tt.env)
 			lp := getTestImplementation()
 
 			// Create project
-			projectID := createTestProject(t, lp, launchpadAddr, adminRealm, tt.project)
+			projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, tt.project)
 
 			// Create deposits
-			userAddrs, depositIDs := createTestDeposits(t, lp, launchpadAddr, adminRealm, projectID, tt.depositors)
+			userAddrs, depositIDs := createTestDeposits(cur, t, lp, launchpadAddr, adminRealm, projectID, tt.depositors)
 
 			// Skip to collection time
 			testing.SkipHeights(tt.skipToCollect)
@@ -424,7 +425,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 			rewards := make([]int64, len(tt.depositors))
 			for i, userAddr := range userAddrs {
 				balanceBefore := common.BalanceOf(testOblTokenPath, userAddr)
-				rewards[i] = collectTestReward(t, lp, userAddr, depositIDs[i])
+				rewards[i] = collectTestReward(cur, t, lp, userAddr, depositIDs[i])
 				balanceAfter := common.BalanceOf(testOblTokenPath, userAddr)
 
 				// Verify reward was collected
@@ -461,7 +462,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 }
 
 // TestCollectRewardByDepositId_UpdatesTotalCollectedAmount ensures collected rewards are reflected in project stats.
-func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(cur realm, t *testing.T) {
 	env := testEnvConfig{initialTime: 15000000}
 	project := testProjectConfig{
 		rewardAmount:    10000000,
@@ -470,14 +471,14 @@ func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t 
 	}
 	depositor := testDepositConfig{userSuffix: "statUser1", depositAmount: 1000000, tier: 30}
 
-	launchpadAddr, adminRealm := setupTestEnvironment(t, env)
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, env)
 	lp := getTestImplementation()
 
-	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, project)
-	userAddr, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, depositor)
+	projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, project)
+	userAddr, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, depositor)
 
 	testing.SkipHeights(testSkipTier30Claimable)
-	reward := collectTestReward(t, lp, userAddr, depositID)
+	reward := collectTestReward(cur, t, lp, userAddr, depositID)
 
 	storedProject, err := lp.getProject(projectID)
 	uassert.NoError(t, err)
@@ -494,7 +495,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t 
 }
 
 // TestCollectRewardByDepositId_Failure tests error scenarios
-func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_Failure(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		env              testEnvConfig
@@ -557,19 +558,19 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup environment
-			launchpadAddr, adminRealm := setupTestEnvironment(t, tt.env)
+			launchpadAddr, adminRealm := setupTestEnvironment(cur, t, tt.env)
 			lp := getTestImplementation()
 
 			var depositID string
 
 			if tt.setupDeposit {
 				// Create project
-				projectID := createTestProject(t, lp, launchpadAddr, adminRealm, tt.project)
+				projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, tt.project)
 
 				// Create deposit
-				_, depositID = createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID,
+				_, depositID = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID,
 					testDepositConfig{userSuffix: tt.depositOwner, depositAmount: 1000000, tier: 30})
 
 				testing.SkipHeights(testSkipTier30Claimable)
@@ -583,7 +584,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			// Set halt level if specified
 			if tt.haltLevel != "" {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, tt.haltLevel)
+				halt.SetHaltLevel(cross(cur), tt.haltLevel)
 			}
 
 			// Execute and verify
@@ -591,79 +592,79 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(callerAddr))
 
 			if tt.expectedErrorMsg != "" {
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-						lp.CollectRewardByDepositId(depositID)
-					}(cross)
+						lp.CollectRewardByDepositId(0, cur, depositID)
+					}(cross(cur))
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-						_ = lp.CollectRewardByDepositId(depositID)
-					}(cross)
+						_ = lp.CollectRewardByDepositId(0, cur, depositID)
+					}(cross(cur))
 				})
 			}
 
 			// Cleanup halt
 			if tt.haltLevel != "" {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			}
 		})
 	}
 }
 
-func TestLaunchpadReward_CollectRewardByDepositId_ContractDepositor(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_ContractDepositor(cur realm, t *testing.T) {
 	const contractPackagePath = "gno.land/r/test/contract"
 
-	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 14000000})
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{initialTime: 14000000})
 	lp := getTestImplementation()
 	contractAddr := chain.PackageAddress(contractPackagePath)
 
-	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+	projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 		rewardAmount:    10000000,
 		recipientSuffix: "contractRecv",
 		tier30Pct:       100,
 	})
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, contractAddr, 2000000)
+	gns.Transfer(cross(cur), contractAddr, 2000000)
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
-	gns.Approve(cross, launchpadAddr, 1000000)
+	gns.Approve(cross(cur), launchpadAddr, 1000000)
 
 	var depositID string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		depositID = lp.DepositGns(projectID+":30", 1000000, "")
-	}(cross)
+		depositID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+	}(cross(cur))
 
 	testing.SkipHeights(testSkipTier30Claimable)
 
 	var rewardAmount int64
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		rewardAmount = lp.CollectRewardByDepositId(depositID)
-	}(cross)
+		rewardAmount = lp.CollectRewardByDepositId(0, cur, depositID)
+	}(cross(cur))
 
 	uassert.True(t, rewardAmount > 0)
 }
 
-func TestLaunchpadReward_CollectRewardByDepositId_ContractNonOwner(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_ContractNonOwner(cur realm, t *testing.T) {
 	const contractPackagePath = "gno.land/r/test/contract"
 
-	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 14100000})
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{initialTime: 14100000})
 	lp := getTestImplementation()
 
-	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+	projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 		rewardAmount:    10000000,
 		recipientSuffix: "contractNonOwnerRecv",
 		tier30Pct:       100,
 	})
 
-	_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+	_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 		userSuffix:    "contractNonOwner",
 		depositAmount: 1000000,
 		tier:          30,
@@ -672,16 +673,16 @@ func TestLaunchpadReward_CollectRewardByDepositId_ContractNonOwner(t *testing.T)
 	testing.SkipHeights(testSkipTier30Claimable)
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 
-	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
+	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-			lp.CollectRewardByDepositId(depositID)
-		}(cross)
+			lp.CollectRewardByDepositId(0, cur, depositID)
+		}(cross(cur))
 	})
 }
 
 // TestCollectRewardByDepositId_ConsecutiveCollections tests multiple collections
-func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		env                 testEnvConfig
@@ -733,19 +734,19 @@ func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(t *test
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup environment
-			launchpadAddr, adminRealm := setupTestEnvironment(t, tt.env)
+			launchpadAddr, adminRealm := setupTestEnvironment(cur, t, tt.env)
 			lp := getTestImplementation()
 
 			// Create project and depositor
-			projectID := createTestProject(t, lp, launchpadAddr, adminRealm, tt.project)
-			userAddr, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, tt.depositor)
+			projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, tt.project)
+			userAddr, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, tt.depositor)
 
 			// First collection
 			testing.SkipHeights(tt.skipToFirstCollect)
 			balanceBefore1 := common.BalanceOf(testOblTokenPath, userAddr)
-			reward1 := collectTestReward(t, lp, userAddr, depositID)
+			reward1 := collectTestReward(cur, t, lp, userAddr, depositID)
 			balanceAfter1 := common.BalanceOf(testOblTokenPath, userAddr)
 
 			uassert.True(t, reward1 > 0, "first reward should be > 0")
@@ -754,7 +755,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(t *test
 			// Second collection
 			testing.SkipHeights(tt.skipBetweenCollects)
 			balanceBefore2 := common.BalanceOf(testOblTokenPath, userAddr)
-			reward2 := collectTestReward(t, lp, userAddr, depositID)
+			reward2 := collectTestReward(cur, t, lp, userAddr, depositID)
 			balanceAfter2 := common.BalanceOf(testOblTokenPath, userAddr)
 
 			uassert.Equal(t, reward2, balanceAfter2-balanceBefore2)
@@ -769,7 +770,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_ConsecutiveCollections(t *test
 }
 
 // TestCollectRewardByDepositId_BalanceIntegrity tests that total rewards distributed match balance changes
-func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(t *testing.T) {
+func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(cur realm, t *testing.T) {
 	env := testEnvConfig{initialTime: 14000000}
 	project := testProjectConfig{
 		rewardAmount:    10000000,
@@ -783,15 +784,15 @@ func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(t *testing.T)
 	}
 
 	// Setup environment
-	launchpadAddr, adminRealm := setupTestEnvironment(t, env)
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, env)
 	lp := getTestImplementation()
 
 	// Create project
-	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, project)
+	projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, project)
 	launchpadBalanceAfterCreate := common.BalanceOf(testOblTokenPath, launchpadAddr)
 
 	// Create all deposits
-	userAddrs, depositIDs := createTestDeposits(t, lp, launchpadAddr, adminRealm, projectID, depositors)
+	userAddrs, depositIDs := createTestDeposits(cur, t, lp, launchpadAddr, adminRealm, projectID, depositors)
 
 	// Skip to collection time
 	testing.SkipHeights(testSkipTier30Claimable)
@@ -799,7 +800,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_BalanceIntegrity(t *testing.T)
 	// Collect all rewards
 	rewards := make([]int64, len(depositors))
 	for i, userAddr := range userAddrs {
-		rewards[i] = collectTestReward(t, lp, userAddr, depositIDs[i])
+		rewards[i] = collectTestReward(cur, t, lp, userAddr, depositIDs[i])
 	}
 
 	// Verify total distributed

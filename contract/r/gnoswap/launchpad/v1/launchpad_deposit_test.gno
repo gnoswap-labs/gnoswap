@@ -30,7 +30,43 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
 
-func TestLaunchpadDeposit_DepositGns(t *testing.T) {
+func createDepositTestProject(
+	cur realm,
+	lp *launchpadV1,
+	launchpadAddr address,
+	adminRealm runtime.Realm,
+	name string,
+	recipient address,
+	depositAmount int64,
+	tier30Ratio int64,
+	tier90Ratio int64,
+	tier180Ratio int64,
+	startTime int64,
+) string {
+	project, err := lp.createProject(0, cur, &createProjectParams{
+		name:                  name,
+		tokenPath:             "gno.land/r/onbloc/obl",
+		recipient:             recipient,
+		depositAmount:         depositAmount,
+		tier30Ratio:           tier30Ratio,
+		tier90Ratio:           tier90Ratio,
+		tier180Ratio:          tier180Ratio,
+		startTime:             startTime,
+		currentTime:           testing.GetContext().Time.Unix(),
+		currentHeight:         testing.GetContext().Height,
+		minimumStartDelayTime: projectMinimumStartDelayTime,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	testing.SetRealm(adminRealm)
+	obl.Transfer(cross(cur), launchpadAddr, depositAmount)
+
+	return project.ID()
+}
+
+func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
@@ -39,7 +75,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		setupFunc            func(lp *launchpadV1) (string, address)
+		setupFunc            func(cur realm, lp *launchpadV1) (string, address)
 		targetProjectTierID  string
 		depositAmount        int64
 		referrer             string
@@ -50,7 +86,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 	}{
 		{
 			name: "successful deposit with valid project and tier",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user1")
 				projectAddr := testutils.TestAddress("project1")
 
@@ -68,38 +104,20 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function
-				var projectID string
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-
-					// Approve token for project creation
-					projectID = lp.CreateProject(
-						"Test Project",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						startTime,
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Test Project", projectAddr, 10000, 30, 30, 40, startTime)
 
 				// Skip blocks to activate the project
 				testing.SkipHeights(projectMinimumStartDelayTime)
 
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, userAddr, 2000000) // Enough for deposit
+				gns.Transfer(cross(cur), userAddr, 2000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
 				testing.SetRealm(testing.NewUserRealm(userAddr))
-				gns.Approve(cross, launchpadAddr, 2000000)
+				gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 				return projectID + ":30", userAddr
 			},
@@ -123,7 +141,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "successful deposit with referrer",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user2")
 				projectAddr := testutils.TestAddress("project2")
 
@@ -139,37 +157,20 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Approve token for project creation
 				testing.SetRealm(adminRealm)
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function
-				var projectID string
-
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-					projectID = lp.CreateProject(
-						"Test Project 2",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						startTime,
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Test Project 2", projectAddr, 10000, 30, 30, 40, startTime)
 
 				// Skip blocks to activate the project
 				testing.SkipHeights(projectMinimumStartDelayTime)
 
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, userAddr, 3000000) // Enough for deposit
+				gns.Transfer(cross(cur), userAddr, 3000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
 				testing.SetRealm(testing.NewUserRealm(userAddr))
-				gns.Approve(cross, launchpadAddr, 3000000)
+				gns.Approve(cross(cur), launchpadAddr, 3000000)
 
 				return projectID + ":90", userAddr
 			},
@@ -188,7 +189,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "deposit with 180 day tier",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user3")
 				projectAddr := testutils.TestAddress("project3")
 
@@ -203,37 +204,20 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function
-				var projectID string
-
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-					projectID = lp.CreateProject(
-						"Test Project 3",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						startTime,
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Test Project 3", projectAddr, 10000, 30, 30, 40, startTime)
 
 				// Skip blocks to activate the project
 				testing.SkipHeights(projectMinimumStartDelayTime)
 
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, userAddr, 4000000) // Enough for deposit
+				gns.Transfer(cross(cur), userAddr, 4000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
 				testing.SetRealm(testing.NewUserRealm(userAddr))
-				gns.Approve(cross, launchpadAddr, 4000000)
+				gns.Approve(cross(cur), launchpadAddr, 4000000)
 
 				return projectID + ":180", userAddr
 			},
@@ -252,10 +236,10 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with zero amount",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				// Unhalt the system
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 
 				userAddr := testutils.TestAddress("user5")
 
@@ -270,7 +254,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with negative amount",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user6")
 
 				// No need to set up project since validation fails early
@@ -284,7 +268,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with invalid project tier ID format",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user7")
 
 				return "invalid_format", userAddr
@@ -297,7 +281,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with non-existent project",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user8")
 
 				// Reset state
@@ -313,7 +297,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with invalid tier duration",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user9")
 				projectAddr := testutils.TestAddress("project9")
 
@@ -331,37 +315,20 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function
-				var projectID string
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-
-					projectID = lp.CreateProject(
-						"Test Project 9",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						startTime,
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Test Project 9", projectAddr, 10000, 30, 30, 40, startTime)
 
 				// Skip blocks to activate the project
 				testing.SkipHeights(projectMinimumStartDelayTime)
 
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, userAddr, 2000000)
+				gns.Transfer(cross(cur), userAddr, 2000000)
 
 				// User approves launchpad to spend GNS
 				testing.SetRealm(testing.NewUserRealm(userAddr))
-				gns.Approve(cross, launchpadAddr, 2000000)
+				gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 				return projectID + ":60", userAddr // Invalid tier
 			},
@@ -373,7 +340,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "fail when project is inactive",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user10")
 				projectAddr := testutils.TestAddress("project10")
 
@@ -391,35 +358,19 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				futureTime := time.Now().Unix() + projectMinimumStartDelayTime + dayTime // 8 days in future
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function with future start time
-				var projectID string
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-					projectID = lp.CreateProject(
-						"Future Project",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						futureTime, // Project starts in the future
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Future Project", projectAddr, 10000, 30, 30, 40, futureTime)
 
 				// DON'T skip blocks - keep project inactive
 
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, userAddr, 2000000)
+				gns.Transfer(cross(cur), userAddr, 2000000)
 
 				// User approves launchpad to spend GNS
 				testing.SetRealm(testing.NewUserRealm(userAddr))
-				gns.Approve(cross, launchpadAddr, 2000000)
+				gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 				return projectID + ":30", userAddr
 			},
@@ -431,7 +382,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 		},
 		{
 			name: "successful deposit when called from contract",
-			setupFunc: func(lp *launchpadV1) (string, address) {
+			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				contractAddr := chain.PackageAddress("gno.land/r/test/contract")
 				projectAddr := testutils.TestAddress("project12")
 
@@ -449,37 +400,20 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
-				obl.Approve(cross, launchpadAddr, 10000)
+				obl.Approve(cross(cur), launchpadAddr, 10000)
 
-				// Create project using public CreateProject function
-				var projectID string
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-
-					projectID = lp.CreateProject(
-						"Test Project 12",
-						"gno.land/r/onbloc/obl",
-						projectAddr,
-						10000,
-						"", // no conditions
-						"",
-						30,
-						30,
-						40,
-						startTime,
-					)
-				}(cross)
+				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Test Project 12", projectAddr, 10000, 30, 30, 40, startTime)
 
 				// Skip blocks to activate the project
 				testing.SkipHeights(projectMinimumStartDelayTime)
 
 				// Setup contract with GNS tokens
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, contractAddr, 2000000) // Enough for deposit
+				gns.Transfer(cross(cur), contractAddr, 2000000) // Enough for deposit
 
 				// Contract approves launchpad to spend GNS
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
-				gns.Approve(cross, launchpadAddr, 2000000)
+				gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 				return projectID + ":30", contractAddr
 			},
@@ -497,13 +431,13 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Reset test store for each test
 			initTestStore()
 
 			testing.SetRealm(adminRealm)
 			lp := getTestImplementation()
-			projectTierID, userAddr := tt.setupFunc(lp)
+			projectTierID, userAddr := tt.setupFunc(cur, lp)
 			if tt.targetProjectTierID == "" {
 				tt.targetProjectTierID = projectTierID
 			}
@@ -515,16 +449,16 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			}
 
 			if tt.expectedPanic {
-				uassert.AbortsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-						lp.DepositGns(tt.targetProjectTierID, tt.depositAmount, tt.referrer)
-					}(cross)
+						lp.DepositGns(0, cur, tt.targetProjectTierID, tt.depositAmount, tt.referrer)
+					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-					depositID := lp.DepositGns(tt.targetProjectTierID, tt.depositAmount, tt.referrer)
+					depositID := lp.DepositGns(0, cur, tt.targetProjectTierID, tt.depositAmount, tt.referrer)
 
 					if tt.expectedDepositID {
 						uassert.NotEmpty(t, depositID)
@@ -533,13 +467,13 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 							tt.validateFunc(t, lp, depositID)
 						}
 					}
-				}(cross)
+				}(cross(cur))
 			}
 		})
 	}
 }
 
-func TestLaunchpadDeposit_depositGns(t *testing.T) {
+func TestLaunchpadDeposit_depositGns(cur realm, t *testing.T) {
 	userAddr := testutils.TestAddress("user")
 
 	tests := []struct {
@@ -571,8 +505,8 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadDepositTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initLaunchpadDepositTest(cur, t)
 			lp := getTestImplementation()
 			testing.SetOriginCaller(tt.callerAddress)
 
@@ -582,7 +516,7 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 				return
 			}
 
-			_, _, _, _, err = lp.depositGns(project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			_, _, _, _, err = lp.depositGns(0, cur, project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -594,7 +528,7 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 	}
 }
 
-func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
+func TestLaunchpadDeposit_stakeGovernance(cur realm, t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectRecipient := testutils.TestAddress("project")
@@ -633,23 +567,23 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 
 	// caller is launchpad, user is admin
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadDepositTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initLaunchpadDepositTest(cur, t)
 			lp := getTestImplementation()
 
 			testing.SetOriginCaller(tt.userAddress)
-			gns.Approve(cross, tt.callerAddress, tt.depositAmount)
+			gns.Approve(cross(cur), tt.callerAddress, tt.depositAmount)
 
 			testing.SetOriginCaller(tt.callerAddress)
 
 			var err error
 
 			stakeGovernanceFn := func() {
-				err = lp.stakeGovernance(tt.recipient, tt.depositAmount, tt.callerAddress, tt.userAddress)
+				err = lp.stakeGovernance(0, cur, tt.recipient, tt.depositAmount, tt.callerAddress, tt.userAddress)
 			}
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, stakeGovernanceFn)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMessage, stakeGovernanceFn)
 				return
 			}
 
@@ -665,7 +599,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	}
 }
 
-func initLaunchpadDepositTest(t *testing.T) {
+func initLaunchpadDepositTest(cur realm, t *testing.T) {
 	testing.SetHeight(123)
 
 	// Reset test store completely
@@ -678,8 +612,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 	currentHeight := runtime.ChainHeight()
 
 	// Setup test project
-	project, _ := lp.createProject(
-		&createProjectParams{
+	project, _ := lp.createProject(0, cur, &createProjectParams{
 			name:          "Test Project",
 			tokenPath:     "gno.land/r/onbloc/obl",
 			depositAmount: 1000000,
@@ -695,7 +628,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)
-	lp.store.SetProjects(projects)
+	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)
 }
@@ -703,14 +636,14 @@ func initLaunchpadDepositTest(t *testing.T) {
 // TestLaunchpadDeposit_xGNSMintedOnce verifies that xGNS is minted exactly once
 // during deposit (not twice as was the bug before the fix).
 // This test ensures the fix for the double-minting issue is working correctly.
-func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
+func TestLaunchpadDeposit_xGNSMintedOnce(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
 
-	t.Run("xGNS should be minted exactly once per deposit", func(t *testing.T) {
+	t.Run("xGNS should be minted exactly once per deposit", func(cur realm, t *testing.T) {
 		// Reset test store
 		initTestStore()
 
@@ -728,27 +661,11 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 10000)
+		obl.Approve(cross(cur), launchpadAddr, 10000)
 
 		lp := getTestImplementation()
 
-		// Create project
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"xGNS Test Project",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				10000,
-				"", // no conditions
-				"",
-				30,
-				30,
-				40,
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "xGNS Test Project", projectAddr, 10000, 30, 30, 40, startTime)
 
 		// Skip blocks to activate the project
 		testing.SkipHeights(projectMinimumStartDelayTime)
@@ -756,11 +673,11 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		// Setup user with GNS tokens
 		testing.SetRealm(adminRealm)
 		depositAmount := int64(1000000)
-		gns.Transfer(cross, userAddr, depositAmount*2)
+		gns.Transfer(cross(cur), userAddr, depositAmount*2)
 
 		// User approves launchpad to spend GNS
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		gns.Approve(cross, launchpadAddr, depositAmount*2)
+		gns.Approve(cross(cur), launchpadAddr, depositAmount*2)
 
 		// Record xGNS state before deposit
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
@@ -771,8 +688,8 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			lp.DepositGns(projectID+":30", depositAmount, "")
-		}(cross)
+			lp.DepositGns(0, cur, projectID+":30", depositAmount, "")
+		}(cross(cur))
 
 		// Record xGNS state after deposit
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
@@ -795,7 +712,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 			"xGNS should NOT be minted twice")
 	})
 
-	t.Run("multiple deposits should each mint xGNS once", func(t *testing.T) {
+	t.Run("multiple deposits should each mint xGNS once", func(cur realm, t *testing.T) {
 		// Reset test store
 		initTestStore()
 
@@ -813,27 +730,11 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 10000)
+		obl.Approve(cross(cur), launchpadAddr, 10000)
 
 		lp := getTestImplementation()
 
-		// Create project
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"xGNS Multi Test Project",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				10000,
-				"",
-				"",
-				30,
-				30,
-				40,
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "xGNS Multi Test Project", projectAddr, 10000, 30, 30, 40, startTime)
 
 		// Skip blocks to activate the project
 		testing.SkipHeights(projectMinimumStartDelayTime)
@@ -843,11 +744,11 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		deposit1Amount := int64(1000000)
 		deposit2Amount := int64(2000000)
 		totalDepositAmount := deposit1Amount + deposit2Amount
-		gns.Transfer(cross, userAddr, totalDepositAmount*2)
+		gns.Transfer(cross(cur), userAddr, totalDepositAmount*2)
 
 		// User approves launchpad
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		gns.Approve(cross, launchpadAddr, totalDepositAmount*2)
+		gns.Approve(cross(cur), launchpadAddr, totalDepositAmount*2)
 
 		// Record initial xGNS state
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
@@ -857,8 +758,8 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			lp.DepositGns(projectID+":30", deposit1Amount, "")
-		}(cross)
+			lp.DepositGns(0, cur, projectID+":30", deposit1Amount, "")
+		}(cross(cur))
 
 		// Check after first deposit
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
@@ -871,8 +772,8 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			lp.DepositGns(projectID+":90", deposit2Amount, "")
-		}(cross)
+			lp.DepositGns(0, cur, projectID+":90", deposit2Amount, "")
+		}(cross(cur))
 
 		// Check after second deposit
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
@@ -890,14 +791,14 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 // This prevents:
 // 1. Dilution of existing depositor rewards
 // 2. New depositors claiming rewards from periods they didn't participate in
-func TestDepositGns_RewardDistributionOrder(t *testing.T) {
+func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
 
-	t.Run("existing depositor should not have rewards diluted by new deposit", func(t *testing.T) {
+	t.Run("existing depositor should not have rewards diluted by new deposit", func(cur realm, t *testing.T) {
 		// Reset state
 		resetTestStore()
 		lp := getTestImplementation()
@@ -916,41 +817,26 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		obl.Approve(cross(cur), launchpadAddr, 1000000)
 
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"Reward Distribution Test Project",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				1000000, // total reward amount
-				"",
-				"",
-				100, // all to tier 30
-				0,
-				0,
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Reward Distribution Test Project", projectAddr, 1000000, 100, 0, 0, startTime)
 
 		// Skip blocks to activate the project
 		testing.SkipHeights(projectMinimumStartDelayTime)
 
 		// Setup user1 with GNS tokens
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, user1Addr, 10000000)
+		gns.Transfer(cross(cur), user1Addr, 10000000)
 
 		// User1 deposits first
 		testing.SetRealm(testing.NewUserRealm(user1Addr))
-		gns.Approve(cross, launchpadAddr, 10000000)
+		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit1ID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			deposit1ID = lp.DepositGns(projectID+":30", 1000000, "")
-		}(cross)
+			deposit1ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+		}(cross(cur))
 
 		// Get reward state for user1 right after deposit
 		deposit1, err := lp.getDeposit(deposit1ID)
@@ -975,17 +861,17 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 
 		// Setup user2 with GNS tokens
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, user2Addr, 10000000)
+		gns.Transfer(cross(cur), user2Addr, 10000000)
 
 		// User2 deposits same amount
 		testing.SetRealm(testing.NewUserRealm(user2Addr))
-		gns.Approve(cross, launchpadAddr, 10000000)
+		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit2ID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			deposit2ID = lp.DepositGns(projectID+":30", 1000000, "")
-		}(cross)
+			deposit2ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+		}(cross(cur))
 
 		// Verify deposit2 was created
 		deposit2, err := lp.getDeposit(deposit2ID)
@@ -1004,7 +890,7 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 			"User2's price debt should be greater than User1's initial debt")
 	})
 
-	t.Run("new depositor should not claim rewards from period before deposit", func(t *testing.T) {
+	t.Run("new depositor should not claim rewards from period before deposit", func(cur realm, t *testing.T) {
 		// Reset state
 		resetTestStore()
 		lp := getTestImplementation()
@@ -1023,56 +909,41 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		obl.Approve(cross(cur), launchpadAddr, 1000000)
 
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"No Prior Claim Test",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				1000000,
-				"",
-				"",
-				100,
-				0,
-				0,
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "No Prior Claim Test", projectAddr, 1000000, 100, 0, 0, startTime)
 
 		// Activate project
 		testing.SkipHeights(projectMinimumStartDelayTime)
 
 		// User1 deposits
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, user1Addr, 10000000)
+		gns.Transfer(cross(cur), user1Addr, 10000000)
 
 		testing.SetRealm(testing.NewUserRealm(user1Addr))
-		gns.Approve(cross, launchpadAddr, 10000000)
+		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit1ID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			deposit1ID = lp.DepositGns(projectID+":30", 1000000, "")
-		}(cross)
+			deposit1ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+		}(cross(cur))
 
 		// Skip significant time to accumulate rewards
 		testing.SkipHeights(100)
 
 		// User2 deposits
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, user2Addr, 10000000)
+		gns.Transfer(cross(cur), user2Addr, 10000000)
 
 		testing.SetRealm(testing.NewUserRealm(user2Addr))
-		gns.Approve(cross, launchpadAddr, 10000000)
+		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit2ID string
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			deposit2ID = lp.DepositGns(projectID+":30", 1000000, "")
-		}(cross)
+			deposit2ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+		}(cross(cur))
 
 		// Get project and tier
 		project, err := lp.getProject(projectID)
@@ -1107,14 +978,14 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 
 // TestDepositGns_TierEndTimeBoundary tests that deposits fail when attempted
 // at exactly the tier's endTime (tier is inactive at endTime per IsActivated semantics).
-func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
+func TestDepositGns_TierEndTimeBoundary(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
 
-	t.Run("deposit fails at exactly tier endTime (tier inactive)", func(t *testing.T) {
+	t.Run("deposit fails at exactly tier endTime (tier inactive)", func(cur realm, t *testing.T) {
 		// Reset state
 		resetTestStore()
 		lp := getTestImplementation()
@@ -1132,21 +1003,9 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		obl.Approve(cross(cur), launchpadAddr, 1000000)
 
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"Boundary Test Project",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				1000000,
-				"", "",
-				100, 0, 0, // All allocation to tier 30
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Boundary Test Project", projectAddr, 1000000, 100, 0, 0, startTime)
 
 		// Get the project and tier to find the exact endTime
 		project, err := lp.getProject(projectID)
@@ -1166,21 +1025,21 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 
 		// Setup user with GNS tokens
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, userAddr, 2000000)
+		gns.Transfer(cross(cur), userAddr, 2000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		gns.Approve(cross, launchpadAddr, 2000000)
+		gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 		// Attempt to deposit - should fail because tier is inactive at endTime
-		uassert.AbortsContains(t, "project is inactive", func() {
+		uassert.AbortsContains(t, cur, "project is inactive", func() {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				lp.DepositGns(projectID+":30", 1000000, "")
-			}(cross)
+				lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+			}(cross(cur))
 		})
 	})
 
-	t.Run("deposit succeeds when tier is active (before endTime)", func(t *testing.T) {
+	t.Run("deposit succeeds when tier is active (before endTime)", func(cur realm, t *testing.T) {
 		// Reset state
 		resetTestStore()
 		lp := getTestImplementation()
@@ -1198,39 +1057,27 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		startTime := time.Now().Unix() + projectMinimumStartDelayTime
 
-		obl.Approve(cross, launchpadAddr, 1000000)
+		obl.Approve(cross(cur), launchpadAddr, 1000000)
 
-		var projectID string
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			projectID = lp.CreateProject(
-				"Boundary Test Project 2",
-				"gno.land/r/onbloc/obl",
-				projectAddr,
-				1000000,
-				"", "",
-				100, 0, 0,
-				startTime,
-			)
-		}(cross)
+		projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Boundary Test Project 2", projectAddr, 1000000, 100, 0, 0, startTime)
 
 		// Skip to just after project starts (tier is now active)
 		testing.SkipHeights(projectMinimumStartDelayTime)
 
 		// Setup user with GNS tokens
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, userAddr, 2000000)
+		gns.Transfer(cross(cur), userAddr, 2000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		gns.Approve(cross, launchpadAddr, 2000000)
+		gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 		// Attempt to deposit - should succeed because tier is active
 		var depositID string
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				depositID = lp.DepositGns(projectID+":30", 1000000, "")
-			}(cross)
+				depositID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
+			}(cross(cur))
 		})
 
 		uassert.NotEmpty(t, depositID)
