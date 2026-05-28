@@ -87,7 +87,7 @@ func (i *poolV1) Mint(
 	}
 
 	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(rlm, pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -157,7 +157,7 @@ func (i *poolV1) Burn(
 	setPosition(pool, positionKey, position)
 
 	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(rlm, pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -242,7 +242,7 @@ func (i *poolV1) Collect(
 
 	setPosition(pool, positionKey, *position)
 
-	if err := i.savePool(rlm, pool); err != nil {
+	if err := i.savePool(0, rlm, pool); err != nil {
 		panic(err)
 	}
 
@@ -273,6 +273,7 @@ func (i *poolV1) CollectProtocol(
 	common.MustRegistered(token0Path, token1Path)
 
 	amount0, amount1 := i.collectProtocol(
+		0,
 		rlm,
 		token0Path,
 		token1Path,
@@ -301,7 +302,8 @@ func (i *poolV1) CollectProtocol(
 // It ensures requested amounts don't exceed available protocol fees.
 // Returns amount0, amount1 as strings representing collected fees.
 func (i *poolV1) collectProtocol(
-	cur realm,
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -335,13 +337,13 @@ func (i *poolV1) collectProtocol(
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
 
-	err = i.savePool(cur, pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross(cur), pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(cross(cur), pool.Token1Path(), recipient, amount1)
+	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
 
 	return formatInt(amount0), formatInt(amount1)
 }
