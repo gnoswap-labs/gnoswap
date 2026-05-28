@@ -59,7 +59,7 @@ func (m *mockGovStakerStore) GetUnDelegationLockupPeriod() int64 {
 	return m.unDelegationLockupPeriod
 }
 
-func (m *mockGovStakerStore) SetUnDelegationLockupPeriod(period int64) error {
+func (m *mockGovStakerStore) SetUnDelegationLockupPeriod(_ int, rlm realm, period int64) error {
 	m.unDelegationLockupPeriod = period
 	m.hasUnDelegationLockupPeriodKey = true
 	return nil
@@ -73,7 +73,7 @@ func (m *mockGovStakerStore) GetTotalDelegatedAmount() int64 {
 	return m.totalDelegatedAmount
 }
 
-func (m *mockGovStakerStore) SetTotalDelegatedAmount(amount int64) error {
+func (m *mockGovStakerStore) SetTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	m.totalDelegatedAmount = amount
 	return nil
 }
@@ -86,7 +86,7 @@ func (m *mockGovStakerStore) GetTotalLockedAmount() int64 {
 	return m.totalLockedAmount
 }
 
-func (m *mockGovStakerStore) SetTotalLockedAmount(amount int64) error {
+func (m *mockGovStakerStore) SetTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	m.totalLockedAmount = amount
 	return nil
 }
@@ -96,7 +96,7 @@ func (m *mockGovStakerStore) HasDelegationsStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) SetDelegations(delegations *bptree.BPTree) error {
+func (m *mockGovStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BPTree) error {
 	m.delegations = delegations
 	return nil
 }
@@ -114,12 +114,12 @@ func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) 
 	return value.(*staker.Delegation), true
 }
 
-func (m *mockGovStakerStore) SetDelegation(id int64, delegation *staker.Delegation) error {
+func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
 	m.delegations.Set(uint64ToString(uint64(id)), delegation)
 	return nil
 }
 
-func (m *mockGovStakerStore) RemoveDelegation(id int64) error {
+func (m *mockGovStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
 	_, _ = m.delegations.Remove(uint64ToString(uint64(id)))
 	return nil
 }
@@ -136,7 +136,7 @@ func (m *mockGovStakerStore) GetDelegationCounter() *staker.Counter {
 	return m.delegationNextID
 }
 
-func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {
+func (m *mockGovStakerStore) SetDelegationCounter(_ int, rlm realm, counter *staker.Counter) error {
 	m.delegationNextID = counter
 	return nil
 }
@@ -150,7 +150,7 @@ func (m *mockGovStakerStore) GetTotalDelegationHistory() *staker.UintTree {
 	return m.totalDelegationHistory
 }
 
-func (m *mockGovStakerStore) SetTotalDelegationHistory(history *staker.UintTree) error {
+func (m *mockGovStakerStore) SetTotalDelegationHistory(_ int, rlm realm, history *staker.UintTree) error {
 	m.totalDelegationHistory = history
 	return nil
 }
@@ -164,7 +164,7 @@ func (m *mockGovStakerStore) GetUserDelegationHistory() *bptree.BPTree {
 	return m.userDelegationHistory
 }
 
-func (m *mockGovStakerStore) SetUserDelegationHistory(history *bptree.BPTree) error {
+func (m *mockGovStakerStore) SetUserDelegationHistory(_ int, rlm realm, history *bptree.BPTree) error {
 	m.userDelegationHistory = history
 	return nil
 }
@@ -209,7 +209,7 @@ func (m *mockGovStakerStore) GetEmissionRewardManager() *staker.EmissionRewardMa
 	return m.emissionRewardManager
 }
 
-func (m *mockGovStakerStore) SetEmissionRewardManager(manager *staker.EmissionRewardManager) error {
+func (m *mockGovStakerStore) SetEmissionRewardManager(_ int, rlm realm, manager *staker.EmissionRewardManager) error {
 	m.emissionRewardManager = manager
 	return nil
 }
@@ -225,7 +225,7 @@ func (m *mockGovStakerStore) GetProtocolFeeRewardManager() *staker.ProtocolFeeRe
 	return m.protocolFeeRewardManager
 }
 
-func (m *mockGovStakerStore) SetProtocolFeeRewardManager(manager *staker.ProtocolFeeRewardManager) error {
+func (m *mockGovStakerStore) SetProtocolFeeRewardManager(_ int, rlm realm, manager *staker.ProtocolFeeRewardManager) error {
 	m.protocolFeeRewardManager = manager
 	return nil
 }
@@ -241,7 +241,7 @@ func (m *mockGovStakerStore) GetDelegationManager() *staker.DelegationManager {
 	return m.delegationManager
 }
 
-func (m *mockGovStakerStore) SetDelegationManager(manager *staker.DelegationManager) error {
+func (m *mockGovStakerStore) SetDelegationManager(_ int, rlm realm, manager *staker.DelegationManager) error {
 	m.delegationManager = manager
 	return nil
 }
@@ -257,7 +257,7 @@ func (m *mockGovStakerStore) GetLaunchpadProjectDeposits() *staker.LaunchpadProj
 	return m.launchpadProjectDeposits
 }
 
-func (m *mockGovStakerStore) SetLaunchpadProjectDeposits(deposits *staker.LaunchpadProjectDeposits) error {
+func (m *mockGovStakerStore) SetLaunchpadProjectDeposits(_ int, rlm realm, deposits *staker.LaunchpadProjectDeposits) error {
 	m.launchpadProjectDeposits = deposits
 	return nil
 }

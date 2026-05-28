@@ -7,8 +7,8 @@ import (
 )
 
 // TestInit_initStoreData tests the private initStoreData function
-func TestInit_initStoreData(t *testing.T) {
-	t.Run("initialize empty store", func(t *testing.T) {
+func TestInit_initStoreData(cur realm, t *testing.T) {
+	t.Run("initialize empty store", func(cur realm, t *testing.T) {
 		// given
 		store := newMockGovStakerStore()
 
@@ -44,7 +44,7 @@ func TestInit_initStoreData(t *testing.T) {
 		uassert.True(t, hasDelegationManager)
 	})
 
-	t.Run("idempotent - does not overwrite existing data", func(t *testing.T) {
+	t.Run("idempotent - does not overwrite existing data", func(cur realm, t *testing.T) {
 		// given
 		store := newMockGovStakerStore()
 
@@ -54,7 +54,7 @@ func TestInit_initStoreData(t *testing.T) {
 
 		// Set a custom value
 		customPeriod := int64(172800) // 2 days
-		err = store.SetUnDelegationLockupPeriod(customPeriod)
+		err = store.SetUnDelegationLockupPeriod(0, cur, customPeriod)
 		uassert.Nil(t, err)
 
 		// when - initialize again
