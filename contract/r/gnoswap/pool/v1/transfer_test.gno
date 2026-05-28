@@ -9,7 +9,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestValidatePoolBalance(t *testing.T) {
+func TestValidatePoolBalance(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		token0        int64
@@ -61,7 +61,7 @@ func TestValidatePoolBalance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validatePoolBalance(tt.token0, tt.token1, tt.amount, tt.isToken0)
 			if tt.expectedError {
 				if err == nil {
@@ -76,7 +76,7 @@ func TestValidatePoolBalance(t *testing.T) {
 	}
 }
 
-func TestUpdatePoolBalance(t *testing.T) {
+func TestUpdatePoolBalance(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		token0        int64
@@ -134,7 +134,7 @@ func TestUpdatePoolBalance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			newBal, err := updatePoolBalance(tt.token0, tt.token1, tt.amount, tt.isToken0)
 			if tt.expectedError {
 				if err == nil {
@@ -153,7 +153,7 @@ func TestUpdatePoolBalance(t *testing.T) {
 	}
 }
 
-func TestTransferFromAndVerify(t *testing.T) {
+func TestTransferFromAndVerify(cur realm, t *testing.T) {
 	makeMockPoolWithBalance := func(token0 int64, token1 int64) *pl.Pool {
 		mockPool := &pl.Pool{}
 
@@ -211,11 +211,11 @@ func TestTransferFromAndVerify(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			TokenFaucet(t, tt.tokenPath, tt.from)
-			TokenApprove(t, tt.tokenPath, tt.from, poolAddr, u256.MustFromDecimal(tt.amount.ToString()).Int64())
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			TokenFaucet(cur, t, tt.tokenPath, tt.from)
+			TokenApprove(cur, t, tt.tokenPath, tt.from, poolAddr, u256.MustFromDecimal(tt.amount.ToString()).Int64())
 
-			mockInstanceSafeTransferFrom(tt.pool, tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
+			mockInstanceSafeTransferFrom(cur, tt.pool, tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
 			if tt.pool.BalanceToken0() != tt.expectedBal0 {
 				t.Errorf("token0 balance mismatch: expected %d, got %d",
@@ -231,14 +231,14 @@ func TestTransferFromAndVerify(t *testing.T) {
 		})
 	}
 
-	t.Run("negative value handling", func(t *testing.T) {
+	t.Run("negative value handling", func(cur realm, t *testing.T) {
 		pool := makeMockPoolWithBalance(1000, 2000)
 
 		negativeAmount := i256.NewInt(-500)
 
-		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
-		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
-		mockInstanceSafeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
+		TokenFaucet(cur, t, fooPath, testutils.TestAddress("from_addr"))
+		TokenApprove(cur, t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
+		mockInstanceSafeTransferFrom(cur, pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
 
 		expectedBal := int64(1500) // 1000 + 500 (absolute value)
 		if pool.BalanceToken0() != expectedBal {

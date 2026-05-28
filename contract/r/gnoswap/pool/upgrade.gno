@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"chain/runtime"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -17,14 +15,14 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(poolStore IPoolStore) IPool) {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore IPoolStore) IPool) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentPoolStore, ok := domainStore.(IPoolStore)
 		if !ok {
 			panic("domainStore is not an IPoolStore")
 		}
 
-		return initializer(currentPoolStore)
+		return initializer(0, rlm, currentPoolStore)
 	}
 
 	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
@@ -46,7 +44,7 @@ func RegisterInitializer(cur realm, initializer func(poolStore IPoolStore) IPool
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(0, cur, packagePath)

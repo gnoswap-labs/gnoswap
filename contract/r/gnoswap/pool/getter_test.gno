@@ -43,14 +43,14 @@ func newPositionInfoFixture() PositionInfo {
 	return positionInfo
 }
 
-func TestMutablePoolGetterIsolation(t *testing.T) {
+func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setup     func(m *MockPool)
 		getter    func() any
 		assertGot func(t *testing.T, result any)
 		mutate    func(result any)
-		assertRaw func(t *testing.T)
+		assertRaw func(cur realm, t *testing.T)
 	}{
 		{
 			name:   "GetPoolPaths",
@@ -61,7 +61,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[0] = "mutated"
 				_ = append(values, "baz")
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetPoolPaths"][0].([]string)
 				uassert.Equal(t, "foo", values[0])
 				uassert.Equal(t, 2, len(values))
@@ -76,7 +76,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[500] = 20
 				values[3000] = 60
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetFeeAmountTickSpacings"][0].(map[uint32]int32)
 				uassert.Equal(t, int32(10), values[500])
 				_, ok := values[3000]
@@ -97,7 +97,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[0] = "3000"
 				values[1] = "4000"
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetFeeGrowthGlobalX128"]
 				uassert.Equal(t, "1000", values[0].(*u256.Uint).ToString())
 				uassert.Equal(t, "2000", values[1].(*u256.Uint).ToString())
@@ -108,7 +108,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			setup:  func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
 			getter: func() any { return GetPositionLiquidity("foo:bar:500", "pos") },
 			mutate: func(result any) {},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetPositionLiquidity"][0].(string)
 				uassert.Equal(t, "1000", value)
 			},
@@ -125,7 +125,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[0] = "3300"
 				values[1] = "4400"
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetTickFeeGrowthOutsideX128"]
 				uassert.Equal(t, "1100", values[0].(string))
 				uassert.Equal(t, "2200", values[1].(string))
@@ -136,7 +136,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
 			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
 			mutate: func(result any) {},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(*u256.Uint)
 				uassert.Equal(t, "3000", value.ToString())
 			},
@@ -169,7 +169,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				slot0.SetUnlocked(false)
 				pool.SetSlot0(slot0)
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				pool := implementation.(*MockPool).Response.responses["GetPool"][0].(*Pool)
 				uassert.Equal(t, "foo", pool.Token0Path())
 				uassert.Equal(t, "bar", pool.Token1Path())
@@ -197,7 +197,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[0] = "mutated"
 				_ = append(values, "pos2")
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetPoolPositionKeys"][0].([]string)
 				uassert.Equal(t, "pos0", values[0])
 				uassert.Equal(t, 2, len(values))
@@ -222,7 +222,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				tickInfo.SetSecondsOutside(70)
 				tickInfo.SetInitialized(false)
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				tickInfo := implementation.(*MockPool).Response.responses["GetTickInfo"][0].(TickInfo)
 				uassert.Equal(t, "1000", tickInfo.LiquidityGross())
 				uassert.Equal(t, "2000", tickInfo.LiquidityNet())
@@ -243,7 +243,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				return bitmap
 			},
 			mutate: func(result any) {},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				bitmap := implementation.(*MockPool).Response.responses["GetTickBitmaps"][0].(string)
 				uassert.Equal(t, "1234", bitmap)
 			},
@@ -264,7 +264,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				positionInfo.SetTokensOwed0(4444)
 				positionInfo.SetTokensOwed1(5555)
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				positionInfo := implementation.(*MockPool).Response.responses["GetPosition"][0].(PositionInfo)
 				uassert.Equal(t, "1000", positionInfo.Liquidity())
 				uassert.Equal(t, "2000", positionInfo.FeeGrowthInside0LastX128())
@@ -282,7 +282,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				values[0] = -99
 				_ = append(values, 99)
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetInitializedTicksInRange"][0].([]int32)
 				uassert.Equal(t, int32(-10), values[0])
 				uassert.Equal(t, 2, len(values))
@@ -297,7 +297,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				return liquidity
 			},
 			mutate: func(result any) {},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
 				uassert.Equal(t, "5000", value.ToString())
 			},
@@ -331,7 +331,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				state.SetCardinalityNext(10)
 				state.Observations()[8] = NewObservation(1, 2, "3", "4", true)
 			},
-			assertRaw: func(t *testing.T) {
+			assertRaw: func(cur realm, t *testing.T) {
 				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
 				uassert.Equal(t, uint16(3), state.Index())
 				uassert.Equal(t, uint16(4), state.Cardinality())
@@ -348,7 +348,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			mockPool := newMockPool("v1")
 			implementation = mockPool
@@ -358,7 +358,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				tt.assertGot(t, result)
 			}
 			tt.mutate(result)
-			tt.assertRaw(t)
+			tt.assertRaw(cur, t)
 		})
 	}
 }

@@ -24,13 +24,13 @@ const (
 	defaultUnlocked = true
 )
 
-func init() {
-	registerPoolV1()
+func init(cur realm) {
+	registerPoolV1(cur)
 }
 
-func registerPoolV1() {
-	pool.RegisterInitializer(cross, func(poolStore pool.IPoolStore) pool.IPool {
-		err := initStoreData(poolStore)
+func registerPoolV1(cur realm) {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore) pool.IPool {
+		err := initStoreData(rlm, poolStore)
 		if err != nil {
 			panic(err)
 		}
@@ -39,9 +39,9 @@ func registerPoolV1() {
 	})
 }
 
-func initStoreData(poolStore pool.IPoolStore) error {
+func initStoreData(cur realm, poolStore pool.IPoolStore) error {
 	if !poolStore.HasPools() {
-		err := poolStore.SetPools(bptree.NewBPTreeN(32))
+		err := poolStore.SetPools(0, cur, bptree.NewBPTreeN(32))
 		if err != nil {
 			return err
 		}
@@ -55,42 +55,42 @@ func initStoreData(poolStore pool.IPoolStore) error {
 			10000: 200,
 		}
 
-		err := poolStore.SetFeeAmountTickSpacing(defaultFeeAmountTickSpacing)
+		err := poolStore.SetFeeAmountTickSpacing(0, cur, defaultFeeAmountTickSpacing)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasPoolCreationFee() {
-		err := poolStore.SetPoolCreationFee(defaultPoolCreationFee)
+		err := poolStore.SetPoolCreationFee(0, cur, defaultPoolCreationFee)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasPendingProtocolFees() {
-		err := poolStore.SetPendingProtocolFees(make(map[string]int64))
+		err := poolStore.SetPendingProtocolFees(0, cur, make(map[string]int64))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasSlot0FeeProtocol() {
-		err := poolStore.SetSlot0FeeProtocol(defaultSlot0FeeProtocol)
+		err := poolStore.SetSlot0FeeProtocol(0, cur, defaultSlot0FeeProtocol)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasWithdrawalFeeBPS() {
-		err := poolStore.SetWithdrawalFeeBPS(defaultWithdrawalFeeBPS)
+		err := poolStore.SetWithdrawalFeeBPS(0, cur, defaultWithdrawalFeeBPS)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasUnlocked() {
-		err := poolStore.SetUnlocked(defaultUnlocked)
+		err := poolStore.SetUnlocked(0, cur, defaultUnlocked)
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func initStoreData(poolStore pool.IPoolStore) error {
 	// Initialize swap start hook with no-op function
 	if !poolStore.HasSwapStartHook() {
 		noopSwapStart := func(cur realm, poolPath string, timestamp int64) {}
-		err := poolStore.SetSwapStartHook(noopSwapStart)
+		err := poolStore.SetSwapStartHook(0, cur, noopSwapStart)
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		noopSwapEnd := func(cur realm, poolPath string) error {
 			return nil
 		}
-		err := poolStore.SetSwapEndHook(noopSwapEnd)
+		err := poolStore.SetSwapEndHook(0, cur, noopSwapEnd)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func initStoreData(poolStore pool.IPoolStore) error {
 	// Initialize tick cross hook with no-op function
 	if !poolStore.HasTickCrossHook() {
 		noopTickCross := func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {}
-		err := poolStore.SetTickCrossHook(noopTickCross)
+		err := poolStore.SetTickCrossHook(0, cur, noopTickCross)
 		if err != nil {
 			return err
 		}

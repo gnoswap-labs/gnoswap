@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -41,6 +40,8 @@ import (
 //
 // Only callable by position contract.
 func (i *poolV1) Mint(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -50,10 +51,10 @@ func (i *poolV1) Mint(
 	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
@@ -78,15 +79,15 @@ func (i *poolV1) Mint(
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	if amount0.Gt(zero) {
-		i.safeTransferFrom(pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
+		i.safeTransferFrom(rlm, pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
 	}
 
 	if amount1.Gt(zero) {
-		i.safeTransferFrom(pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
+		i.safeTransferFrom(rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
 	}
 
 	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(pool)
+	err = i.savePool(rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -114,6 +115,8 @@ func (i *poolV1) Mint(
 // Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
 func (i *poolV1) Burn(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -123,10 +126,10 @@ func (i *poolV1) Burn(
 	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
@@ -154,7 +157,7 @@ func (i *poolV1) Burn(
 	setPosition(pool, positionKey, position)
 
 	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(pool)
+	err = i.savePool(rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -182,6 +185,8 @@ func (i *poolV1) Burn(
 // Note: Withdrawal fees are applied by the position contract, not here.
 // Only callable by position contract.
 func (i *poolV1) Collect(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -192,10 +197,10 @@ func (i *poolV1) Collect(
 	amount1Requested string,
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
@@ -224,7 +229,7 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, amount0)
+		common.SafeGRC20Approve(cross(rlm), pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := safeSubInt64(position.TokensOwed1(), amount1)
@@ -232,12 +237,12 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(cross, pool.Token1Path(), positionAddr, amount1)
+		common.SafeGRC20Approve(cross(rlm), pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, *position)
 
-	if err := i.savePool(pool); err != nil {
+	if err := i.savePool(rlm, pool); err != nil {
 		panic(err)
 	}
 
@@ -248,6 +253,8 @@ func (i *poolV1) Collect(
 // Only callable by admin or governance.
 // Returns amount0, amount1 representing protocol fees collected.
 func (i *poolV1) CollectProtocol(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -256,16 +263,17 @@ func (i *poolV1) CollectProtocol(
 	amount1Requested string, // uint128
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path, token1Path)
 
 	amount0, amount1 := i.collectProtocol(
+		rlm,
 		token0Path,
 		token1Path,
 		fee,
@@ -293,6 +301,7 @@ func (i *poolV1) CollectProtocol(
 // It ensures requested amounts don't exceed available protocol fees.
 // Returns amount0, amount1 as strings representing collected fees.
 func (i *poolV1) collectProtocol(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -326,13 +335,13 @@ func (i *poolV1) collectProtocol(
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
 
-	err = i.savePool(pool)
+	err = i.savePool(cur, pool)
 	if err != nil {
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, amount1)
+	common.SafeGRC20Transfer(cross(cur), pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(cross(cur), pool.Token1Path(), recipient, amount1)
 
 	return formatInt(amount0), formatInt(amount1)
 }
@@ -362,14 +371,16 @@ func minRequestedAmount(request, available int64) int64 {
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	cardinalityNext uint16,
 ) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(rlm)
+	defer i.unlockPool(rlm)
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
@@ -377,7 +388,7 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"IncreaseObservationCardinalityNext",
 		"prevAddr", previousRealm.Address().String(),
