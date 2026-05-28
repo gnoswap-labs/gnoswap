@@ -404,7 +404,7 @@ func TestSetFeeProtocol_BoundaryValues(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetObject(cur, t)
 
-			newFee, err := getMockInstance().setFeeProtocol(cur, tt.feeProtocol0, tt.feeProtocol1)
+			newFee, err := getMockInstance().setFeeProtocol(0, cur, tt.feeProtocol0, tt.feeProtocol1)
 
 			if tt.shouldError {
 				uassert.NotNil(t, err, tt.description)

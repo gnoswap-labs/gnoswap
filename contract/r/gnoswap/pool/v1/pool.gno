@@ -51,8 +51,8 @@ func (i *poolV1) Mint(
 	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
@@ -79,11 +79,11 @@ func (i *poolV1) Mint(
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	if amount0.Gt(zero) {
-		i.safeTransferFrom(rlm, pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
+		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
 	}
 
 	if amount1.Gt(zero) {
-		i.safeTransferFrom(rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
+		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
 	}
 
 	// Save pool state after modifyPosition may have updated liquidity
@@ -126,8 +126,8 @@ func (i *poolV1) Burn(
 	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
@@ -197,8 +197,8 @@ func (i *poolV1) Collect(
 	amount1Requested string,
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
@@ -263,8 +263,8 @@ func (i *poolV1) CollectProtocol(
 	amount1Requested string, // uint128
 ) (string, string) {
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
@@ -381,8 +381,8 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	cardinalityNext uint16,
 ) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)

@@ -742,7 +742,7 @@ func TestFeeCollection_RevenueDistribution(cur realm, t *testing.T) {
 	for _, test := range feeTests {
 		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Given: Set up fee collection scenario
-			pool, recipient := test.setupScenario(t)
+			pool, recipient := test.setupScenario(cur, t)
 
 			// Collect must be called by position realm
 			testing.SetRealm(posRealm)

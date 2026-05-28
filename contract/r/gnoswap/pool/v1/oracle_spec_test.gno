@@ -12,7 +12,7 @@ import (
 func TestOracleInitialize(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(cur realm, t *testing.T)
+		fn   func(t *testing.T)
 	}{
 		{"index is 0", testInitializeIndexIsZero},
 		{"cardinality is 1", testInitializeCardinalityIsOne},
@@ -59,7 +59,7 @@ func testInitializeSetsFirstSlot(t *testing.T) {
 func TestOracleGrow(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(cur realm, t *testing.T)
+		fn   func(t *testing.T)
 	}{
 		{"increases the cardinality next for the first call", testGrowIncreasesCardinalityNext},
 		{"does not touch the first slot", testGrowDoesNotTouchFirstSlot},
@@ -132,7 +132,7 @@ func testGrowAddsDataToSlots(t *testing.T) {
 func TestOracleWrite(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(cur realm, t *testing.T)
+		fn   func(t *testing.T)
 	}{
 		{"single element array gets overwritten", testSingleElementOverwrite},
 		{"does nothing if time has not changed", testDoesNothingIfTimeUnchanged},
@@ -328,7 +328,7 @@ func testAccumulatesLiquidity(t *testing.T) {
 func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(cur realm, t *testing.T)
+		fn   func(t *testing.T)
 	}{
 		{"fails if an older observation does not exist", testObserveFailsIfOlderNotExist},
 		{"interpolates correctly at max liquidity", testObserveInterpolatesMaxLiquidity},
@@ -789,7 +789,7 @@ func testObserveFetchMultiple(t *testing.T) {
 func TestOracleFiveObservations(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
-		fn   func(cur realm, t *testing.T)
+		fn   func(t *testing.T)
 	}{
 		{"index cardinality cardinality next", testFiveObservationsIndexCardinality},
 		{"latest observation same time as latest", testFiveObservationsLatestSameTime},

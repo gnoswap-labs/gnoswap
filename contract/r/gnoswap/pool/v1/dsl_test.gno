@@ -92,24 +92,24 @@ func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uin
 }
 
 // AndUserFunded provides tokens to a user
-func (e *PoolTestEnv) AndUserFunded(user address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndUserFunded(cur realm, user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	e.AsAdmin()
 	for _, token := range tokens {
-		TokenFaucet(e.t, token, user)
+		TokenFaucet(cur, e.t, token, user)
 	}
 
 	return e
 }
 
 // AndTokensApproved approves tokens for pool operations
-func (e *PoolTestEnv) AndTokensApproved(user address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndTokensApproved(cur realm, user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	// TokenApprove already sets the realm internally, so we don't need to set it here
 	for _, token := range tokens {
-		TokenApprove(e.t, token, user, e.poolAddr, maxApprove)
+		TokenApprove(cur, e.t, token, user, e.poolAddr, maxApprove)
 	}
 
 	return e

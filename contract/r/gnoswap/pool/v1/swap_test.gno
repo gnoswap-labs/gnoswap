@@ -323,7 +323,7 @@ func TestSwapComputation_CoreEngine(cur realm, t *testing.T) {
 			}
 
 			// When: Execute swap computation
-			result, err := getMockInstance().computeSwap(mockPool, computation)
+			result, err := getMockInstance().computeSwap(mockPool, computation, nil)
 			// Then: Verify computation result
 			if err != nil {
 				t.Fatalf("Unexpected error during swap computation: %v", err)
@@ -366,7 +366,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 		})
 
 		step := StepComputations{initialized: true, tickNext: 1}
-		newState := getMockInstance().tickTransition(step, false, state, pool, cache)
+		newState := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
 
 		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
 	})
@@ -392,7 +392,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 
 		step := StepComputations{initialized: true, tickNext: 1}
 		uassert.PanicsContains(t, cur, "result exceeds uint128 range", func() {
-			getMockInstance().tickTransition(step, false, state, pool, cache)
+			getMockInstance().tickTransition(step, false, state, pool, cache, nil)
 		})
 	})
 }
@@ -521,7 +521,7 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			burnTokens(cur, t)
 
 			// Given: Specific security test condition
-			pool := test.setupCondition(t)
+			pool := test.setupCondition(cur, t)
 			if lockedPool {
 				defer func() {
 					getMockInstance().unlockPool(cur)
@@ -743,7 +743,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			burnTokens(cur, t)
 
 			// Given: Specific trading scenario
-			test.setupScenario(t)
+			test.setupScenario(cur, t)
 
 			// When: DrySwap for pre-calculation
 			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
@@ -931,7 +931,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			burnTokens(cur, t)
 
 			// Given: Specific liquidity and trading conditions
-			pattern.setupLiquidity(t)
+			pattern.setupLiquidity(cur, t)
 
 			// When: Execute swap with specified pattern
 			TokenApprove(cur, t, bazPath, routerAddr, poolAddr, maxApprove)
@@ -1015,7 +1015,7 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 			burnTokens(cur, t)
 
 			// Given: Extreme market conditions
-			test.setupCondition(t)
+			test.setupCondition(cur, t)
 
 			// When: Execute swap in extreme conditions
 			testing.SetRealm(rouRealm)
@@ -1410,7 +1410,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 		Cache:             cache,
 	}
 
-	result, _ := getMockInstance().computeSwap(pool, comp)
+	result, _ := getMockInstance().computeSwap(pool, comp, nil)
 	uassert.Equal(t, "0", result.Amount0.ToString(), "DrySwap should return amount0=0")
 	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
 
@@ -1691,7 +1691,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.setup(cur, t)
 			tt.action(cur, t)
-			tt.verify(t)
+			tt.verify(cur, t)
 			t.Logf("passed: %s", tt.description)
 		})
 	}

@@ -36,7 +36,8 @@ import (
 //
 // Panics if any validation fails or if the transfer fails
 func (i *poolV1) safeTransfer(
-	cur realm,
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	to address,
 	tokenPath string,
@@ -51,7 +52,7 @@ func (i *poolV1) safeTransfer(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross(cur), tokenPath, to, amountInt64)
+	common.SafeGRC20Transfer(cross(rlm), tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, amountInt64, isToken0)
 	if err != nil {
@@ -96,7 +97,8 @@ func (i *poolV1) safeTransfer(
 // - The balance consistency check ensures that no tokens are lost or double-counted during the transfer.
 // - Pool balance updates are performed atomically to ensure internal consistency.
 func (i *poolV1) safeTransferFrom(
-	cur realm,
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	from, to address,
 	tokenPath string,
@@ -108,7 +110,7 @@ func (i *poolV1) safeTransferFrom(
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
-	common.SafeGRC20TransferFrom(cross(cur), tokenPath, from, to, amountInt64)
+	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, from, to, amountInt64)
 
 	afterBalance := token.BalanceOf(to)
 	if safeAddInt64(beforeBalance, amountInt64) != afterBalance {
@@ -187,7 +189,8 @@ func (i *poolV1) safeTransferFrom(
 //	    return nil
 //	}
 func (i *poolV1) safeSwapCallback(
-	cur realm,
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	tokenPath string,
 	amountInInt256 *i256.Int,
@@ -229,7 +232,7 @@ func (i *poolV1) safeSwapCallback(
 
 	// execute swap callback
 	// CallbackMarker is created by the pool module to enforce type-system level validation.
-	err := swapCallback(cross(cur), amount0Delta, amount1Delta, &pl.CallbackMarker{})
+	err := swapCallback(cross(rlm), amount0Delta, amount1Delta, &pl.CallbackMarker{})
 	if err != nil {
 		panic(err)
 	}

@@ -38,8 +38,8 @@ var (
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -58,8 +58,8 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -78,8 +78,8 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -162,8 +162,8 @@ func (i *poolV1) Swap(
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	// no liquidity -> no swap, return zero amounts
 	if pool.Liquidity().IsZero() {
@@ -242,16 +242,16 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeTransfer(rlm, pool, recipient, token1Path, result.Amount1.Abs(), false)
+			i.safeTransfer(0, rlm, pool, recipient, token1Path, result.Amount1.Abs(), false)
 		}
-		i.safeSwapCallback(rlm, pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeTransfer(rlm, pool, recipient, token0Path, result.Amount0.Abs(), true)
+			i.safeTransfer(0, rlm, pool, recipient, token0Path, result.Amount0.Abs(), true)
 		}
-		i.safeSwapCallback(rlm, pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 	}
 
 	lastObservation, err := lastObservation(pool.ObservationState())

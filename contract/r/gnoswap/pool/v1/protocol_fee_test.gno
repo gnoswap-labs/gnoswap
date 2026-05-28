@@ -470,7 +470,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 3)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 3, 3)
+				_, err := getMockInstance().setFeeProtocol(0, cur,3, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -482,7 +482,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 3)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 6, 3)
+				_, err := getMockInstance().setFeeProtocol(0, cur,6, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -494,7 +494,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 6)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 3, 6)
+				_, err := getMockInstance().setFeeProtocol(0, cur,3, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -506,7 +506,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 11)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 11, 11)
+				_, err := getMockInstance().setFeeProtocol(0, cur,11, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -518,7 +518,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 11)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 6, 11)
+				_, err := getMockInstance().setFeeProtocol(0, cur,6, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -530,7 +530,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 6)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 11, 6)
+				_, err := getMockInstance().setFeeProtocol(0, cur,11, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -542,7 +542,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "set fee protocol to valid values (10, 10)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(cur, 10, 10)
+				_, err := getMockInstance().setFeeProtocol(0, cur,10, 10)
 				if err != nil {
 					panic(err)
 				}
@@ -558,7 +558,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(cur, 0)
-				getMockInstance().store.SetSlot0FeeProtocol(170)
+				getMockInstance().store.SetSlot0FeeProtocol(0, cur, 170)
 				mockInstanceCreatePool(cur, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 				// Fee already set in previous test
 			},
@@ -574,7 +574,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(cur, 0)
-				getMockInstance().store.SetSlot0FeeProtocol(170)
+				getMockInstance().store.SetSlot0FeeProtocol(0, cur, 170)
 				mockInstanceCreatePool(cur, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(cur realm, t *testing.T) interface{} {
