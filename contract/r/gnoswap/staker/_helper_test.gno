@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IStakerStore, _ PoolAccessor, _ EmissionAccessor, _ NFTAccessor) IStaker {
-	return func(_ IStakerStore, _ PoolAccessor, _ EmissionAccessor, _ NFTAccessor) IStaker {
+func makeMockInitializer(version string) func(_ int, _ realm, _ IStakerStore, _ PoolAccessor, _ EmissionAccessor, _ NFTAccessor) IStaker {
+	return func(_ int, _ realm, _ IStakerStore, _ PoolAccessor, _ EmissionAccessor, _ NFTAccessor) IStaker {
 		return newMockStaker(version)
 	}
 }

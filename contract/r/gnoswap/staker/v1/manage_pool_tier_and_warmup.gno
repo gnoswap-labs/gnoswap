@@ -129,10 +129,6 @@ func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 
 // setPoolTier internally sets the pool tier.
 func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
 	pool := s.getPools().GetPoolOrNil(poolPath)
@@ -147,10 +143,6 @@ func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, c
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
 func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 	poolTier := s.getPoolTier()
 	previousTier := poolTier.CurrentTier(poolPath)
@@ -163,10 +155,6 @@ func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64
 
 // removePoolTier internally removes the pool from tier system.
 func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime int64) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
 	poolTier := s.getPoolTier()
@@ -176,10 +164,6 @@ func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime
 
 // setWarmUp internally sets the warm-up parameters.
 func (s *stakerV1) setWarmUp(_ int, rlm realm, pct, timeDuration int64) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
 	warmupTemplate := s.store.GetWarmupTemplate()

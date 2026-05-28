@@ -10,11 +10,6 @@ type IStaker interface {
 	IStakerGetter
 }
 
-// IStakerHookRegistrar is implemented by versions that need to register external hooks.
-type IStakerHookRegistrar interface {
-	RegisterHooks(_ int, rlm realm)
-}
-
 type IStakerManager interface {
 	StakeToken(_ int, rlm realm, positionId uint64, referrer string) string
 	UnStakeToken(_ int, rlm realm, positionId uint64) string

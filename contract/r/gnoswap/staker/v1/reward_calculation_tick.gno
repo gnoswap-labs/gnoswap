@@ -188,10 +188,6 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 // Instead of updating pool state for each tick cross individually (O(n) operations),
 // it calculates the cumulative effect and applies it once (O(1) pool updates + O(n) tick updates).
 func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
-	if !rlm.IsCurrent() {
-		return sr.ErrSpoofedRealm
-	}
-
 	// Early exit for empty batches
 	currentSwapBatch := s.store.GetCurrentSwapBatch()
 	if currentSwapBatch == nil || len(currentSwapBatch.Crosses()) == 0 {
@@ -271,20 +267,7 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 	return nil
 }
 
-func (s *stakerV1) RegisterHooks(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
-	s.setupSwapHooks(0, rlm)
-	s.emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, s.emissionCacheUpdateHook)
-}
-
 func (s *stakerV1) setupSwapHooks(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
-
 	// Set tick cross hook for pool contract
 	s.poolAccessor.SetTickCrossHook(0, rlm, s.tickCrossHook)
 

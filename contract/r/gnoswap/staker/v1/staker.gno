@@ -357,10 +357,6 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
 func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, caller, to address) error {
-	if !rlm.IsCurrent() {
-		return sr.ErrSpoofedRealm
-	}
-
 	// If the recipient already owns the NFT, no transfer is needed.
 	if owner == to {
 		return nil

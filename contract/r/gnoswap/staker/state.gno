@@ -71,12 +71,3 @@ func updateImplementation() error {
 
 	return nil
 }
-
-func registerImplementationHooks(cur realm) {
-	hookRegistrar, ok := implementation.(IStakerHookRegistrar)
-	if !ok {
-		return
-	}
-
-	hookRegistrar.RegisterHooks(0, cur)
-}

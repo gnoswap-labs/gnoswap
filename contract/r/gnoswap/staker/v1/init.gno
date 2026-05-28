@@ -23,13 +23,21 @@ func init(cur realm) {
 }
 
 func registerStakerV1(cur realm) {
-	sr.RegisterInitializer(cross(cur), func(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
+	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
+		if !rlm.IsCurrent() {
+			panic(sr.ErrSpoofedRealm)
+		}
+
 		err := initStoreData(stakerStore, emissionAccessor)
 		if err != nil {
 			panic(err)
 		}
 
-		return NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
+		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
+		instance.setupSwapHooks(0, rlm)
+		emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, instance.emissionCacheUpdateHook)
+
+		return instance
 	})
 }
 
