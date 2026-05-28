@@ -83,10 +83,7 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 }
 
 func addProjectTier(p *launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) {
-	tiers := p.Tiers()
-	tiers[tierDuration] = projectTier
-
-	p.SetTiers(tiers)
+	p.SetTier(tierDuration, projectTier)
 }
 
 func addProjectCondition(p *launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) {

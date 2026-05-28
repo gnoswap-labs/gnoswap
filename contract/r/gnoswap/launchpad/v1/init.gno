@@ -5,13 +5,13 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func init() {
-	registerLaunchpadV1()
+func init(cur realm) {
+	registerLaunchpadV1(cur)
 }
 
-func registerLaunchpadV1() {
-	launchpad.RegisterInitializer(cross, func(launchpadStore launchpad.ILaunchpadStore) launchpad.ILaunchpad {
-		err := initStoreData(launchpadStore)
+func registerLaunchpadV1(cur realm) {
+	launchpad.RegisterInitializer(cross(cur), func(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) launchpad.ILaunchpad {
+		err := initStoreData(0, rlm, launchpadStore)
 		if err != nil {
 			panic(err)
 		}
@@ -20,30 +20,30 @@ func registerLaunchpadV1() {
 	})
 }
 
-func initStoreData(launchpadStore launchpad.ILaunchpadStore) error {
+func initStoreData(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) error {
 	if !launchpadStore.HasProjectsKey() {
-		err := launchpadStore.SetProjects(bptree.NewBPTreeN(16))
+		err := launchpadStore.SetProjects(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !launchpadStore.HasProjectTierRewardManagersKey() {
-		err := launchpadStore.SetProjectTierRewardManagers(bptree.NewBPTreeN(16))
+		err := launchpadStore.SetProjectTierRewardManagers(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !launchpadStore.HasDepositCounterStoreKey() {
-		err := launchpadStore.SetDepositCounter(launchpad.NewCounter())
+		err := launchpadStore.SetDepositCounter(0, rlm, launchpad.NewCounter())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !launchpadStore.HasDepositsKey() {
-		err := launchpadStore.SetDeposits(bptree.NewBPTreeN(16))
+		err := launchpadStore.SetDeposits(0, rlm, bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestDeposit_ID(t *testing.T) {
+func TestDeposit_ID(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		deposit  *launchpad.Deposit
@@ -47,13 +47,13 @@ func TestDeposit_ID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, tt.deposit.ID())
 		})
 	}
 }
 
-func TestDeposit_ProjectID(t *testing.T) {
+func TestDeposit_ProjectID(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		deposit  *launchpad.Deposit
@@ -90,13 +90,13 @@ func TestDeposit_ProjectID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, tt.deposit.ProjectID())
 		})
 	}
 }
 
-func TestDeposit_ProjectTierID(t *testing.T) {
+func TestDeposit_ProjectTierID(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		deposit  *launchpad.Deposit
@@ -133,13 +133,13 @@ func TestDeposit_ProjectTierID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, tt.deposit.ProjectTierID())
 		})
 	}
 }
 
-func TestDeposit_IsOwner(t *testing.T) {
+func TestDeposit_IsOwner(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	otherAddr := testutils.TestAddress("other")
 
@@ -182,13 +182,13 @@ func TestDeposit_IsOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, tt.deposit.IsDepositor(tt.address))
 		})
 	}
 }
 
-func TestDeposit_IsEnded(t *testing.T) {
+func TestDeposit_IsEnded(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	tests := []struct {
 		name        string
@@ -244,13 +244,13 @@ func TestDeposit_IsEnded(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, tt.deposit.IsEnded(tt.currentTime))
 		})
 	}
 }
 
-func TestDeposit_IsWithdrawn(t *testing.T) {
+func TestDeposit_IsWithdrawn(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		withdrawnTime    int64
@@ -284,7 +284,7 @@ func TestDeposit_IsWithdrawn(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
 				"test_deposit_id",
 				"test_project",
@@ -301,7 +301,7 @@ func TestDeposit_IsWithdrawn(t *testing.T) {
 	}
 }
 
-func TestDeposit_WithdrawnHeight(t *testing.T) {
+func TestDeposit_WithdrawnHeight(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		withdrawnHeight int64
@@ -325,15 +325,24 @@ func TestDeposit_WithdrawnHeight(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			deposit := &launchpad.Deposit{}
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			deposit := newDeposit(
+				"test_deposit_id",
+				"test_project",
+				30,
+				testutils.TestAddress("test"),
+				1000,
+				100,
+				time.Now().Unix(),
+				time.Now().Add(time.Hour*24*30).Unix(),
+			)
 			deposit.SetWithdrawnHeight(tt.withdrawnHeight)
 			uassert.Equal(t, tt.expected, deposit.WithdrawnHeight())
 		})
 	}
 }
 
-func TestDeposit_Withdraw(t *testing.T) {
+func TestDeposit_Withdraw(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	tests := []struct {
 		name              string
@@ -370,7 +379,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
 				"test_deposit",
 				"test_project",
@@ -392,7 +401,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 	}
 }
 
-func TestDeposit_NewDeposit(t *testing.T) {
+func TestDeposit_NewDeposit(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	projectID := "gno.land/r/onbloc/obl:123"
 
@@ -438,7 +447,7 @@ func TestDeposit_NewDeposit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
 				tt.depositID,
 				tt.projectID,

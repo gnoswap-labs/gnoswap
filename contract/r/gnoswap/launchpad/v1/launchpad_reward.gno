@@ -17,10 +17,14 @@ import (
 //
 // Returns amount of reward collected.
 // Only callable by deposit owner.
-func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
@@ -29,14 +33,14 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(
@@ -51,7 +55,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
+func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
@@ -91,7 +95,7 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 		project.SetTier(deposit.Tier(), projectTier)
 
 		projects := lp.store.GetProjects()
-		if err := lp.store.SetProjects(projects); err != nil {
+		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 			return "", 0, err
 		}
 	}
