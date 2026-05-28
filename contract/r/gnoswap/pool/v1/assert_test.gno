@@ -32,7 +32,8 @@ func TestAssertIsNotUserCall(cur realm, t *testing.T) {
 			testing.SetRealm(tt.currentRealm)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
+				testing.SetRealm(tt.currentRealm)
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func(cur realm) {
 					assertIsNotUserCall(0, cur)
 				})
 			} else {

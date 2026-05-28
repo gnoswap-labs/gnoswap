@@ -1493,7 +1493,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 							routerAddr, false, "50",
 							common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 							routerAddr,
-							func(r realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
+							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
 						)
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
@@ -1534,15 +1534,15 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(stakerRealm)
-						getMockInstance().SetTickCrossHook(0, cur, func(r realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+						getMockInstance().SetTickCrossHook(0, cur, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(stakerRealm)
-						getMockInstance().SetSwapStartHook(0, cur, func(r realm, poolPath string, timestamp int64) {})
+						getMockInstance().SetSwapStartHook(0, cur, func(cur realm, poolPath string, timestamp int64) {})
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(stakerRealm)
-						getMockInstance().SetSwapEndHook(0, cur, func(r realm, poolPath string) error { return nil })
+						getMockInstance().SetSwapEndHook(0, cur, func(cur realm, poolPath string) error { return nil })
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(posRealm)

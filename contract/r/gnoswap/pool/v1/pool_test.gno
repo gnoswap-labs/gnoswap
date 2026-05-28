@@ -947,7 +947,7 @@ func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 
 	mockInstanceSwap(cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 		})
 
 	testing.SkipHeights(1)
@@ -1187,7 +1187,7 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 		"4295128740",
 		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
 		},
 	)
 

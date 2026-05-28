@@ -6,10 +6,11 @@ import (
 )
 
 func assertIsNotUserCall(_ int, rlm realm) {
-	if rlm.IsUserCall() {
+	previousRealm := rlm.Previous()
+	if previousRealm.IsUserCall() {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,
-			ufmt.Sprintf("previousRealm(%s) is EOA", rlm.Previous().Address()),
+			ufmt.Sprintf("previousRealm(%s) is EOA", previousRealm.Address()),
 		))
 	}
 }

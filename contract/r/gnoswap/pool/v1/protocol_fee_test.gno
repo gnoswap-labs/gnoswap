@@ -262,10 +262,10 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 	initPoolTest(t)
 	instance := getMockInstance()
 
-	instance.addPendingProtocolFee(cur, barPath, 100)
-	instance.addPendingProtocolFee(cur, barPath, 50)
-	instance.addPendingProtocolFee(cur, gnsPath, 25)
-	instance.addPendingProtocolFee(cur, fooPath, 0)
+	instance.addPendingProtocolFee(0, cur,barPath, 100)
+	instance.addPendingProtocolFee(0, cur,barPath, 50)
+	instance.addPendingProtocolFee(0, cur,gnsPath, 25)
+	instance.addPendingProtocolFee(0, cur,fooPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
@@ -282,7 +282,7 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	instance.addToProtocolFee(cur)
+	instance.addToProtocolFee(0, cur)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)

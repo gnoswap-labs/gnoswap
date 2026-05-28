@@ -544,76 +544,103 @@ const currentPoolPath = "gno.land/r/gnoswap/pool"
 // proxy's IPool method as the second argument.
 
 func mockInstanceSetPoolCreationFee(cur realm, fee int64) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetPoolCreationFee(0, cur, fee)
+	func(cur realm) {
+		getMockInstance().SetPoolCreationFee(0, cur, fee)
+	}(cross(cur))
 }
 
 func mockInstanceCreatePool(cur realm, token0Path string, token1Path string, fee uint32, sqrtPrice string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().CreatePool(0, cur, token0Path, token1Path, fee, sqrtPrice)
+	func(cur realm) {
+		getMockInstance().CreatePool(0, cur, token0Path, token1Path, fee, sqrtPrice)
+	}(cross(cur))
 }
 
 func mockInstanceIncreaseObservationCardinalityNext(cur realm, token0Path string, token1Path string, fee uint32, newCardinalityNext uint16) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().IncreaseObservationCardinalityNext(0, cur, token0Path, token1Path, fee, newCardinalityNext)
+	func(cur realm) {
+		getMockInstance().IncreaseObservationCardinalityNext(0, cur, token0Path, token1Path, fee, newCardinalityNext)
+	}(cross(cur))
 }
 
 func mockInstanceSetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetTickCrossHook(0, cur, hook)
+	func(cur realm) {
+		getMockInstance().SetTickCrossHook(0, cur, hook)
+	}(cross(cur))
 }
 
 func mockInstanceSetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetSwapStartHook(0, cur, hook)
+	func(cur realm) {
+		getMockInstance().SetSwapStartHook(0, cur, hook)
+	}(cross(cur))
 }
 
 func mockInstanceSetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetSwapEndHook(0, cur, hook)
+	func(cur realm) {
+		getMockInstance().SetSwapEndHook(0, cur, hook)
+	}(cross(cur))
 }
 
 func mockInstanceMint(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().Mint(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	var amount0, amount1 string
+	func(cur realm) {
+		amount0, amount1 = getMockInstance().Mint(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	}(cross(cur))
+	return amount0, amount1
 }
 
 func mockInstanceBurn(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().Burn(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	var amount0, amount1 string
+	func(cur realm) {
+		amount0, amount1 = getMockInstance().Burn(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	}(cross(cur))
+	return amount0, amount1
 }
 
 func mockInstanceCollect(cur realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().Collect(0, cur, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+	var amount0, amount1 string
+	func(cur realm) {
+		amount0, amount1 = getMockInstance().Collect(0, cur, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+	}(cross(cur))
+	return amount0, amount1
 }
 
 func mockInstanceCollectProtocol(cur realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().CollectProtocol(0, cur, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+	var amount0, amount1 string
+	func(cur realm) {
+		amount0, amount1 = getMockInstance().CollectProtocol(0, cur, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+	}(cross(cur))
+	return amount0, amount1
 }
 
 func mockInstanceSwap(cur realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().Swap(0, cur, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+	var amount0, amount1 string
+	func(cur realm) {
+		amount0, amount1 = getMockInstance().Swap(0, cur, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+	}(cross(cur))
+	return amount0, amount1
 }
 
 func mockInstanceHandleWithdrawalFee(cur realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	return getMockInstance().HandleWithdrawalFee(0, cur, token0Path, amount0, token1Path, amount1, positionCaller)
+	var fee0, fee1, after0, after1 string
+	func(cur realm) {
+		fee0, fee1, after0, after1 = getMockInstance().HandleWithdrawalFee(0, cur, token0Path, amount0, token1Path, amount1, positionCaller)
+	}(cross(cur))
+	return fee0, fee1, after0, after1
 }
 
 func mockInstanceSetWithdrawalFee(cur realm, fee uint64) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetWithdrawalFee(0, cur, fee)
+	func(cur realm) {
+		getMockInstance().SetWithdrawalFee(0, cur, fee)
+	}(cross(cur))
 }
 
 func mockInstanceSetFeeProtocol(cur realm, feeProtocol0 uint8, feeProtocol1 uint8) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().SetFeeProtocol(0, cur, feeProtocol0, feeProtocol1)
+	func(cur realm) {
+		getMockInstance().SetFeeProtocol(0, cur, feeProtocol0, feeProtocol1)
+	}(cross(cur))
 }
 
 func mockInstanceSafeTransferFrom(cur realm, pool *pl.Pool, from, to address, tokenPath string, amount *u256.Uint, isToken0 bool) {
-	testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-	getMockInstance().safeTransferFrom(cur, pool, from, to, tokenPath, amount, isToken0)
+	func(cur realm) {
+		getMockInstance().safeTransferFrom(0, cur, pool, from, to, tokenPath, amount, isToken0)
+	}(cross(cur))
 }

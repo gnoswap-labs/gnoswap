@@ -1141,7 +1141,7 @@ func TestPositionLiquidity(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 
 			liquidity := "0"
 
@@ -1187,7 +1187,7 @@ func TestPositionFeeGrowthInside0LastX128(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 			feeGrowth := PositionFeeGrowthInside0LastX128(pool, key)
 			tt.verifyFn(t, feeGrowth)
 		})
@@ -1223,7 +1223,7 @@ func TestPositionFeeGrowthInside1LastX128(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 			feeGrowth := PositionFeeGrowthInside1LastX128(pool, key)
 			tt.verifyFn(t, feeGrowth)
 		})
@@ -1259,7 +1259,7 @@ func TestPositionTokensOwed0(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 			tokensOwed := PositionTokensOwed0(pool, key)
 			tt.verifyFn(t, tokensOwed)
 		})
@@ -1295,7 +1295,7 @@ func TestPositionTokensOwed1(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 			tokensOwed := PositionTokensOwed1(pool, key)
 			tt.verifyFn(t, tokensOwed)
 		})
@@ -1347,7 +1347,7 @@ func TestGetPositionByPool(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(t)
+			pool, key := tt.setupFn(cur, t)
 			position, exists := GetPositionByPool(pool, key)
 			tt.verifyFn(t, position, exists)
 		})
