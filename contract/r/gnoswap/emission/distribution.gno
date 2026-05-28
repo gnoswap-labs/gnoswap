@@ -2,7 +2,6 @@ package emission
 
 import (
 	"chain"
-	"chain/runtime"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -93,7 +92,7 @@ func ChangeDistributionPct(
 ) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionPct(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
@@ -101,7 +100,7 @@ func ChangeDistributionPct(
 	// Distribute accumulated emissions with current ratios before changing ratios.
 	// This prevents retroactive application of new ratios to emissions that occurred
 	// under previous ratio configurations.
-	MintAndDistributeGns(cross)
+	MintAndDistributeGns(cur)
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
@@ -111,7 +110,7 @@ func ChangeDistributionPct(
 
 	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
@@ -209,9 +208,9 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	return amountByAddress, nil
 }
 
-func transferToTarget(targets map[address]int64) error {
+func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 	for address, amount := range targets {
-		gns.Transfer(cross, address, amount)
+		gns.Transfer(cross(rlm), address, amount)
 	}
 
 	return nil
@@ -309,7 +308,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 //
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
 	distributedToStaker = 0
@@ -319,7 +318,7 @@ func ClearDistributedToStaker(cur realm) {
 //
 // Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 	distributedToGovStaker = 0
 }
