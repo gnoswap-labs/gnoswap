@@ -12,10 +12,6 @@ import "gno.land/r/gnoswap/access"
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, launchpadStore ILaunchpadStore) ILaunchpad) {
-	if !cur.IsCurrent() {
-		panic(ErrSpoofedRealm)
-	}
-
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentLaunchpadStore, ok := domainStore.(ILaunchpadStore)
 		if !ok {
@@ -43,10 +39,6 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, launchpad
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
-	if !cur.IsCurrent() {
-		panic(ErrSpoofedRealm)
-	}
-
 	// Ensure only admin or governance can perform upgrades
 	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
