@@ -149,8 +149,7 @@ func (i *poolV1) Swap(
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
 
-	previousRealm := rlm.Previous()
-	assertIsNotUserCall(previousRealm)
+	assertIsNotUserCall(0, rlm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
@@ -262,6 +261,8 @@ func (i *poolV1) Swap(
 
 	token0Amount := result.Amount0.ToString()
 	token1Amount := result.Amount1.ToString()
+
+	previousRealm := rlm.Previous()
 
 	chain.Emit(
 		"Swap",

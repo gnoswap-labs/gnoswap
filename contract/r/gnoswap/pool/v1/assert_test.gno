@@ -33,10 +33,10 @@ func TestAssertIsNotUserCall(cur realm, t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
-					assertIsNotUserCall(tt.currentRealm)
+					assertIsNotUserCall(0, cur, tt.currentRealm)
 				})
 			} else {
-				assertIsNotUserCall(tt.currentRealm)
+				assertIsNotUserCall(0, cur, tt.currentRealm)
 			}
 		})
 	}

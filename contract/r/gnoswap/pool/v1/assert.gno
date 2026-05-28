@@ -5,11 +5,11 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func assertIsNotUserCall(previousRealm realm) {
-	if previousRealm.IsUserCall() {
+func assertIsNotUserCall(_ int, rlm realm) {
+	if rlm.IsUserCall() {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,
-			ufmt.Sprintf("previousRealm(%s) is EOA", previousRealm.Address()),
+			ufmt.Sprintf("previousRealm(%s) is EOA", rlm.Previous().Address()),
 		))
 	}
 }
