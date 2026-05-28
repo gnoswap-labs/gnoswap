@@ -483,7 +483,7 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
 				InitialisePoolTest(cur, t)
 				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				getMockInstance().lockPool(cur)
+				getMockInstance().lockPool(0, cur)
 				lockedPool = true
 				return pool
 			},
@@ -524,7 +524,7 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			pool := test.setupCondition(cur, t)
 			if lockedPool {
 				defer func() {
-					getMockInstance().unlockPool(cur)
+					getMockInstance().unlockPool(0, cur)
 					lockedPool = false
 				}()
 			}
@@ -1850,8 +1850,8 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 			InitialisePoolTest(cur, t)
 			MintPositionAll(cur, t, adminAddr)
 
-			getMockInstance().lockPool(cur)
-			defer getMockInstance().unlockPool(cur)
+			getMockInstance().lockPool(0, cur)
+			defer getMockInstance().unlockPool(0, cur)
 
 			tt.setRealm()
 			uassert.AbortsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {

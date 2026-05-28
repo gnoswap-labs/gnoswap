@@ -383,7 +383,7 @@ func resetObject(cur realm, t *testing.T) {
 
 func unlockPoolForTest(cur realm) {
 	if mockInstance != nil {
-		mockInstance.unlockPool(cur)
+		mockInstance.unlockPool(0, cur)
 	}
 }
 
