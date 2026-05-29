@@ -13,7 +13,7 @@
 //
 //   - Bit Math: MSB/LSB calculations for tick bitmap operations
 //   - Tick Math: tick and Q64.96 sqrt-price conversions
-//   - Liquidity Math (`liquidity_math.gno`): liquidity and token amount math for price ranges
+//   - Liquidity Math: liquidity and token amount math for price ranges
 //   - Sqrt Price Math: token amount conversions using Q64.96 format
 //   - Swap Math: single-step swap calculations with fee handling
 //   - Overflow Protection: explicit int256/uint256 overflow checks
@@ -44,7 +44,7 @@
 //   - TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint
 //   - TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32
 //
-// ### Liquidity Math (`liquidity_math.gno`)
+// ### Liquidity Math
 //
 //   - GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) *u256.Uint
 //   - GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint)

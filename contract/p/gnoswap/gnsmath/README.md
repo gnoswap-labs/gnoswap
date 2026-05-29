@@ -12,7 +12,7 @@ The implementation follows Uniswap V3's mathematical model, ensuring compatibili
 
 - **Bit Math**: MSB/LSB calculations for tick bitmap operations
 - **Tick Math**: Tick and Q64.96 sqrt-price conversions
-- **Liquidity Math** (`liquidity_math.gno`): Liquidity and token amount conversions for price ranges
+- **Liquidity Math**: Liquidity and token amount conversions for price ranges
 - **Sqrt Price Math**: Token amount conversions using Q64.96 format
 - **Swap Math**: Single-step swap calculations with fee handling
 - **Overflow Protection**: Built-in int256 overflow detection
@@ -79,7 +79,7 @@ println(lsb) // Output: 8
 - `TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint` - Convert tick to Q64.96 sqrt price
 - `TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32` - Convert Q64.96 sqrt price to tick
 
-### Liquidity Math (`liquidity_math.gno`)
+### Liquidity Math
 
 - `GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) *u256.Uint`
   - Calculate max liquidity from token amounts and price range

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	maxUint128 = u256.MustFromDecimal(liquidityMaxUint128Decimal)
-	q96Uint    = u256.MustFromDecimal(liquidityQ96Decimal)
+	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
+	q96Uint    = u256.MustFromDecimal(Q96)
 	// only used for return value
 	zeroI256 = i256.Zero()
 )
@@ -47,12 +47,12 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 // computeLiquidityForAmount1 calculates liquidity based on the provided token1 amount and price range.
 //
 // This function computes the liquidity for a given amount of token1 by using the difference
-// between the upper and lower square root price ratios. The calculation uses liquidityQ96Decimal fixed-point
+// between the upper and lower square root price ratios. The calculation uses Q96 fixed-point
 // arithmetic to maintain precision.
 //
 // Parameters:
-//   - sqrtRatioAX96: *u256.Uint - The square root ratio of price at the lower tick, represented in liquidityQ96Decimal format.
-//   - sqrtRatioBX96: *u256.Uint - The square root ratio of price at the upper tick, represented in liquidityQ96Decimal format.
+//   - sqrtRatioAX96: *u256.Uint - The square root ratio of price at the lower tick, represented in Q96 format.
+//   - sqrtRatioBX96: *u256.Uint - The square root ratio of price at the upper tick, represented in Q96 format.
 //   - amount1: *u256.Uint - The amount of token1 to calculate liquidity for.
 //
 // Returns:
@@ -61,7 +61,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 // Notes:
 //   - The result is not directly limited to uint128, as liquidity values can exceed uint128 bounds.
 //   - If `sqrtRatioAX96 == sqrtRatioBX96`, the function will panic due to division by zero.
-//   - liquidityQ96Decimal is a constant representing `2^96`, ensuring that precision is maintained during division.
+//   - Q96 is a constant representing `2^96`, ensuring that precision is maintained during division.
 //
 // Panics:
 //   - If the resulting liquidity exceeds the uint128 range, `SafeConvertToUint128` will trigger a panic.
@@ -324,7 +324,7 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 //     indicating the overflow and the original value.
 //
 // Notes:
-// - The constant `liquidityMaxUint128Decimal` is defined as `340282366920938463463374607431768211455` (the largest uint128 value).
+// - The constant `MAX_UINT128` is defined as `340282366920938463463374607431768211455` (the largest uint128 value).
 // - No actual conversion occurs since the function works directly with *u256.Uint types.
 //
 // Example:

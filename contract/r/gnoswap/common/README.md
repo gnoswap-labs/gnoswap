@@ -46,7 +46,3 @@ which realm `CallerTeller` treats as the actor.
 **Coin Validation:**
 - **ExistsUserSendCoins**: Checks if user sent any coins
 - **AssertIsNotHandleNativeCoin**: Ensures no native coins in transaction
-
-## Math
-
-Concentrated-liquidity math, tick conversion, swap-step math, and liquidity math calculations live in `contract/p/gnoswap/gnsmath/liquidity_math.gno` and the rest of `contract/p/gnoswap/gnsmath/`.

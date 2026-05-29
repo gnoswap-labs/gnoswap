@@ -191,14 +191,14 @@ func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 		},
 		{
 			name:            "rounding_to_zero_after_fee",
-			currentX96:      Q96,
-			targetX96:       new(u256.Uint).Lsh(Q96, 1),
+			currentX96:      u256.MustFromDecimal(Q96),
+			targetX96:       new(u256.Uint).Lsh(u256.MustFromDecimal(Q96), 1),
 			liquidity:       u256.MustFromDecimal("1000000"),
 			amountRemaining: i256.MustFromDecimal("1"),
 			feePips:         999999,
-			sqrtNextX96:     Q96,
+			sqrtNextX96:     u256.MustFromDecimal(Q96),
 			chkSqrtNextX96: func(sqrt, target *u256.Uint) {
-				uassert.True(t, sqrt.Eq(Q96))
+				uassert.True(t, sqrt.Eq(u256.MustFromDecimal(Q96)))
 			},
 			amountIn:  "0",
 			amountOut: "0",
