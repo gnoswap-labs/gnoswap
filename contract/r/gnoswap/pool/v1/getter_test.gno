@@ -42,7 +42,7 @@ func testInitData(cur realm, t *testing.T) {
 
 	mockTicks := bptree.NewBPTreeN(32)
 
-	tickInfo := pl.TickInfo{}
+	tickInfo := pl.NewTickInfo()
 	tickInfo.SetLiquidityGross("1000000")
 	tickInfo.SetLiquidityNet("2000000")
 	tickInfo.SetFeeGrowthOutside0X128("3000000")
@@ -57,7 +57,7 @@ func testInitData(cur realm, t *testing.T) {
 
 	mockPositions := bptree.NewBPTreeN(16)
 
-	positionInfo := pl.PositionInfo{}
+	positionInfo := pl.NewPositionInfo()
 	positionInfo.SetLiquidity("1000000")
 	positionInfo.SetFeeGrowthInside0LastX128("2000000")
 	positionInfo.SetFeeGrowthInside1LastX128("3000000")

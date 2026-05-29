@@ -14,7 +14,7 @@ func TestNewPoolParams(cur realm, t *testing.T) {
 	t.Run(
 		"success - normal token pair",
 		func(cur realm, t *testing.T) {
-			initPoolTest(t)
+			initPoolTest(cur, t)
 
 			params := newPoolParams(
 				"token0",

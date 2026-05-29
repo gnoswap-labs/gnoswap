@@ -89,6 +89,7 @@ var (
 
 	mockInstance        *poolV1
 	registeredTestStore = false
+	initializedPool     = false
 )
 
 const (
@@ -197,8 +198,8 @@ func MintPosition(cur realm, t *testing.T,
 	t.Helper()
 	testing.SetRealm(posRealm)
 
-	return mockInstanceMint(
-		cur,
+	return pl.Mint(
+		cross(cur),
 		token0,
 		token1,
 		fee,
@@ -221,7 +222,7 @@ func InitialisePoolTest(cur realm, t *testing.T) {
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 	poolPath := GetPoolPath(barPath, bazPath, fee3000)
 	if !getMockInstance().ExistsPoolPath(poolPath) {
-		mockInstanceCreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336")
+		mockInstanceCreatePool(0, cur, barPath, bazPath, fee3000, "79228162514264337593543950336")
 	}
 
 	// 2. create position
@@ -377,14 +378,7 @@ func quxTransfer(cur realm, t *testing.T, to address, amount int64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(cur realm, t *testing.T) {
-	unlockPoolForTest(cur)
-	initPoolTest(t)
-}
-
-func unlockPoolForTest(cur realm) {
-	if mockInstance != nil {
-		mockInstance.unlockPool(0, cur)
-	}
+	initPoolTest(cur, t)
 }
 
 func burnTokens(cur realm, t *testing.T) {
@@ -438,25 +432,36 @@ func TestBurnTokens(cur realm, t *testing.T) {
 	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 }
 
-func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(_ int, rlm realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(rlm), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(rlm), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
 }
 
-func initPoolTest(t *testing.T) {
+func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
+	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
-	mockInstance = &poolV1{
-		store: mock.NewMockPoolStore(),
+	if !initializedPool {
+		initializedPool = true
+		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
+		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, s pl.IPoolStore) pl.IPool {
+			mockInstance = &poolV1{
+				store: mock.NewMockPoolStore(),
+			}
+			return mockInstance
+		})
 	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pl.UpgradeImpl(cross(cur), mockPoolPath)
 }
 
 type mockSlot0 struct {
@@ -489,17 +494,18 @@ type createMockPoolParams struct {
 }
 
 func makeMockPool(params createMockPoolParams) *pl.Pool {
-	slot0 := pl.Slot0{}
-	slot0.SetFeeProtocol(params.slot0.feeProtocol)
-	slot0.SetSqrtPriceX96(params.slot0.sqrtPriceX96)
-	slot0.SetTick(params.slot0.tick)
-	slot0.SetUnlocked(params.slot0.unlocked)
+	slot0 := pl.NewSlot0(
+		params.slot0.sqrtPriceX96,
+		params.slot0.tick,
+		params.slot0.feeProtocol,
+		params.slot0.unlocked,
+	)
 
-	balances := pl.TokenPair{}
+	balances := pl.NewTokenPair()
 	balances.SetToken0(params.balances.token0)
 	balances.SetToken1(params.balances.token1)
 
-	protocolFees := pl.TokenPair{}
+	protocolFees := pl.NewTokenPair()
 	protocolFees.SetToken0(params.protocolFees.token0)
 	protocolFees.SetToken1(params.protocolFees.token1)
 
@@ -507,7 +513,15 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 		params.tickBitmaps = make(map[int16]string)
 	}
 
-	pool := &pl.Pool{}
+	pool := pl.NewPool(
+		params.token0Path,
+		params.token1Path,
+		params.fee,
+		params.slot0.sqrtPriceX96,
+		params.tickSpacing,
+		params.slot0.tick,
+		params.slot0.feeProtocol,
+	)
 	pool.SetToken0Path(params.token0Path)
 	pool.SetToken1Path(params.token1Path)
 	pool.SetFee(params.fee)
@@ -543,104 +557,63 @@ const currentPoolPath = "gno.land/r/gnoswap/pool"
 // via SetRealm, then forwards `cross(cur)` (or the threaded `cur`) into the
 // proxy's IPool method as the second argument.
 
-func mockInstanceSetPoolCreationFee(cur realm, fee int64) {
-	func(cur realm) {
-		getMockInstance().SetPoolCreationFee(0, cur, fee)
-	}(cross(cur))
+func mockInstanceSetPoolCreationFee(_ int, rlm realm, fee int64) {
+	pl.SetPoolCreationFee(cross(rlm), fee)
 }
 
-func mockInstanceCreatePool(cur realm, token0Path string, token1Path string, fee uint32, sqrtPrice string) {
-	func(cur realm) {
-		getMockInstance().CreatePool(0, cur, token0Path, token1Path, fee, sqrtPrice)
-	}(cross(cur))
+func mockInstanceCreatePool(_ int, rlm realm, token0Path string, token1Path string, fee uint32, sqrtPrice string) {
+	pl.CreatePool(cross(rlm), token0Path, token1Path, fee, sqrtPrice)
 }
 
-func mockInstanceIncreaseObservationCardinalityNext(cur realm, token0Path string, token1Path string, fee uint32, newCardinalityNext uint16) {
-	func(cur realm) {
-		getMockInstance().IncreaseObservationCardinalityNext(0, cur, token0Path, token1Path, fee, newCardinalityNext)
-	}(cross(cur))
+func mockInstanceIncreaseObservationCardinalityNext(_ int, rlm realm, token0Path string, token1Path string, fee uint32, newCardinalityNext uint16) {
+	pl.IncreaseObservationCardinalityNext(cross(rlm), token0Path, token1Path, fee, newCardinalityNext)
 }
 
-func mockInstanceSetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	func(cur realm) {
-		getMockInstance().SetTickCrossHook(0, cur, hook)
-	}(cross(cur))
+func mockInstanceSetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	pl.SetTickCrossHook(cross(rlm), hook)
 }
 
-func mockInstanceSetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
-	func(cur realm) {
-		getMockInstance().SetSwapStartHook(0, cur, hook)
-	}(cross(cur))
+func mockInstanceSetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	pl.SetSwapStartHook(cross(rlm), hook)
 }
 
-func mockInstanceSetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
-	func(cur realm) {
-		getMockInstance().SetSwapEndHook(0, cur, hook)
-	}(cross(cur))
+func mockInstanceSetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	pl.SetSwapEndHook(cross(rlm), hook)
 }
 
-func mockInstanceMint(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	var amount0, amount1 string
-	func(cur realm) {
-		amount0, amount1 = getMockInstance().Mint(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
-	}(cross(cur))
-	return amount0, amount1
+func mockInstanceMint(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return pl.Mint(cross(rlm), token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func mockInstanceBurn(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	var amount0, amount1 string
-	func(cur realm) {
-		amount0, amount1 = getMockInstance().Burn(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
-	}(cross(cur))
-	return amount0, amount1
+func mockInstanceMint2(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return pl.Mint(cross(cur), token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func mockInstanceCollect(cur realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
-	var amount0, amount1 string
-	func(cur realm) {
-		amount0, amount1 = getMockInstance().Collect(0, cur, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
-	}(cross(cur))
-	return amount0, amount1
+func mockInstanceBurn(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return pl.Burn(cross(rlm), token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func mockInstanceCollectProtocol(cur realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
-	var amount0, amount1 string
-	func(cur realm) {
-		amount0, amount1 = getMockInstance().CollectProtocol(0, cur, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
-	}(cross(cur))
-	return amount0, amount1
+func mockInstanceCollect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
+	return pl.Collect(cross(rlm), token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
 
-func mockInstanceSwap(cur realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
-	var amount0, amount1 string
-	func(cur realm) {
-		amount0, amount1 = getMockInstance().Swap(0, cur, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
-	}(cross(cur))
-	return amount0, amount1
+func mockInstanceCollectProtocol(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
+	return pl.CollectProtocol(cross(rlm), token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
 }
 
-func mockInstanceHandleWithdrawalFee(cur realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	var fee0, fee1, after0, after1 string
-	func(cur realm) {
-		fee0, fee1, after0, after1 = getMockInstance().HandleWithdrawalFee(0, cur, token0Path, amount0, token1Path, amount1, positionCaller)
-	}(cross(cur))
-	return fee0, fee1, after0, after1
+func mockInstanceSwap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
+	return pl.Swap(cross(rlm), token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
 }
 
-func mockInstanceSetWithdrawalFee(cur realm, fee uint64) {
-	func(cur realm) {
-		getMockInstance().SetWithdrawalFee(0, cur, fee)
-	}(cross(cur))
+func mockInstanceHandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
+	return pl.HandleWithdrawalFee(cross(rlm), token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
-func mockInstanceSetFeeProtocol(cur realm, feeProtocol0 uint8, feeProtocol1 uint8) {
-	func(cur realm) {
-		getMockInstance().SetFeeProtocol(0, cur, feeProtocol0, feeProtocol1)
-	}(cross(cur))
+func mockInstanceSetWithdrawalFee(_ int, rlm realm, fee uint64) {
+	pl.SetWithdrawalFee(cross(rlm), fee)
 }
 
-func mockInstanceSafeTransferFrom(cur realm, pool *pl.Pool, from, to address, tokenPath string, amount *u256.Uint, isToken0 bool) {
-	func(cur realm) {
-		getMockInstance().safeTransferFrom(0, cur, pool, from, to, tokenPath, amount, isToken0)
-	}(cross(cur))
+func mockInstanceSetFeeProtocol(_ int, rlm realm, feeProtocol0 uint8, feeProtocol1 uint8) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pl.SetFeeProtocol(cross(rlm), feeProtocol0, feeProtocol1)
 }

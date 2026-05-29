@@ -13,7 +13,13 @@ func TestInit_initStoreDataUsesFreshFeeAmountTickSpacingPerStore(cur realm, t *t
 	err := initStoreData(0, cur, firstStore)
 	uassert.Nil(t, err)
 
-	firstStore.GetFeeAmountTickSpacing()[100] = 999
+	// not allowed to modify
+	firstStore.SetFeeAmountTickSpacing(0, cur, map[uint32]int32{
+		100:   999,
+		500:   999,
+		3000:  999,
+		10000: 999,
+	})
 
 	secondStore := mock.NewMockPoolStore()
 	err = initStoreData(0, cur, secondStore)

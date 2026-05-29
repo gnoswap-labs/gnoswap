@@ -190,9 +190,9 @@ func TestCreatePool(cur realm, t *testing.T) {
 		},
 	}
 
-	initPoolTest(t)
+	initPoolTest(cur, t)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	mockInstanceSetPoolCreationFee(cur, 0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
@@ -200,10 +200,10 @@ func TestCreatePool(cur realm, t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func() {
-					mockInstanceCreatePool(cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+					mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 				})
 			} else {
-				mockInstanceCreatePool(cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
@@ -237,7 +237,7 @@ func TestGetPool(cur realm, t *testing.T) {
 			name: "Panic - unregistered poolPath",
 			setupFn: func(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstanceSetPoolCreationFee(cur, 0)
+				mockInstanceSetPoolCreationFee(0, cur, 0)
 			},
 			shouldError: true,
 			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
@@ -246,8 +246,8 @@ func TestGetPool(cur realm, t *testing.T) {
 			name: "success - get pool (bar:foo:500)",
 			setupFn: func(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstanceSetPoolCreationFee(cur, 0)
-				mockInstanceCreatePool(cur, barPath, fooPath, fee500, "4295128740")
+				mockInstanceSetPoolCreationFee(0, cur, 0)
+				mockInstanceCreatePool(0, cur, barPath, fooPath, fee500, "4295128740")
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool) {
 				if pool.Token0Path() != barPath {

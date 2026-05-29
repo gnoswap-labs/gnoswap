@@ -97,7 +97,7 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 
 // setTickBitmap sets the tick bitmap for the given word position
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
-	p.TickBitmaps()[wordPos] = tickBitmap.ToString()
+	p.SetTickBitmap(wordPos, tickBitmap.ToString())
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick

@@ -81,10 +81,10 @@ func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uin
 	// Set pool creation fee to 0 for testing
 	e.AsAdmin()
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(cur, 0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	// Create the pool
-	mockInstanceCreatePool(cur, token0, token1, fee, sqrtPriceX96)
+	mockInstanceCreatePool(0, cur, token0, token1, fee, sqrtPriceX96)
 	pool := getMockInstance().mustGetPool(poolKey)
 	e.pools[poolKey] = pool
 
@@ -127,7 +127,7 @@ func (e *PoolTestEnv) AndLiquidityProvided(cur realm, params LiquidityParams) *P
 	// Add liquidity
 	testing.SetRealm(posRealm)
 	amount0, amount1 := mockInstanceMint(
-		cur,
+		0, cur,
 		params.token0,
 		params.token1,
 		params.fee,
@@ -175,7 +175,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint
 	// Execute swap
 	testing.SetRealm(rouRealm)
 	amount0Str, amount1Str := mockInstanceSwap(
-		cur,
+		0, cur,
 		params.token0,
 		params.token1,
 		params.fee,

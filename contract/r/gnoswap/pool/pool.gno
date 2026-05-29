@@ -23,9 +23,9 @@ type Pool struct {
 	feeGrowthGlobal0X128 *u256.Uint       // uint256
 	feeGrowthGlobal1X128 *u256.Uint       // uint256
 	liquidity            *u256.Uint       // total amount of active liquidity in the pool (within current tick range)
-	ticks                *bptree.BPTree    // tick(int32) -> TickInfo
+	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
-	positions            *bptree.BPTree    // maps the key (caller, lower tick, upper tick) to a unique position
+	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
 }
@@ -50,9 +50,9 @@ func (p *Pool) ProtocolFees() TokenPair             { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
-func (p *Pool) Ticks() *bptree.BPTree                { return p.ticks }
+func (p *Pool) Ticks() *bptree.BPTree               { return p.ticks }
 func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
-func (p *Pool) Positions() *bptree.BPTree            { return p.positions }
+func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
 // Pool Setters methods
@@ -114,6 +114,10 @@ func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
 
 func (p *Pool) SetTicks(ticks *bptree.BPTree) {
 	p.ticks = ticks
+}
+
+func (p *Pool) SetTickBitmap(wordPos int16, tickBitmap string) {
+	p.tickBitmaps[wordPos] = tickBitmap
 }
 
 func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]string) {
@@ -208,18 +212,18 @@ func NewPool(
 	tick int32,
 	slot0FeeProtocol uint8,
 ) *Pool {
-	slot0 := newSlot0(sqrtPriceX96, tick, slot0FeeProtocol, true)
+	slot0 := NewSlot0(sqrtPriceX96, tick, slot0FeeProtocol, true)
 
 	return &Pool{
 		token0Path:           token0Path,
 		token1Path:           token1Path,
-		balances:             newTokenPair(),
+		balances:             NewTokenPair(),
 		fee:                  fee,
 		tickSpacing:          tickSpacing,
 		slot0:                slot0,
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         newTokenPair(),
+		protocolFees:         NewTokenPair(),
 		liquidity:            u256.Zero(),
 		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
@@ -232,7 +236,7 @@ type TokenPair struct {
 	token0, token1 int64
 }
 
-func newTokenPair() TokenPair {
+func NewTokenPair() TokenPair {
 	return TokenPair{
 		token0: 0,
 		token1: 0,
@@ -261,7 +265,7 @@ func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
 func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }
 
-func newSlot0(
+func NewSlot0(
 	sqrtPriceX96 *u256.Uint,
 	tick int32,
 	feeProtocol uint8,
@@ -409,4 +413,14 @@ func (p *PositionInfo) SetTokensOwed0(tokensOwed0 int64) {
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 int64) {
 	p.tokensOwed1 = tokensOwed1
+}
+
+func NewPositionInfo() PositionInfo {
+	return PositionInfo{
+		liquidity:                "0",
+		feeGrowthInside0LastX128: "0",
+		feeGrowthInside1LastX128: "0",
+		tokensOwed0:              0,
+		tokensOwed1:              0,
+	}
 }

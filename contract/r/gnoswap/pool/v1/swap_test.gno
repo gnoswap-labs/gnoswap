@@ -348,7 +348,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 	maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
 
 	t.Run("tick crossing can raise active liquidity to uint128 max", func(cur realm, t *testing.T) {
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		state := SwapState{
 			amountSpecifiedRemaining: i256.Zero(),
 			amountCalculated:         i256.Zero(),
@@ -373,7 +373,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 	})
 
 	t.Run("tick crossing panics when active liquidity would exceed uint128 max", func(cur realm, t *testing.T) {
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		state := SwapState{
 			amountSpecifiedRemaining: i256.Zero(),
 			amountCalculated:         i256.Zero(),
@@ -404,7 +404,7 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		AsAdmin().
 		GivenPoolCreated(cur, barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
-	defer initPoolTest(t)
+	defer initPoolTest(cur, t)
 
 	validationTests := []struct {
 		name           string
@@ -450,7 +450,7 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		t.Run(test.name, func(cur realm, t *testing.T) {
 			// When: DrySwap for pre-transaction validation using DSL parameters
 			swapParams := test.swapBuilder()
-			amount0, amount1, success := getMockInstance().DrySwap(
+			amount0, amount1, success := pl.DrySwap(
 				swapParams.token0,
 				swapParams.token1,
 				swapParams.fee,
@@ -539,11 +539,11 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			testing.SetRealm(rouRealm)
 
 			uassert.AbortsContains(t, cur, test.expectedError, func() {
-				mockInstanceSwap(cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
+						return mockSwapCallback(0, cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 					})
 			})
 
@@ -761,11 +761,11 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstanceSwap(cur, barPath, bazPath, test.fee,
+			actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, test.fee,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
 
 			// Then: Verify consistency between prediction and actual result
@@ -797,11 +797,11 @@ func setupWideRangePositionPool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barPath, bazPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	testing.SetRealm(posRealm)
 	// Wide range position (low concentration)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "100000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "100000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -824,11 +824,11 @@ func setupNarrowRangePositionPool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barPath, bazPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	testing.SetRealm(posRealm)
 	// Narrow range position (high concentration)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -60, 60, "100000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -60, 60, "100000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -942,19 +942,19 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 
 			if pattern.expectedHasPanic {
 				uassert.AbortsContains(t, cur, pattern.expectedPanicMessage, func() {
-					mockInstanceSwap(cur, barPath, bazPath, STANDARD_FEE_TIER,
+					mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 						alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 						pattern.swapParams.priceLimit, routerAddr,
 						func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-							return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+							return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 						})
 				})
 			} else {
-				actualAmount0, actualAmount1 := mockInstanceSwap(cur, barPath, bazPath, STANDARD_FEE_TIER,
+				actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 					alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 					pattern.swapParams.priceLimit, routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 					})
 
 				// Then: Verify expected trading result
@@ -1026,11 +1026,11 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstanceSwap(cur, barPath, bazPath, STANDARD_FEE_TIER,
+			actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
 
 			// Then: Verify stable handling in extreme conditions
@@ -1060,11 +1060,11 @@ func TestSwap_FeeTierOptimization(cur realm, t *testing.T) {
 
 		testing.SetRealm(rouRealm)
 
-		actualAmount0, actualAmount1 := mockInstanceSwap(cur, barPath, bazPath, ULTRA_LOW_FEE_TIER,
+		actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
 			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 			})
 
 		// Then: Verify fee efficiency
@@ -1127,15 +1127,15 @@ func setupScatteredLiquidityPool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER,
+	mockInstanceCreatePool(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	testing.SetRealm(posRealm)
 	// 4 dispersed liquidity positions
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -1158,13 +1158,13 @@ func setupExtremePriceRangePool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER,
+	mockInstanceCreatePool(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 		gnsmath.TickMathGetSqrtRatioAtTick(100000).ToString())
 
 	testing.SetRealm(posRealm)
 	// Extreme range liquidity
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
-	mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -1309,12 +1309,12 @@ func setupUltraLowFeePool(cur realm, t *testing.T) *pl.Pool {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 	baz.Approve(cross(cur), poolAddr, maxApprove)
-	mockInstanceCreatePool(cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
-	mockInstanceMint(cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
-	mockInstanceMint(cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	mockInstanceMint(0, cur, barPath, bazPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
 
 	// Send tokens to router
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -1343,10 +1343,10 @@ func setupUltraLowFeePool(cur realm, t *testing.T) *pl.Pool {
 // - Result: amount0=0, amount1=2
 func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	// given: Setup pool
-	initPoolTest(t)
+	initPoolTest(cur, t)
 
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(cur, 0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	token0Path := barPath
 	token1Path := fooPath
@@ -1357,7 +1357,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	targetTick := int32(506)
 	targetPrice := gnsmath.TickMathGetSqrtRatioAtTick(targetTick)
 
-	mockInstanceCreatePool(cur, token0Path, token1Path, fee, targetPrice.ToString())
+	mockInstanceCreatePool(0, cur, token0Path, token1Path, fee, targetPrice.ToString())
 
 	// Approve tokens for liquidity provision
 	testing.SetRealm(adminRealm)
@@ -1373,7 +1373,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 
 	testing.SetRealm(posRealm)
 	// Try adding liquidity once with a value that gets us close to 348726074781113
-	mockInstanceMint(cur, token0Path, token1Path, fee, tickLower, tickUpper, "1000000000000", adminAddr)
+	mockInstanceMint(0, cur, token0Path, token1Path, fee, tickLower, tickUpper, "1000000000000", adminAddr)
 
 	// Verify pool state
 	pool := getMockInstance().mustGetPoolBy(token0Path, token1Path, fee)
@@ -1382,7 +1382,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	// when: Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		t.Logf("Callback: amount0=%d, amount1=%d", amount0Delta, amount1Delta)
-		return mockSwapCallback(cur, token0Path, token1Path, amount0Delta, amount1Delta)
+		return mockSwapCallback(0, cur, token0Path, token1Path, amount0Delta, amount1Delta)
 	}
 
 	// Swap parameters matching the failing case
@@ -1417,7 +1417,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 
 	// then: Actual Swap should complete successfully even with zero amount0
 	amount0Str, amount1Str := mockInstanceSwap(
-		cur,
+		0, cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -1459,7 +1459,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 			name:        "expected panics by reentrant mutation entrypoints in callback",
 			description: "Reentrancy attacks via callback should be blocked by pool lock",
 			setup: func(cur realm, t *testing.T) {
-				initPoolTest(t)
+				initPoolTest(cur, t)
 				InitialisePoolTest(cur, t)
 				MintPositionAll(cur, t, adminAddr)
 
@@ -1552,12 +1552,12 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 
 					// Step 6: Complete original swap payment
 					testing.SetRealm(rouRealm)
-					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 				}
 
 				// Step 1-3, 7: Execute swap with malicious callback
 				amount0, amount1 := mockInstanceSwap(
-					cur,
+					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
@@ -1604,13 +1604,13 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 				// Step 1: Execute first swap
 				testing.SetRealm(rouRealm)
 				mockInstanceSwap(
-					cur,
+					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 
@@ -1620,13 +1620,13 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 
 				testing.SetRealm(rouRealm)
 				amount0, amount1 := mockInstanceSwap(
-					cur,
+					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 
@@ -1670,12 +1670,12 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					uassert.False(t, getMockInstance().store.GetUnlocked(), "Pool should be locked during callback")
 
 					// Step 6: Complete swap payment
-					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 				}
 
 				// Step 1-4, 7: Execute swap
 				amount0, amount1 := mockInstanceSwap(
-					cur,
+					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
@@ -1715,13 +1715,13 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 			},
 			action: func(cur realm, t *testing.T) {
 				mockInstanceSwap(
-					cur,
+					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 			},
@@ -1732,7 +1732,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceMint(cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+				mockInstanceMint(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
 			},
 		},
 		{
@@ -1741,7 +1741,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceBurn(cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+				mockInstanceBurn(0, cur, barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
 			},
 		},
 		{
@@ -1750,7 +1750,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceCollect(cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
+				mockInstanceCollect(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
 			},
 		},
 		{
@@ -1759,7 +1759,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceCollectProtocol(cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
+				mockInstanceCollectProtocol(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
 			},
 		},
 		{
@@ -1768,7 +1768,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetFeeProtocol(cur, 4, 4)
+				mockInstanceSetFeeProtocol(0, cur, 4, 4)
 			},
 		},
 		{
@@ -1777,7 +1777,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(rouRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceIncreaseObservationCardinalityNext(cur, barPath, bazPath, STANDARD_FEE_TIER, 3)
+				mockInstanceIncreaseObservationCardinalityNext(0, cur, barPath, bazPath, STANDARD_FEE_TIER, 3)
 			},
 		},
 		{
@@ -1786,7 +1786,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceCreatePool(cur, barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+				mockInstanceCreatePool(0, cur, barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 			},
 		},
 		{
@@ -1795,7 +1795,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetPoolCreationFee(cur, 1)
+				mockInstanceSetPoolCreationFee(0, cur, 1)
 			},
 		},
 		{
@@ -1804,7 +1804,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetWithdrawalFee(cur, 1)
+				mockInstanceSetWithdrawalFee(0, cur, 1)
 			},
 		},
 		{
@@ -1813,7 +1813,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(stakerRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetTickCrossHook(cur, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+				mockInstanceSetTickCrossHook(0, cur, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
 			},
 		},
 		{
@@ -1822,7 +1822,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(stakerRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetSwapStartHook(cur, func(cur realm, poolPath string, timestamp int64) {})
+				mockInstanceSetSwapStartHook(0, cur, func(cur realm, poolPath string, timestamp int64) {})
 			},
 		},
 		{
@@ -1831,7 +1831,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(stakerRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceSetSwapEndHook(cur, func(cur realm, poolPath string) error { return nil })
+				mockInstanceSetSwapEndHook(0, cur, func(cur realm, poolPath string) error { return nil })
 			},
 		},
 		{
@@ -1840,14 +1840,14 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceHandleWithdrawalFee(cur, barPath, "1", bazPath, "1", adminAddr)
+				mockInstanceHandleWithdrawalFee(0, cur, barPath, "1", bazPath, "1", adminAddr)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initPoolTest(t)
+			initPoolTest(cur, t)
 			InitialisePoolTest(cur, t)
 			MintPositionAll(cur, t, adminAddr)
 
@@ -1979,7 +1979,7 @@ func TestSwapCallback_DeltaConvention(cur realm, t *testing.T) {
 			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 				capturedAmount0Delta = amount0Delta
 				capturedAmount1Delta = amount1Delta
-				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 			}
 
 			// Determine price limit based on direction
@@ -1993,7 +1993,7 @@ func TestSwapCallback_DeltaConvention(cur realm, t *testing.T) {
 			// Execute swap
 			testing.SetRealm(rouRealm)
 			amount0, amount1 := mockInstanceSwap(
-				cur,
+				0, cur,
 				barPath, bazPath, STANDARD_FEE_TIER,
 				routerAddr, tt.zeroForOne, tt.amountSpecified,
 				priceLimit, routerAddr, callbackCapturingDeltas,
@@ -2066,13 +2066,13 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		if amount1Delta > 0 {
 			token1Transferred = amount1Delta
 		}
-		return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+		return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 	}
 
 	// Test zeroForOne: should transfer token0 only
 	testing.SetRealm(rouRealm)
 	mockInstanceSwap(
-		cur,
+		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000",
 		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
@@ -2087,7 +2087,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 	TokenFaucet(cur, t, bazPath, routerAddr)
 	testing.SetRealm(rouRealm)
 	mockInstanceSwap(
-		cur,
+		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, false, "10000",
 		gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
@@ -2169,7 +2169,7 @@ func TestSwap_FlashSwapPattern(cur realm, t *testing.T) {
 				recipientBalanceDuringCallback = common.BalanceOf(outputTokenPath, routerAddr)
 
 				// Complete the swap by paying input tokens
-				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 			}
 
 			// Get initial balance
@@ -2186,7 +2186,7 @@ func TestSwap_FlashSwapPattern(cur realm, t *testing.T) {
 			// Execute swap
 			testing.SetRealm(rouRealm)
 			mockInstanceSwap(
-				cur,
+				0, cur,
 				barPath, bazPath, STANDARD_FEE_TIER,
 				routerAddr, tt.zeroForOne, "10000",
 				priceLimit, routerAddr, flashSwapCallback,
@@ -2243,13 +2243,13 @@ func TestSwap_FlashSwapArbitragePattern(cur realm, t *testing.T) {
 		}
 
 		// Pay back input tokens
-		return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+		return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
 	}
 
 	// Execute flash swap
 	testing.SetRealm(rouRealm)
 	amount0, amount1 := mockInstanceSwap(
-		cur,
+		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000", // zeroForOne: swap token0 for token1
 		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),

@@ -216,7 +216,7 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initPoolTest(t)
+			initPoolTest(cur, t)
 			pool := createTestPool()
 			currentTime := time.Now().Unix()
 			observationState := pool.ObservationState()
@@ -471,13 +471,13 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 	os.SetCardinality(2)
 	os.SetCardinalityNext(2)
 	os.SetIndex(1)
-	os.Observations()[1] = pl.NewObservation(
+	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
 		"0",
 		"0",
 		true,
-	)
+	))
 	return os
 }
 
@@ -491,13 +491,13 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 	os.SetCardinality(2)
 	os.SetCardinalityNext(2)
 	os.SetIndex(1)
-	os.Observations()[1] = pl.NewObservation(
+	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
 		"0",
 		secondsPerLiquidityDelta.ToString(),
 		true,
-	)
+	))
 	return os
 }
 

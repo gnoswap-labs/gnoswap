@@ -290,8 +290,8 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initSwapPaid(t)
-			defer initSwapPaid(t)
+			initSwapPaid(cur, t)
+			defer initSwapPaid(cur, t)
 
 			initSwapPaidCreatePool(cur, t, tt.poolInfo.token0Path, tt.poolInfo.token1Path, tt.poolInfo.feeTier)
 			for _, pos := range tt.positionInfo {
@@ -317,7 +317,7 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 				resultAmount0, resultAmount1 := mockInstanceSwap(
-					cur,
+					0, cur,
 					tt.swapInfo.token0Path,
 					tt.swapInfo.token1Path,
 					tt.poolInfo.feeTier,
@@ -391,17 +391,17 @@ func swapPaidSwapCallback(
 }
 
 // test helpers
-func initSwapPaid(t *testing.T) {
-	initPoolTest(t)
+func initSwapPaid(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
 }
 
 func initSwapPaidCreatePool(cur realm, t *testing.T, token0Path, token1Path string, feeTier uint32) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	mockInstanceSetPoolCreationFee(cur, 0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	if !getMockInstance().ExistsPoolPath(GetPoolPath(token0Path, token1Path, feeTier)) {
-		mockInstanceCreatePool(cur, token0Path, token1Path, feeTier, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+		mockInstanceCreatePool(0, cur, token0Path, token1Path, feeTier, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	}
 }
 
@@ -442,7 +442,7 @@ func initSwapPaidSetFeeMintPosition(
 
 	testing.SetRealm(testing.NewUserRealm(positionAddr))
 	mockInstanceMint(
-		cur,
+		0, cur,
 		token0Path,
 		token1Path,
 		feeTier,

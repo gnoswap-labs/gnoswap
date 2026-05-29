@@ -1589,7 +1589,7 @@ func TestIterateTicksBoundary(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initPoolTest(t)
+			initPoolTest(cur, t)
 			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
 			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
 			pool := newPool(poolParams)
