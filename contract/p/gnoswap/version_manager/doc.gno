@@ -6,18 +6,19 @@
 // ## Overview
 //
 // Version Manager enables seamless upgrades by allowing multiple versioned implementations
-// (v1, v2, v3) to coexist and share a unified storage layer. The system manages permissions
-// dynamically, granting write access only to the active implementation while keeping
-// previous versions available in read-only mode for backward compatibility.
+// (v1, v2, v3) to coexist and share a unified storage layer. The domain
+// (proxy) realm owns that storage; the manager records version initializers and
+// swaps the active implementation reference without granting implementation
+// realms direct write permission.
 //
 // Key components of this package include:
 //
 //  1. **VersionManager Interface**: Defines the contract for managing multiple versioned
 //     implementations of a domain.
 //  2. **versionManager Implementation**: Concrete implementation that manages version
-//     registration, permission control, and implementation switching.
-//  3. **Permission-Based Access Control**: Dynamically manages read/write permissions
-//     for each version through the shared KVStore.
+//     registration and active implementation switching.
+//  3. **Realm-Threaded Validation**: Validates live realm tokens and restricts
+//     registration to packages under the configured domain path.
 //  4. **Domain-Scoped Security**: Ensures only authorized packages within the domain
 //     path can register implementations.
 //
@@ -25,14 +26,14 @@
 //
 //   - **Zero-Downtime Upgrades**: Switch implementations at runtime without service
 //     interruption or data migration.
-//   - **Unified Storage**: All versions share a single KVStore with permission-based
-//     access control, eliminating migration overhead.
+//   - **Unified Storage**: All versions share a single KVStore owned by the
+//     domain (proxy) realm, eliminating migration overhead.
 //   - **Hot-Swapping**: Instant version switching through dynamic strategy replacement
-//     with automatic permission management.
+//     with explicit realm validation.
 //   - **Domain-Scoped Security**: Only packages under the authorized domain path can
 //     register implementations, preventing unauthorized access.
-//   - **Backward Compatibility**: Previous versions remain accessible in read-only mode
-//     for gradual migration and rollback support.
+//   - **Backward Compatibility**: Previous versions remain registered for
+//     gradual migration and rollback support.
 //   - **Strategy Pattern**: Enables runtime algorithm swapping without code changes.
 //
 // ## Architecture Pattern
@@ -48,11 +49,11 @@
 //
 //  1. **Initialization**: Create a version manager for the domain using NewVersionManager.
 //  2. **Version Registration**: Each version (v1, v2, v3) calls RegisterInitializer during
-//     their init() function to register their implementation.
-//  3. **Active Implementation**: The first registered version becomes the active implementation
-//     with write access; subsequent versions are granted read-only access.
-//  4. **Version Switching**: Use ChangeImplementation to hot-swap to a different version,
-//     which automatically updates permissions.
+//     its init(cur realm) function to register its implementation.
+//  3. **Active Implementation**: The first registered version becomes the active implementation;
+//     subsequent versions are retained for later switching.
+//  4. **Version Switching**: Use ChangeImplementation to hot-swap to a different version
+//     while storage ownership stays with the domain KVStore.
 //
 // ## Example Usage
 //
@@ -84,13 +85,13 @@
 //
 //	var manager version_manager.VersionManager
 //
-//	func init() {
-//	    kvStore := store.NewKVStore("protocol_fee")
+//	func init(cur realm) {
+//	    kvStore := store.NewKVStore(cur.Address())
 //
 //	    manager = version_manager.NewVersionManager(
-//	        "gno.land/r/gnoswap/protocol_fee",
+//	        cur.PkgPath(),
 //	        kvStore,
-//	        func(kv store.KVStore) any {
+//	        func(_ int, rlm realm, kv store.KVStore) any {
 //	            return NewProtocolFeeStore(kv)
 //	        },
 //	    )
@@ -116,10 +117,9 @@
 //
 // }
 //
-//	func init() {
-//	    // Register this version during package initialization
-//	    manager := protocol_fee.GetManager()
-//	    manager.RegisterInitializer(func(_ int, rlm realm, store any) any {
+//	func init(cur realm) {
+//	    // Register this version during package initialization.
+//	    protocol_fee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store any) any {
 //	        return &protocolFeeV1{store: store}
 //	    })
 //	}
@@ -150,10 +150,9 @@
 //
 // }
 //
-//	func init() {
-//	    // Register v2 - will be read-only until explicitly activated
-//	    manager := protocol_fee.GetManager()
-//	    manager.RegisterInitializer(func(_ int, rlm realm, store any) any {
+//	func init(cur realm) {
+//	    // Register v2 - inactive until explicitly activated.
+//	    protocol_fee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store any) any {
 //	        return &protocolFeeV2{store: store}
 //	    })
 //	}
@@ -191,18 +190,9 @@
 // ```gno
 // // governance or admin function
 //
-//	func UpgradeToV2() error {
-//	    manager := protocol_fee.GetManager()
-//
-//	    // Hot-swap to v2 - zero downtime
-//	    err := manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v2")
-//	    if err != nil {
-//	        return err
-//	    }
-//
-//	    // v2 now has write access
-//	    // v1 automatically becomes read-only
-//	    return nil
+//	func UpgradeToV2(cur realm) {
+//	    // Hot-swap to v2 - zero downtime.
+//	    protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v2")
 //	}
 //
 // ```
@@ -213,43 +203,40 @@
 //
 //  1. Domain package initializes version manager with KVStore
 //     ↓
-//  2. v1 package calls RegisterInitializer during init()
-//     → Becomes active implementation (write access)
+//  2. v1 package calls the domain registration wrapper during init(cur realm)
+//     → Becomes the active implementation
 //     ↓
-//  3. v2 package calls RegisterInitializer during init()
-//     → Registered but read-only
+//  3. v2 package calls the domain registration wrapper during init(cur realm)
+//     → Registered for later activation
 //     ↓
-//  4. v3 package calls RegisterInitializer during init()
-//     → Registered but read-only
+//  4. v3 package calls the domain registration wrapper during init(cur realm)
+//     → Registered for later activation
 //
 // ## Version Switching Flow
 //
 // When switching versions, the following steps occur:
 //
-//  1. Admin calls ChangeImplementation("path/to/v2")
+//  1. Admin/governance calls the domain upgrade wrapper
 //     ↓
-//  2. Version Manager retrieves v2's initializer
+//  2. The domain wrapper enforces authorization and calls ChangeImplementation(0, cur, ...)
 //     ↓
-//  3. Executes v2 initializer with shared KVStore
+//  3. Version Manager validates the live realm token and retrieves v2's initializer
 //     ↓
-//  4. Updates permissions:
-//     - v1: Write → ReadOnly
-//     - v2: ReadOnly → Write
-//     - v3: ReadOnly (unchanged)
+//  4. Executes v2 initializer with the shared KVStore
 //     ↓
-//  5. v2 is now active with write access
+//  5. Updates currentPackagePath and currentImplementation
 //
-// ## Permission Model
+// ## Storage Access Model
 //
-// The version manager enforces a strict permission model:
+// The version manager keeps storage ownership with the domain (proxy) realm:
 //
-//   - **Write Access**: Only the active implementation can modify storage. Granted
-//     automatically to the first registered version or during ChangeImplementation.
-//   - **Read-Only Access**: Inactive versions can read storage but cannot modify it.
-//     All non-active versions are automatically downgraded to read-only.
-//   - **Automatic Transition**: Permission changes are handled automatically by the
-//     manager during version switching.
-//   - **Domain Isolation**: Permissions are scoped to the domain's KVStore.
+//   - **Domain Ownership**: The domain realm owns the KVStore and drives writes.
+//   - **No Direct Grants**: Implementation realms do not receive direct storage
+//     permissions from version_manager.
+//   - **Explicit Realm Threading**: Registration and switching calls validate the
+//     live realm token with `rlm.IsCurrent()` and identify the caller with
+//     `rlm.Previous()`.
+//   - **Domain Isolation**: Registration is scoped to packages under the domain path.
 //
 // ## Security
 //
@@ -268,12 +255,11 @@
 //   - Unauthorized caller attempting to register (not in domain path)
 //   - Duplicate registration of the same package path
 //   - Attempting to switch to an unregistered version
-//   - Permission update failures during version switching
 //   - Invalid initializer function type
 //
 // ## Best Practices
 //
-//  1. **Version Registration**: All versions should register during init() to ensure
+//  1. **Version Registration**: All versions should register during init(cur realm) to ensure
 //     they're available before any runtime operations.
 //  2. **Interface Compliance**: Ensure all versions implement the same domain interface
 //     for seamless switching.
@@ -292,34 +278,34 @@
 //
 // Upgrade DeFi protocol logic without disrupting active users:
 //
-//	manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v2")
+//	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v2")
 //
 // ### A/B Testing
 //
 // Test new implementations before full rollout:
 //
 //	// Switch to experimental version
-//	manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/experimental")
+//	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/experimental")
 //
 //	// Rollback if issues detected
-//	manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
+//	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v1")
 //
 // ### Emergency Response
 //
 // Quickly switch to a patched version during security incidents:
 //
-//	manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
+//	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 //
 // ## Limitations and Considerations
 //
 //   - **Type Safety**: Requires runtime type assertion to domain interface. No compile-time
 //     type checking for implementation compatibility.
-//   - **Atomic Switching**: Permission updates during ChangeImplementation are not
+//   - **Atomic Switching**: Initializer side effects during ChangeImplementation are not
 //     transactionally rolled back on partial failure. Manual recovery may be required.
 //   - **Storage Schema**: Requires careful schema design for cross-version compatibility.
 //     Breaking schema changes require migration or careful version ordering.
 //   - **Registration Order**: The first registered version automatically becomes the
-//     active implementation with write access. Plan your deployment order carefully.
+//     active implementation. Plan your deployment order carefully.
 //   - **No Unregistration**: Once registered, a version cannot be unregistered. Plan
 //     version lifecycles accordingly.
 //

@@ -41,11 +41,11 @@ import "gno.land/p/gnoswap/store"
 
 var manager version_manager.VersionManager
 
-func init() {
-    kvStore := store.NewKVStore("protocol_fee")
+func init(cur realm) {
+    kvStore := store.NewKVStore(cur.Address())
 
     manager = version_manager.NewVersionManager(
-        "gno.land/r/gnoswap/protocol_fee",
+        cur.PkgPath(),
         kvStore,
         // initializeDomainStoreFn carries the v2 interrealm marker (`_ int, rlm realm`):
         // the leading 0 surfaces realm-threading at the call site.
@@ -90,11 +90,11 @@ type protocolFeeV1 struct {
     store any
 }
 
-func init() {
+func init(cur realm) {
     // Register this version during package initialization.
-    // `cross` invokes the domain's crossing entry point, which threads the
+    // `cross(cur)` invokes the domain's crossing entry point, which threads the
     // live realm token into the version manager.
-    protocol_fee.RegisterInitializer(cross, func(_ int, rlm realm, store any) any {
+    protocol_fee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store any) any {
         return &protocolFeeV1{store: store}
     })
 }
@@ -116,9 +116,9 @@ type protocolFeeV2 struct {
     store any
 }
 
-func init() {
-    // Register v2 — read-only until explicitly activated.
-    protocol_fee.RegisterInitializer(cross, func(_ int, rlm realm, store any) any {
+func init(cur realm) {
+    // Register v2 — inactive until explicitly activated.
+    protocol_fee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store any) any {
         return &protocolFeeV2{store: store}
     })
 }
@@ -152,9 +152,9 @@ func UseFee() {
 ```go
 // governance or admin entry point
 func UpgradeToV2(cur realm) {
-    // Hot-swap to v2 — zero downtime. `cross` enters UpgradeImpl's crossing
+    // Hot-swap to v2 — zero downtime. `cross(cur)` enters UpgradeImpl's crossing
     // frame; UpgradeImpl threads the realm token into the version manager.
-    protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v2")
+    protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v2")
 }
 ```
 
@@ -165,14 +165,14 @@ func UpgradeToV2(cur realm) {
 ```
 1. Domain package initializes version manager with KVStore
    ↓
-2. v1 package calls RegisterInitializer (via the domain's crossing wrapper) during init()
+2. v1 package calls RegisterInitializer (via the domain's crossing wrapper) during `init(cur realm)`
    → Manager validates the realm token (rlm.IsCurrent()) and caller domain path
    → Becomes active implementation
    ↓
-3. v2 package calls RegisterInitializer during init()
-   → Registered (read-only until activated)
+3. v2 package calls RegisterInitializer during `init(cur realm)`
+   → Registered for later activation
    ↓
-4. v3 package calls RegisterInitializer during init()
+4. v3 package calls RegisterInitializer during `init(cur realm)`
    → Registered
 ```
 
@@ -202,7 +202,7 @@ func UpgradeToV2(cur realm) {
 
 ### Best Practices
 
-1. **Version Registration**: All versions should register during `init()`
+1. **Version Registration**: All versions should register during `init(cur realm)`
 2. **Interface Compliance**: Ensure all versions implement the same domain interface
 3. **Storage Compatibility**: Design storage schema to be forward/backward compatible
 4. **Testing**: Test version switching thoroughly before production use
@@ -226,7 +226,7 @@ Upgrade DeFi protocol logic without disrupting active users:
 
 ```go
 // Upgrade fee calculation algorithm
-protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v2")
+protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v2")
 ```
 
 ### A/B Testing
@@ -235,10 +235,10 @@ Test new implementations before full rollout:
 
 ```go
 // Switch to experimental version
-protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/experimental")
+protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/experimental")
 
 // Rollback if issues detected
-protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v1")
+protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v1")
 ```
 
 ### Emergency Response
@@ -247,7 +247,7 @@ Quickly switch to a patched version during security incidents:
 
 ```go
 // Deploy fixed version and immediately activate
-protocol_fee.UpgradeImpl(cross, "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
+protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 ```
 
 ## Implementation Notes
