@@ -80,11 +80,16 @@ func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uin
 
 	// Set pool creation fee to 0 for testing
 	e.AsAdmin()
-	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(0, cur, 0)
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+		mockInstanceSetPoolCreationFee(0, cur, 0)
+	}(cross(cur))
 
 	// Create the pool
-	mockInstanceCreatePool(0, cur, token0, token1, fee, sqrtPriceX96)
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+		mockInstanceCreatePool(0, cur, token0, token1, fee, sqrtPriceX96)
+	}(cross(cur))
 	pool := getMockInstance().mustGetPool(poolKey)
 	e.pools[poolKey] = pool
 
