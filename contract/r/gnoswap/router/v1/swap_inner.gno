@@ -54,6 +54,7 @@ func init() {
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func (r *routerV1) swapInner(
+	_ int,
 	rlm realm,
 	amountSpecified int64,
 	recipient address,
@@ -144,6 +145,7 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	return e.router.swapInner(
+		0,
 		e.rlm,
 		p.amountSpecified,
 		recipient,             // if single swap => user will receive

@@ -221,7 +221,7 @@ func TestSwapInner(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			swapInnerFn := func(cur realm) (int64, int64) {
-				return router.swapInner(cur, 
+				return router.swapInner(0, cur,
 					tt.amountSpecified,
 					tt.recipient,
 					tt.sqrtPriceLimitX96,

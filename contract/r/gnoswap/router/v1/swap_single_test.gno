@@ -70,7 +70,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 			}
 			router := mockRouter()
 			singleSwapFn := func(cur realm) (int64, int64) {
-				return router.singleSwap(cur, &tt.params)
+				return router.singleSwap(0, cur, &tt.params)
 			}
 
 			user1Realm := testing.NewUserRealm(user1Addr)
@@ -217,17 +217,17 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 				switch tt.errType {
 				case "panic":
 					uassert.PanicsWithMessage(t, cur, tt.errorMessage, func() {
-						router.singleSwap(cur, &tt.params)
+						router.singleSwap(0, cur, &tt.params)
 					})
 				case "abort":
 					uassert.AbortsWithMessage(t, cur, tt.errorMessage, func() {
-						router.singleSwap(cur, &tt.params)
+						router.singleSwap(0, cur, &tt.params)
 					})
 				default:
 					t.Errorf("unexpected error type: %s", tt.errType)
 				}
 			} else {
-				amountIn, amountOut := router.singleSwap(cur, &tt.params)
+				amountIn, amountOut := router.singleSwap(0, cur, &tt.params)
 
 				if amountIn == 0 {
 					t.Error("Expected non-zero input amount")

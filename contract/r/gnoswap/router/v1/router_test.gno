@@ -135,7 +135,7 @@ func TestFinalizeSwap(cur realm, t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsContains(t, cur, tt.errorMessage, func() {
-					router.finalizeSwap(cur, 
+					router.finalizeSwap(0, cur,
 						tt.inputToken,
 						tt.outputToken,
 						tt.resultAmountIn,
@@ -148,7 +148,7 @@ func TestFinalizeSwap(cur realm, t *testing.T) {
 					)
 				})
 			} else {
-				amountIn, amountOut := router.finalizeSwap(cur, 
+				amountIn, amountOut := router.finalizeSwap(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.resultAmountIn,
@@ -622,7 +622,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			router.handleSwapFee(cur, tt.outputToken, safeParseInt64(drySwapAmountOut))
+			router.handleSwapFee(0, cur, tt.outputToken, safeParseInt64(drySwapAmountOut))
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -805,7 +805,7 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			handleMultiSwapFn := func(cur realm) (int64, int64) {
-				return router.handleMultiSwap(cur, 
+				return router.handleMultiSwap(0, cur,
 					tt.swapType,
 					tt.route,
 					tt.numHops,

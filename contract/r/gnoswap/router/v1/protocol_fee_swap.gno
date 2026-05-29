@@ -72,13 +72,14 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func (r *routerV1) handleSwapFee(
+	_ int,
 	rlm realm,
 	outputToken string,
 	amount int64,
 ) int64 {
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
-		r.addToProtocolFee(rlm)
+		r.addToProtocolFee(0, rlm)
 		return amount
 	}
 
@@ -86,7 +87,7 @@ func (r *routerV1) handleSwapFee(
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
-	r.addToProtocolFee(rlm)
+	r.addToProtocolFee(0, rlm)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -120,7 +121,7 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (r *routerV1) addToProtocolFee(rlm realm) {
+func (r *routerV1) addToProtocolFee(_ int, rlm realm) {
 	pendingProtocolFees := r.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return

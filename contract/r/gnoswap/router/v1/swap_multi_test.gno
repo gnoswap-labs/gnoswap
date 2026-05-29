@@ -117,7 +117,7 @@ func TestMultiSwap(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			firstAmountIn, lastAmountOut := router.multiSwap(cur, 
+			firstAmountIn, lastAmountOut := router.multiSwap(0, cur,
 				tt.params,
 				tt.numPools,
 				tt.swapPath,

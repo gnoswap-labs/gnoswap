@@ -32,7 +32,7 @@ var (
 // singleSwap executes a swap within a single pool using the provided parameters.
 // It processes a token swap within two assets using a specific fee tier and
 // automatically sets the recipient to the caller's address.
-func (r *routerV1) singleSwap(rlm realm, p *SingleSwapParams) (int64, int64) {
+func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int64) {
 	return r.executeSwap(&RealSwapExecutor{rlm: rlm, router: r}, p)
 }
 

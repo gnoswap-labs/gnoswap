@@ -56,7 +56,7 @@ func TestHandleSwapFee(cur realm, t *testing.T) {
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				result := router.handleSwapFee(cur, barPath, tt.amount)
+				result := router.handleSwapFee(0, cur, barPath, tt.amount)
 
 				if result != tt.expectedAmount {
 					t.Errorf("handleSwapFee() = %d, want %d", result, tt.expectedAmount)
@@ -145,7 +145,7 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	router.store.SetPendingProtocolFees(originalPendingProtocolFees)
 
-	router.addToProtocolFee(cur)
+	router.addToProtocolFee(0, cur)
 
 	pendingProtocolFees := router.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)

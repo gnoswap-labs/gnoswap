@@ -842,11 +842,11 @@ func TestHandleMultiSwap_SwapTypes(cur realm, t *testing.T) {
 			if tt.expectPanic && tt.needsRouter {
 				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					router := mockRouter()
-					router.handleMultiSwap(cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
+					router.handleMultiSwap(0, cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 				})
 			} else {
 				router := mockRouter()
-				router.handleMultiSwap(cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
+				router.handleMultiSwap(0, cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 			}
 		})
 	}

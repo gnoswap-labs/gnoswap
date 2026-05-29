@@ -62,13 +62,13 @@ func (r *routerV1) SwapCallback(
 
 	// Transfer tokens from router to pool
 	// The router should already have the tokens from the user
-	r.transferToPool(rlm, tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
+	r.transferToPool(0, rlm, tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
 
 	return nil
 }
 
 // transferToPool transfers tokens from router to pool
-func (r *routerV1) transferToPool(rlm realm, token string, amount *u256.Uint, payer address) {
+func (r *routerV1) transferToPool(_ int, rlm realm, token string, amount *u256.Uint, payer address) {
 	balance := common.BalanceOf(token, payer)
 
 	if u256.NewUintFromInt64(balance).Lt(amount) {
