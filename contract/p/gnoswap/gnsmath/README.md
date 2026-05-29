@@ -4,13 +4,15 @@ Core mathematical operations for GnoSwap's concentrated liquidity AMM.
 
 ## Overview
 
-This package provides the fundamental calculations for concentrated liquidity, including sqrt price math, swap calculations, and bit manipulation utilities. All operations use Q96 and Q160 fixed-point arithmetic for precision.
+This package provides the fundamental calculations for concentrated liquidity, including tick conversion, liquidity math calculations, sqrt price math, swap calculations, and bit manipulation utilities. All operations use Q96 and Q160 fixed-point arithmetic for precision.
 
 The implementation follows Uniswap V3's mathematical model, ensuring compatibility and correctness for cross-chain liquidity operations.
 
 ## Features
 
 - **Bit Math**: MSB/LSB calculations for tick bitmap operations
+- **Tick Math**: Tick and Q64.96 sqrt-price conversions
+- **Liquidity Math** (`liquidity_math.gno`): Liquidity and token amount conversions for price ranges
 - **Sqrt Price Math**: Token amount conversions using Q64.96 format
 - **Swap Math**: Single-step swap calculations with fee handling
 - **Overflow Protection**: Built-in int256 overflow detection
@@ -71,6 +73,20 @@ println(lsb) // Output: 8
 
 - `BitMathMostSignificantBit(x *u256.Uint) uint8` - Find MSB position (0-255)
 - `BitMathLeastSignificantBit(x *u256.Uint) uint8` - Find LSB position (0-255)
+
+### Tick Math
+
+- `TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint` - Convert tick to Q64.96 sqrt price
+- `TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32` - Convert Q64.96 sqrt price to tick
+
+### Liquidity Math (`liquidity_math.gno`)
+
+- `GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) *u256.Uint`
+  - Calculate max liquidity from token amounts and price range
+- `GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint)`
+  - Calculate token amounts represented by liquidity and price range
+- `LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint`
+  - Apply signed liquidity delta with overflow/underflow protection
 
 ### Sqrt Price Math
 
