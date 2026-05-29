@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"chain/runtime"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -43,7 +44,7 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
-	access.AssertIsUser(prevRealm)
+	access.AssertIsUser(0, prevRealm)
 
 	assertIsPoolExists(s, targetPoolPath)
 

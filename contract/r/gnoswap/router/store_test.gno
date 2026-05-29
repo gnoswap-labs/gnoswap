@@ -11,7 +11,7 @@ import (
 func TestStoreInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "kvStore should be initialized",
@@ -31,7 +31,7 @@ func TestStoreInitialization(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
-			tt.verifyFn(t)
+			tt.verifyFn(cur, t)
 		})
 	}
 }

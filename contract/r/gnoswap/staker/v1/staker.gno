@@ -277,7 +277,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(currentTime, pools)
-	s.updatePoolTier(0, cur, poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)

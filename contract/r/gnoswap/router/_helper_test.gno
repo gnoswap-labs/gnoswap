@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IRouterStore) IRouter {
-	return func(_ IRouterStore) IRouter {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IRouterStore) IRouter {
+	return func(_ int, rlm realm, _ IRouterStore) IRouter {
 		return newMockRouter(version)
 	}
 }
