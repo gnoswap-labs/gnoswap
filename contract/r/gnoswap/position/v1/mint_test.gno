@@ -316,7 +316,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 				WithMins("0", "0").
 				Caller(alice, alice).
 				Params(),
-			expectedMsg: "[GNOSWAP-COMMON-005] identical ticks || sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
+			expectedMsg: "liquidity_math: identical ticks || sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
 		},
 		{
 			name: "abort: tick lower below MIN_TICK bound",
@@ -327,7 +327,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 				WithMins("0", "0").
 				Caller(alice, alice).
 				Params(),
-			expectedMsg: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (smaller than -887272), tick: -887273",
+			expectedMsg: "tick_math: value out of range || tick is out of range (smaller than -887272), tick: -887273",
 		},
 	}
 

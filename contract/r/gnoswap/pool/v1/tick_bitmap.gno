@@ -1,7 +1,7 @@
 package v1
 
 import (
-	plp "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
@@ -142,9 +142,9 @@ func getNextTick(lte, initialized bool, compress int32, bitPos uint8, tickSpacin
 // getTickIfInitialized gets the next tick if the tick bitmap is initialized
 func getTickIfInitialized(compress, tickSpacing int32, bitPos uint8, masked *u256.Uint, lte bool) int32 {
 	if lte {
-		return (compress - int32(bitPos-plp.BitMathMostSignificantBit(masked))) * tickSpacing
+		return (compress - int32(bitPos-gnsmath.BitMathMostSignificantBit(masked))) * tickSpacing
 	}
-	return (compress + 1 + int32(plp.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
+	return (compress + 1 + int32(gnsmath.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 }
 
 // getTickIfNotInitialized gets the next tick if the tick bitmap is not initialized

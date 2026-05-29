@@ -8,6 +8,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -816,8 +817,8 @@ func getTickOf(positionId uint64) (int32, int32) {
 // calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
 func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
 	sqrtPriceX96 := u256.MustFromDecimal(s.poolAccessor.GetSlot0SqrtPriceX96(poolPath))
-	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtPriceLowerX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtPriceUpperX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	return common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
+	return gnsmath.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
 }
