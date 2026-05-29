@@ -6,10 +6,9 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/common"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -520,7 +519,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := gnsmath.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions

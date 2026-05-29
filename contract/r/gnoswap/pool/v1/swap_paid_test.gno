@@ -4,6 +4,7 @@ import (
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/common"
@@ -279,7 +280,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				recipient:           adminAddr,
 				payer:               adminAddr,
 				zeroForOne:          true,
-				sqrtPriceLimitX96:   common.TickMathGetSqrtRatioAtTick(-10).ToString(),
+				sqrtPriceLimitX96:   gnsmath.TickMathGetSqrtRatioAtTick(-10).ToString(),
 				isUseCallbackAmount: true,
 			},
 			expectedToken0PoolBalanceChange: 502882,
@@ -396,7 +397,7 @@ func initSwapPaidCreatePool(t *testing.T, token0Path, token1Path string, feeTier
 	mockInstanceSetPoolCreationFee(0)
 
 	if !getMockInstance().ExistsPoolPath(GetPoolPath(token0Path, token1Path, feeTier)) {
-		mockInstanceCreatePool(token0Path, token1Path, feeTier, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		mockInstanceCreatePool(token0Path, token1Path, feeTier, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	}
 }
 
@@ -423,10 +424,10 @@ func initSwapPaidSetFeeMintPosition(
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

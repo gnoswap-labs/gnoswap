@@ -4,9 +4,9 @@ import (
 	"chain"
 	"chain/runtime"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -468,10 +468,10 @@ func calculatePositionBalances(position *position.Position) (int64, int64) {
 		return 0, 0
 	}
 
-	token0Balance, token1Balance := common.GetAmountsForLiquidity(
+	token0Balance, token1Balance := gnsmath.GetAmountsForLiquidity(
 		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
-		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
-		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
+		gnsmath.TickMathGetSqrtRatioAtTick(position.TickLower()),
+		gnsmath.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
 	)
 

@@ -8,7 +8,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/p/gnoswap/gnsmath"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -96,7 +96,7 @@ func setupTestPool(t *testing.T, token0, token1 string, fee uint32, sqrtPrice st
 func setupPoolAtPrice(t *testing.T, tick int32) *pl.Pool {
 	t.Helper()
 
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick).ToString()
+	sqrtPrice := gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString()
 	return setupTestPool(t, barPath, fooPath, FeeTier500, sqrtPrice)
 }
 
@@ -643,7 +643,7 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 
 func TestModifyPositionEdgeCases(t *testing.T) {
 	const fee500 = uint32(500)
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(-10000).ToString()
+	sqrtPrice := gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()
 
 	t.Run("liquidityDelta is zero", func(t *testing.T) {
 		poolParams := newPoolParams(

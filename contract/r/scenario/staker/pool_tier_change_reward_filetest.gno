@@ -8,6 +8,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -128,11 +129,11 @@ func createPoolsAndSetTiers() {
 	println("[INFO] create multiple pools for tier distribution")
 
 	// Create main test pool
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Create additional pools for tier 1
-	pl.CreatePool(cross, fooPath, oblPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, oblPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, fooPath, oblPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, oblPath, quxPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 

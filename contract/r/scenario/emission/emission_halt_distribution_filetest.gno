@@ -12,6 +12,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -122,7 +123,7 @@ func initPool() {
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)

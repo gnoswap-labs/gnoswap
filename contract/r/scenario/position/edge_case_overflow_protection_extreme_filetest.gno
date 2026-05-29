@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -99,7 +100,7 @@ func testExactAttackVector() {
 		barPath,
 		bazPath,
 		100, // 0.01% fee, tick spacing 1
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -173,7 +174,7 @@ func testOverflowBoundary192() {
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -215,7 +216,7 @@ func testSilentOverflowPrevention() {
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -271,7 +272,7 @@ func testGetDeltaIntegrity() {
 		barPath,
 		bazPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)

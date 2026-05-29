@@ -5,13 +5,13 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -94,7 +94,7 @@ func createPool(token0Path string, token1Path string, fee uint32, startTick int3
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(startTick).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(startTick).ToString(),
 	)
 
 	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)

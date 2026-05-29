@@ -7,6 +7,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/router"
 
@@ -170,9 +170,9 @@ func createPoolsAndSetTier() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz pools with fee 100/500/3000")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set all pools to tier 2")
 	sr.SetPoolTier(cross, poolPath1, 2)

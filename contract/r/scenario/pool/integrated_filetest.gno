@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -93,7 +94,7 @@ func setupPools(t *testing.T) {
 		barPath,
 		fooPath,
 		FeeTier500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Create Bar:Baz pool with fee 3000

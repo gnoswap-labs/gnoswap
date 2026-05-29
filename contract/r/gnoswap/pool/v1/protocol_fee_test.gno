@@ -10,10 +10,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
-
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	"gno.land/r/onbloc/bar"
@@ -179,7 +179,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				bar.Approve(cross, poolAddr, 100000000000)
 				gns.Approve(cross, poolAddr, 100000000000)
 
-				mockInstanceCreatePool(barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				bar.Transfer(cross, poolAddr, 1000000000)
@@ -444,7 +444,7 @@ func TestProtocolFee(t *testing.T) {
 			action: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				mockInstanceSetPoolCreationFee(0)
-				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
 				return getMockInstance().store.GetSlot0FeeProtocol()
@@ -457,7 +457,7 @@ func TestProtocolFee(t *testing.T) {
 			action: func(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(0)
-				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
 				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 3000)
@@ -558,7 +558,7 @@ func TestProtocolFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(0)
 				getMockInstance().store.SetSlot0FeeProtocol(170)
-				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 				// Fee already set in previous test
 			},
 			verify: func(t *testing.T) interface{} {
@@ -574,7 +574,7 @@ func TestProtocolFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(0)
 				getMockInstance().store.SetSlot0FeeProtocol(170)
-				mockInstanceCreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
 				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 500)
@@ -617,7 +617,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, getMockInstance().GetPoolCreationFee())
 	mockInstanceSetPoolCreationFee(0)
-	mockInstanceCreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	mockInstanceCreatePool(barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	// Approve tokens for minting liquidity
 	foo.Approve(cross, poolAddr, maxApprove)
