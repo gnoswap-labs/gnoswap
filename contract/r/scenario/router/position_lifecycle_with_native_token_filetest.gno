@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -96,7 +97,7 @@ func setupInitialEnvironment() {
 	// Create WUGNOT:GNS pool (fee 0.05%)
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Verify initial balances
 	testing.SetRealm(userRealm)

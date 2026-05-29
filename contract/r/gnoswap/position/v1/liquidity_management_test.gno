@@ -5,9 +5,8 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -15,7 +14,7 @@ func initialSetup(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	pl.SetPoolCreationFee(cross(cur), 0)
-	CreatePool(cur, t, gnsPath, barPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	CreatePool(cur, t, gnsPath, barPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 	TokenFaucet(cur, t, gnsPath, alice)
 	TokenFaucet(cur, t, barPath, alice)
 }
@@ -144,7 +143,7 @@ func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "panic",
-			expectedMessage: "[GNOSWAP-COMMON-005] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+			expectedMessage: "liquidity_math: identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 		{
 			name: "add liquidity with exact minimum amounts",

@@ -1022,6 +1022,7 @@ func TestExactOutSwapOperation_MultiRoute(cur realm, t *testing.T) {
 		})
 	}
 }
+
 // TestSwapRoute_EmptyRoute tests validation of empty route parameter
 func TestSwapRoute_EmptyRoute(cur realm, t *testing.T) {
 	initRouterTest(t)
@@ -1198,7 +1199,7 @@ func TestSwapRoute_InvalidQuoteSum(cur realm, t *testing.T) {
 				bazPath,
 				"100000",
 				singlePoolPath+","+singlePoolPath, // Two routes
-				"50,40", // Sum = 90, not 100
+				"50,40",                           // Sum = 90, not 100
 				"0",
 				deadline,
 				"",

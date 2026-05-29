@@ -3,6 +3,7 @@
 package tickmath_boundary
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -13,7 +14,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -55,7 +55,7 @@ func main() {
 	maxPlusOne := u256.Zero().Add(maxSqrtRatio, u256.One())
 
 	println("[INFO] Test 1: MIN_SQRT_RATIO (inclusive)")
-	tickAtMin := common.TickMathGetTickAtSqrtRatio(minSqrtRatio)
+	tickAtMin := gnsmath.TickMathGetTickAtSqrtRatio(minSqrtRatio)
 	println("[INFO] tick_math tick:", tickAtMin)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
@@ -64,7 +64,7 @@ func main() {
 	println()
 
 	println("[INFO] Test 2: MAX_SQRT_RATIO - 1 (valid)")
-	tickAtMaxMinusOne := common.TickMathGetTickAtSqrtRatio(maxMinusOne)
+	tickAtMaxMinusOne := gnsmath.TickMathGetTickAtSqrtRatio(maxMinusOne)
 	println("[INFO] tick_math tick:", tickAtMaxMinusOne)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
@@ -79,7 +79,7 @@ func main() {
 				println("[EXPECTED] tick_math rejected")
 			}
 		}()
-		common.TickMathGetTickAtSqrtRatio(maxSqrtRatio)
+		gnsmath.TickMathGetTickAtSqrtRatio(maxSqrtRatio)
 	}()
 	println()
 
@@ -90,7 +90,7 @@ func main() {
 				println("[EXPECTED] tick_math rejected")
 			}
 		}()
-		common.TickMathGetTickAtSqrtRatio(maxPlusOne)
+		gnsmath.TickMathGetTickAtSqrtRatio(maxPlusOne)
 	}()
 	println()
 

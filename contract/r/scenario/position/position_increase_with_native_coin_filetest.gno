@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/onbloc/foo"
@@ -75,7 +75,7 @@ func initPool() {
 		wugnotPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(100).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(100).ToString(),
 	)
 }
 

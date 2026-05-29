@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
@@ -122,7 +123,7 @@ func createPool() {
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // price ratio 1:1
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // price ratio 1:1
 	)
 
 	ufmt.Printf("[EXPECTED] pool created with price ratio 1:1\n")

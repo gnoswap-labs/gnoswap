@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	testutils "gno.land/p/nt/testutils/v0"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
@@ -262,10 +262,10 @@ func CreatePoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
 	pl.SetPoolCreationFee(cross(cur), 0)
-	CreatePool(cur, t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, bazPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 }
 
 func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
@@ -276,7 +276,7 @@ func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
 		bazPath,
 		quxPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 		admin,
 	)
 }

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -82,7 +83,7 @@ func initPool() {
 		wugnotPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(100).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(100).ToString(),
 	)
 }
 

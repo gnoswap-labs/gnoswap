@@ -1415,7 +1415,7 @@ func TestValidateTokenPath(cur realm, t *testing.T) {
 		},
 		{
 			name:        "Valid wugnot with GRC20 token",
-			token0:      common.WUGNOT_PATH,
+			token0:      wugnotPath,
 			token1:      gnsPath,
 			expectError: false,
 		},
@@ -1428,7 +1428,7 @@ func TestValidateTokenPath(cur realm, t *testing.T) {
 		{
 			name:        "Invalid - ugnot is not a registered token",
 			token0:      "ugnot",
-			token1:      common.WUGNOT_PATH,
+			token1:      wugnotPath,
 			expectError: true,
 		},
 		{

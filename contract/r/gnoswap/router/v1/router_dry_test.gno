@@ -354,76 +354,76 @@ func TestValidateSwapResults_ExactOutTolerance(cur realm, t *testing.T) {
 	processor := &SwapProcessor{}
 
 	tests := []struct {
-		name             string
-		resultAmountIn   int64
-		resultAmountOut  int64
-		amountSpecified  int64
-		amountLimit      int64
-		swapCount        int64
-		expectedSuccess  bool
+		name            string
+		resultAmountIn  int64
+		resultAmountOut int64
+		amountSpecified int64
+		amountLimit     int64
+		swapCount       int64
+		expectedSuccess bool
 	}{
 		{
-			name:             "exact match - should succeed",
-			resultAmountIn:   1000,
-			resultAmountOut:  500,
-			amountSpecified:  -500, // negative for ExactOut
-			amountLimit:      2000,
-			swapCount:        1,
-			expectedSuccess:  true,
+			name:            "exact match - should succeed",
+			resultAmountIn:  1000,
+			resultAmountOut: 500,
+			amountSpecified: -500, // negative for ExactOut
+			amountLimit:     2000,
+			swapCount:       1,
+			expectedSuccess: true,
 		},
 		{
-			name:             "within tolerance (diff = swapCount) - should succeed",
-			resultAmountIn:   1000,
-			resultAmountOut:  499, // diff = 1, swapCount = 1
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        1,
-			expectedSuccess:  true,
+			name:            "within tolerance (diff = swapCount) - should succeed",
+			resultAmountIn:  1000,
+			resultAmountOut: 499, // diff = 1, swapCount = 1
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       1,
+			expectedSuccess: true,
 		},
 		{
-			name:             "within tolerance multi-hop (diff = swapCount) - should succeed",
-			resultAmountIn:   1000,
-			resultAmountOut:  497, // diff = 3, swapCount = 3
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        3,
-			expectedSuccess:  true,
+			name:            "within tolerance multi-hop (diff = swapCount) - should succeed",
+			resultAmountIn:  1000,
+			resultAmountOut: 497, // diff = 3, swapCount = 3
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       3,
+			expectedSuccess: true,
 		},
 		{
-			name:             "exceeds tolerance by 1 - should fail",
-			resultAmountIn:   1000,
-			resultAmountOut:  496, // diff = 4, swapCount = 3
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        3,
-			expectedSuccess:  false,
+			name:            "exceeds tolerance by 1 - should fail",
+			resultAmountIn:  1000,
+			resultAmountOut: 496, // diff = 4, swapCount = 3
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       3,
+			expectedSuccess: false,
 		},
 		{
-			name:             "result higher than specified within tolerance - should succeed",
-			resultAmountIn:   1000,
-			resultAmountOut:  502, // diff = 2, swapCount = 3
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        3,
-			expectedSuccess:  true,
+			name:            "result higher than specified within tolerance - should succeed",
+			resultAmountIn:  1000,
+			resultAmountOut: 502, // diff = 2, swapCount = 3
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       3,
+			expectedSuccess: true,
 		},
 		{
-			name:             "slippage exceeded (amountIn > limit) - should fail",
-			resultAmountIn:   3000,
-			resultAmountOut:  500,
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        1,
-			expectedSuccess:  false,
+			name:            "slippage exceeded (amountIn > limit) - should fail",
+			resultAmountIn:  3000,
+			resultAmountOut: 500,
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       1,
+			expectedSuccess: false,
 		},
 		{
-			name:             "zero amounts - should fail",
-			resultAmountIn:   0,
-			resultAmountOut:  0,
-			amountSpecified:  -500,
-			amountLimit:      2000,
-			swapCount:        1,
-			expectedSuccess:  false,
+			name:            "zero amounts - should fail",
+			resultAmountIn:  0,
+			resultAmountOut: 0,
+			amountSpecified: -500,
+			amountLimit:     2000,
+			swapCount:       1,
+			expectedSuccess: false,
 		},
 	}
 
@@ -562,40 +562,40 @@ func TestValidateSwapResults_ExactIn(cur realm, t *testing.T) {
 	processor := &SwapProcessor{}
 
 	tests := []struct {
-		name             string
-		resultAmountIn   int64
-		resultAmountOut  int64
-		amountSpecified  int64
-		amountLimit      int64
-		swapCount        int64
-		expectedSuccess  bool
+		name            string
+		resultAmountIn  int64
+		resultAmountOut int64
+		amountSpecified int64
+		amountLimit     int64
+		swapCount       int64
+		expectedSuccess bool
 	}{
 		{
-			name:             "exact match - should succeed",
-			resultAmountIn:   1000,
-			resultAmountOut:  500,
-			amountSpecified:  1000,
-			amountLimit:      400,
-			swapCount:        1,
-			expectedSuccess:  true,
+			name:            "exact match - should succeed",
+			resultAmountIn:  1000,
+			resultAmountOut: 500,
+			amountSpecified: 1000,
+			amountLimit:     400,
+			swapCount:       1,
+			expectedSuccess: true,
 		},
 		{
-			name:             "amountIn less than specified - should succeed",
-			resultAmountIn:   900,
-			resultAmountOut:  500,
-			amountSpecified:  1000,
-			amountLimit:      400,
-			swapCount:        1,
-			expectedSuccess:  true,
+			name:            "amountIn less than specified - should succeed",
+			resultAmountIn:  900,
+			resultAmountOut: 500,
+			amountSpecified: 1000,
+			amountLimit:     400,
+			swapCount:       1,
+			expectedSuccess: true,
 		},
 		{
-			name:             "amountOut below limit - should fail",
-			resultAmountIn:   1000,
-			resultAmountOut:  300,
-			amountSpecified:  1000,
-			amountLimit:      400,
-			swapCount:        1,
-			expectedSuccess:  false,
+			name:            "amountOut below limit - should fail",
+			resultAmountIn:  1000,
+			resultAmountOut: 300,
+			amountSpecified: 1000,
+			amountLimit:     400,
+			swapCount:       1,
+			expectedSuccess: false,
 		},
 	}
 
@@ -865,10 +865,10 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 
 func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 	tests := []struct {
-		name         string
-		setupFn      func(*TestEnv)
-		swapParams   DrySwapParams
-		description  string
+		name        string
+		setupFn     func(*TestEnv)
+		swapParams  DrySwapParams
+		description string
 	}{
 		{
 			name:    "ExactOut - Multi Route exceeds tolerance (DrySwap fails, Swap should fail too)",

@@ -1717,7 +1717,6 @@ func TestSwapValidator_ExactOutAmount(cur realm, t *testing.T) {
 	}
 }
 
-
 // Test validateRoutesAndQuotes convenience function
 func TestValidateRoutesAndQuotes(cur realm, t *testing.T) {
 	tests := []struct {

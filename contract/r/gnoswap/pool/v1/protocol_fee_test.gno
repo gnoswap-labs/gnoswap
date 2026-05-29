@@ -10,10 +10,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
-
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	"gno.land/r/onbloc/bar"
@@ -179,7 +179,7 @@ func TestHandleWithdrawalFee(cur realm, t *testing.T) {
 				bar.Approve(cross(cur), poolAddr, 100000000000)
 				gns.Approve(cross(cur), poolAddr, 100000000000)
 
-				mockInstanceCreatePool(cur, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(cur, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				bar.Transfer(cross(cur), poolAddr, 1000000000)
@@ -262,10 +262,10 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 	initPoolTest(t)
 	instance := getMockInstance()
 
-	instance.addPendingProtocolFee(0, cur,barPath, 100)
-	instance.addPendingProtocolFee(0, cur,barPath, 50)
-	instance.addPendingProtocolFee(0, cur,gnsPath, 25)
-	instance.addPendingProtocolFee(0, cur,fooPath, 0)
+	instance.addPendingProtocolFee(0, cur, barPath, 100)
+	instance.addPendingProtocolFee(0, cur, barPath, 50)
+	instance.addPendingProtocolFee(0, cur, gnsPath, 25)
+	instance.addPendingProtocolFee(0, cur, fooPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
@@ -445,7 +445,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
 				mockInstanceSetPoolCreationFee(cur, 0)
-				mockInstanceCreatePool(cur, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(cur, barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(cur realm, t *testing.T) interface{} {
 				return getMockInstance().store.GetSlot0FeeProtocol()
@@ -458,7 +458,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(cur, 0)
-				mockInstanceCreatePool(cur, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(cur, barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(cur realm, t *testing.T) interface{} {
 				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 3000)
@@ -470,7 +470,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 3)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,3, 3)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 3, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -482,7 +482,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 3)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,6, 3)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 6, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -494,7 +494,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 6)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,3, 6)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 3, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -506,7 +506,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 11)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,11, 11)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 11, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -518,7 +518,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 11)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,6, 11)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 6, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -530,7 +530,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 6)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,11, 6)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 11, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -542,7 +542,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 		{
 			name: "set fee protocol to valid values (10, 10)",
 			action: func(cur realm, t *testing.T) {
-				_, err := getMockInstance().setFeeProtocol(0, cur,10, 10)
+				_, err := getMockInstance().setFeeProtocol(0, cur, 10, 10)
 				if err != nil {
 					panic(err)
 				}
@@ -559,7 +559,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(cur, 0)
 				getMockInstance().store.SetSlot0FeeProtocol(0, cur, 170)
-				mockInstanceCreatePool(cur, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(cur, barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 				// Fee already set in previous test
 			},
 			verify: func(cur realm, t *testing.T) interface{} {
@@ -575,7 +575,7 @@ func TestProtocolFee(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				mockInstanceSetPoolCreationFee(cur, 0)
 				getMockInstance().store.SetSlot0FeeProtocol(0, cur, 170)
-				mockInstanceCreatePool(cur, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(cur, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(cur realm, t *testing.T) interface{} {
 				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 500)
@@ -618,7 +618,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross(cur), poolAddr, getMockInstance().GetPoolCreationFee())
 	mockInstanceSetPoolCreationFee(cur, 0)
-	mockInstanceCreatePool(cur, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	mockInstanceCreatePool(cur, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	// Approve tokens for minting liquidity
 	foo.Approve(cross(cur), poolAddr, maxApprove)

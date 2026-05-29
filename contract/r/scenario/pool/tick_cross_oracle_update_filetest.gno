@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -57,7 +58,7 @@ func main() {
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
 	foo.Approve(cross, poolAddr, maxApprove)
@@ -131,7 +132,7 @@ func main() {
 		adminAddr,
 		true,       // zeroForOne - tick decreases (0 -> past testTick)
 		"10000000", // large amount to ensure we cross testTick
-		common.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
+		gnsmath.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
@@ -205,7 +206,7 @@ func main() {
 		adminAddr,
 		false,      // oneForZero - tick increases (back above testTick)
 		"10000000", // large amount to ensure crossing back
-		common.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
+		gnsmath.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)

@@ -7,6 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
@@ -607,7 +608,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: SMALL_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			},
 			consistencyGoal: "Minimal price impact with small amount",
 		},
@@ -624,7 +625,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: LARGE_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			},
 			consistencyGoal: "Significant price impact with large amount",
 		},
@@ -641,7 +642,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: "-" + SMALL_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
 			consistencyGoal: "Small input required for small output",
 		},
@@ -658,7 +659,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: "-" + MEDIUM_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			},
 			consistencyGoal: "Large input required due to price impact",
 		},
@@ -674,7 +675,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: MEDIUM_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			},
 			consistencyGoal: "Minimal fee impact on stablecoin swap",
 		},
@@ -688,7 +689,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: SMALL_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(11040).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(11040).ToString(),
 			},
 			consistencyGoal: "Navigation across multiple liquidity ranges",
 		},
@@ -702,7 +703,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: SMALL_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-100080).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-100080).ToString(),
 			},
 			consistencyGoal: "Large price movement in extreme volatility",
 		},
@@ -716,7 +717,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: MEDIUM_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			},
 			consistencyGoal: "Lower price impact due to wide liquidity distribution",
 		},
@@ -730,7 +731,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: SMALL_SWAP_AMOUNT,
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
 			consistencyGoal: "Better execution due to concentrated liquidity",
 		},
@@ -864,7 +865,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: "200",
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
 			expectedAmounts: []string{"-198", "200"},
 			tradingContext:  "User wants to purchase exactly 200 token1",
@@ -881,7 +882,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: "-200", // Negative for exact output
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
 			expectedAmounts: []string{"-200", "202"},
 			tradingContext:  "User wants to acquire exactly 200 token0",
@@ -898,7 +899,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: "1000",
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
 			expectedAmounts: []string{"0", "0"},
 			tradingContext:  "Swap attempt in zero liquidity situation",
@@ -915,7 +916,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: "200",
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(887224).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887224).ToString(),
 			},
 			expectedAmounts:      []string{},
 			tradingContext:       "Swap terminated when sqrtPriceLimitX96 is over tick range",
@@ -987,7 +988,7 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: "1000",
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(11040).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(11040).ToString(),
 			},
 			expectedResult: []string{"-2709", "1000"},
 			marketScenario: "Inefficient market with liquidity spread across multiple price ranges",
@@ -1001,7 +1002,7 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 			swapParams: SwapScenario{
 				zeroForOne:      true,
 				amountSpecified: "1000",
-				priceLimit:      common.TickMathGetSqrtRatioAtTick(-100080).ToString(),
+				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(-100080).ToString(),
 			},
 			expectedResult: []string{"1000", "-148220"},
 			marketScenario: "Large swap in extreme volatility situation",
@@ -1061,7 +1062,7 @@ func TestSwap_FeeTierOptimization(cur realm, t *testing.T) {
 
 		actualAmount0, actualAmount1 := mockInstanceSwap(cur, barPath, bazPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
-			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
+			gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
 			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 			})
@@ -1086,7 +1087,7 @@ func createMockLiquidityPool() *pl.Pool {
 			feeProtocol  uint8
 			unlocked     bool
 		}{
-			sqrtPriceX96: common.TickMathGetSqrtRatioAtTick(0),
+			sqrtPriceX96: gnsmath.TickMathGetSqrtRatioAtTick(0),
 			tick:         0,
 			feeProtocol:  0,
 			unlocked:     true,
@@ -1127,7 +1128,7 @@ func setupScatteredLiquidityPool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
 	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	testing.SetRealm(posRealm)
 	// 4 dispersed liquidity positions
@@ -1158,7 +1159,7 @@ func setupExtremePriceRangePool(cur realm, t *testing.T) {
 	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
 	mockInstanceCreatePool(cur, barPath, bazPath, STANDARD_FEE_TIER,
-		common.TickMathGetSqrtRatioAtTick(100000).ToString())
+		gnsmath.TickMathGetSqrtRatioAtTick(100000).ToString())
 
 	testing.SetRealm(posRealm)
 	// Extreme range liquidity
@@ -1354,7 +1355,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	// Create pool at a specific price to match the failing case
 	// tick 506 corresponds to sqrtPrice around 81258104018314874265769693256
 	targetTick := int32(506)
-	targetPrice := common.TickMathGetSqrtRatioAtTick(targetTick)
+	targetPrice := gnsmath.TickMathGetSqrtRatioAtTick(targetTick)
 
 	mockInstanceCreatePool(cur, token0Path, token1Path, fee, targetPrice.ToString())
 
@@ -1491,7 +1492,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 							0, cur,
 							barPath, bazPath, STANDARD_FEE_TIER,
 							routerAddr, false, "50",
-							common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+							gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 							routerAddr,
 							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
 						)
@@ -1559,7 +1560,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr, maliciousCallback,
 				)
 
@@ -1606,7 +1607,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
@@ -1622,7 +1623,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
@@ -1677,7 +1678,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr, callbackWithLockCheck,
 				)
 
@@ -1717,7 +1718,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 					cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
-					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
@@ -1984,9 +1985,9 @@ func TestSwapCallback_DeltaConvention(cur realm, t *testing.T) {
 			// Determine price limit based on direction
 			var priceLimit string
 			if tt.zeroForOne {
-				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+				priceLimit = gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString()
 			} else {
-				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+				priceLimit = gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString()
 			}
 
 			// Execute swap
@@ -2074,7 +2075,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000",
-		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 		routerAddr, genericCallback,
 	)
 
@@ -2089,7 +2090,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, false, "10000",
-		common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 		routerAddr, genericCallback,
 	)
 
@@ -2177,9 +2178,9 @@ func TestSwap_FlashSwapPattern(cur realm, t *testing.T) {
 			// Determine price limit based on direction
 			var priceLimit string
 			if tt.zeroForOne {
-				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+				priceLimit = gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString()
 			} else {
-				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+				priceLimit = gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString()
 			}
 
 			// Execute swap
@@ -2251,7 +2252,7 @@ func TestSwap_FlashSwapArbitragePattern(cur realm, t *testing.T) {
 		cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000", // zeroForOne: swap token0 for token1
-		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 		routerAddr, arbitrageCallback,
 	)
 
