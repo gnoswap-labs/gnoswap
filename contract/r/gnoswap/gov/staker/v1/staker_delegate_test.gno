@@ -115,13 +115,13 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						gs.Delegate(tt.to, tt.amount, tt.referrer)
+						gs.Delegate(0, cur, tt.to, tt.amount, tt.referrer)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Delegate(tt.to, tt.amount, tt.referrer)
+					result := gs.Delegate(0, cur, tt.to, tt.amount, tt.referrer)
 					uassert.Equal(t, result, tt.amount)
 				}(cross(cur))
 			}
@@ -154,7 +154,7 @@ func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			result := gs.Delegate(validator, amount, "")
+			result := gs.Delegate(0, cur, validator, amount, "")
 			uassert.Equal(t, result, amount)
 		}(cross(cur))
 	}(cross(cur))
@@ -249,13 +249,13 @@ func TestStakerDelegate_Undelegate(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						gs.Undelegate(tt.from, tt.amount)
+						gs.Undelegate(0, cur, tt.from, tt.amount)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Undelegate(tt.from, tt.amount)
+					result := gs.Undelegate(0, cur, tt.from, tt.amount)
 					uassert.Equal(t, result, tt.expectedAmount)
 				}(cross(cur))
 			}
@@ -348,7 +348,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 				for _, amount := range tt.delegationAmounts {
-					gs.Delegate(validator, amount, "")
+					gs.Delegate(0, cur, validator, amount, "")
 					totalDelegated += amount
 				}
 			}(cross(cur))
@@ -357,7 +357,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 			var undelegatedAmount int64
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				undelegatedAmount = gs.Undelegate(validator, tt.undelegateAmount)
+				undelegatedAmount = gs.Undelegate(0, cur, validator, tt.undelegateAmount)
 			}(cross(cur))
 
 			// Then: Verify results
@@ -409,7 +409,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 			setupFunc: func(gs *govStakerV1, user, validator address) {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.Delegate(validator, minimumAmount*5, "")
+					gs.Delegate(0, cur, validator, minimumAmount*5, "")
 				}(cross(cur))
 			},
 			undelegateAmt: minimumAmount * 10,
@@ -422,7 +422,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 			setupFunc: func(gs *govStakerV1, user, validator address) {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.Delegate(validator, minimumAmount*5, "")
+					gs.Delegate(0, cur, validator, minimumAmount*5, "")
 				}(cross(cur))
 			},
 			undelegateAmt: 0,
@@ -435,7 +435,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 			setupFunc: func(gs *govStakerV1, user, validator address) {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.Delegate(validator, minimumAmount*5, "")
+					gs.Delegate(0, cur, validator, minimumAmount*5, "")
 				}(cross(cur))
 			},
 			undelegateAmt: -minimumAmount,
@@ -462,13 +462,13 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.Undelegate(validator, tt.undelegateAmt)
+						gs.Undelegate(0, cur, validator, tt.undelegateAmt)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Undelegate(validator, tt.undelegateAmt)
+					result := gs.Undelegate(0, cur, validator, tt.undelegateAmt)
 					// For non-panic cases, verify result is reasonable
 					// (either 0 for no delegations, or capped at available amount)
 					if tt.undelegateAmt > 0 {
@@ -603,13 +603,13 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.Redelegate(tt.delegator, tt.delegatee, tt.amount)
+						gs.Redelegate(0, cur, tt.delegator, tt.delegatee, tt.amount)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Redelegate(tt.delegator, tt.delegatee, tt.amount)
+					result := gs.Redelegate(0, cur, tt.delegator, tt.delegatee, tt.amount)
 					uassert.Equal(t, result, tt.amount)
 				}(cross(cur))
 			}
@@ -630,7 +630,7 @@ func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testi
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.Delegate(validator1, amount, "")
+		gs.Delegate(0, cur, validator1, amount, "")
 	}(cross(cur))
 
 	initialLocked := gs.store.GetTotalLockedAmount()
@@ -651,7 +651,7 @@ func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testi
 	for _, transition := range transitions {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			result := gs.Redelegate(transition.from, transition.to, amount)
+			result := gs.Redelegate(0, cur, transition.from, transition.to, amount)
 			uassert.Equal(t, result, amount)
 		}(cross(cur))
 
@@ -670,7 +670,7 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 
 	testing.SetRealm(testing.NewUserRealm(admin))
 	func(cur realm) {
-		gs.SetUnDelegationLockupPeriodByAdmin(0)
+		gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 0)
 	}(cross(cur))
 
 	initialSupply := xgns.TotalSupply()
@@ -679,7 +679,7 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.Delegate(validator, amount, "")
+		gs.Delegate(0, cur, validator, amount, "")
 	}(cross(cur))
 
 	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
@@ -687,7 +687,7 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.Undelegate(validator, amount)
+		gs.Undelegate(0, cur, validator, amount)
 	}(cross(cur))
 
 	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
@@ -695,7 +695,7 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.CollectUndelegatedGns()
+		gs.CollectUndelegatedGns(0, cur)
 	}(cross(cur))
 
 	uassert.Equal(t, xgns.TotalSupply(), initialSupply)
@@ -754,13 +754,13 @@ func TestStakerDelegate_CollectUndelegatedGns(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						gs.CollectUndelegatedGns()
+						gs.CollectUndelegatedGns(0, cur)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.CollectUndelegatedGns()
+					result := gs.CollectUndelegatedGns(0, cur)
 					uassert.Equal(t, tt.expectedAmount, result)
 				}(cross(cur))
 			}
@@ -781,7 +781,7 @@ func TestStakerDelegate_CollectUndelegatedGns_EmergencyHaltAllowsRecovery(cur re
 	uassert.NotPanics(t, cur, func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			result := gs.CollectUndelegatedGns()
+			result := gs.CollectUndelegatedGns(0, cur)
 			uassert.Equal(t, int64(minimumAmount), result)
 		}(cross(cur))
 	})
@@ -890,13 +890,13 @@ func TestStakerDelegate_DelegationValidationEdgeCases(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						gs.Delegate(tt.to, tt.amount, "")
+						gs.Delegate(0, cur, tt.to, tt.amount, "")
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Delegate(tt.to, tt.amount, "")
+					result := gs.Delegate(0, cur, tt.to, tt.amount, "")
 					uassert.Equal(t, result, tt.amount)
 				}(cross(cur))
 			}
@@ -1010,10 +1010,10 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(cur realm, t *testing.T) {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 				// Delegate
-				gs.Delegate(validator, tt.delegateAmount, "")
+				gs.Delegate(0, cur, validator, tt.delegateAmount, "")
 
 				// Undelegate
-				gs.Undelegate(validator, tt.undelegateAmount)
+				gs.Undelegate(0, cur, validator, tt.undelegateAmount)
 			}(cross(cur))
 
 			// Simulate time passage for lockup period
@@ -1026,13 +1026,13 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(cur realm, t *testing.T) {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CollectUndelegatedGns()
+						gs.CollectUndelegatedGns(0, cur)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.CollectUndelegatedGns()
+					result := gs.CollectUndelegatedGns(0, cur)
 					// In successful cases, should return some amount
 					// The exact amount depends on implementation details
 					uassert.Equal(t, tt.expectedCollectable, result)
@@ -1102,13 +1102,13 @@ func TestStakerDelegate_ReferrerFunctionality(cur realm, t *testing.T) {
 				uassert.AbortsWithMessage(t, cur, "", func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.Delegate(tt.to, tt.amount, tt.referrer)
+						gs.Delegate(0, cur, tt.to, tt.amount, tt.referrer)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					result := gs.Delegate(tt.to, tt.amount, tt.referrer)
+					result := gs.Delegate(0, cur, tt.to, tt.amount, tt.referrer)
 					uassert.Equal(t, result, tt.amount)
 				}(cross(cur))
 			}
@@ -1140,7 +1140,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.Delegate(validator, amount, "")
+					gs.Delegate(0, cur, validator, amount, "")
 				}(cross(cur))
 
 				return user, validator, amount
@@ -1160,7 +1160,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.Delegate(validator1, amount, "")
+					gs.Delegate(0, cur, validator1, amount, "")
 				}(cross(cur))
 
 				return user, testutils.TestAddress("validator2"), amount
@@ -1197,13 +1197,13 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						switch tt.executeAction {
 						case "delegate":
-							gs.Delegate(target, amount, "")
+							gs.Delegate(0, cur, target, amount, "")
 						case "undelegate":
-							gs.Undelegate(target, amount)
+							gs.Undelegate(0, cur, target, amount)
 						case "redelegate":
-							gs.Redelegate(testutils.TestAddress("validator1"), target, amount)
+							gs.Redelegate(0, cur, testutils.TestAddress("validator1"), target, amount)
 						case "collect":
-							gs.CollectUndelegatedGns()
+							gs.CollectUndelegatedGns(0, cur)
 						}
 					}(cross(cur))
 				})
@@ -1212,13 +1212,13 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					switch tt.executeAction {
 					case "delegate":
-						result = gs.Delegate(target, amount, "")
+						result = gs.Delegate(0, cur, target, amount, "")
 					case "undelegate":
-						result = gs.Undelegate(target, amount)
+						result = gs.Undelegate(0, cur, target, amount)
 					case "redelegate":
-						result = gs.Redelegate(testutils.TestAddress("validator1"), target, amount)
+						result = gs.Redelegate(0, cur, testutils.TestAddress("validator1"), target, amount)
 					case "collect":
-						result = gs.CollectUndelegatedGns()
+						result = gs.CollectUndelegatedGns(0, cur)
 					}
 
 					// Then: Verify result

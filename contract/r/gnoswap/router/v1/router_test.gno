@@ -300,7 +300,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -480,7 +480,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 			testing.SetOriginSend(chain.Coins{})
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				_, amountOut := router.ExactInSwapRoute(0, cur, 
+				_, amountOut := router.ExactInSwapRoute(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -629,7 +629,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -912,7 +912,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
-				return op.processRoute(router, tt.route, toSwapAmount, tt.swapType)
+				return op.processRoute(0, cur, router, tt.route, toSwapAmount, tt.swapType)
 			}
 
 			if tt.expectError {

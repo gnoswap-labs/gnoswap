@@ -25,7 +25,7 @@ const (
 // MultiSwapExecutor defines the interface for multi-hop swap operation execution.
 type MultiSwapExecutor interface {
 	// Run performs the swap operation and returns pool received and pool output amounts.
-	Run(_ int, rlm realm, p SwapParams, data SwapCallbackData, recipient address) (int64, int64)
+	Run(p SwapParams, data SwapCallbackData, recipient address) (int64, int64)
 }
 
 // DryMultiSwapExecutor implements MultiSwapExecutor for dry run simulations.
@@ -40,12 +40,13 @@ func (e *DryMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, _ addres
 
 // RealMultiSwapExecutor implements MultiSwapExecutor for actual swap operations.
 type RealMultiSwapExecutor struct {
+	rlm    realm
 	router *routerV1
 }
 
 // Run performs a real swap operation with state changes.
-func (e *RealMultiSwapExecutor) Run(_ int, rlm realm, p SwapParams, data SwapCallbackData, recipient address) (int64, int64) {
-	return e.router.swapInner(0, rlm, p.amountSpecified, recipient, zero, data)
+func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient address) (int64, int64) {
+	return e.router.swapInner(0, e.rlm, p.amountSpecified, recipient, zero, data)
 }
 
 // MultiSwapProcessor handles the execution flow for multi-hop swaps.

@@ -184,7 +184,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, gov, tt.setupProposal)
+				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.executor))
@@ -356,12 +356,14 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, gov, tt.setupProposal)
+				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
 			// when
 			testing.SetRealm(govRealm)
 			proposal, err := gov.executeProposal(
+				0,
+				cur,
 				tt.proposalId,
 				tt.executedAt,
 				tt.executedHeight,
@@ -522,7 +524,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, gov, tt.setupProposal)
+				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.canceler))
@@ -744,7 +746,7 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, gov, tt.setupProposal())
+				setupExecuteTestProposal(cur, t, gov, tt.setupProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
@@ -833,7 +835,7 @@ func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 			)
 			statusResolver := NewProposalStatusResolver(proposal.Status())
 			statusResolver.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, gov, proposal)
+			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -935,7 +937,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 			)
 			statusResolver := NewProposalStatusResolver(proposal.Status())
 			statusResolver.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, gov, proposal)
+			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			// Mock community pool balance setup would go here
 
@@ -1043,7 +1045,7 @@ func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 			)
 			statusResolver := NewProposalStatusResolver(proposal.Status())
 			statusResolver.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, gov, proposal)
+			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -1154,7 +1156,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 					tt.cancellationTime.Unix(),
 					100,
 				)
-				setupExecuteTestProposal(t, gov, proposal)
+				setupExecuteTestProposal(cur, t, gov, proposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.canceler))
@@ -1200,7 +1202,7 @@ func TestGovernanceExecute_ReExecutionPrevention(cur realm, t *testing.T) {
 		)
 		resolver := NewProposalStatusResolver(proposal.Status())
 		resolver.vote(true, 6_000_000_000)
-		setupExecuteTestProposal(t, gov, proposal)
+		setupExecuteTestProposal(cur, t, gov, proposal)
 
 		testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -1429,8 +1431,8 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 }
 
 // Helper functions for execute tests
-func setupExecuteTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(proposal)
+func setupExecuteTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
+	gov.addProposal(0, cur, proposal)
 }
 
 func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {

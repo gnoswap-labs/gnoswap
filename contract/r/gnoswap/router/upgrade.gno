@@ -13,14 +13,14 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(routerStore IRouterStore) IRouter) {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, routerStore IRouterStore) IRouter) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentRouterStore, ok := domainStore.(IRouterStore)
 		if !ok {
 			panic("domainStore is not an IRouterStore")
 		}
 
-		return initializer(currentRouterStore)
+		return initializer(0, rlm, currentRouterStore)
 	}
 
 	err := versionManager.RegisterInitializer(0, cur, initializerFunc)

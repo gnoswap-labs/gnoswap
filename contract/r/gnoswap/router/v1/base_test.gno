@@ -139,7 +139,7 @@ func TestProcessRoute(cur realm, t *testing.T) {
 
 		router := mockRouter()
 		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType)
+			amountIn, amountOut, err := op.processRoute(0, cur, router, route, toSwap, swapType)
 			uassert.Equal(t, err, nil)
 			uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
 			uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
@@ -173,7 +173,7 @@ func TestProcessRoutesWithRemainder(cur realm, t *testing.T) {
 
 	func(cur realm) {
 		router := mockRouter()
-		_, amountOut, err := op.processRoutes(router, ExactIn)
+		_, amountOut, err := op.processRoutes(0, cur, router, ExactIn)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -613,10 +613,10 @@ func TestProcessRoute_ErrorCases(cur realm, t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
-					op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+					op.processRoute(0, cur, router, tt.route, tt.toSwap, tt.swapType)
 				})
 			} else {
-				op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				op.processRoute(0, cur, router, tt.route, tt.toSwap, tt.swapType)
 			}
 		})
 	}
@@ -756,7 +756,7 @@ func TestProcessRoutes_OverflowDetection(cur realm, t *testing.T) {
 
 			processRoutesFn := func(cur realm) error {
 				testing.SetRealm(routerRealm)
-				_, _, err := tt.op.processRoutes(router, ExactIn)
+				_, _, err := tt.op.processRoutes(0, cur, router, ExactIn)
 				return err
 			}
 

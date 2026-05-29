@@ -124,7 +124,7 @@ func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 			)
 
 			// when
-			err := handler.Execute(tc.params)
+			err := handler.Execute(0, cur, tc.params)
 
 			// then
 			if tc.expectedError {

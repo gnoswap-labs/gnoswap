@@ -14,7 +14,7 @@ import (
 func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupProposal    func(*governanceV1) int64
+		setupProposal    func(cur realm, gv *governanceV1) int64
 		caller           address
 		proposalID       int64
 		expectedPanic    bool
@@ -22,7 +22,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 	}{
 		{
 			name: "success - caller is proposer",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					1,
@@ -34,7 +34,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 1
 			},
 			caller:        testutils.TestAddress("proposer1"),
@@ -43,7 +43,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 		},
 		{
 			name: "panic - proposal not found",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				return 999 // Non-existent proposal ID
 			},
 			caller:           testutils.TestAddress("proposer1"),
@@ -53,7 +53,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 		},
 		{
 			name: "panic - caller is not proposer",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					2,
@@ -65,7 +65,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 2
 			},
 			caller:           testutils.TestAddress("not_proposer"),
@@ -75,7 +75,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 		},
 		{
 			name: "success - different proposer for different proposal",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer2")
 				proposal := governance.NewProposal(
 					3,
@@ -87,7 +87,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 3
 			},
 			caller:        testutils.TestAddress("proposer2"),
@@ -100,7 +100,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gv := newMockGovernance()
-			tt.setupProposal(gv)
+			tt.setupProposal(cur, gv)
 
 			// when & then
 			if tt.expectedPanic {

@@ -57,7 +57,7 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 	}
 
 	prevSwapFee := r.store.GetSwapFee()
-	if err := r.store.SetSwapFee(fee); err != nil {
+	if err := r.store.SetSwapFee(0, rlm, fee); err != nil {
 		panic(err)
 	}
 
@@ -86,7 +86,7 @@ func (r *routerV1) handleSwapFee(
 	currentTokenPath := outputToken
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
-	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
+	r.addPendingProtocolFee(0, rlm, currentTokenPath, feeAmountInt64)
 	r.addToProtocolFee(0, rlm)
 
 	previousRealm := rlm.Previous()
@@ -101,7 +101,7 @@ func (r *routerV1) handleSwapFee(
 	return safeSubInt64(amount, feeAmountInt64)
 }
 
-func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
@@ -112,7 +112,7 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	if err := r.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -141,7 +141,7 @@ func (r *routerV1) addToProtocolFee(_ int, rlm realm) {
 		}
 	}
 
-	if err := r.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+	if err := r.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
 		panic(err)
 	}
 }

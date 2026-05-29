@@ -49,7 +49,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 
 	tests := []struct {
 		name                   string
-		setup                  func(gv *governanceV1)
+		setup                  func(cur realm, gv *governanceV1)
 		currentTime            int64
 		expectedRemainingCount int
 		expectedRemainingIDs   []int64
@@ -57,7 +57,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 	}{
 		{
 			name:                   "No proposals for user",
-			setup:                  func(gv *governanceV1) {},
+			setup:                  func(cur realm, gv *governanceV1) {},
 			currentTime:            baseCreatedAt,
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
@@ -65,7 +65,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Upcoming proposal should remain active",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
@@ -74,7 +74,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay - 10,
 			expectedRemainingCount: 1,
@@ -83,7 +83,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "All proposals are active - none should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
@@ -92,7 +92,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
 			expectedRemainingCount: 1,
@@ -101,7 +101,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "All proposals are expired - all should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
@@ -110,7 +110,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            expiredTime + 100, // after expired
 			expectedRemainingCount: 0,
@@ -119,7 +119,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Mixed active and inactive proposals - only inactive should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				// Expired proposal
 				oldProposal := governance.NewProposal(
 					1,
@@ -129,7 +129,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(oldProposal)
+				gv.addProposal(0, cur, oldProposal)
 
 				// Active proposal (created after first one expired)
 				newCreatedAt := expiredTime + 50
@@ -141,7 +141,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, newCreatedAt,
 					100,
 				)
-				gv.addProposal(newProposal)
+				gv.addProposal(0, cur, newProposal)
 			},
 			currentTime:            expiredTime + 50 + config.VotingStartDelay + 50, // during new proposal's voting period
 			expectedRemainingCount: 1,
@@ -150,7 +150,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Canceled proposal should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
 					NewProposalStatus(config, 1000, true, baseCreatedAt),
@@ -159,7 +159,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 
 				// Cancel the proposal
 				proposalResolver := NewProposalResolver(proposal)
@@ -172,7 +172,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Executable proposal should remain active",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
 					NewProposalStatus(config, 1000, true, baseCreatedAt),
@@ -190,7 +190,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				proposalResolver := NewProposalResolver(proposal)
 				_ = proposalResolver.Vote(true, 600)
 
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay + 50,
 			expectedRemainingCount: 1,
@@ -199,7 +199,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Multiple expired proposals - all should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				for i := int64(1); i <= 3; i++ {
 					proposal := governance.NewProposal(
 						i,
@@ -209,7 +209,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(proposal)
+					gv.addProposal(0, cur, proposal)
 				}
 			},
 			currentTime:            expiredTime + 100,
@@ -219,7 +219,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		},
 		{
 			name: "Multiple active proposals - none should be removed",
-			setup: func(gv *governanceV1) {
+			setup: func(cur realm, gv *governanceV1) {
 				for i := int64(1); i <= 3; i++ {
 					proposal := governance.NewProposal(
 						i,
@@ -229,7 +229,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(proposal)
+					gv.addProposal(0, cur, proposal)
 				}
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
@@ -243,10 +243,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			gv := newMockGovernance()
-			tc.setup(gv)
+			tc.setup(cur, gv)
 
 			// when
-			err := gv.removeInactiveUserProposals(proposerAddr, tc.currentTime)
+			err := gv.removeInactiveUserProposals(0, cur, proposerAddr, tc.currentTime)
 
 			// then
 			uassert.Nil(t, err)

@@ -93,20 +93,20 @@ func TestGetVotingWeightSnapshot(cur realm, t *testing.T) {
 func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupVotingInfos func() *mockGovernanceStore
+		setupVotingInfos func(cur realm) *mockGovernanceStore
 		proposalID       int64
 		voterAddr        address
 		expectedFound    bool
 	}{
 		{
 			name: "voting info exists for user",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				voterAddr := address("g1voter00000000000000000000000000000001")
 				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := bptree.NewBPTreeN(16)
 				votingInfos.Set(voterAddr.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
 			proposalID:    1,
@@ -115,9 +115,9 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 		},
 		{
 			name: "voting info does not exist for user",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
-				store.SetProposalVotingInfos(1, bptree.NewBPTreeN(16))
+				store.SetProposalVotingInfos(0, cur, 1, bptree.NewBPTreeN(16))
 				return store
 			},
 			proposalID:    1,
@@ -126,7 +126,7 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 		},
 		{
 			name: "proposal has no voting infos",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				return store
 			},
@@ -136,13 +136,13 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 		},
 		{
 			name: "different user not found",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				otherUser := address("g1other00000000000000000000000000000002")
 				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := bptree.NewBPTreeN(16)
 				votingInfos.Set(otherUser.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
 			proposalID:    1,
@@ -153,7 +153,7 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			store := tt.setupVotingInfos()
+			store := tt.setupVotingInfos(cur)
 			gv := &governanceV1{
 				store:          store,
 				stakerAccessor: newMockGovStakerAccessor(),
@@ -206,7 +206,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 
 			// Create proposal
 			proposal := createTestProposal(tt.proposalID)
-			store.SetProposal(tt.proposalID, proposal)
+			store.SetProposal(0, cur, tt.proposalID, proposal)
 
 			// Create voting infos
 			votingInfos := bptree.NewBPTreeN(16)
@@ -217,7 +217,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 			}
 
 			// Update votes
-			err := gv.updateProposalUserVotes(proposal, votingInfos)
+			err := gv.updateProposalUserVotes(0, cur, proposal, votingInfos)
 
 			uassert.NoError(t, err)
 

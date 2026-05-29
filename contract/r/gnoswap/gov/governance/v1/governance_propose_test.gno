@@ -174,12 +174,12 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(0, cur, t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
@@ -370,12 +370,12 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(0, cur, t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
@@ -656,12 +656,12 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(0, cur, t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
@@ -756,7 +756,7 @@ func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
+			setupTestConfig(0, cur, t, gov, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -767,7 +767,7 @@ func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 			})
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(0, cur, t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -970,7 +970,7 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
+			setupTestConfig(0, cur, t, gov, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -981,13 +981,13 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			})
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(0, cur, t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			if tt.setupActiveProposal != nil {
-				gov.addProposal(tt.setupActiveProposal())
+				gov.addProposal(0, cur, tt.setupActiveProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -1081,7 +1081,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T)
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
+			setupTestConfig(0, cur, t, gov, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -1092,7 +1092,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T)
 			})
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(0, cur, t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1290,7 +1290,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
+			setupTestConfig(0, cur, t, gov, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -1301,7 +1301,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 			})
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(0, cur, t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1334,7 +1334,7 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
-		setupTestConfig(t, gov, &governance.Config{
+		setupTestConfig(0, cur, t, gov, &governance.Config{
 			VotingStartDelay:              86400,
 			VotingPeriod:                  604800,
 			VotingWeightSmoothingDuration: 86400,
@@ -1348,9 +1348,9 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 		caller2 := testutils.TestAddress("proposer2")
 		caller3 := testutils.TestAddress("proposer3")
 
-		setupTestGnsBalance(t, caller1, 10_000_000_000)
-		setupTestGnsBalance(t, caller2, 10_000_000_000)
-		setupTestGnsBalance(t, caller3, 10_000_000_000)
+		setupTestGnsBalance(0, cur, t, caller1, 10_000_000_000)
+		setupTestGnsBalance(0, cur, t, caller2, 10_000_000_000)
+		setupTestGnsBalance(0, cur, t, caller3, 10_000_000_000)
 		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 			caller1.String(): governance.NewVotingInfo(5_000_000_000),
 			caller2.String(): governance.NewVotingInfo(5_000_000_000),
@@ -1414,12 +1414,12 @@ func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes
 	gov.stakerAccessor = mockAccessor
 }
 
-func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress address) {
+func setupTestActiveProposal(cur realm, t *testing.T, gov *governanceV1, proposerAddress address) {
 	// Create an active proposal for the proposer
 	config, _ := gov.getCurrentConfig()
 
 	proposal := governance.NewProposal(
-		gov.nextProposalID(),
+		gov.nextProposalID(0, cur),
 		NewProposalStatus(
 			config,
 			1_000_000_000,
@@ -1434,5 +1434,5 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 		100,
 	)
 
-	gov.addProposal(proposal)
+	gov.addProposal(0, cur, proposal)
 }

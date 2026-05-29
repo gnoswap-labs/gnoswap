@@ -81,7 +81,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 			if !rs.HasSwapFeeKey() {
-				rs.SetSwapFee(25)
+				rs.SetSwapFee(0, cur, 25)
 			}
 
 			testing.SetRealm(tc.callerRealm)
@@ -93,7 +93,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				rs.GetSwapFee()
 			}
 
-			err := rs.SetSwapFee(50)
+			err := rs.SetSwapFee(0, cur, 50)
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -106,17 +106,17 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 func TestStoreSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IRouterStore)
-		testFn       func(*testing.T, IRouterStore)
+		setupFn      func(cur realm, rs IRouterStore)
+		testFn       func(cur realm, t *testing.T, rs IRouterStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get swap fee successfully",
-			testFn: func(t *testing.T, rs IRouterStore) {
+			testFn: func(cur realm, t *testing.T, rs IRouterStore) {
 				uassert.False(t, rs.HasSwapFeeKey(), "should not have swap fee initially")
 
-				err := rs.SetSwapFee(25)
+				err := rs.SetSwapFee(0, cur, 25)
 				uassert.NoError(t, err)
 
 				uassert.True(t, rs.HasSwapFeeKey(), "should have swap fee after setting")
@@ -127,7 +127,7 @@ func TestStoreSwapFee(cur realm, t *testing.T) {
 		},
 		{
 			name: "panic when getting uninitialized swap fee",
-			testFn: func(t *testing.T, rs IRouterStore) {
+			testFn: func(cur realm, t *testing.T, rs IRouterStore) {
 				rs.GetSwapFee()
 			},
 			shouldPanic:  true,
@@ -135,8 +135,8 @@ func TestStoreSwapFee(cur realm, t *testing.T) {
 		},
 		{
 			name: "set and get zero value swap fee",
-			testFn: func(t *testing.T, rs IRouterStore) {
-				err := rs.SetSwapFee(0)
+			testFn: func(cur realm, t *testing.T, rs IRouterStore) {
+				err := rs.SetSwapFee(0, cur, 0)
 				uassert.NoError(t, err)
 
 				uassert.True(t, rs.HasSwapFeeKey(), "should have swap fee key even with zero value")
@@ -147,10 +147,10 @@ func TestStoreSwapFee(cur realm, t *testing.T) {
 		},
 		{
 			name: "set and get max uint64 swap fee",
-			testFn: func(t *testing.T, rs IRouterStore) {
+			testFn: func(cur realm, t *testing.T, rs IRouterStore) {
 				maxUint64 := uint64(18446744073709551615) // 2^64 - 1
 
-				err := rs.SetSwapFee(maxUint64)
+				err := rs.SetSwapFee(0, cur, maxUint64)
 				uassert.NoError(t, err)
 
 				retrieved := rs.GetSwapFee()
@@ -165,7 +165,7 @@ func TestStoreSwapFee(cur realm, t *testing.T) {
 			rs := NewRouterStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(rs)
+				tt.setupFn(cur, rs)
 			}
 
 			if tt.shouldPanic {
@@ -175,7 +175,7 @@ func TestStoreSwapFee(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, rs)
+			tt.testFn(cur, t, rs)
 		})
 	}
 }
@@ -214,11 +214,11 @@ func TestStoreUpdateSwapFee(cur realm, t *testing.T) {
 
 			rs := NewRouterStore(kvStore)
 
-			err := rs.SetSwapFee(tt.initialFee)
+			err := rs.SetSwapFee(0, cur, tt.initialFee)
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.initialFee, rs.GetSwapFee())
 
-			err = rs.SetSwapFee(tt.updatedFee)
+			err = rs.SetSwapFee(0, cur, tt.updatedFee)
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.updatedFee, rs.GetSwapFee())
 		})
