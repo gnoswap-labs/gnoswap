@@ -412,10 +412,10 @@ func TestChangeImplementation_Success(cur realm, t *testing.T) {
 
 				got := vmInternal.GetCurrentPackagePath()
 				uassert.Equal(t, tt.expectedCurrent, got,
-				    ufmt.Sprintf("GetCurrentPackagePath() = %s, want %s", got, tt.expectedCurrent))
+					ufmt.Sprintf("GetCurrentPackagePath() = %s, want %s", got, tt.expectedCurrent))
 
 				uassert.NotNil(t, vmInternal.GetCurrentImplementation(),
-				    "GetCurrentImplementation() should not be nil after successful change")
+					"GetCurrentImplementation() should not be nil after successful change")
 			}
 		})
 	}
@@ -482,6 +482,20 @@ func TestGetInitializers(cur realm, t *testing.T) {
 		uassert.NotNil(t, initializers, "initializers should not be nil")
 		uassert.True(t, len(initializers) == 0, "len(initializers) should be 0")
 	})
+}
+
+// makeInitializerSafe creates a safe copy of an initializer function for test inspection.
+func makeInitializerSafe(data any) any {
+	fn, ok := data.(func(_ int, rlm realm, store any) any)
+	if !ok {
+		panic(ufmt.Sprintf("expected func(_ int, rlm realm, store any) any, got %T", data))
+	}
+
+	cpy := func(_ int, rlm realm, store any) any {
+		return fn(0, rlm, store)
+	}
+
+	return cpy
 }
 
 // TestMakeInitializerSafe_InvalidType tests panic on invalid type
@@ -633,7 +647,7 @@ func TestIsContainDomainPath(cur realm, t *testing.T) {
 
 			result := vm.isContainDomainPath(tt.testPath)
 			uassert.True(t, result == tt.expected,
-			    ufmt.Sprintf("isContainDomainPath(%q) = %v, want %v", tt.testPath, result, tt.expected))
+				ufmt.Sprintf("isContainDomainPath(%q) = %v, want %v", tt.testPath, result, tt.expected))
 		})
 	}
 }
@@ -707,7 +721,7 @@ func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 				fullPath := tt.domainPath + "/" + pkg
 				err := vmInternal.ChangeImplementation(0, cur, fullPath)
 				uassert.Nil(t, err,
-				    ufmt.Sprintf("unexpected error during change to %s: %v", pkg, err))
+					ufmt.Sprintf("unexpected error during change to %s: %v", pkg, err))
 			}
 
 			// Verify final state
@@ -718,7 +732,7 @@ func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 
 			// Verify implementation is not nil
 			uassert.NotNil(t, vmInternal.GetCurrentImplementation(),
-			    "implementation should not be nil after changes")
+				"implementation should not be nil after changes")
 		})
 	}
 }

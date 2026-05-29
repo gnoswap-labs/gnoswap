@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	// Package-init reads use chain/runtime/unsafe.CurrentRealm because there
-	// is no `cur realm` in scope at package-initialization time. The values
-	// captured here describe the protocol_fee realm itself, not any caller.
 	currentAddress address
 	domainPath     string
 
