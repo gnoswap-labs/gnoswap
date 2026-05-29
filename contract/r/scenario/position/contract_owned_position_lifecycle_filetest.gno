@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
@@ -32,15 +33,15 @@ import (
 )
 
 const (
-	INT64_MAX int64 = 9223372036854775807
+	INT64_MAX int64  = 9223372036854775807
 	MIN_PRICE string = "4295128740"
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 
 	originAddr  = testutils.TestAddress("vault-origin")
@@ -117,7 +118,7 @@ func setupPoolAndFundVault() {
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	staker.SetPoolTier(cross, poolPath, 1)
