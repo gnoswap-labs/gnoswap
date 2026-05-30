@@ -440,7 +440,7 @@ func initSwapPaidSetFeeMintPosition(
 		uint256.NewUintFromInt64(amount1Requested),
 	)
 
-	testing.SetRealm(testing.NewUserRealm(positionAddr))
+	testing.SetRealm(posRealm)
 	mockInstanceMint(
 		0, cur,
 		token0Path,

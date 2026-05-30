@@ -494,6 +494,12 @@ type createMockPoolParams struct {
 }
 
 func makeMockPool(params createMockPoolParams) *pl.Pool {
+	// NewSlot0/NewPool clone the sqrt price, so a nil value would panic.
+	// Default to the 1:1 price when callers don't specify one.
+	if params.slot0.sqrtPriceX96 == nil {
+		params.slot0.sqrtPriceX96 = u256.MustFromDecimal(EQUAL_PRICE_RATIO)
+	}
+
 	slot0 := pl.NewSlot0(
 		params.slot0.sqrtPriceX96,
 		params.slot0.tick,

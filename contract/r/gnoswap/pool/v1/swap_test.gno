@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -98,8 +97,8 @@ func TestProtocolFees_ManagementAndCollection(cur realm, t *testing.T) {
 	for _, test := range feeManagementTests {
 		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Given: Specific protocol fee state
-			pool := &pl.Pool{}
-			protocolFees := pl.TokenPair{}
+			pool := pl.NewPool(barPath, bazPath, STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 0, 0)
+			protocolFees := pl.NewTokenPair()
 			protocolFees.SetToken0(test.initialFees["token0"])
 			protocolFees.SetToken1(test.initialFees["token1"])
 			pool.SetProtocolFees(protocolFees)
@@ -404,7 +403,13 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		AsAdmin().
 		GivenPoolCreated(cur, barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
-	defer initPoolTest(cur, t)
+	defer func() {
+		// initPoolTest re-runs UpgradeImpl, which requires admin/governance.
+		// Restore the admin realm before the deferred reset so it is not run
+		// under whatever realm the sub-tests last left active.
+		testing.SetRealm(adminRealm)
+		initPoolTest(cur, t)
+	}()
 
 	validationTests := []struct {
 		name           string
@@ -1076,36 +1081,16 @@ func TestSwap_FeeTierOptimization(cur realm, t *testing.T) {
 }
 
 func createMockLiquidityPool() *pl.Pool {
-	pool := makeMockPool(createMockPoolParams{
-		token0Path:  "token0",
-		token1Path:  "token1",
-		fee:         STANDARD_FEE_TIER,
-		tickSpacing: 60,
-		slot0: struct {
-			sqrtPriceX96 *u256.Uint
-			tick         int32
-			feeProtocol  uint8
-			unlocked     bool
-		}{
-			sqrtPriceX96: gnsmath.TickMathGetSqrtRatioAtTick(0),
-			tick:         0,
-			feeProtocol:  0,
-			unlocked:     true,
-		},
-		liquidity: u256.MustFromDecimal("1000000000000000000"),
-		protocolFees: struct {
-			token0 int64
-			token1 int64
-		}{
-			token0: 0,
-			token1: 0,
-		},
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(map[int16]string),
-		ticks:                bptree.NewBPTreeN(32),
-		positions:            bptree.NewBPTreeN(16),
-	})
+	// Build the pool with pl.NewPool so every internal container (tickBitmaps
+	// map, ticks/positions trees) is allocated and owned by the pool realm.
+	// makeMockPool installs test-realm-owned containers via setters such as
+	// SetTickBitmaps; mutating an entry of such a container later (e.g. the
+	// lazy tickBitmap init inside computeSwap) trips the interrealm v2 readonly
+	// taint check. Mutating the pool's own container is allowed.
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, gnsmath.TickMathGetSqrtRatioAtTick(0), 60, 0, 0)
+	pool.SetLiquidity(u256.MustFromDecimal("1000000000000000000"))
+	pool.SetFeeGrowthGlobal0X128(u256.Zero())
+	pool.SetFeeGrowthGlobal1X128(u256.Zero())
 
 	wordPos, _ := tickBitmapPosition(0)
 	setTickBitmap(pool, wordPos, u256.NewUint(1))

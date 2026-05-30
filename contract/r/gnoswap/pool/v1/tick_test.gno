@@ -73,7 +73,7 @@ func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 		feeGrowthOutside1X128 string,
 		initialized bool,
 	) pl.TickInfo {
-		tickInfo := pl.TickInfo{}
+		tickInfo := pl.NewTickInfo()
 		tickInfo.SetLiquidityGross(liquidityGross)
 		tickInfo.SetLiquidityNet(liquidityNet)
 		tickInfo.SetFeeGrowthOutside0X128(feeGrowthOutside0X128)
@@ -249,9 +249,11 @@ func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 }
 
 func TestTickUpdate(cur realm, t *testing.T) {
-	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
-	})
+	// Use pl.NewPool so the internal ticks BPTree is allocated and owned by the
+	// pool realm. makeMockPool would override it with a test-realm-owned tree
+	// (via SetTicks), and the in-place slot update performed by the second
+	// setTick would then trip the interrealm v2 readonly taint check.
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 0, 0)
 
 	tests := []struct {
 		name                 string
@@ -482,9 +484,10 @@ func TestTickUpdate(cur realm, t *testing.T) {
 }
 
 func TestTickCross(cur realm, t *testing.T) {
-	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
-	})
+	// Use pl.NewPool so the internal ticks BPTree is owned by the pool realm;
+	// otherwise the in-place slot update in tickCross->setTick trips the
+	// interrealm v2 readonly taint check (see TestTickUpdate).
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 0, 0)
 
 	// Setup initial tick state
 
@@ -534,8 +537,6 @@ func TestTickCross(cur realm, t *testing.T) {
 }
 
 func TestGetTick(cur realm, t *testing.T) {
-	pool := &pl.Pool{}
-
 	ticks := bptree.NewBPTreeN(32)
 	tickInfo := mockTickInfo{
 		liquidityGross:        u256.NewUint(1000),
@@ -546,7 +547,9 @@ func TestGetTick(cur realm, t *testing.T) {
 	}
 	ticks.Set(pl.EncodeTickKey(50), tickInfo.toTickInfo())
 
-	pool.SetTicks(ticks)
+	pool := makeMockPool(createMockPoolParams{
+		ticks: ticks,
+	})
 
 	tests := []struct {
 		name     string

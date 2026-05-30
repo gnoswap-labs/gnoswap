@@ -396,7 +396,7 @@ func TestPositionUpdate_FeeAccumulation(cur realm, t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			// initial position state
-			position := pl.PositionInfo{}
+			position := pl.NewPositionInfo()
 			position.SetLiquidity(scenario.initialLiquidity)
 			position.SetFeeGrowthInside0LastX128("0")
 			position.SetFeeGrowthInside1LastX128("0")
@@ -502,7 +502,7 @@ func TestPositionUpdateNegativeValues(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			position := pl.PositionInfo{}
+			position := pl.NewPositionInfo()
 			position.SetLiquidity(tt.initialLiquidity)
 			position.SetFeeGrowthInside0LastX128(tt.initialFeeGrowth0Last)
 			position.SetFeeGrowthInside1LastX128(tt.initialFeeGrowth1Last)
