@@ -232,7 +232,9 @@ func (i *poolV1) safeSwapCallback(
 
 	// execute swap callback
 	// CallbackMarker is created by the pool module to enforce type-system level validation.
-	err := swapCallback(cross(rlm), amount0Delta, amount1Delta, &pl.CallbackMarker{})
+	// Allocation goes through pl.NewCallbackMarker so the alloc happens in pool realm
+	// (interrealm v2 forbids /r/-declared types being constructed outside their owner).
+	err := swapCallback(cross(rlm), amount0Delta, amount1Delta, pl.NewCallbackMarker())
 	if err != nil {
 		panic(err)
 	}

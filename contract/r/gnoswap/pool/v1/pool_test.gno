@@ -479,24 +479,23 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 	for _, tt := range edgeCases {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Set up pool with specific conditions
-			pool := &pl.Pool{}
+			pool := pl.NewPool(fooTokenPath, barTokenPath, FeeTier3000, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 100, tt.initialTick, 0)
 
-			slot0 := pl.Slot0{}
-			slot0.SetSqrtPriceX96(u256.MustFromDecimal(EQUAL_PRICE_RATIO))
-			slot0.SetTick(tt.initialTick)
+			slot0 := pl.NewSlot0(u256.MustFromDecimal(EQUAL_PRICE_RATIO), tt.initialTick, 0, true)
 			pool.SetSlot0(slot0)
 
-			observationState := &pl.ObservationState{}
+			observationState := pl.NewObservationState(100)
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
 			observationState.SetCardinalityNext(1)
-			obs := &pl.Observation{}
-			obs.SetBlockTimestamp(100)
-			obs.SetTickCumulative(5000000000)
-			obs.SetLiquidityCumulative("3000000")
-			obs.SetSecondsPerLiquidityCumulativeX128("0")
-			obs.SetInitialized(true)
-			observationState.SetObservations(map[uint16]*pl.Observation{0: obs})
+			obs := pl.NewObservation(
+				100,
+				5000000000,
+				"3000000",
+				"0",
+				true,
+			)
+			observationState.SetObservation(0, obs)
 			pool.SetObservationState(observationState)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
@@ -922,6 +921,7 @@ func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 
 	// Set tokens and execute swap
 	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
 
 	// Send tokens to router
 	switch pool.Token0Path() {
@@ -948,7 +948,7 @@ func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 
 	mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(0, cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 		})
 
 	testing.SkipHeights(1)
@@ -1172,7 +1172,7 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 		"4295128740",
 		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(0, cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
 		},
 	)
 

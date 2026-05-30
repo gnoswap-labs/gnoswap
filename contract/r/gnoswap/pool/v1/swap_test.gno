@@ -543,7 +543,7 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(0, cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
+						return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 					})
 			})
 
@@ -765,7 +765,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
 
 			// Then: Verify consistency between prediction and actual result
@@ -946,7 +946,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 						alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 						pattern.swapParams.priceLimit, routerAddr,
 						func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-							return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+							return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 						})
 				})
 			} else {
@@ -954,7 +954,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 					alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 					pattern.swapParams.priceLimit, routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					})
 
 				// Then: Verify expected trading result
@@ -1030,7 +1030,7 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
 
 			// Then: Verify stable handling in extreme conditions
@@ -1064,7 +1064,7 @@ func TestSwap_FeeTierOptimization(cur realm, t *testing.T) {
 			adminAddr, true, "40012000",
 			gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
 			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 			})
 
 		// Then: Verify fee efficiency
@@ -1382,7 +1382,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	// when: Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		t.Logf("Callback: amount0=%d, amount1=%d", amount0Delta, amount1Delta)
-		return mockSwapCallback(0, cur, token0Path, token1Path, amount0Delta, amount1Delta)
+		return mockSwapCallback(cur, token0Path, token1Path, amount0Delta, amount1Delta)
 	}
 
 	// Swap parameters matching the failing case
@@ -1552,7 +1552,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 
 					// Step 6: Complete original swap payment
 					testing.SetRealm(rouRealm)
-					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				}
 
 				// Step 1-3, 7: Execute swap with malicious callback
@@ -1610,7 +1610,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 
@@ -1626,7 +1626,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 
@@ -1670,7 +1670,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					uassert.False(t, getMockInstance().store.GetUnlocked(), "Pool should be locked during callback")
 
 					// Step 6: Complete swap payment
-					return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				}
 
 				// Step 1-4, 7: Execute swap
@@ -1721,7 +1721,7 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-						return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
 				)
 			},
@@ -1979,7 +1979,7 @@ func TestSwapCallback_DeltaConvention(cur realm, t *testing.T) {
 			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 				capturedAmount0Delta = amount0Delta
 				capturedAmount1Delta = amount1Delta
-				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 			}
 
 			// Determine price limit based on direction
@@ -2066,7 +2066,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		if amount1Delta > 0 {
 			token1Transferred = amount1Delta
 		}
-		return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+		return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 	}
 
 	// Test zeroForOne: should transfer token0 only
@@ -2169,7 +2169,7 @@ func TestSwap_FlashSwapPattern(cur realm, t *testing.T) {
 				recipientBalanceDuringCallback = common.BalanceOf(outputTokenPath, routerAddr)
 
 				// Complete the swap by paying input tokens
-				return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 			}
 
 			// Get initial balance
@@ -2243,7 +2243,7 @@ func TestSwap_FlashSwapArbitragePattern(cur realm, t *testing.T) {
 		}
 
 		// Pay back input tokens
-		return mockSwapCallback(0, cur, barPath, bazPath, amount0Delta, amount1Delta)
+		return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 	}
 
 	// Execute flash swap
