@@ -40,9 +40,8 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	// only position contract can call this function
 	previousRealm := rlm.Previous()
@@ -50,6 +49,9 @@ func (i *poolV1) HandleWithdrawalFee(
 	access.AssertIsPosition(caller)
 
 	common.MustRegistered(token0Path, token1Path)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	fee := u256.NewUint(i.store.GetWithdrawalFeeBPS())
 	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
@@ -115,13 +117,15 @@ func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	prevPoolCreationFee := i.store.GetPoolCreationFee()
 	err := i.setPoolCreationFee(0, rlm, fee)
@@ -141,13 +145,15 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	prevWithdrawalFee := i.store.GetWithdrawalFeeBPS()
 

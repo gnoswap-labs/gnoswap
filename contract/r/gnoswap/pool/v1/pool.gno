@@ -50,13 +50,15 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
 	if liquidity.IsZero() {
@@ -84,12 +86,6 @@ func (i *poolV1) Mint(
 
 	if amount1.Gt(zero) {
 		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
-	}
-
-	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(0, rlm, pool)
-	if err != nil {
-		panic(err)
 	}
 
 	return amount0.ToString(), amount1.ToString()
@@ -125,13 +121,15 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
 	liqAmountInt256 := safeConvertToInt128(liqAmount)
@@ -155,12 +153,6 @@ func (i *poolV1) Burn(
 	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
-
-	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(0, rlm, pool)
-	if err != nil {
-		panic(err)
-	}
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -196,13 +188,15 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	amount0Req := safeParseInt64(amount0Requested)
 	amount1Req := safeParseInt64(amount1Requested)
@@ -242,10 +236,6 @@ func (i *poolV1) Collect(
 
 	setPosition(pool, positionKey, *position)
 
-	if err := i.savePool(0, rlm, pool); err != nil {
-		panic(err)
-	}
-
 	return formatInt(amount0), formatInt(amount1)
 }
 
@@ -262,15 +252,17 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path, token1Path)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	amount0, amount1 := i.collectProtocol(
 		0,
@@ -337,11 +329,6 @@ func (i *poolV1) collectProtocol(
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
 
-	err = i.savePool(0, rlm, pool)
-	if err != nil {
-		panic(err)
-	}
-
 	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
 	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
 
@@ -380,11 +367,14 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	fee uint32,
 	cardinalityNext uint16,
 ) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
+
+	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
 	if err != nil {
 		panic(err)

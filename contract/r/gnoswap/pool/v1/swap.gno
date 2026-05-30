@@ -36,12 +36,14 @@ var (
 //
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetTickCrossHook(0, rlm, hook)
 	if err != nil {
@@ -56,12 +58,14 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetSwapStartHook(0, rlm, hook)
 	if err != nil {
@@ -76,12 +80,14 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetSwapEndHook(0, rlm, hook)
 	if err != nil {
@@ -97,7 +103,8 @@ type SwapResult struct {
 	NewSqrtPrice         *u256.Uint
 	NewTick              int32
 	NewLiquidity         *u256.Uint
-	NewProtocolFees      pl.TokenPair
+	NewProtocolFeeToken0 int64
+	NewProtocolFeeToken1 int64
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
 }
@@ -146,6 +153,7 @@ func (i *poolV1) Swap(
 	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
 	assertIsNotUserCall(0, rlm)
@@ -396,7 +404,8 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross ti
 		NewSqrtPrice:         state.sqrtPriceX96,
 		NewTick:              state.tick,
 		NewLiquidity:         state.liquidity,
-		NewProtocolFees:      pool.ProtocolFees(),
+		NewProtocolFeeToken0: pool.ProtocolFeesToken0(),
+		NewProtocolFeeToken1: pool.ProtocolFeesToken1(),
 		FeeGrowthGlobal0X128: pool.FeeGrowthGlobal0X128(),
 		FeeGrowthGlobal1X128: pool.FeeGrowthGlobal1X128(),
 	}
@@ -404,12 +413,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross ti
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken0 = safeAddInt64(result.NewProtocolFeeToken0, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken1 = safeAddInt64(result.NewProtocolFeeToken1, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -426,7 +435,8 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 	pool.SetSlot0(slot0)
 
 	pool.SetLiquidity(result.NewLiquidity)
-	pool.SetProtocolFees(result.NewProtocolFees)
+	pool.SetProtocolFeesToken0(result.NewProtocolFeeToken0)
+	pool.SetProtocolFeesToken1(result.NewProtocolFeeToken1)
 	pool.SetFeeGrowthGlobal0X128(result.FeeGrowthGlobal0X128)
 	pool.SetFeeGrowthGlobal1X128(result.FeeGrowthGlobal1X128)
 }

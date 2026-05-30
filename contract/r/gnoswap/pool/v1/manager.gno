@@ -60,12 +60,14 @@ func (i *poolV1) CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	assertIsSupportedFeeTier(fee)
 	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	en.MintAndDistributeGns(cross(rlm))
 
@@ -144,12 +146,14 @@ func (i *poolV1) CreatePool(
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.setFeeProtocolInternal(0, rlm, feeProtocol0, feeProtocol1)
 	if err != nil {
