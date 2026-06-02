@@ -127,6 +127,61 @@ func TestCanonicalLargeStakedLiquidity_2(cur realm, t *testing.T) {
 }
 
 // Tests simple case with tick crossing
+func TestCanonicalTickCross_NetZeroDeltaSharedBoundary(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
+
+	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
+	canonical.CreatePool(gnousdc, 1, 5)
+
+	liquidity := u256.NewUint(1000000000000000000)
+	err := canonical.StakeToken(
+		cur,
+		0,
+		gnousdc,
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		0,
+		10,
+		liquidity,
+	)
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		cur,
+		1,
+		gnousdc,
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		10,
+		20,
+		liquidity,
+	)
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	pool, ok := canonical.global.pools.Get(gnousdc)
+	if !ok {
+		t.Fatalf("pool not found: %s", gnousdc)
+	}
+	tick := pool.Ticks().Get(10)
+	if tick.StakedLiquidityGross().IsZero() {
+		t.Fatalf("tick 10 must remain initialized")
+	}
+	if !tick.StakedLiquidityDelta().IsZero() {
+		t.Fatalf("tick 10 delta = %s, want 0", tick.StakedLiquidityDelta().ToString())
+	}
+
+	canonical.MoveTick(cur, t, gnousdc, 10)
+	canonical.NextBlock()
+
+	expected := canonical.PerSecondEmission * 30 / 100
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 1, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 1, expected)
+}
+
 func TestCanonicalTickCross_0(cur realm, t *testing.T) {
 	canonical := Setup(cur, t)
 
