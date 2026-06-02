@@ -129,8 +129,8 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 
 	tick := pool.Ticks().Get(tickId)
 
-	// Skip ticks with zero staked liquidity (no reward impact)
-	if tick.StakedLiquidityDelta().Sign() == 0 {
+	// Skip ticks without staked boundary liquidity (no reward impact)
+	if tick.StakedLiquidityGross().IsZero() {
 		return
 	}
 
