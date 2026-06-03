@@ -60,7 +60,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 		{
 			name: "balance with one NFT",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(100))
 			},
@@ -70,7 +70,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 		{
 			name: "balance with zero NFTs",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(100))
 			},
@@ -80,7 +80,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 		{
 			name: "balance with multiple NFTs",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(1))
 				Mint(cross(cur), addr01, tid(2))
@@ -92,7 +92,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 		{
 			name: "balance after transfer",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(1))
 				Mint(cross(cur), addr01, tid(2))
@@ -108,7 +108,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 		{
 			name: "balance of recipient after transfer",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(1))
 				Mint(cross(cur), addr01, tid(2))
@@ -136,7 +136,7 @@ func TestBalanceOf(cur realm, t *testing.T) {
 }
 
 func TestTotalSupply(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	tests := []struct {
 		name     string
 		setup    func(cur realm)
@@ -177,7 +177,7 @@ func TestTotalSupply(cur realm, t *testing.T) {
 }
 
 func TestOwnerOf(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 	Mint(cross(cur), addr02, tid(2))
@@ -247,7 +247,7 @@ func TestSetApprovalForAll(cur realm, t *testing.T) {
 		{
 			name: "approve operator for all tokens",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 			},
 			callerRealm: addr01Realm,
 			operator:    addr02,
@@ -257,7 +257,7 @@ func TestSetApprovalForAll(cur realm, t *testing.T) {
 		{
 			name: "revoke operator approval for all tokens",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(addr01Realm)
 				SetApprovalForAll(cross(cur), addr02, true)
 			},
@@ -269,7 +269,7 @@ func TestSetApprovalForAll(cur realm, t *testing.T) {
 		{
 			name: "approve invalid operator address",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 			},
 			callerRealm: addr01Realm,
 			operator:    address(""),
@@ -280,7 +280,7 @@ func TestSetApprovalForAll(cur realm, t *testing.T) {
 		{
 			name: "approve self as operator",
 			setup: func(cur realm) {
-				resetObject(t)
+				resetObject(cur, t)
 			},
 			callerRealm: addr01Realm,
 			operator:    addr01,
@@ -355,7 +355,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "successfully set token uri by owner with token id 1",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				// Mint token without URI by directly calling nft.Mint
 				checkErr(nft.Mint(positionAddr, tid(tokenId)))
@@ -367,7 +367,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "successfully set token uri by owner with token id 2",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				checkErr(nft.Mint(positionAddr, tid(tokenId)))
 			},
@@ -378,7 +378,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "successfully set token uri by owner with token id 100",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				checkErr(nft.Mint(positionAddr, tid(tokenId)))
 			},
@@ -389,7 +389,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "fail to set token uri on already set token with token id 1",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(tokenId))
 			},
@@ -401,7 +401,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "fail to set token uri on already set token with token id 999",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(tokenId))
 			},
@@ -413,7 +413,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "fail to set token uri by unauthorized caller with token id 1",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(tokenId))
 			},
@@ -425,7 +425,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 		{
 			name: "fail to set token uri by unauthorized caller with token id 50",
 			setup: func(cur realm, tokenId uint64) {
-				resetObject(t)
+				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
 				Mint(cross(cur), addr01, tid(tokenId))
 			},
@@ -461,7 +461,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 }
 
 func TestGetApproved(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -531,7 +531,7 @@ func TestGetApproved(cur realm, t *testing.T) {
 }
 
 func TestTransferFrom(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -738,7 +738,7 @@ func TestMint(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetObject(t)
+			resetObject(cur, t)
 
 			// token id 0 is pre-minted
 			testing.SetRealm(positionRealm)
@@ -816,7 +816,7 @@ func TestBurn(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetObject(t)
+			resetObject(cur, t)
 
 			// token id 1 is pre-minted
 			testing.SetRealm(positionRealm)
@@ -857,7 +857,7 @@ func TestBurn(cur realm, t *testing.T) {
 }
 
 func TestTokenURI(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -899,7 +899,7 @@ func TestTokenURI(cur realm, t *testing.T) {
 }
 
 func TestMustOwnerOf(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -939,7 +939,7 @@ func TestMustOwnerOf(cur realm, t *testing.T) {
 }
 
 func TestSafeTransferFrom(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -1067,7 +1067,7 @@ func TestSafeTransferFrom(cur realm, t *testing.T) {
 }
 
 func TestExists(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 	Mint(cross(cur), addr01, tid(2))
@@ -1135,7 +1135,7 @@ func TestRender(cur realm, t *testing.T) {
 }
 
 func TestApprove(cur realm, t *testing.T) {
-	resetObject(t)
+	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
 	Mint(cross(cur), addr01, tid(1))
 
@@ -1343,7 +1343,7 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			resetObject(t)
+			resetObject(cur, t)
 
 			if tc.setup != nil {
 				tc.setup(cur)
@@ -1381,8 +1381,8 @@ func callSetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) error 
 	return setTokenURI(0, cur, tid, tURI)
 }
 
-func resetObject(t *testing.T) {
+func resetObject(cur realm, t *testing.T) {
 	t.Helper()
 
-	nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	nft = grc721.NewBasicNFT(0, cur, "GNOSWAP NFT", "GNFT")
 }

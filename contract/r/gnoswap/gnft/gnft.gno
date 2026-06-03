@@ -11,7 +11,11 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-var nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+var nft *grc721.BasicNFT
+
+func init(cur realm) {
+	nft = grc721.NewBasicNFT(0, cur, "GNOSWAP NFT", "GNFT")
+}
 
 // Name returns the NFT collection name.
 func Name() string {

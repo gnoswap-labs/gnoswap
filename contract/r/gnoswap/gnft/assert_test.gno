@@ -69,7 +69,7 @@ func TestAssertIsAllowedTransfer(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetObject(t)
+			resetObject(cur, t)
 
 			if tt.setup != nil {
 				tt.setup(cur, t)
