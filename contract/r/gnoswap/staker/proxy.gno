@@ -1,5 +1,10 @@
 package staker
 
+import (
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+)
+
 // StakeToken stakes a position NFT to earn rewards.
 //
 // Parameters:
@@ -36,6 +41,19 @@ func UnStakeToken(cur realm, positionId uint64) string {
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	poolPath, stakingDetails, internalRewards, externalRewards := getImplementation().CollectReward(0, cur, positionId)
 	return poolPath, stakingDetails, cloneStringInt64Map(internalRewards), cloneStringInt64Map(externalRewards)
+}
+
+func EmissionCacheUpdateHook(cur realm, emissionAmountPerSecond int64) {
+	access.AssertIsEmission(cur.Previous().Address())
+	getImplementation().EmissionCacheUpdateHook(0, cur, emissionAmountPerSecond)
+}
+
+func RegisterEmissionCacheUpdateHook(cur realm) {
+	if cur.Previous().PkgPath() != versionManager.GetCurrentPackagePath() {
+		panic("caller is not current staker implementation")
+	}
+
+	emission.SetOnDistributionPctChangeCallback(cross(cur), EmissionCacheUpdateHook)
 }
 
 // SetPoolTier sets the reward tier for a pool.

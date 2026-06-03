@@ -276,6 +276,14 @@ type Warmup struct {
 	WarmupRatio    uint64
 }
 
+func NewWarmup(timeDuration, nextWarmupTime int64, warmupRatio uint64) Warmup {
+	return Warmup{
+		TimeDuration:   timeDuration,
+		NextWarmupTime: nextWarmupTime,
+		WarmupRatio:    warmupRatio,
+	}
+}
+
 func (w *Warmup) SetNextWarmupTime(nextWarmupTime int64) {
 	w.NextWarmupTime = nextWarmupTime
 }

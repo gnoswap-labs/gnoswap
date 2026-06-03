@@ -60,6 +60,10 @@ func (m *MockStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return res[0].(string), res[1].(string), res[2].(map[string]int64), res[3].(map[string]int64)
 }
 
+func (m *MockStaker) EmissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
+	m.Response.Get("EmissionCacheUpdateHook")
+}
+
 func (m *MockStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	m.Response.Get("SetPoolTier")
 }
