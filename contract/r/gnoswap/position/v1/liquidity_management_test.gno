@@ -313,9 +313,9 @@ func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 			initPositionTest(cur, t)
 
 			initialSetup(cur, t)
-			testing.SetRealm(posRealm)
 			TokenApprove(cur, t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
 			TokenApprove(cur, t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
+			testing.SetRealm(posRealm)
 
 			if tt.expectError {
 				if tt.errorType == "panic" {
