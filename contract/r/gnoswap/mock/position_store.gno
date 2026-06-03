@@ -22,7 +22,7 @@ func (s *MockPositionStore) GetPositions() *bptree.BPTree {
 	return s.positions
 }
 
-func (s *MockPositionStore) SetPositions(positions *bptree.BPTree) error {
+func (s *MockPositionStore) SetPositions(_ int, rlm realm, positions *bptree.BPTree) error {
 	s.positions = positions
 	return nil
 }
@@ -35,7 +35,7 @@ func (s *MockPositionStore) GetPositionNextID() uint64 {
 	return s.nextID
 }
 
-func (s *MockPositionStore) SetPositionNextID(nextID uint64) error {
+func (s *MockPositionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) error {
 	s.nextID = nextID
 	return nil
 }
@@ -47,18 +47,18 @@ func (s *MockPositionStore) HasPosition(positionId uint64) bool {
 func (s *MockPositionStore) GetPosition(positionId uint64) (position.Position, bool) {
 	value, exists := s.positions.Get(strconv.FormatUint(positionId, 10))
 	if !exists {
-		return position.Position{}, false
+		return *position.NewPosition("", 0, 0, "", "", "", 0, 0, false, ""), false
 	}
 
 	return value.(position.Position), true
 }
 
-func (s *MockPositionStore) SetPosition(positionId uint64, position position.Position) error {
+func (s *MockPositionStore) SetPosition(_ int, rlm realm, positionId uint64, position position.Position) error {
 	s.positions.Set(strconv.FormatUint(positionId, 10), position)
 	return nil
 }
 
-func (s *MockPositionStore) RemovePosition(positionId uint64) error {
+func (s *MockPositionStore) RemovePosition(_ int, rlm realm, positionId uint64) error {
 	s.positions.Remove(strconv.FormatUint(positionId, 10))
 	return nil
 }
@@ -69,18 +69,18 @@ type MockNFTAccessor struct {
 	owners   map[grc721.TokenID]address
 }
 
-func (n *MockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
+func (n *MockNFTAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	n.approved[tid][approved] = true
 	return nil
 }
 
-func (n *MockNFTAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
+func (n *MockNFTAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
 	n.owners[tid] = to
 	n.approved[tid] = make(map[address]bool)
 	return tid
 }
 
-func (n *MockNFTAccessor) Burn(tid grc721.TokenID) {
+func (n *MockNFTAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 	delete(n.owners, tid)
 	delete(n.approved, tid)
 }
