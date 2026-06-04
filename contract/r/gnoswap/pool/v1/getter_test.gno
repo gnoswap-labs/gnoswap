@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 
@@ -40,7 +39,7 @@ func testInitData(cur realm, t *testing.T) {
 	}
 	mockPool := makeMockPool(params)
 
-	mockTicks := bptree.NewBPTreeN(32)
+	mockTicks := pl.NewPoolTicksTree()
 
 	tickInfo := pl.NewTickInfo()
 	tickInfo.SetLiquidityGross("1000000")
@@ -55,7 +54,7 @@ func testInitData(cur realm, t *testing.T) {
 	mockTicks.Set(pl.EncodeTickKey(0), tickInfo)
 	mockPool.SetTicks(mockTicks)
 
-	mockPositions := bptree.NewBPTreeN(16)
+	mockPositions := pl.NewPoolPositionsTree()
 
 	positionInfo := pl.NewPositionInfo()
 	positionInfo.SetLiquidity("1000000")

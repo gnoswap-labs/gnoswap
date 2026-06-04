@@ -236,6 +236,18 @@ func NewPoolsTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(32)
 }
 
+// NewPoolTicksTree creates a BPTree for storing pool tick info (fanout 32),
+// owned by the pool domain realm so leaf-slot writes are not readonly tainted.
+func NewPoolTicksTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(32)
+}
+
+// NewPoolPositionsTree creates a BPTree for storing pool position info (fanout 16),
+// owned by the pool domain realm so leaf-slot writes are not readonly tainted.
+func NewPoolPositionsTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
 type TokenPair struct {
 	token0, token1 int64
 }

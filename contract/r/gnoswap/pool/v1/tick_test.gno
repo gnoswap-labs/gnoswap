@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
@@ -63,7 +62,7 @@ func TestcalculateMaxLiquidityPerTick(cur realm, t *testing.T) {
 func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
+		ticks: pl.NewPoolTicksTree(),
 	})
 
 	makeTickInfo := func(
@@ -537,7 +536,7 @@ func TestTickCross(cur realm, t *testing.T) {
 }
 
 func TestGetTick(cur realm, t *testing.T) {
-	ticks := bptree.NewBPTreeN(32)
+	ticks := pl.NewPoolTicksTree()
 	tickInfo := mockTickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
