@@ -348,7 +348,7 @@ func TestProtocolFeeRewardManager_claimRewards(cur realm, t *testing.T) {
 			tt.setupManager(resolver)
 
 			// When: Claim rewards
-			rewards, err := resolver.claimRewards(0, cur, tt.address, tt.currentTimestamp)
+			rewards, err := resolver.claimRewards(tt.address, tt.currentTimestamp)
 
 			// Then: Check result
 			if tt.expectError {
@@ -374,10 +374,10 @@ func TestProtocolFeeRewardManager_claimRewards_Multipletimes(cur realm, t *testi
 		resolver.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 20)
 
 		// when - claim rewards multiple times
-		claimed1, err1 := resolver.claimRewards(0, cur, "user1", 30)
+		claimed1, err1 := resolver.claimRewards("user1", 30)
 		uassert.NoError(t, err1)
 
-		claimed2, err2 := resolver.claimRewards(0, cur, "user1", 40)
+		claimed2, err2 := resolver.claimRewards("user1", 40)
 		uassert.NoError(t, err2)
 
 		// then - second claim should return zero amounts (no new rewards)

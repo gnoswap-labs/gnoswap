@@ -49,10 +49,10 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 			expectPanic: false,
 			setupMocks: func() {
 				// Setup mocks for successful delegation
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -64,10 +64,10 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "invalid address: ",
 			setupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -79,10 +79,10 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
 			setupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -94,10 +94,10 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-GOV_STAKER-002] invalid amount || amount must be multiple of 1000000",
 			setupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 	}
@@ -131,7 +131,7 @@ func TestStakerDelegate_Delegate(cur realm, t *testing.T) {
 
 func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerDelegateTest(t, gs)
+	cleanupStakerDelegateTest(cur, t, gs)
 
 	contractCallerRealm := testing.NewCodeRealm("gno.land/r/onbloc/delegator")
 	contractCaller := contractCallerRealm.Address()
@@ -196,11 +196,11 @@ func TestStakerDelegate_Undelegate(cur realm, t *testing.T) {
 			expectedAmount: 1000000,
 			expectPanic:    false,
 			setupDelegation: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
-				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+				cleanupStakerDelegateTest(cur, t, gs)
+				setupStakerDelegateTestDelegation(cur, t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
 			},
 			cleanupMocks: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -212,10 +212,10 @@ func TestStakerDelegate_Undelegate(cur realm, t *testing.T) {
 			expectPanic:    true,
 			expectedError:  "invalid address: ",
 			setupDelegation: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -226,11 +226,11 @@ func TestStakerDelegate_Undelegate(cur realm, t *testing.T) {
 			expectedAmount: 0,
 			expectPanic:    false,
 			setupDelegation: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
-				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+				cleanupStakerDelegateTest(cur, t, gs)
+				setupStakerDelegateTestDelegation(cur, t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
 			},
 			cleanupMocks: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 	}
@@ -336,7 +336,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup gov staker with clean state
 			gs := createTestGovStaker()
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator1")
@@ -449,7 +449,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment
 			gs := createTestGovStaker()
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator1")
@@ -504,11 +504,11 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			amount:      minimumAmount,
 			expectPanic: false,
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
-				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+				cleanupStakerDelegateTest(cur, t, gs)
+				setupStakerDelegateTestDelegation(cur, t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -520,11 +520,11 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: errNotEnoughDelegated.Error(),
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
-				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+				cleanupStakerDelegateTest(cur, t, gs)
+				setupStakerDelegateTestDelegation(cur, t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -536,10 +536,10 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: errNotEnoughDelegated.Error(),
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -551,10 +551,10 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "invalid address: ",
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -566,10 +566,10 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "invalid address: ",
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 		{
@@ -581,10 +581,10 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: errSameDelegatee.Error(),
 			setupDelegation: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func() {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 		},
 	}
@@ -619,7 +619,7 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 
 func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerDelegateTest(t, gs)
+	cleanupStakerDelegateTest(cur, t, gs)
 
 	user := testutils.TestAddress("alice")
 	validator1 := testutils.TestAddress("validator1")
@@ -662,7 +662,7 @@ func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testi
 
 func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerDelegateTest(t, gs)
+	cleanupStakerDelegateTest(cur, t, gs)
 
 	user := testutils.TestAddress("alice")
 	validator := testutils.TestAddress("validator1")
@@ -718,11 +718,11 @@ func TestStakerDelegate_CollectUndelegatedGns(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupCollectable: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
-				setupStakerDelegateTestCollectableAmount(t, gs, testutils.TestAddress("alice"), minimumAmount)
+				cleanupStakerDelegateTest(cur, t, gs)
+				setupStakerDelegateTestCollectableAmount(cur, t, gs, testutils.TestAddress("alice"), minimumAmount)
 			},
 			cleanupMocks: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			expectedAmount: minimumAmount,
 		},
@@ -731,10 +731,10 @@ func TestStakerDelegate_CollectUndelegatedGns(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupCollectable: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			cleanupMocks: func(gs *govStakerV1) {
-				cleanupStakerDelegateTest(t, gs)
+				cleanupStakerDelegateTest(cur, t, gs)
 			},
 			expectedAmount: 0,
 		},
@@ -770,9 +770,9 @@ func TestStakerDelegate_CollectUndelegatedGns(cur realm, t *testing.T) {
 
 func TestStakerDelegate_CollectUndelegatedGns_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerDelegateTest(t, gs)
-	setupStakerDelegateTestCollectableAmount(t, gs, testutils.TestAddress("alice"), minimumAmount)
-	defer cleanupStakerDelegateTest(t, gs)
+	cleanupStakerDelegateTest(cur, t, gs)
+	setupStakerDelegateTestCollectableAmount(cur, t, gs, testutils.TestAddress("alice"), minimumAmount)
+	defer cleanupStakerDelegateTest(cur, t, gs)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
@@ -880,7 +880,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 			// Setup GNS balance for caller
 			// In real implementation, would setup actual balance
 
@@ -982,7 +982,7 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup delegation and undelegation
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 			testing.SetHeight(100)
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator")
@@ -1093,7 +1093,7 @@ func TestStakerDelegate_ReferrerFunctionality(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -1184,7 +1184,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup scenario
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 			user, target, amount := tt.setupScenario()
 
 			testing.SetRealm(testing.NewUserRealm(user))
@@ -1230,7 +1230,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(cur realm, t *testing.T) {
 }
 
 // Helper functions
-func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
+func cleanupStakerDelegateTest(cur realm, t *testing.T, gs *govStakerV1) {
 	// Reset delegation state
 	mockStore := gs.store.(*mockGovStakerStore)
 	mockStore.delegationNextID = staker.NewCounter()
@@ -1242,10 +1242,10 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	// Reset managers in store
 	mockStore.delegationManager = staker.NewDelegationManager()
 
-	setupStakerDelegateTestGNSBalance(t)
+	setupStakerDelegateTestGNSBalance(cur, t)
 }
 
-func setupStakerDelegateTestGNSBalance(t *testing.T) {
+func setupStakerDelegateTestGNSBalance(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	amount := int64(1_000_000_000)
@@ -1275,7 +1275,7 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 	gns.Approve(cross(cur), govStakerAddr, amount)
 }
 
-func setupStakerDelegateTestDelegation(t *testing.T, gs *govStakerV1, from, to address, amount int64) {
+func setupStakerDelegateTestDelegation(cur realm, t *testing.T, gs *govStakerV1, from, to address, amount int64) {
 	delegationID := gs.nextDelegationID()
 	delegation := staker.NewDelegation(delegationID, from, to, amount, 100, 100)
 	gs.addDelegation(0, cur, delegationID, delegation)
@@ -1287,7 +1287,7 @@ func setupStakerDelegateTestDelegation(t *testing.T, gs *govStakerV1, from, to a
 	xgns.Mint(cross(cur), from, amount)
 }
 
-func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, user address, amount int64) {
+func setupStakerDelegateTestCollectableAmount(cur realm, t *testing.T, gs *govStakerV1, user address, amount int64) {
 	// Create a delegation that has been undelegated and is collectable
 	delegationID := gs.nextDelegationID()
 	delegation := staker.NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
@@ -1380,7 +1380,7 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(cur realm, t *tes
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test environment
 			gs := createTestGovStaker()
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator1")
@@ -1485,7 +1485,7 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test environment
 			gs := createTestGovStaker()
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			user := tt.setupFunc(gs)
 
@@ -1666,7 +1666,7 @@ func TestStakerDelegate_BoundaryConditions_CollectDelegations(cur realm, t *test
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
-			cleanupStakerDelegateTest(t, gs)
+			cleanupStakerDelegateTest(cur, t, gs)
 
 			// Given: Set initial locked amount
 			err := gs.store.SetTotalLockedAmount(0, cur, tt.initialLocked)

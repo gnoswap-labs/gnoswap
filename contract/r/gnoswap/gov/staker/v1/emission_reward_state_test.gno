@@ -443,7 +443,7 @@ func TestEmissionRewardState_claimRewards(cur realm, t *testing.T) {
 			tt.setupState(resolver)
 
 			// When: Claim rewards
-			claimedAmount, err := resolver.claimRewards(0, cur, tt.currentHeight)
+			claimedAmount, err := resolver.claimRewards(tt.currentHeight)
 
 			// Then: Check result
 			if tt.expectError {
@@ -472,20 +472,20 @@ func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t *t
 	resolver.SetClaimedRewardAmount(200)
 
 	// First claim at ts=100 captures the pending delta (800).
-	first, err := resolver.claimRewards(0, cur, 100)
+	first, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, first, int64(800))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1000))
 
 	// Second and third calls at the same ts=100 must be no-ops.
-	second, err := resolver.claimRewards(0, cur, 100)
+	second, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, second, int64(0))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1000))
 
-	third, err := resolver.claimRewards(0, cur, 100)
+	third, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, third, int64(0))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
@@ -493,7 +493,7 @@ func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t *t
 
 	// Advancing to ts=101 with newly accumulated rewards is claimable again.
 	resolver.SetAccumulatedRewardAmount(1500)
-	fourth, err := resolver.claimRewards(0, cur, 101)
+	fourth, err := resolver.claimRewards(101)
 	uassert.NoError(t, err)
 	uassert.Equal(t, fourth, int64(500))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(101))

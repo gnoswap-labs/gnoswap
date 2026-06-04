@@ -12,10 +12,10 @@ import (
 
 func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(cur realm, t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func() *LaunchpadProjectDepositsResolver
-		ownerAddress  string
-		expectedValue int64
+		name           string
+		setup          func() *LaunchpadProjectDepositsResolver
+		ownerAddress   string
+		expectedValue  int64
 		expectedExists bool
 	}{
 		{
@@ -130,7 +130,7 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(cur realm, t *testi
 			resolver := tc.setup()
 
 			// when
-			result := resolver.setLaunchpadProjectDeposit(0, cur, tc.ownerAddress, tc.depositAmount)
+			result := resolver.setLaunchpadProjectDeposit(tc.ownerAddress, tc.depositAmount)
 
 			// then
 			uassert.True(t, result)
@@ -407,11 +407,11 @@ func TestLaunchpadProjectDeposits_SetDeposit(cur realm, t *testing.T) {
 
 func TestLaunchpadProjectDeposits_RemoveDeposit(cur realm, t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func() *LaunchpadProjectDepositsResolver
-		ownerAddress  string
-		expectedOk    bool
-		shouldExist   bool
+		name         string
+		setup        func() *LaunchpadProjectDepositsResolver
+		ownerAddress string
+		expectedOk   bool
+		shouldExist  bool
 	}{
 		{
 			name: "removes existing deposit",
@@ -465,6 +465,7 @@ func TestLaunchpadProjectDeposits_RemoveDeposit(cur realm, t *testing.T) {
 		})
 	}
 }
+
 // Test boundary conditions for safe arithmetic in launchpad project deposits
 func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 	t.Run("AddDeposit boundary - overflow panic", func(cur realm, t *testing.T) {

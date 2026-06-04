@@ -456,7 +456,7 @@ func TestProtocolFeeRewardState_claimRewards(cur realm, t *testing.T) {
 			tt.setupState(resolver)
 
 			// When: Claim rewards
-			claimedRewards, err := resolver.claimRewards(0, cur, tt.currentTimestamp)
+			claimedRewards, err := resolver.claimRewards(tt.currentTimestamp)
 
 			// Then: Check result
 			if tt.expectError {
@@ -503,19 +503,19 @@ func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t
 	})
 
 	// First claim at ts=100 captures the pending delta.
-	first, err := resolver.claimRewards(0, cur, 100)
+	first, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, first["token1"], int64(800))
 	uassert.Equal(t, first["token2"], int64(300))
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 
 	// Second and third calls at the same ts=100 must be no-ops.
-	second, err := resolver.claimRewards(0, cur, 100)
+	second, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, len(second), 0)
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
 
-	third, err := resolver.claimRewards(0, cur, 100)
+	third, err := resolver.claimRewards(100)
 	uassert.NoError(t, err)
 	uassert.Equal(t, len(third), 0)
 	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
@@ -531,7 +531,7 @@ func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t
 		"token1": 1500,
 		"token2": 300,
 	})
-	fourth, err := resolver.claimRewards(0, cur, 101)
+	fourth, err := resolver.claimRewards(101)
 	uassert.NoError(t, err)
 	uassert.Equal(t, fourth["token1"], int64(500))
 	uassert.Equal(t, fourth["token2"], int64(0))
@@ -709,7 +709,7 @@ func TestProtocolFeeRewardState_EdgeCases(cur realm, t *testing.T) {
 				})
 
 				// First claim returns the full accumulated reward
-				rewards1, err1 := s.claimRewards(0, cur, 100)
+				rewards1, err1 := s.claimRewards(100)
 				uassert.NoError(t, err1)
 				if rewards1["token1"] != 1000 {
 					t.Errorf("Expected 1000, got %d", rewards1["token1"])
@@ -717,7 +717,7 @@ func TestProtocolFeeRewardState_EdgeCases(cur realm, t *testing.T) {
 
 				// Second claim at the same timestamp is an idempotent no-op:
 				// it must not error, and must return no additional rewards.
-				rewards2, err2 := s.claimRewards(0, cur, 100)
+				rewards2, err2 := s.claimRewards(100)
 				uassert.NoError(t, err2)
 				if rewards2["token1"] != 0 {
 					t.Errorf("Expected 0 on second claim, got %d", rewards2["token1"])
@@ -824,7 +824,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(cur realm, t *testing.T) {
 		state.SetClaimedTimestamp(500)
 
 		// when: claim rewards (uses safeSubInt64 in claimRewards)
-		claimed, err := resolver.claimRewards(0, cur, currentTimestamp)
+		claimed, err := resolver.claimRewards(currentTimestamp)
 
 		// then: should result in zero claimable
 		uassert.NoError(t, err)

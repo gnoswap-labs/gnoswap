@@ -5,9 +5,9 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/gnoswap/gns"
 )
 
 // Test CollectReward function
@@ -27,11 +27,11 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupRewards: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
-				setupStakerRewardTestEmissionRewards(t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
+				cleanupStakerRewardTest(cur, t)
+				setupStakerRewardTestEmissionRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 1000,
 			expectedProtocol: make(map[string]int64),
@@ -41,14 +41,14 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupRewards: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
-				setupStakerRewardTestProtocolFeeRewards(t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
+				cleanupStakerRewardTest(cur, t)
+				setupStakerRewardTestProtocolFeeRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 500,
 					barPath:  300,
 				}, 1000)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
@@ -61,10 +61,10 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupRewards: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
 			expectedProtocol: make(map[string]int64),
@@ -74,8 +74,8 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
 			setupRewards: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
-				setupStakerRewardTestProtocolFeeRewards(t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
+				cleanupStakerRewardTest(cur, t)
+				setupStakerRewardTestProtocolFeeRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 1000,
 					barPath:  2000,
 					bazPath:  1500,
@@ -83,7 +83,7 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 				}, 1000)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
@@ -142,12 +142,12 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			to:          testutils.TestAddress("project1"),
 			expectPanic: false,
 			setupLaunchpad: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
-				setupStakerRewardTestLaunchpadDeposit(t, gs, testutils.TestAddress("project1"), 1000)
-				setupStakerRewardTestLaunchpadRewards(t, gs, testutils.TestAddress("project1"), 500)
+				cleanupStakerRewardTest(cur, t)
+				setupStakerRewardTestLaunchpadDeposit(cur, t, gs, testutils.TestAddress("project1"), 1000)
+				setupStakerRewardTestLaunchpadRewards(cur, t, gs, testutils.TestAddress("project1"), 500)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 		{
@@ -157,10 +157,10 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupLaunchpad: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 		{
@@ -170,10 +170,10 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-GOV_STAKER-003] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
 			setupLaunchpad: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 	}
@@ -228,10 +228,10 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			add:         true,
 			expectPanic: false,
 			setupMocks: func(_ *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 		{
@@ -242,11 +242,11 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			add:         false,
 			expectPanic: false,
 			setupMocks: func(gs *govStakerV1) {
-				cleanupStakerRewardTest(t)
-				setupStakerRewardTestLaunchpadStake(t, gs, testutils.TestAddress("project1"), 1000)
+				cleanupStakerRewardTest(cur, t)
+				setupStakerRewardTestLaunchpadStake(cur, t, gs, testutils.TestAddress("project1"), 1000)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 		{
@@ -258,25 +258,25 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			expectPanic:   true,
 			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
 			setupMocks: func(_ *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 		{
-			name:        "Zero amount should panic",
-			caller:      launchpadAddr,
-			addr:        testutils.TestAddress("project1"),
-			amount:      0,
-			add:         true,
-			expectPanic: true,
+			name:          "Zero amount should panic",
+			caller:        launchpadAddr,
+			addr:          testutils.TestAddress("project1"),
+			amount:        0,
+			add:           true,
+			expectPanic:   true,
 			expectedError: "amount must be positive",
 			setupMocks: func(_ *govStakerV1) {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 			cleanupMocks: func() {
-				cleanupStakerRewardTest(t)
+				cleanupStakerRewardTest(cur, t)
 			},
 		},
 	}
@@ -312,9 +312,9 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 
 func TestStakerReward_CollectReward_EmergencyHaltAllowsSettlement(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerRewardTest(t)
-	setupStakerRewardTestEmissionRewards(t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
-	defer cleanupStakerRewardTest(t)
+	cleanupStakerRewardTest(cur, t)
+	setupStakerRewardTestEmissionRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
+	defer cleanupStakerRewardTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
@@ -333,10 +333,10 @@ func TestStakerReward_CollectReward_EmergencyHaltAllowsSettlement(cur realm, t *
 
 func TestStakerReward_CollectRewardFromLaunchPad_EmergencyHaltAllowsSettlement(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerRewardTest(t)
-	setupStakerRewardTestLaunchpadDeposit(t, gs, testutils.TestAddress("project1"), 1000)
-	setupStakerRewardTestLaunchpadRewards(t, gs, testutils.TestAddress("project1"), 500)
-	defer cleanupStakerRewardTest(t)
+	cleanupStakerRewardTest(cur, t)
+	setupStakerRewardTestLaunchpadDeposit(cur, t, gs, testutils.TestAddress("project1"), 1000)
+	setupStakerRewardTestLaunchpadRewards(cur, t, gs, testutils.TestAddress("project1"), 500)
+	defer cleanupStakerRewardTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
@@ -355,9 +355,9 @@ func TestStakerReward_CollectRewardFromLaunchPad_EmergencyHaltAllowsSettlement(c
 
 func TestStakerReward_SetAmountByProjectWallet_EmergencyHaltPolicy(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
-	cleanupStakerRewardTest(t)
-	setupStakerRewardTestLaunchpadStake(t, gs, testutils.TestAddress("project1"), 1000)
-	defer cleanupStakerRewardTest(t)
+	cleanupStakerRewardTest(cur, t)
+	setupStakerRewardTestLaunchpadStake(cur, t, gs, testutils.TestAddress("project1"), 1000)
+	defer cleanupStakerRewardTest(cur, t)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
@@ -451,7 +451,7 @@ func TestStakerReward_transferToken(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup balance if needed
-			cleanupStakerRewardTest(t)
+			cleanupStakerRewardTest(cur, t)
 			tt.setupBalance()
 
 			// When: Transfer token
@@ -529,18 +529,18 @@ func TestStakerReward_LaunchpadExclusionAndRewards(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment
-			cleanupStakerRewardTest(t)
+			cleanupStakerRewardTest(cur, t)
 
 			gs := createTestGovStaker()
 
 			// Setup different types of xGNS holdings
 			if tt.regularXgns > 0 {
-				setupStakerRewardTestEmissionRewards(t, gs, tt.caller, tt.regularXgns, tt.expectEmissionReward, 100)
-				setupStakerRewardTestProtocolFeeRewards(t, gs, tt.caller, tt.regularXgns, tt.expectProtocolReward, 100)
+				setupStakerRewardTestEmissionRewards(cur, t, gs, tt.caller, tt.regularXgns, tt.expectEmissionReward, 100)
+				setupStakerRewardTestProtocolFeeRewards(cur, t, gs, tt.caller, tt.regularXgns, tt.expectProtocolReward, 100)
 			}
 			if tt.launchpadXgns > 0 {
-				setupStakerRewardTestLaunchpadDeposit(t, gs, tt.caller, tt.launchpadXgns)
-				setupStakerRewardTestLaunchpadRewards(t, gs, tt.caller, tt.launchpadXgns)
+				setupStakerRewardTestLaunchpadDeposit(cur, t, gs, tt.caller, tt.launchpadXgns)
+				setupStakerRewardTestLaunchpadRewards(cur, t, gs, tt.caller, tt.launchpadXgns)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
@@ -664,8 +664,8 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup balance if needed
 			// Note: In real implementation, we would set up token balances
-			cleanupStakerRewardTest(t)
-			setupStakerRewardStakerTokenBalance(t)
+			cleanupStakerRewardTest(cur, t)
+			setupStakerRewardStakerTokenBalance(cur, t)
 
 			testing.SetRealm(adminRealm)
 
@@ -769,26 +769,26 @@ func TestStakerReward_RewardCalculationAccuracy(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup reward pools and stakes
-			cleanupStakerRewardTest(t)
+			cleanupStakerRewardTest(cur, t)
 
 			gs := createTestGovStaker()
 
 			user := testutils.TestAddress("user")
-			setupStakerRewardTestEmissionRewards(t, gs, user, tt.userStake, tt.emissionReward, 100)
-			setupStakerRewardTestProtocolFeeRewards(t, gs, user, tt.userStake, tt.protocolFeeReward, 100)
+			setupStakerRewardTestEmissionRewards(cur, t, gs, user, tt.userStake, tt.emissionReward, 100)
+			setupStakerRewardTestProtocolFeeRewards(cur, t, gs, user, tt.userStake, tt.protocolFeeReward, 100)
 
-			setupStakerRewardTestAccumulateEmissionRewards(t, gs, tt.updatedEmissionReward, 1000)
-			setupStakerRewardTestAccumulateProtocolFeeRewards(t, gs, tt.updatedProtocolFeeReward, 1000)
+			setupStakerRewardTestAccumulateEmissionRewards(cur, t, gs, tt.updatedEmissionReward, 1000)
+			setupStakerRewardTestAccumulateProtocolFeeRewards(cur, t, gs, tt.updatedProtocolFeeReward, 1000)
 
 			// When: Claim rewards
 			emissionRewardManager := gs.store.GetEmissionRewardManager()
 
 			emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
-			emission, emissionErr := emissionResolver.claimRewards(0, cur, user.String(), 1000)
+			emission, emissionErr := emissionResolver.claimRewards(user.String(), 1000)
 
 			protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 			protocolResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
-			protocol, protocolFeeErr := protocolResolver.claimRewards(0, cur, user.String(), 1000)
+			protocol, protocolFeeErr := protocolResolver.claimRewards(user.String(), 1000)
 
 			// Then: Check calculated amounts
 			uassert.NoError(t, emissionErr)
@@ -805,11 +805,11 @@ func TestStakerReward_RewardCalculationAccuracy(cur realm, t *testing.T) {
 }
 
 // Helper functions for test setup
-func cleanupStakerRewardTest(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
+func cleanupStakerRewardTest(cur realm, t *testing.T) {
+	setupStakerRewardStakerTokenBalance(cur, t)
 }
 
-func setupStakerRewardStakerTokenBalance(t *testing.T) {
+func setupStakerRewardStakerTokenBalance(cur realm, t *testing.T) {
 	amount := int64(1_000_000_000)
 
 	testing.SetRealm(adminRealm)
@@ -817,7 +817,7 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	bar.Transfer(cross(cur), govStakerAddr, amount*10)
 }
 
-func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {
+func setupStakerRewardTestEmissionRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {
 	// Setup emission rewards for testing
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
@@ -826,7 +826,7 @@ func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr ad
 	gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
 }
 
-func setupStakerRewardTestProtocolFeeRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
+func setupStakerRewardTestProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 
@@ -837,7 +837,7 @@ func setupStakerRewardTestProtocolFeeRewards(t *testing.T, gs *govStakerV1, addr
 	gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
 }
 
-func setupStakerRewardTestAccumulateEmissionRewards(t *testing.T, gs *govStakerV1, amount, currentHeight int64) {
+func setupStakerRewardTestAccumulateEmissionRewards(cur realm, t *testing.T, gs *govStakerV1, amount, currentHeight int64) {
 	// Setup emission rewards for testing
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
@@ -845,7 +845,7 @@ func setupStakerRewardTestAccumulateEmissionRewards(t *testing.T, gs *govStakerV
 	gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
 }
 
-func setupStakerRewardTestAccumulateProtocolFeeRewards(t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
+func setupStakerRewardTestAccumulateProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
@@ -853,20 +853,20 @@ func setupStakerRewardTestAccumulateProtocolFeeRewards(t *testing.T, gs *govStak
 	gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
 }
 
-func setupStakerRewardTestLaunchpadDeposit(t *testing.T, gs *govStakerV1, addr address, amount int64) {
+func setupStakerRewardTestLaunchpadDeposit(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
 	// Setup launchpad project deposit
 	launchpadRewardID := gs.makeLaunchpadRewardID(addr.String())
 	gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount)
 }
 
-func setupStakerRewardTestLaunchpadRewards(t *testing.T, gs *govStakerV1, addr address, amount int64) {
+func setupStakerRewardTestLaunchpadRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 		gs.addStakeFromLaunchpad(0, cur, addr.String(), amount, 100)
 	}(cross(cur))
 }
 
-func setupStakerRewardTestLaunchpadStake(t *testing.T, gs *govStakerV1, addr address, amount int64) {
+func setupStakerRewardTestLaunchpadStake(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
 	// Setup launchpad stake for removal test
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
@@ -874,7 +874,7 @@ func setupStakerRewardTestLaunchpadStake(t *testing.T, gs *govStakerV1, addr add
 	}(cross(cur))
 }
 
-func setupStakerRewardTestGNSBalance(t *testing.T, user address, amount int64) {
+func setupStakerRewardTestGNSBalance(cur realm, t *testing.T, user address, amount int64) {
 	testing.SetRealm(adminRealm)
 
 	gns.Transfer(cross(cur), user, amount)
