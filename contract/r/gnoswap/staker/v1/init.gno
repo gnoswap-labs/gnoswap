@@ -3,7 +3,6 @@ package v1
 import (
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -59,14 +58,14 @@ func initStoreData(cur realm, stakerStore sr.IStakerStore, emissionAccessor sr.E
 	}
 
 	if !stakerStore.HasDepositsStoreKey() {
-		err := stakerStore.SetDeposits(0, cur, bptree.NewBPTreeN(16))
+		err := stakerStore.SetDeposits(0, cur, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasExternalIncentivesStoreKey() {
-		err := stakerStore.SetExternalIncentives(0, cur, bptree.NewBPTreeN(16))
+		err := stakerStore.SetExternalIncentives(0, cur, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

@@ -39,7 +39,7 @@ type Deposits struct {
 // NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: bptree.NewBPTreeN(16), // positionId -> *Deposit
+		tree: sr.NewBPTreeN(16), // positionId -> *Deposit
 	}
 }
 
@@ -111,7 +111,7 @@ type ExternalIncentives struct {
 // NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
-		tree: bptree.NewBPTreeN(16),
+		tree: sr.NewBPTreeN(16),
 	}
 }
 

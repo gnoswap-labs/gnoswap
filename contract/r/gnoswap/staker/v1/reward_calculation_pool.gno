@@ -21,7 +21,7 @@ type Pools struct {
 
 func NewPools() *Pools {
 	return &Pools{
-		tree: bptree.NewBPTreeN(16),
+		tree: sr.NewBPTreeN(16),
 	}
 }
 
