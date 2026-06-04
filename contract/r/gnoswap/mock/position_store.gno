@@ -107,7 +107,7 @@ func (n *MockNFTAccessor) SetOwner(tid grc721.TokenID, owner address) error {
 }
 
 func NewMockPositionStore() *MockPositionStore {
-	store := &MockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
+	store := &MockPositionStore{positions: position.NewPositionsTree(), nextID: 1}
 	return store
 }
 

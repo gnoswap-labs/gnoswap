@@ -1,7 +1,6 @@
 package v1
 
 import (
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -36,7 +35,7 @@ func initStoreData(_ int, rlm realm, positionStore position.IPositionStore) erro
 	}
 
 	if !positionStore.HasPositionsStoreKey() {
-		err := positionStore.SetPositions(0, rlm, bptree.NewBPTreeN(16))
+		err := positionStore.SetPositions(0, rlm, position.NewPositionsTree())
 		if err != nil {
 			return err
 		}
