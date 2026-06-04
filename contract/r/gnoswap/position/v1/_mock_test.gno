@@ -105,7 +105,7 @@ func newMockPosition() *positionV1 {
 }
 
 func newMockPositionStore() *mockPositionStore {
-	store := &mockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
+	store := &mockPositionStore{positions: position.NewPositionsTree(), nextID: 1}
 	return store
 }
 

@@ -64,7 +64,7 @@ func (s *mockPositionStore) RemovePosition(positionId uint64) error {
 }
 
 func newmockPositionStore() position.IPositionStore {
-	return &mockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
+	return &mockPositionStore{positions: position.NewPositionsTree(), nextID: 1}
 }
 
 // Mock Router Store
@@ -141,7 +141,7 @@ func mockRouter() *routerV1 {
 }
 
 func newMockPositionStore() *mockPositionStore {
-	return &mockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
+	return &mockPositionStore{positions: position.NewPositionsTree(), nextID: 1}
 }
 
 // Initialize Mock Instances
