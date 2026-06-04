@@ -63,14 +63,14 @@ func TestAddToken(cur realm, t *testing.T) {
 			// when
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
-					mockInstanceAddToken(cur, tt.inputTokenPath)
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					mockInstanceAddToken(cur, tt.inputTokenPath)
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceAddToken(cur, tt.inputTokenPath)
+				mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then
@@ -158,14 +158,14 @@ func TestRemoveToken(cur realm, t *testing.T) {
 			// when
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
-					mockInstanceRemoveToken(cur, tt.inputTokenPath)
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					mockInstanceRemoveToken(cur, tt.inputTokenPath)
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceRemoveToken(cur, tt.inputTokenPath)
+				mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then

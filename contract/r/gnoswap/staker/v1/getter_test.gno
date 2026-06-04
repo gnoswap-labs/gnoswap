@@ -41,19 +41,19 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 		fixedBlockHeight: int64(100),
 	}
 
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	// Setup allowed tokens and config via the admin-gated manager methods.
+	// These run through the mock instance helpers under an admin caller so the
+	// access checks (rlm.Previous() == admin) pass.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), barPath)
+	mockInstanceAddToken(cross(cur), bazPath)
 
-	// Setup allowed tokens via manager method
-	state.instance.AddToken(0, cur, barPath)
-	state.instance.AddToken(0, cur, bazPath)
+	mockInstanceSetDepositGnsAmount(cross(cur), 1_000_000_000)
+	mockInstanceSetMinimumRewardAmount(cross(cur), 500_000)
+	mockInstanceSetUnstakingFee(cross(cur), 100) // 1%
 
-	// Setup config values via manager methods
-	state.instance.SetDepositGnsAmount(0, cur, 1_000_000_000)
-	state.instance.SetMinimumRewardAmount(0, cur, 500_000)
-	state.instance.SetUnStakingFee(0, cur, 100) // 1%
-
-	// Setup warmup template via manager method
-	state.instance.SetWarmUp(0, cur, 30, 86400*5) // 30%, 5 days
+	// Setup warmup template via manager method (30%, 5 days)
+	mockInstanceSetWarmupPeriod(cross(cur), state.poolPath, 86400*5)
 
 	// Direct store access for complex state: Pool
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)

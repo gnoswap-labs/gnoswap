@@ -66,10 +66,18 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 			if tc.stakerBalance > 0 {
 				testing.SetRealm(adminRealm)
 				gns.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
+				// The local mock instance pays the protocol fee from the
+				// staker/v1 realm (the cross(rlm) transfer actor), so fund it too.
+				gns.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
 			}
 
+			// Set the caller identity on the test frame's own cur so the
+			// protocol_fee crossing inside handleStakingRewardFee sees the staker
+			// role as cur.Previous(). Setting it inside a nested closure would
+			// only mutate that closure's frame, not the cur passed below.
+			testing.SetRealm(stakerRealm)
+
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				testing.SetRealm(stakerRealm)
 				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
 			}
 
@@ -201,10 +209,10 @@ func TestSetUnStakingFee(cur realm, t *testing.T) {
 			// Execute the function
 			if tc.shouldAbort {
 				uassert.AbortsContains(t, cur, tc.expectedErrMsg, func() {
-					mockInstanceSetUnstakingFee(cur, tc.fee)
+					mockInstanceSetUnstakingFee(cross(cur), tc.fee)
 				})
 			} else {
-				mockInstanceSetUnstakingFee(cur, tc.fee)
+				mockInstanceSetUnstakingFee(cross(cur), tc.fee)
 
 				testing.SetRealm(adminRealm)
 				// Verify the result

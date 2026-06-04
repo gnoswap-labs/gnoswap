@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"math"
 	"testing"
 
@@ -62,6 +63,13 @@ var (
 	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
 	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+
+	// stakerV1Addr is the address of this implementation realm. Mock instance
+	// methods run with m.Realm == staker/v1 (the local *stakerV1 receiver lives
+	// here), so cross(rlm) token transfers inside those methods act as this
+	// realm rather than the ROLE_STAKER proxy. Fund this address in tests that
+	// exercise reward/penalty payouts through the local mock instance.
+	stakerV1Addr = chain.PackageAddress("gno.land/r/gnoswap/staker/v1")
 
 	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
@@ -417,69 +425,64 @@ func getMockInstance() *stakerV1 {
 }
 
 func mockInstanceSetDepositGnsAmount(cur realm, amount int64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().SetDepositGnsAmount(0, cur, amount)
 }
 
 func mockInstanceSetMinimumRewardAmount(cur realm, amount int64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().SetMinimumRewardAmount(0, cur, amount)
 }
 
 func mockInstanceStakeToken(cur realm, positionId uint64, referrer string) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().StakeToken(0, cur, positionId, referrer)
 }
 
 func mockInstanceCollectReward(cur realm, positionId uint64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().CollectReward(0, cur, positionId)
 }
 
 func mockInstanceAddToken(cur realm, tokenPath string) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().AddToken(0, cur, tokenPath)
 }
 
 func mockInstanceRemoveToken(cur realm, tokenPath string) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().RemoveToken(0, cur, tokenPath)
 }
 
 func mockInstanceSetUnstakingFee(cur realm, fee uint64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().SetUnStakingFee(0, cur, fee)
 }
 
 func mockInstanceCreateExternalIncentive(cur realm, poolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().CreateExternalIncentive(0, cur, poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
 func mockInstanceSetPoolTier(cur realm, poolPath string, tier uint64) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().SetPoolTier(0, cur, poolPath, tier)
+}
+
+func mockInstanceSetWarmUp(cur realm, pct, timeDuration int64) {
+	getMockInstance().SetWarmUp(0, cur, pct, timeDuration)
+}
+
+func mockInstanceRemovePoolTier(cur realm, poolPath string) {
+	getMockInstance().RemovePoolTier(0, cur, poolPath)
 }
 
 func mockInstanceSetWarmupPeriod(cur realm, poolPath string, warmupPeriod int64) {
 	// SetWarmUp is a global function that takes percentage and time duration
 	// For test purposes, we'll use 30% and the provided warmup period as duration
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().SetWarmUp(0, cur, 30, warmupPeriod)
 }
 
 func mockInstanceUnStakeToken(cur realm, positionId uint64) string {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	return getMockInstance().UnStakeToken(0, cur, positionId)
 }
 
 func mockInstanceEndExternalIncentive(cur realm, poolPath string, incentiveId string, refundAddress address) {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 }
 
 func mockInstanceCollectExternalIncentivePenalty(cur realm, poolPath string, incentiveId string, refundAddress address) int64 {
-	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 	return getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
 }
 

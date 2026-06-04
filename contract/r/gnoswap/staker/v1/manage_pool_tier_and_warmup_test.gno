@@ -375,11 +375,11 @@ func TestChangePoolTierWithPermission(cur realm, t *testing.T) {
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					mockInstanceSetPoolTier(cur, poolPath, tt.tier)
+					mockInstanceSetPoolTier(cross(cur), poolPath, tt.tier)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					mockInstanceSetPoolTier(cur, poolPath, tt.tier)
+					mockInstanceSetPoolTier(cross(cur), poolPath, tt.tier)
 				})
 			}
 		})
@@ -430,13 +430,11 @@ func TestSetWarmUpWithPermission(cur realm, t *testing.T) {
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-					getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
+					mockInstanceSetWarmUp(cross(cur), tt.pct, tt.duration)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-					getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
+					mockInstanceSetWarmUp(cross(cur), tt.pct, tt.duration)
 				})
 			}
 		})
@@ -487,19 +485,17 @@ func TestRemovePoolTierWithPermission(cur realm, t *testing.T) {
 
 			// Reset tier before each test
 			testing.SetRealm(adminRealm)
-			mockInstanceSetPoolTier(cur, poolPath, 2)
+			mockInstanceSetPoolTier(cross(cur), poolPath, 2)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-					getMockInstance().RemovePoolTier(0, cur, poolPath)
+					mockInstanceRemovePoolTier(cross(cur), poolPath)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-					getMockInstance().RemovePoolTier(0, cur, poolPath)
+					mockInstanceRemovePoolTier(cross(cur), poolPath)
 				})
 
 				// Verify tier was removed
