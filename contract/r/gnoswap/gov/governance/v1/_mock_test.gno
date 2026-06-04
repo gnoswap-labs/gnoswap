@@ -55,18 +55,18 @@ func (m *mockGovernanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTre
 
 func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool) {
 	if m.configs == nil {
-		return governance.Config{}, false
+		return governance.NewDefaultConfig(), false
 	}
 	result, exists := m.configs.Get(formatInt(version))
 	if !exists {
-		return governance.Config{}, false
+		return governance.NewDefaultConfig(), false
 	}
 	return result.(governance.Config), true
 }
 
 func (m *mockGovernanceStore) SetConfig(_ int, rlm realm, version int64, config governance.Config) error {
 	if m.configs == nil {
-		m.configs = bptree.NewBPTreeN(16)
+		m.configs = governance.NewConfigTree()
 	}
 	m.configs.Set(formatInt(version), config)
 	return nil
@@ -94,7 +94,7 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 
 func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *governance.Proposal) error {
 	if m.proposals == nil {
-		m.proposals = bptree.NewBPTreeN(16)
+		m.proposals = governance.NewProposalTree()
 	}
 	m.proposals.Set(formatInt(proposalID), proposal)
 	return nil
@@ -130,7 +130,7 @@ func (m *mockGovernanceStore) SetProposalVotingInfos(_ int, rlm realm, proposalI
 		return m.setProposalVotingInfosErr
 	}
 	if m.proposalUserVotingInfos == nil {
-		m.proposalUserVotingInfos = bptree.NewBPTreeN(16)
+		m.proposalUserVotingInfos = governance.NewProposalUserVotingInfoTree()
 	}
 	m.proposalUserVotingInfos.Set(formatInt(proposalID), votingInfos)
 	return nil
@@ -163,7 +163,7 @@ func (m *mockGovernanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 
 func (m *mockGovernanceStore) AddUserProposal(_ int, rlm realm, user string, proposalID int64) error {
 	if m.userProposals == nil {
-		m.userProposals = bptree.NewBPTreeN(16)
+		m.userProposals = governance.NewUserProposalTree()
 	}
 
 	var proposalIDs []int64
@@ -222,10 +222,10 @@ func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
 		configCounter:           governance.NewCounter(),
 		proposalCounter:         governance.NewCounter(),
-		configs:                 bptree.NewBPTreeN(16),
-		proposals:               bptree.NewBPTreeN(16),
-		proposalUserVotingInfos: bptree.NewBPTreeN(16),
-		userProposals:           bptree.NewBPTreeN(16),
+		configs:                 governance.NewConfigTree(),
+		proposals:               governance.NewProposalTree(),
+		proposalUserVotingInfos: governance.NewProposalUserVotingInfoTree(),
+		userProposals:           governance.NewUserProposalTree(),
 	}
 }
 

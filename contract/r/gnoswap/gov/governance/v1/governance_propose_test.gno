@@ -1383,20 +1383,20 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 	})
 }
 
-func setupTestConfig(_ int, cur realm, t *testing.T, gov *governanceV1, config *governance.Config) {
+func setupTestConfig(_ int, rlm realm, t *testing.T, gov *governanceV1, config *governance.Config) {
 	if config == nil {
 		return
 	}
-	nextVersion := gov.nextConfigVersion(0, cur)
-	gov.setConfig(0, cur, nextVersion, *config)
+	nextVersion := gov.nextConfigVersion(0, rlm)
+	gov.setConfig(0, rlm, nextVersion, *config)
 }
 
-func setupTestGnsBalance(_ int, cur realm, t *testing.T, address address, balance int64) {
+func setupTestGnsBalance(_ int, rlm realm, t *testing.T, address address, balance int64) {
 	// Mock GNS balance setup
 	// In actual implementation, this would set up the GNS token balance
 	testing.SetRealm(adminRealm)
 
-	gns.Transfer(cross(cur), address, balance)
+	gns.Transfer(cross(rlm), address, balance)
 }
 
 func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {

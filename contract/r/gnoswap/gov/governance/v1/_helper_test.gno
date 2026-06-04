@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -66,10 +65,10 @@ func createMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
 		configCounter:           governance.NewCounter(),
 		proposalCounter:         governance.NewCounter(),
-		configs:                 bptree.NewBPTreeN(16),
-		proposals:               bptree.NewBPTreeN(16),
-		proposalUserVotingInfos: bptree.NewBPTreeN(16),
-		userProposals:           bptree.NewBPTreeN(16),
+		configs:                 governance.NewConfigTree(),
+		proposals:               governance.NewProposalTree(),
+		proposalUserVotingInfos: governance.NewProposalUserVotingInfoTree(),
+		userProposals:           governance.NewUserProposalTree(),
 	}
 }
 
