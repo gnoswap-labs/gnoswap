@@ -26,7 +26,7 @@ func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					2,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return nil
 					},
 				)
@@ -41,7 +41,7 @@ func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					2,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return errors.New("test error")
 					},
 				)
@@ -57,7 +57,7 @@ func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					1,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return errors.New("test error")
 					},
 				)
@@ -72,7 +72,7 @@ func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 					"gno.land/r/gnoswap/test",
 					"DoThing",
 					2,
-					func([]string) error { return nil },
+					func(_ int, rlm realm, _ []string) error { return nil },
 					func(string) error { return nil },
 				)
 			},
@@ -122,13 +122,13 @@ func TestParameterRegistryHandler_registerHandlers(cur realm, t *testing.T) {
 						"gno.land/r/test/package1",
 						"TestFunction1",
 						2,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 					NewParameterHandlerOptions(
 						"gno.land/r/test/package2",
 						"TestFunction2",
 						1,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 				}
 				keys := []string{
@@ -147,7 +147,7 @@ func TestParameterRegistryHandler_registerHandlers(cur realm, t *testing.T) {
 						"gno.land/r/test/package",
 						"TestFunction",
 						0,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 				}
 				keys := []string{

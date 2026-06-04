@@ -21,18 +21,18 @@ func makeConfig(
 	executionDelay int64,
 	executionWindow int64,
 ) governance.Config {
-	// Create new configuration with provided parameters
-	cfg := governance.Config{
-		VotingStartDelay:              votingStartDelay,
-		VotingPeriod:                  votingPeriod,
-		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
-		Quorum:                        quorum,
-		ProposalCreationThreshold:     proposalCreationThreshold,
-		ExecutionDelay:                executionDelay,
-		ExecutionWindow:               executionWindow,
-	}
-
-	return cfg
+	// Create new configuration with provided parameters. Constructed via the
+	// domain constructor so the Config value is allocated inside the governance
+	// domain realm (satisfies the realm allocation check).
+	return governance.NewConfig(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
 }
 
 // Reconfigure updates governance configuration.

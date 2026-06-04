@@ -184,18 +184,16 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				}
 			}
 
-			testing.SetRealm(testing.NewUserRealm(tt.voter))
-
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
-					testing.SetRealm(govRealm)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					testing.SetRealm(testing.NewUserRealm(tt.voter))
 					gov.Vote(0, cur, tt.proposalID, tt.yes)
 				})
 				return
 			}
 
-			testing.SetRealm(govRealm)
+			testing.SetRealm(testing.NewUserRealm(tt.voter))
 			weight := gov.Vote(0, cur, tt.proposalID, tt.yes)
 			uassert.Equal(t, tt.expectedWeight, weight)
 
@@ -389,6 +387,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 
 			// when
 			userVote, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
+				0, cur,
 				tt.proposalID,
 				tt.voterAddress,
 				tt.votedYes,
@@ -531,13 +530,13 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			testing.SetRealm(adminRealm)
-			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			if tt.setupHalt {
-				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			}
 			defer func() {
 				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			}()
 			if tt.setupProposal != nil {
 				setupTestProposal(cur, t, gov, tt.setupProposal())
@@ -547,9 +546,8 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.voter))
 
 			// when & then
-			uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-				testing.SetRealm(govRealm)
-				gov.Vote(0, cur, tt.proposalID, tt.yes)
+			uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
+				mockVote(cross(cur), gov, tt.proposalID, tt.yes)
 			})
 		})
 	}
@@ -621,13 +619,11 @@ func TestGovernanceVote_VotePeriod(cur realm, t *testing.T) {
 			// when & then
 			if tt.shouldPass {
 				// Mock time to vote time for successful cases
-				testing.SetRealm(govRealm)
-				weight := gov.Vote(0, cur, 1, true)
+				weight := mockVote(cross(cur), gov, 1, true)
 				uassert.Equal(t, "5000000000", weight)
 			} else {
-				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-					testing.SetRealm(govRealm)
-					gov.Vote(0, cur, 1, true)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
+					mockVote(cross(cur), gov, 1, true)
 				})
 			}
 		})
@@ -703,14 +699,13 @@ func TestGovernanceVote_VoteWeightCalculation(cur realm, t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 
-			testing.SetRealm(govRealm)
 			// when & then
 			if tt.shouldFail {
 				uassert.PanicsWithMessage(t, cur, tt.expectedError, func() {
-					gov.Vote(0, cur, 1, true)
+					mockVote(cross(cur), gov, 1, true)
 				})
 			} else {
-				weight := gov.Vote(0, cur, 1, true)
+				weight := mockVote(cross(cur), gov, 1, true)
 				uassert.Equal(t, tt.expectedWeight, weight)
 			}
 		})

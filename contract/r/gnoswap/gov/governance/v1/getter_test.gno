@@ -17,13 +17,7 @@ func setupGetterTest(cur realm, t *testing.T) *governanceV1 {
 	gv := newMockGovernance()
 
 	// Setup config
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 	gv.store.SetConfig(0, cur, 1, config)
 	gv.store.GetConfigCounter().Next()
 

@@ -230,15 +230,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 }
 
 func createTestProposal(id int64) *governance.Proposal {
-	config := governance.Config{
-		VotingStartDelay:              100,
-		VotingPeriod:                  1000,
-		VotingWeightSmoothingDuration: 50,
-		Quorum:                        30,
-		ProposalCreationThreshold:     100,
-		ExecutionDelay:                100,
-		ExecutionWindow:               500,
-	}
+	config := governance.NewConfig(100, 1000, 50, 30, 100, 100, 500)
 
 	createdAt := int64(1000)
 

@@ -35,13 +35,7 @@ func TestInstance_NewGovernanceV1(cur realm, t *testing.T) {
 
 // TestInstance_RemoveInactiveUserProposals tests the removeInactiveUserProposals function
 func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 	proposerAddr := testutils.TestAddress("proposer")
 	baseCreatedAt := int64(1000)

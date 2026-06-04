@@ -105,6 +105,30 @@ func NewConfig(
 	}
 }
 
+// NewConfigPtr constructs a Config and returns a pointer to it. The Config is
+// allocated within the governance domain realm, satisfying realm allocation
+// checks for callers (such as tests) that require a *Config value.
+func NewConfigPtr(
+	votingStartDelay,
+	votingPeriod,
+	votingWeightSmoothingDuration,
+	quorum,
+	proposalCreationThreshold,
+	executionDelay,
+	executionWindow int64,
+) *Config {
+	c := NewConfig(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
+	return &c
+}
+
 func NewDefaultConfig() Config {
 	return Config{
 		VotingStartDelay:              86400,         // 1 day - delay before voting starts

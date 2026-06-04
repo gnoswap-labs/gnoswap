@@ -16,7 +16,7 @@ func TestParameterRegistry_RegisterAndHandler(cur realm, t *testing.T) {
 		pkgPath          string
 		function         string
 		paramCount       int
-		handlerFunc      func([]string) error
+		handlerFunc      func(_ int, rlm realm, _ []string) error
 		expectedError    bool
 		expectedErrorMsg string
 	}{
@@ -25,7 +25,7 @@ func TestParameterRegistry_RegisterAndHandler(cur realm, t *testing.T) {
 			pkgPath:    "test/pkg",
 			function:   "testFunc",
 			paramCount: 1,
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError: false,
@@ -78,7 +78,7 @@ func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 		name             string
 		paramCount       int
 		params           []string
-		handlerFunc      func([]string) error
+		handlerFunc      func(_ int, rlm realm, _ []string) error
 		expectedError    bool
 		expectedErrorMsg string
 	}{
@@ -86,7 +86,7 @@ func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 			name:       "Success - Execute with correct param count",
 			paramCount: 2,
 			params:     []string{"param1", "param2"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError: false,
@@ -95,7 +95,7 @@ func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 			name:       "Failure - Wrong param count",
 			paramCount: 2,
 			params:     []string{"param1"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError:    true,
@@ -105,7 +105,7 @@ func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 			name:       "Failure - Handler error",
 			paramCount: 1,
 			params:     []string{"param1"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return errors.New("handler error")
 			},
 			expectedError:    true,

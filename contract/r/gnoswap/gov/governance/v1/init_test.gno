@@ -57,13 +57,13 @@ func TestInit_formatConfigKey(cur realm, t *testing.T) {
 func TestInit_initStoreData(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupStore    func() governance.IGovernanceStore
+		setupStore    func(cur realm) governance.IGovernanceStore
 		expectedError bool
 		verifyStore   func(*testing.T, governance.IGovernanceStore)
 	}{
 		{
 			name: "success - initialize empty store",
-			setupStore: func() governance.IGovernanceStore {
+			setupStore: func(cur realm) governance.IGovernanceStore {
 				// Create completely empty store (not initialized)
 				return &mockGovernanceStore{}
 			},
@@ -101,10 +101,10 @@ func TestInit_initStoreData(cur realm, t *testing.T) {
 		},
 		{
 			name: "success - idempotent initialization (already initialized)",
-			setupStore: func() governance.IGovernanceStore {
+			setupStore: func(cur realm) governance.IGovernanceStore {
 				store := createMockGovernanceStore()
 				// Pre-initialize store
-				err := initStoreData(store)
+				err := initStoreData(0, cur, store)
 				if err != nil {
 					panic(err)
 				}
@@ -126,10 +126,10 @@ func TestInit_initStoreData(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
-			store := tt.setupStore()
+			store := tt.setupStore(cur)
 
 			// when
-			err := initStoreData(store)
+			err := initStoreData(0, cur, store)
 
 			// then
 			if tt.expectedError {

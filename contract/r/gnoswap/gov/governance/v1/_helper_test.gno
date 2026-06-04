@@ -51,6 +51,7 @@ var (
 	govPath  = "gno.land/r/gnoswap/gov/governance"
 	govRealm = testing.NewCodeRealm(govPath)
 
+	govGovernanceAddr, _ = access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -92,4 +93,67 @@ func newTestProposal(
 		snapshotTime,
 		100, // createdHeight
 	)
+}
+// Crossing test wrappers.
+//
+// The governance impl methods read their caller via rlm.Previous(). To
+// simulate a specific caller, tests set the caller realm with
+// testing.SetRealm(...) and then invoke the method through one of these
+// crossing wrappers using mockX(cross(cur), gov, ...). The cross(cur)
+// mints a fresh cur whose previous realm is the simulated caller, which
+// the wrapper threads into the impl method as `cur` so the impl's
+// rlm.Previous() resolves to that caller.
+func mockReconfigure(
+	cur realm,
+	gv *governanceV1,
+	votingStartDelay, votingPeriod, votingWeightSmoothingDuration,
+	quorum, proposalCreationThreshold, executionDelay, executionWindow int64,
+) int64 {
+	return gv.Reconfigure(
+		0, cur,
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
+}
+
+func mockExecute(cur realm, gv *governanceV1, proposalID int64) int64 {
+	return gv.Execute(0, cur, proposalID)
+}
+
+func mockCancel(cur realm, gv *governanceV1, proposalID int64) int64 {
+	return gv.Cancel(0, cur, proposalID)
+}
+
+func mockVote(cur realm, gv *governanceV1, proposalID int64, yes bool) string {
+	return gv.Vote(0, cur, proposalID, yes)
+}
+
+func mockProposeText(cur realm, gv *governanceV1, title, description string) int64 {
+	return gv.ProposeText(0, cur, title, description)
+}
+
+func mockProposeCommunityPoolSpend(
+	cur realm,
+	gv *governanceV1,
+	title, description string,
+	to address,
+	tokenPath string,
+	amount int64,
+) int64 {
+	return gv.ProposeCommunityPoolSpend(0, cur, title, description, to, tokenPath, amount)
+}
+
+func mockProposeParameterChange(
+	cur realm,
+	gv *governanceV1,
+	title, description string,
+	numToExecute int64,
+	executions string,
+) int64 {
+	return gv.ProposeParameterChange(0, cur, title, description, numToExecute, executions)
 }
