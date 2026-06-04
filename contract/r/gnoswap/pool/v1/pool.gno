@@ -88,6 +88,12 @@ func (i *poolV1) Mint(
 		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
 	}
 
+	// Save pool state after modifyPosition may have updated liquidity
+	err = i.savePool(0, rlm, pool)
+	if err != nil {
+		panic(err)
+	}
+
 	return amount0.ToString(), amount1.ToString()
 }
 
@@ -153,6 +159,11 @@ func (i *poolV1) Burn(
 	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
+
+	err = i.savePool(0, rlm, pool)
+	if err != nil {
+		panic(err)
+	}
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -235,6 +246,10 @@ func (i *poolV1) Collect(
 	}
 
 	setPosition(pool, positionKey, *position)
+
+	if err := i.savePool(0, rlm, pool); err != nil {
+		panic(err)
+	}
 
 	return formatInt(amount0), formatInt(amount1)
 }
@@ -328,6 +343,11 @@ func (i *poolV1) collectProtocol(
 		panic(err)
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
+
+	err = i.savePool(0, rlm, pool)
+	if err != nil {
+		panic(err)
+	}
 
 	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
 	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)

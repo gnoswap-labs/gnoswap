@@ -232,6 +232,10 @@ func NewPool(
 	}
 }
 
+func NewPoolsTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(32)
+}
+
 type TokenPair struct {
 	token0, token1 int64
 }
