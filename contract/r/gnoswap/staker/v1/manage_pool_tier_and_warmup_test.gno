@@ -11,7 +11,7 @@ import (
 )
 
 // Test pctToIndex function
-func TestPctToIndex(t *testing.T) {
+func TestPctToIndex(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		pct         int64
@@ -64,9 +64,9 @@ func TestPctToIndex(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					pctToIndex(tt.pct)
 				})
 			} else {
@@ -78,8 +78,8 @@ func TestPctToIndex(t *testing.T) {
 }
 
 // Test setPoolTier internal function
-func TestSetPoolTier(t *testing.T) {
-	initStakerTest(t)
+func TestSetPoolTier(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	// Create a test pool
@@ -120,15 +120,15 @@ func TestSetPoolTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := int64(100)
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "panic", func() {
-					instance.setPoolTier(tt.poolPath, tt.tier, currentTime)
+				uassert.PanicsContains(t, cur, "panic", func() {
+					instance.setPoolTier(0, cur, tt.poolPath, tt.tier, currentTime)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					instance.setPoolTier(tt.poolPath, tt.tier, currentTime)
+				uassert.NotPanics(t, cur, func() {
+					instance.setPoolTier(0, cur, tt.poolPath, tt.tier, currentTime)
 				})
 
 				// Verify tier was set
@@ -141,8 +141,8 @@ func TestSetPoolTier(t *testing.T) {
 }
 
 // Test changePoolTier internal function
-func TestChangePoolTier(t *testing.T) {
-	initStakerTest(t)
+func TestChangePoolTier(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	// Create a test pool
@@ -153,7 +153,7 @@ func TestChangePoolTier(t *testing.T) {
 	currentTime := int64(100)
 
 	// Set initial tier
-	instance.setPoolTier(poolPath, 1, currentTime)
+	instance.setPoolTier(0, cur, poolPath, 1, currentTime)
 
 	tests := []struct {
 		name         string
@@ -182,8 +182,8 @@ func TestChangePoolTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			prevTier, newTier := instance.changePoolTier(poolPath, tt.newTier, currentTime)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			prevTier, newTier := instance.changePoolTier(0, cur, poolPath, tt.newTier, currentTime)
 
 			uassert.Equal(t, tt.expectedPrev, prevTier)
 			uassert.Equal(t, tt.expectedNew, newTier)
@@ -197,8 +197,8 @@ func TestChangePoolTier(t *testing.T) {
 }
 
 // Test removePoolTier internal function
-func TestRemovePoolTier(t *testing.T) {
-	initStakerTest(t)
+func TestRemovePoolTier(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	// Create a test pool
@@ -209,7 +209,7 @@ func TestRemovePoolTier(t *testing.T) {
 	currentTime := int64(100)
 
 	// Set initial tier
-	instance.setPoolTier(poolPath, 2, currentTime)
+	instance.setPoolTier(0, cur, poolPath, 2, currentTime)
 
 	// Verify tier was set
 	poolTier := instance.getPoolTier()
@@ -217,7 +217,7 @@ func TestRemovePoolTier(t *testing.T) {
 	uassert.Equal(t, uint64(2), currentTier)
 
 	// Remove tier
-	instance.removePoolTier(poolPath, currentTime)
+	instance.removePoolTier(0, cur, poolPath, currentTime)
 
 	// Verify tier was set to NOT_EMISSION_TARGET_TIER
 	poolTier = instance.getPoolTier()
@@ -226,7 +226,7 @@ func TestRemovePoolTier(t *testing.T) {
 }
 
 // Test setWarmUp internal function
-func TestSetWarmUp(t *testing.T) {
+func TestSetWarmUp(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		pct            int64
@@ -295,17 +295,17 @@ func TestSetWarmUp(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.expectPanicMsg, func() {
-					instance.setWarmUp(tt.pct, tt.timeDuration)
+				uassert.PanicsContains(t, cur, tt.expectPanicMsg, func() {
+					instance.setWarmUp(0, cur, tt.pct, tt.timeDuration)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					instance.setWarmUp(tt.pct, tt.timeDuration)
+				uassert.NotPanics(t, cur, func() {
+					instance.setWarmUp(0, cur, tt.pct, tt.timeDuration)
 				})
 
 				// Verify warmup was set
@@ -321,12 +321,12 @@ func TestSetWarmUp(t *testing.T) {
 }
 
 // Test NOT_EMISSION_TARGET_TIER constant
-func TestNotEmissionTargetTier(t *testing.T) {
+func TestNotEmissionTargetTier(cur realm, t *testing.T) {
 	uassert.Equal(t, uint64(0), NOT_EMISSION_TARGET_TIER)
 }
 
 // Test ChangePoolTier with permission
-func TestChangePoolTierWithPermission(t *testing.T) {
+func TestChangePoolTierWithPermission(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	tests := []struct {
@@ -360,12 +360,12 @@ func TestChangePoolTierWithPermission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+			pl.SetPoolCreationFee(cross(cur), 0)
+			CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)
@@ -374,12 +374,12 @@ func TestChangePoolTierWithPermission(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					mockInstanceSetPoolTier(poolPath, tt.tier)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					mockInstanceSetPoolTier(cur, poolPath, tt.tier)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					mockInstanceSetPoolTier(poolPath, tt.tier)
+				uassert.NotPanics(t, cur, func() {
+					mockInstanceSetPoolTier(cur, poolPath, tt.tier)
 				})
 			}
 		})
@@ -387,8 +387,8 @@ func TestChangePoolTierWithPermission(t *testing.T) {
 }
 
 // Test SetWarmUp with permission
-func TestSetWarmUpWithPermission(t *testing.T) {
-	initStakerTest(t)
+func TestSetWarmUpWithPermission(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	tests := []struct {
 		name             string
@@ -425,22 +425,18 @@ func TestSetWarmUpWithPermission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+					getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
-					}(cross)
+				uassert.NotPanics(t, cur, func() {
+					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+					getMockInstance().SetWarmUp(0, cur, tt.pct, tt.duration)
 				})
 			}
 		})
@@ -448,7 +444,7 @@ func TestSetWarmUpWithPermission(t *testing.T) {
 }
 
 // Test RemovePoolTier with permission
-func TestRemovePoolTierWithPermission(t *testing.T) {
+func TestRemovePoolTierWithPermission(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	tests := []struct {
@@ -478,12 +474,12 @@ func TestRemovePoolTierWithPermission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+			pl.SetPoolCreationFee(cross(cur), 0)
+			CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)
@@ -491,23 +487,19 @@ func TestRemovePoolTierWithPermission(t *testing.T) {
 
 			// Reset tier before each test
 			testing.SetRealm(adminRealm)
-			mockInstanceSetPoolTier(poolPath, 2)
+			mockInstanceSetPoolTier(cur, poolPath, 2)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().RemovePoolTier(0, cur, poolPath)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+					getMockInstance().RemovePoolTier(0, cur, poolPath)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-						getMockInstance().RemovePoolTier(0, cur, poolPath)
-					}(cross)
+				uassert.NotPanics(t, cur, func() {
+					testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+					getMockInstance().RemovePoolTier(0, cur, poolPath)
 				})
 
 				// Verify tier was removed

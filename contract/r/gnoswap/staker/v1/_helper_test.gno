@@ -63,15 +63,10 @@ var (
 	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
-	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
-	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
-
-	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = testing.NewUserRealm(dummyAddr)
 
 	mockInstance     *stakerV1
 	mockGNFTAccessor = newMockNFTAccessor()
@@ -81,6 +76,7 @@ var (
 )
 
 func CreatePool(
+	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -90,7 +86,7 @@ func CreatePool(
 	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
-		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
+		pl.CreatePool(cross(cur), token0, token1, fee, sqrtPriceX96)
 	}
 }
 
@@ -104,11 +100,11 @@ func LPTokenUnStake(t *testing.T, owner address, positionId uint64, unwrap bool)
 	testing.SetRealm(testing.NewUserRealm(owner))
 }
 
-func CreateSecondPoolWithoutFee(t *testing.T) {
+func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	CreatePool(
+	CreatePool(cur,
 		barPath,
 		bazPath,
 		fee3000,
@@ -117,18 +113,18 @@ func CreateSecondPoolWithoutFee(t *testing.T) {
 	)
 }
 
-func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+func MakeMintPositionWithoutFee(cur realm, t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
 
 	// mint position
 	return pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee3000,
@@ -144,24 +140,24 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	)
 }
 
-func TokenFaucet(t *testing.T, tokenPath string, to address) {
+func TokenFaucet(cur realm, t *testing.T, tokenPath string, to address) {
 	t.Helper()
 	testing.SetOriginCaller(adminAddr)
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case gnsPath:
-		gnsTransfer(t, to, defaultAmount)
+		gnsTransfer(cur, t, to, defaultAmount)
 	case barPath:
-		barTransfer(t, to, defaultAmount)
+		barTransfer(cur, t, to, defaultAmount)
 	case bazPath:
-		bazTransfer(t, to, defaultAmount)
+		bazTransfer(cur, t, to, defaultAmount)
 	case fooPath:
-		fooTransfer(t, to, defaultAmount)
+		fooTransfer(cur, t, to, defaultAmount)
 	case oblPath:
-		oblTransfer(t, to, defaultAmount)
+		oblTransfer(cur, t, to, defaultAmount)
 	case quxPath:
-		quxTransfer(t, to, defaultAmount)
+		quxTransfer(cur, t, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -207,27 +203,29 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 	}
 }
 
-func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
+func TokenApprove(cur realm, t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
 	case gnsPath:
-		gnsApprove(t, owner, spender, amount)
+		gnsApprove(cur, t, owner, spender, amount)
 	case barPath:
-		barApprove(t, owner, spender, amount)
+		barApprove(cur, t, owner, spender, amount)
 	case bazPath:
-		bazApprove(t, owner, spender, amount)
+		bazApprove(cur, t, owner, spender, amount)
 	case fooPath:
-		fooApprove(t, owner, spender, amount)
+		fooApprove(cur, t, owner, spender, amount)
 	case oblPath:
-		oblApprove(t, owner, spender, amount)
+		oblApprove(cur, t, owner, spender, amount)
 	case quxPath:
-		quxApprove(t, owner, spender, amount)
+		quxApprove(cur, t, owner, spender, amount)
 	default:
 		panic("token not found")
 	}
 }
 
-func MintPosition(t *testing.T,
+func MintPosition(
+	cur realm,
+	t *testing.T,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -245,7 +243,7 @@ func MintPosition(t *testing.T,
 	testing.SetRealm(testing.NewUserRealm(caller))
 
 	return pn.Mint(
-		cross,
+		cross(cur),
 		token0,
 		token1,
 		fee,
@@ -261,76 +259,76 @@ func MintPosition(t *testing.T,
 	)
 }
 
-func gnsApprove(t *testing.T, owner, spender address, amount int64) {
+func gnsApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	gns.Approve(cross, spender, amount)
+	gns.Approve(cross(cur), spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func barApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	bar.Approve(cross(cur), spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func bazApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	baz.Approve(cross(cur), spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender address, amount int64) {
+func fooApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	foo.Approve(cross, spender, amount)
+	foo.Approve(cross(cur), spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender address, amount int64) {
+func oblApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	obl.Approve(cross, spender, amount)
+	obl.Approve(cross(cur), spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender address, amount int64) {
+func quxApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	qux.Approve(cross, spender, amount)
+	qux.Approve(cross(cur), spender, amount)
 }
 
-func gnsTransfer(t *testing.T, to address, amount int64) {
+func gnsTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, to, amount)
+	gns.Transfer(cross(cur), to, amount)
 }
 
-func barTransfer(t *testing.T, to address, amount int64) {
+func barTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, to, amount)
+	bar.Transfer(cross(cur), to, amount)
 }
 
-func bazTransfer(t *testing.T, to address, amount int64) {
+func bazTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	baz.Transfer(cross, to, amount)
+	baz.Transfer(cross(cur), to, amount)
 }
 
-func fooTransfer(t *testing.T, to address, amount int64) {
+func fooTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	foo.Transfer(cross, to, amount)
+	foo.Transfer(cross(cur), to, amount)
 }
 
-func oblTransfer(t *testing.T, to address, amount int64) {
+func oblTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	obl.Transfer(cross, to, amount)
+	obl.Transfer(cross(cur), to, amount)
 }
 
-func quxTransfer(t *testing.T, to address, amount int64) {
+func quxTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, to, amount)
+	qux.Transfer(cross(cur), to, amount)
 }
 
 type gnsBalanceTracker struct {
@@ -357,13 +355,13 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 	return actual >= lowerBound && actual <= upperBound
 }
 
-func initStakerTest(t *testing.T) {
+func initStakerTest(cur realm, t *testing.T) {
 	t.Helper()
 
 	mockGNFTAccessor = newMockNFTAccessor()
 
-	initPoolTest(t)
-	initPositionTest(t)
+	initPoolTest(cur, t)
+	initPositionTest(cur, t)
 
 	mockInstance = &stakerV1{
 		store:            newMockStakerStore(),
@@ -373,36 +371,36 @@ func initStakerTest(t *testing.T) {
 	}
 }
 
-func initPoolTest(t *testing.T) {
+func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
 	if !initializedPool {
 		initializedPool = true
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pl.RegisterInitializer(cross, func(s pl.IPoolStore) pl.IPool {
+		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pl.IPoolStore) pl.IPool {
 			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	pl.UpgradeImpl(cross, mockPoolPath)
+	pl.UpgradeImpl(cross(cur), mockPoolPath)
 }
 
-func initPositionTest(t *testing.T) {
+func initPositionTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
 
 	if !initializedPosition {
 		initializedPosition = true
 		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
-		pn.RegisterInitializer(cross, func(s pn.IPositionStore) pn.IPosition {
+		pn.RegisterInitializer(cross(cur), func(_ int, rlm realm, positionStore pn.IPositionStore) pn.IPosition {
 			return position_v1.NewPositionV1(mock.NewMockPositionStore(), mockGNFTAccessor)
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	pn.UpgradeImpl(cross, mockPositionPath)
+	pn.UpgradeImpl(cross(cur), mockPositionPath)
 }
 
 func getMockInstance() *stakerV1 {
@@ -418,115 +416,81 @@ func getMockInstance() *stakerV1 {
 	return mockInstance
 }
 
-func mockInstanceSetDepositGnsAmount(amount int64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetDepositGnsAmount(0, cur, amount)
-	}(cross)
+func mockInstanceSetDepositGnsAmount(cur realm, amount int64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().SetDepositGnsAmount(0, cur, amount)
 }
 
-func mockInstanceSetMinimumRewardAmount(amount int64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetMinimumRewardAmount(0, cur, amount)
-	}(cross)
+func mockInstanceSetMinimumRewardAmount(cur realm, amount int64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().SetMinimumRewardAmount(0, cur, amount)
 }
 
-func mockInstanceStakeToken(positionId uint64, referrer string) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().StakeToken(0, cur, positionId, referrer)
-	}(cross)
+func mockInstanceStakeToken(cur realm, positionId uint64, referrer string) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().StakeToken(0, cur, positionId, referrer)
 }
 
-func mockInstanceCollectReward(positionId uint64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CollectReward(0, cur, positionId)
-	}(cross)
+func mockInstanceCollectReward(cur realm, positionId uint64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().CollectReward(0, cur, positionId)
 }
 
-func mockInstanceAddToken(tokenPath string) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().AddToken(0, cur, tokenPath)
-	}(cross)
+func mockInstanceAddToken(cur realm, tokenPath string) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().AddToken(0, cur, tokenPath)
 }
 
-func mockInstanceRemoveToken(tokenPath string) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().RemoveToken(0, cur, tokenPath)
-	}(cross)
+func mockInstanceRemoveToken(cur realm, tokenPath string) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().RemoveToken(0, cur, tokenPath)
 }
 
-func mockInstanceSetUnstakingFee(fee uint64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetUnStakingFee(0, cur, fee)
-	}(cross)
+func mockInstanceSetUnstakingFee(cur realm, fee uint64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().SetUnStakingFee(0, cur, fee)
 }
 
-func mockInstanceCreateExternalIncentive(poolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CreateExternalIncentive(0, cur, poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
-	}(cross)
+func mockInstanceCreateExternalIncentive(cur realm, poolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().CreateExternalIncentive(0, cur, poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func mockInstanceSetPoolTier(poolPath string, tier uint64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetPoolTier(0, cur, poolPath, tier)
-	}(cross)
+func mockInstanceSetPoolTier(cur realm, poolPath string, tier uint64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().SetPoolTier(0, cur, poolPath, tier)
 }
 
-func mockInstanceSetWarmupPeriod(poolPath string, warmupPeriod int64) {
+func mockInstanceSetWarmupPeriod(cur realm, poolPath string, warmupPeriod int64) {
 	// SetWarmUp is a global function that takes percentage and time duration
 	// For test purposes, we'll use 30% and the provided warmup period as duration
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().SetWarmUp(0, cur, 30, warmupPeriod)
-	}(cross)
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().SetWarmUp(0, cur, 30, warmupPeriod)
 }
 
-func mockInstanceUnStakeToken(positionId uint64) string {
-	var poolPath string
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		poolPath = getMockInstance().UnStakeToken(0, cur, positionId)
-	}(cross)
-	return poolPath
+func mockInstanceUnStakeToken(cur realm, positionId uint64) string {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	return getMockInstance().UnStakeToken(0, cur, positionId)
 }
 
-func mockInstanceEndExternalIncentive(poolPath string, incentiveId string, refundAddress address) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
-	}(cross)
+func mockInstanceEndExternalIncentive(cur realm, poolPath string, incentiveId string, refundAddress address) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 }
 
-func mockInstanceCollectExternalIncentivePenalty(poolPath string, incentiveId string, refundAddress address) int64 {
-	var result int64
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		result = getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
-	}(cross)
-	return result
+func mockInstanceCollectExternalIncentivePenalty(cur realm, poolPath string, incentiveId string, refundAddress address) int64 {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	return getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
 }
 
-func mockNFTMint(to address, positionId uint64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().nftAccessor.Mint(0, cur, to, positionIdFrom(positionId))
-	}(cross)
+func mockNFTMint(cur realm, to address, positionId uint64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().nftAccessor.Mint(0, cur, to, positionIdFrom(positionId))
 }
 
-func mockNFTApprove(approved address, positionId uint64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().nftAccessor.Approve(0, cur, approved, positionIdFrom(positionId))
-	}(cross)
+func mockNFTApprove(cur realm, approved address, positionId uint64) {
+	testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+	getMockInstance().nftAccessor.Approve(0, cur, approved, positionIdFrom(positionId))
 }
 
 func getPositionOperator(positionId uint64) address {

@@ -31,43 +31,44 @@ const (
 	rewardMinimumAmount int64 = 1000000000
 )
 
-func TestCollectRewardGracefulDegradation(t *testing.T) {
-	initStakerTest(t)
+func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 
 	// Test 1: Normal collection with sufficient rewards
-	t.Run("normal collection works", func(t *testing.T) {
+	t.Run("normal collection works", func(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFee(cross, 0)
-		emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+		pl.SetPoolCreationFee(cross(cur), 0)
+		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 		// setup
 		govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
 		testing.SetRealm(testing.NewUserRealm(govAddr))
 
-		mockInstanceSetMinimumRewardAmount(1000000000)
-		mockInstanceSetUnstakingFee(0)
+		mockInstanceSetMinimumRewardAmount(cur, 1000000000)
+		mockInstanceSetUnstakingFee(cur, 0)
 
 		// Create pool
 		testing.SetRealm(adminRealm)
-		pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
+		pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950336")
 
 		// Set pool tier
-		mockInstanceSetPoolTier(poolPath, 1)
+		mockInstanceSetPoolTier(cur, poolPath, 1)
 
 		// Give tokens to test user
-		TokenFaucet(t, barPath, addr01)
-		TokenFaucet(t, bazPath, addr01)
-		TokenFaucet(t, gnsPath, addr01)
+		TokenFaucet(cur, t, barPath, addr01)
+		TokenFaucet(cur, t, bazPath, addr01)
+		TokenFaucet(cur, t, gnsPath, addr01)
 
 		// Approve tokens
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-		TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+		TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+		TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 		// Mint position
 		positionId, _, _, _ := MintPosition(
+			cur,
 			t,
 			barPath,
 			bazPath,
@@ -85,16 +86,16 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 		// Stake position
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		mockNFTMint(addr01, positionId)
-		mockNFTApprove(stakerAddr, positionId)
+		mockNFTMint(cur, addr01, positionId)
+		mockNFTApprove(cur, stakerAddr, positionId)
 
-		mockInstanceStakeToken(positionId, "")
+		mockInstanceStakeToken(cur, positionId, "")
 
 		// Create external incentive
 		testing.SetRealm(adminRealm)
-		gns.Approve(cross, stakerAddr, maxApprove)
+		gns.Approve(cross(cur), stakerAddr, maxApprove)
 
-		mockInstanceCreateExternalIncentive(poolPath, gnsPath, rewardMinimumAmount, incentiveStartTimestamp, incentiveStartTimestamp+incentiveDuration)
+		mockInstanceCreateExternalIncentive(cur, poolPath, gnsPath, rewardMinimumAmount, incentiveStartTimestamp, incentiveStartTimestamp+incentiveDuration)
 
 		// Wait for external incentive to start (skip to start timestamp)
 		// Calculate blocks to skip based on current time vs start timestamp
@@ -115,7 +116,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 		beforeBar := bar.BalanceOf(addr01)
 
 		// Should not panic
-		mockInstanceCollectReward(positionId)
+		mockInstanceCollectReward(cur, positionId)
 
 		afterGns := gns.BalanceOf(addr01)
 		afterBar := bar.BalanceOf(addr01)
@@ -130,15 +131,16 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	})
 
 	// Test 2: Create incentive with insufficient reward amount
-	t.Run("very small amount of external reward", func(t *testing.T) {
+	t.Run("very small amount of external reward", func(cur realm, t *testing.T) {
 		// Create another position for testing
 		testing.SetRealm(testing.NewUserRealm(addr02))
-		TokenFaucet(t, barPath, addr02)
-		TokenFaucet(t, bazPath, addr02)
-		TokenApprove(t, barPath, addr02, poolAddr, maxApprove)
-		TokenApprove(t, bazPath, addr02, poolAddr, maxApprove)
+		TokenFaucet(cur, t, barPath, addr02)
+		TokenFaucet(cur, t, bazPath, addr02)
+		TokenApprove(cur, t, barPath, addr02, poolAddr, maxApprove)
+		TokenApprove(cur, t, bazPath, addr02, poolAddr, maxApprove)
 
 		positionId2, _, _, _ := MintPosition(
+			cur,
 			t,
 			barPath,
 			bazPath,
@@ -154,17 +156,17 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 			addr02,
 		)
 
-		mockNFTMint(addr02, positionId2)
-		mockNFTApprove(stakerAddr, positionId2)
-		mockInstanceStakeToken(positionId2, "")
+		mockNFTMint(cur, addr02, positionId2)
+		mockNFTApprove(cur, stakerAddr, positionId2)
+		mockInstanceStakeToken(cur, positionId2, "")
 
 		// Create external incentive with very small amount
 		testing.SetRealm(adminRealm)
-		bar.Approve(cross, stakerAddr, 100)
+		bar.Approve(cross(cur), stakerAddr, 100)
 
 		expectedMsg := "[GNOSWAP-STAKER-004] invalid input data || rewardAmount(100) is less than minimum required amount(1000000000)"
-		uassert.AbortsWithMessage(t, expectedMsg, func() {
-			mockInstanceCreateExternalIncentive(poolPath, barPath, 100, incentiveStartTimestamp, incentiveStartTimestamp+incentiveDuration)
+		uassert.AbortsWithMessage(t, cur, expectedMsg, func() {
+			mockInstanceCreateExternalIncentive(cur, poolPath, barPath, 100, incentiveStartTimestamp, incentiveStartTimestamp+incentiveDuration)
 		})
 	})
 }
@@ -172,24 +174,25 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 // TestCollectReward_NilIncentiveSkipped verifies that CollectReward
 // gracefully skips external incentives that have been removed
 // and returns nil when looked up.
-func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
-	initStakerTest(t)
+func TestCollectReward_NilIncentiveSkipped(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
 
 	// Prepare user liquidity and stake
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -205,17 +208,17 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	// Create an external incentive
-	TokenFaucet(t, gnsPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	gnsApprove(t, addr01, stakerAddr, maxApprove)
+	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
 
 	startTimestamp := int64(1234569600)
-	mockInstanceCreateExternalIncentive(
+	mockInstanceCreateExternalIncentive(cur,
 		poolPath,
 		gnsPath,
 		rewardMinimumAmount,
@@ -243,32 +246,33 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 
 	// CollectReward should not panic when incentive is nil
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, func() {
-		mockInstanceCollectReward(positionId)
+	uassert.NotPanics(t, cur, func() {
+		mockInstanceCollectReward(cur, positionId)
 	})
 }
 
 // CollectReward should not process the same external penalty multiple times
 // when an incentive is missing but the deposit's reward state is kept.
-func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *testing.T) {
-	initStakerTest(t)
+func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
-	mockInstanceAddToken(barPath)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
+	mockInstanceAddToken(cur, barPath)
 
 	// Prepare user liquidity and stake.
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -284,21 +288,21 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	// Fund caller for incentive creation.
-	TokenFaucet(t, gnsPath, addr01)
-	TokenFaucet(t, barPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
 
 	// Create an external incentive that has already started.
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	gnsApprove(t, addr01, stakerAddr, maxApprove)
-	barApprove(t, addr01, stakerAddr, maxApprove)
+	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
+	barApprove(cur, t, addr01, stakerAddr, maxApprove)
 
 	startTimestamp := int64(1234569600)
-	mockInstanceCreateExternalIncentive(
+	mockInstanceCreateExternalIncentive(cur,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
@@ -335,7 +339,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	resolver := getMockInstance().getDepositResolver(positionId)
 	firstLastCollect := resolver.ExternalRewardLastCollectTime(incentiveId)
 
-	mockInstanceCollectReward(positionId)
+	mockInstanceCollectReward(cur, positionId)
 
 	resolver = getMockInstance().getDepositResolver(positionId)
 	uassert.Equal(t, firstLastCollect, resolver.ExternalRewardLastCollectTime(incentiveId))
@@ -347,7 +351,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	incentives.set(incentiveId, incentive)
 
 	communityPoolBefore = TokenBalance(t, barPath, communityPoolAddr)
-	mockInstanceCollectReward(positionId)
+	mockInstanceCollectReward(cur, positionId)
 
 	resolver = getMockInstance().getDepositResolver(positionId)
 	communityPoolAfter := TokenBalance(t, barPath, communityPoolAddr)
@@ -362,35 +366,36 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	lastCollectAfter := resolver.ExternalRewardLastCollectTime(incentiveId)
 
 	// Subsequent collect in the same second should not apply the penalty again.
-	mockInstanceCollectReward(positionId)
+	mockInstanceCollectReward(cur, positionId)
 	resolver = getMockInstance().getDepositResolver(positionId)
 	uassert.Equal(t, communityPoolAfter, TokenBalance(t, barPath, communityPoolAddr))
 	uassert.Equal(t, collectedAfter, resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, lastCollectAfter, resolver.ExternalRewardLastCollectTime(incentiveId))
 }
 
-func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *testing.T) {
-	initStakerTest(t)
+func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
-	mockInstanceAddToken(barPath)
-	mockInstanceSetWarmupPeriod(poolPath, 86400)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
+	mockInstanceAddToken(cur, barPath)
+	mockInstanceSetWarmupPeriod(cur, poolPath, 86400)
 
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
-	TokenFaucet(t, gnsPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
-	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(t, addr01, stakerAddr, 1000000000)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
+	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -406,12 +411,12 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	startTimestamp := int64(1234569600)
-	mockInstanceCreateExternalIncentive(
+	mockInstanceCreateExternalIncentive(cur,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
@@ -459,7 +464,7 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 	beforeAvailable := incentive.RewardAmount()
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	mockInstanceCollectReward(positionId)
+	mockInstanceCollectReward(cur, positionId)
 
 	depositResolver = getMockInstance().getDepositResolver(positionId)
 	incentiveAfter := getMockInstance().getExternalIncentives().get(incentiveId)
@@ -476,33 +481,34 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 // TestCollectReward_ZeroNetRewardWithPenalty tests the case where fees/warmup zero out
 // the user reward but leave InternalPenalty > 0. This ensures penalties are properly
 // handled even when toUser = 0.
-func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
-	initStakerTest(t)
+func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
 
 	// Set up high unstaking fee to ensure penalty exists
 	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
 	testing.SetRealm(testing.NewUserRealm(govAddr))
-	mockInstanceSetUnstakingFee(1000) // 10% (maximum allowed)
+	mockInstanceSetUnstakingFee(cur, 1000) // 10% (maximum allowed)
 
 	// Prepare user liquidity and stake
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
-	TokenFaucet(t, gnsPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
 
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -518,13 +524,13 @@ func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	// Create warmup period that will consume rewards
 	testing.SetRealm(adminRealm)
-	mockInstanceSetWarmupPeriod(poolPath, 86400) // 1 day warmup
+	mockInstanceSetWarmupPeriod(cur, poolPath, 86400) // 1 day warmup
 
 	// Skip some time but not enough to fully pass warmup
 	testing.SkipHeights(100) // Small amount of time
@@ -538,7 +544,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
 	depositResolver := getMockInstance().getDepositResolver(positionId)
 
 	// Collect reward - should process penalty even if net reward is 0
-	mockInstanceCollectReward(positionId)
+	mockInstanceCollectReward(cur, positionId)
 
 	// Check balances after
 	userGnsAfter := gns.BalanceOf(addr01)
@@ -559,34 +565,35 @@ func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
 	uassert.True(t, collectedInternal >= 0, "collected internal reward should be tracked")
 }
 
-func TestUnStakeToken(t *testing.T) {
-	initStakerTest(t)
+func TestUnStakeToken(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
 
 	// Add external token
-	mockInstanceAddToken(barPath)
+	mockInstanceAddToken(cur, barPath)
 
 	// Prepare user liquidity
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
-	TokenFaucet(t, gnsPath, addr01)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
 
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	// Create position with specific tick range
 	tickLower := int32(-18000)
 	tickUpper := int32(18000)
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -602,11 +609,11 @@ func TestUnStakeToken(t *testing.T) {
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
 
 	// Stake the position
-	mockInstanceStakeToken(positionId, "")
+	mockInstanceStakeToken(cur, positionId, "")
 
 	// Verify operator is set after staking
 	operatorAfterStake := getPositionOperator(positionId)
@@ -614,13 +621,13 @@ func TestUnStakeToken(t *testing.T) {
 
 	// Create external incentive
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(t, addr01, stakerAddr, 1000000000) // Approve GNS deposit
+	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(cur, t, addr01, stakerAddr, 1000000000) // Approve GNS deposit
 
 	// Incentive must start at least 1 day in the future (midnight)
 	tomorrow := time.Now().AddDate(0, 0, 1)
 	startTimestamp := tomorrow.Truncate(24 * time.Hour).Unix()
-	mockInstanceCreateExternalIncentive(
+	mockInstanceCreateExternalIncentive(cur,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
@@ -652,7 +659,7 @@ func TestUnStakeToken(t *testing.T) {
 
 	// Unstake the position
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	resultPoolPath := mockInstanceUnStakeToken(positionId)
+	resultPoolPath := mockInstanceUnStakeToken(cur, positionId)
 	uassert.Equal(t, poolPath, resultPoolPath)
 
 	// Verify operator is reset to zero address
@@ -677,25 +684,26 @@ func TestUnStakeToken(t *testing.T) {
 		"upper tick liquidity should be reduced")
 }
 
-func TestUnStakeToken_EmergencyHaltAllowsRecovery(t *testing.T) {
-	initStakerTest(t)
+func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
-	mockInstanceAddToken(barPath)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
+	mockInstanceAddToken(cur, barPath)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
-	TokenFaucet(t, gnsPath, addr01)
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -711,49 +719,50 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(t *testing.T) {
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(t, addr01, stakerAddr, 1000000000)
+	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
 	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	mockInstanceCreateExternalIncentive(poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	mockInstanceCreateExternalIncentive(cur, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, func() {
-		resultPoolPath := mockInstanceUnStakeToken(positionId)
+	uassert.NotPanics(t, cur, func() {
+		resultPoolPath := mockInstanceUnStakeToken(cur, positionId)
 		uassert.Equal(t, poolPath, resultPoolPath)
 	})
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 }
 
-func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(t *testing.T) {
-	initStakerTest(t)
+func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(poolPath, 1)
-	mockInstanceAddToken(barPath)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(cur, poolPath, 1)
+	mockInstanceAddToken(cur, barPath)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(t, barPath, addr01)
-	TokenFaucet(t, bazPath, addr01)
-	TokenFaucet(t, gnsPath, addr01)
-	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	TokenFaucet(cur, t, barPath, addr01)
+	TokenFaucet(cur, t, bazPath, addr01)
+	TokenFaucet(cur, t, gnsPath, addr01)
+	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
 	positionId, _, _, _ := MintPosition(
+		cur,
 		t,
 		barPath,
 		bazPath,
@@ -769,32 +778,32 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(t *testing.T) {
 		addr01,
 	)
 
-	mockNFTMint(addr01, positionId)
-	mockNFTApprove(stakerAddr, positionId)
-	mockInstanceStakeToken(positionId, "")
+	mockNFTMint(cur, addr01, positionId)
+	mockNFTApprove(cur, stakerAddr, positionId)
+	mockInstanceStakeToken(cur, positionId, "")
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(t, addr01, stakerAddr, 1000000000)
+	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
 	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	mockInstanceCreateExternalIncentive(poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	mockInstanceCreateExternalIncentive(cur, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, func() {
-		mockInstanceCollectReward(positionId)
+	uassert.NotPanics(t, cur, func() {
+		mockInstanceCollectReward(cur, positionId)
 	})
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 }
 
 // TestStakeToken_EmptyIncentiveList tests that after staking,
 // the deposit's external incentive list is empty (lazy sync optimization).
-func TestStakeToken_EmptyIncentiveList(t *testing.T) {
+func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	currentTime := time.Now().Unix()
@@ -850,8 +859,8 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 
 // TestStore_ExternalIncentivesByCreationTime tests the store functions
 // for the time-based incentive index with 2-level structure.
-func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
-	initStakerTest(t)
+func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	poolPath1 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -861,17 +870,17 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	tree := sr.NewUintTree()
 
 	// Create pool map for timestamp 100
-	poolMap1 := bptree.NewBPTreeN(16)
+	poolMap1 := sr.NewBPTreeN(16)
 	poolMap1.Set(poolPath1, []string{"incentive1"})
 	tree.Set(100, poolMap1)
 
 	// Create pool map for timestamp 200
-	poolMap2 := bptree.NewBPTreeN(16)
+	poolMap2 := sr.NewBPTreeN(16)
 	poolMap2.Set(poolPath1, []string{"incentive2"})
 	poolMap2.Set(poolPath2, []string{"incentive3"})
 	tree.Set(200, poolMap2)
 
-	err := instance.store.SetExternalIncentivesByCreationTime(tree)
+	err := instance.store.SetExternalIncentivesByCreationTime(0, cur, tree)
 	if err != nil {
 		t.Fatalf("Failed to set incentives tree: %v", err)
 	}

@@ -69,7 +69,7 @@ type EmissionAccessor interface {
 	MintAndDistributeGns(_ int, rlm realm) (int64, bool)
 	GetStakerEmissionAmountPerSecond() int64
 	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64)
-	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(cur realm, emissionAmountPerSecond int64))
+	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64))
 }
 
 type emissionAccessor struct{}
@@ -90,12 +90,21 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(cur realm, emissionAmountPerSecond int64)) {
+func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
 	if !rlm.IsCurrent() {
 		panic(ErrSpoofedRealm)
 	}
 
-	emission.SetOnDistributionPctChangeCallback(cross(rlm), callback)
+	// Wrap the caller-provided callback in an adapter constructed HERE, inside
+	// the /r/gnoswap/staker domain package. By borrow rule #3 the wrapper
+	// closure is owned by /r/gnoswap/staker (its construction realm), not by the
+	// v1 implementation that passed `callback` in. This mirrors the swap/tick
+	// hook accessors above and lets emission persist the callback into its
+	// package-level var without hitting "cannot persist realm value" (which
+	// fired when a v1-constructed closure was stored there directly).
+	emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
+		callback(0, cur, emissionAmountPerSecond)
+	})
 }
 
 func newEmissionAccessor() EmissionAccessor {

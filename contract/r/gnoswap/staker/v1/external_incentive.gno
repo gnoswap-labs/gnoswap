@@ -405,7 +405,11 @@ func (s *stakerV1) addIncentiveIdByCreationTime(_ int, rlm realm, poolPath, ince
 
 	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
 	if !exists {
-		currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
+		// Allocate the nested tree under /r/gnoswap/staker (same realm as the
+		// outer incentivesByTime UintTree) so the leaf-slot writes at
+		// incentivesByTime.Set / currentPoolIncentiveIds.Set below clear the
+		// readonly-taint gate regardless of the calling realm.
+		currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 	}
 
 	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)

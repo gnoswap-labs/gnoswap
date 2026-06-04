@@ -18,7 +18,7 @@ import (
 	"gno.land/r/onbloc/bar"
 )
 
-func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
+func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 	poolPath := "test_pool"
 	account1 := testutils.TestAddress("account1")
 	account2 := testutils.TestAddress("account2")
@@ -60,7 +60,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 		incentiveId := ufmt.Sprintf("%d", i+1)
 		name := ufmt.Sprintf("account_%d_token_%s_amount_%d", tc.accountIdx+1, token, amount)
 
-		t.Run(name, func(t *testing.T) {
+		t.Run(name, func(cur realm, t *testing.T) {
 			// create incentive
 			incentive := sr.NewExternalIncentive(
 				incentiveId,
@@ -104,7 +104,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 }
 
 // Test ExternalIncentiveRefundAmount through the public entrypoint with full preconditions.
-func TestExternalIncentiveRefundAmount(t *testing.T) {
+func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	refundee := testutils.TestAddress("refundee")
 
@@ -184,7 +184,7 @@ func TestExternalIncentiveRefundAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Create ended or active incentive based on the test case.
 			incentiveId := "test-incentive-1"
 			incentive := sr.NewExternalIncentive(
@@ -212,7 +212,7 @@ func TestExternalIncentiveRefundAmount(t *testing.T) {
 }
 
 // Test EndExternalIncentive through the public entrypoint with full preconditions.
-func TestEndExternalIncentive(t *testing.T) {
+func TestEndExternalIncentive(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	refundee := testutils.TestAddress("refundee")
 	stranger := testutils.TestAddress("stranger")
@@ -260,8 +260,8 @@ func TestEndExternalIncentive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			currentTime := time.Now().Unix()
@@ -270,8 +270,9 @@ func TestEndExternalIncentive(t *testing.T) {
 
 			// Setup real pool registry for poolAccessor.ExistsPoolPath().
 			testing.SetRealm(adminRealm)
-			gns.Approve(cross, poolAddr, math.MaxInt)
+			gns.Approve(cross(cur), poolAddr, math.MaxInt)
 			CreatePool(
+				cur,
 				barPath,
 				fooPath,
 				fee3000,
@@ -313,20 +314,20 @@ func TestEndExternalIncentive(t *testing.T) {
 
 			if tt.expectError {
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-					mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
+					mockInstanceEndExternalIncentive(cur, poolPath, incentiveId, tt.refundAddress)
 				})
 				return
 			}
 
-			uassert.NotPanics(t, func() {
+			uassert.NotPanics(t, cur, func() {
 				// Fund staker so transfers during successful end do not fail.
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, stakerAddr, depositGnsAmount)
-				bar.Transfer(cross, stakerAddr, rewardAmount)
+				gns.Transfer(cross(cur), stakerAddr, depositGnsAmount)
+				bar.Transfer(cross(cur), stakerAddr, rewardAmount)
 
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
-				mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
+				mockInstanceEndExternalIncentive(cur, poolPath, incentiveId, tt.refundAddress)
 			})
 
 			creatorGnsBalanceAfter := gns.BalanceOf(tt.refundAddress)
@@ -342,7 +343,7 @@ func TestEndExternalIncentive(t *testing.T) {
 }
 
 // Test endExternalIncentive internal logic.
-func TestEndExternalIncentiveInternal(t *testing.T) {
+func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10 // 10 days ago
 	endTime := currentTime - 1          // ended 1 second ago
@@ -379,8 +380,8 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -427,7 +428,7 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 	}
 }
 
-func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
+func TestEndExternalIncentiveRefundAddressValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		refundAddr  address
@@ -451,15 +452,15 @@ func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, "invalid address", func() {
+				uassert.PanicsContains(t, cur, "invalid address", func() {
 					assertIsValidAddress(tt.refundAddr)
 				})
 				return
 			}
 
-			uassert.NotPanics(t, func() {
+			uassert.NotPanics(t, cur, func() {
 				assertIsValidAddress(tt.refundAddr)
 			})
 		})
@@ -468,7 +469,7 @@ func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
 
 // TestDoubleClaimPrevention tests that the "last collect time"
 // mechanism prevents double claiming even with finished incentives.
-func TestDoubleClaimPrevention(t *testing.T) {
+func TestDoubleClaimPrevention(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker1 := testutils.TestAddress("staker1")
 	currentTime := time.Now().Unix()
@@ -518,7 +519,7 @@ func TestDoubleClaimPrevention(t *testing.T) {
 }
 
 // Test Deposit.LastExternalIncentiveUpdatedAt getter/setter
-func TestDepositLastExternalIncentiveUpdatedAt(t *testing.T) {
+func TestDepositLastExternalIncentiveUpdatedAt(cur realm, t *testing.T) {
 	deposit := sr.NewDeposit(
 		addr01,
 		"pool1",
@@ -541,7 +542,7 @@ func TestDepositLastExternalIncentiveUpdatedAt(t *testing.T) {
 	}
 }
 
-func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
+func TestExternalIncentivesByCreationTimeSliceStorage(cur realm, t *testing.T) {
 	tree := sr.NewUintTree()
 
 	timestamp := int64(1000)
@@ -549,7 +550,7 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 
 	incentiveId1 := "addr1:1000:0"
 
-	poolIncentives := bptree.NewBPTreeN(16)
+	poolIncentives := sr.NewBPTreeN(16)
 	incentiveIds := []string{incentiveId1}
 	poolIncentives.Set(poolPath, incentiveIds)
 
@@ -619,7 +620,7 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 }
 
 // Test lazy sync logic: filter by pool
-func TestLazySyncPoolFiltering(t *testing.T) {
+func TestLazySyncPoolFiltering(cur realm, t *testing.T) {
 	pool1 := "pool1"
 	pool2 := "pool2"
 
@@ -661,7 +662,7 @@ func TestLazySyncPoolFiltering(t *testing.T) {
 }
 
 // Test lastExternalIncentiveUpdatedAt prevents re-syncing
-func TestLastUpdatePreventsReSync(t *testing.T) {
+func TestLastUpdatePreventsReSync(cur realm, t *testing.T) {
 	deposit := sr.NewDeposit(
 		addr01,
 		"pool1",
@@ -696,8 +697,8 @@ func TestLastUpdatePreventsReSync(t *testing.T) {
 
 // TestCreateExternalIncentive_SameTimestamp tests that multiple incentives
 // created at the same timestamp are all stored correctly in the time-based tree.
-func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
-	initStakerTest(t)
+func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -751,7 +752,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
 		if !exists {
-			currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
+			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 		}
 
 		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
@@ -775,7 +776,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		currentPoolIncentiveIds.Set(poolPath, ids)
 		incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
 
-		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
+		instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
 	}
 
 	// Verify all 3 incentives are stored at the same timestamp for the same pool
@@ -824,8 +825,8 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 
 // TestCreateExternalIncentive_TimeBasedIndex tests that the time-based index
 // correctly stores and retrieves incentives across different timestamps.
-func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
-	initStakerTest(t)
+func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -880,7 +881,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(ts)
 		if !exists {
-			currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
+			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 		}
 
 		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
@@ -904,7 +905,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		currentPoolIncentiveIds.Set(poolPath, ids)
 		incentivesByTime.Set(ts, currentPoolIncentiveIds)
 
-		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
+		instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
 	}
 
 	// Test range queries
@@ -921,7 +922,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
 			found := make([]string, 0)
@@ -955,8 +956,8 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 // TestCreateExternalIncentive_SameTimestampDifferentPools tests that
 // incentives created at the same timestamp for different pools are properly
 // stored in separate pool maps within the same timestamp entry.
-func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
-	initStakerTest(t)
+func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -1015,7 +1016,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
 		if !exists {
-			currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
+			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 		}
 
 		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
@@ -1039,7 +1040,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		currentPoolIncentiveIds.Set(poolPath, ids)
 		incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
 
-		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
+		instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
 	}
 
 	// Verify all 3 pools have their incentives stored at the same timestamp
@@ -1089,7 +1090,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 
 // TestLazySync_DuplicatePrevention tests that the same incentive
 // is not added multiple times to deposit even if lazy sync runs multiple times.
-func TestLazySync_DuplicatePrevention(t *testing.T) {
+func TestLazySync_DuplicatePrevention(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1135,8 +1136,8 @@ func TestLazySync_DuplicatePrevention(t *testing.T) {
 
 // TestLazySync_MultipleConcurrentIncentives tests that multiple active
 // incentives are all tracked and none are missed.
-func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
-	initStakerTest(t)
+func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -1220,7 +1221,7 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 
 // TestLazySync_PoolFilteringPreventsWrongPool tests that incentives
 // from different pools are not added to deposit during lazy sync.
-func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
+func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
 	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	pool2Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
 	creator := testutils.TestAddress("creator")
@@ -1292,8 +1293,8 @@ func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
 
 // TestRefundCalculationWithPartialCollections tests that refund calculation
 // is accurate when multiple users collect and unstake
-func TestRefundCalculationWithPartialCollections(t *testing.T) {
-	initStakerTest(t)
+func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	poolPath := "gno.land/r/test/refund_calc"
@@ -1329,26 +1330,10 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	poolResolver.IncentivesResolver().create(incentive)
 
 	warmups := []sr.Warmup{
-		{
-			TimeDuration:   0,
-			NextWarmupTime: startTime,
-			WarmupRatio:    30,
-		},
-		{
-			TimeDuration:   0,
-			NextWarmupTime: startTime,
-			WarmupRatio:    50,
-		},
-		{
-			TimeDuration:   0,
-			NextWarmupTime: startTime,
-			WarmupRatio:    70,
-		},
-		{
-			TimeDuration:   math.MaxInt64,
-			NextWarmupTime: math.MaxInt64,
-			WarmupRatio:    100,
-		},
+		sr.NewWarmup(0, startTime, 30),
+		sr.NewWarmup(0, startTime, 50),
+		sr.NewWarmup(0, startTime, 70),
+		sr.NewWarmup(math.MaxInt64, math.MaxInt64, 100),
 	}
 
 	// Create deposits for User A and User B
@@ -1410,7 +1395,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 }
 
 // Test that zero-liquidity windows are tracked via modifyDeposit and reflected in calculateUnclaimableReward.
-func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T) {
+func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(cur realm, t *testing.T) {
 	poolPath := "test_pool_unclaimable_tracking"
 	creator := testutils.TestAddress("creator")
 
@@ -1459,8 +1444,8 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T)
 
 // TestMultipleCollectionsBeforeUnstake tests that multiple collections
 // by the same user correctly update DistributedRewardAmount only in CollectReward
-func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
-	initStakerTest(t)
+func TestMultipleCollectionsBeforeUnstake(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	poolPath := "gno.land/r/test/multi_collect"
@@ -1533,8 +1518,8 @@ func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
 
 // TestCalculateCollectableExternalReward_ExcludesCollected verifies that
 // calculateCollectableExternalReward returns only uncollected rewards
-func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
-	initStakerTest(t)
+func TestCalculateCollectableExternalReward_ExcludesCollected(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	poolPath := "gno.land/r/test/calc_total"
@@ -1599,8 +1584,8 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
 
 // TestDistributedRewardAmountNotDoubledOnUnstake verifies that
 // DistributedRewardAmount is not modified during unstake
-func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
-	initStakerTest(t)
+func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	poolPath := "gno.land/r/test/no_double"
@@ -1661,7 +1646,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
 
 // TestAddIncentiveIdByCreationTime tests the addIncentiveIdByCreationTime function
 // with various scenarios using table-driven tests.
-func TestAddIncentiveIdByCreationTime(t *testing.T) {
+func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 	// incentiveInput represents a single incentive to be added
 	type incentiveInput struct {
 		poolPath     string
@@ -1906,14 +1891,14 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			if tt.expectedHasPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
 					for _, input := range tt.inputs {
-						instance.addIncentiveIdByCreationTime(input.poolPath, input.incentiveId, input.creationTime)
+						instance.addIncentiveIdByCreationTime(0, cur, input.poolPath, input.incentiveId, input.creationTime)
 					}
 				})
 
@@ -1922,7 +1907,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 
 			// Execute: add all incentives
 			for _, input := range tt.inputs {
-				instance.addIncentiveIdByCreationTime(input.poolPath, input.incentiveId, input.creationTime)
+				instance.addIncentiveIdByCreationTime(0, cur, input.poolPath, input.incentiveId, input.creationTime)
 			}
 
 			// Verify: check all expected results
@@ -1957,7 +1942,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 
 // TestAddIncentiveIdByCreationTime_IterationRange tests time range iteration
 // for retrieving incentives within a specific time window.
-func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
+func TestAddIncentiveIdByCreationTime_IterationRange(cur realm, t *testing.T) {
 	// setup represents incentives to add before testing iteration
 	type setup struct {
 		poolPath     string
@@ -2042,13 +2027,13 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			// Setup: add all incentives
 			for _, s := range tt.setupData {
-				instance.addIncentiveIdByCreationTime(s.poolPath, s.incentiveId, s.creationTime)
+				instance.addIncentiveIdByCreationTime(0, cur, s.poolPath, s.incentiveId, s.creationTime)
 			}
 
 			// Execute: iterate over range
@@ -2078,7 +2063,7 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 
 // TestGetExternalIncentiveIdsBy tests the getExternalIncentiveIdsBy function
 // which retrieves external incentive IDs within a specific time range for a pool.
-func TestGetExternalIncentiveIdsBy(t *testing.T) {
+func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 	// incentiveSetup represents an incentive to be added to the time index
 	type incentiveSetup struct {
 		poolPath     string
@@ -2299,12 +2284,12 @@ func TestGetExternalIncentiveIdsBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			for _, inc := range tt.incentives {
-				instance.addIncentiveIdByCreationTime(inc.poolPath, inc.incentiveId, inc.creationTime)
+				instance.addIncentiveIdByCreationTime(0, cur, inc.poolPath, inc.incentiveId, inc.creationTime)
 			}
 
 			deposit := sr.NewDeposit(
@@ -2347,7 +2332,7 @@ func TestGetExternalIncentiveIdsBy(t *testing.T) {
 
 // TestCollectExternalIncentivePenalty tests the full CollectExternalIncentivePenalty flow
 // using table-driven tests covering all validation paths and edge cases.
-func TestCollectExternalIncentivePenalty(t *testing.T) {
+func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	stranger := testutils.TestAddress("stranger")
 
@@ -2446,8 +2431,8 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			currentTime := time.Now().Unix()
@@ -2458,8 +2443,8 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 
 			if tt.setupPool {
 				testing.SetRealm(adminRealm)
-				gns.Approve(cross, poolAddr, math.MaxInt)
-				CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+				gns.Approve(cross(cur), poolAddr, math.MaxInt)
+				CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 				pool := sr.NewPool(poolPath, currentTime)
 				instance.getPools().set(poolPath, pool)
@@ -2492,18 +2477,18 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 
 			if tt.expectPanic {
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-					mockInstanceCollectExternalIncentivePenalty(poolPath, tt.incentiveId, tt.refundAddress)
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
+					mockInstanceCollectExternalIncentivePenalty(cur, poolPath, tt.incentiveId, tt.refundAddress)
 				})
 				return
 			}
 
 			// fund staker with reward token so transfer succeeds
 			testing.SetRealm(adminRealm)
-			bar.Transfer(cross, stakerAddr, 10_000_000_000)
+			bar.Transfer(cross(cur), stakerAddr, 10_000_000_000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
-			result := mockInstanceCollectExternalIncentivePenalty(poolPath, tt.incentiveId, tt.refundAddress)
+			result := mockInstanceCollectExternalIncentivePenalty(cur, poolPath, tt.incentiveId, tt.refundAddress)
 
 			if tt.expectedReturn == 0 {
 				uassert.Equal(t, int64(0), result)
@@ -2525,7 +2510,7 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 
 // TestCollectExternalIncentivePenaltyAccounting tests the accounting invariant
 // across CollectReward penalty accumulation and CollectExternalIncentivePenalty.
-func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
+func TestCollectExternalIncentivePenaltyAccounting(cur realm, t *testing.T) {
 	type collectStep struct {
 		reward  int64
 		penalty int64
@@ -2580,8 +2565,8 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			poolPath := "gno.land/r/test/penalty_accounting"
 			creator := testutils.TestAddress("creator")
@@ -2611,16 +2596,16 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 	}
 }
 
-func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
+func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	refundAddress := testutils.TestAddress("refundee")
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	incentiveId := "test-id"
 
-	setupPenaltyFixture := func(t *testing.T) {
+	setupPenaltyFixture := func(cur realm, t *testing.T) {
 		t.Helper()
 
-		initStakerTest(t)
+		initStakerTest(cur, t)
 		instance := getMockInstance()
 
 		currentTime := time.Now().Unix()
@@ -2628,8 +2613,8 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 		endTime := currentTime + 86400*30
 
 		testing.SetRealm(adminRealm)
-		gns.Approve(cross, poolAddr, math.MaxInt)
-		CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+		gns.Approve(cross(cur), poolAddr, math.MaxInt)
+		CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 		pool := sr.NewPool(poolPath, currentTime)
 		instance.getPools().set(poolPath, pool)
@@ -2657,39 +2642,39 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 		skipBlocks := (endTime-startTime)/5 + 86400
 		testing.SkipHeights(skipBlocks)
 
-		bar.Transfer(cross, stakerAddr, 10_000_000_000)
+		bar.Transfer(cross(cur), stakerAddr, 10_000_000_000)
 	}
 
-	t.Run("safe mode blocks penalty collection", func(t *testing.T) {
-		setupPenaltyFixture(t)
+	t.Run("safe mode blocks penalty collection", func(cur realm, t *testing.T) {
+		setupPenaltyFixture(cross(cur), t)
 
 		testing.SetRealm(adminRealm)
-		halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 
 		defer func() {
 			testing.SetRealm(adminRealm)
-			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 		}()
 
 		testing.SetRealm(testing.NewUserRealm(creator))
-		uassert.AbortsContains(t, "halted: withdraw", func() {
-			mockInstanceCollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+		uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+			mockInstanceCollectExternalIncentivePenalty(cur, poolPath, incentiveId, refundAddress)
 		})
 	})
 
-	t.Run("emergency mode allows penalty collection", func(t *testing.T) {
-		setupPenaltyFixture(t)
+	t.Run("emergency mode allows penalty collection", func(cur realm, t *testing.T) {
+		setupPenaltyFixture(cross(cur), t)
 
 		testing.SetRealm(adminRealm)
-		halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
 		defer func() {
 			testing.SetRealm(adminRealm)
-			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 		}()
 
 		testing.SetRealm(testing.NewUserRealm(creator))
-		result := mockInstanceCollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+		result := mockInstanceCollectExternalIncentivePenalty(cur, poolPath, incentiveId, refundAddress)
 		uassert.Equal(t, int64(5000), result)
 
 		pool, exists := getMockInstance().getPools().Get(poolPath)
@@ -2703,7 +2688,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
 
 // TestEndExternalIncentiveRefundWithPenalty tests that endExternalIncentive
 // includes accumulatedPenaltyAmount in the refund calculation.
-func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
+func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		distributed int64
@@ -2716,8 +2701,8 @@ func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			s := getMockInstance()
 
 			poolPath := "gno.land/r/test/penalty_refund"

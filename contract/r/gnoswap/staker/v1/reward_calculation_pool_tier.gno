@@ -23,33 +23,22 @@ const (
 // Returns:
 // - TierRatio: The ratio distribution across tier 1, 2, and 3, scaled up by 100.
 func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) sr.TierRatio {
-	// tier1 always exists
+	// tier1 always exists.
+	//
+	// TierRatio is declared in /r/gnoswap/staker; constructing it via a
+	// composite literal here (/r/gnoswap/staker/v1) trips the construction-time
+	// check ("cannot allocate ... in realm ..."). Route through the domain
+	// constructor sr.NewTierRatio so allocation happens in the declaring realm.
 	if tier2Count == 0 && tier3Count == 0 {
-		return sr.TierRatio{
-			Tier1: 100,
-			Tier2: 0,
-			Tier3: 0,
-		}
+		return sr.NewTierRatio(100, 0, 0)
 	}
 	if tier2Count == 0 {
-		return sr.TierRatio{
-			Tier1: 80,
-			Tier2: 0,
-			Tier3: 20,
-		}
+		return sr.NewTierRatio(80, 0, 20)
 	}
 	if tier3Count == 0 {
-		return sr.TierRatio{
-			Tier1: 70,
-			Tier2: 30,
-			Tier3: 0,
-		}
+		return sr.NewTierRatio(70, 30, 0)
 	}
-	return sr.TierRatio{
-		Tier1: 50,
-		Tier2: 30,
-		Tier3: 20,
-	}
+	return sr.NewTierRatio(50, 30, 20)
 }
 
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
@@ -95,7 +84,7 @@ type PoolTier struct {
 // - *PoolTier: The new PoolTier instance.
 func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
 	result := &PoolTier{
-		membership:               bptree.NewBPTreeN(16),
+		membership:               sr.NewBPTreeN(16),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
 		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),
 		getEmission:              getEmission,

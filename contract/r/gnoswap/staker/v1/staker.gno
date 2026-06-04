@@ -150,7 +150,7 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 
 // EmissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func (s *stakerV1) EmissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
+func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()

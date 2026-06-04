@@ -14,7 +14,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
-func TestHandleStakingRewardFee(t *testing.T) {
+func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -58,23 +58,23 @@ func TestHandleStakingRewardFee(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
-			getMockInstance().store.SetUnstakingFee(uint64(tc.expectedFee)) // Set the fee globally for the test
+			getMockInstance().store.SetUnstakingFee(0, cur, uint64(tc.expectedFee)) // Set the fee globally for the test
 
 			if tc.stakerBalance > 0 {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, stakerAddr, tc.stakerBalance)
+				gns.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
 			}
 
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
 				testing.SetRealm(stakerRealm)
-				return getMockInstance().handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
+				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
 			}
 
 			if tc.expectedHasPanic {
-				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.AbortsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					handleStakingRewardFeeFn()
 				})
 
@@ -93,14 +93,14 @@ func TestHandleStakingRewardFee(t *testing.T) {
 	}
 }
 
-func TestAddPendingProtocolFee(t *testing.T) {
-	initStakerTest(t)
+func TestAddPendingProtocolFee(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	instance.addPendingProtocolFee(barPath, 100)
-	instance.addPendingProtocolFee(barPath, 50)
-	instance.addPendingProtocolFee(gnsPath, 25)
-	instance.addPendingProtocolFee(fooPath, 0)
+	instance.addPendingProtocolFee(0, cur, barPath, 100)
+	instance.addPendingProtocolFee(0, cur, barPath, 50)
+	instance.addPendingProtocolFee(0, cur, gnsPath, 25)
+	instance.addPendingProtocolFee(0, cur, fooPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
@@ -108,23 +108,23 @@ func TestAddPendingProtocolFee(t *testing.T) {
 	uassert.Equal(t, len(pendingProtocolFees), 2)
 }
 
-func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
-	initStakerTest(t)
+func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 	originalPendingProtocolFees := map[string]int64{
 		barPath: 0,
 		gnsPath: -10,
 	}
-	instance.store.SetPendingProtocolFees(originalPendingProtocolFees)
+	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	instance.addToProtocolFee()
+	instance.addToProtocolFee(0, cur)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
 	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
-func TestSetUnStakingFee(t *testing.T) {
+func TestSetUnStakingFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		caller         address
@@ -189,22 +189,22 @@ func TestSetUnStakingFee(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// Reset unstaking fee before each test
-			getMockInstance().store.SetUnstakingFee(0)
+			getMockInstance().store.SetUnstakingFee(0, cur, 0)
 
 			// Set the caller
 			testing.SetRealm(testing.NewUserRealm(tc.caller))
 
 			// Execute the function
 			if tc.shouldAbort {
-				uassert.AbortsContains(t, tc.expectedErrMsg, func() {
-					mockInstanceSetUnstakingFee(tc.fee)
+				uassert.AbortsContains(t, cur, tc.expectedErrMsg, func() {
+					mockInstanceSetUnstakingFee(cur, tc.fee)
 				})
 			} else {
-				mockInstanceSetUnstakingFee(tc.fee)
+				mockInstanceSetUnstakingFee(cur, tc.fee)
 
 				testing.SetRealm(adminRealm)
 				// Verify the result
@@ -216,7 +216,7 @@ func TestSetUnStakingFee(t *testing.T) {
 }
 
 // Test GetUnstakingFee function
-func TestGetUnstakingFee(t *testing.T) {
+func TestGetUnstakingFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setFee      uint64
@@ -245,12 +245,12 @@ func TestGetUnstakingFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			// Set the fee
-			instance.store.SetUnstakingFee(tt.setFee)
+			instance.store.SetUnstakingFee(0, cur, tt.setFee)
 
 			// Get and verify
 			actualFee := instance.GetUnstakingFee()
@@ -260,7 +260,7 @@ func TestGetUnstakingFee(t *testing.T) {
 }
 
 // Test setUnStakingFee internal function
-func TestSetUnStakingFeeInternal(t *testing.T) {
+func TestSetUnStakingFeeInternal(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		fee     uint64
@@ -284,12 +284,12 @@ func TestSetUnStakingFeeInternal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			// Call internal setter
-			instance.setUnStakingFee(tt.fee)
+			instance.setUnStakingFee(0, cur, tt.fee)
 
 			// Verify
 			actualFee := instance.GetUnstakingFee()
@@ -299,7 +299,7 @@ func TestSetUnStakingFeeInternal(t *testing.T) {
 }
 
 // Test handleStakingRewardFee with various scenarios
-func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
+func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -363,12 +363,12 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			// Set the unstaking fee
-			instance.store.SetUnstakingFee(tt.unstakingFee)
+			instance.store.SetUnstakingFee(0, cur, tt.unstakingFee)
 
 			// Prepare token balance
 			if tt.unstakingFee > 0 {
@@ -379,12 +379,12 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 					if tt.internal {
 						_ = GNS_PATH
 					}
-					gns.Transfer(cross, stakerAddr, calculatedFee)
+					gns.Transfer(cross(cur), stakerAddr, calculatedFee)
 				}
 			}
 
 			testing.SetRealm(stakerRealm)
-			netAmount, feeAmount, err := instance.handleStakingRewardFee(tt.tokenPath, tt.amount, tt.internal)
+			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -398,7 +398,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 }
 
 // Test handleStakingRewardFee calculation precision
-func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
+func TestHandleStakingRewardFeeCalculationPrecision(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
@@ -437,7 +437,7 @@ func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Verify calculation: feeAmount = (amount * fee) / FEE_PRECISION
 			calculatedFee := (tt.amount * int64(tt.fee)) / 10000
 			uassert.Equal(t, tt.expectedFee, calculatedFee)
