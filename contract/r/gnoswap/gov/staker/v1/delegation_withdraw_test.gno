@@ -306,7 +306,11 @@ func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
+			// Copy into a local so the value is owned by the executing realm;
+			// the domain composite literal carries domain provenance and a
+			// non-crossing setter would otherwise hit the cross-realm guard.
+			withdraw := tc.withdraw
+			resolver := NewDelegationWithdrawResolver(&withdraw)
 
 			// when
 			err := resolver.Collect(tc.collectAmount, tc.currentTime)
@@ -316,9 +320,9 @@ func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 				uassert.ErrorIs(t, err, tc.expectedError)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, tc.withdraw.IsCollected(), tc.expectedCollected)
-				uassert.Equal(t, tc.withdraw.CollectedAmount(), tc.expectedCollectedAmount)
-				uassert.Equal(t, tc.withdraw.CollectedAt(), tc.currentTime)
+				uassert.Equal(t, withdraw.IsCollected(), tc.expectedCollected)
+				uassert.Equal(t, withdraw.CollectedAmount(), tc.expectedCollectedAmount)
+				uassert.Equal(t, withdraw.CollectedAt(), tc.currentTime)
 			}
 		})
 	}

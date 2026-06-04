@@ -69,3 +69,41 @@ func (dm *DelegationManager) SetDelegationIDs(delegator, delegatee string, ids [
 	}
 	delegations.Set(delegatee, ids)
 }
+
+// AddDelegationID appends a delegation ID to the delegator-delegatee pair,
+// skipping duplicates. The whole get-modify-set runs inside this domain method
+// so the nested BPTree mutation never escapes the owning realm. Performing the
+// lookup in one realm and the write in another (e.g. re-fetching the inner tree
+// across a realm boundary and mutating it) would hit the cross-realm write
+// guard for the persisted leaf slot.
+func (dm *DelegationManager) AddDelegationID(delegator, delegatee string, delegationID int64) {
+	ids, _ := dm.GetDelegationIDs(delegator, delegatee)
+	for _, id := range ids {
+		if id == delegationID {
+			return
+		}
+	}
+	ids = append(ids, delegationID)
+	dm.SetDelegationIDs(delegator, delegatee, ids)
+}
+
+// RemoveDelegationID removes a delegation ID from the delegator-delegatee pair.
+// Like AddDelegationID, the read-modify-write is kept inside this domain method.
+func (dm *DelegationManager) RemoveDelegationID(delegator, delegatee string, delegationID int64) {
+	ids, exists := dm.GetDelegationIDs(delegator, delegatee)
+	if !exists {
+		return
+	}
+	index := -1
+	for i, id := range ids {
+		if id == delegationID {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return
+	}
+	ids = append(ids[:index], ids[index+1:]...)
+	dm.SetDelegationIDs(delegator, delegatee, ids)
+}
