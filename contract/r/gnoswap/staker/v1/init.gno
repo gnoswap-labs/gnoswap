@@ -35,7 +35,9 @@ func registerStakerV1(cur realm) {
 
 		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
 		instance.setupSwapHooks(0, rlm)
-		emissionAccessor.SetOnDistributionPctChangeCallback(0, cur, instance.emissionCacheUpdateHook)
+		emissionAccessor.SetOnDistributionPctChangeCallback(0, cur, func(cur realm, emissionAmountPerSecond int64) {
+			instance.EmissionCacheUpdateHook(0, cur, emissionAmountPerSecond)
+		})
 
 		return instance
 	})

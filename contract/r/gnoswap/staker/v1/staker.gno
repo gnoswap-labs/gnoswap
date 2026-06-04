@@ -148,9 +148,9 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
-// emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
+// EmissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func (s *stakerV1) emissionCacheUpdateHook(cur realm, emissionAmountPerSecond int64) {
+func (s *stakerV1) EmissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
@@ -165,7 +165,7 @@ func (s *stakerV1) emissionCacheUpdateHook(cur realm, emissionAmountPerSecond in
 		// Now apply the new emission rate to each pool individually
 		poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
 
-		s.updatePoolTier(0, cur, poolTier)
+		s.updatePoolTier(0, rlm, poolTier)
 	}
 }
 
