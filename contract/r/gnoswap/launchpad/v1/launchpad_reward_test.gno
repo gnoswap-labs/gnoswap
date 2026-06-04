@@ -568,9 +568,16 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(cur realm, t *testing.
 				// Create project
 				projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, tt.project)
 
-				// Create deposit
-				_, depositID = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID,
-					testDepositConfig{userSuffix: tt.depositOwner, depositAmount: 1000000, tier: 30})
+				// When the caller is expected to be the deposit owner, the public
+				// CollectRewardByDepositId resolves the caller to the launchpad v1
+				// realm, so create the deposit owned by that realm. Otherwise keep
+				// the deposit owned by a distinct user to exercise the owner check.
+				if tt.caller == tt.depositOwner {
+					depositID = createV1OwnedDeposit(cur, t, lp, launchpadAddr, projectID, 30, 1000000)
+				} else {
+					_, depositID = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID,
+						testDepositConfig{userSuffix: tt.depositOwner, depositAmount: 1000000, tier: 30})
+				}
 
 				testing.SkipHeights(testSkipTier30Claimable)
 			}
@@ -633,6 +640,12 @@ func TestLaunchpadReward_CollectRewardByDepositId_ContractDepositor(cur realm, t
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 	gns.Approve(cross(cur), launchpadAddr, 1000000)
+
+	// The public DepositGns/CollectRewardByDepositId caller resolves to the
+	// launchpad v1 realm in this harness, so the deposit must be made and owned
+	// by that realm.
+	_ = contractAddr
+	fundDepositCaller(cur, launchpadAddr, 1000000)
 
 	var depositID string
 	func(cur realm) {

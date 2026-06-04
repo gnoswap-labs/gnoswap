@@ -30,6 +30,26 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
 
+// fundDepositCaller funds and approves GNS from the launchpad v1 realm, which
+// is the address the test harness resolves as the public DepositGns caller
+// (rlm.Previous()) when crossing in via SetRealm(NewCodeRealm(...)). This lets
+// the deposit's GNS TransferFrom succeed.
+func fundDepositCaller(cur realm, launchpadAddr address, amount int64) {
+	// Skip for non-positive amounts (used by invalid-amount failure cases that
+	// abort before any token transfer).
+	if amount <= 0 {
+		return
+	}
+
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	depositCaller := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross(cur), depositCaller, amount)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+	gns.Approve(cross(cur), launchpadAddr, amount)
+}
+
 func createDepositTestProject(
 	cur realm,
 	lp *launchpadV1,
@@ -425,7 +445,9 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
 				deposit, err := lp.getDeposit(depositID)
 				uassert.NoError(t, err)
-				uassert.Equal(t, chain.PackageAddress("gno.land/r/test/contract"), deposit.Depositor())
+				// The deposit caller is resolved by rlm.Previous(), which the
+				// test harness reports as the launchpad realm crossing in.
+				uassert.Equal(t, chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1"), deposit.Depositor())
 			},
 		},
 	}
@@ -441,6 +463,13 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 			if tt.targetProjectTierID == "" {
 				tt.targetProjectTierID = projectTierID
 			}
+
+			// In this test harness the public DepositGns is invoked by crossing
+			// into the launchpad realm via SetRealm(NewCodeRealm(...)). The
+			// runtime resolves rlm.Previous() (the deposit caller) to the test
+			// realm itself (gno.land/r/gnoswap/launchpad/v1), so fund and approve
+			// GNS from that realm to cover the deposit's TransferFrom.
+			fundDepositCaller(cur, launchpadAddr, tt.depositAmount)
 
 			if userAddr == chain.PackageAddress("gno.land/r/test/contract") {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
@@ -685,7 +714,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(cur realm, t *testing.T) {
 		initialXGNSTotalSupply := xgns.TotalSupply()
 
 		// Perform deposit
-		testing.SetRealm(testing.NewUserRealm(userAddr))
+		fundDepositCaller(cur, launchpadAddr, depositAmount)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			lp.DepositGns(0, cur, projectID+":30", depositAmount, "")
@@ -755,7 +784,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(cur realm, t *testing.T) {
 		initialXGNSTotalSupply := xgns.TotalSupply()
 
 		// First deposit
-		testing.SetRealm(testing.NewUserRealm(userAddr))
+		fundDepositCaller(cur, launchpadAddr, deposit1Amount)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			lp.DepositGns(0, cur, projectID+":30", deposit1Amount, "")
@@ -769,7 +798,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(cur realm, t *testing.T) {
 			"First deposit should mint exactly deposit1Amount of xGNS")
 
 		// Second deposit
-		testing.SetRealm(testing.NewUserRealm(userAddr))
+		fundDepositCaller(cur, launchpadAddr, deposit2Amount)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			lp.DepositGns(0, cur, projectID+":90", deposit2Amount, "")
@@ -833,6 +862,7 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit1ID string
+		fundDepositCaller(cur, launchpadAddr, 1000000)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			deposit1ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
@@ -868,6 +898,7 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit2ID string
+		fundDepositCaller(cur, launchpadAddr, 1000000)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			deposit2ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
@@ -924,6 +955,7 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit1ID string
+		fundDepositCaller(cur, launchpadAddr, 1000000)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			deposit1ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
@@ -940,6 +972,7 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		gns.Approve(cross(cur), launchpadAddr, 10000000)
 
 		var deposit2ID string
+		fundDepositCaller(cur, launchpadAddr, 1000000)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			deposit2ID = lp.DepositGns(0, cur, projectID+":30", 1000000, "")
@@ -1072,6 +1105,7 @@ func TestDepositGns_TierEndTimeBoundary(cur realm, t *testing.T) {
 		gns.Approve(cross(cur), launchpadAddr, 2000000)
 
 		// Attempt to deposit - should succeed because tier is active
+		fundDepositCaller(cur, launchpadAddr, 1000000)
 		var depositID string
 		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {

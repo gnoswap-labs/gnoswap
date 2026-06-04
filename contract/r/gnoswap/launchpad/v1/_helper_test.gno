@@ -13,6 +13,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
@@ -140,6 +141,31 @@ func createTestProject(
 	return projectID
 }
 
+// createV1OwnedDeposit creates a deposit via the public DepositGns so the
+// deposit is owned by the launchpad v1 realm (the caller the test harness
+// resolves). Use when the deposit must later be collected through the public
+// CollectRewardByDepositId, whose caller is also resolved to the v1 realm.
+func createV1OwnedDeposit(
+	cur realm,
+	t *testing.T,
+	lp *launchpadV1,
+	launchpadAddr address,
+	projectID string,
+	tier int64,
+	depositAmount int64,
+) string {
+	if tier == 0 {
+		tier = 30
+	}
+	fundDepositCaller(cur, launchpadAddr, depositAmount)
+
+	tierID := projectID + ":" + strconv.FormatInt(tier, 10)
+	return func(cur realm) string {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		return lp.DepositGns(0, cur, tierID, depositAmount, "")
+	}(cross(cur))
+}
+
 // createTestDeposit creates a deposit for given user and returns user address and deposit ID
 func createTestDeposit(
 	cur realm,
@@ -204,16 +230,34 @@ func createTestDeposits(
 // Test Reward Collection Functions
 // =============================================================================
 
-// collectTestReward collects reward for given user and deposit
-// Returns the reward amount
+// collectTestReward collects reward for given user and deposit.
+// Returns the reward amount.
+//
+// Deposits created by createTestDeposit are owned by explicit user addresses
+// (via the internal depositGns), but the public CollectRewardByDepositId
+// resolves its caller to the launchpad v1 realm in this harness, which fails
+// the deposit-owner assertion. Collect via the internal path with the deposit
+// looked up directly so per-depositor reward accounting is preserved.
 func collectTestReward(cur realm, t *testing.T, lp *launchpadV1, userAddr address, depositID string) int64 {
-	testing.SetRealm(testing.NewUserRealm(userAddr))
+	deposit := lp.mustGetDeposit(depositID)
 
 	var rewardAmount int64
+	var rewardTokenPath string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		rewardAmount = lp.CollectRewardByDepositId(0, cur, depositID)
+		tokenPath, amount, err := lp.collectDepositReward(0, cur, deposit, testing.GetContext().Height, testing.GetContext().Time.Unix())
+		if err != nil {
+			panic(err)
+		}
+		rewardTokenPath = tokenPath
+		rewardAmount = amount
 	}(cross(cur))
+
+	// Transfer reward to the depositor, mirroring CollectRewardByDepositId.
+	if rewardAmount > 0 {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		common.SafeGRC20Transfer(cross(cur), rewardTokenPath, deposit.Depositor(), rewardAmount)
+	}
 
 	return rewardAmount
 }
@@ -408,6 +452,11 @@ func getDeposit(depositID string) (*launchpad.Deposit, error) {
 	return lp.getDeposit(depositID)
 }
 
+// createProjectTest creates a project via the internal createProject and funds
+// the launchpad with the reward tokens. The public CreateProject derives its
+// admin caller from rlm.Previous(), which the test harness resolves to the
+// launchpad v1 realm rather than the admin, so it cannot be exercised directly
+// here; the public auth path is covered by TestLaunchpadProject_* tests.
 func createProjectTest(
 	cur realm,
 	t *testing.T,
@@ -420,21 +469,45 @@ func createProjectTest(
 	tier180Pct int64,
 	startTime int64,
 ) string {
-	return func(cur realm) string {
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+	projectID := func(cur realm) string {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.CreateProject(0, cur, projectName,
-			tokenPath,
-			recipient,
-			rewardAmount,
-			"", "",
-			tier30Pct, tier90Pct, tier180Pct,
-			startTime,
-		)
+		project, err := testImpl.createProject(0, cur, &createProjectParams{
+			name:                  projectName,
+			tokenPath:             tokenPath,
+			recipient:             recipient,
+			depositAmount:         rewardAmount,
+			tier30Ratio:           tier30Pct,
+			tier90Ratio:           tier90Pct,
+			tier180Ratio:          tier180Pct,
+			startTime:             startTime,
+			currentTime:           testing.GetContext().Time.Unix(),
+			currentHeight:         testing.GetContext().Height,
+			minimumStartDelayTime: projectMinimumStartDelayTime,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return project.ID()
 	}(cross(cur))
+
+	// Fund the launchpad with the reward tokens, mirroring CreateProject's
+	// TransferFrom(caller -> launchpad).
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross(cur), launchpadAddr, rewardAmount)
+
+	return projectID
 }
 
 func depositGnsTest(cur realm, t *testing.T, depositID string, depositAmount int64) string {
+	// The public DepositGns caller resolves to the launchpad v1 realm in this
+	// harness; fund and approve GNS from that realm so the deposit succeeds.
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	fundDepositCaller(cur, launchpadAddr, depositAmount)
+
 	return func(cur realm) string {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
