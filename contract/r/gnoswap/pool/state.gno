@@ -28,6 +28,8 @@ var (
 	// This pointer is switched during upgrades to point to different versions (v1, v2, etc.).
 	// The proxy layer routes all calls to this implementation.
 	implementation IPool
+
+	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 )
 
 // init initializes the pool domain state.

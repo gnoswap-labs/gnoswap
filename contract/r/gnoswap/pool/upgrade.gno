@@ -17,6 +17,10 @@ import (
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore IPoolStore) IPool) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
+		if !rlm.IsCurrent() {
+			panic(ErrSpoofedRealm)
+		}
+
 		currentPoolStore, ok := domainStore.(IPoolStore)
 		if !ok {
 			panic("domainStore is not an IPoolStore")
