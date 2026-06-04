@@ -8,6 +8,17 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
+// NewBPTreeN allocates a BP-tree under /r/gnoswap/launchpad's realm context
+// (the realm that declares Project/Deposit/RewardManager). The tree's PkgID is
+// therefore /r/gnoswap/launchpad, matching the domain values it stores, so
+// tree.Set leaf-slot writes clear the readonly-taint gate regardless of which
+// realm (launchpad/v1, mock, tests) calls Set. Implementations, mocks, and
+// tests must allocate launchpad trees through here rather than calling
+// bptree.NewBPTreeN directly in their own realm.
+func NewBPTreeN(fanout int) *bptree.BPTree {
+	return bptree.NewBPTreeN(fanout)
+}
+
 type StoreKey string
 
 func (s StoreKey) String() string {

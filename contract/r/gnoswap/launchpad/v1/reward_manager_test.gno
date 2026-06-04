@@ -6,7 +6,6 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/launchpad"
@@ -39,7 +38,7 @@ func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			tree := bptree.NewBPTreeN(16)
+			tree := launchpad.NewBPTreeN(16)
 			for k, v := range tt.rewardStates {
 				tree.Set(k, v)
 			}

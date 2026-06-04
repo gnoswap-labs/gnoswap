@@ -271,10 +271,10 @@ var (
 // initTestStore initializes a new test store
 func initTestStore() {
 	testStore = &testLaunchpadStore{
-		projects:                  bptree.NewBPTreeN(16),
-		projectTierRewardManagers: bptree.NewBPTreeN(16),
+		projects:                  launchpad.NewBPTreeN(16),
+		projectTierRewardManagers: launchpad.NewBPTreeN(16),
 		depositCounter:            launchpad.NewCounter(),
-		deposits:                  bptree.NewBPTreeN(16),
+		deposits:                  launchpad.NewBPTreeN(16),
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -300,7 +300,7 @@ func (s *testLaunchpadStore) HasProjectsKey() bool {
 
 func (s *testLaunchpadStore) GetProjects() *bptree.BPTree {
 	if s.projects == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.projects
 }
@@ -316,7 +316,7 @@ func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
 
 func (s *testLaunchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 	if s.projectTierRewardManagers == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.projectTierRewardManagers
 }
@@ -349,7 +349,7 @@ func (s *testLaunchpadStore) HasDepositsKey() bool {
 
 func (s *testLaunchpadStore) GetDeposits() *bptree.BPTree {
 	if s.deposits == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.deposits
 }
@@ -364,7 +364,7 @@ func (s *testLaunchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTr
 // getTestProjects returns the projects tree
 func getTestProjects() *bptree.BPTree {
 	if testStore == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return testStore.GetProjects()
 }
@@ -383,7 +383,7 @@ func setTestProjects(tree *bptree.BPTree) {
 // getTestProjectTierRewardManagers returns the projectTierRewardManagers tree
 func getTestProjectTierRewardManagers() *bptree.BPTree {
 	if testStore == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return testStore.GetProjectTierRewardManagers()
 }

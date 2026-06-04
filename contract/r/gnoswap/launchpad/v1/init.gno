@@ -1,7 +1,6 @@
 package v1
 
 import (
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/launchpad"
 )
 
@@ -22,14 +21,14 @@ func registerLaunchpadV1(cur realm) {
 
 func initStoreData(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) error {
 	if !launchpadStore.HasProjectsKey() {
-		err := launchpadStore.SetProjects(0, rlm, bptree.NewBPTreeN(16))
+		err := launchpadStore.SetProjects(0, rlm, launchpad.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !launchpadStore.HasProjectTierRewardManagersKey() {
-		err := launchpadStore.SetProjectTierRewardManagers(0, rlm, bptree.NewBPTreeN(16))
+		err := launchpadStore.SetProjectTierRewardManagers(0, rlm, launchpad.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
@@ -43,7 +42,7 @@ func initStoreData(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) e
 	}
 
 	if !launchpadStore.HasDepositsKey() {
-		err := launchpadStore.SetDeposits(0, rlm, bptree.NewBPTreeN(16))
+		err := launchpadStore.SetDeposits(0, rlm, launchpad.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
