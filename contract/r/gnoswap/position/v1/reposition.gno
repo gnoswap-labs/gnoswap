@@ -10,7 +10,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/position"
 )
 
 // Reposition adjusts the price range and liquidity of an existing position.
