@@ -180,6 +180,8 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 
 // finalizeSwap handles post-swap operations and validations.
 func (r *routerV1) finalizeSwap(
+	_ int,
+	rlm realm,
 	inputToken, outputToken string,
 	resultAmountIn, resultAmountOut int64,
 	swapType SwapType,
@@ -191,7 +193,7 @@ func (r *routerV1) finalizeSwap(
 	validator := &SwapValidator{}
 
 	// Handle swap fee
-	resultAmountOutWithoutFee := r.handleSwapFee(outputToken, resultAmountOut)
+	resultAmountOutWithoutFee := r.handleSwapFee(0, rlm, outputToken, resultAmountOut)
 
 	// Validate exact out amount if applicable
 	// If sqrtPriceLimitX96 is set, slippage check is not needed

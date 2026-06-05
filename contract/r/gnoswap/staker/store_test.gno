@@ -9,7 +9,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestStoreInitialization(t *testing.T) {
+func TestStoreInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -30,14 +30,14 @@ func TestStoreInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			tt.verifyFn(t)
 		})
 	}
 }
 
-func TestStore_AuthorizedCallers(t *testing.T) {
+func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		callerRealm                   runtime.Realm
@@ -81,27 +81,27 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			ss := NewStakerStore(kvStore)
-			initRegisterWritableContract()
+			initRegisterWritableContract(cur)
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 			if !ss.HasAllowedTokensStoreKey() {
-				ss.SetAllowedTokens([]string{})
+				ss.SetAllowedTokens(0, cur, []string{})
 			}
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
-				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+				uassert.PanicsContains(t, cur, tc.expectedErrorMessageWithRead, func() {
 					ss.GetAllowedTokens()
 				})
 			} else {
 				ss.GetAllowedTokens()
 			}
 
-			err := ss.SetAllowedTokens([]string{"gno.land/r/demo/token1"})
+			err := ss.SetAllowedTokens(0, cur, []string{"gno.land/r/demo/token1"})
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -111,20 +111,20 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetDepositGnsAmount(t *testing.T) {
+func TestStoreSetAndGetDepositGnsAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get deposit gns amount successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetDepositGnsAmount(1000000)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetDepositGnsAmount(0, cur, 1000000)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasDepositGnsAmountStoreKey(), "should have deposit gns amount after setting")
 				retrieved := ss.GetDepositGnsAmount()
 				uassert.Equal(t, int64(1000000), retrieved)
@@ -132,13 +132,13 @@ func TestStoreSetAndGetDepositGnsAmount(t *testing.T) {
 		},
 		{
 			name: "should not have deposit gns amount initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasDepositGnsAmountStoreKey(), "should not have deposit gns amount initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized deposit gns amount",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetDepositGnsAmount()
 			},
 			shouldPanic:  true,
@@ -147,12 +147,12 @@ func TestStoreSetAndGetDepositGnsAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -162,25 +162,25 @@ func TestStoreSetAndGetDepositGnsAmount(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetMinimumRewardAmount(t *testing.T) {
+func TestStoreSetAndGetMinimumRewardAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get minimum reward amount successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetMinimumRewardAmount(100)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetMinimumRewardAmount(0, cur, 100)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasMinimumRewardAmountStoreKey(), "should have minimum reward amount after setting")
 				retrieved := ss.GetMinimumRewardAmount()
 				uassert.Equal(t, int64(100), retrieved)
@@ -188,13 +188,13 @@ func TestStoreSetAndGetMinimumRewardAmount(t *testing.T) {
 		},
 		{
 			name: "should not have minimum reward amount initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasMinimumRewardAmountStoreKey(), "should not have minimum reward amount initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized minimum reward amount",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetMinimumRewardAmount()
 			},
 			shouldPanic:  true,
@@ -203,12 +203,12 @@ func TestStoreSetAndGetMinimumRewardAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -218,26 +218,26 @@ func TestStoreSetAndGetMinimumRewardAmount(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetDeposits(t *testing.T) {
+func TestStoreSetAndGetDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get deposits successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				deposits := bptree.NewBPTreeN(16)
-				ss.SetDeposits(deposits)
+				ss.SetDeposits(0, cur, deposits)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasDepositsStoreKey(), "should have deposits after setting")
 				retrieved := ss.GetDeposits()
 				uassert.NotEqual(t, nil, retrieved)
@@ -245,13 +245,13 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 		},
 		{
 			name: "should not have deposits initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasDepositsStoreKey(), "should not have deposits initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized deposits",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetDeposits()
 			},
 			shouldPanic:  true,
@@ -260,12 +260,12 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -275,26 +275,26 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetExternalIncentives(t *testing.T) {
+func TestStoreSetAndGetExternalIncentives(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get external incentives successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				incentives := bptree.NewBPTreeN(16)
-				ss.SetExternalIncentives(incentives)
+				ss.SetExternalIncentives(0, cur, incentives)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasExternalIncentivesStoreKey(), "should have external incentives after setting")
 				retrieved := ss.GetExternalIncentives()
 				uassert.NotEqual(t, nil, retrieved)
@@ -302,13 +302,13 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 		},
 		{
 			name: "should not have external incentives initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasExternalIncentivesStoreKey(), "should not have external incentives initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized external incentives",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetExternalIncentives()
 			},
 			shouldPanic:  true,
@@ -317,12 +317,12 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -332,25 +332,25 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetTotalEmissionSent(t *testing.T) {
+func TestStoreSetAndGetTotalEmissionSent(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get total emission sent successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetTotalEmissionSent(50000)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetTotalEmissionSent(0, cur, 50000)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasTotalEmissionSentStoreKey(), "should have total emission sent after setting")
 				retrieved := ss.GetTotalEmissionSent()
 				uassert.Equal(t, int64(50000), retrieved)
@@ -358,13 +358,13 @@ func TestStoreSetAndGetTotalEmissionSent(t *testing.T) {
 		},
 		{
 			name: "should not have total emission sent initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasTotalEmissionSentStoreKey(), "should not have total emission sent initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized total emission sent",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetTotalEmissionSent()
 			},
 			shouldPanic:  true,
@@ -373,12 +373,12 @@ func TestStoreSetAndGetTotalEmissionSent(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -388,26 +388,26 @@ func TestStoreSetAndGetTotalEmissionSent(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetAllowedTokens(t *testing.T) {
+func TestStoreSetAndGetAllowedTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get allowed tokens successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				tokens := []string{"gno.land/r/demo/token1", "gno.land/r/demo/token2"}
-				ss.SetAllowedTokens(tokens)
+				ss.SetAllowedTokens(0, cur, tokens)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasAllowedTokensStoreKey(), "should have allowed tokens after setting")
 				retrieved := ss.GetAllowedTokens()
 				uassert.NotEqual(t, nil, retrieved)
@@ -416,13 +416,13 @@ func TestStoreSetAndGetAllowedTokens(t *testing.T) {
 		},
 		{
 			name: "should not have allowed tokens initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasAllowedTokensStoreKey(), "should not have allowed tokens initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized allowed tokens",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetAllowedTokens()
 			},
 			shouldPanic:  true,
@@ -431,12 +431,12 @@ func TestStoreSetAndGetAllowedTokens(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -446,26 +446,26 @@ func TestStoreSetAndGetAllowedTokens(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetIncentiveCounter(t *testing.T) {
+func TestStoreSetAndGetIncentiveCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get incentive counter successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				counter := &Counter{}
-				ss.SetIncentiveCounter(counter)
+				ss.SetIncentiveCounter(0, cur, counter)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasIncentiveCounterStoreKey(), "should have incentive counter after setting")
 				retrieved := ss.GetIncentiveCounter()
 				uassert.NotEqual(t, nil, retrieved)
@@ -473,13 +473,13 @@ func TestStoreSetAndGetIncentiveCounter(t *testing.T) {
 		},
 		{
 			name: "should not have incentive counter initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasIncentiveCounterStoreKey(), "should not have incentive counter initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized incentive counter",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetIncentiveCounter()
 			},
 			shouldPanic:  true,
@@ -488,12 +488,12 @@ func TestStoreSetAndGetIncentiveCounter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -503,25 +503,25 @@ func TestStoreSetAndGetIncentiveCounter(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetUnstakingFee(t *testing.T) {
+func TestStoreSetAndGetUnstakingFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get unstaking fee successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetUnstakingFee(25)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetUnstakingFee(0, cur, 25)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasUnstakingFeeStoreKey(), "should have unstaking fee after setting")
 				retrieved := ss.GetUnstakingFee()
 				uassert.Equal(t, uint64(25), retrieved)
@@ -529,13 +529,13 @@ func TestStoreSetAndGetUnstakingFee(t *testing.T) {
 		},
 		{
 			name: "should not have unstaking fee initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasUnstakingFeeStoreKey(), "should not have unstaking fee initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized unstaking fee",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetUnstakingFee()
 			},
 			shouldPanic:  true,
@@ -544,12 +544,12 @@ func TestStoreSetAndGetUnstakingFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -559,26 +559,26 @@ func TestStoreSetAndGetUnstakingFee(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPools(t *testing.T) {
+func TestStoreSetAndGetPools(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pools successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				pools := bptree.NewBPTreeN(16)
-				ss.SetPools(pools)
+				ss.SetPools(0, cur, pools)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolsStoreKey(), "should have pools after setting")
 				retrieved := ss.GetPools()
 				uassert.NotEqual(t, nil, retrieved)
@@ -586,13 +586,13 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		},
 		{
 			name: "should not have pools initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolsStoreKey(), "should not have pools initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pools",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPools()
 			},
 			shouldPanic:  true,
@@ -601,12 +601,12 @@ func TestStoreSetAndGetPools(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -616,26 +616,26 @@ func TestStoreSetAndGetPools(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
+func TestStoreSetAndGetTokenSpecificMinimumRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get token specific minimum rewards successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				rewards := make(map[string]int64)
-				ss.SetTokenSpecificMinimumRewards(rewards)
+				ss.SetTokenSpecificMinimumRewards(0, cur, rewards)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasTokenSpecificMinimumRewardsStoreKey(), "should have token specific minimum rewards after setting")
 				retrieved := ss.GetTokenSpecificMinimumRewards()
 				uassert.NotEqual(t, nil, retrieved)
@@ -643,13 +643,13 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 		},
 		{
 			name: "should not have token specific minimum rewards initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasTokenSpecificMinimumRewardsStoreKey(), "should not have token specific minimum rewards initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized token specific minimum rewards",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetTokenSpecificMinimumRewards()
 			},
 			shouldPanic:  true,
@@ -658,12 +658,12 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -673,26 +673,26 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
+func TestStoreSetAndGetPoolTierMemberships(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier memberships successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				memberships := bptree.NewBPTreeN(16)
-				ss.SetPoolTierMemberships(memberships)
+				ss.SetPoolTierMemberships(0, cur, memberships)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierMembershipsStoreKey(), "should have pool tier memberships after setting")
 				retrieved := ss.GetPoolTierMemberships()
 				uassert.NotEqual(t, nil, retrieved)
@@ -700,13 +700,13 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier memberships initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierMembershipsStoreKey(), "should not have pool tier memberships initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier memberships",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierMemberships()
 			},
 			shouldPanic:  true,
@@ -715,12 +715,12 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -730,26 +730,26 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierRatio(t *testing.T) {
+func TestStoreSetAndGetPoolTierRatio(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier ratio successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				ratio := TierRatio{100, 200, 300}
-				ss.SetPoolTierRatio(ratio)
+				ss.SetPoolTierRatio(0, cur, ratio)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierRatioStoreKey(), "should have pool tier ratio after setting")
 				retrieved := ss.GetPoolTierRatio()
 				uassert.Equal(t, uint64(100), retrieved.Tier1)
@@ -759,13 +759,13 @@ func TestStoreSetAndGetPoolTierRatio(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier ratio initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierRatioStoreKey(), "should not have pool tier ratio initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier ratio",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierRatio()
 			},
 			shouldPanic:  true,
@@ -774,12 +774,12 @@ func TestStoreSetAndGetPoolTierRatio(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -789,26 +789,26 @@ func TestStoreSetAndGetPoolTierRatio(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
+func TestStoreSetAndGetPoolTierCounts(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier counts successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				counts := [AllTierCount]uint64{10, 20, 30}
-				ss.SetPoolTierCounts(counts)
+				ss.SetPoolTierCounts(0, cur, counts)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierCountsStoreKey(), "should have pool tier counts after setting")
 				retrieved := ss.GetPoolTierCounts()
 				uassert.Equal(t, uint64(10), retrieved[0])
@@ -818,13 +818,13 @@ func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier counts initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierCountsStoreKey(), "should not have pool tier counts initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier counts",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierCounts()
 			},
 			shouldPanic:  true,
@@ -833,12 +833,12 @@ func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -848,25 +848,25 @@ func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
+func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier last reward cache timestamp successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierLastRewardCacheTimestamp(1234567890)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetPoolTierLastRewardCacheTimestamp(0, cur, 1234567890)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierLastRewardCacheTimestampStoreKey(), "should have pool tier last reward cache timestamp after setting")
 				retrieved := ss.GetPoolTierLastRewardCacheTimestamp()
 				uassert.Equal(t, int64(1234567890), retrieved)
@@ -874,13 +874,13 @@ func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier last reward cache timestamp initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierLastRewardCacheTimestampStoreKey(), "should not have pool tier last reward cache timestamp initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier last reward cache timestamp",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierLastRewardCacheTimestamp()
 			},
 			shouldPanic:  true,
@@ -889,12 +889,12 @@ func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -904,25 +904,25 @@ func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
+func TestStoreSetAndGetPoolTierCurrentEmission(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier current emission successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierCurrentEmission(50000)
+			setupFn: func(cur realm, ss IStakerStore) {
+				ss.SetPoolTierCurrentEmission(0, cur, 50000)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierCurrentEmissionStoreKey(), "should have pool tier current emission after setting")
 				retrieved := ss.GetPoolTierCurrentEmission()
 				uassert.Equal(t, int64(50000), retrieved)
@@ -930,13 +930,13 @@ func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier current emission initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierCurrentEmissionStoreKey(), "should not have pool tier current emission initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier current emission",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierCurrentEmission()
 			},
 			shouldPanic:  true,
@@ -945,12 +945,12 @@ func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -960,26 +960,26 @@ func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierGetEmission(t *testing.T) {
+func TestStoreSetAndGetPoolTierGetEmission(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier get emission successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				emissionFunc := func() int64 { return 1000 }
-				ss.SetPoolTierGetEmission(emissionFunc)
+				ss.SetPoolTierGetEmission(0, cur, emissionFunc)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierGetEmissionStoreKey(), "should have pool tier get emission after setting")
 				retrieved := ss.GetPoolTierGetEmission()
 				uassert.NotEqual(t, nil, retrieved)
@@ -988,13 +988,13 @@ func TestStoreSetAndGetPoolTierGetEmission(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier get emission initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierGetEmissionStoreKey(), "should not have pool tier get emission initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier get emission",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierGetEmission()
 			},
 			shouldPanic:  true,
@@ -1003,12 +1003,12 @@ func TestStoreSetAndGetPoolTierGetEmission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -1018,28 +1018,28 @@ func TestStoreSetAndGetPoolTierGetEmission(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
+func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool tier get halving blocks in range successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				halvingFunc := func(start, end int64) ([]int64, []int64) {
 					return []int64{100, 200}, []int64{10, 20}
 				}
-				ss.SetPoolTierGetHalvingBlocksInRange(halvingFunc)
+				ss.SetPoolTierGetHalvingBlocksInRange(0, cur, halvingFunc)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierGetHalvingBlocksInRangeStoreKey(), "should have pool tier get halving blocks in range after setting")
 				retrieved := ss.GetPoolTierGetHalvingBlocksInRange()
 				uassert.NotEqual(t, nil, retrieved)
@@ -1053,13 +1053,13 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
 		},
 		{
 			name: "should not have pool tier get halving blocks in range initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasPoolTierGetHalvingBlocksInRangeStoreKey(), "should not have pool tier get halving blocks in range initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool tier get halving blocks in range",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetPoolTierGetHalvingBlocksInRange()
 			},
 			shouldPanic:  true,
@@ -1068,12 +1068,12 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -1083,26 +1083,26 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetWarmupTemplate(t *testing.T) {
+func TestStoreSetAndGetWarmupTemplate(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get warmup template successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				warmups := []Warmup{{WarmupRatio: 50, TimeDuration: 100}, {WarmupRatio: 100, TimeDuration: 200}}
-				ss.SetWarmupTemplate(warmups)
+				ss.SetWarmupTemplate(0, cur, warmups)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasWarmupTemplateStoreKey(), "should have warmup template after setting")
 				retrieved := ss.GetWarmupTemplate()
 				uassert.NotEqual(t, nil, retrieved)
@@ -1113,13 +1113,13 @@ func TestStoreSetAndGetWarmupTemplate(t *testing.T) {
 		},
 		{
 			name: "should not have warmup template initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasWarmupTemplateStoreKey(), "should not have warmup template initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized warmup template",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetWarmupTemplate()
 			},
 			shouldPanic:  true,
@@ -1128,12 +1128,12 @@ func TestStoreSetAndGetWarmupTemplate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -1143,26 +1143,26 @@ func TestStoreSetAndGetWarmupTemplate(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetCurrentSwapBatch(t *testing.T) {
+func TestStoreSetAndGetCurrentSwapBatch(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get current swap batch successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				batch := &SwapBatchProcessor{}
-				ss.SetCurrentSwapBatch(batch)
+				ss.SetCurrentSwapBatch(0, cur, batch)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasCurrentSwapBatchStoreKey(), "should have current swap batch after setting")
 				retrieved := ss.GetCurrentSwapBatch()
 				uassert.NotEqual(t, nil, retrieved)
@@ -1170,13 +1170,13 @@ func TestStoreSetAndGetCurrentSwapBatch(t *testing.T) {
 		},
 		{
 			name: "should not have current swap batch initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasCurrentSwapBatchStoreKey(), "should not have current swap batch initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized current swap batch",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetCurrentSwapBatch()
 			},
 			shouldPanic:  true,
@@ -1185,12 +1185,12 @@ func TestStoreSetAndGetCurrentSwapBatch(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -1200,26 +1200,26 @@ func TestStoreSetAndGetCurrentSwapBatch(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreSetAndGetExternalIncentivesByCreationTime(t *testing.T) {
+func TestStoreSetAndGetExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
+		setupFn      func(cur realm, ss IStakerStore)
+		testFn       func(cur realm, t *testing.T, ss IStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get external incentives by creation time successfully",
-			setupFn: func(ss IStakerStore) {
+			setupFn: func(cur realm, ss IStakerStore) {
 				tree := NewUintTree()
-				ss.SetExternalIncentivesByCreationTime(tree)
+				ss.SetExternalIncentivesByCreationTime(0, cur, tree)
 			},
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should have external incentives by creation time after setting")
 				retrieved := ss.GetExternalIncentivesByCreationTime()
 				uassert.NotEqual(t, nil, retrieved)
@@ -1227,13 +1227,13 @@ func TestStoreSetAndGetExternalIncentivesByCreationTime(t *testing.T) {
 		},
 		{
 			name: "should not have external incentives by creation time initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.False(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should not have external incentives by creation time initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized external incentives by creation time",
-			testFn: func(t *testing.T, ss IStakerStore) {
+			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				ss.GetExternalIncentivesByCreationTime()
 			},
 			shouldPanic:  true,
@@ -1242,12 +1242,12 @@ func TestStoreSetAndGetExternalIncentivesByCreationTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ss := NewStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ss)
+				tt.setupFn(cur, ss)
 			}
 
 			if tt.shouldPanic {
@@ -1257,34 +1257,34 @@ func TestStoreSetAndGetExternalIncentivesByCreationTime(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ss)
+			tt.testFn(cur, t, ss)
 		})
 	}
 }
 
-func TestStoreMultipleSetAndGet(t *testing.T) {
+func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	resetTestState(t)
 
 	ss := NewStakerStore(kvStore)
 
-	err := ss.SetDepositGnsAmount(1000000)
+	err := ss.SetDepositGnsAmount(0, cur, 1000000)
 	uassert.NoError(t, err)
 
-	err = ss.SetMinimumRewardAmount(100)
+	err = ss.SetMinimumRewardAmount(0, cur, 100)
 	uassert.NoError(t, err)
 
 	deposits := bptree.NewBPTreeN(16)
-	err = ss.SetDeposits(deposits)
+	err = ss.SetDeposits(0, cur, deposits)
 	uassert.NoError(t, err)
 
-	err = ss.SetTotalEmissionSent(50000)
+	err = ss.SetTotalEmissionSent(0, cur, 50000)
 	uassert.NoError(t, err)
 
 	tokens := []string{"token1", "token2"}
-	err = ss.SetAllowedTokens(tokens)
+	err = ss.SetAllowedTokens(0, cur, tokens)
 	uassert.NoError(t, err)
 
-	err = ss.SetUnstakingFee(25)
+	err = ss.SetUnstakingFee(0, cur, 25)
 	uassert.NoError(t, err)
 
 	uassert.True(t, ss.HasDepositGnsAmountStoreKey())

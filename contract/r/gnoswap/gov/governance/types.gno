@@ -12,11 +12,13 @@ type IGovernance interface {
 type IGovernanceManager interface {
 	// Proposal management
 	ProposeText(
+		_ int, rlm realm,
 		title string,
 		description string,
 	) int64
 
 	ProposeCommunityPoolSpend(
+		_ int, rlm realm,
 		title string,
 		description string,
 		to address,
@@ -25,6 +27,7 @@ type IGovernanceManager interface {
 	) int64
 
 	ProposeParameterChange(
+		_ int, rlm realm,
 		title string,
 		description string,
 		numToExecute int64,
@@ -33,21 +36,25 @@ type IGovernanceManager interface {
 
 	// Voting
 	Vote(
+		_ int, rlm realm,
 		proposalId int64,
 		yes bool,
 	) string
 
 	// Execution
 	Execute(
+		_ int, rlm realm,
 		proposalId int64,
 	) int64
 
 	Cancel(
+		_ int, rlm realm,
 		proposalId int64,
 	) int64
 
 	// Configuration
 	Reconfigure(
+		_ int, rlm realm,
 		votingStartDelay int64,
 		votingPeriod int64,
 		votingWeightSmoothingDuration int64,
@@ -109,38 +116,38 @@ type IGovernanceStore interface {
 	// Counter methods
 	HasConfigCounterStoreKey() bool
 	GetConfigCounter() *Counter
-	SetConfigCounter(counter *Counter) error
+	SetConfigCounter(_ int, rlm realm, counter *Counter) error
 
 	HasProposalCounterStoreKey() bool
 	GetProposalCounter() *Counter
-	SetProposalCounter(counter *Counter) error
+	SetProposalCounter(_ int, rlm realm, counter *Counter) error
 
 	// Config methods
 	HasConfigsStoreKey() bool
-	SetConfigs(configs *bptree.BPTree) error
-	SetConfig(version int64, config Config) error
+	SetConfigs(_ int, rlm realm, configs *bptree.BPTree) error
+	SetConfig(_ int, rlm realm, version int64, config Config) error
 	GetConfig(version int64) (Config, bool)
 
 	// Proposal methods
 	HasProposalsStoreKey() bool
 	GetProposals() *bptree.BPTree
 	GetProposal(proposalID int64) (*Proposal, bool)
-	SetProposal(proposalID int64, proposal *Proposal) error
-	SetProposals(proposals *bptree.BPTree) error
+	SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error
+	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool
 	GetProposalUserVotingInfos() *bptree.BPTree
-	SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error
+	SetProposalUserVotingInfos(_ int, rlm realm, votingInfos *bptree.BPTree) error
 	GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool)
-	SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error
+	SetProposalVotingInfos(_ int, rlm realm, proposalID int64, votingInfos *bptree.BPTree) error
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
-	SetUserProposals(userProposals *bptree.BPTree) error
-	AddUserProposal(user string, proposalID int64) error
-	RemoveUserProposal(user string, proposalID int64) error
+	SetUserProposals(_ int, rlm realm, userProposals *bptree.BPTree) error
+	AddUserProposal(_ int, rlm realm, user string, proposalID int64) error
+	RemoveUserProposal(_ int, rlm realm, user string, proposalID int64) error
 }
 
 // GovStakerAccessor provides an interface for accessing gov staker functionality.

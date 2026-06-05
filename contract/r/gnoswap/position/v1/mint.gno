@@ -11,9 +11,11 @@ import (
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.
 // Panics if position ID already exists or adding liquidity fails.
-func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
+func (p *positionV1) mint(_ int, rlm realm, params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := p.addLiquidity(
+		0,
+		rlm,
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      params.tickLower,
@@ -42,7 +44,7 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		))
 	}
 
-	p.nftAccessor.Mint(params.mintTo, positionIdFrom(id))
+	p.nftAccessor.Mint(0, rlm, params.mintTo, positionIdFrom(id))
 
 	positionKey := computePositionKey(params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
@@ -61,8 +63,8 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 	)
 
 	// The position ID should not exist at the time of minting
-	p.mustUpdatePosition(id, *position)
-	p.incrementNextId()
+	p.mustUpdatePosition(0, rlm, id, *position)
+	p.incrementNextId(0, rlm)
 
 	return id, liquidity, amount0, amount1
 }
@@ -106,11 +108,13 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 }
 
 // increaseLiquidity increases the liquidity of an existing position.
-func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
+func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
 
 	liquidity, amount0, amount1 := p.addLiquidity(
+		0,
+		rlm,
 		AddLiquidityParams{
 			poolKey:        position.PoolKey(),
 			tickLower:      position.TickLower(),
@@ -147,7 +151,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetLiquidity(liquidityAmount.ToString())
 	position.SetBurned(false)
 
-	err := p.setPosition(params.positionId, *position)
+	err := p.setPosition(0, rlm, params.positionId, *position)
 	if err != nil {
 		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,

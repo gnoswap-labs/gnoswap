@@ -10,11 +10,11 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-func TestNewPoolParams(t *testing.T) {
+func TestNewPoolParams(cur realm, t *testing.T) {
 	t.Run(
 		"success - normal token pair",
-		func(t *testing.T) {
-			initPoolTest(t)
+		func(cur realm, t *testing.T) {
+			initPoolTest(cur, t)
 
 			params := newPoolParams(
 				"token0",
@@ -40,7 +40,7 @@ func TestNewPoolParams(t *testing.T) {
 	)
 }
 
-func TestNewPoolParam(t *testing.T) {
+func TestNewPoolParam(cur realm, t *testing.T) {
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -65,7 +65,7 @@ func TestNewPoolParam(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			uassert.Equal(t, params.token0Path, barPath, "Token0Path should match")
 			uassert.Equal(t, params.token1Path, bazPath, "Token1Path should match")
@@ -76,7 +76,7 @@ func TestNewPoolParam(t *testing.T) {
 	}
 }
 
-func TestIsInOrder(t *testing.T) {
+func TestIsInOrder(cur realm, t *testing.T) {
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -101,7 +101,7 @@ func TestIsInOrder(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			poolPath := params.poolPath()
 			uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", "Pool path should match")
@@ -110,7 +110,7 @@ func TestIsInOrder(t *testing.T) {
 	}
 }
 
-func TestUpdateWithWrapping(t *testing.T) {
+func TestUpdateWithWrapping(cur realm, t *testing.T) {
 	tick := int32(-11242)
 	sqrtPriceX96FromTick := gnsmath.TickMathGetSqrtRatioAtTick(tick)
 
@@ -191,7 +191,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			err := params.update()
 
@@ -231,7 +231,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 	}
 }
 
-func TestGeneratePoolPath(t *testing.T) {
+func TestGeneratePoolPath(cur realm, t *testing.T) {
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -256,7 +256,7 @@ func TestGeneratePoolPath(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			expected := ufmt.Sprintf("%s:%s:%d", params.token0Path, params.token1Path, params.fee)
 			if !params.isInOrder() {
@@ -270,7 +270,7 @@ func TestGeneratePoolPath(t *testing.T) {
 }
 
 // TestIsValidFeeTier tests validation of fee tier values
-func TestIsValidFeeTier(t *testing.T) {
+func TestIsValidFeeTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		feeTier  uint32
@@ -349,7 +349,7 @@ func TestIsValidFeeTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := isValidFeeTier(tt.feeTier)
 			uassert.Equal(t, tt.expected, result, "Fee tier validation result should match expected")
 		})
@@ -357,7 +357,7 @@ func TestIsValidFeeTier(t *testing.T) {
 }
 
 // TestValidateSqrtPriceX96 tests validation of sqrtPriceX96 values
-func TestValidateSqrtPriceX96(t *testing.T) {
+func TestValidateSqrtPriceX96(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		sqrtPriceX96 *u256.Uint
@@ -406,7 +406,7 @@ func TestValidateSqrtPriceX96(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validateSqrtPriceX96(tt.sqrtPriceX96)
 			if tt.shouldError {
 				uassert.NotNil(t, err, "Expected error but got none")

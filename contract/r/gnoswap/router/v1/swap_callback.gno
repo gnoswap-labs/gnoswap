@@ -1,11 +1,9 @@
 package v1
 
 import (
-	"chain/runtime"
-
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -36,13 +34,19 @@ import (
 //   - Positive delta: tokens the pool must receive (input token)
 //   - Negative delta: tokens the pool has sent (output token)
 func (r *routerV1) SwapCallback(
+	_ int,
+	rlm realm,
 	token0Path, token1Path string,
 	amount0Delta, amount1Delta int64,
 	payer address,
 ) error {
+	if !rlm.IsCurrent() {
+		return errSpoofedRealm
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	assertIsRouterV1(caller)
 
 	var tokenToPay string
@@ -62,13 +66,13 @@ func (r *routerV1) SwapCallback(
 
 	// Transfer tokens from router to pool
 	// The router should already have the tokens from the user
-	r.transferToPool(tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
+	r.transferToPool(0, rlm, tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
 
 	return nil
 }
 
 // transferToPool transfers tokens from router to pool
-func (r *routerV1) transferToPool(token string, amount *u256.Uint, payer address) {
+func (r *routerV1) transferToPool(_ int, rlm realm, token string, amount *u256.Uint, payer address) {
 	balance := common.BalanceOf(token, payer)
 
 	if u256.NewUintFromInt64(balance).Lt(amount) {
@@ -82,8 +86,8 @@ func (r *routerV1) transferToPool(token string, amount *u256.Uint, payer address
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	if payer == routerAddr {
-		common.SafeGRC20Transfer(cross, token, poolAddr, amount.Int64())
+		common.SafeGRC20Transfer(cross(rlm), token, poolAddr, amount.Int64())
 	} else {
-		common.SafeGRC20TransferFrom(cross, token, payer, poolAddr, amount.Int64())
+		common.SafeGRC20TransferFrom(cross(rlm), token, payer, poolAddr, amount.Int64())
 	}
 }

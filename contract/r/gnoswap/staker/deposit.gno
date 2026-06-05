@@ -276,6 +276,14 @@ type Warmup struct {
 	WarmupRatio    uint64
 }
 
+func NewWarmup(timeDuration, nextWarmupTime int64, warmupRatio uint64) Warmup {
+	return Warmup{
+		TimeDuration:   timeDuration,
+		NextWarmupTime: nextWarmupTime,
+		WarmupRatio:    warmupRatio,
+	}
+}
+
 func (w *Warmup) SetNextWarmupTime(nextWarmupTime int64) {
 	w.NextWarmupTime = nextWarmupTime
 }
@@ -323,3 +331,10 @@ func DefaultWarmupTemplate() []Warmup {
 		},
 	}
 }
+
+const (
+	GNS_PATH    string = "gno.land/r/gnoswap/gns"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+)
+
+var DefaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}

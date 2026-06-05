@@ -734,6 +734,14 @@ type TierRatio struct {
 	Tier3 uint64
 }
 
+func NewTierRatio(tier1, tier2, tier3 uint64) TierRatio {
+	return TierRatio{
+		Tier1: tier1,
+		Tier2: tier2,
+		Tier3: tier3,
+	}
+}
+
 // Get returns the ratio(scaled up by 100) for the given tier.
 func (ratio *TierRatio) Get(tier uint64) (uint64, error) {
 	switch tier {

@@ -9,7 +9,7 @@ import (
 )
 
 // TestTierDurationConsistency verifies tier duration consistency across multiple scenarios
-func TestTierDurationConsistency(t *testing.T) {
+func TestTierDurationConsistency(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		tierType               int64 // 30, 90, or 180
@@ -76,7 +76,7 @@ func TestTierDurationConsistency(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestStore()
 			lp := getTestImplementation()
 
@@ -102,8 +102,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				tier180Ratio = 100
 			}
 
-			project, err := lp.createProject(
-				&createProjectParams{
+			project, err := lp.createProject(0, cur, &createProjectParams{
 					name:          "Test Project " + tt.name,
 					tokenPath:     "gno.land/r/onbloc/obl",
 					depositAmount: 10000000,
@@ -121,7 +120,7 @@ func TestTierDurationConsistency(t *testing.T) {
 
 			projects := lp.store.GetProjects()
 			projects.Set(project.ID(), project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 			tier, _ := getProjectTier(project, tt.tierType)
 
 			initialStartTime := tier.StartTime()
@@ -148,7 +147,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				user := testutils.TestAddress("user" + formatInt(int64(i)))
 				testing.SetOriginCaller(user)
 
-				_, _, isFirstDeposit, _, _ := lp.depositGns(project, tt.tierType, 1000000, user)
+				_, _, isFirstDeposit, _, _ := lp.depositGns(0, cur, project, tt.tierType, 1000000, user)
 
 				if i == 0 {
 					uassert.True(t, isFirstDeposit, "First deposit should be marked as such")
@@ -185,7 +184,7 @@ func calculateEndTimeByTierType(tierType int64, startTime int64) int64 {
 }
 
 // TestTierDuration_TimestampBasedCalculation tests that tier duration calculations are time-based
-func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
+func TestTierDuration_TimestampBasedCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		tierType             int64
@@ -237,7 +236,7 @@ func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Calculate end time info
 			endTimeInfo := calculateEndTimeByTierType(
 				tt.tierType,

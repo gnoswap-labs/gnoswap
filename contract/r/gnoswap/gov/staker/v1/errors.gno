@@ -17,6 +17,7 @@ var (
 	errInvalidSnapshotTime    = errors.New("[GNOSWAP-GOV_STAKER-008] invalid snapshot time")
 	errSameDelegatee          = errors.New("[GNOSWAP-GOV_STAKER-009] cannot redelegate to same address")
 	errWithdrawNotCollectable = errors.New("[GNOSWAP-GOV_STAKER-010] withdraw is not collectable")
+	errSpoofedRealm           = errors.New("[GNOSWAP-GOV_STAKER-011] rlm does not match the current crossing frame")
 )
 
 func makeErrorWithDetails(err error, detail string) error {

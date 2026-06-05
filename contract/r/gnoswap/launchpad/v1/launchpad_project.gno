@@ -34,6 +34,8 @@ import (
 // Returns project ID.
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(
+	_ int,
+	rlm realm,
 	name string,
 	tokenPath string,
 	recipient address,
@@ -45,13 +47,17 @@ func (lp *launchpadV1) CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedLaunchpad()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	launchpadAddr := runtime.CurrentRealm().Address()
+	launchpadAddr := rlm.Address()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -85,14 +91,14 @@ func (lp *launchpadV1) CreateProject(
 	}
 
 	// Effects: create project and save state
-	project, err := lp.createProject(params)
+	project, err := lp.createProject(0, rlm, params)
 	if err != nil {
 		panic(err)
 	}
 
 	// Interactions: transfer tokens
 	common.SafeGRC20TransferFrom(
-		cross,
+		cross(rlm),
 		tokenPath,
 		caller,
 		launchpadAddr,
@@ -148,7 +154,7 @@ func (lp *launchpadV1) CreateProject(
 // This function validates the input parameters, creates the project structure,
 // and sets up the project tiers and reward managers.
 // Returns the created project and any error.
-func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Project, error) {
+func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (*launchpad.Project, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
@@ -225,10 +231,10 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 	projects.Set(project.ID(), project)
 
 	// Save the modified state back
-	if err := lp.store.SetProjects(projects); err != nil {
+	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 		return nil, err
 	}
-	if err := lp.store.SetProjectTierRewardManagers(projectTierRewardManagers); err != nil {
+	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
 		return nil, err
 	}
 
@@ -237,10 +243,14 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin can call this function. Returns the amount of rewards transferred.
-func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
+func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedLaunchpad()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdmin(caller)
 
@@ -252,7 +262,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 		panic(err)
 	}
 
-	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentTime)
+	projectLeftReward, err := lp.transferLeftFromProject(0, rlm, project, recipient, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -297,12 +307,12 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
+func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	accumTotalDistributeAmount := int64(0)
 	accumLeftReward := int64(0)
@@ -346,7 +356,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	}
 
 	if refundableAmount > 0 {
-		common.SafeGRC20Transfer(cross, project.TokenPath(), recipient, refundableAmount)
+		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, refundableAmount)
 	}
 
 	return refundableAmount, nil

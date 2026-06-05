@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestProjectTier_Getters(t *testing.T) {
+func TestProjectTier_Getters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		id                            string
@@ -64,7 +64,7 @@ func TestProjectTier_Getters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, tt.totalDistributeAmount, tt.startTime, tt.endTime)
 			tier.SetID(tt.id)
@@ -102,7 +102,7 @@ func TestProjectTier_Getters(t *testing.T) {
 	}
 }
 
-func TestProjectTier_Status(t *testing.T) {
+func TestProjectTier_Status(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		startHeight      int64
@@ -140,7 +140,7 @@ func TestProjectTier_Status(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000, tt.startHeight, tt.endHeight)
 
@@ -158,7 +158,7 @@ func TestProjectTier_Status(t *testing.T) {
 // This ensures the exact semantics are well-defined:
 // - IsActivated: startTime <= currentTime && currentTime < endTime (startTime inclusive, endTime exclusive)
 // - IsEnded: endTime < currentTime (endTime exclusive)
-func TestProjectTier_StatusBoundaries(t *testing.T) {
+func TestProjectTier_StatusBoundaries(cur realm, t *testing.T) {
 	const startTime = int64(100)
 	const endTime = int64(200)
 
@@ -207,7 +207,7 @@ func TestProjectTier_StatusBoundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tier := launchpad.NewProjectTier("test_project", 180, 1000, startTime, endTime)
 
 			isActive := tier.IsActivated(tt.currentTime)
@@ -219,7 +219,7 @@ func TestProjectTier_StatusBoundaries(t *testing.T) {
 	}
 }
 
-func TestProjectTier_DepositAndWithdraw(t *testing.T) {
+func TestProjectTier_DepositAndWithdraw(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		initialDepositAmount   int64
@@ -270,7 +270,7 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000, 100, 200)
 			tier.SetTotalDepositAmount(tt.initialDepositAmount)
@@ -298,7 +298,7 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 	}
 }
 
-func TestProjectTier_NewProjectTier(t *testing.T) {
+func TestProjectTier_NewProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		projectID             string
@@ -331,7 +331,7 @@ func TestProjectTier_NewProjectTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute
 			tier := launchpad.NewProjectTier(
 				tt.projectID,
@@ -350,7 +350,7 @@ func TestProjectTier_NewProjectTier(t *testing.T) {
 }
 
 // TestProjectTier_UpdateDistributeAmountPerSecond tests time-based distribution calculation
-func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
+func TestProjectTier_UpdateDistributeAmountPerSecond(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		totalDistributeAmount         int64
@@ -394,7 +394,7 @@ func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Create tier with time-based parameters
 			tier := launchpad.NewProjectTier("test", 30, tt.totalDistributeAmount, tt.startTime, tt.endTime)
 			tier.SetID("test:30")
@@ -416,7 +416,7 @@ func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
 }
 
 // TestProjectTier_VaryingBlockTimes tests that tier calculations work correctly with varying block times
-func TestProjectTier_VaryingBlockTimes(t *testing.T) {
+func TestProjectTier_VaryingBlockTimes(cur realm, t *testing.T) {
 	// Test that the tier correctly calculates rewards based on time, not blocks
 
 	// Scenario 1: Fast blocks (1 second per block)
@@ -437,7 +437,7 @@ func TestProjectTier_VaryingBlockTimes(t *testing.T) {
 }
 
 // TestProjectTier_EdgeCases tests edge cases for project tier
-func TestProjectTier_EdgeCases(t *testing.T) {
+func TestProjectTier_EdgeCases(cur realm, t *testing.T) {
 	// Test zero duration
 	zeroDurationTier := launchpad.NewProjectTier("zero", 30, 1000, 1000, 1000)
 	zeroDurationTier.SetID("zero:30")
@@ -461,7 +461,7 @@ func TestProjectTier_EdgeCases(t *testing.T) {
 	_ = invalidTier
 }
 
-func TestProjectTier_makeProjectTierID(t *testing.T) {
+func TestProjectTier_makeProjectTierID(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		projectID  string
@@ -489,7 +489,7 @@ func TestProjectTier_makeProjectTierID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := launchpad.MakeProjectTierID(tt.projectID, tt.tier)
 			uassert.Equal(t, result, tt.expectedID)
 		})

@@ -7,7 +7,7 @@ import (
 )
 
 // TestUtils_formatBool tests boolean formatting
-func TestUtils_formatBool(t *testing.T) {
+func TestUtils_formatBool(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    bool
@@ -26,7 +26,7 @@ func TestUtils_formatBool(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := formatBool(tc.input)
 
@@ -37,7 +37,7 @@ func TestUtils_formatBool(t *testing.T) {
 }
 
 // TestUtils_formatInt tests integer formatting
-func TestUtils_formatInt(t *testing.T) {
+func TestUtils_formatInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		input         interface{}
@@ -87,7 +87,7 @@ func TestUtils_formatInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
 				defer func() {
 					if r := recover(); r == nil {
@@ -107,7 +107,7 @@ func TestUtils_formatInt(t *testing.T) {
 }
 
 // TestUtils_parseInt tests int parsing with overflow checking
-func TestUtils_parseInt(t *testing.T) {
+func TestUtils_parseInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -157,9 +157,9 @@ func TestUtils_parseInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseInt(tc.input)
 				})
 			} else {
@@ -174,7 +174,7 @@ func TestUtils_parseInt(t *testing.T) {
 }
 
 // TestUtils_parseInt64 tests int64 parsing
-func TestUtils_parseInt64(t *testing.T) {
+func TestUtils_parseInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -234,9 +234,9 @@ func TestUtils_parseInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseInt64(tc.input)
 				})
 			} else {
@@ -251,7 +251,7 @@ func TestUtils_parseInt64(t *testing.T) {
 }
 
 // TestUtils_parseUint64 tests uint64 parsing
-func TestUtils_parseUint64(t *testing.T) {
+func TestUtils_parseUint64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -307,9 +307,9 @@ func TestUtils_parseUint64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseUint64(tc.input)
 				})
 			} else {
@@ -324,7 +324,7 @@ func TestUtils_parseUint64(t *testing.T) {
 }
 
 // TestUtils_SafeAddInt64 tests safe addition with overflow/underflow detection
-func TestUtils_SafeAddInt64(t *testing.T) {
+func TestUtils_SafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -439,9 +439,9 @@ func TestUtils_SafeAddInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					safeAddInt64(tc.a, tc.b)
 				})
 			} else {
@@ -453,7 +453,7 @@ func TestUtils_SafeAddInt64(t *testing.T) {
 }
 
 // TestUtils_SafeSubInt64 tests safe subtraction with overflow/underflow detection
-func TestUtils_SafeSubInt64(t *testing.T) {
+func TestUtils_SafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -575,9 +575,9 @@ func TestUtils_SafeSubInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					safeSubInt64(tc.a, tc.b)
 				})
 			} else {
@@ -589,7 +589,7 @@ func TestUtils_SafeSubInt64(t *testing.T) {
 }
 
 // TestUtils_SafeMulDiv tests safe multiplication and division
-func TestUtils_SafeMulDiv(t *testing.T) {
+func TestUtils_SafeMulDiv(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -753,9 +753,9 @@ func TestUtils_SafeMulDiv(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					safeMulDiv(tc.a, tc.b, tc.c)
 				})
 			} else {

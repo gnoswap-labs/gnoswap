@@ -29,7 +29,7 @@ func makeTestTickInfo(liquidityGross, feeGrowth0, feeGrowth1, liquidityNet strin
 	return info
 }
 
-func TestPool_HasTick(t *testing.T) {
+func TestPool_HasTick(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	tick := int32(100)
 
@@ -42,7 +42,7 @@ func TestPool_HasTick(t *testing.T) {
 	uassert.False(t, pool.HasTick(200))
 }
 
-func TestPool_GetTick(t *testing.T) {
+func TestPool_GetTick(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	tick := int32(100)
 
@@ -59,7 +59,7 @@ func TestPool_GetTick(t *testing.T) {
 	uassert.Equal(t, expected.Initialized(), got.Initialized())
 }
 
-func TestPool_SetTick(t *testing.T) {
+func TestPool_SetTick(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	tick := int32(100)
 
@@ -76,7 +76,7 @@ func TestPool_SetTick(t *testing.T) {
 	uassert.Equal(t, "2000", got2.LiquidityGross())
 }
 
-func TestPool_DeleteTick(t *testing.T) {
+func TestPool_DeleteTick(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	tick := int32(100)
 
@@ -91,7 +91,7 @@ func TestPool_DeleteTick(t *testing.T) {
 	uassert.NotNil(t, err)
 }
 
-func TestPool_IterateTicks(t *testing.T) {
+func TestPool_IterateTicks(cur realm, t *testing.T) {
 	pool := makeTestPool()
 
 	ticks := []int32{-100, 0, 100, 200, 300}
@@ -100,7 +100,7 @@ func TestPool_IterateTicks(t *testing.T) {
 		pool.SetTick(tick, info)
 	}
 
-	t.Run("iterate all", func(t *testing.T) {
+	t.Run("iterate all", func(cur realm, t *testing.T) {
 		visited := []int32{}
 		pool.IterateTicks(-100, 300, func(tick int32, _ TickInfo) bool {
 			visited = append(visited, tick)
@@ -113,7 +113,7 @@ func TestPool_IterateTicks(t *testing.T) {
 		}
 	})
 
-	t.Run("iterate partial range", func(t *testing.T) {
+	t.Run("iterate partial range", func(cur realm, t *testing.T) {
 		visited := []int32{}
 		pool.IterateTicks(0, 200, func(tick int32, _ TickInfo) bool {
 			visited = append(visited, tick)
@@ -127,7 +127,7 @@ func TestPool_IterateTicks(t *testing.T) {
 		}
 	})
 
-	t.Run("empty range", func(t *testing.T) {
+	t.Run("empty range", func(cur realm, t *testing.T) {
 		visited := []int32{}
 		pool.IterateTicks(400, 500, func(tick int32, _ TickInfo) bool {
 			visited = append(visited, tick)
@@ -138,7 +138,7 @@ func TestPool_IterateTicks(t *testing.T) {
 	})
 }
 
-func TestPool_TickMethods_NegativeTicks(t *testing.T) {
+func TestPool_TickMethods_NegativeTicks(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	ticks := []int32{-MAX_TICK, -100000, -1000, -100, -1}
 
@@ -157,7 +157,7 @@ func TestPool_TickMethods_NegativeTicks(t *testing.T) {
 	}
 }
 
-func TestPool_TickMethods_BoundaryTicks(t *testing.T) {
+func TestPool_TickMethods_BoundaryTicks(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	ticks := []int32{-MAX_TICK, MAX_TICK}
 

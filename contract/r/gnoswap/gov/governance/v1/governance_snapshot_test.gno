@@ -3,13 +3,12 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-func TestGetVotingWeightSnapshot(t *testing.T) {
+func TestGetVotingWeightSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		current              int64
@@ -67,7 +66,7 @@ func TestGetVotingWeightSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovernanceStore()
 			mockAccessor := newMockGovStakerAccessor()
 			mockAccessor.SetTotalDelegation(tt.totalDelegation)
@@ -90,23 +89,23 @@ func TestGetVotingWeightSnapshot(t *testing.T) {
 	}
 }
 
-func TestGetProposalUserVotingInfo(t *testing.T) {
+func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupVotingInfos func() *mockGovernanceStore
+		setupVotingInfos func(cur realm) *mockGovernanceStore
 		proposalID       int64
 		voterAddr        address
 		expectedFound    bool
 	}{
 		{
 			name: "voting info exists for user",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				voterAddr := address("g1voter00000000000000000000000000000001")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := bptree.NewBPTreeN(16)
+				votingInfos := governance.NewVotingInfoTree()
 				votingInfos.Set(voterAddr.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
 			proposalID:    1,
@@ -115,9 +114,9 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 		},
 		{
 			name: "voting info does not exist for user",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
-				store.SetProposalVotingInfos(1, bptree.NewBPTreeN(16))
+				store.SetProposalVotingInfos(0, cur, 1, governance.NewVotingInfoTree())
 				return store
 			},
 			proposalID:    1,
@@ -126,7 +125,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 		},
 		{
 			name: "proposal has no voting infos",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				return store
 			},
@@ -136,13 +135,13 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 		},
 		{
 			name: "different user not found",
-			setupVotingInfos: func() *mockGovernanceStore {
+			setupVotingInfos: func(cur realm) *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				otherUser := address("g1other00000000000000000000000000000002")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := bptree.NewBPTreeN(16)
+				votingInfos := governance.NewVotingInfoTree()
 				votingInfos.Set(otherUser.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
 			proposalID:    1,
@@ -152,8 +151,8 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := tt.setupVotingInfos()
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			store := tt.setupVotingInfos(cur)
 			gv := &governanceV1{
 				store:          store,
 				stakerAccessor: newMockGovStakerAccessor(),
@@ -169,7 +168,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 	}
 }
 
-func TestUpdateProposalUserVotes(t *testing.T) {
+func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalID    int64
@@ -197,7 +196,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := newMockGovernanceStore()
 			gv := &governanceV1{
 				store:          store,
@@ -206,10 +205,10 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 
 			// Create proposal
 			proposal := createTestProposal(tt.proposalID)
-			store.SetProposal(tt.proposalID, proposal)
+			store.SetProposal(0, cur, tt.proposalID, proposal)
 
 			// Create voting infos
-			votingInfos := bptree.NewBPTreeN(16)
+			votingInfos := governance.NewProposalUserVotingInfoTree()
 			for i := 0; i < tt.numVotes; i++ {
 				voterAddr := address("g1voter0000000000000000000000000000000" + formatInt(int64(i)))
 				votingInfo := governance.NewVotingInfo(1000)
@@ -217,7 +216,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 			}
 
 			// Update votes
-			err := gv.updateProposalUserVotes(proposal, votingInfos)
+			err := gv.updateProposalUserVotes(0, cur, proposal, votingInfos)
 
 			uassert.NoError(t, err)
 
@@ -230,15 +229,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 }
 
 func createTestProposal(id int64) *governance.Proposal {
-	config := governance.Config{
-		VotingStartDelay:              100,
-		VotingPeriod:                  1000,
-		VotingWeightSmoothingDuration: 50,
-		Quorum:                        30,
-		ProposalCreationThreshold:     100,
-		ExecutionDelay:                100,
-		ExecutionWindow:               500,
-	}
+	config := governance.NewConfig(100, 1000, 50, 30, 100, 100, 500)
 
 	createdAt := int64(1000)
 

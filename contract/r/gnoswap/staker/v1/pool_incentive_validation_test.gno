@@ -11,8 +11,8 @@ import (
 
 // TestStakeToken_WithEndedIncentives tests that StakeToken incorrectly allows
 // staking in pools that only have ended incentives due to the bug in IsExternallyIncentivizedPool
-func TestStakeToken_WithEndedIncentives(t *testing.T) {
-	initStakerTest(t)
+func TestStakeToken_WithEndedIncentives(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 
 	// given
 	poolPath := "test_pool_stake_validation"
@@ -74,7 +74,7 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 	getMockInstance().getPools().tree.Remove(poolPath)
 }
 
-func TestExternalIncentiveResolver_IsActive(t *testing.T) {
+func TestExternalIncentiveResolver_IsActive(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	startTime := currentTime + 3600
 	endTime := startTime + 3600
@@ -132,14 +132,14 @@ func TestExternalIncentiveResolver_IsActive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := resolver.isActive(tt.ts)
 			uassert.Equal(t, tt.wantActive, got)
 		})
 	}
 }
 
-func TestExternalIncentiveResolver_IsEnded(t *testing.T) {
+func TestExternalIncentiveResolver_IsEnded(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	startTime := currentTime + 3600
 	endTime := startTime + 3600
@@ -197,7 +197,7 @@ func TestExternalIncentiveResolver_IsEnded(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := resolver.IsEnded(tt.ts)
 			uassert.Equal(t, tt.wantEnded, got)
 		})
@@ -217,7 +217,7 @@ func TestExternalIncentiveResolver_IsEnded(t *testing.T) {
 // Fix:
 // Invert the loop control so that it continues iterating over inactive incentives
 // and breaks only when an active incentive is found.
-func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing.T) {
+func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		description string
@@ -466,8 +466,8 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			poolPath := "test_pool_" + tt.name
 			currentTime := time.Now().Unix()
