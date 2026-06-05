@@ -3,19 +3,8 @@ package v1
 import (
 	"strconv"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
-
-var defaultConfig = governance.Config{
-	VotingStartDelay:              86400,         // 1 day - delay before voting starts
-	VotingPeriod:                  604800,        // 7 days - duration for collecting votes
-	VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
-	Quorum:                        50,            // 50% of total xGNS supply required
-	ProposalCreationThreshold:     1_000_000_000, // 1 billion - minimum balance to create proposals
-	ExecutionDelay:                86400,         // 1 day - waiting period before execution
-	ExecutionWindow:               2592000,       // 30 days - window for executing proposals
-}
 
 func init(cur realm) {
 	registerGovernanceV1(cur)
@@ -53,11 +42,11 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 
 	// Initialize Configs with default configuration if not already set
 	if !governanceStore.HasConfigsStoreKey() {
-		configs := bptree.NewBPTreeN(16)
+		configs := governance.NewConfigTree()
 		counter := governanceStore.GetConfigCounter()
 		nextConfigVersion := counter.Next()
 
-		configs.Set(formatConfigKey(nextConfigVersion), defaultConfig)
+		configs.Set(formatConfigKey(nextConfigVersion), governance.NewDefaultConfig())
 
 		err := governanceStore.SetConfigs(0, rlm, configs)
 		if err != nil {
@@ -71,21 +60,21 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 	}
 
 	if !governanceStore.HasProposalsStoreKey() {
-		err := governanceStore.SetProposals(0, rlm, bptree.NewBPTreeN(16))
+		err := governanceStore.SetProposals(0, rlm, governance.NewProposalTree())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
-		err := governanceStore.SetProposalUserVotingInfos(0, rlm, bptree.NewBPTreeN(16))
+		err := governanceStore.SetProposalUserVotingInfos(0, rlm, governance.NewProposalUserVotingInfoTree())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasUserProposalsStoreKey() {
-		err := governanceStore.SetUserProposals(0, rlm, bptree.NewBPTreeN(16))
+		err := governanceStore.SetUserProposals(0, rlm, governance.NewUserProposalTree())
 		if err != nil {
 			return err
 		}

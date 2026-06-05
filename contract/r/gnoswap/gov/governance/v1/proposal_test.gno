@@ -84,13 +84,7 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			baseTime := time.Now().Unix()
-			config := governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			}
+			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
@@ -117,13 +111,7 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 // TestProposal_StatusOperations tests proposal status operations
 func TestProposal_StatusOperations(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 	tests := []struct {
 		name           string
@@ -464,13 +452,7 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			config := governance.Config{
-				VotingStartDelay: tc.votingStartDelay,
-				VotingPeriod:     tc.votingPeriod,
-				ExecutionDelay:   tc.executionDelay,
-				ExecutionWindow:  tc.executionWindow,
-				Quorum:           tc.quorum,
-			}
+			config := governance.NewConfig(tc.votingStartDelay, tc.votingPeriod, 0, tc.quorum, 0, tc.executionDelay, tc.executionWindow)
 
 			proposal := newTestProposal(
 				1,
@@ -530,13 +512,7 @@ func TestNewProposal(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			baseTime := time.Now().Unix()
-			config := governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			}
+			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 			// when
 			proposal := newTestProposal(

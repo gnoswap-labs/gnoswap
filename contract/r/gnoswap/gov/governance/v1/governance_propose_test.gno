@@ -32,19 +32,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create text proposal",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "success - create text proposal",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -55,19 +47,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - insufficient GNS balance",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("poor_proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - insufficient GNS balance",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("poor_proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     500_000_000, // Less than threshold
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -78,19 +62,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] not enough balance",
 		},
 		{
-			name:          "fail - empty title",
-			title:         "",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - empty title",
+			title:               "",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -101,19 +77,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || title is empty",
 		},
 		{
-			name:          "fail - empty description",
-			title:         "Test Text Proposal",
-			description:   "",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - empty description",
+			title:               "Test Text Proposal",
+			description:         "",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -124,19 +92,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || description is empty",
 		},
 		{
-			name:          "fail - already has active proposal",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("active_proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - already has active proposal",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("active_proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: true,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -147,19 +107,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 		},
 		{
-			name:          "fail - not enough voting weight",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - not enough voting weight",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes:      map[string]*governance.VotingInfo{}, // Empty voting info
@@ -174,28 +126,26 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
-
-			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeText(0, cur, tt.title, tt.description)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
+					mockProposeText(cross(cur), gov, tt.title, tt.description)
 				})
 				return
 			}
 
+			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 			var proposalId int64
-			testing.SetRealm(govRealm)
-			proposalId = gov.ProposeText(0, cur, tt.title, tt.description)
+			proposalId = mockProposeText(cross(cur), gov, tt.title, tt.description)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -234,22 +184,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create community pool spend proposal",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     gnsPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "success - create community pool spend proposal",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           gnsPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -260,22 +202,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - invalid recipient address",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            address("invalid"),
-			tokenPath:     gnsPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid recipient address",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  address("invalid"),
+			tokenPath:           gnsPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -286,22 +220,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 		},
 		{
-			name:          "fail - zero amount",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     gnsPath,
-			amount:        0,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - zero amount",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           gnsPath,
+			amount:              0,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -312,22 +238,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 		},
 		{
-			name:          "fail - empty token path",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "",
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - empty token path",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           "",
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -338,22 +256,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || tokenPath is empty",
 		},
 		{
-			name:          "fail - token path is not registered in grc20 registry",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     invalidTokenPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - token path is not registered in grc20 registry",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           invalidTokenPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -370,27 +280,26 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
-					gov.ProposeCommunityPoolSpend(0, cur, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					mockProposeCommunityPoolSpend(cross(cur), gov, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 				})
 				return
 			}
 
 			var proposalId int64
-			testing.SetRealm(govRealm)
-			proposalId = gov.ProposeCommunityPoolSpend(0, cur, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+			proposalId = mockProposeCommunityPoolSpend(cross(cur), gov, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -425,21 +334,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create parameter change proposal",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "success - create parameter change proposal",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -450,21 +351,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - zero executions",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  0,
-			executions:    "",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - zero executions",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        0,
+			executions:          "",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -475,21 +368,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
 		{
-			name:          "fail - invalid execution format",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  1,
-			executions:    "invalid_format",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid execution format",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        1,
+			executions:          "invalid_format",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -500,21 +385,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-010] invalid message format || execution[0]: expected 3 parts (pkgPath, function, params), got 1",
 		},
 		{
-			name:          "fail - invalid package path (handler not found)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with invalid package",
-			numToExecute:  1,
-			executions:    "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid package path (handler not found)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with invalid package",
+			numToExecute:        1,
+			executions:          "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -525,21 +402,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
 		},
 		{
-			name:          "fail - invalid function name (handler not found)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with invalid function",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid function name (handler not found)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with invalid function",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -550,21 +419,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
 		},
 		{
-			name:          "fail - invalid parameter count (too few)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with wrong parameter count",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid parameter count (too few)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with wrong parameter count",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -575,21 +436,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 2 parameters for gno.land/r/gnoswap/staker:SetPoolTier, got 1",
 		},
 		{
-			name:          "fail - invalid parameter count (too many)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with wrong parameter count",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - invalid parameter count (too many)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with wrong parameter count",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -600,21 +453,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 1 parameters for gno.land/r/gnoswap/pool:SetPoolCreationFee, got 2",
 		},
 		{
-			name:          "fail - empty package path",
-			title:         "Parameter Change",
-			description:   "Change system parameters with empty package path",
-			numToExecute:  1,
-			executions:    "*EXE*SetPoolTier*EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - empty package path",
+			title:               "Parameter Change",
+			description:         "Change system parameters with empty package path",
+			numToExecute:        1,
+			executions:          "*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -625,21 +470,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: package path is empty",
 		},
 		{
-			name:          "fail - empty function name",
-			title:         "Parameter Change",
-			description:   "Change system parameters with empty function name",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			},
+			name:                "fail - empty function name",
+			title:               "Parameter Change",
+			description:         "Change system parameters with empty function name",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -656,28 +493,26 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, tt.setupConfig)
-			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestConfig(0, cur, t, gov, tt.setupConfig)
+			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, gov, tt.callerAddress)
+				setupTestActiveProposal(cur, t, gov, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeParameterChange(0, cur, tt.title, tt.description, tt.numToExecute, tt.executions)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					mockProposeParameterChange(cross(cur), gov, tt.title, tt.description, tt.numToExecute, tt.executions)
 				})
 				return
 			}
 
 			var proposalId int64
-			testing.SetRealm(govRealm)
-			proposalId = gov.ProposeParameterChange(0, cur, tt.title, tt.description, tt.numToExecute, tt.executions)
+			proposalId = mockProposeParameterChange(cross(cur), gov, tt.title, tt.description, tt.numToExecute, tt.executions)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
@@ -756,18 +591,10 @@ func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			})
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -776,14 +603,12 @@ func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, cur, tt.expectedError, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeText(0, cur, tt.title, tt.description)
+				uassert.AbortsContains(t, cur, tt.expectedError, func(cur realm) {
+					mockProposeText(cross(cur), gov, tt.title, tt.description)
 				})
 			} else {
 				var proposalId int64
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeText(0, cur, tt.title, tt.description)
+				proposalId = mockProposeText(cross(cur), gov, tt.title, tt.description)
 
 				uassert.Equal(t, int64(1), proposalId)
 
@@ -970,24 +795,16 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			})
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			if tt.setupActiveProposal != nil {
-				gov.addProposal(tt.setupActiveProposal())
+				gov.addProposal(0, cur, tt.setupActiveProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -995,13 +812,15 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeText(0, cur, "New Proposal", "New Description")
+					func(cur realm) {
+						mockProposeText(cur, gov, "New Proposal", "New Description")
+					}(cross(cur))
 				})
 			} else {
-				testing.SetRealm(govRealm)
-				proposalID := gov.ProposeText(0, cur, "New Proposal", "New Description")
-				uassert.Equal(t, proposalID, gov.getCurrentProposalID())
+				func(cur realm) {
+					proposalID := mockProposeText(cur, gov, "New Proposal", "New Description")
+					uassert.Equal(t, proposalID, gov.getCurrentProposalID())
+				}(cross(cur))
 			}
 		})
 	}
@@ -1081,18 +900,10 @@ func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T)
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			})
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1101,14 +912,12 @@ func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T)
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, cur, tt.expectedError, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeCommunityPoolSpend(0, cur, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
+				uassert.AbortsContains(t, cur, tt.expectedError, func(cur realm) {
+					mockProposeCommunityPoolSpend(cross(cur), gov, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 				})
 			} else {
 				var proposalId int64
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeCommunityPoolSpend(0, cur, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
+				proposalId = mockProposeCommunityPoolSpend(cross(cur), gov, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 				uassert.Equal(t, proposalId, gov.getCurrentProposalID())
 
 				proposal, ok := gov.getProposal(proposalId)
@@ -1290,18 +1099,10 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			setupTestConfig(t, gov, &governance.Config{
-				VotingStartDelay:              86400,
-				VotingPeriod:                  604800,
-				VotingWeightSmoothingDuration: 86400,
-				Quorum:                        50,
-				ProposalCreationThreshold:     1_000_000_000,
-				ExecutionDelay:                86400,
-				ExecutionWindow:               2592000,
-			})
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(t, caller, 10_000_000_000)
+			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1310,14 +1111,12 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsContains(t, cur, tt.expectedError, func() {
-					testing.SetRealm(govRealm)
-					gov.ProposeParameterChange(0, cur, "Parameter Change", "Description", tt.numToExecute, tt.executions)
+				uassert.AbortsContains(t, cur, tt.expectedError, func(cur realm) {
+					mockProposeParameterChange(cross(cur), gov, "Parameter Change", "Description", tt.numToExecute, tt.executions)
 				})
 			} else {
 				var proposalId int64
-				testing.SetRealm(govRealm)
-				proposalId = gov.ProposeParameterChange(0, cur, "Parameter Change", "Description", tt.numToExecute, tt.executions)
+				proposalId = mockProposeParameterChange(cross(cur), gov, "Parameter Change", "Description", tt.numToExecute, tt.executions)
 				uassert.Equal(t, proposalId, gov.getCurrentProposalID())
 
 				proposal, ok := gov.getProposal(proposalId)
@@ -1334,23 +1133,15 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
-		setupTestConfig(t, gov, &governance.Config{
-			VotingStartDelay:              86400,
-			VotingPeriod:                  604800,
-			VotingWeightSmoothingDuration: 86400,
-			Quorum:                        50,
-			ProposalCreationThreshold:     1_000_000_000,
-			ExecutionDelay:                86400,
-			ExecutionWindow:               2592000,
-		})
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 		caller1 := testutils.TestAddress("proposer1")
 		caller2 := testutils.TestAddress("proposer2")
 		caller3 := testutils.TestAddress("proposer3")
 
-		setupTestGnsBalance(t, caller1, 10_000_000_000)
-		setupTestGnsBalance(t, caller2, 10_000_000_000)
-		setupTestGnsBalance(t, caller3, 10_000_000_000)
+		setupTestGnsBalance(cross(cur), t, caller1, 10_000_000_000)
+		setupTestGnsBalance(cross(cur), t, caller2, 10_000_000_000)
+		setupTestGnsBalance(cross(cur), t, caller3, 10_000_000_000)
 		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 			caller1.String(): governance.NewVotingInfo(5_000_000_000),
 			caller2.String(): governance.NewVotingInfo(5_000_000_000),
@@ -1363,18 +1154,15 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 		// when - create first proposal
 		testing.SetRealm(testing.NewUserRealm(caller1))
 
-		testing.SetRealm(govRealm)
-		proposalId1 = gov.ProposeText(0, cur, "Proposal 1", "Description 1")
+		proposalId1 = mockProposeText(cross(cur), gov, "Proposal 1", "Description 1")
 
 		// when - create second proposal from same user
 		testing.SetRealm(testing.NewUserRealm(caller2))
-		testing.SetRealm(govRealm)
-		proposalId2 = gov.ProposeText(0, cur, "Proposal 2", "Description 2")
+		proposalId2 = mockProposeText(cross(cur), gov, "Proposal 2", "Description 2")
 
 		// when - create third proposal from different user
 		testing.SetRealm(testing.NewUserRealm(caller3))
-		testing.SetRealm(govRealm)
-		proposalId3 = gov.ProposeText(0, cur, "Proposal 3", "Description 3")
+		proposalId3 = mockProposeText(cross(cur), gov, "Proposal 3", "Description 3")
 
 		// then
 		uassert.Equal(t, proposalId1, int64(1))
@@ -1383,15 +1171,15 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 	})
 }
 
-func setupTestConfig(_ int, cur realm, t *testing.T, gov *governanceV1, config *governance.Config) {
+func setupTestConfig(_ int, rlm realm, t *testing.T, gov *governanceV1, config *governance.Config) {
 	if config == nil {
 		return
 	}
-	nextVersion := gov.nextConfigVersion(0, cur)
-	gov.setConfig(0, cur, nextVersion, *config)
+	nextVersion := gov.nextConfigVersion(0, rlm)
+	gov.setConfig(0, rlm, nextVersion, *config)
 }
 
-func setupTestGnsBalance(_ int, cur realm, t *testing.T, address address, balance int64) {
+func setupTestGnsBalance(cur realm, t *testing.T, address address, balance int64) {
 	// Mock GNS balance setup
 	// In actual implementation, this would set up the GNS token balance
 	testing.SetRealm(adminRealm)
@@ -1414,12 +1202,12 @@ func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes
 	gov.stakerAccessor = mockAccessor
 }
 
-func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress address) {
+func setupTestActiveProposal(cur realm, t *testing.T, gov *governanceV1, proposerAddress address) {
 	// Create an active proposal for the proposer
 	config, _ := gov.getCurrentConfig()
 
 	proposal := governance.NewProposal(
-		gov.nextProposalID(),
+		gov.nextProposalID(0, cur),
 		NewProposalStatus(
 			config,
 			1_000_000_000,
@@ -1434,5 +1222,5 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 		100,
 	)
 
-	gov.addProposal(proposal)
+	gov.addProposal(0, cur, proposal)
 }

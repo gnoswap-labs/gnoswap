@@ -57,7 +57,7 @@ type ParameterHandler interface {
 	// realm value into the handler so any cross-realm calls inside the closure
 	// run under the proxy's identity (the only address with caller-allowlist
 	// permission against the targeted /r/ realms).
-	Execute(_ int, cur realm, params []string) error
+	Execute(_ int, rlm realm, params []string) error
 }
 
 // ParameterHandlerOptions contains the configuration and execution logic for a parameter handler.
@@ -134,12 +134,12 @@ func (h *ParameterHandlerOptions) HandlerKey() string {
 //
 // Returns:
 //   - error: execution error if parameter count mismatch or handler execution fails
-func (h *ParameterHandlerOptions) Execute(_ int, cur realm, params []string) error {
+func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) error {
 	// Validate parameter count matches expected count
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
 	}
-	return h.handlerFunc(0, cur, params)
+	return h.handlerFunc(0, rlm, params)
 }
 
 // ValidateParams runs parameter count and per-parameter validation without executing the handler.
