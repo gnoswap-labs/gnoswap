@@ -87,7 +87,7 @@ var (
 	routerPath  = "gno.land/r/gnoswap/router"
 	routerRealm = testing.NewCodeRealm(routerPath)
 
-	// SwapCallback's assertIsRouterV1 compares the caller against the router
+	// SwapCallback's assertIsRouterImplementation compares the caller against the router
 	// v1 implementation address, so the callback caller must be the v1 realm.
 	routerV1Path = "gno.land/r/gnoswap/router/v1"
 

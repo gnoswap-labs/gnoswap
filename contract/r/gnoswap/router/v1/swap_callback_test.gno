@@ -151,8 +151,8 @@ func TestSwapCallback(cur realm, t *testing.T) {
 	}
 }
 
-// TestSwapCallback_AssertIsRouterV1 tests the assertIsRouterV1 function with various caller types
-func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
+// TestSwapCallback_assertIsRouterImplementation tests the assertIsRouterImplementation function with various caller types
+func TestSwapCallback_assertIsRouterImplementation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		callerAddress    address
@@ -207,11 +207,11 @@ func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
 			// Execute and verify
 			if tt.shouldError {
 				uassert.PanicsContains(t, cur, tt.expectedErrorMsg, func() {
-					assertIsRouterV1(tt.callerAddress)
+					assertIsRouterImplementation(tt.callerAddress)
 				})
 			} else {
 				// Should not panic
-				assertIsRouterV1(tt.callerAddress)
+				assertIsRouterImplementation(tt.callerAddress)
 			}
 		})
 	}
