@@ -92,7 +92,7 @@ func TestMustFromDecimal(t *testing.T) {
 	}
 }
 
-func TestFromUint256(t *testing.T) {
+func TestFromUint256(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       *uint256.Uint
@@ -122,7 +122,7 @@ func TestFromUint256(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, "int256: overflow", func() {
+				uassert.PanicsContains(t, cur, "int256: overflow", func() {
 					FromUint256(tt.input)
 				})
 				return

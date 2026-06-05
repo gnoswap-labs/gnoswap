@@ -155,12 +155,6 @@
 //     match.
 //   - `errSpoofedRealm` - The supplied `realm` is not the live crossing frame.
 //
-// ## Type Casting Utilities
-//
-//   - `castToInt64`, `castToUint64`, `castToBool`, `castToString`,
-//     `castToAddress`, `castToBPTree` - Safe runtime casts used by the typed
-//     getters and reusable for custom flows.
-//
 // ## Limitations and Considerations
 //
 //   - All stored values are of type `any`, so retrieval requires either a

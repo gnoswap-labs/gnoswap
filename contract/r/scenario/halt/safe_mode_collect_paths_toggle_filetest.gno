@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -114,7 +115,7 @@ func setupSafeScenario() {
 	foo.Transfer(cross, aliceAddr3, 100000000)
 	gns.Transfer(cross, bobAddr3, 5000000)
 	gns.Transfer(cross, carolAddr3, 15000000)
-	pool.CreatePool(cross, barPath3, fooPath3, fee3, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath3, fooPath3, fee3, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	staker.SetPoolTier(cross, barPath3+":"+fooPath3+":3000", 1)
 	obl.Approve(cross, launchpadAddr3, 1000000000)
 	launchpadProjectID3 = launchpad.CreateProject(cross, "Bar Project", "gno.land/r/onbloc/obl", projectAddr3, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)

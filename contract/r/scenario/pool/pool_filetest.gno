@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -61,7 +62,7 @@ func main() {
 
 	println("[INFO] Create Foo:Bar Pool")
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	testing.SkipHeights(1)
 
 	println("[INFO] Create Bar:Baz Pool")

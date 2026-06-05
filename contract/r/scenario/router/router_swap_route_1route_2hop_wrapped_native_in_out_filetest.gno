@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 
@@ -67,7 +68,7 @@ func main() {
 	println("[INFO] Creating baz-qux pool (fee: 500)")
 	pl.CreatePool(cross, bazPath, quxPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	println("[INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)")
-	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Executing test scenarios")
 	println()

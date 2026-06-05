@@ -6,8 +6,8 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetReservedTokensIsolation(t *testing.T) {
-	resetTestState(t)
+func TestGetReservedTokensIsolation(cur realm, t *testing.T) {
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := []string{"foo", "bar"}
@@ -24,18 +24,18 @@ func TestGetReservedTokensIsolation(t *testing.T) {
 	}
 }
 
-func TestDistributeProtocolFeeForwardsCall(t *testing.T) {
-	resetTestState(t)
+func TestDistributeProtocolFeeForwardsCall(cur realm, t *testing.T) {
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 
-	DistributeProtocolFee(cross)
+	DistributeProtocolFee(cross(cur))
 
 	uassert.Equal(t, 1, mockProtocolFee.Response.CallCount("DistributeProtocolFee"))
 }
 
-func TestGetAccuTransfersToGovStakerIsolation(t *testing.T) {
-	resetTestState(t)
+func TestGetAccuTransfersToGovStakerIsolation(cur realm, t *testing.T) {
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := map[string]int64{"foo": 10, "bar": 20}
@@ -50,8 +50,8 @@ func TestGetAccuTransfersToGovStakerIsolation(t *testing.T) {
 	uassert.Equal(t, false, ok)
 }
 
-func TestGetAccuTransfersToDevOpsIsolation(t *testing.T) {
-	resetTestState(t)
+func TestGetAccuTransfersToDevOpsIsolation(cur realm, t *testing.T) {
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := map[string]int64{"foo": 10, "bar": 20}

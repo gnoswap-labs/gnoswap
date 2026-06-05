@@ -12,7 +12,7 @@ const (
 // preventing accidental transfers to incorrect addresses.
 //
 // Note: This package does not verify callers. Consuming realms must extract the actual
-// caller using `runtime.PreviousRealm` or `runtime.OriginCaller` and pass it to these methods.
+// caller from the live realm context and pass it to these methods.
 type Ownable2Step struct {
 	owner        address
 	pendingOwner address

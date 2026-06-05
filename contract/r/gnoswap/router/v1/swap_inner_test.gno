@@ -4,13 +4,12 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	prabc "gno.land/p/gnoswap/rbac"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
@@ -36,7 +35,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected: u256.Zero().Add(
-				common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
+				gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
 				u256.One(),
 			),
 		},
@@ -46,7 +45,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected: u256.Zero().Sub(
-				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
+				gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
 				u256.One(),
 			),
 		},
@@ -76,49 +75,49 @@ func TestMustGetSqrtPriceLimit(t *testing.T) {
 			name:     "forward limit fee 100",
 			limits:   sqrtPriceLimitForward,
 			fee:      100,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 500",
 			limits:   sqrtPriceLimitForward,
 			fee:      500,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 3000",
 			limits:   sqrtPriceLimitForward,
 			fee:      3000,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 10000",
 			limits:   sqrtPriceLimitForward,
 			fee:      10000,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 100",
 			limits:   sqrtPriceLimitBackward,
 			fee:      100,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 500",
 			limits:   sqrtPriceLimitBackward,
 			fee:      500,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 3000",
 			limits:   sqrtPriceLimitBackward,
 			fee:      3000,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 10000",
 			limits:   sqrtPriceLimitBackward,
 			fee:      10000,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
 		},
 		{
 			name:        "unknown fee panics",

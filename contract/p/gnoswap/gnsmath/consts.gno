@@ -1,4 +1,4 @@
-package common
+package gnsmath
 
 const (
 	// minTick is the minimum valid tick index in the concentrated liquidity model.
@@ -9,7 +9,9 @@ const (
 	// Represents the highest possible price: 1.0001^887272 ≈ infinity
 	maxTick = 887272
 
-	// WUGNOT_PATH is the package path for wrapped ugnot (wugnot) token.
-	// wrapped ugnot is an GRC20 representation of native GNOT for DeFi operations.
-	WUGNOT_PATH = "gno.land/r/gnoland/wugnot"
+	Q96_RESOLUTION  uint = 96
+	Q160_RESOLUTION uint = 160
+
+	MAX_UINT128 = "340282366920938463463374607431768211455" // 2^128 - 1
+	Q96         = "79228162514264337593543950336"           // 2^96
 )

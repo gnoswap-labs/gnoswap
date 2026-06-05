@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	"gno.land/r/onbloc/bar"
@@ -81,7 +82,7 @@ func setupPool() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
@@ -231,7 +232,7 @@ func verifyExtremeSwapWithPriceLimit() {
 	println("[INFO] Current price:", currentPrice)
 
 	targetTick := int32(-5000)
-	targetPrice := common.TickMathGetSqrtRatioAtTick(targetTick).ToString()
+	targetPrice := gnsmath.TickMathGetSqrtRatioAtTick(targetTick).ToString()
 	println("[INFO] Target price limit (tick -5000):", targetPrice)
 
 	dryPoolIn, dryPoolOut, dryEndPrice := pool.DrySwap(
