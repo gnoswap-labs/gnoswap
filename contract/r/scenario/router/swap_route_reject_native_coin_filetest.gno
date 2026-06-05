@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -66,7 +67,7 @@ func main() {
 		wugnotPath,
 		quxPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	pn.Mint(
@@ -90,16 +91,16 @@ func main() {
 
 	router.ExactOutSwapRoute(
 		cross,
-		"ugnot",    // inputToken (native coin)
-		quxPath,    // outputToken
-		"3",        // amountSpecified
+		"ugnot", // inputToken (native coin)
+		quxPath, // outputToken
+		"3",     // amountSpecified
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
-		"100",      // quoteArr
-		"12345",    // tokenAmountLimit
+		"100",   // quoteArr
+		"12345", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
-		"",         // referrer
+		"", // referrer
 	)
 }
 
 // Error:
-// [GNOSWAP-COMMON-006] handle native coin is not allowed
+// [GNOSWAP-COMMON-002] handle native coin is not allowed

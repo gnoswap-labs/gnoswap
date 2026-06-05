@@ -314,8 +314,8 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"0",
 					0,
 					9223372036854775807, // Already max tokens owed
-					false, // burned
-					"",    // operator
+					false,               // burned
+					"",                  // operator
 				)
 				return pos
 			},

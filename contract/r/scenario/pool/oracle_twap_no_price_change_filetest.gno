@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -65,7 +66,7 @@ func main() {
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
 	foo.Approve(cross, poolAddr, maxApprove)

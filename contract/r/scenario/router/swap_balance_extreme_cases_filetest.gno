@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -150,7 +151,7 @@ func setupPoolAndPosition() BalanceSnapshot {
 		barPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	bar.Approve(cross, poolAddr, max_approve)

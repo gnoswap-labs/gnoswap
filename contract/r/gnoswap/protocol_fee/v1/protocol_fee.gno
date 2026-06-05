@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"strconv"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -20,9 +19,13 @@ import (
 //
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
-func (pf *protocolFeeV1) DistributeProtocolFee() {
-	caller := runtime.PreviousRealm().Address()
-	assertIsAdminOrGovStaker(caller)
+func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
+	prev := rlm.Previous()
+	assertIsAdminOrGovStaker(prev.Address())
 
 	if halt.IsHaltedWithdraw() {
 		return
@@ -59,24 +62,23 @@ func (pf *protocolFeeV1) DistributeProtocolFee() {
 		}
 
 		// Distribute to DevOps
-		if err := pfs.distributeToDevOps(token, toDevOpsAmount); err != nil {
+		if err := pfs.distributeToDevOps(0, rlm, token, toDevOpsAmount); err != nil {
 			panic(err)
 		}
 
 		// Distribute to Gov/Staker
-		if err := pfs.distributeToGovStaker(token, toGovStakerAmount); err != nil {
+		if err := pfs.distributeToGovStaker(0, rlm, token, toGovStakerAmount); err != nil {
 			panic(err)
 		}
 	}
-	if err := pfs.clearReservedTokens(); err != nil {
+	if err := pfs.clearReservedTokens(0, rlm); err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"TransferProtocolFee",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 	)
 }
 
@@ -87,28 +89,31 @@ func (pf *protocolFeeV1) DistributeProtocolFee() {
 //
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
-func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
+func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	prev := rlm.Previous()
+	access.AssertIsAdminOrGovernance(prev.Address())
 
 	assertIsValidPercent(pct)
 
 	prevDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 	prevGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
-	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(pct)
+	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(0, rlm, pct)
 	if err != nil {
 		panic(err)
 	}
 	newGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetDevOpsPct",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
 		"prevDevOpsPct", strconv.FormatInt(prevDevOpsPct, 10),
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
@@ -123,28 +128,31 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 //
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
-func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
+func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	prev := rlm.Previous()
+	access.AssertIsAdminOrGovernance(prev.Address())
 
 	assertIsValidPercent(pct)
 
 	prevDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 	prevGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
-	newGovStakerPct, err := pf.getProtocolFeeState().setGovStakerPct(pct)
+	newGovStakerPct, err := pf.getProtocolFeeState().setGovStakerPct(0, rlm, pct)
 	if err != nil {
 		panic(err)
 	}
 	newDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetGovStakerPct",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
 		"prevDevOpsPct", strconv.FormatInt(prevDevOpsPct, 10),
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
@@ -161,12 +169,17 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 // Only callable by pool, router or staker contracts.
 // Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
-func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error {
+func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	if !rlm.IsCurrent() {
+		return errSpoofedRealm
+	}
+
 	if halt.IsHaltedProtocolFee() {
 		return errProtocolFeeHalted
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
 
 	if amount < 0 {
@@ -180,14 +193,14 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 		return nil
 	}
 
-	pf.reserveCollectedProtocolFee(tokenPath, amount)
+	pf.reserveCollectedProtocolFee(0, rlm, tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
+	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, caller, protocolFeeAddr, amount)
 
 	chain.Emit(
 		"AddToProtocolFee",
 		"prevAddr", caller.String(),
-		"prevRealm", runtime.PreviousRealm().PkgPath(),
+		"prevRealm", prev.PkgPath(),
 		"tokenPath", tokenPath,
 		"amount", strconv.FormatInt(amount, 10),
 	)
@@ -195,20 +208,20 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 	return nil
 }
 
-func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) {
+func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	pfs := pf.getProtocolFeeState()
 
 	toDevOpsAmount := safeMulDiv(amount, pfs.DevOpsPct(), 10000)
 	toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
 
-	if err := pfs.addAccuToDevOps(tokenPath, toDevOpsAmount); err != nil {
+	if err := pfs.addAccuToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {
 		panic(err)
 	}
-	if err := pfs.addAccuToGovStaker(tokenPath, toGovStakerAmount); err != nil {
+	if err := pfs.addAccuToGovStaker(0, rlm, tokenPath, toGovStakerAmount); err != nil {
 		panic(err)
 	}
 
-	if err := pfs.store.AddReservedToken(tokenPath); err != nil {
+	if err := pfs.store.AddReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
 }

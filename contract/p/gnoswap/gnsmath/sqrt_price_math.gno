@@ -5,11 +5,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const (
-	Q96_RESOLUTION  uint = 96
-	Q160_RESOLUTION uint = 160
-)
-
 var (
 	q96       = u256.Zero().Lsh(u256.One(), 96)                               // 2^96
 	max160    = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1

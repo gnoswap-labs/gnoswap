@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -92,7 +93,7 @@ func createPoolByAdmin(token0, token1 string, fee int64) {
 	poolCreationFee := pool.GetPoolCreationFee()
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
-	pool.CreatePool(cross, token0, token1, uint32(fee), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, token0, token1, uint32(fee), gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	ufmt.Printf("[INFO] created %s:%s:%d pool (poolCreationFee: %d)\n", token0, token1, fee, poolCreationFee)
 }

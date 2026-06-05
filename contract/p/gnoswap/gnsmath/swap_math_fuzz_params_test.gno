@@ -10,9 +10,8 @@ import (
 )
 
 var (
-	MAX_UINT128 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 128), u256.One())
-	MAX_INT190  = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 190), u256.One())
-	MIN_INT190  = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 190), u256.One())
+	MAX_INT190 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 190), u256.One())
+	MIN_INT190 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 190), u256.One())
 )
 
 // Parameters for SwapMathComputeSwapStep fuzzing test
@@ -45,7 +44,7 @@ func (p *swapMathComputeSwapStepParams) IsValid() bool {
 		return false
 	}
 
-	if p.liquidity.Gt(MAX_UINT128) {
+	if p.liquidity.Gt(maxUint128) {
 		return false
 	}
 
@@ -70,7 +69,7 @@ func (p *swapMathComputeSwapStepParams) ToString() string {
 func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepParams {
 	sqrtCurrent := fuzz.Uint256Range(MIN_SQRT_RATIO.ToString(), MAX_SQRT_RATIO.ToString()).Draw(t, "sqrtRatioCurrentX96").(*u256.Uint)
 	sqrtTarget := fuzz.Uint256Range(MIN_SQRT_RATIO.ToString(), MAX_SQRT_RATIO.ToString()).Draw(t, "sqrtRatioTargetX96").(*u256.Uint)
-	liquidity := fuzz.Uint256Range("1", MAX_UINT128.ToString()).Draw(t, "liquidity").(*u256.Uint)
+	liquidity := fuzz.Uint256Range("1", maxUint128.ToString()).Draw(t, "liquidity").(*u256.Uint)
 
 	feePips := fuzz.Uint64Range(1, 999_999).Draw(t, "feePips").(uint64)
 

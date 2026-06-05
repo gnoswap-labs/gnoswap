@@ -9,7 +9,7 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	plp "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 )
@@ -530,7 +530,7 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 		initialized := !(masked.IsZero())
 
 		if initialized {
-			next := compress - int32(bitPos-plp.BitMathMostSignificantBit(masked))*tickSpacing
+			next := compress - int32(bitPos-gnsmath.BitMathMostSignificantBit(masked))*tickSpacing
 			return next, initialized
 		}
 
@@ -554,7 +554,7 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 
 	initialized := !(masked.IsZero())
 	if initialized {
-		next := (compress + 1 + int32(plp.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
+		next := (compress + 1 + int32(gnsmath.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
 	}
 	next := (compress + 1 + int32(255-bitPos)) * tickSpacing

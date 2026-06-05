@@ -61,21 +61,21 @@ Also updates the `admin` role address and syncs it to the access package.
 
 ```go
 // Register new role (requires admin or governance)
-RegisterRole(cross, "new_role", roleAddress)
+RegisterRole(cross(cur), "new_role", roleAddress)
 
 // Update role address
-UpdateRoleAddress(cross, "staker", newAddress)
+UpdateRoleAddress(cross(cur), "staker", newAddress)
 
 // Admin role is updated via ownership transfer
-TransferOwnership(cross, newAdmin)
-AcceptOwnership(cross)
+TransferOwnership(cross(cur), newAdmin)
+AcceptOwnership(cross(cur))
 
 // Get role address
 addr, err := GetRoleAddress("router")
 
 // Transfer ownership (two-step)
-TransferOwnership(cross, newAdmin)  // Step 1: Initiate
-AcceptOwnership(cross)               // Step 2: Accept (by newAdmin)
+TransferOwnership(cross(cur), newAdmin) // Step 1: Initiate
+AcceptOwnership(cross(cur))             // Step 2: Accept (by newAdmin)
 ```
 
 ## Contract Upgrade

@@ -2,7 +2,7 @@ package protocol_fee
 
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
 func DistributeProtocolFee(cur realm) {
-	getImplementation().DistributeProtocolFee()
+	getImplementation().DistributeProtocolFee(0, cur)
 }
 
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
@@ -10,7 +10,7 @@ func DistributeProtocolFee(cur realm) {
 // Parameters:
 //   - pct: percentage (0-100)
 func SetDevOpsPct(cur realm, pct int64) {
-	getImplementation().SetDevOpsPct(pct)
+	getImplementation().SetDevOpsPct(0, cur, pct)
 }
 
 // SetGovStakerPct sets the percentage of protocol fees allocated to GovStaker.
@@ -18,7 +18,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 // Parameters:
 //   - pct: percentage (0-100)
 func SetGovStakerPct(cur realm, pct int64) {
-	getImplementation().SetGovStakerPct(pct)
+	getImplementation().SetGovStakerPct(0, cur, pct)
 }
 
 // AddToProtocolFee adds tokens to the protocol fee pool.
@@ -27,7 +27,7 @@ func SetGovStakerPct(cur realm, pct int64) {
 //   - tokenPath: path of the token
 //   - amount: amount to add
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
-	return getImplementation().AddToProtocolFee(tokenPath, amount)
+	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }
 
 // GetDevOpsPct returns the DevOps fee percentage.

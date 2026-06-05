@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -79,7 +80,7 @@ func initializeSetup() {
 		barPath,
 		bazPath,
 		100, // fee tier with tick spacing 1
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Setup test accounts with smaller amounts for shared test environment

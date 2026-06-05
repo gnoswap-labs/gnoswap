@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
@@ -55,7 +56,7 @@ func main() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
 	println("[INFO] Creating gns-wugnot pool (fee: 100, tick: -10000)")
-	pl.CreatePool(cross, wrappedWugnot, gnsPath, fee100, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pl.CreatePool(cross, wrappedWugnot, gnsPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Creating wugnot-bar pool (fee: 100)")
 	pl.CreatePool(cross, wrappedWugnot, barPath, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875

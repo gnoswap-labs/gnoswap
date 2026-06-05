@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -93,7 +94,7 @@ func testInitialTierInternalRewards() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1 (rewards start here)")
@@ -182,7 +183,7 @@ func testInitialTierExternalRewards() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, fooPath, quxPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for external incentive")
