@@ -28,7 +28,7 @@ func (s *MockPoolStore) GetPools() *bptree.BPTree {
 }
 
 // SetPools stores the map containing all pool data.
-func (s *MockPoolStore) SetPools(pools *bptree.BPTree) error {
+func (s *MockPoolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	s.pools = pools
 	return nil
 }
@@ -44,7 +44,7 @@ func (s *MockPoolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
-func (s *MockPoolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
+func (s *MockPoolStore) SetFeeAmountTickSpacing(_ int, rlm realm, feeAmountTickSpacing map[uint32]int32) error {
 	s.feeAmountTickSpacing = feeAmountTickSpacing
 	return nil
 }
@@ -59,7 +59,7 @@ func (s *MockPoolStore) GetSlot0FeeProtocol() uint8 {
 }
 
 // SetSlot0FeeProtocol stores the protocol fee percentage for slot0.
-func (s *MockPoolStore) SetSlot0FeeProtocol(slot0FeeProtocol uint8) error {
+func (s *MockPoolStore) SetSlot0FeeProtocol(_ int, rlm realm, slot0FeeProtocol uint8) error {
 	s.slot0FeeProtocol = slot0FeeProtocol
 	return nil
 }
@@ -74,7 +74,7 @@ func (s *MockPoolStore) GetPoolCreationFee() int64 {
 }
 
 // SetPoolCreationFee stores the pool creation fee amount.
-func (s *MockPoolStore) SetPoolCreationFee(poolCreationFee int64) error {
+func (s *MockPoolStore) SetPoolCreationFee(_ int, rlm realm, poolCreationFee int64) error {
 	s.poolCreationFee = poolCreationFee
 	return nil
 }
@@ -87,7 +87,7 @@ func (s *MockPoolStore) GetPendingProtocolFees() map[string]int64 {
 	return s.pendingProtocolFees
 }
 
-func (s *MockPoolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
+func (s *MockPoolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {
 	s.pendingProtocolFees = pendingProtocolFees
 	return nil
 }
@@ -102,7 +102,7 @@ func (s *MockPoolStore) GetWithdrawalFeeBPS() uint64 {
 }
 
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
-func (s *MockPoolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
+func (s *MockPoolStore) SetWithdrawalFeeBPS(_ int, rlm realm, withdrawalFeeBPS uint64) error {
 	s.withdrawalFeeBPS = withdrawalFeeBPS
 	return nil
 }
@@ -115,7 +115,7 @@ func (s *MockPoolStore) GetUnlocked() bool {
 	return s.unlocked
 }
 
-func (s *MockPoolStore) SetUnlocked(unlocked bool) error {
+func (s *MockPoolStore) SetUnlocked(_ int, rlm realm, unlocked bool) error {
 	s.unlocked = unlocked
 	return nil
 }
@@ -131,7 +131,7 @@ func (s *MockPoolStore) GetSwapStartHook() func(cur realm, poolPath string, time
 }
 
 // SetSwapStartHook stores the swap start hook function.
-func (s *MockPoolStore) SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
+func (s *MockPoolStore) SetSwapStartHook(_ int, rlm realm, swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
 	s.swapStartHook = swapStartHook
 	return nil
 }
@@ -147,7 +147,7 @@ func (s *MockPoolStore) GetSwapEndHook() func(cur realm, poolPath string) error 
 }
 
 // SetSwapEndHook stores the swap end hook function.
-func (s *MockPoolStore) SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error {
+func (s *MockPoolStore) SetSwapEndHook(_ int, rlm realm, swapEndHook func(cur realm, poolPath string) error) error {
 	s.swapEndHook = swapEndHook
 	return nil
 }
@@ -163,7 +163,7 @@ func (s *MockPoolStore) GetTickCrossHook() func(cur realm, poolPath string, tick
 }
 
 // SetTickCrossHook stores the tick cross hook function.
-func (s *MockPoolStore) SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
+func (s *MockPoolStore) SetTickCrossHook(_ int, rlm realm, tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
 	s.tickCrossHook = tickCrossHook
 	return nil
 }

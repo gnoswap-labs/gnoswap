@@ -2,11 +2,9 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"strconv"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -36,15 +34,21 @@ var (
 // Used for reward calculation when positions enter/exit range.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
 
-	err := i.store.SetTickCrossHook(hook)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
+	err := i.store.SetTickCrossHook(0, rlm, hook)
 	if err != nil {
 		panic(err)
 	}
@@ -56,15 +60,21 @@ func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId i
 // Captures timestamp for time-weighted calculations.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
 
-	err := i.store.SetSwapStartHook(hook)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
+	err := i.store.SetSwapStartHook(0, rlm, hook)
 	if err != nil {
 		panic(err)
 	}
@@ -76,15 +86,21 @@ func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestam
 // Allows error propagation to revert invalid swaps.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
 
-	err := i.store.SetSwapEndHook(hook)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
+	err := i.store.SetSwapEndHook(0, rlm, hook)
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +114,8 @@ type SwapResult struct {
 	NewSqrtPrice         *u256.Uint
 	NewTick              int32
 	NewLiquidity         *u256.Uint
-	NewProtocolFees      pl.TokenPair
+	NewProtocolFeeToken0 int64
+	NewProtocolFeeToken1 int64
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
 }
@@ -135,6 +152,8 @@ type SwapComputation struct {
 //
 // Returns amount0 and amount1 deltas as strings.
 func (i *poolV1) Swap(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -145,10 +164,14 @@ func (i *poolV1) Swap(
 	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
-	previousRealm := runtime.PreviousRealm()
-	assertIsNotUserCall(previousRealm)
+	assertIsNotUserCall(0, rlm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
@@ -161,8 +184,8 @@ func (i *poolV1) Swap(
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
-	i.lockPool()
-	defer i.unlockPool()
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	// no liquidity -> no swap, return zero amounts
 	if pool.Liquidity().IsZero() {
@@ -176,7 +199,7 @@ func (i *poolV1) Swap(
 		swapStartHook := i.store.GetSwapStartHook()
 
 		if swapStartHook != nil {
-			swapStartHook(cross, pool.PoolPath(), blockTimestamp)
+			swapStartHook(cross(rlm), pool.PoolPath(), blockTimestamp)
 		}
 	}
 
@@ -185,7 +208,7 @@ func (i *poolV1) Swap(
 			swapEndHook := i.store.GetSwapEndHook()
 
 			if swapEndHook != nil {
-				err := swapEndHook(cross, pool.PoolPath())
+				err := swapEndHook(cross(rlm), pool.PoolPath())
 				if err != nil {
 					panic(err)
 				}
@@ -211,7 +234,17 @@ func (i *poolV1) Swap(
 		Cache:             cache,
 	}
 
-	result, err := i.computeSwap(pool, comp)
+	var onTickCross tickCrossHookFn
+	if i.store.HasTickCrossHook() {
+		hook := i.store.GetTickCrossHook()
+		if hook != nil {
+			onTickCross = func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+				hook(cross(rlm), poolPath, tickId, zeroForOne, timestamp)
+			}
+		}
+	}
+
+	result, err := i.computeSwap(pool, comp, onTickCross)
 	if err != nil {
 		panic(err)
 	}
@@ -231,16 +264,16 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
+			i.safeTransfer(0, rlm, pool, recipient, token1Path, result.Amount1.Abs(), false)
 		}
-		i.safeSwapCallback(pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
+			i.safeTransfer(0, rlm, pool, recipient, token0Path, result.Amount0.Abs(), true)
 		}
-		i.safeSwapCallback(pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 	}
 
 	lastObservation, err := lastObservation(pool.ObservationState())
@@ -250,6 +283,8 @@ func (i *poolV1) Swap(
 
 	token0Amount := result.Amount0.ToString()
 	token1Amount := result.Amount1.ToString()
+
+	previousRealm := rlm.Previous()
 
 	chain.Emit(
 		"Swap",
@@ -324,7 +359,7 @@ func (i *poolV1) DrySwap(
 		Cache:             cache,
 	}
 
-	result, err := i.computeSwap(poolSnapshot, comp)
+	result, err := i.computeSwap(poolSnapshot, comp, nil)
 	if err != nil {
 		return "0", "0", false
 	}
@@ -342,6 +377,10 @@ func (i *poolV1) DrySwap(
 	return result.Amount0.ToString(), result.Amount1.ToString(), true
 }
 
+// tickCrossHookFn is invoked from inside the swap loop whenever an
+// initialized tick is crossed. DrySwap passes nil to skip side effects.
+type tickCrossHookFn func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+
 // computeSwap performs the core swap computation without modifying pool state.
 // The computation continues until either:
 // - The entire amount is consumed (amountSpecifiedRemaining = 0)
@@ -350,13 +389,17 @@ func (i *poolV1) DrySwap(
 // Important: This function is critical for AMM price discovery. It iterates through
 // tick ranges, calculating swap amounts and fees for each liquidity segment.
 // Returns an error if the computation fails at any step.
-func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, error) {
+//
+// The optional `onTickCross` callback is invoked when an initialized tick is
+// crossed; Swap supplies a hook that performs a cross-realm call into the
+// configured tick-cross hook, while DrySwap passes nil.
+func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
 
 	// Compute swap steps until completion
 	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-		state, err = i.computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache)
+		state, err = i.computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, onTickCross)
 		if err != nil {
 			return nil, err
 		}
@@ -376,7 +419,8 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 		NewSqrtPrice:         state.sqrtPriceX96,
 		NewTick:              state.tick,
 		NewLiquidity:         state.liquidity,
-		NewProtocolFees:      pool.ProtocolFees(),
+		NewProtocolFeeToken0: pool.ProtocolFeesToken0(),
+		NewProtocolFeeToken1: pool.ProtocolFeesToken1(),
 		FeeGrowthGlobal0X128: pool.FeeGrowthGlobal0X128(),
 		FeeGrowthGlobal1X128: pool.FeeGrowthGlobal1X128(),
 	}
@@ -384,12 +428,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken0 = safeAddInt64(result.NewProtocolFeeToken0, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken1 = safeAddInt64(result.NewProtocolFeeToken1, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -406,7 +450,8 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 	pool.SetSlot0(slot0)
 
 	pool.SetLiquidity(result.NewLiquidity)
-	pool.SetProtocolFees(result.NewProtocolFees)
+	pool.SetProtocolFeesToken0(result.NewProtocolFeeToken0)
+	pool.SetProtocolFeesToken1(result.NewProtocolFeeToken1)
 	pool.SetFeeGrowthGlobal0X128(result.FeeGrowthGlobal0X128)
 	pool.SetFeeGrowthGlobal1X128(result.FeeGrowthGlobal1X128)
 }
@@ -482,6 +527,7 @@ func (i *poolV1) computeSwapStep(
 	sqrtPriceLimitX96 *u256.Uint,
 	exactInput bool,
 	cache *SwapCache,
+	onTickCross tickCrossHookFn,
 ) (SwapState, error) {
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
@@ -518,9 +564,9 @@ func (i *poolV1) computeSwapStep(
 
 	// handling tick transitions
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-		newState = i.tickTransition(step, zeroForOne, newState, pool, cache)
+		newState = i.tickTransition(step, zeroForOne, newState, pool, cache, onTickCross)
 	} else if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
-		newState.setTick(gnsmath.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
+		newState.setTick(pl.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
 
 	return newState, nil
@@ -563,7 +609,7 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = gnsmath.TickMathGetSqrtRatioAtTick(step.tickNext)
+	step.sqrtPriceNextX96 = pl.TickMathGetSqrtRatioAtTick(step.tickNext)
 	return step
 }
 
@@ -585,7 +631,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := pl.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -664,7 +710,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 }
 
 // tickTransition handles the transition between price ticks during a swap
-func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, cache *SwapCache) SwapState {
+func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, cache *SwapCache, onTickCross tickCrossHookFn) SwapState {
 	// ensure existing state to keep immutability
 	newState := state
 
@@ -718,12 +764,10 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = gnsmath.LiquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = pl.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
-		if i.store.HasTickCrossHook() {
-			tickCrossHook := i.store.GetTickCrossHook()
-
-			tickCrossHook(cross, pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)
+		if onTickCross != nil {
+			onTickCross(pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)
 		}
 	}
 
