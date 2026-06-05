@@ -40,6 +40,10 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -117,6 +121,10 @@ func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
@@ -145,6 +153,10 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 

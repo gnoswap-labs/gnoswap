@@ -60,6 +60,10 @@ func (i *poolV1) CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
@@ -146,6 +150,10 @@ func (i *poolV1) CreatePool(
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
