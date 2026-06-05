@@ -171,6 +171,7 @@ func (m *mockGovernanceStore) AddUserProposal(_ int, rlm realm, user string, pro
 		proposalIDs = existing.([]int64)
 	}
 	proposalIDs = append(proposalIDs, proposalID)
+	m.userProposals.Remove(user)
 	m.userProposals.Set(user, proposalIDs)
 	return nil
 }
@@ -199,6 +200,7 @@ func (m *mockGovernanceStore) RemoveUserProposal(_ int, rlm realm, user string, 
 	if len(newProposalIDs) == 0 {
 		m.userProposals.Remove(user)
 	} else {
+		m.userProposals.Remove(user)
 		m.userProposals.Set(user, newProposalIDs)
 	}
 

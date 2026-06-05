@@ -32,11 +32,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create text proposal",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "success - create text proposal",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -47,11 +47,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - insufficient GNS balance",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("poor_proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - insufficient GNS balance",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("poor_proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     500_000_000, // Less than threshold
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -62,11 +62,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] not enough balance",
 		},
 		{
-			name:          "fail - empty title",
-			title:         "",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - empty title",
+			title:               "",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -77,11 +77,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || title is empty",
 		},
 		{
-			name:          "fail - empty description",
-			title:         "Test Text Proposal",
-			description:   "",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - empty description",
+			title:               "Test Text Proposal",
+			description:         "",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -92,11 +92,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || description is empty",
 		},
 		{
-			name:          "fail - already has active proposal",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("active_proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - already has active proposal",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("active_proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: true,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -107,11 +107,11 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 		},
 		{
-			name:          "fail - not enough voting weight",
-			title:         "Test Text Proposal",
-			description:   "This is a test text proposal for governance",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - not enough voting weight",
+			title:               "Test Text Proposal",
+			description:         "This is a test text proposal for governance",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes:      map[string]*governance.VotingInfo{}, // Empty voting info
@@ -184,14 +184,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create community pool spend proposal",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     gnsPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "success - create community pool spend proposal",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           gnsPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -202,14 +202,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - invalid recipient address",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            address("invalid"),
-			tokenPath:     gnsPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid recipient address",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  address("invalid"),
+			tokenPath:           gnsPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -220,14 +220,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 		},
 		{
-			name:          "fail - zero amount",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     gnsPath,
-			amount:        0,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - zero amount",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           gnsPath,
+			amount:              0,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -238,14 +238,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 		},
 		{
-			name:          "fail - empty token path",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "",
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - empty token path",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           "",
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -256,14 +256,14 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || tokenPath is empty",
 		},
 		{
-			name:          "fail - token path is not registered in grc20 registry",
-			title:         "Community Pool Spend",
-			description:   "Spend from community pool for development",
-			to:            testutils.TestAddress("recipient"),
-			tokenPath:     invalidTokenPath,
-			amount:        5_000_000_000,
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - token path is not registered in grc20 registry",
+			title:               "Community Pool Spend",
+			description:         "Spend from community pool for development",
+			to:                  testutils.TestAddress("recipient"),
+			tokenPath:           invalidTokenPath,
+			amount:              5_000_000_000,
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -334,13 +334,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 		expectedAbortMsg   string
 	}{
 		{
-			name:          "success - create parameter change proposal",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "success - create parameter change proposal",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -351,13 +351,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:          "fail - zero executions",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  0,
-			executions:    "",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - zero executions",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        0,
+			executions:          "",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -368,13 +368,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
 		{
-			name:          "fail - invalid execution format",
-			title:         "Parameter Change",
-			description:   "Change system parameters",
-			numToExecute:  1,
-			executions:    "invalid_format",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid execution format",
+			title:               "Parameter Change",
+			description:         "Change system parameters",
+			numToExecute:        1,
+			executions:          "invalid_format",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -385,13 +385,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-010] invalid message format || execution[0]: expected 3 parts (pkgPath, function, params), got 1",
 		},
 		{
-			name:          "fail - invalid package path (handler not found)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with invalid package",
-			numToExecute:  1,
-			executions:    "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid package path (handler not found)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with invalid package",
+			numToExecute:        1,
+			executions:          "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -402,13 +402,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
 		},
 		{
-			name:          "fail - invalid function name (handler not found)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with invalid function",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid function name (handler not found)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with invalid function",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -419,13 +419,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
 		},
 		{
-			name:          "fail - invalid parameter count (too few)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with wrong parameter count",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid parameter count (too few)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with wrong parameter count",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -436,13 +436,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 2 parameters for gno.land/r/gnoswap/staker:SetPoolTier, got 1",
 		},
 		{
-			name:          "fail - invalid parameter count (too many)",
-			title:         "Parameter Change",
-			description:   "Change system parameters with wrong parameter count",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - invalid parameter count (too many)",
+			title:               "Parameter Change",
+			description:         "Change system parameters with wrong parameter count",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -453,13 +453,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 1 parameters for gno.land/r/gnoswap/pool:SetPoolCreationFee, got 2",
 		},
 		{
-			name:          "fail - empty package path",
-			title:         "Parameter Change",
-			description:   "Change system parameters with empty package path",
-			numToExecute:  1,
-			executions:    "*EXE*SetPoolTier*EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - empty package path",
+			title:               "Parameter Change",
+			description:         "Change system parameters with empty package path",
+			numToExecute:        1,
+			executions:          "*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -470,13 +470,13 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: package path is empty",
 		},
 		{
-			name:          "fail - empty function name",
-			title:         "Parameter Change",
-			description:   "Change system parameters with empty function name",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
-			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
+			name:                "fail - empty function name",
+			title:               "Parameter Change",
+			description:         "Change system parameters with empty function name",
+			numToExecute:        1,
+			executions:          "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
+			callerAddress:       testutils.TestAddress("proposer"),
+			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
@@ -811,12 +811,16 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
-					mockProposeText(cross(cur), gov, "New Proposal", "New Description")
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+					func(cur realm) {
+						mockProposeText(cur, gov, "New Proposal", "New Description")
+					}(cross(cur))
 				})
 			} else {
-				proposalID := mockProposeText(cross(cur), gov, "New Proposal", "New Description")
-				uassert.Equal(t, proposalID, gov.getCurrentProposalID())
+				func(cur realm) {
+					proposalID := mockProposeText(cur, gov, "New Proposal", "New Description")
+					uassert.Equal(t, proposalID, gov.getCurrentProposalID())
+				}(cross(cur))
 			}
 		})
 	}

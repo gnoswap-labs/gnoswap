@@ -98,11 +98,17 @@ func newTestProposal(
 //
 // The governance impl methods read their caller via rlm.Previous(). To
 // simulate a specific caller, tests set the caller realm with
-// testing.SetRealm(...) and then invoke the method through one of these
-// crossing wrappers using mockX(cross(cur), gov, ...). The cross(cur)
-// mints a fresh cur whose previous realm is the simulated caller, which
-// the wrapper threads into the impl method as `cur` so the impl's
-// rlm.Previous() resolves to that caller.
+// testing.SetRealm(...) and then cross into a closure before invoking
+// these wrappers:
+//
+//	func(cur realm) { mockX(cur, gov, ...) }(cross(cur))
+//
+// Inside the closure, cur is the live crossing frame and cur.Previous()
+// is the SetRealm'd caller. Do not pass cross(cur) directly to mockX —
+// that leaves rlm.Previous() as the test package realm. For abort
+// assertions, use AbortsWithMessage(..., func() { ... }(cross(cur)) ),
+// not func(cur realm) { mockX(cross(cur), ...) } — AbortsWithMessage
+// already crosses func(realm) callbacks and would double-cross.
 func mockReconfigure(
 	cur realm,
 	gv *governanceV1,

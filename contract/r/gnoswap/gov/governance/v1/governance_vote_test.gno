@@ -16,11 +16,12 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
-		proposalID       int64
-		yes              bool
-		voter            address
-		setupProposal    *governance.Proposal
-		setupVotingInfos map[string]*governance.VotingInfo
+		proposalID        int64
+		yes               bool
+		voter             address
+		setupProposal     *governance.Proposal
+		setupVotingInfos  map[string]*governance.VotingInfo
+		requiresPriorVote bool
 		// then
 		expectedWeight   string
 		expectedHasAbort bool
@@ -140,7 +141,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			name:       "fail - already voted",
 			proposalID: 1,
 			yes:        true,
-			voter:      testutils.TestAddress("voter_already"),
+			voter:      testutils.TestAddress("voter"),
 			setupProposal: governance.NewProposal(
 				1,
 				NewProposalStatus(
@@ -157,15 +158,11 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter_already").String(): func() *governance.VotingInfo {
-					vi := governance.NewVotingInfo(5_000_000_000)
-					viResolver := NewVotingInfoResolver(vi)
-					viResolver.vote(true, 5_000_000_000, 100, time.Now().Unix()) // Already voted
-					return vi
-				}(),
+				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
-			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-004] cannot vote twice || user has already voted",
+			requiresPriorVote: true,
+			expectedHasAbort:  true,
+			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-004] cannot vote twice || user has already voted",
 		},
 	}
 
@@ -183,17 +180,28 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				}
 			}
 
+			testing.SetRealm(testing.NewUserRealm(tt.voter))
+
 			// when
+			if tt.requiresPriorVote {
+				func(cur realm) {
+					mockVote(cur, gov, tt.proposalID, tt.yes)
+				}(cross(cur))
+			}
+
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func(cur realm) {
-					testing.SetRealm(testing.NewUserRealm(tt.voter))
-					gov.Vote(0, cur, tt.proposalID, tt.yes)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					func(cur realm) {
+						mockVote(cur, gov, tt.proposalID, tt.yes)
+					}(cross(cur))
 				})
 				return
 			}
 
-			testing.SetRealm(testing.NewUserRealm(tt.voter))
-			weight := gov.Vote(0, cur, tt.proposalID, tt.yes)
+			var weight string
+			func(cur realm) {
+				weight = mockVote(cur, gov, tt.proposalID, tt.yes)
+			}(cross(cur))
 			uassert.Equal(t, tt.expectedWeight, weight)
 
 			// Verify vote was recorded
@@ -533,10 +541,6 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			if tt.setupHalt {
 				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			}
-			defer func() {
-				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
-			}()
 			if tt.setupProposal != nil {
 				setupTestProposal(cur, t, gov, tt.setupProposal())
 				setupTestVotingInfo(cur, t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000))
@@ -548,6 +552,9 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
 				mockVote(cross(cur), gov, tt.proposalID, tt.yes)
 			})
+
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 		})
 	}
 }
@@ -700,7 +707,7 @@ func TestGovernanceVote_VoteWeightCalculation(cur realm, t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.PanicsWithMessage(t, cur, tt.expectedError, func() {
+				uassert.AbortsContains(t, cur, tt.expectedError, func() {
 					mockVote(cross(cur), gov, 1, true)
 				})
 			} else {
@@ -755,8 +762,7 @@ func TestGovernanceVote_QuorumCalculation(cur realm, t *testing.T) {
 
 			eligibleWeight := tt.totalVotingWeight - tt.launchpadWeight
 
-			customConfig := testConfig
-			customConfig.Quorum = tt.quorumPercent
+			customConfig := governance.NewConfig(86400, 604800, 86400, tt.quorumPercent, 1_000_000_000, 86400, 2592000)
 
 			proposal := governance.NewProposal(
 				1,
