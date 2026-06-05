@@ -6,7 +6,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
-	sr "gno.land/r/gnoswap/staker"
 )
 
 var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
@@ -21,7 +20,7 @@ var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 //   - If the caller is not the admin
 func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -54,7 +53,7 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 //   - If the caller is not the admin
 func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()

@@ -18,7 +18,7 @@ const (
 // Only admin or governance can call this function.
 func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -48,7 +48,7 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 // Only admin or governance can call this function.
 func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -79,7 +79,7 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 // Only admin or governance can call this function.
 func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -107,7 +107,7 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 // Only admin or governance can call this function.
 func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()

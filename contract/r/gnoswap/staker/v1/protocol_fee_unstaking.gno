@@ -8,7 +8,6 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
-	sr "gno.land/r/gnoswap/staker"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
@@ -100,7 +99,7 @@ func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
 // Only admin or governance can call this function.
 func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedStaker()

@@ -24,7 +24,7 @@ func init(cur realm) {
 func registerStakerV1(cur realm) {
 	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
 		if !rlm.IsCurrent() {
-			panic(sr.ErrSpoofedRealm)
+			panic(errSpoofedRealm)
 		}
 
 		err := initStoreData(0, rlm, stakerStore, emissionAccessor)
