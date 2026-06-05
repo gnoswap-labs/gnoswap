@@ -35,6 +35,14 @@ const defaultDevOpsPct = int64(0)
 
 var errSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 
+// NewBPTreeN allocates a BP-tree under /r/gnoswap/protocol_fee's realm context
+// so tree.Set leaf-slot writes clear the readonly-taint gate regardless of
+// which realm (protocol_fee/v1, mock, tests) calls Set. Callers must allocate
+// protocol_fee trees through here rather than bptree.NewBPTreeN directly.
+func NewBPTreeN(fanout int) *bptree.BPTree {
+	return bptree.NewBPTreeN(fanout)
+}
+
 type protocolFeeStore struct {
 	kvStore store.KVStore
 }
@@ -79,7 +87,7 @@ func (s *protocolFeeStore) InitializeAccuToGovStaker(_ int, rlm realm) error {
 		return errSpoofedRealm
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyAccuToGovStaker.String(), bptree.NewBPTreeN(16))
+	return s.kvStore.Set(0, rlm, StoreKeyAccuToGovStaker.String(), NewBPTreeN(16))
 }
 
 func (s *protocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
@@ -135,7 +143,7 @@ func (s *protocolFeeStore) InitializeAccuToDevOps(_ int, rlm realm) error {
 		return errSpoofedRealm
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyAccuToDevOps.String(), bptree.NewBPTreeN(16))
+	return s.kvStore.Set(0, rlm, StoreKeyAccuToDevOps.String(), NewBPTreeN(16))
 }
 
 func (s *protocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
@@ -191,7 +199,7 @@ func (s *protocolFeeStore) InitializeDistributedToGovStakerHistory(_ int, rlm re
 		return errSpoofedRealm
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyDistributedToGovStakerHistory.String(), bptree.NewBPTreeN(16))
+	return s.kvStore.Set(0, rlm, StoreKeyDistributedToGovStakerHistory.String(), NewBPTreeN(16))
 }
 
 func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
@@ -247,7 +255,7 @@ func (s *protocolFeeStore) InitializeDistributedToDevOpsHistory(_ int, rlm realm
 		return errSpoofedRealm
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyDistributedToDevOpsHistory.String(), bptree.NewBPTreeN(16))
+	return s.kvStore.Set(0, rlm, StoreKeyDistributedToDevOpsHistory.String(), NewBPTreeN(16))
 }
 
 func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {

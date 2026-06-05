@@ -739,33 +739,35 @@ func TestAssertIsValidAddress(cur realm, t *testing.T) {
 
 func TestAssertIsUser(cur realm, t *testing.T) {
 	tests := []struct {
-		name        string
-		realm       runtime.Realm
-		shouldPanic bool
-		expectedMsg string
+		name         string
+		currentRealm runtime.Realm
+		shouldPanic  bool
+		expectedMsg  string
 	}{
 		{
-			name:        "user realm",
-			realm:       testing.NewUserRealm(testutils.TestAddress("user")),
-			shouldPanic: false,
+			name:         "user realm",
+			currentRealm: testing.NewUserRealm(testutils.TestAddress("user")),
+			shouldPanic:  false,
 		},
 		{
-			name:        "code realm",
-			realm:       testing.NewCodeRealm("gno.land/r/demo/example"),
-			shouldPanic: true,
-			expectedMsg: "caller is not user",
+			name:         "code realm",
+			currentRealm: testing.NewCodeRealm("gno.land/r/demo/example"),
+			shouldPanic:  true,
+			expectedMsg:  "caller is not user",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(tt.currentRealm)
+
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
-					AssertIsUser(tt.realm)
+					AssertIsUser(0, cur)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					AssertIsUser(tt.realm)
+					AssertIsUser(0, cur)
 				})
 			}
 		})
