@@ -47,7 +47,7 @@ func (r *routerV1) SwapCallback(
 	halt.AssertIsNotHaltedRouter()
 
 	caller := rlm.Previous().Address()
-	assertIsRouterV1(caller)
+	assertIsRouterImplementation(caller)
 
 	var tokenToPay string
 	var amountToPay int64
