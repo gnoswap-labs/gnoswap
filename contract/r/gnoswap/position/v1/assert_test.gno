@@ -398,6 +398,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 		otherAddr            address
 		expectedPanicMessage string
 		shouldPanic          bool
+		shouldAbort          bool
 	}{
 		{
 			name:        "Valid equal addresses",
@@ -424,6 +425,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 			otherAddr:            alice,
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Second address is invalid (empty)",
@@ -431,6 +433,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 			otherAddr:            "",
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Both addresses are invalid (empty)",
@@ -438,6 +441,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 			otherAddr:            "",
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Different valid addresses",
@@ -445,6 +449,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 			otherAddr:            "g1charlie",
 			expectedPanicMessage: "invalid address: g1charlie",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Same address with different case (should be equal)",
@@ -452,6 +457,7 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 			otherAddr:            "g1alice",
 			expectedPanicMessage: "invalid address: g1alice",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 	}
 
@@ -459,7 +465,11 @@ func TestAssertEqualsAddress(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initPositionTest(cur, t)
 
-			if tt.shouldPanic {
+			if tt.shouldAbort {
+				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMessage, func() {
+					assertEqualsAddress(tt.prevAddr, tt.otherAddr)
+				})
+			} else if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertEqualsAddress(tt.prevAddr, tt.otherAddr)
 				})

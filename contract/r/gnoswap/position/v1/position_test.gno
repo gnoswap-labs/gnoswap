@@ -122,7 +122,6 @@ func TestMustGetPosition(cur realm, t *testing.T) {
 			positionId:           1,
 			inputPosition:        newDummyPosition(1),
 			inputPositionId:      999,
-			expectedPosition:     position.Position{},
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
@@ -794,8 +793,7 @@ func TestMint_ParticipantDerivationAndMintToValidation(cur realm, t *testing.T) 
 			caller := tt.caller
 			mintTo := tt.mintTo
 			if tt.callerCodePath != "" {
-				callerRealm := testing.NewCodeRealm(tt.callerCodePath)
-				caller = callerRealm.Address()
+				caller = testing.NewCodeRealm(tt.callerCodePath).Address()
 			}
 			if tt.mintToCaller {
 				mintTo = caller
@@ -814,8 +812,12 @@ func TestMint_ParticipantDerivationAndMintToValidation(cur realm, t *testing.T) 
 			common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, 1000000)
 
 			mint := func(cur realm) (uint64, string, string, string) {
-				testing.SetRealm(posRealm)
-				return mockInstance.Mint(0, cur,
+				if tt.callerCodePath != "" {
+					testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
+				} else {
+					testing.SetRealm(testing.NewUserRealm(caller))
+				}
+				return position.Mint(cross(cur),
 					barPath, fooPath, fee500,
 					-500, 500,
 					"1000000", "1000000",
@@ -1068,7 +1070,7 @@ func TestDecreaseLiquidity(cur realm, t *testing.T) {
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 
-			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			testing.SetRealm(adminRealm)
 			if tc.expectedHasAbort {
 				uassert.AbortsWithMessage(t, cur, tc.expectedErrorMsg, func() {
 					mockInstanceDecreaseLiquidity(cur,
@@ -1216,7 +1218,7 @@ func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SetRealm(adminRealm)
 	uassert.NotPanics(t, cur, func() {
 		_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 			1,
@@ -1610,7 +1612,7 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(cur realm, t *testing.T) {
 
 			deadline := time.Now().Add(time.Hour).Unix()
 
-			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			testing.SetRealm(adminRealm)
 			if tc.expectedHasAbort {
 				uassert.AbortsContains(t, cur, tc.expectedErrorMsg, func() {
 					mockInstanceDecreaseLiquidity(cur,
@@ -1683,7 +1685,7 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(cur realm, t *testing.T) {
 	// but collect amounts will be limited by pool balance (~500,000 total / 2 = ~250,000 each)
 	// So if we set amount0Min = 400,000, it should fail because collect0 < 400,000
 
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SetRealm(adminRealm)
 
 	// This should FAIL because collect0 will be less than amount0Min
 	// Even though burn0 would be >= 400,000, collect0 will be limited by pool balance
@@ -1831,7 +1833,7 @@ func TestDecreaseLiquidity_NonOwner(cur realm, t *testing.T) {
 	// Setup pool and position owned by admin
 	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
-	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
 	mockInstanceMint(cur,
 		barPath,
 		fooPath,
@@ -1843,13 +1845,12 @@ func TestDecreaseLiquidity_NonOwner(cur realm, t *testing.T) {
 		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
 	)
 
-	// Alice (non-owner) tries to decrease liquidity
+	// Alice (non-owner) tries to decrease liquidity through the public proxy.
 	testing.SetRealm(testing.NewUserRealm(alice))
 
-	uassert.PanicsWithMessage(t, cur, "[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
 		func() {
-			testing.SetRealm(testing.NewCodeRealm(posPath))
-			mockInstance.DecreaseLiquidity(0, cur,
+			mockInstanceDecreaseLiquidity(cur,
 				1,
 				"100",
 				"0",

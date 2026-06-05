@@ -47,7 +47,7 @@ func (s *mockPositionStore) HasPosition(positionId uint64) bool {
 func (s *mockPositionStore) GetPosition(positionId uint64) (position.Position, bool) {
 	value, exists := s.positions.Get(strconv.FormatUint(positionId, 10))
 	if !exists {
-		return position.Position{}, false
+		return *position.NewPosition("", 0, 0, "", "", "", 0, 0, false, ""), false
 	}
 	return value.(position.Position), true
 }
@@ -105,7 +105,7 @@ func newMockPosition() *positionV1 {
 }
 
 func newMockPositionStore() *mockPositionStore {
-	store := &mockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
+	store := &mockPositionStore{positions: position.NewPositionsTree(), nextID: 1}
 	return store
 }
 

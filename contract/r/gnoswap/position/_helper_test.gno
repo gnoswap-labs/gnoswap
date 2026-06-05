@@ -30,7 +30,7 @@ func resetTestState(t *testing.T) {
 }
 
 func makeMockInitializer(version string) func(_ int, rlm realm, _ IPositionStore) IPosition {
-	return func(_ int, _ realm, _ IPositionStore) IPosition {
+	return func(_ int, rlm realm, _ IPositionStore) IPosition {
 		return newMockPosition(version)
 	}
 }

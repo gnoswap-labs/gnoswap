@@ -1,7 +1,6 @@
 package position
 
 import (
-	"chain/runtime"
 	"testing"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -40,19 +39,20 @@ func TestStoreInitialization(t *testing.T) {
 func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
-		callerRealm                   runtime.Realm
+		callerRealmPath               string
+		callerAddress                 address
 		expectedErrorWithRead         bool
 		expectedErrorWithWrite        bool
 		expectedErrorMessageWithRead  string
 		expectedErrorMessageWithWrite string
 	}{
 		{
-			name:        "domain address",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
+			name:            "domain address",
+			callerRealmPath: "gno.land/r/gnoswap/position",
 		},
 		{
 			name:                          "domain implementation has no permission",
-			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position/v2"),
+			callerRealmPath:               "gno.land/r/gnoswap/position/v2",
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
 			expectedErrorMessageWithRead:  "",
@@ -60,7 +60,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 		},
 		{
 			name:                          "staker has read permission",
-			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+			callerRealmPath:               "gno.land/r/gnoswap/staker",
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
 			expectedErrorMessageWithRead:  "",
@@ -68,7 +68,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 		},
 		{
 			name:                          "panic with no permission realm",
-			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			callerRealmPath:               "gno.land/r/gnoswap/gov/staker",
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
 			expectedErrorMessageWithRead:  "",
@@ -76,7 +76,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 		},
 		{
 			name:                   "user has permission",
-			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			callerAddress:          testutils.TestAddress("bob"),
 			expectedErrorWithRead:  false,
 			expectedErrorWithWrite: false,
 		},
@@ -93,7 +93,11 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				ps.SetPositionNextID(0, cur, 1)
 			}
 
-			testing.SetRealm(tc.callerRealm)
+			if tc.callerRealmPath != "" {
+				testing.SetRealm(testing.NewCodeRealm(tc.callerRealmPath))
+			} else {
+				testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
+			}
 			if tc.expectedErrorWithRead {
 				uassert.PanicsContains(t, cur, tc.expectedErrorMessageWithRead, func() {
 					ps.GetPositionNextID()

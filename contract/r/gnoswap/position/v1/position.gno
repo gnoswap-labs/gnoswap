@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 
-	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
@@ -11,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/position"
+	pos "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 )
 
@@ -46,7 +45,7 @@ func (p *positionV1) Mint(
 	referrer string,
 ) (uint64, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(pos.ErrSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -160,7 +159,7 @@ func (p *positionV1) IncreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(pos.ErrSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -260,7 +259,7 @@ func (p *positionV1) DecreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(pos.ErrSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -338,7 +337,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(pos.ErrSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -443,7 +442,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(pos.ErrSpoofedRealm)
 	}
 
 	previousRealm := rlm.Previous()
@@ -468,7 +467,7 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
-func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner address) (FeeGrowthInside, error) {
+func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
@@ -487,16 +486,16 @@ func computePositionKey(tickLower, tickUpper int32) string {
 
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
-func calculatePositionBalances(position *position.Position) (int64, int64) {
+func calculatePositionBalances(position *pos.Position) (int64, int64) {
 	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {
 		return 0, 0
 	}
 
-	token0Balance, token1Balance := gnsmath.GetAmountsForLiquidity(
+	token0Balance, token1Balance := pos.GetAmountsForLiquidity(
 		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
-		gnsmath.TickMathGetSqrtRatioAtTick(position.TickLower()),
-		gnsmath.TickMathGetSqrtRatioAtTick(position.TickUpper()),
+		pos.TickMathGetSqrtRatioAtTick(position.TickLower()),
+		pos.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
 	)
 

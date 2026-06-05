@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/r/gnoswap/common"
@@ -15,6 +16,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pl "gno.land/r/gnoswap/pool"
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -26,8 +28,6 @@ import (
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/rbac"
-
-	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (
@@ -83,9 +83,6 @@ var (
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	rouPath  = "gno.land/r/gnoswap/router"
-	rouRealm = testing.NewCodeRealm(rouPath)
-
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
 
@@ -93,7 +90,8 @@ var (
 	mockPoolStore       *mock.MockPoolStore
 	registeredTestStore = false
 
-	initializedPool = false
+	initializedPool          = false
+	initializedPositionProxy = false
 )
 
 func TokenFaucet(cur realm, t *testing.T, tokenPath string, to address) {
@@ -206,37 +204,30 @@ func CreatePool(cur realm, t *testing.T,
 // set pool create fee to 0 for testing
 func CreatePoolWithoutFee(cur realm, t *testing.T) {
 	t.Helper()
-	testing.SetRealm(adminRealm)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	pl.SetPoolCreationFee(cross(cur), 0)
-	CreatePool(cur, t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	CreatePool(cur, t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
 func MakeMintPositionWithoutFee(cur realm, t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
-	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(cur, t, fooPath, adminAddr, poolAddr, maxApprove)
-
-	testing.SetRealm(adminRealm)
-
-	// mint position
-	return func(cur realm) (uint64, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Mint(0, cur,
-			barPath,
-			fooPath,
-			fee500,
-			-887270,
-			887270,
-			"50000",
-			"50000",
-			"0",
-			"0",
-			max_timeout,
-			adminAddr,
-			"",
-		)
-	}(cross(cur))
+	return mockInstanceMint(
+		cur,
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
 }
 
 func LPTokenApprove(cur realm, t *testing.T, owner, operator address, positionId uint64) {
@@ -349,14 +340,14 @@ func ugnotTransfer(cur realm, t *testing.T, from, to address, amount int64) {
 
 	testing.SetRealm(testing.NewUserRealm(from))
 	testing.SetOriginSend(chain.Coins{{gnotDenom, amount}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, amount}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
+func ugnotBalanceOf(cur realm, t *testing.T, addr address) int64 {
 	t.Helper()
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue, cur)
 	coins := banker_.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
@@ -370,9 +361,9 @@ func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
 	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
 }
 
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
+func ugnotBurn(cur realm, t *testing.T, addr address, denom string, amount int64) {
 	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue, cur)
 	banker_.RemoveCoin(addr, denom, amount)
 }
 
@@ -381,7 +372,7 @@ func ugnotFaucet(cur realm, t *testing.T, to address, amount int64) {
 	faucetAddress := adminAddr
 	testing.SetOriginCaller(faucetAddress)
 
-	if ugnotBalanceOf(t, faucetAddress) < amount {
+	if ugnotBalanceOf(cur, t, faucetAddress) < amount {
 		newCoins := chain.Coins{{gnotDenom, amount}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
@@ -442,7 +433,7 @@ func initPoolTest(cur realm, t *testing.T) {
 		initializedPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pool.RegisterInitializer(cross(cur), func(_ pool.IPoolStore) pool.IPool {
+		pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ pool.IPoolStore) pool.IPool {
 			return pool_v1.NewPoolV1(mockPoolStore)
 		})
 	}
@@ -473,13 +464,31 @@ func initPositionTest(cur realm, t *testing.T) {
 		store:       mock.NewMockPositionStore(),
 		nftAccessor: mock.NewMockNFTAccessor(),
 	}
+	initPositionProxyTest(cur, t)
+}
+
+func initPositionProxyTest(cur realm, t *testing.T) {
+	t.Helper()
+	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
+
+	if !initializedPositionProxy {
+		initializedPositionProxy = true
+
+		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
+		position.RegisterInitializer(cross(cur), func(_ int, rlm realm, positionStore position.IPositionStore) position.IPosition {
+			return mockInstance
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	position.UpgradeImpl(cross(cur), mockPositionPath)
 }
 
 // set pool create fee to 0 for testing
 func createPoolWithoutFee(cur realm, token0 string, token1 string, fee uint32, tick int32) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
-	pl.CreatePool(cross(cur), token0, token1, fee, common.TickMathGetSqrtRatioAtTick(tick).ToString())
+	pl.CreatePool(cross(cur), token0, token1, fee, gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString())
 }
 
 func mockInstanceMint(
@@ -505,23 +514,21 @@ func mockInstanceMint(
 	common.SafeGRC20Approve(cross(cur), token0, poolAddr, amount0Int)
 	common.SafeGRC20Approve(cross(cur), token1, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Mint(0, cur,
-			token0,
-			token1,
-			fee,
-			tickLower,
-			tickUpper,
-			amount0Desired,
-			amount1Desired,
-			amount0Min,
-			amount1Min,
-			deadline,
-			mintTo,
-			referrer,
-		)
-	}(cross(cur))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.Mint(cross(cur),
+		token0,
+		token1,
+		fee,
+		tickLower,
+		tickUpper,
+		amount0Desired,
+		amount1Desired,
+		amount0Min,
+		amount1Min,
+		deadline,
+		mintTo,
+		referrer,
+	)
 }
 
 func mockInstanceIncreaseLiquidity(
@@ -541,17 +548,15 @@ func mockInstanceIncreaseLiquidity(
 	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
 	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.IncreaseLiquidity(0, cur,
-			positionId,
-			amount0DesiredStr,
-			amount1DesiredStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross(cur))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.IncreaseLiquidity(cross(cur),
+		positionId,
+		amount0DesiredStr,
+		amount1DesiredStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceDecreaseLiquidity(
@@ -562,16 +567,13 @@ func mockInstanceDecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	return func(cur realm) (uint64, string, string, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.DecreaseLiquidity(0, cur,
-			positionId,
-			liquidityStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross(cur))
+	return position.DecreaseLiquidity(cross(cur),
+		positionId,
+		liquidityStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceReposition(
@@ -593,19 +595,17 @@ func mockInstanceReposition(
 	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
 	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, int32, int32, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Reposition(0, cur,
-			positionId,
-			tickLower,
-			tickUpper,
-			amount0DesiredStr,
-			amount1DesiredStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross(cur))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.Reposition(cross(cur),
+		positionId,
+		tickLower,
+		tickUpper,
+		amount0DesiredStr,
+		amount1DesiredStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceCollectFee(
@@ -615,8 +615,5 @@ func mockInstanceCollectFee(
 ) (uint64, string, string, string, string, string) {
 	testing.SetRealm(testing.NewUserRealm(caller))
 
-	return func(cur realm) (uint64, string, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.CollectFee(0, cur, positionId)
-	}(cross(cur))
+	return position.CollectFee(cross(cur), positionId)
 }
