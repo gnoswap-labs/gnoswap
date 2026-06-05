@@ -142,7 +142,7 @@ func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 				caller:         alice,
 			},
 			expectError:     true,
-			errorType:       "panic",
+			errorType:       "abort",
 			expectedMessage: "liquidity_math: identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 		{
