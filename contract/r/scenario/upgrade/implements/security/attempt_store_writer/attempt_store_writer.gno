@@ -23,8 +23,8 @@ func (h *storeHolder) Get() pool.IPoolStore {
 
 var capturedStore = &storeHolder{}
 
-func init() {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+func init(cur realm) {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		capturedStore.Set(store)
 
 		// Reuse the stable v1 implementation for functionality so we do not need to duplicate logic.

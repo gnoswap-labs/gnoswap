@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Pool contract upgrade scenario test with collect fee
 package main
 
@@ -11,7 +13,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -46,118 +47,118 @@ const (
 	poolV3ValidPath   = "gno.land/r/gnoswap/pool/v3_valid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Pool Contract Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool with v1")
-	createPool(barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(cur, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position with v1")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(cur, barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Collect fee from position before upgrade")
-	collectFee(positionId)
+	collectFee(cur, positionId)
 	println()
 
 	println("[SCENARIO] 6. Pool Contract Upgrade to v2_invalid")
-	upgradePoolContractToV2Invalid()
+	upgradePoolContractToV2Invalid(cur)
 	println()
 
 	println("[SCENARIO] 7. Perform swap to generate fees (should panic)")
-	withAbortsWithMessage(func() {
-		exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	withAbortsWithMessage(cur, func() {
+		exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
 	},
 		"[EXPECTED] Perform swap to generate fees panics correctly with v2_invalid",
 	)
 
 	println("[SCENARIO] 8. Collect fee from position with v2_invalid (should panic)")
-	withAbortsWithMessage(func() {
-		collectFee(positionId)
+	withAbortsWithMessage(cur, func() {
+		collectFee(cur, positionId)
 	},
 		"[EXPECTED] Collect fee from position panics correctly with v2_invalid",
 	)
 	println()
 
 	println("[SCENARIO] 9. Pool Contract Upgrade to v3_valid")
-	upgradePoolContractToV3Valid()
+	upgradePoolContractToV3Valid(cur)
 	println()
 
 	println("[SCENARIO] 10. Perform swap to generate fees (should panic)")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 11. Collect fee from position:", positionId)
-	collectFee(positionId)
+	collectFee(cur, positionId)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
-	pool.UpgradeImpl(cross, poolV1Path)
-	pool.SetFeeProtocol(cross, 6, 6) // 1/6 = ~16.67% protocol fee
+	pool.SetPoolCreationFee(cross(cur), 0)
+	pool.UpgradeImpl(cross(cur), poolV1Path)
+	pool.SetFeeProtocol(cross(cur), 6, 6) // 1/6 = ~16.67% protocol fee
 	println("[EXPECTED] Initialized pool contract with v1:", poolV1Path)
 	println("[EXPECTED] Set fee protocol to 6/6")
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(cur realm, barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee, sqrtPriceX96)
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(cur realm, barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	bar.Approve(cross(cur), poolAddr, math.MaxInt64)
+	foo.Approve(cross(cur), poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross(cur), barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 }
 
-func exactInSwapRouteBy(inputToken string, outputToken string, specifiedAmount string, routeQueryString string, queryRatios string, minAmountOut string) {
+func exactInSwapRouteBy(cur realm, inputToken string, outputToken string, specifiedAmount string, routeQueryString string, queryRatios string, minAmountOut string) {
 	println("[INFO] Exact-In Swap Route")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, math.MaxInt64)
-	foo.Approve(cross, routerAddr, math.MaxInt64)
+	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
+	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross, inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
+	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross(cur), inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
 
 	println("[EXPECTED] Input token amount:", inputTokenAmount)
 	println("[EXPECTED] Output token amount:", outputTokenAmount)
 }
 
-func collectProtocolFee(token0Path, token1Path string, fee uint32, recipient address, amount0Requested, amount1Requested string) {
+func collectProtocolFee(cur realm, token0Path, token1Path string, fee uint32, recipient address, amount0Requested, amount1Requested string) {
 	println("[INFO] Collect protocol fee")
 	testing.SetRealm(adminRealm)
 
-	amount0, amount1 := pool.CollectProtocol(cross, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+	amount0, amount1 := pool.CollectProtocol(cross(cur), token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
 	println("[EXPECTED] Collected protocol fee amount0:", amount0)
 	println("[EXPECTED] Collected protocol fee amount1:", amount1)
 }
 
-func collectFee(positionId uint64) {
+func collectFee(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
-	positionId, protocolFee0, protocolFee1, poolPath, amount0, amount1 := position.CollectFee(cross, positionId)
+	positionId, protocolFee0, protocolFee1, poolPath, amount0, amount1 := position.CollectFee(cross(cur), positionId)
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Collected protocol fee amount0:", protocolFee0)
 	println("[EXPECTED] Collected protocol fee amount1:", protocolFee1)
@@ -166,24 +167,24 @@ func collectFee(positionId uint64) {
 	println("[EXPECTED] Amount1:", amount1)
 }
 
-func upgradePoolContractToV2Invalid() {
+func upgradePoolContractToV2Invalid(cur realm) {
 	println("[INFO] Upgrade pool contract to v2_invalid")
 	testing.SetRealm(adminRealm)
 
-	pool.UpgradeImpl(cross, poolV2InvalidPath)
+	pool.UpgradeImpl(cross(cur), poolV2InvalidPath)
 	println("[EXPECTED] Upgraded pool contract to v2_invalid:", poolV2InvalidPath)
 }
 
-func upgradePoolContractToV3Valid() {
+func upgradePoolContractToV3Valid(cur realm) {
 	println("[INFO] Upgrade pool contract to v3_valid")
 	testing.SetRealm(adminRealm)
 
-	pool.UpgradeImpl(cross, poolV3ValidPath)
+	pool.UpgradeImpl(cross(cur), poolV3ValidPath)
 	println("[EXPECTED] Upgraded pool contract to v3_valid:", poolV3ValidPath)
 }
 
-func withAbortsWithMessage(callback func(), logMessage string) {
-	uassert.AbortsContains(t, "implementation", func() {
+func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
+	uassert.AbortsContains(t, cur, "implementation", func() {
 		callback()
 	})
 	println(logMessage)
