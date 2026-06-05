@@ -39,7 +39,7 @@ type MockGovernance struct {
 	Response *MockResponse
 }
 
-func (m *MockGovernance) ProposeText(title string, description string) int64 {
+func (m *MockGovernance) ProposeText(_ int, rlm realm, title string, description string) int64 {
 	res, ok := m.Response.Get("ProposeText")
 	if !ok {
 		return 0
@@ -48,6 +48,7 @@ func (m *MockGovernance) ProposeText(title string, description string) int64 {
 }
 
 func (m *MockGovernance) ProposeCommunityPoolSpend(
+	_ int, rlm realm,
 	title string,
 	description string,
 	to address,
@@ -62,6 +63,7 @@ func (m *MockGovernance) ProposeCommunityPoolSpend(
 }
 
 func (m *MockGovernance) ProposeParameterChange(
+	_ int, rlm realm,
 	title string,
 	description string,
 	numToExecute int64,
@@ -74,7 +76,7 @@ func (m *MockGovernance) ProposeParameterChange(
 	return res[0].(int64)
 }
 
-func (m *MockGovernance) Vote(proposalId int64, yes bool) string {
+func (m *MockGovernance) Vote(_ int, rlm realm, proposalId int64, yes bool) string {
 	res, ok := m.Response.Get("Vote")
 	if !ok {
 		return ""
@@ -82,7 +84,7 @@ func (m *MockGovernance) Vote(proposalId int64, yes bool) string {
 	return res[0].(string)
 }
 
-func (m *MockGovernance) Execute(proposalId int64) int64 {
+func (m *MockGovernance) Execute(_ int, rlm realm, proposalId int64) int64 {
 	res, ok := m.Response.Get("Execute")
 	if !ok {
 		return 0
@@ -90,7 +92,7 @@ func (m *MockGovernance) Execute(proposalId int64) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovernance) Cancel(proposalId int64) int64 {
+func (m *MockGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	res, ok := m.Response.Get("Cancel")
 	if !ok {
 		return 0
@@ -99,6 +101,7 @@ func (m *MockGovernance) Cancel(proposalId int64) int64 {
 }
 
 func (m *MockGovernance) Reconfigure(
+	_ int, rlm realm,
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,

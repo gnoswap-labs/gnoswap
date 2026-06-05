@@ -5,7 +5,6 @@ import (
 	"chain/runtime"
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
@@ -35,12 +34,18 @@ import (
 //
 // Returns new proposal ID.
 func (gv *governanceV1) ProposeText(
+	_ int, rlm realm,
 	title string,
 	description string,
 ) (newProposalId int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	callerAddress := prev.Address()
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
@@ -52,7 +57,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
-	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	err := gv.removeInactiveUserProposals(0, rlm, callerAddress, createdAt)
 	if err != nil {
 		panic(err)
 	}
@@ -73,6 +78,7 @@ func (gv *governanceV1) ProposeText(
 
 	// Create the text proposal with metadata
 	proposal, err := gv.createProposal(
+		0, rlm,
 		governance.Text,
 		config,
 		maxVotingWeight,
@@ -89,17 +95,16 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
+	err = gv.updateProposalUserVotes(0, rlm, proposal, governance.NewProposalUserVotingInfoTree())
 	if err != nil {
 		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ProposeText",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"title", title,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
@@ -137,12 +142,17 @@ func (gv *governanceV1) ProposeText(
 //
 // Returns new proposal ID.
 func (gv *governanceV1) ProposeCommunityPoolSpend(
+	_ int, rlm realm,
 	title string,
 	description string,
 	to address,
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
 	assertIsValidToken(tokenPath)
@@ -150,7 +160,8 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	callerAddress := prev.Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
@@ -159,7 +170,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
-	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	err := gv.removeInactiveUserProposals(0, rlm, callerAddress, createdAt)
 	if err != nil {
 		panic(err)
 	}
@@ -180,6 +191,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 
 	// Create the community pool spend proposal with execution data
 	proposal, err := gv.createProposal(
+		0, rlm,
 		governance.CommunityPoolSpend,
 		config,
 		maxVotingWeight,
@@ -196,17 +208,16 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
+	err = gv.updateProposalUserVotes(0, rlm, proposal, governance.NewProposalUserVotingInfoTree())
 	if err != nil {
 		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ProposeCommunityPoolSpend",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"title", title,
 		"to", to.String(),
 		"tokenPath", tokenPath,
@@ -246,14 +257,20 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 //
 // Returns new proposal ID.
 func (gv *governanceV1) ProposeParameterChange(
+	_ int, rlm realm,
 	title string,
 	description string,
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	callerAddress := prev.Address()
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
@@ -265,7 +282,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
-	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	err := gv.removeInactiveUserProposals(0, rlm, callerAddress, createdAt)
 	if err != nil {
 		panic(err)
 	}
@@ -286,6 +303,7 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	// Create the parameter change proposal with execution data
 	proposal, err := gv.createProposal(
+		0, rlm,
 		governance.ParameterChange,
 		config,
 		maxVotingWeight,
@@ -302,17 +320,16 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
+	err = gv.updateProposalUserVotes(0, rlm, proposal, governance.NewProposalUserVotingInfoTree())
 	if err != nil {
 		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ProposeParameterChange",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"title", title,
 		"numToExecute", formatInt(numToExecute),
 		"proposalId", formatInt(proposal.ID()),
@@ -328,6 +345,7 @@ func (gv *governanceV1) ProposeParameterChange(
 // createProposal handles proposal creation logic.
 // Validates input data, checks proposer eligibility, and creates proposal object.
 func (gv *governanceV1) createProposal(
+	_ int, rlm realm,
 	proposalType governance.ProposalType,
 	config governance.Config,
 	maxVotingWeight int64,
@@ -359,7 +377,7 @@ func (gv *governanceV1) createProposal(
 	}
 
 	// Generate unique proposal ID
-	proposalID := gv.nextProposalID()
+	proposalID := gv.nextProposalID(0, rlm)
 
 	// Create proposal status with voting schedule and requirements
 	proposalStatus := NewProposalStatus(
@@ -385,7 +403,7 @@ func (gv *governanceV1) createProposal(
 	)
 
 	// Store the proposal in state
-	success := gv.addProposal(proposal)
+	success := gv.addProposal(0, rlm, proposal)
 	if !success {
 		return nil, errDataNotFound
 	}

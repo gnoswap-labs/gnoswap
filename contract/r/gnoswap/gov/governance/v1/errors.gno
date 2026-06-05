@@ -24,6 +24,7 @@ var (
 	errInvalidConfiguration                           = errors.New("[GNOSWAP-GOVERNANCE-015] invalid configuration")
 	errInvalidExecution                               = errors.New("[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found")
 	errInvalidSmoothingPeriod                         = errors.New("[GNOSWAP-GOVERNANCE-017] invalid smoothing period")
+	errSpoofedRealm                                   = errors.New("[GNOSWAP-GOVERNANCE-018] spoofed realm: captured cur no longer matches live frame")
 )
 
 // makeErrorWithDetails creates an error with additional context.

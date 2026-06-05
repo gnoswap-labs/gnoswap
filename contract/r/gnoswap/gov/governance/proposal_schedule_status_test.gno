@@ -8,7 +8,7 @@ import (
 )
 
 // TestProposalScheduleStatus_NewProposalScheduleStatus tests the instance creation
-func TestProposalScheduleStatus_NewProposalScheduleStatus(t *testing.T) {
+func TestProposalScheduleStatus_NewProposalScheduleStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		createTime     int64
@@ -76,7 +76,7 @@ func TestProposalScheduleStatus_NewProposalScheduleStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// when
 			status := NewProposalScheduleStatus(
 				tt.createTime,
@@ -98,7 +98,7 @@ func TestProposalScheduleStatus_NewProposalScheduleStatus(t *testing.T) {
 }
 
 // TestProposalScheduleStatus_Setters tests setter methods
-func TestProposalScheduleStatus_Setters(t *testing.T) {
+func TestProposalScheduleStatus_Setters(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		initialCreate     int64
@@ -180,7 +180,7 @@ func TestProposalScheduleStatus_Setters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			status := NewProposalScheduleStatus(
 				tt.initialCreate,
