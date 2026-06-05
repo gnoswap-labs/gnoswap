@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // ErrSpoofedRealm is returned when the supplied realm token does not match the
@@ -231,7 +230,7 @@ func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
 //
 //   - initializeDomainStoreFn: A factory function that wraps the KVStore into a domain-specific storage interface
 //     This abstraction allows each version to work with a familiar storage API
-//     Example: func(kvStore store.KVStore) any { return NewProtocolFeeStore(kvStore) }
+//     Example: func(_ int, rlm realm, kvStore store.KVStore) any { return NewProtocolFeeStore(kvStore) }
 //
 // Returns:
 //   - VersionManager: An initialized version manager ready to accept implementation registrations
@@ -253,19 +252,4 @@ func NewVersionManager(
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}
-}
-
-// makeInitializerSafe creates a safe copy of an initializer function.
-// Used to verify stored initializer types during inspection.
-func makeInitializerSafe(data any) any {
-	fn, ok := data.(func(_ int, rlm realm, store any) any)
-	if !ok {
-		panic(ufmt.Sprintf("expected func(_ int, rlm realm, store any) any, got %T", data))
-	}
-
-	cpy := func(_ int, rlm realm, store any) any {
-		return fn(0, rlm, store)
-	}
-
-	return cpy
 }

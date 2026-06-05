@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -85,7 +85,7 @@ func setupScenario() {
 	bar.Transfer(cross, aliceAddr, 100000000)
 	foo.Transfer(cross, aliceAddr, 100000000)
 	gns.Transfer(cross, bobAddr, 2000000)
-	pool.CreatePool(cross, barPath, fooPath, fee, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 1)
 	obl.Approve(cross, launchpadAddr, 10000)
 	existingLaunchpadProjectID = launchpad.CreateProject(cross, "Existing Project", "gno.land/r/onbloc/obl", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
@@ -130,7 +130,7 @@ func testBlockedEntriesOneByOne() {
 	testing.SetRealm(adminRealm)
 	printBlockedScenario("pool", "CreatePool")
 	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pool.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	})
 	printBlockedExpected("pool", "CreatePool", "pool")
 

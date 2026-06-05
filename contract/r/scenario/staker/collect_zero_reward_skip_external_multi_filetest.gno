@@ -24,6 +24,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -33,7 +34,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -158,7 +158,7 @@ func createPool() {
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	println("[INFO] created pool (external-only, no internal tier)")

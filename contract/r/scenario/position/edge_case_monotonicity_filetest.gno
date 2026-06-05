@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -90,7 +91,7 @@ func testMonotonicityUltraTight() {
 		barPath,
 		bazPath,
 		100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -171,7 +172,7 @@ func testMonotonicityScales() {
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -239,7 +240,7 @@ func testMonotonicityBoundaries() {
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -298,7 +299,7 @@ func testNoDiscontinuousJumps() {
 		barPath,
 		bazPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)

@@ -9,6 +9,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -18,7 +19,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -103,7 +103,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:qux:500 pool")
-	pl.CreatePool(cross, barPath, quxPath, 500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
+	pl.CreatePool(cross, barPath, quxPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
 
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)

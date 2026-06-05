@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 
@@ -94,7 +95,7 @@ func initPool() {
 		WUGNOT_PATH,
 		GNS_PATH,
 		500,
-		common.TickMathGetSqrtRatioAtTick(1).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(1).ToString(),
 	)
 }
 

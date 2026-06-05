@@ -12,7 +12,7 @@ import (
 func TestRbac_RegisterRole(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func()
+		setup         func(cur realm)
 		roleName      string
 		roleAddress   address
 		callerRealm   address // Test with different callers (ADMIN or GOVERNANCE)
@@ -21,7 +21,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Register role with valid address succeeds (ADMIN)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -32,7 +32,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with valid address succeeds (GOVERNANCE)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -43,7 +43,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with different valid address succeeds (ADMIN)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -54,7 +54,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with empty address fails (ADMIN)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -66,7 +66,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with empty address fails (GOVERNANCE)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -78,7 +78,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register duplicate role with different address fails (ADMIN)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				// Pre-register a role
@@ -93,7 +93,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register system role with new address fails (GOVERNANCE)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -105,7 +105,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with unauthorized caller fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -117,7 +117,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with devops caller fails (not admin or governance)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -129,7 +129,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with empty role name fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -141,7 +141,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with whitespace-only name fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -153,7 +153,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with tab and space name fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -165,7 +165,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with invalid address format fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -177,7 +177,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Register role with malformed address fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -191,7 +191,7 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			tt.setup()
+			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing
 			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))
@@ -215,14 +215,14 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 func TestRbac_RemoveRole(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func()
+		setup       func(cur realm)
 		roleName    string
 		shouldError bool
 		errorMsg    string
 	}{
 		{
 			name: "Remove custom role should succeed",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				manager.RegisterRole("removable_role", testutils.TestAddress("removable_address"))
@@ -232,7 +232,7 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove system role should error",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -242,7 +242,7 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove non-existent role should error",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -252,7 +252,7 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role with empty string should error",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -262,7 +262,7 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role multiple times should error on second attempt",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				manager.RegisterRole("remove_twice_role", testutils.TestAddress("remove_twice_address"))
@@ -276,7 +276,7 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			tt.setup()
+			tt.setup(cur)
 			testing.SetRealm(testing.NewUserRealm(ADMIN))
 			err := manager.RemoveRole(tt.roleName)
 
@@ -435,7 +435,7 @@ func TestUpdateAccessRoleAddresses(cur realm, t *testing.T) {
 func TestAddressChangeComplete(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func()
+		setup         func(cur realm)
 		roleName      string
 		oldAddress    address
 		newAddress    address
@@ -444,7 +444,7 @@ func TestAddressChangeComplete(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Change admin role address",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -465,7 +465,7 @@ func TestAddressChangeComplete(cur realm, t *testing.T) {
 		},
 		{
 			name: "Change custom role address",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				manager.RegisterRole("custom_role", testutils.TestAddress("custom_address"))
@@ -488,7 +488,7 @@ func TestAddressChangeComplete(cur realm, t *testing.T) {
 		},
 		{
 			name: "Change multiple role addresses sequentially",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -531,7 +531,7 @@ func TestAddressChangeComplete(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Setup
-			tt.setup()
+			tt.setup(cur)
 
 			// Verify initial address
 			initialAddr, err := manager.GetRoleAddress(tt.roleName)
@@ -720,7 +720,7 @@ func TestRBACToAccessSync(cur realm, t *testing.T) {
 func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func()
+		setup         func(cur realm)
 		roleName      string
 		newAddr       address
 		callerRealm   address
@@ -729,7 +729,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Update role with admin caller succeeds",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -742,7 +742,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with governance caller succeeds",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -755,7 +755,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with unauthorized caller fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -769,7 +769,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with devops caller fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -783,7 +783,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with empty role name fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -795,7 +795,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with empty address fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -809,7 +809,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with invalid address format fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -823,7 +823,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with malformed address fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -837,7 +837,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update non-existent role fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -849,7 +849,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update role with same address succeeds (idempotent)",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -862,7 +862,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update admin role via UpdateRoleAddress fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -874,7 +874,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Update whitespace padded admin role via UpdateRoleAddress fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -888,7 +888,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			tt.setup()
+			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing
 			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))
@@ -912,7 +912,7 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func()
+		setup         func(cur realm)
 		roleName      string
 		callerRealm   address
 		shouldPanic   bool
@@ -920,7 +920,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Remove role with admin caller succeeds",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -932,7 +932,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role with governance caller succeeds",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -944,7 +944,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role with unauthorized caller fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -957,7 +957,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role with devops caller fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 				testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -970,7 +970,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove role with empty role name fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -981,7 +981,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove admin role fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -992,7 +992,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove whitespace padded admin role fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -1003,7 +1003,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 		},
 		{
 			name: "Remove non-existent role fails",
-			setup: func() {
+			setup: func(cur realm) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac(cur)
 			},
@@ -1016,7 +1016,7 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			tt.setup()
+			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing
 			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))

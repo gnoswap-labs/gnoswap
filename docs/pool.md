@@ -10,7 +10,6 @@ Core AMM. All pools live in a single singleton realm.
 | `pool.gno` | Pool data structures, Slot0 |
 | `position.gno` | Per-pool position tracking |
 | `manager.gno` | Pool creation |
-| `liquidity_math.gno` | Liquidity calculations |
 | `transfer.gno` | Token transfer helpers (`SafeGRC20Transfer`) |
 
 ## Rules

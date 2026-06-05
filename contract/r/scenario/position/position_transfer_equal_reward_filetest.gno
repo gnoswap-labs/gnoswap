@@ -11,6 +11,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -104,7 +105,7 @@ func setup() {
 	pool.CreatePool(
 		cross,
 		token0Path, token1Path, fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)

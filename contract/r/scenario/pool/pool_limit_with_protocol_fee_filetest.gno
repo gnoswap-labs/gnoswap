@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
@@ -82,7 +83,7 @@ func main() {
 	println()
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
