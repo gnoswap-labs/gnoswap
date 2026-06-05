@@ -16,14 +16,16 @@ import (
 
 // ExactInSwapRouteParams is the parameters for the ExactInSwapRoute fuzz test.
 type exactInSwapRouteParams struct {
-	inputToken   string
-	outputToken  string
-	amountIn     string
-	routeArr     string
-	quoteArr     string
-	amountOutMin string
-	deadline     int64
-	referrer     string
+	inputToken       string
+	outputToken      string
+	amountIn         string
+	routeArr         string
+	quoteArr         string
+	amountOutMin     string
+	deadline         int64
+	referrer         string
+	isPreDrySwap     bool
+	preDrySwapResult bool
 }
 
 func (p *exactInSwapRouteParams) ToString() string {
@@ -200,12 +202,20 @@ func (p *exactInSwapRouteParams) isValidMintOverflow() bool {
 }
 
 func (p *exactInSwapRouteParams) isValidDrySwap() bool {
-	_, _, success := p.drySwapRoute()
+	if p.isPreDrySwap {
+		return p.preDrySwapResult
+	}
 
-	return success
+	return false
 }
 
-func (p *exactInSwapRouteParams) drySwapRoute() (string, string, bool) {
+func (p *exactInSwapRouteParams) updateDrySwapResult(cur realm) {
+	_, _, success := p.drySwapRoute(cur)
+	p.isPreDrySwap = true
+	p.preDrySwapResult = success
+}
+
+func (p *exactInSwapRouteParams) drySwapRoute(cur realm) (string, string, bool) {
 	amountIn, amountOut, success := "0", "0", false
 
 	revive(func() {
@@ -236,14 +246,16 @@ func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
 	amountInUint256 := u256.NewUintFromInt64(amountIn)
 
 	return &exactInSwapRouteParams{
-		inputToken:   inputToken,
-		outputToken:  outputToken,
-		amountIn:     amountInUint256.ToString(),
-		routeArr:     routeArr,
-		quoteArr:     quoteArr,
-		amountOutMin: "0",
-		deadline:     time.Now().Add(time.Hour).Unix(),
-		referrer:     "",
+		inputToken:       inputToken,
+		outputToken:      outputToken,
+		amountIn:         amountInUint256.ToString(),
+		routeArr:         routeArr,
+		quoteArr:         quoteArr,
+		amountOutMin:     "0",
+		deadline:         time.Now().Add(time.Hour).Unix(),
+		referrer:         "",
+		isPreDrySwap:     false,
+		preDrySwapResult: false,
 	}
 }
 
@@ -259,13 +271,15 @@ func NewRandomizedExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
 	amountIn := amountInVal.ToString()
 
 	return &exactInSwapRouteParams{
-		inputToken:   inputToken,
-		outputToken:  outputToken,
-		amountIn:     amountIn,
-		routeArr:     routeArr,
-		quoteArr:     quoteArr,
-		amountOutMin: "0",
-		deadline:     time.Now().Add(time.Hour).Unix(),
-		referrer:     "",
+		inputToken:       inputToken,
+		outputToken:      outputToken,
+		amountIn:         amountIn,
+		routeArr:         routeArr,
+		quoteArr:         quoteArr,
+		amountOutMin:     "0",
+		deadline:         time.Now().Add(time.Hour).Unix(),
+		referrer:         "",
+		isPreDrySwap:     false,
+		preDrySwapResult: false,
 	}
 }

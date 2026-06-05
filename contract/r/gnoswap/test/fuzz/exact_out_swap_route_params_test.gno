@@ -210,20 +210,17 @@ func (p *exactOutSwapRouteParams) isValidMintOverflow(amountInStr string) bool {
 }
 
 func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
-	// If updateAmountInByPreDrySwap() was already called, use cached result
 	if p.isPreDrySwap {
 		return p.preDrySwapResult
 	}
 
-	// Otherwise, run a simple dry swap check
-	_, _, success := p.drySwapRoute()
-	return success
+	return false
 }
 
-func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
+func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap(cur realm) {
 	p.isPreDrySwap = true
 
-	amountIn, amountOut, success := p.drySwapRoute()
+	amountIn, amountOut, success := p.drySwapRoute(cur)
 
 	if !success {
 		p.preDrySwapResult = false
@@ -241,19 +238,17 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
 	p.amountOut = amountOut // use DrySwap's achievable output amount
 }
 
-func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {
+func (p *exactOutSwapRouteParams) drySwapRoute(cur realm) (amountIn string, amountOut string, success bool) {
 	r := revive(func() {
-		func(cur realm) {
-			amountIn, amountOut, success = router.DrySwapRoute(
-				p.inputToken,
-				p.outputToken,
-				p.amountOut,
-				"EXACT_OUT",
-				p.routeArr,
-				p.quoteArr,
-				u256.NewUintFromInt64(math.MaxInt64).ToString(),
-			)
-		}(cross)
+		amountIn, amountOut, success = router.DrySwapRoute(
+			p.inputToken,
+			p.outputToken,
+			p.amountOut,
+			"EXACT_OUT",
+			p.routeArr,
+			p.quoteArr,
+			u256.NewUintFromInt64(math.MaxInt64).ToString(),
+		)
 	})
 
 	if r != nil {
