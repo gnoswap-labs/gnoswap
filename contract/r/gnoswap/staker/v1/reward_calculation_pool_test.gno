@@ -227,8 +227,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 		setupHistoricalTicks func(poolResolver *PoolResolver)
 		currentTime          int64
 		expectedTick         int32
-		expectedPanic        bool
-		expectedPanicMessage string
+		expectedAbort        bool
+		expectedAbortMessage string
 	}{
 		{
 			name:     "get current tick by valid historical ticks",
@@ -241,10 +241,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
-			currentTime:          1000,
-			expectedTick:         3,
-			expectedPanic:        false,
-			expectedPanicMessage: "",
+			currentTime:  1000,
+			expectedTick: 3,
 		},
 		{
 			name:     "get current tick by valid historical ticks",
@@ -258,10 +256,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
-			currentTime:          1000,
-			expectedTick:         3,
-			expectedPanic:        false,
-			expectedPanicMessage: "",
+			currentTime:  1000,
+			expectedTick: 3,
 		},
 		{
 			name:     "get current tick by invalid historical ticks (int64 type)",
@@ -275,8 +271,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
 			currentTime:          1000,
-			expectedPanic:        true,
-			expectedPanicMessage: "failed to cast value to int32: int64",
+			expectedAbort:        true,
+			expectedAbortMessage: "failed to cast value to int32: int64",
 		},
 		{
 			name:     "get current tick by invalid historical ticks (string type)",
@@ -291,8 +287,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 			},
 			currentTime:          1000,
 			expectedTick:         3,
-			expectedPanic:        true,
-			expectedPanicMessage: "failed to cast value to int32: string",
+			expectedAbort:        true,
+			expectedAbortMessage: "failed to cast value to int32: string",
 		},
 	}
 
@@ -305,8 +301,8 @@ func TestCurrentTick(cur realm, t *testing.T) {
 				tt.setupHistoricalTicks(poolResolver)
 			}
 
-			if tt.expectedPanic {
-				uassert.PanicsContains(t, cur, tt.expectedPanicMessage, func() {
+			if tt.expectedAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
 					poolResolver.CurrentTick(tt.currentTime)
 				})
 			} else {
