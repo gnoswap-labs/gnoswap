@@ -51,12 +51,6 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-// turn protocol fee on
-func init() {
-	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross(cur), 6, 6)
-}
-
 type BalanceSnapshot struct {
 	userObl         int64
 	userUsdc        int64
@@ -67,6 +61,9 @@ type BalanceSnapshot struct {
 }
 
 func main(cur realm) {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross(cur), 6, 6)
+
 	println("[SCENARIO] Swap Balance Validation - Extreme Price Movements")
 	println("[INFO] Purpose: Validate balance conservation during extreme pool swaps")
 	println()

@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -40,10 +41,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm           = testing.NewUserRealm(adminAddr)
-	poolAddr     address = "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
-	positionAddr address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = testing.NewUserRealm(adminAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -117,6 +118,7 @@ func initializePoolAndCreatePosition(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for position creation")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -156,6 +158,7 @@ func testPositionCreationAndRetrieval(cur realm) {
 	println("[INFO] Providing tokens to bob")
 	tokenFaucet(cur, barPath, bobAddr)
 	tokenFaucet(cur, fooPath, bobAddr)
+	testing.SetRealm(bobRealm)
 
 	println("[INFO] Approving tokens for bob")
 	bar.Approve(cross(cur), poolAddr, maxApprove)

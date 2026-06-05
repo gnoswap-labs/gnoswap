@@ -24,12 +24,12 @@ const (
 	defaultBlockTime   = 2000        // 2 seconds = 2000 milliseconds
 )
 
+var t *testing.T
+
 var (
 	emissionAddr = chain.PackageAddress("gno.land/r/gnoswap/emission")
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	userAddr     = testutils.TestAddress("user")
-
-	t *testing.T
 )
 
 func main(cur realm) {

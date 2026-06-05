@@ -211,7 +211,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "router", "SwapCallback")
 	uassert.AbortsContains(t, cur, "halted: router", func() {
-		router.SwapCallback(barPath, fooPath, 1, 0, aliceAddr)
+		router.SwapCallback(cross(cur), barPath, fooPath, 1, 0, aliceAddr)
 	})
 	printBlockedExpected(cur, "router", "SwapCallback", "router")
 

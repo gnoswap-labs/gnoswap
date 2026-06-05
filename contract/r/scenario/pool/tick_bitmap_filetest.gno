@@ -33,7 +33,7 @@ func BeforeEachTest(t *testing.T) {
 	InitializeTickBitmaps_Helper()
 }
 
-func main() {
+func main(cur realm) {
 	TestTickFlip_1(t)
 	TestTickFlip_2(t)
 	TestTicknextInitializedTickWithinOneWord_1(t)
