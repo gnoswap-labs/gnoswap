@@ -45,7 +45,7 @@ func (p *positionV1) Mint(
 	referrer string,
 ) (uint64, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(pos.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -159,7 +159,7 @@ func (p *positionV1) IncreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(pos.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -259,7 +259,7 @@ func (p *positionV1) DecreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(pos.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -337,7 +337,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(pos.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -442,7 +442,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
 	if !rlm.IsCurrent() {
-		panic(pos.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	previousRealm := rlm.Previous()

@@ -13,7 +13,7 @@ func registerPositionV1(cur realm) {
 		cross(cur),
 		func(_ int, rlm realm, positionStore position.IPositionStore) position.IPosition {
 			if !rlm.IsCurrent() {
-				panic(position.ErrSpoofedRealm)
+				panic(errSpoofedRealm)
 			}
 
 			err := initStoreData(0, rlm, positionStore)

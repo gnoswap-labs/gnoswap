@@ -31,7 +31,7 @@ type gnftAccessor struct{}
 
 func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	if !rlm.IsCurrent() {
-		return position.ErrSpoofedRealm
+		return errSpoofedRealm
 	}
 
 	return gnft.Approve(cross(rlm), approved, tid)
@@ -39,7 +39,7 @@ func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.To
 
 func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	return gnft.Mint(cross(rlm), to, tid)
@@ -47,7 +47,7 @@ func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) gr
 
 func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	gnft.Burn(cross(rlm), tid)

@@ -36,7 +36,7 @@ func (p *positionV1) Reposition(
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
 	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
+		panic(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedPosition()
