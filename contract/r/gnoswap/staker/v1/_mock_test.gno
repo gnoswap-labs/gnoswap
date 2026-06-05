@@ -152,6 +152,19 @@ func (s *MockStakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewar
 	return nil
 }
 
+func (s *MockStakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error {
+	if s.tokenSpecificMinimumRewards == nil {
+		s.tokenSpecificMinimumRewards = make(map[string]int64)
+	}
+	s.tokenSpecificMinimumRewards[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error {
+	delete(s.tokenSpecificMinimumRewards, tokenPath)
+	return nil
+}
+
 // UnstakingFee
 func (s *MockStakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.unstakingFee != 0
@@ -337,18 +350,18 @@ func newMockStakerStore() *MockStakerStore {
 	swapBatch := sr.NewSwapBatchProcessor("", nil, 0)
 	swapBatch.SetIsActive(false)
 	return &MockStakerStore{
-		depositGnsAmount:            1_000_000_000,
-		minimumRewardAmount:         1_000_000_000,
-		deposits:                    sr.NewBPTreeN(16),
-		externalIncentives:          sr.NewBPTreeN(16),
-		totalEmissionSent:           0,
-		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns"},
-		incentiveCounter:            sr.NewCounter(),
-		tokenSpecificMinimumRewards: make(map[string]int64),
-		unstakingFee:                0,
-		pendingProtocolFees:         make(map[string]int64),
-		pools:                       sr.NewBPTreeN(16),
-		poolTierMemberships:         sr.NewBPTreeN(16),
+		depositGnsAmount:                 1_000_000_000,
+		minimumRewardAmount:              1_000_000_000,
+		deposits:                         sr.NewBPTreeN(16),
+		externalIncentives:               sr.NewBPTreeN(16),
+		totalEmissionSent:                0,
+		allowedTokens:                    []string{"ugnot", "gno.land/r/gnoswap/gns"},
+		incentiveCounter:                 sr.NewCounter(),
+		tokenSpecificMinimumRewards:      make(map[string]int64),
+		unstakingFee:                     0,
+		pendingProtocolFees:              make(map[string]int64),
+		pools:                            sr.NewBPTreeN(16),
+		poolTierMemberships:              sr.NewBPTreeN(16),
 		poolTierRatio:                    sr.NewTierRatio(0, 0, 0),
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,

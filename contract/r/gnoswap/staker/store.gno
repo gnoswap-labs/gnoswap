@@ -263,6 +263,44 @@ func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards m
 	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), rewards)
 }
 
+// SetTokenSpecificMinimumRewardItem sets a single token's minimum reward amount.
+func (s *stakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	rewards := s.GetTokenSpecificMinimumRewards()
+
+	owned := make(map[string]int64)
+	for k, v := range rewards {
+		owned[k] = v
+	}
+
+	owned[tokenPath] = amount
+
+	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), owned)
+}
+
+// RemoveTokenSpecificMinimumRewardItem removes a single token's minimum reward entry.
+func (s *stakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	rewards := s.GetTokenSpecificMinimumRewards()
+
+	owned := make(map[string]int64)
+	for k, v := range rewards {
+		if k == tokenPath {
+			continue
+		}
+
+		owned[k] = v
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), owned)
+}
+
 // UnstakingFee
 func (s *stakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUnstakingFee.String())

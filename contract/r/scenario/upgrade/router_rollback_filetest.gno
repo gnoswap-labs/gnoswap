@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Router contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	routerTestPath = "gno.land/r/gnoswap/router/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Router Contract Rollback Test")
-	testRouterRollback()
+	testRouterRollback(cur)
 	println()
 }
 
-func testRouterRollback() {
+func testRouterRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	router.UpgradeImpl(cross, routerTestPath)
+	router.UpgradeImpl(cross(cur), routerTestPath)
 
 	currentVersion := router.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testRouterRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back router contract to v1")
 	testing.SetRealm(adminRealm)
-	router.UpgradeImpl(cross, routerV1Path)
+	router.UpgradeImpl(cross(cur), routerV1Path)
 
 	currentVersion = router.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Router rolled back to: %s\n", currentVersion)

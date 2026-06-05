@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Gov/Governance contract upgrade scenario test
 package main
 
@@ -27,26 +29,26 @@ const (
 	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize gov/governance contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade gov/governance contract to test version")
-	testGovGovernanceUpgrade()
+	testGovGovernanceUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := govGovernance.GetImplementationPackagePath()
 
 	if currentVersion != govGovernanceV1Path {
 		testing.SetRealm(adminRealm)
-		govGovernance.UpgradeImpl(cross, govGovernanceV1Path)
+		govGovernance.UpgradeImpl(cross(cur), govGovernanceV1Path)
 		currentVersion = govGovernance.GetImplementationPackagePath()
 	}
 
@@ -56,7 +58,7 @@ func initializeV1() {
 	}
 }
 
-func testGovGovernanceUpgrade() {
+func testGovGovernanceUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -67,7 +69,7 @@ func testGovGovernanceUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading gov/governance contract to test version")
 	testing.SetRealm(adminRealm)
-	govGovernance.UpgradeImpl(cross, govGovernanceTestPath)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceTestPath)
 
 	currentVersion = govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Gov/Governance upgraded to: %s\n", currentVersion)
@@ -76,7 +78,7 @@ func testGovGovernanceUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -87,56 +89,56 @@ func verifyTestImplementation() {
 	// Test ProposeText - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ProposeText function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ProposeText not supported", func() {
-		govGovernance.ProposeText(cross, "Test Title", "Test Description")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ProposeText not supported", func() {
+		govGovernance.ProposeText(cross(cur), "Test Title", "Test Description")
 	})
 	ufmt.Println("[EXPECTED] ProposeText panics correctly")
 
 	// Test Vote - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Vote function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Vote not supported", func() {
-		govGovernance.Vote(cross, 1, true)
+	uassert.AbortsWithMessage(t, cur, "test implementation: Vote not supported", func() {
+		govGovernance.Vote(cross(cur), 1, true)
 	})
 	ufmt.Println("[EXPECTED] Vote panics correctly")
 
 	// Test Execute - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Execute function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Execute not supported", func() {
-		govGovernance.Execute(cross, 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: Execute not supported", func() {
+		govGovernance.Execute(cross(cur), 1)
 	})
 	ufmt.Println("[EXPECTED] Execute panics correctly")
 
 	// Test ProposeCommunityPoolSpend - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ProposeCommunityPoolSpend function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ProposeCommunityPoolSpend not supported", func() {
-		govGovernance.ProposeCommunityPoolSpend(cross, "Test Title", "Test Description", adminAddr, "gno.land/r/onbloc/foo", 1000)
+	uassert.AbortsWithMessage(t, cur, "test implementation: ProposeCommunityPoolSpend not supported", func() {
+		govGovernance.ProposeCommunityPoolSpend(cross(cur), "Test Title", "Test Description", adminAddr, "gno.land/r/onbloc/foo", 1000)
 	})
 	ufmt.Println("[EXPECTED] ProposeCommunityPoolSpend panics correctly")
 
 	// Test ProposeParameterChange - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ProposeParameterChange function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ProposeParameterChange not supported", func() {
-		govGovernance.ProposeParameterChange(cross, "Test Title", "Test Description", 1, "{}")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ProposeParameterChange not supported", func() {
+		govGovernance.ProposeParameterChange(cross(cur), "Test Title", "Test Description", 1, "{}")
 	})
 	ufmt.Println("[EXPECTED] ProposeParameterChange panics correctly")
 
 	// Test Cancel - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Cancel function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Cancel not supported", func() {
-		govGovernance.Cancel(cross, 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: Cancel not supported", func() {
+		govGovernance.Cancel(cross(cur), 1)
 	})
 	ufmt.Println("[EXPECTED] Cancel panics correctly")
 
 	// Test Reconfigure - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Reconfigure function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Reconfigure not supported", func() {
-		govGovernance.Reconfigure(cross, 100, 100, 100, 100, 100, 100, 100)
+	uassert.AbortsWithMessage(t, cur, "test implementation: Reconfigure not supported", func() {
+		govGovernance.Reconfigure(cross(cur), 100, 100, 100, 100, 100, 100, 100)
 	})
 	ufmt.Println("[EXPECTED] Reconfigure panics correctly")
 }

@@ -1,0 +1,1 @@
+../../../../../gnoswap/router/v1/protocol_fee_swap.gno

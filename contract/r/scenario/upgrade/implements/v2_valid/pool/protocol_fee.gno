@@ -1,0 +1,1 @@
+../../../../../gnoswap/pool/v1/protocol_fee.gno

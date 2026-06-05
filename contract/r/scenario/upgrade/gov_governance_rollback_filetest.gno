@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Gov/Governance contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Gov/Governance Contract Rollback Test")
-	testGovGovernanceRollback()
+	testGovGovernanceRollback(cur)
 	println()
 }
 
-func testGovGovernanceRollback() {
+func testGovGovernanceRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	govGovernance.UpgradeImpl(cross, govGovernanceTestPath)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceTestPath)
 
 	currentVersion := govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testGovGovernanceRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back gov/governance contract to v1")
 	testing.SetRealm(adminRealm)
-	govGovernance.UpgradeImpl(cross, govGovernanceV1Path)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceV1Path)
 
 	currentVersion = govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Gov/Governance rolled back to: %s\n", currentVersion)

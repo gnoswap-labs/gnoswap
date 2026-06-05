@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Staker contract upgrade scenario test with collect reward
 package main
 
@@ -13,7 +15,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/pool"
@@ -50,135 +51,135 @@ const (
 	stakerV3ValidPath   = "gno.land/r/gnoswap/staker/v3_valid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Staker Contract Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool(barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(cur, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(cur, barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Set pool tier for staking")
-	setPoolTier(barFoo500PoolPath, 1)
+	setPoolTier(cur, barFoo500PoolPath, 1)
 	println()
 
 	println("[SCENARIO] 5. Stake position")
-	stakePosition(positionId)
+	stakePosition(cur, positionId)
 	println()
 
 	println("[SCENARIO] 6. Wait 10 blocks for reward accumulation")
-	waitBlocks(10)
-	collectReward(positionId)
+	waitBlocks(cur, 10)
+	collectReward(cur, positionId)
 	println()
 
 	println("[SCENARIO] 7. Check staking info before upgrade")
-	checkStakingInfo(positionId)
+	checkStakingInfo(cur, positionId)
 	println()
 
 	println("[SCENARIO] 8. Staker Contract Upgrade to v2_invalid")
-	upgradeStakerContractToV2Invalid()
+	upgradeStakerContractToV2Invalid(cur)
 	println()
 
 	println("[SCENARIO] 9. Collect reward with v2_invalid (should panic)")
-	withAbortsWithMessage(func() {
-		waitBlocks(10)
-		collectReward(positionId)
+	withAbortsWithMessage(cur, func() {
+		waitBlocks(cur, 10)
+		collectReward(cur, positionId)
 	},
 		"[EXPECTED] Collect reward panics correctly with v2_invalid",
 	)
 	println()
 
 	println("[SCENARIO] 10. Check staking info with v2_invalid (should panic)")
-	withAbortsWithMessage(func() {
-		checkStakingInfo(positionId)
+	withAbortsWithMessage(cur, func() {
+		checkStakingInfo(cur, positionId)
 	},
 		"[EXPECTED] Check staking info panics correctly with v2_invalid",
 	)
 	println()
 
 	println("[SCENARIO] 11. Staker Contract Upgrade to v3_valid")
-	upgradeStakerContractToV3Valid()
+	upgradeStakerContractToV3Valid(cur)
 	println()
 
 	println("[SCENARIO] 12. Check staking info after upgrade to v3_valid")
-	checkStakingInfo(positionId)
+	checkStakingInfo(cur, positionId)
 	println()
 
 	println("[SCENARIO] 13. Collect reward with v3_valid")
-	collectReward(positionId)
+	collectReward(cur, positionId)
 	println()
 
 	println("[SCENARIO] 14. Check staking info after reward collection")
-	checkStakingInfo(positionId)
+	checkStakingInfo(cur, positionId)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
-	staker.UpgradeImpl(cross, stakerV1Path)
+	pool.SetPoolCreationFee(cross(cur), 0)
+	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	println("[EXPECTED] Initialized staker contract with v1:", stakerV1Path)
 
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+5)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+5)
 	testing.SkipHeights(1)
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(cur realm, barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee, sqrtPriceX96)
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 
-	staker.SetPoolTier(cross, poolPath, 1)
+	staker.SetPoolTier(cross(cur), poolPath, 1)
 	testing.SkipHeights(1)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(cur realm, barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	bar.Approve(cross(cur), poolAddr, math.MaxInt64)
+	foo.Approve(cross(cur), poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross(cur), barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 }
 
-func setPoolTier(poolPath string, tier uint64) {
+func setPoolTier(cur realm, poolPath string, tier uint64) {
 	println("[INFO] Set pool tier")
 	testing.SetRealm(adminRealm)
 
-	staker.SetPoolTier(cross, poolPath, tier)
+	staker.SetPoolTier(cross(cur), poolPath, tier)
 	println("[EXPECTED] Pool tier set to:", tier)
 }
 
-func stakePosition(positionId uint64) {
+func stakePosition(cur realm, positionId uint64) {
 	println("[INFO] Stake position")
 	testing.SetRealm(adminRealm)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.FormatUint(positionId, 10)))
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.FormatUint(positionId, 10)))
 
-	lpTokenId := staker.StakeToken(cross, positionId, "")
+	lpTokenId := staker.StakeToken(cross(cur), positionId, "")
 	println("[EXPECTED] Staked position ID:", positionId)
 	println("[EXPECTED] LP Token ID:", lpTokenId)
 }
 
-func collectReward(positionId uint64) {
+func collectReward(cur realm, positionId uint64) {
 	println("[INFO] Collect reward")
 	testing.SetRealm(adminRealm)
 
-	rewardToUser, rewardPenalty, _, _ := staker.CollectReward(cross, positionId)
+	rewardToUser, rewardPenalty, _, _ := staker.CollectReward(cross(cur), positionId)
 	rewardToUserInt, _ := strconv.ParseInt(rewardToUser, 10, 64)
 	rewardPenaltyInt, _ := strconv.ParseInt(rewardPenalty, 10, 64)
 
@@ -187,7 +188,7 @@ func collectReward(positionId uint64) {
 	println("[EXPECTED] Reward penalty:", rewardPenalty)
 }
 
-func checkStakingInfo(positionId uint64) {
+func checkStakingInfo(cur realm, positionId uint64) {
 	println("[INFO] Check staking info")
 	testing.SetRealm(adminRealm)
 
@@ -205,29 +206,29 @@ func checkStakingInfo(positionId uint64) {
 	}
 }
 
-func waitBlocks(n int) {
+func waitBlocks(cur realm, n int) {
 	println("[INFO] Waiting", n, "blocks")
 	testing.SkipHeights(10)
 }
 
-func upgradeStakerContractToV2Invalid() {
+func upgradeStakerContractToV2Invalid(cur realm) {
 	println("[INFO] Upgrade staker contract to v2_invalid")
 	testing.SetRealm(adminRealm)
 
-	staker.UpgradeImpl(cross, stakerV2InvalidPath)
+	staker.UpgradeImpl(cross(cur), stakerV2InvalidPath)
 	println("[EXPECTED] Upgraded staker contract to v2_invalid:", stakerV2InvalidPath)
 }
 
-func upgradeStakerContractToV3Valid() {
+func upgradeStakerContractToV3Valid(cur realm) {
 	println("[INFO] Upgrade staker contract to v3_valid")
 	testing.SetRealm(adminRealm)
 
-	staker.UpgradeImpl(cross, stakerV3ValidPath)
+	staker.UpgradeImpl(cross(cur), stakerV3ValidPath)
 	println("[EXPECTED] Upgraded staker contract to v3_valid:", stakerV3ValidPath)
 }
 
-func withAbortsWithMessage(callback func(), logMessage string) {
-	uassert.AbortsContains(t, "implementation", func() {
+func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
+	uassert.AbortsContains(t, cur, "implementation", func() {
 		callback()
 	})
 	println(logMessage)

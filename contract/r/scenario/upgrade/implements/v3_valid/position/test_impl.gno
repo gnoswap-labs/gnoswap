@@ -13,16 +13,28 @@ import (
 // NFTAccessor implementation for test
 type gnftAccessor struct{}
 
-func (n *gnftAccessor) Approve(approved address, tid grc721.TokenID) error {
-	return gnft.Approve(cross, approved, tid)
+func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
+	if !rlm.IsCurrent() {
+		return position.ErrSpoofedRealm
+	}
+
+	return gnft.Approve(cross(rlm), approved, tid)
 }
 
-func (n *gnftAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
-	return gnft.Mint(cross, to, tid)
+func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	return gnft.Mint(cross(rlm), to, tid)
 }
 
-func (n *gnftAccessor) Burn(tid grc721.TokenID) {
-	gnft.Burn(cross, tid)
+func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	gnft.Burn(cross(rlm), tid)
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {
@@ -47,8 +59,8 @@ func NewV3ValidPosition(store position.IPositionStore) position.IPosition {
 	}
 }
 
-func init() {
-	position.RegisterInitializer(cross, func(store position.IPositionStore) position.IPosition {
+func init(cur realm) {
+	position.RegisterInitializer(cross(cur), func(_ int, rlm realm, store position.IPositionStore) position.IPosition {
 		return NewV3ValidPosition(store)
 	})
 }
@@ -59,28 +71,28 @@ type TestPosition struct {
 }
 
 // IPositionManager interface
-func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, referrer string) (uint64, string, string, string) {
-	return t.instance.Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer)
+func (t *TestPosition) Mint(_ int, rlm realm, token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, referrer string) (uint64, string, string, string) {
+	return t.instance.Mint(0, rlm, token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer)
 }
 
-func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string) {
-	return t.instance.IncreaseLiquidity(positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
+func (t *TestPosition) IncreaseLiquidity(_ int, rlm realm, positionId uint64, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string) {
+	return t.instance.IncreaseLiquidity(0, rlm, positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
-	return t.instance.DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
+func (t *TestPosition) DecreaseLiquidity(_ int, rlm realm, positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
+	return t.instance.DecreaseLiquidity(0, rlm, positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
-	return t.instance.Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
+func (t *TestPosition) Reposition(_ int, rlm realm, positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
+	return t.instance.Reposition(0, rlm, positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-func (t *TestPosition) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
-	return t.instance.CollectFee(positionId)
+func (t *TestPosition) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
+	return t.instance.CollectFee(0, rlm, positionId)
 }
 
-func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) {
-	t.instance.SetPositionOperator(positionId, operator)
+func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, operator address) {
+	t.instance.SetPositionOperator(0, rlm, positionId, operator)
 }
 
 // IPositionGetter interface

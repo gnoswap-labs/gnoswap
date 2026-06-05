@@ -1,0 +1,1 @@
+../../../../../../gnoswap/gov/governance/v1/governance_propose.gno

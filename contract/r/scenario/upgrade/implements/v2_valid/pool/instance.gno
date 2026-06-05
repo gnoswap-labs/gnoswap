@@ -1,0 +1,1 @@
+../../../../../gnoswap/pool/v1/instance.gno

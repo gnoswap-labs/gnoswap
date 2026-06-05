@@ -26,12 +26,12 @@ func TestSwapCallback(cur realm, t *testing.T) {
 				CreatePoolWithoutFee(cur, t)
 				// SwapCallback runs under the router v1 realm, so the GRC20
 				// transfer actor (and the payer == routerAddr check) resolves to
-				// routerV1Addr. Fund and self-approve that address.
-				TokenFaucet(cur, t, barPath, routerV1Addr)
-				TokenFaucet(cur, t, bazPath, routerV1Addr)
-				TokenApprove(cur, t, barPath, routerV1Addr, routerV1Addr, maxApprove)
-				TokenApprove(cur, t, bazPath, routerV1Addr, routerV1Addr, maxApprove)
-				return routerV1Addr
+				// routerImplAddr. Fund and self-approve that address.
+				TokenFaucet(cur, t, barPath, routerImplAddr)
+				TokenFaucet(cur, t, bazPath, routerImplAddr)
+				TokenApprove(cur, t, barPath, routerImplAddr, routerImplAddr, maxApprove)
+				TokenApprove(cur, t, bazPath, routerImplAddr, routerImplAddr, maxApprove)
+				return routerImplAddr
 			},
 			amount0Delta:    "1000",
 			amount1Delta:    "0",
@@ -43,11 +43,11 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				TokenFaucet(cur, t, barPath, routerV1Addr)
-				TokenFaucet(cur, t, bazPath, routerV1Addr)
-				TokenApprove(cur, t, barPath, routerV1Addr, routerV1Addr, maxApprove)
-				TokenApprove(cur, t, bazPath, routerV1Addr, routerV1Addr, maxApprove)
-				return routerV1Addr
+				TokenFaucet(cur, t, barPath, routerImplAddr)
+				TokenFaucet(cur, t, bazPath, routerImplAddr)
+				TokenApprove(cur, t, barPath, routerImplAddr, routerImplAddr, maxApprove)
+				TokenApprove(cur, t, bazPath, routerImplAddr, routerImplAddr, maxApprove)
+				return routerImplAddr
 			},
 			amount0Delta:    "0",
 			amount1Delta:    "1000",
@@ -59,7 +59,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				return routerV1Addr
+				return routerImplAddr
 			},
 			amount0Delta:    "0",
 			amount1Delta:    "0",
@@ -75,9 +75,9 @@ func TestSwapCallback(cur realm, t *testing.T) {
 				TokenFaucet(cur, t, barPath, testUser)
 				TokenFaucet(cur, t, bazPath, testUser)
 				// The TransferFrom spender is the router v1 realm (the callback
-				// caller), so approve routerV1Addr, not the router domain addr.
-				TokenApprove(cur, t, barPath, testUser, routerV1Addr, maxApprove)
-				TokenApprove(cur, t, bazPath, testUser, routerV1Addr, maxApprove)
+				// caller), so approve routerImplAddr, not the router domain addr.
+				TokenApprove(cur, t, barPath, testUser, routerImplAddr, maxApprove)
+				TokenApprove(cur, t, bazPath, testUser, routerImplAddr, maxApprove)
 				return testUser
 			},
 			amount0Delta:    "1000",
@@ -151,8 +151,8 @@ func TestSwapCallback(cur realm, t *testing.T) {
 	}
 }
 
-// TestSwapCallback_AssertIsRouterV1 tests the assertIsRouterV1 function with various caller types
-func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
+// TestSwapCallback_assertIsRouterImplementation tests the assertIsRouterImplementation function with various caller types
+func TestSwapCallback_assertIsRouterImplementation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		callerAddress    address
@@ -161,7 +161,7 @@ func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
 	}{
 		{
 			name:          "valid caller from router v1",
-			callerAddress: routerV1Addr,
+			callerAddress: routerImplAddr,
 			shouldError:   false,
 		},
 		{
@@ -207,11 +207,11 @@ func TestSwapCallback_AssertIsRouterV1(cur realm, t *testing.T) {
 			// Execute and verify
 			if tt.shouldError {
 				uassert.PanicsContains(t, cur, tt.expectedErrorMsg, func() {
-					assertIsRouterV1(tt.callerAddress)
+					assertIsRouterImplementation(tt.callerAddress)
 				})
 			} else {
 				// Should not panic
-				assertIsRouterV1(tt.callerAddress)
+				assertIsRouterImplementation(tt.callerAddress)
 			}
 		})
 	}
