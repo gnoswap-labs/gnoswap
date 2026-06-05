@@ -22,37 +22,41 @@ import (
 //
 // Returns amount withdrawn and any error.
 // Only callable by deposit owner after tier lock period ends.
-func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
+func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
+	if !rlm.IsCurrent() {
+		return 0, errSpoofedRealm
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	deposit := lp.mustGetDeposit(depositID)
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
 	// Collect reward before withdrawal
-	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(0, rlm, deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	// Cross-realm governance update before token transfers
-	unStakeGovernance(recipient, withdrawalAmount)
+	unStakeGovernance(0, rlm, recipient, withdrawalAmount)
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
 
 		chain.Emit(
 			"CollectRewardByDepositId",
@@ -64,7 +68,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	}
 
 	// Transfer the original GNS deposit back to the depositor
-	common.SafeGRC20Transfer(cross, GNS_PATH, deposit.Depositor(), withdrawalAmount)
+	common.SafeGRC20Transfer(cross(rlm), GNS_PATH, deposit.Depositor(), withdrawalAmount)
 
 	chain.Emit(
 		"CollectDepositGns",
@@ -78,7 +82,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
@@ -137,7 +141,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	deposits.Set(deposit.ID(), deposit)
 
 	// Save the modified state back
-	if err := lp.store.SetDeposits(deposits); err != nil {
+	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
 		return "", 0, err
 	}
 
@@ -145,6 +149,6 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 }
 
 // unStakeGovernance removes the staked amount from governance system
-func unStakeGovernance(recipient address, withdrawalAmount int64) {
-	gov_staker.SetAmountByProjectWallet(cross, recipient, withdrawalAmount, false)
+func unStakeGovernance(_ int, rlm realm, recipient address, withdrawalAmount int64) {
+	gov_staker.SetAmountByProjectWallet(cross(rlm), recipient, withdrawalAmount, false)
 }

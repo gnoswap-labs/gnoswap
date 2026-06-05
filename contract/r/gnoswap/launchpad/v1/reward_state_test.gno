@@ -15,7 +15,7 @@ func wrappedPriceDebtForCurrentAndDelta(currentAccumX128, deltaX128 *u256.Uint) 
 	return u256.Zero().Sub(currentAccumX128, deltaX128)
 }
 
-func TestRewardState_IsClaimable(t *testing.T) {
+func TestRewardState_IsClaimable(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		claimableTime       int64
@@ -48,7 +48,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			state := launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
 
@@ -61,7 +61,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}
 }
 
-func TestRewardState_CalculateReward(t *testing.T) {
+func TestRewardState_CalculateReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		priceDebt               *u256.Uint
@@ -126,7 +126,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			state := launchpad.NewRewardState(u256.Zero().Lsh(tt.priceDebt, 128), tt.depositAmount, 100, 200, 100)
 			state.SetClaimedAmount(tt.claimedAmount)
@@ -143,7 +143,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
-func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
+func TestRewardState_CalculateClaimableRewardWrappedAccumulator(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		currentAccumX128  *u256.Uint
@@ -219,7 +219,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			state := launchpad.NewRewardState(
 				wrappedPriceDebtForCurrentAndDelta(tt.currentAccumX128, tt.deltaX128),
 				tt.depositAmount,
@@ -238,7 +238,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	}
 }
 
-func TestRewardState_newRewardState(t *testing.T) {
+func TestRewardState_newRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		priceDebt           *u256.Uint
@@ -261,7 +261,7 @@ func TestRewardState_newRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			accumulatedRewardPerDepositX128 := u256.Zero().Lsh(tt.priceDebt, 128)
 			// Execute

@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestProject_IsProjectActive(t *testing.T) {
+func TestProject_IsProjectActive(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		startTime        int64
@@ -54,7 +54,7 @@ func TestProject_IsProjectActive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
@@ -73,7 +73,7 @@ func TestProject_IsProjectActive(t *testing.T) {
 	}
 }
 
-func TestProject_IsProjectEnded(t *testing.T) {
+func TestProject_IsProjectEnded(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		startTime       int64
@@ -105,7 +105,7 @@ func TestProject_IsProjectEnded(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
@@ -124,7 +124,7 @@ func TestProject_IsProjectEnded(t *testing.T) {
 	}
 }
 
-func TestProject_IsRecipient(t *testing.T) {
+func TestProject_IsRecipient(cur realm, t *testing.T) {
 	recipientAddr := testutils.TestAddress("recipient")
 	otherAddr := testutils.TestAddress("other")
 
@@ -149,7 +149,7 @@ func TestProject_IsRecipient(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, tt.recipient, 100, 1000)
 
@@ -162,7 +162,7 @@ func TestProject_IsRecipient(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectRemainingAmount(t *testing.T) {
+func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		tiers             map[int64]*launchpad.ProjectTier
@@ -240,7 +240,7 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -254,7 +254,7 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectTotalDepositCount(t *testing.T) {
+func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		tiers              map[int64]*launchpad.ProjectTier
@@ -310,7 +310,7 @@ func TestProject_GetProjectTotalDepositCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -327,7 +327,7 @@ func TestProject_GetProjectTotalDepositCount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
+func TestProject_GetProjectCurrentDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		tiers                map[int64]*launchpad.ProjectTier
@@ -378,7 +378,7 @@ func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -395,7 +395,7 @@ func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
+func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		tiers               map[int64]*launchpad.ProjectTier
@@ -451,7 +451,7 @@ func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -468,7 +468,7 @@ func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
+func TestProject_GetProjectCurrentDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		tiers                 map[int64]*launchpad.ProjectTier
@@ -519,7 +519,7 @@ func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -536,7 +536,7 @@ func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
+func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		tiers                   map[int64]*launchpad.ProjectTier
@@ -587,7 +587,7 @@ func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -604,7 +604,7 @@ func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
 	}
 }
 
-func TestProject_GetProjectTier(t *testing.T) {
+func TestProject_GetProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tiers            map[int64]*launchpad.ProjectTier
@@ -652,7 +652,7 @@ func TestProject_GetProjectTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
@@ -673,7 +673,7 @@ func TestProject_GetProjectTier(t *testing.T) {
 	}
 }
 
-func TestProject_GetStandardTier(t *testing.T) {
+func TestProject_GetStandardTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tiers         map[int64]*launchpad.ProjectTier
@@ -716,14 +716,14 @@ func TestProject_GetStandardTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Verify
 			if tt.expectedPanic {
-				uassert.PanicsContains(t, "[GNOSWAP-LAUNCHPAD-003] requested data not found || tier(180) not found", func() {
+				uassert.PanicsContains(t, cur, "[GNOSWAP-LAUNCHPAD-003] requested data not found || tier(180) not found", func() {
 					getStandardTier(project)
 				})
 			} else {
@@ -736,7 +736,7 @@ func TestProject_GetStandardTier(t *testing.T) {
 	}
 }
 
-func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
+func TestProject_ValidateRefundRemainingAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
@@ -779,7 +779,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
@@ -804,7 +804,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 	}
 }
 
-func TestProject_AddProjectTier(t *testing.T) {
+func TestProject_AddProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialTiers  map[int64]*launchpad.ProjectTier
@@ -883,7 +883,7 @@ func TestProject_AddProjectTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.initialTiers)
@@ -904,7 +904,7 @@ func TestProject_AddProjectTier(t *testing.T) {
 	}
 }
 
-func TestProject_CheckProjectConditions(t *testing.T) {
+func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		conditions       map[string]*launchpad.ProjectCondition
@@ -972,7 +972,7 @@ func TestProject_CheckProjectConditions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetConditions(tt.conditions)
