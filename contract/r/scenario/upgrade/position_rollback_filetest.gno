@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Position contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	positionTestPath = "gno.land/r/gnoswap/position/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Position Contract Rollback Test")
-	testPositionRollback()
+	testPositionRollback(cur)
 	println()
 }
 
-func testPositionRollback() {
+func testPositionRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	position.UpgradeImpl(cross, positionTestPath)
+	position.UpgradeImpl(cross(cur), positionTestPath)
 
 	currentVersion := position.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testPositionRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back position contract to v1")
 	testing.SetRealm(adminRealm)
-	position.UpgradeImpl(cross, positionV1Path)
+	position.UpgradeImpl(cross(cur), positionV1Path)
 
 	currentVersion = position.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Position rolled back to: %s\n", currentVersion)

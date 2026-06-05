@@ -120,6 +120,8 @@ func (m *MockRouter) ExactOutSingleSwapRoute(
 }
 
 func (m *MockRouter) DrySwapRoute(
+	_ int,
+	rlm realm,
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,

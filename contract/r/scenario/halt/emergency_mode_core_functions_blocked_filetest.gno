@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario: Emergency Mode blocks core growth functions across contracts
 
 package main
@@ -65,48 +67,48 @@ var (
 	existingLaunchpadProjectID string
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize pool, position, launchpad, and governance state")
-	setupScenario()
+	setupScenario(cur)
 	println()
 
 	println("[SCENARIO] 2. Set emergency mode")
-	setEmergencyMode()
+	setEmergencyMode(cur)
 	println()
 
-	testBlockedEntriesOneByOne()
+	testBlockedEntriesOneByOne(cur)
 }
 
-func setupScenario() {
+func setupScenario(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
-	pool.SetPoolCreationFee(cross, 0)
-	bar.Transfer(cross, aliceAddr, 100000000)
-	foo.Transfer(cross, aliceAddr, 100000000)
-	gns.Transfer(cross, bobAddr, 2000000)
-	pool.CreatePool(cross, barPath, fooPath, fee, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
-	staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 1)
-	obl.Approve(cross, launchpadAddr, 10000)
-	existingLaunchpadProjectID = launchpad.CreateProject(cross, "Existing Project", "gno.land/r/onbloc/obl", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
+	pool.SetPoolCreationFee(cross(cur), 0)
+	bar.Transfer(cross(cur), aliceAddr, 100000000)
+	foo.Transfer(cross(cur), aliceAddr, 100000000)
+	gns.Transfer(cross(cur), bobAddr, 2000000)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	staker.SetPoolTier(cross(cur), barPath+":"+fooPath+":3000", 1)
+	obl.Approve(cross(cur), launchpadAddr, 10000)
+	existingLaunchpadProjectID = launchpad.CreateProject(cross(cur), "Existing Project", "gno.land/r/onbloc/obl", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, int64Max)
-	foo.Approve(cross, poolAddr, int64Max)
+	bar.Approve(cross(cur), poolAddr, int64Max)
+	foo.Approve(cross(cur), poolAddr, int64Max)
 	testing.SetOriginSend(chain.Coins{})
-	positionId, _, _, _ := position.Mint(cross, barPath, fooPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
+	positionId, _, _, _ := position.Mint(cross(cur), barPath, fooPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
 	ufmt.Printf("[INFO] setup position id: %d\n", positionId)
 
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, govStakerAddr, 1000000)
-	gns.Approve(cross, launchpadAddr, 1000000)
+	gns.Approve(cross(cur), govStakerAddr, 1000000)
+	gns.Approve(cross(cur), launchpadAddr, 1000000)
 	ufmt.Println("[INFO] bob prepared gov staker and launchpad approvals")
 }
 
-func setEmergencyMode() {
+func setEmergencyMode(cur realm) {
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 	ufmt.Printf("[INFO] Pool halted: %t\n", halt.IsHaltedPool())
 	ufmt.Printf("[INFO] Staker halted: %t\n", halt.IsHaltedStaker())
 	ufmt.Printf("[INFO] GovStaker halted: %t\n", halt.IsHaltedGovStaker())
@@ -116,312 +118,312 @@ func setEmergencyMode() {
 
 var blockedScenarioNo = 3
 
-func printBlockedScenario(domain, function string) {
+func printBlockedScenario(cur realm, domain, function string) {
 	ufmt.Printf("[SCENARIO] %d. %s.%s is blocked\n", blockedScenarioNo, domain, function)
 	blockedScenarioNo++
 }
 
-func printBlockedExpected(domain, function, haltDomain string) {
+func printBlockedExpected(cur realm, domain, function, haltDomain string) {
 	ufmt.Printf("[EXPECTED] %s.%s blocked by %s halt\n", domain, function, haltDomain)
 	println()
 }
 
-func testBlockedEntriesOneByOne() {
+func testBlockedEntriesOneByOne(cur realm) {
 	testing.SetRealm(adminRealm)
-	printBlockedScenario("pool", "CreatePool")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	printBlockedScenario(cur, "pool", "CreatePool")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.CreatePool(cross(cur), barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	})
-	printBlockedExpected("pool", "CreatePool", "pool")
+	printBlockedExpected(cur, "pool", "CreatePool", "pool")
 
 	testing.SetRealm(aliceRealm)
-	printBlockedScenario("pool", "IncreaseObservationCardinalityNext")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee, 2)
+	printBlockedScenario(cur, "pool", "IncreaseObservationCardinalityNext")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee, 2)
 	})
-	printBlockedExpected("pool", "IncreaseObservationCardinalityNext", "pool")
+	printBlockedExpected(cur, "pool", "IncreaseObservationCardinalityNext", "pool")
 
-	printBlockedScenario("pool", "Mint")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.Mint(cross, barPath, fooPath, fee, -960, 960, "1000", aliceAddr)
+	printBlockedScenario(cur, "pool", "Mint")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.Mint(cross(cur), barPath, fooPath, fee, -960, 960, "1000", aliceAddr)
 	})
-	printBlockedExpected("pool", "Mint", "pool")
+	printBlockedExpected(cur, "pool", "Mint", "pool")
 
-	printBlockedScenario("pool", "Swap")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.Swap(cross, barPath, fooPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
+	printBlockedScenario(cur, "pool", "Swap")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.Swap(cross(cur), barPath, fooPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
 	})
-	printBlockedExpected("pool", "Swap", "pool")
+	printBlockedExpected(cur, "pool", "Swap", "pool")
 
-	printBlockedScenario("pool", "SetSwapEndHook")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetSwapEndHook(cross, nil)
+	printBlockedScenario(cur, "pool", "SetSwapEndHook")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetSwapEndHook(cross(cur), nil)
 	})
-	printBlockedExpected("pool", "SetSwapEndHook", "pool")
+	printBlockedExpected(cur, "pool", "SetSwapEndHook", "pool")
 
-	printBlockedScenario("pool", "SetSwapStartHook")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetSwapStartHook(cross, nil)
+	printBlockedScenario(cur, "pool", "SetSwapStartHook")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetSwapStartHook(cross(cur), nil)
 	})
-	printBlockedExpected("pool", "SetSwapStartHook", "pool")
+	printBlockedExpected(cur, "pool", "SetSwapStartHook", "pool")
 
-	printBlockedScenario("pool", "SetTickCrossHook")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetTickCrossHook(cross, nil)
+	printBlockedScenario(cur, "pool", "SetTickCrossHook")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetTickCrossHook(cross(cur), nil)
 	})
-	printBlockedExpected("pool", "SetTickCrossHook", "pool")
+	printBlockedExpected(cur, "pool", "SetTickCrossHook", "pool")
 
 	testing.SetRealm(aliceRealm)
-	printBlockedScenario("position", "Mint")
-	uassert.AbortsContains(t, "halted: position", func() {
+	printBlockedScenario(cur, "position", "Mint")
+	uassert.AbortsContains(t, cur, "halted: position", func() {
 		testing.SetOriginSend(chain.Coins{})
-		position.Mint(cross, barPath, fooPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+		position.Mint(cross(cur), barPath, fooPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 	})
-	printBlockedExpected("position", "Mint", "position")
+	printBlockedExpected(cur, "position", "Mint", "position")
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, int64Max)
-	foo.Approve(cross, routerAddr, int64Max)
-	printBlockedScenario("router", "ExactInSwapRoute")
-	uassert.AbortsContains(t, "halted: router", func() {
+	bar.Approve(cross(cur), routerAddr, int64Max)
+	foo.Approve(cross(cur), routerAddr, int64Max)
+	printBlockedScenario(cur, "router", "ExactInSwapRoute")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
 		testing.SetOriginSend(chain.Coins{})
-		router.ExactInSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "0", time.Now().Unix()+3600, "")
+		router.ExactInSwapRoute(cross(cur), barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "0", time.Now().Unix()+3600, "")
 	})
-	printBlockedExpected("router", "ExactInSwapRoute", "router")
+	printBlockedExpected(cur, "router", "ExactInSwapRoute", "router")
 
-	printBlockedScenario("router", "ExactInSingleSwapRoute")
-	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactInSingleSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "0", "0", time.Now().Unix()+3600, "")
+	printBlockedScenario(cur, "router", "ExactInSingleSwapRoute")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
+		router.ExactInSingleSwapRoute(cross(cur), barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "0", "0", time.Now().Unix()+3600, "")
 	})
-	printBlockedExpected("router", "ExactInSingleSwapRoute", "router")
+	printBlockedExpected(cur, "router", "ExactInSingleSwapRoute", "router")
 
-	printBlockedScenario("router", "ExactOutSwapRoute")
-	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactOutSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "1000000", time.Now().Unix()+3600, "")
+	printBlockedScenario(cur, "router", "ExactOutSwapRoute")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
+		router.ExactOutSwapRoute(cross(cur), barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "100", "1000000", time.Now().Unix()+3600, "")
 	})
-	printBlockedExpected("router", "ExactOutSwapRoute", "router")
+	printBlockedExpected(cur, "router", "ExactOutSwapRoute", "router")
 
-	printBlockedScenario("router", "ExactOutSingleSwapRoute")
-	uassert.AbortsContains(t, "halted: router", func() {
-		router.ExactOutSingleSwapRoute(cross, barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "1000000", "0", time.Now().Unix()+3600, "")
+	printBlockedScenario(cur, "router", "ExactOutSingleSwapRoute")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
+		router.ExactOutSingleSwapRoute(cross(cur), barPath, fooPath, "100000", barPath+":"+fooPath+":3000", "1000000", "0", time.Now().Unix()+3600, "")
 	})
-	printBlockedExpected("router", "ExactOutSingleSwapRoute", "router")
+	printBlockedExpected(cur, "router", "ExactOutSingleSwapRoute", "router")
 
-	printBlockedScenario("router", "SwapCallback")
-	uassert.AbortsContains(t, "halted: router", func() {
+	printBlockedScenario(cur, "router", "SwapCallback")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
 		router.SwapCallback(barPath, fooPath, 1, 0, aliceAddr)
 	})
-	printBlockedExpected("router", "SwapCallback", "router")
+	printBlockedExpected(cur, "router", "SwapCallback", "router")
 
 	testing.SetRealm(aliceRealm)
-	printBlockedScenario("staker", "StakeToken")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.StakeToken(cross, 1, "")
+	printBlockedScenario(cur, "staker", "StakeToken")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.StakeToken(cross(cur), 1, "")
 	})
-	printBlockedExpected("staker", "StakeToken", "staker")
+	printBlockedExpected(cur, "staker", "StakeToken", "staker")
 
-	printBlockedScenario("staker", "SetPoolTier")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 2)
+	printBlockedScenario(cur, "staker", "SetPoolTier")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetPoolTier(cross(cur), barPath+":"+fooPath+":3000", 2)
 	})
-	printBlockedExpected("staker", "SetPoolTier", "staker")
-
-	testing.SetRealm(bobRealm)
-	printBlockedScenario("gov_staker", "Delegate")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.Delegate(cross, bobAddr, 1000000, "")
-	})
-	printBlockedExpected("gov_staker", "Delegate", "gov_staker")
-
-	printBlockedScenario("gov_staker", "Redelegate")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.Redelegate(cross, bobAddr, aliceAddr, 1000000)
-	})
-	printBlockedExpected("gov_staker", "Redelegate", "gov_staker")
-
-	testing.SetRealm(adminRealm)
-	printBlockedScenario("launchpad", "CreateProject")
-	uassert.AbortsContains(t, "halted: launchpad", func() {
-		obl.Approve(cross, launchpadAddr, 10000)
-		launchpad.CreateProject(cross, "Blocked Project", "gno.land/r/onbloc/obl", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
-	})
-	printBlockedExpected("launchpad", "CreateProject", "launchpad")
+	printBlockedExpected(cur, "staker", "SetPoolTier", "staker")
 
 	testing.SetRealm(bobRealm)
-	printBlockedScenario("launchpad", "DepositGns")
-	uassert.AbortsContains(t, "halted: launchpad", func() {
-		launchpad.DepositGns(cross, "gno.land/r/onbloc/obl:123:30", 1000000, "")
+	printBlockedScenario(cur, "gov_staker", "Delegate")
+	uassert.AbortsContains(t, cur, "halted: gov_staker", func() {
+		govstaker.Delegate(cross(cur), bobAddr, 1000000, "")
 	})
-	printBlockedExpected("launchpad", "DepositGns", "launchpad")
+	printBlockedExpected(cur, "gov_staker", "Delegate", "gov_staker")
+
+	printBlockedScenario(cur, "gov_staker", "Redelegate")
+	uassert.AbortsContains(t, cur, "halted: gov_staker", func() {
+		govstaker.Redelegate(cross(cur), bobAddr, aliceAddr, 1000000)
+	})
+	printBlockedExpected(cur, "gov_staker", "Redelegate", "gov_staker")
 
 	testing.SetRealm(adminRealm)
-	printBlockedScenario("launchpad", "TransferLeftFromProjectByAdmin")
-	uassert.AbortsContains(t, "halted: launchpad", func() {
-		launchpad.TransferLeftFromProjectByAdmin(cross, existingLaunchpadProjectID, bobAddr)
+	printBlockedScenario(cur, "launchpad", "CreateProject")
+	uassert.AbortsContains(t, cur, "halted: launchpad", func() {
+		obl.Approve(cross(cur), launchpadAddr, 10000)
+		launchpad.CreateProject(cross(cur), "Blocked Project", "gno.land/r/onbloc/obl", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 	})
-	printBlockedExpected("launchpad", "TransferLeftFromProjectByAdmin", "launchpad")
+	printBlockedExpected(cur, "launchpad", "CreateProject", "launchpad")
+
+	testing.SetRealm(bobRealm)
+	printBlockedScenario(cur, "launchpad", "DepositGns")
+	uassert.AbortsContains(t, cur, "halted: launchpad", func() {
+		launchpad.DepositGns(cross(cur), "gno.land/r/onbloc/obl:123:30", 1000000, "")
+	})
+	printBlockedExpected(cur, "launchpad", "DepositGns", "launchpad")
 
 	testing.SetRealm(adminRealm)
-	printBlockedScenario("pool", "SetPoolCreationFee")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetPoolCreationFee(cross, 1)
+	printBlockedScenario(cur, "launchpad", "TransferLeftFromProjectByAdmin")
+	uassert.AbortsContains(t, cur, "halted: launchpad", func() {
+		launchpad.TransferLeftFromProjectByAdmin(cross(cur), existingLaunchpadProjectID, bobAddr)
 	})
-	printBlockedExpected("pool", "SetPoolCreationFee", "pool")
+	printBlockedExpected(cur, "launchpad", "TransferLeftFromProjectByAdmin", "launchpad")
 
-	printBlockedScenario("pool", "SetWithdrawalFee")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetWithdrawalFee(cross, 1)
+	testing.SetRealm(adminRealm)
+	printBlockedScenario(cur, "pool", "SetPoolCreationFee")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetPoolCreationFee(cross(cur), 1)
 	})
-	printBlockedExpected("pool", "SetWithdrawalFee", "pool")
+	printBlockedExpected(cur, "pool", "SetPoolCreationFee", "pool")
 
-	printBlockedScenario("pool", "SetFeeProtocol")
-	uassert.AbortsContains(t, "halted: pool", func() {
-		pool.SetFeeProtocol(cross, 1, 1)
+	printBlockedScenario(cur, "pool", "SetWithdrawalFee")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetWithdrawalFee(cross(cur), 1)
 	})
-	printBlockedExpected("pool", "SetFeeProtocol", "pool")
+	printBlockedExpected(cur, "pool", "SetWithdrawalFee", "pool")
 
-	printBlockedScenario("router", "SetSwapFee")
-	uassert.AbortsContains(t, "halted: router", func() {
-		router.SetSwapFee(cross, 1)
+	printBlockedScenario(cur, "pool", "SetFeeProtocol")
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
+		pool.SetFeeProtocol(cross(cur), 1, 1)
 	})
-	printBlockedExpected("router", "SetSwapFee", "router")
+	printBlockedExpected(cur, "pool", "SetFeeProtocol", "pool")
 
-	printBlockedScenario("staker", "SetPoolTier")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 1)
+	printBlockedScenario(cur, "router", "SetSwapFee")
+	uassert.AbortsContains(t, cur, "halted: router", func() {
+		router.SetSwapFee(cross(cur), 1)
 	})
-	printBlockedExpected("staker", "SetPoolTier", "staker")
+	printBlockedExpected(cur, "router", "SetSwapFee", "router")
 
-	printBlockedScenario("staker", "ChangePoolTier")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.ChangePoolTier(cross, barPath+":"+fooPath+":3000", 1)
+	printBlockedScenario(cur, "staker", "SetPoolTier")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetPoolTier(cross(cur), barPath+":"+fooPath+":3000", 1)
 	})
-	printBlockedExpected("staker", "ChangePoolTier", "staker")
+	printBlockedExpected(cur, "staker", "SetPoolTier", "staker")
 
-	printBlockedScenario("staker", "RemovePoolTier")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.RemovePoolTier(cross, barPath+":"+fooPath+":3000")
+	printBlockedScenario(cur, "staker", "ChangePoolTier")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.ChangePoolTier(cross(cur), barPath+":"+fooPath+":3000", 1)
 	})
-	printBlockedExpected("staker", "RemovePoolTier", "staker")
+	printBlockedExpected(cur, "staker", "ChangePoolTier", "staker")
 
-	printBlockedScenario("staker", "SetWarmUp")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetWarmUp(cross, 0, 0)
+	printBlockedScenario(cur, "staker", "RemovePoolTier")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.RemovePoolTier(cross(cur), barPath+":"+fooPath+":3000")
 	})
-	printBlockedExpected("staker", "SetWarmUp", "staker")
+	printBlockedExpected(cur, "staker", "RemovePoolTier", "staker")
 
-	printBlockedScenario("staker", "SetDepositGnsAmount")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetDepositGnsAmount(cross, 1)
+	printBlockedScenario(cur, "staker", "SetWarmUp")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetWarmUp(cross(cur), 0, 0)
 	})
-	printBlockedExpected("staker", "SetDepositGnsAmount", "staker")
+	printBlockedExpected(cur, "staker", "SetWarmUp", "staker")
 
-	printBlockedScenario("staker", "SetMinimumRewardAmount")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetMinimumRewardAmount(cross, 1)
+	printBlockedScenario(cur, "staker", "SetDepositGnsAmount")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetDepositGnsAmount(cross(cur), 1)
 	})
-	printBlockedExpected("staker", "SetMinimumRewardAmount", "staker")
+	printBlockedExpected(cur, "staker", "SetDepositGnsAmount", "staker")
 
-	printBlockedScenario("staker", "SetTokenMinimumRewardAmount")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetTokenMinimumRewardAmount(cross, barPath+":1")
+	printBlockedScenario(cur, "staker", "SetMinimumRewardAmount")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetMinimumRewardAmount(cross(cur), 1)
 	})
-	printBlockedExpected("staker", "SetTokenMinimumRewardAmount", "staker")
+	printBlockedExpected(cur, "staker", "SetMinimumRewardAmount", "staker")
 
-	printBlockedScenario("staker", "SetUnStakingFee")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.SetUnStakingFee(cross, 1)
+	printBlockedScenario(cur, "staker", "SetTokenMinimumRewardAmount")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetTokenMinimumRewardAmount(cross(cur), barPath+":1")
 	})
-	printBlockedExpected("staker", "SetUnStakingFee", "staker")
+	printBlockedExpected(cur, "staker", "SetTokenMinimumRewardAmount", "staker")
 
-	printBlockedScenario("protocol_fee", "SetDevOpsPct")
-	uassert.AbortsContains(t, "halted: protocol_fee", func() {
-		protocolfee.SetDevOpsPct(cross, 10)
+	printBlockedScenario(cur, "staker", "SetUnStakingFee")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.SetUnStakingFee(cross(cur), 1)
 	})
-	printBlockedExpected("protocol_fee", "SetDevOpsPct", "protocol_fee")
+	printBlockedExpected(cur, "staker", "SetUnStakingFee", "staker")
 
-	printBlockedScenario("protocol_fee", "SetGovStakerPct")
-	uassert.AbortsContains(t, "halted: protocol_fee", func() {
-		protocolfee.SetGovStakerPct(cross, 10)
+	printBlockedScenario(cur, "protocol_fee", "SetDevOpsPct")
+	uassert.AbortsContains(t, cur, "halted: protocol_fee", func() {
+		protocolfee.SetDevOpsPct(cross(cur), 10)
 	})
-	printBlockedExpected("protocol_fee", "SetGovStakerPct", "protocol_fee")
+	printBlockedExpected(cur, "protocol_fee", "SetDevOpsPct", "protocol_fee")
 
-	printBlockedScenario("protocol_fee", "AddToProtocolFee")
-	if err := protocolfee.AddToProtocolFee(cross, barPath, 1); err == nil || err.Error() != "[GNOSWAP-PROTOCOL_FEE-003] protocol fee halted" {
+	printBlockedScenario(cur, "protocol_fee", "SetGovStakerPct")
+	uassert.AbortsContains(t, cur, "halted: protocol_fee", func() {
+		protocolfee.SetGovStakerPct(cross(cur), 10)
+	})
+	printBlockedExpected(cur, "protocol_fee", "SetGovStakerPct", "protocol_fee")
+
+	printBlockedScenario(cur, "protocol_fee", "AddToProtocolFee")
+	if err := protocolfee.AddToProtocolFee(cross(cur), barPath, 1); err == nil || err.Error() != "[GNOSWAP-PROTOCOL_FEE-003] protocol fee halted" {
 		panic("expected protocol fee add to fail while protocol fee is halted")
 	}
-	printBlockedExpected("protocol_fee", "AddToProtocolFee", "protocol_fee")
+	printBlockedExpected(cur, "protocol_fee", "AddToProtocolFee", "protocol_fee")
 
-	printBlockedScenario("gov_staker", "SetAmountByProjectWallet")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.SetAmountByProjectWallet(cross, bobAddr, 1, true)
+	printBlockedScenario(cur, "gov_staker", "SetAmountByProjectWallet")
+	uassert.AbortsContains(t, cur, "halted: gov_staker", func() {
+		govstaker.SetAmountByProjectWallet(cross(cur), bobAddr, 1, true)
 	})
-	printBlockedExpected("gov_staker", "SetAmountByProjectWallet", "gov_staker")
+	printBlockedExpected(cur, "gov_staker", "SetAmountByProjectWallet", "gov_staker")
 
-	printBlockedScenario("gov_staker", "CleanStakerDelegationSnapshotByAdmin")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.CleanStakerDelegationSnapshotByAdmin(cross, time.Now().Unix(), bobAddr)
+	printBlockedScenario(cur, "gov_staker", "CleanStakerDelegationSnapshotByAdmin")
+	uassert.AbortsContains(t, cur, "halted: gov_staker", func() {
+		govstaker.CleanStakerDelegationSnapshotByAdmin(cross(cur), time.Now().Unix(), bobAddr)
 	})
-	printBlockedExpected("gov_staker", "CleanStakerDelegationSnapshotByAdmin", "gov_staker")
+	printBlockedExpected(cur, "gov_staker", "CleanStakerDelegationSnapshotByAdmin", "gov_staker")
 
-	printBlockedScenario("gov_staker", "SetUnDelegationLockupPeriodByAdmin")
-	uassert.AbortsContains(t, "halted: gov_staker", func() {
-		govstaker.SetUnDelegationLockupPeriodByAdmin(cross, 1)
+	printBlockedScenario(cur, "gov_staker", "SetUnDelegationLockupPeriodByAdmin")
+	uassert.AbortsContains(t, cur, "halted: gov_staker", func() {
+		govstaker.SetUnDelegationLockupPeriodByAdmin(cross(cur), 1)
 	})
-	printBlockedExpected("gov_staker", "SetUnDelegationLockupPeriodByAdmin", "gov_staker")
+	printBlockedExpected(cur, "gov_staker", "SetUnDelegationLockupPeriodByAdmin", "gov_staker")
 
-	printBlockedScenario("emission", "SetDistributionStartTime")
-	uassert.AbortsContains(t, "halted: emission", func() {
-		emission.SetDistributionStartTime(cross, time.Now().Unix()+1000)
+	printBlockedScenario(cur, "emission", "SetDistributionStartTime")
+	uassert.AbortsContains(t, cur, "halted: emission", func() {
+		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1000)
 	})
-	printBlockedExpected("emission", "SetDistributionStartTime", "emission")
+	printBlockedExpected(cur, "emission", "SetDistributionStartTime", "emission")
 
-	printBlockedScenario("emission", "ChangeDistributionPct")
-	uassert.AbortsContains(t, "halted: emission", func() {
-		emission.ChangeDistributionPct(cross, 7000, 2000, 1000, 0)
+	printBlockedScenario(cur, "emission", "ChangeDistributionPct")
+	uassert.AbortsContains(t, cur, "halted: emission", func() {
+		emission.ChangeDistributionPct(cross(cur), 7000, 2000, 1000, 0)
 	})
-	printBlockedExpected("emission", "ChangeDistributionPct", "emission")
+	printBlockedExpected(cur, "emission", "ChangeDistributionPct", "emission")
 
 	testing.SetRealm(aliceRealm)
-	printBlockedScenario("position", "IncreaseLiquidity")
-	uassert.AbortsContains(t, "halted: position", func() {
-		position.IncreaseLiquidity(cross, 1, "1000", "1000", "0", "0", time.Now().Unix()+3600)
+	printBlockedScenario(cur, "position", "IncreaseLiquidity")
+	uassert.AbortsContains(t, cur, "halted: position", func() {
+		position.IncreaseLiquidity(cross(cur), 1, "1000", "1000", "0", "0", time.Now().Unix()+3600)
 	})
-	printBlockedExpected("position", "IncreaseLiquidity", "position")
+	printBlockedExpected(cur, "position", "IncreaseLiquidity", "position")
 
-	printBlockedScenario("position", "Reposition")
-	uassert.AbortsContains(t, "halted: position", func() {
-		position.Reposition(cross, 1, -120, 120, "1000", "1000", "0", "0", time.Now().Unix()+3600)
+	printBlockedScenario(cur, "position", "Reposition")
+	uassert.AbortsContains(t, cur, "halted: position", func() {
+		position.Reposition(cross(cur), 1, -120, 120, "1000", "1000", "0", "0", time.Now().Unix()+3600)
 	})
-	printBlockedExpected("position", "Reposition", "position")
+	printBlockedExpected(cur, "position", "Reposition", "position")
 
-	printBlockedScenario("staker", "CreateExternalIncentive")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.CreateExternalIncentive(cross, barPath+":"+fooPath+":3000", barPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
+	printBlockedScenario(cur, "staker", "CreateExternalIncentive")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.CreateExternalIncentive(cross(cur), barPath+":"+fooPath+":3000", barPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
 	})
-	printBlockedExpected("staker", "CreateExternalIncentive", "staker")
+	printBlockedExpected(cur, "staker", "CreateExternalIncentive", "staker")
 
-	printBlockedScenario("staker", "AddToken")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.AddToken(cross, barPath)
+	printBlockedScenario(cur, "staker", "AddToken")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.AddToken(cross(cur), barPath)
 	})
-	printBlockedExpected("staker", "AddToken", "staker")
+	printBlockedExpected(cur, "staker", "AddToken", "staker")
 
-	printBlockedScenario("staker", "RemoveToken")
-	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.RemoveToken(cross, barPath)
+	printBlockedScenario(cur, "staker", "RemoveToken")
+	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		staker.RemoveToken(cross(cur), barPath)
 	})
-	printBlockedExpected("staker", "RemoveToken", "staker")
+	printBlockedExpected(cur, "staker", "RemoveToken", "staker")
 
 	testing.SetRealm(testing.NewUserRealm(govStakerAddr))
-	printBlockedScenario("xgns", "Mint")
-	uassert.AbortsContains(t, "halted: xgns", func() {
-		xgns.Mint(cross, bobAddr, 1)
+	printBlockedScenario(cur, "xgns", "Mint")
+	uassert.AbortsContains(t, cur, "halted: xgns", func() {
+		xgns.Mint(cross(cur), bobAddr, 1)
 	})
-	printBlockedExpected("xgns", "Mint", "xgns")
+	printBlockedExpected(cur, "xgns", "Mint", "xgns")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId.(type) {
 	case int:
 		return grc721.TokenID(ufmt.Sprintf("%d", positionId.(int)))

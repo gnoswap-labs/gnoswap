@@ -304,6 +304,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 			router := mockRouter()
 
 			_, drySwapAmountOut, _ := router.DrySwapRoute(
+				0,
+				cur,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -517,6 +519,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 			router := mockRouter()
 
 			router.DrySwapRoute(
+				0,
+				cur,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,
@@ -694,6 +698,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 			router := mockRouter()
 
 			_, drySwapAmountOut, _ := router.DrySwapRoute(
+				0,
+				cur,
 				tt.inputToken,
 				tt.outputToken,
 				tt.amountIn,

@@ -27,7 +27,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -79,78 +78,78 @@ var (
 	actualIncentiveID string
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing lazy removal after incentive ends")
 	println()
 
 	println("[SCENARIO] 1. Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and set tier")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. Create and start 90-day external incentive")
-	createAndStartIncentive()
+	createAndStartIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. User mints and stakes position")
-	userMintThenStake()
+	userMintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards during incentive period (day 45/90)")
-	collectDuringIncentive()
+	collectDuringIncentive(cur)
 	println()
 
 	println("[SCENARIO] 6. Skip time until incentive ends")
-	skipUntilEnd()
+	skipUntilEnd(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect rewards after end (lazy removal should occur)")
-	collectAfterEnd()
+	collectAfterEnd(cur)
 	println()
 
 	println("[SCENARIO] 8. Verify second collection yields zero (incentive removed)")
-	verifyIncentiveRemoved()
+	verifyIncentiveRemoved(cur)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	sr.SetUnStakingFee(cross, 0)
-	pl.SetPoolCreationFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 	testing.SkipHeights(1)
 
-	bar.Transfer(cross, user1User, 10000)
-	qux.Transfer(cross, user1User, 10000)
+	bar.Transfer(cross(cur), user1User, 10000)
+	qux.Transfer(cross(cur), user1User, 10000)
 
-	gns.Transfer(cross, externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
+	gns.Transfer(cross(cur), externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
 
 	println("[INFO] initialized accounts")
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
-func createAndStartIncentive() {
+func createAndStartIncentive(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
-	gns.Approve(cross, stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	startTime := int64(1234569600) // +1 day midnight
 	endTime := startTime + INCENTIVE_DURATION
@@ -158,7 +157,7 @@ func createAndStartIncentive() {
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
 		REWARD_AMOUNT,
@@ -175,15 +174,15 @@ func createAndStartIncentive() {
 	ufmt.Printf("[INFO] created 90-day incentive - ID: %s\n", actualIncentiveID)
 }
 
-func userMintThenStake() {
+func userMintThenStake(cur realm) {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -198,13 +197,13 @@ func userMintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user staked position %d\n", lpTokenId)
 }
 
-func collectDuringIncentive() {
+func collectDuringIncentive(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	// Skip 45 days (half of 90-day period)
@@ -212,14 +211,14 @@ func collectDuringIncentive() {
 	testing.SkipHeights(blocksToSkip)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
 	ufmt.Printf("[INFO] collected %d GNS during incentive period (day 45/90)\n", rewards)
 }
 
-func skipUntilEnd() {
+func skipUntilEnd(cur realm) {
 	// Skip remaining 45 days + 1 day buffer
 	blocksToSkip := int64((46 * 24 * 60 * 60) / 5)
 	testing.SkipHeights(blocksToSkip)
@@ -227,11 +226,11 @@ func skipUntilEnd() {
 	println("[INFO] incentive has ended")
 }
 
-func collectAfterEnd() {
+func collectAfterEnd(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -239,11 +238,11 @@ func collectAfterEnd() {
 	ufmt.Printf("[INFO] lazy removal should have removed incentive ID from deposit\n")
 }
 
-func verifyIncentiveRemoved() {
+func verifyIncentiveRemoved(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -256,7 +255,7 @@ func verifyIncentiveRemoved() {
 	}
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

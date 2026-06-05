@@ -49,7 +49,7 @@ var (
 	currentBlockTime = int64(5)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
@@ -57,7 +57,7 @@ func main() {
 	smoothingPeriodBlocks := int64(config.VotingWeightSmoothingDuration) / currentBlockTime
 
 	println("[SCENARIO] 1. Initial delegation to voter1")
-	initialDelegation()
+	initialDelegation(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip blocks 100")
@@ -66,7 +66,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Additional delegation to voter2 (mid-period)")
-	midPeriodDelegation()
+	midPeriodDelegation(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip remaining smoothing period - 1 block before applying voting weight snapshot")
@@ -75,11 +75,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Check current xGNS balances")
-	checkCurrentXgnsBalance()
+	checkCurrentXgnsBalance(cur)
 	println()
 
 	println("[SCENARIO] 6. Propose Text - ProposalID: 1 (voter2 has no voting weight)")
-	proposalId1 := proposeText(user1Addr)
+	proposalId1 := proposeText(cur, user1Addr)
 	println()
 
 	println("[SCENARIO] 7. Skip 1 block to apply mid delegation voting weight snapshot")
@@ -88,7 +88,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Propose Text - ProposalID: 2 (voter2 has voting weight)")
-	proposalId2 := proposeText(user2Addr)
+	proposalId2 := proposeText(cur, user2Addr)
 	println()
 
 	println("[SCENARIO] 9. Skip 1 block to apply after delegation voting weight snapshot")
@@ -97,7 +97,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 10. Propose Text - ProposalID: 3 (voter2 has voting weight)")
-	proposalId3 := proposeText(user3Addr)
+	proposalId3 := proposeText(cur, user3Addr)
 
 	println("[SCENARIO] 11. Skip voting start delay")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
@@ -105,40 +105,40 @@ func main() {
 	println()
 
 	println("[SCENARIO] 12. Both voters vote - ProposalID: 1 (voter1: yes, voter2: no)")
-	voteProposals(proposalId1, true)
+	voteProposals(cur, proposalId1, true)
 	println()
 
 	println("[SCENARIO] 13. Verify voting weights - ProposalID: 1")
-	verifyVotingWeight(proposalId1, true)
+	verifyVotingWeight(cur, proposalId1, true)
 	println()
 
 	println("[SCENARIO] 14. Both voters vote - ProposalID: 2 (voter1: yes, voter2: no)")
-	voteProposals(proposalId2, true)
+	voteProposals(cur, proposalId2, true)
 	println()
 
 	println("[SCENARIO] 15. Verify voting weights - ProposalID: 2")
-	verifyVotingWeight(proposalId2, true)
+	verifyVotingWeight(cur, proposalId2, true)
 	println()
 
 	println("[SCENARIO] 16. Both voters vote - ProposalID: 3 (voter1: yes, voter2: no)")
-	voteProposals(proposalId3, true)
+	voteProposals(cur, proposalId3, true)
 	println()
 
 	println("[SCENARIO] 17. Verify voting weights - ProposalID: 3")
-	verifyVotingWeight(proposalId3, true)
+	verifyVotingWeight(cur, proposalId3, true)
 	println()
 }
 
-func initialDelegation() {
+func initialDelegation(cur realm) {
 	initialAmount := int64(3_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Transfer(cross, user1Addr, initialAmount)
-	gns.Transfer(cross, user2Addr, initialAmount)
-	gns.Transfer(cross, user3Addr, initialAmount)
+	gns.Transfer(cross(cur), user1Addr, initialAmount)
+	gns.Transfer(cross(cur), user2Addr, initialAmount)
+	gns.Transfer(cross(cur), user3Addr, initialAmount)
 
-	gns.Approve(cross, govStakerAddr, initialAmount)
-	gs.Delegate(cross, voter1Addr, initialAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, initialAmount)
+	gs.Delegate(cross(cur), voter1Addr, initialAmount, "")
 
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	totalXgns := xgns.TotalSupply()
@@ -148,12 +148,12 @@ func initialDelegation() {
 	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
-func midPeriodDelegation() {
+func midPeriodDelegation(cur realm) {
 	additionalAmount := int64(2_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, additionalAmount)
-	gs.Delegate(cross, voter2Addr, additionalAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, additionalAmount)
+	gs.Delegate(cross(cur), voter2Addr, additionalAmount, "")
 
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
 	totalXgns := xgns.TotalSupply()
@@ -163,7 +163,7 @@ func midPeriodDelegation() {
 	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
-func checkCurrentXgnsBalance() {
+func checkCurrentXgnsBalance(cur realm) {
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
 	totalXgns := xgns.TotalSupply()
@@ -173,28 +173,28 @@ func checkCurrentXgnsBalance() {
 	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
-func proposeText(proposerAddr address) int64 {
+func proposeText(cur realm, proposerAddr address) int64 {
 	testing.SetRealm(testing.NewUserRealm(proposerAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] Created proposal ID: %d\n", proposalId)
 	ufmt.Printf("[INFO] Snapshot captures current delegation state\n")
 	return proposalId
 }
 
-func voteProposals(proposalId int64, hasVoter2VotingWeight bool) {
+func voteProposals(cur realm, proposalId int64, hasVoter2VotingWeight bool) {
 	// Voter1 votes YES
 	testing.SetRealm(testing.NewUserRealm(voter1Addr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Printf("[INFO] Voter1 voted YES\n")
 
 	if hasVoter2VotingWeight {
 		testing.SetRealm(testing.NewUserRealm(voter2Addr))
-		governance.Vote(cross, proposalId, false)
+		governance.Vote(cross(cur), proposalId, false)
 		ufmt.Printf("[INFO] Voter2 voted NO\n")
 	} else {
-		uassert.AbortsContains(t, "[GNOSWAP-GOVERNANCE-005] not enough voting power", func() {
+		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-005] not enough voting power", func() {
 			testing.SetRealm(testing.NewUserRealm(voter2Addr))
-			governance.Vote(cross, proposalId, false)
+			governance.Vote(cross(cur), proposalId, false)
 		})
 		ufmt.Printf("[INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time\n")
 	}
@@ -203,7 +203,7 @@ func voteProposals(proposalId int64, hasVoter2VotingWeight bool) {
 	ufmt.Printf("[INFO] Proposal state: %s\n", state)
 }
 
-func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
+func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool) {
 	// Get vote weights
 	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
 	voter2Weight := int64(0)

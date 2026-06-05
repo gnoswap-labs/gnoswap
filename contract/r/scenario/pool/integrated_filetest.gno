@@ -67,30 +67,30 @@ var poolSetup bool = false
 
 // Pool Integrated Test Suite
 // This test covers the complete pool lifecycle from creation to fee collection
-func main() {
+func main(cur realm) {
 	// Setup pools once for all tests
-	setupPools(t)
+	setupPools(cur, t)
 
-	testPoolMinting(t)
-	testPoolSwapping(t)
-	testPoolFeeCollection(t)
-	testPoolMultiToken(t)
-	testPoolEdgeCases(t)
+	testPoolMinting(cur, t)
+	testPoolSwapping(cur, t)
+	testPoolFeeCollection(cur, t)
+	testPoolMultiToken(cur, t)
+	testPoolEdgeCases(cur, t)
 }
 
 // setupPools creates the pools once for all tests
-func setupPools(t *testing.T) {
+func setupPools(cur realm, t *testing.T) {
 	if poolSetup {
 		return
 	}
 
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Create Foo:Bar pool with fee 500
 	println("[INFO] Creating Foo:Bar pool with fee tier 500")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -100,7 +100,7 @@ func setupPools(t *testing.T) {
 	// Create Bar:Baz pool with fee 3000
 	println("[INFO] Creating Bar:Baz pool with fee tier 3000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		FeeTier3000,
@@ -108,16 +108,16 @@ func setupPools(t *testing.T) {
 	)
 
 	// Approve tokens for all tests
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	poolSetup = true
 	println("[INFO] Pool setup completed")
 }
 
 // testPoolMinting tests liquidity minting functionality
-func testPoolMinting(t *testing.T) {
+func testPoolMinting(cur realm, t *testing.T) {
 	println("[INFO] ===== Testing Pool Minting =====")
 	println("[INFO] Testing liquidity provision to pools")
 
@@ -128,7 +128,7 @@ func testPoolMinting(t *testing.T) {
 	println("[INFO] Minting liquidity to Foo:Bar pool")
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -148,7 +148,7 @@ func testPoolMinting(t *testing.T) {
 	// When: Mint liquidity to Bar:Baz pool
 	println("[INFO] Minting liquidity to Bar:Baz pool")
 	mintAmount0Baz, mintAmount1Baz := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		FeeTier3000,
@@ -169,15 +169,15 @@ func testPoolMinting(t *testing.T) {
 }
 
 // testPoolSwapping tests swap functionality
-func testPoolSwapping(t *testing.T) {
+func testPoolSwapping(cur realm, t *testing.T) {
 	println("[INFO] ===== Testing Pool Swapping =====")
 	println("[INFO] Testing token swaps in both directions")
 
 	// Given: Pools have liquidity and tokens are approved for swapping
 	println("[INFO] Approving tokens for swapping")
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
-	foo.Approve(cross, poolAddr, 16000)
+	bar.Approve(cross(cur), poolAddr, 16000)
+	foo.Approve(cross(cur), poolAddr, 16000)
 
 	// When: Swap Bar to Foo in Foo:Bar pool
 	println("[INFO] Performing Bar to Foo swap")
@@ -185,7 +185,7 @@ func testPoolSwapping(t *testing.T) {
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -195,7 +195,7 @@ func testPoolSwapping(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -209,7 +209,7 @@ func testPoolSwapping(t *testing.T) {
 	// When: Swap Foo to Bar in Foo:Bar pool
 	println("[INFO] Performing Foo to Bar swap")
 	swapIn2, swapOut2 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -219,7 +219,7 @@ func testPoolSwapping(t *testing.T) {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -232,7 +232,7 @@ func testPoolSwapping(t *testing.T) {
 }
 
 // testPoolFeeCollection tests fee collection functionality
-func testPoolFeeCollection(t *testing.T) {
+func testPoolFeeCollection(cur realm, t *testing.T) {
 	println("[INFO] ===== Testing Pool Fee Collection =====")
 	println("[INFO] Testing fee collection from positions")
 
@@ -243,7 +243,7 @@ func testPoolFeeCollection(t *testing.T) {
 	println("[INFO] Burning 0 liquidity to collect accumulated fees")
 	testing.SetRealm(posRealm)
 	burnAmount0, burnAmount1 := pool.Burn(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -263,7 +263,7 @@ func testPoolFeeCollection(t *testing.T) {
 	// When: Collect fees
 	println("[INFO] Collecting accumulated fees")
 	collected0, collected1 := pool.Collect(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -284,7 +284,7 @@ func testPoolFeeCollection(t *testing.T) {
 }
 
 // testPoolMultiToken tests multi-token pool interactions
-func testPoolMultiToken(t *testing.T) {
+func testPoolMultiToken(cur realm, t *testing.T) {
 	println("[INFO] ===== Testing Multi-Token Pool Interactions =====")
 	println("[INFO] Testing interactions between multiple pools")
 
@@ -294,12 +294,12 @@ func testPoolMultiToken(t *testing.T) {
 	// When: Swap in Bar:Baz pool
 	println("[INFO] Performing Bar to Baz swap")
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	bar.Approve(cross(cur), poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		FeeTier3000,
@@ -309,7 +309,7 @@ func testPoolMultiToken(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -324,7 +324,7 @@ func testPoolMultiToken(t *testing.T) {
 }
 
 // testPoolEdgeCases tests edge cases and error conditions
-func testPoolEdgeCases(t *testing.T) {
+func testPoolEdgeCases(cur realm, t *testing.T) {
 	println("[INFO] ===== Testing Pool Edge Cases =====")
 	println("[INFO] Testing error conditions and edge cases")
 
@@ -360,14 +360,14 @@ func testPoolEdgeCases(t *testing.T) {
 	println("[SCENARIO] Pool Edge Cases Tests - PASSED")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

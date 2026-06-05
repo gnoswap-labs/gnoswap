@@ -36,27 +36,27 @@ func (t *TestStaker) ExecuteFn(fnName string, actualFn func(args ...any) any, ar
 }
 
 // IStakerManager interface
-func (t *TestStaker) StakeToken(positionId uint64, referrer string) string {
+func (t *TestStaker) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
 	return t.ExecuteFn(
 		"StakeToken",
-		func(args ...any) any { return t.instance.StakeToken(args[0].(uint64), args[1].(string)) },
+		func(args ...any) any { return t.instance.StakeToken(0, rlm, args[0].(uint64), args[1].(string)) },
 		positionId, referrer,
 	).(string)
 }
 
-func (t *TestStaker) UnStakeToken(positionId uint64) string {
+func (t *TestStaker) UnStakeToken(_ int, rlm realm, positionId uint64) string {
 	return t.ExecuteFn(
 		"UnStakeToken",
-		func(args ...any) any { return t.instance.UnStakeToken(args[0].(uint64)) },
+		func(args ...any) any { return t.instance.UnStakeToken(0, rlm, args[0].(uint64)) },
 		positionId,
 	).(string)
 }
 
-func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
+func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	result := t.ExecuteFn(
 		"CollectReward",
 		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.CollectReward(args[0].(uint64))
+			r1, r2, r3, r4 := t.instance.CollectReward(0, rlm, args[0].(uint64))
 			return []any{r1, r2, r3, r4}
 		},
 		positionId,
@@ -64,114 +64,114 @@ func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[strin
 	return result[0].(string), result[1].(string), result[2].(map[string]int64), result[3].(map[string]int64)
 }
 
-func (t *TestStaker) SetPoolTier(poolPath string, tier uint64) {
+func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.ExecuteFn(
 		"SetPoolTier",
-		func(args ...any) any { t.instance.SetPoolTier(args[0].(string), args[1].(uint64)); return nil },
+		func(args ...any) any { t.instance.SetPoolTier(0, rlm, args[0].(string), args[1].(uint64)); return nil },
 		poolPath, tier,
 	)
 }
 
-func (t *TestStaker) ChangePoolTier(poolPath string, tier uint64) {
+func (t *TestStaker) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.ExecuteFn(
 		"ChangePoolTier",
-		func(args ...any) any { t.instance.ChangePoolTier(args[0].(string), args[1].(uint64)); return nil },
+		func(args ...any) any { t.instance.ChangePoolTier(0, rlm, args[0].(string), args[1].(uint64)); return nil },
 		poolPath, tier,
 	)
 }
 
-func (t *TestStaker) RemovePoolTier(poolPath string) {
+func (t *TestStaker) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	t.ExecuteFn(
 		"RemovePoolTier",
-		func(args ...any) any { t.instance.RemovePoolTier(args[0].(string)); return nil },
+		func(args ...any) any { t.instance.RemovePoolTier(0, rlm, args[0].(string)); return nil },
 		poolPath,
 	)
 }
 
-func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
+func (t *TestStaker) CreateExternalIncentive(_ int, rlm realm, targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
 	t.ExecuteFn(
 		"CreateExternalIncentive",
 		func(args ...any) any {
-			t.instance.CreateExternalIncentive(args[0].(string), args[1].(string), args[2].(int64), args[3].(int64), args[4].(int64))
+			t.instance.CreateExternalIncentive(0, rlm, args[0].(string), args[1].(string), args[2].(int64), args[3].(int64), args[4].(int64))
 			return nil
 		},
 		targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp,
 	)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
 	t.ExecuteFn(
 		"EndExternalIncentive",
 		func(args ...any) any {
-			t.instance.EndExternalIncentive(args[0].(string), args[1].(string), args[2].(address))
+			t.instance.EndExternalIncentive(0, rlm, args[0].(string), args[1].(string), args[2].(address))
 			return nil
 		},
 		targetPoolPath, incentiveId, refundAddress,
 	)
 }
 
-func (t *TestStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	return t.ExecuteFn(
 		"CollectExternalIncentivePenalty",
 		func(args ...any) any {
-			return t.instance.CollectExternalIncentivePenalty(args[0].(string), args[1].(string), args[2].(address))
+			return t.instance.CollectExternalIncentivePenalty(0, rlm, args[0].(string), args[1].(string), args[2].(address))
 		},
 		targetPoolPath, incentiveId, refundAddress,
 	).(int64)
 }
 
-func (t *TestStaker) AddToken(tokenPath string) {
+func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	t.ExecuteFn(
 		"AddToken",
-		func(args ...any) any { t.instance.AddToken(args[0].(string)); return nil },
+		func(args ...any) any { t.instance.AddToken(0, rlm, args[0].(string)); return nil },
 		tokenPath,
 	)
 }
 
-func (t *TestStaker) RemoveToken(tokenPath string) {
+func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	t.ExecuteFn(
 		"RemoveToken",
-		func(args ...any) any { t.instance.RemoveToken(args[0].(string)); return nil },
+		func(args ...any) any { t.instance.RemoveToken(0, rlm, args[0].(string)); return nil },
 		tokenPath,
 	)
 }
 
-func (t *TestStaker) SetWarmUp(pct, timeDuration int64) {
+func (t *TestStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	t.ExecuteFn(
 		"SetWarmUp",
-		func(args ...any) any { t.instance.SetWarmUp(args[0].(int64), args[1].(int64)); return nil },
+		func(args ...any) any { t.instance.SetWarmUp(0, rlm, args[0].(int64), args[1].(int64)); return nil },
 		pct, timeDuration,
 	)
 }
 
-func (t *TestStaker) SetDepositGnsAmount(amount int64) {
+func (t *TestStaker) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 	t.ExecuteFn(
 		"SetDepositGnsAmount",
-		func(args ...any) any { t.instance.SetDepositGnsAmount(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetDepositGnsAmount(0, rlm, args[0].(int64)); return nil },
 		amount,
 	)
 }
 
-func (t *TestStaker) SetMinimumRewardAmount(amount int64) {
+func (t *TestStaker) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	t.ExecuteFn(
 		"SetMinimumRewardAmount",
-		func(args ...any) any { t.instance.SetMinimumRewardAmount(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetMinimumRewardAmount(0, rlm, args[0].(int64)); return nil },
 		amount,
 	)
 }
 
-func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
+func (t *TestStaker) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
 	t.ExecuteFn(
 		"SetTokenMinimumRewardAmount",
-		func(args ...any) any { t.instance.SetTokenMinimumRewardAmount(args[0].(string)); return nil },
+		func(args ...any) any { t.instance.SetTokenMinimumRewardAmount(0, rlm, args[0].(string)); return nil },
 		paramsStr,
 	)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee uint64) {
+func (t *TestStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	t.ExecuteFn(
 		"SetUnStakingFee",
-		func(args ...any) any { t.instance.SetUnStakingFee(args[0].(uint64)); return nil },
+		func(args ...any) any { t.instance.SetUnStakingFee(0, rlm, args[0].(uint64)); return nil },
 		fee,
 	)
 }

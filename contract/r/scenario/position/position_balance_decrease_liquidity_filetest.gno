@@ -42,31 +42,31 @@ var (
 	fooPath = "gno.land/r/onbloc/foo"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint and increase position")
-	mintAndIncreasePosition()
+	mintAndIncreasePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Execute swap to generate fees")
-	executeSwap()
+	executeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Decrease liquidity and check balances")
-	testDecreaseLiquidityAndBalance()
+	testDecreaseLiquidityAndBalance(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -74,14 +74,14 @@ func initPool() {
 	)
 }
 
-func mintAndIncreasePosition() {
+func mintAndIncreasePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -101,7 +101,7 @@ func mintAndIncreasePosition() {
 
 	ufmt.Println("[INFO] Increasing liquidity")
 	_, liquidityAdded, _, _, _ := position.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"50000000",
 		"50000000",
@@ -116,14 +116,14 @@ func mintAndIncreasePosition() {
 	ufmt.Printf("[EXPECTED] Total liquidity should be %s\n", pos.Liquidity())
 }
 
-func executeSwap() {
+func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -133,7 +133,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -141,7 +141,7 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func testDecreaseLiquidityAndBalance() {
+func testDecreaseLiquidityAndBalance(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
@@ -154,19 +154,19 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Position liquidity before decrease should be %s\n", liquidityBefore)
 
 	ufmt.Println("[INFO] Collecting fees")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
 	barBalanceAfterFee := bar.BalanceOf(adminAddr)
 	fooBalanceAfterFee := foo.BalanceOf(adminAddr)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity by 100000000")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"100000000",
 		"0",
@@ -202,10 +202,10 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 
 	// Validate token conservation and correctness
-	validateDecreaseLiquidityBalances(barChange, fooChange, barBalanceAfterFee, barBalanceAfter, fooBalanceAfterFee, fooBalanceAfter)
+	validateDecreaseLiquidityBalances(cur, barChange, fooChange, barBalanceAfterFee, barBalanceAfter, fooBalanceAfterFee, fooBalanceAfter)
 }
 
-func validateDecreaseLiquidityBalances(barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
+func validateDecreaseLiquidityBalances(cur realm, barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
 	// User should gain tokens when decreasing liquidity
 	if barChange <= 0 {
 		panic(ufmt.Sprintf("[ERROR] BAR balance should increase (change: %d)", barChange))
@@ -225,15 +225,15 @@ func validateDecreaseLiquidityBalances(barChange, fooChange, barBefore, barAfter
 	ufmt.Println("[EXPECTED] Decrease liquidity balance validation passed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

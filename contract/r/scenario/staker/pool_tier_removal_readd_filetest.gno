@@ -19,7 +19,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -75,70 +74,70 @@ var (
 	thirdTierRewards     int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test: Pool Tier Removal and Re-addition")
 	println()
 
 	println("[SCENARIO 1] Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO 2] Create pools and mint position")
-	createPoolsAndMintPosition()
+	createPoolsAndMintPosition(cur)
 	println()
 
 	println("[SCENARIO 3] First tier period - accumulate rewards")
-	firstTierPeriod()
+	firstTierPeriod(cur)
 	println()
 
 	println("[SCENARIO 4] Remove pool from tier - verify no new rewards")
-	removeFromTierVerifyNoNewRewards()
+	removeFromTierVerifyNoNewRewards(cur)
 	println()
 
 	println("[SCENARIO 5] Re-add to tier - verify new rewards accumulate")
-	reAddToTierVerifyNewRewards()
+	reAddToTierVerifyNewRewards(cur)
 	println()
 
 	println("[SCENARIO 6] Second removal - test multiple cycles")
-	secondRemovalCycle()
+	secondRemovalCycle(cur)
 	println()
 
 	println("[SCENARIO 7] Final re-addition - verify complete cycle")
-	finalReAdditionCycle()
+	finalReAdditionCycle(cur)
 	println()
 
 	println("[SCENARIO 8] Verify complete scenario")
-	verifyCompleteScenario()
+	verifyCompleteScenario(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPoolsAndMintPosition() {
+func createPoolsAndMintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create main test pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create additional pool for tier system")
-	pl.CreatePool(cross, fooPath, oblPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), fooPath, oblPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 
 	println("[INFO] set initial tiers - main pool to tier 2, second pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 2)
-	sr.SetPoolTier(cross, pool2Path, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 2)
+	sr.SetPoolTier(cross(cur), pool2Path, 1)
 
 	tier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[VERIFY] main pool initial tier: %d (expected: 2)\n", tier)
@@ -148,13 +147,13 @@ func createPoolsAndMintPosition() {
 	}
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position (tick range: -200 ~ 200)")
 	tokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -172,13 +171,13 @@ func createPoolsAndMintPosition() {
 	ufmt.Printf("[VERIFY] position ID: %d, liquidity: %s\n", tokenId, liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(tokenId))
-	sr.StakeToken(cross, tokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, tokenId))
+	sr.StakeToken(cross(cur), tokenId, "")
 
 	println("[SUCCESS] position staked successfully")
 }
 
-func firstTierPeriod() {
+func firstTierPeriod(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] accumulate rewards for 10 blocks in tier 2")
@@ -186,7 +185,7 @@ func firstTierPeriod() {
 
 	println("[INFO] collect rewards while in tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	firstTierRewards = afterGns - beforeGns
 
@@ -197,11 +196,11 @@ func firstTierPeriod() {
 	}
 }
 
-func removeFromTierVerifyNoNewRewards() {
+func removeFromTierVerifyNoNewRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system")
-	sr.RemovePoolTier(cross, poolPath)
+	sr.RemovePoolTier(cross(cur), poolPath)
 
 	tier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[VERIFY] pool tier after removal: %d (expected: 0)\n", tier)
@@ -215,7 +214,7 @@ func removeFromTierVerifyNoNewRewards() {
 
 	println("[INFO] attempt to collect rewards - should get only historical rewards if any")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	removedPhaseRewards = afterGns - beforeGns
 
@@ -228,11 +227,11 @@ func removeFromTierVerifyNoNewRewards() {
 	}
 }
 
-func reAddToTierVerifyNewRewards() {
+func reAddToTierVerifyNewRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] re-add pool to tier system as tier 3")
-	sr.SetPoolTier(cross, poolPath, 3)
+	sr.SetPoolTier(cross(cur), poolPath, 3)
 
 	tier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[VERIFY] pool tier after re-addition: %d (expected: 3)\n", tier)
@@ -246,7 +245,7 @@ func reAddToTierVerifyNewRewards() {
 
 	println("[INFO] collect rewards while in tier 3")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondTierRewards = afterGns - beforeGns
 
@@ -259,11 +258,11 @@ func reAddToTierVerifyNewRewards() {
 	println("[SUCCESS] new rewards accumulating after re-addition to tier system")
 }
 
-func secondRemovalCycle() {
+func secondRemovalCycle(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system again (second removal)")
-	sr.RemovePoolTier(cross, poolPath)
+	sr.RemovePoolTier(cross(cur), poolPath)
 
 	tier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[VERIFY] pool tier after second removal: %d (expected: 0)\n", tier)
@@ -277,7 +276,7 @@ func secondRemovalCycle() {
 
 	println("[INFO] attempt to collect rewards during second removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondRemovalRewards = afterGns - beforeGns
 
@@ -286,11 +285,11 @@ func secondRemovalCycle() {
 	println("[INFO] verify no new rewards accumulate during second removal period")
 }
 
-func finalReAdditionCycle() {
+func finalReAdditionCycle(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] re-add pool to tier 1 (highest tier)")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	tier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[VERIFY] pool tier after final re-addition: %d (expected: 1)\n", tier)
@@ -304,7 +303,7 @@ func finalReAdditionCycle() {
 
 	println("[INFO] collect rewards while in tier 1")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	thirdTierRewards = afterGns - beforeGns
 
@@ -317,7 +316,7 @@ func finalReAdditionCycle() {
 	println("[SUCCESS] rewards accumulating correctly after multiple removal/re-addition cycles")
 }
 
-func verifyCompleteScenario() {
+func verifyCompleteScenario(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Complete reward history:")
@@ -349,7 +348,7 @@ func verifyCompleteScenario() {
 	}
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

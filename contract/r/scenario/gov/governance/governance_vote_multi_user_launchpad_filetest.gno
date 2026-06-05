@@ -54,24 +54,24 @@ var (
 	currentBlockTime = int64(5)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate GNS to 3 voters with different amounts")
-	delegateToMultipleVoters()
+	delegateToMultipleVoters(cur)
 	println()
 
 	println("[SCENARIO] 2. Create Launchpad Project")
-	projectTierId := createLaunchpadProject()
+	projectTierId := createLaunchpadProject(cur)
 	println()
 
 	println("[SCENARIO] 3. Multiple depositors deposit to launchpad")
-	multipleDeposits(projectTierId)
+	multipleDeposits(cur, projectTierId)
 	println()
 
 	println("[SCENARIO] 4. Verify xGNS distribution")
-	verifyXgnsDistribution()
+	verifyXgnsDistribution(cur)
 	println()
 
 	println("[SCENARIO] 5. Skip smoothing period for proposal creation")
@@ -80,7 +80,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 6. Propose Text")
-	proposalId := proposeText()
+	proposalId := proposeText(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip voting start delay")
@@ -89,33 +89,33 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. All voters vote (voter1, voter2: yes, voter3: no)")
-	multipleVotes(proposalId)
+	multipleVotes(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 9. Verify voting results")
-	verifyVotingResults(proposalId)
+	verifyVotingResults(cur, proposalId)
 	println()
 }
 
-func delegateToMultipleVoters() {
+func delegateToMultipleVoters(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Voter1: 1 billion GNS
 	voter1Amount := int64(1_000_000_000)
-	gns.Approve(cross, govStakerAddr, voter1Amount)
-	gs.Delegate(cross, voter1Addr, voter1Amount, "")
+	gns.Approve(cross(cur), govStakerAddr, voter1Amount)
+	gs.Delegate(cross(cur), voter1Addr, voter1Amount, "")
 	ufmt.Printf("[INFO] Delegated %d GNS to voter1 (%s)\n", voter1Amount, voter1Addr.String())
 
 	// Voter2: 2 billion GNS
 	voter2Amount := int64(2_000_000_000)
-	gns.Approve(cross, govStakerAddr, voter2Amount)
-	gs.Delegate(cross, voter2Addr, voter2Amount, "")
+	gns.Approve(cross(cur), govStakerAddr, voter2Amount)
+	gs.Delegate(cross(cur), voter2Addr, voter2Amount, "")
 	ufmt.Printf("[INFO] Delegated %d GNS to voter2 (%s)\n", voter2Amount, voter2Addr.String())
 
 	// Voter3: 3 billion GNS
 	voter3Amount := int64(3_000_000_000)
-	gns.Approve(cross, govStakerAddr, voter3Amount)
-	gs.Delegate(cross, voter3Addr, voter3Amount, "")
+	gns.Approve(cross(cur), govStakerAddr, voter3Amount)
+	gs.Delegate(cross(cur), voter3Addr, voter3Amount, "")
 	ufmt.Printf("[INFO] Delegated %d GNS to voter3 (%s)\n", voter3Amount, voter3Addr.String())
 
 	totalDelegated := voter1Amount + voter2Amount + voter3Amount
@@ -123,11 +123,11 @@ func delegateToMultipleVoters() {
 	ufmt.Printf("[INFO] xGNS total supply: %d\n", xgns.TotalSupply())
 }
 
-func createLaunchpadProject() string {
+func createLaunchpadProject(cur realm) string {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Approve(cross, launchpadAddr, int64(10_000_000))
+	obl.Approve(cross(cur), launchpadAddr, int64(10_000_000))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		"Test OBL Project",
 		"gno.land/r/onbloc/obl",
 		projectAddr,
@@ -146,31 +146,31 @@ func createLaunchpadProject() string {
 	return projectId + ":30"
 }
 
-func multipleDeposits(projectTierId string) {
+func multipleDeposits(cur realm, projectTierId string) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Depositor1: 4 billion GNS
 	deposit1Amount := int64(4_000_000_000)
-	gns.Transfer(cross, depositor1Addr, deposit1Amount)
+	gns.Transfer(cross(cur), depositor1Addr, deposit1Amount)
 	testing.SetRealm(testing.NewUserRealm(depositor1Addr))
-	gns.Approve(cross, launchpadAddr, deposit1Amount)
-	depositId1 := launchpad.DepositGns(cross, projectTierId, deposit1Amount, "")
+	gns.Approve(cross(cur), launchpadAddr, deposit1Amount)
+	depositId1 := launchpad.DepositGns(cross(cur), projectTierId, deposit1Amount, "")
 	ufmt.Printf("[INFO] Depositor1 deposited %d GNS (depositId: %d)\n", deposit1Amount, depositId1)
 
 	// Depositor2: 5 billion GNS
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	deposit2Amount := int64(5_000_000_000)
-	gns.Transfer(cross, depositor2Addr, deposit2Amount)
+	gns.Transfer(cross(cur), depositor2Addr, deposit2Amount)
 	testing.SetRealm(testing.NewUserRealm(depositor2Addr))
-	gns.Approve(cross, launchpadAddr, deposit2Amount)
-	depositId2 := launchpad.DepositGns(cross, projectTierId, deposit2Amount, "")
+	gns.Approve(cross(cur), launchpadAddr, deposit2Amount)
+	depositId2 := launchpad.DepositGns(cross(cur), projectTierId, deposit2Amount, "")
 	ufmt.Printf("[INFO] Depositor2 deposited %d GNS (depositId: %d)\n", deposit2Amount, depositId2)
 
 	totalDeposited := deposit1Amount + deposit2Amount
 	ufmt.Printf("[INFO] Total deposited to launchpad: %d GNS\n", totalDeposited)
 }
 
-func verifyXgnsDistribution() {
+func verifyXgnsDistribution(cur realm) {
 	totalSupply := xgns.TotalSupply()
 	launchpadBalance := xgns.BalanceOf(launchpadAddr)
 
@@ -186,34 +186,34 @@ func verifyXgnsDistribution() {
 	ufmt.Printf("  - Voter3 xGNS: %d\n", voter3Xgns)
 }
 
-func proposeText() int64 {
+func proposeText(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] Created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func multipleVotes(proposalId int64) {
+func multipleVotes(cur realm, proposalId int64) {
 	// Voter1 votes YES
 	testing.SetRealm(testing.NewUserRealm(voter1Addr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Printf("[INFO] Voter1 voted YES\n")
 
 	// Voter2 votes YES
 	testing.SetRealm(testing.NewUserRealm(voter2Addr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Printf("[INFO] Voter2 voted YES\n")
 
 	// Voter3 votes NO
 	testing.SetRealm(testing.NewUserRealm(voter3Addr))
-	governance.Vote(cross, proposalId, false)
+	governance.Vote(cross(cur), proposalId, false)
 	ufmt.Printf("[INFO] Voter3 voted NO\n")
 
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state after all votes: %s\n", state)
 }
 
-func verifyVotingResults(proposalId int64) {
+func verifyVotingResults(cur realm, proposalId int64) {
 	// Get individual vote weights
 	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
 	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)

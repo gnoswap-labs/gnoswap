@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // changed halving years by change block time (2000ms -> 3500ms)
 package main
 
@@ -24,29 +26,29 @@ const (
 	defaultBlockTime   = 2000        // 2000ms
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize emission")
-	initEmission()
+	initEmission(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Get halving years")
-	getHalvingYears()
+	getHalvingYears(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Skip 10000 blocks (distribute of half of 1 year)")
 	testing.SetOriginCaller(adminAddr)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+10000*5)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+10000*5)
 	testing.SkipHeights(10000)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Get halving years")
-	getHalvingYears()
+	getHalvingYears(cur)
 	println()
 }
 
-func initEmission() {}
+func initEmission(cur realm) {}
 
-func getHalvingYears() {
+func getHalvingYears(cur realm) {
 	println("[INFO] current halving years", gns.GetHalvingYear(time.Now().Unix()))
 
 	for year := int64(1); year <= 12; year++ {

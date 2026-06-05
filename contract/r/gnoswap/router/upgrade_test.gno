@@ -472,7 +472,7 @@ func TestDrySwapRoute(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		DrySwapRoute(tt.inputToken, tt.outputToken, tt.specifiedAmount, tt.swapTypeStr, tt.strRouteArr, tt.quoteArr, tt.tokenAmountLimit)
+		DrySwapRoute(cross(cur), tt.inputToken, tt.outputToken, tt.specifiedAmount, tt.swapTypeStr, tt.strRouteArr, tt.quoteArr, tt.tokenAmountLimit)
 
 		// Assert
 		if mockRouter.Response.CallCount("DrySwapRoute") != 1 {

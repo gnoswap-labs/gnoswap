@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance proposal execute - pool creation fee change
 
 package main
@@ -34,12 +36,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
@@ -48,7 +50,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose Set Pool Creation Fee")
-	proposalID := proposeChangePoolCreationFee()
+	proposalID := proposeChangePoolCreationFee(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
@@ -57,7 +59,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
-	vote(proposalID, true)
+	vote(cur, proposalID, true)
 	println()
 
 	println("[SCENARIO] 6. Skip voting period for ready to execute")
@@ -66,35 +68,35 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Execute the change pool creation fee proposal")
-	executeChangePoolCreationFee(proposalID)
+	executeChangePoolCreationFee(cur, proposalID)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	govStaker.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeChangePoolCreationFee() int64 {
+func proposeChangePoolCreationFee(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*500")
+	proposalID := governance.ProposeParameterChange(cross(cur), "createfee", "change", 1, "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*500")
 
 	ufmt.Printf("[INFO] Change Pool Creation Fee Proposal ID: %d\n", proposalID)
 	return proposalID
 }
 
-func vote(proposalID int64, yea bool) {
+func vote(cur realm, proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
-	governance.Vote(cross, proposalID, yea)
+	governance.Vote(cross(cur), proposalID, yea)
 
 	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
@@ -102,12 +104,12 @@ func vote(proposalID int64, yea bool) {
 	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeChangePoolCreationFee(proposalID int64) {
+func executeChangePoolCreationFee(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevPoolCreationFee := pool.GetPoolCreationFee()
 
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 
 	afterPoolCreationFee := pool.GetPoolCreationFee()
 

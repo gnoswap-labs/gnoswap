@@ -60,44 +60,44 @@ var (
 	staleRateReward int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize system with 75% staker allocation")
-	initSystem()
+	initSystem(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and mint position")
-	createPoolAndPosition()
+	createPoolAndPosition(cur)
 	println()
 
 	println("[SCENARIO] 3. Stake position and collect initial rewards")
-	stakeAndCollectInitial()
+	stakeAndCollectInitial(cur)
 	println()
 
 	println("[SCENARIO] 4. Change distribution to 50% (governance action)")
-	changeDistribution()
+	changeDistribution(cur)
 	println()
 
 	println("[SCENARIO] 5. Wait without any user interaction")
-	waitWithoutInteraction()
+	waitWithoutInteraction(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect rewards (should use stale 75% rate)")
-	collectWithStaleRate()
+	collectWithStaleRate(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect rewards again (should use correct 50% rate)")
-	collectWithCorrectRate()
+	collectWithCorrectRate(cur)
 }
 
-func initSystem() {
+func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Set emission start time
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Set initial distribution: 75% to staker
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7500, // liquidityStakerPct
 		2000, // devOpsPct
 		500, // communityPoolPct
@@ -105,39 +105,39 @@ func initSystem() {
 	)
 
 	// Remove unstaking fee for clearer reward calculations
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	// Set pool creation fee to 0
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	// Mint and distribute initial GNS
-	emission.MintAndDistributeGns(cross)
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	emission.MintAndDistributeGns(cross(cur))
 
 	// Give tokens to user1 for later testing
-	bar.Transfer(cross, user1Addr, 1_000_000)
-	baz.Transfer(cross, user1Addr, 1_000_000)
+	bar.Transfer(cross(cur), user1Addr, 1_000_000)
+	baz.Transfer(cross(cur), user1Addr, 1_000_000)
 
 	println("[EXPECTED] Initial distribution set to 75% for stakers")
 	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", emission.GetStakerEmissionAmountPerSecond())
 }
 
-func createPoolAndPosition() {
+func createPoolAndPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create bar:baz pool
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950336")
 
 	// Set pool to tier 1
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
 
 	// Approve tokens
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	// Mint position
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee3000,
@@ -155,22 +155,22 @@ func createPoolAndPosition() {
 	ufmt.Printf("[EXPECTED] Position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 }
 
-func stakeAndCollectInitial() {
+func stakeAndCollectInitial(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Stake position
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	// Skip some blocks to accumulate rewards
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
 
 	// Collect initial rewards
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	initialReward = afterGns - beforeGns
 
@@ -182,7 +182,7 @@ func stakeAndCollectInitial() {
 	testing.SkipHeights(500)
 }
 
-func changeDistribution() {
+func changeDistribution(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Record emission rate before change
@@ -190,7 +190,7 @@ func changeDistribution() {
 
 	// Change distribution to 50% for stakers
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		5000, // liquidityStakerPct
 		3000, // devOpsPct
 		2000, // communityPoolPct
@@ -205,7 +205,7 @@ func changeDistribution() {
 	ufmt.Printf("[EXPECTED] Rate reduction: %d%%\n", (beforeRate-afterRate)*100/beforeRate)
 }
 
-func waitWithoutInteraction() {
+func waitWithoutInteraction(cur realm) {
 	// Skip blocks without any user interaction
 	// This simulates a period where pools are inactive
 	testing.SkipHeights(100)
@@ -214,15 +214,15 @@ func waitWithoutInteraction() {
 	ufmt.Printf("[INFO] With the hook fix, cache should now be automatically updated to 50%% rate\n")
 }
 
-func collectWithStaleRate() {
+func collectWithStaleRate(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	testing.SkipHeights(1)
 
 	// Collect rewards - should now use correct cached rate after hook update
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	staleRateReward = afterGns - beforeGns
 
@@ -246,15 +246,15 @@ func collectWithStaleRate() {
 	}
 }
 
-func newUserStakes() {
+func newUserStakes(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	// User1 creates and stakes a new position
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee3000,
@@ -270,25 +270,25 @@ func newUserStakes() {
 	)
 
 	// Stake triggers cache update
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 
 	ufmt.Printf("[EXPECTED] New user staked position %d\n", positionId)
 	println("[INFO] This staking action triggers cache update to correct 50% rate")
 }
 
-func collectWithCorrectRate() {
+func collectWithCorrectRate(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Skip some blocks
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
 
 	// Collect rewards - should still use correct rate after new user stakes
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	correctReward := afterGns - beforeGns
 
@@ -308,7 +308,7 @@ func collectWithCorrectRate() {
 	}
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId := positionId.(type) {
 	case string:
 		return grc721.TokenID(positionId)

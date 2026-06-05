@@ -67,58 +67,58 @@ var (
 	MIN_PRICE string = "4295128740"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Multi Token")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Create foo <> bar pool")
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Create bar <> baz pool")
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, barPath, fee500, "130621891405341611593710811006")
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), bazPath, barPath, fee500, "130621891405341611593710811006")
 
 	println("[SCENARIO] 1. Mint Foo:Bar Liquidity")
-	TestMintFooBarLiquidity()
+	TestMintFooBarLiquidity(cur)
 
 	println("[SCENARIO] 2. Mint Bar:Baz Liquidity")
-	TestMintBarBazLiquidity()
+	TestMintBarBazLiquidity(cur)
 
 	println("[SCENARIO] 3. Swap Foo:Bar Foo > Bar")
-	TestSwapFooBarFooToBar()
+	TestSwapFooBarFooToBar(cur)
 
 	println("[SCENARIO] 4. Swap Bar:Baz Bar > Baz by admin")
-	TestSwapBarBazBarToBaz()
+	TestSwapBarBazBarToBaz(cur)
 
 	println("[SCENARIO] 5. Collect Foo:Bar Fees")
-	TestCollectFooBarFees()
+	TestCollectFooBarFees(cur)
 
 	println("[SCENARIO] 6. Collect Bar:Baz Fees")
-	TestCollectBarBazFees()
+	TestCollectBarBazFees(cur)
 
 	println("[SCENARIO] 7. Burn Foo:Bar Liquidity")
-	TestBurnFooBarLiquidity()
+	TestBurnFooBarLiquidity(cur)
 
 	println("[SCENARIO] 8. Burn Bar:Baz Liquidity")
-	TestBurnBarBazLiquidity()
+	TestBurnBarBazLiquidity(cur)
 
 	println("[SCENARIO] 9. Collect Foo:Bar burned Liquidity")
-	TestCollectFooBarLiquidity()
+	TestCollectFooBarLiquidity(cur)
 
 	println("[SCENARIO] 10. Collect Bar:Baz burned Liquidity")
-	TestCollectBarBazLiquidity()
+	TestCollectBarBazLiquidity(cur)
 }
 
 // Mint Foo:Bar Liquidity by admin
-func TestMintFooBarLiquidity() {
+func TestMintFooBarLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		fee500,
@@ -134,14 +134,14 @@ func TestMintFooBarLiquidity() {
 }
 
 // Mint Bar:Baz Liquidity by admin
-func TestMintBarBazLiquidity() {
+func TestMintBarBazLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -157,7 +157,7 @@ func TestMintBarBazLiquidity() {
 }
 
 // Swap Foo:Bar Foo > Bar by admin
-func TestSwapFooBarFooToBar() {
+func TestSwapFooBarFooToBar(cur realm) {
 	oldTest1Bar := bar.BalanceOf(adminAddr)
 	oldTest1Foo := foo.BalanceOf(adminAddr)
 
@@ -165,12 +165,12 @@ func TestSwapFooBarFooToBar() {
 	oldPoolFoo := foo.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	bar.Approve(cross(cur), poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -180,7 +180,7 @@ func TestSwapFooBarFooToBar() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 
 			return nil
 		},
@@ -202,19 +202,19 @@ func TestSwapFooBarFooToBar() {
 	println()
 }
 
-func TestSwapBarBazBarToBaz() {
+func TestSwapBarBazBarToBaz(cur realm) {
 	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
 	oldadminBazBalance := baz.BalanceOf(adminAddr)
 	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
 	oldPoolBazBalance := baz.BalanceOf(poolAddr)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	bar.Approve(cross(cur), poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -224,7 +224,7 @@ func TestSwapBarBazBarToBaz() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -244,7 +244,7 @@ func TestSwapBarBazBarToBaz() {
 	println()
 }
 
-func TestCollectFooBarFees() {
+func TestCollectFooBarFees(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
@@ -252,10 +252,10 @@ func TestCollectFooBarFees() {
 	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	// burn 0 to collect swap fees
-	pool.Burn(cross, barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
+	pool.Burn(cross(cur), barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
 
 	c0, c1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -280,7 +280,7 @@ func TestCollectFooBarFees() {
 	println()
 }
 
-func TestCollectBarBazFees() {
+func TestCollectBarBazFees(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
@@ -288,10 +288,10 @@ func TestCollectBarBazFees() {
 	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	// burn 0 to collect swap fees
-	pool.Burn(cross, barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
+	pool.Burn(cross(cur), barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
 
 	c0, c1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -317,14 +317,14 @@ func TestCollectBarBazFees() {
 }
 
 // Burn Foo:Bar Liquidity by admin
-func TestBurnFooBarLiquidity() {
+func TestBurnFooBarLiquidity(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolData, _ := pool.GetPool(fooPath, barPath, fee500)
 	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		fee500,
@@ -345,14 +345,14 @@ func TestBurnFooBarLiquidity() {
 	println()
 }
 
-func TestBurnBarBazLiquidity() {
+func TestBurnBarBazLiquidity(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolData, _ := pool.GetPool(barPath, bazPath, fee500)
 	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -374,7 +374,7 @@ func TestBurnBarBazLiquidity() {
 }
 
 // Collect Foo:Bar burned Liquidity by admin
-func TestCollectFooBarLiquidity() {
+func TestCollectFooBarLiquidity(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
@@ -382,7 +382,7 @@ func TestCollectFooBarLiquidity() {
 	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	c0, c1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -407,7 +407,7 @@ func TestCollectFooBarLiquidity() {
 }
 
 // Collect Bar:Baz burned Liquidity by admin
-func TestCollectBarBazLiquidity() {
+func TestCollectBarBazLiquidity(cur realm) {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
@@ -415,7 +415,7 @@ func TestCollectBarBazLiquidity() {
 	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	c0, c1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -439,7 +439,7 @@ func TestCollectBarBazLiquidity() {
 	println()
 }
 
-func strToUint64(s string) uint64 {
+func strToUint64(cur realm, s string) uint64 {
 	i, err := strconv.Atoi(s)
 	if err != nil {
 		panic("strToUint64")
@@ -447,15 +447,15 @@ func strToUint64(s string) uint64 {
 	return uint64(i)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

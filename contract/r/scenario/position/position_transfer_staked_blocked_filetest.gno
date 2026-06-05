@@ -58,42 +58,42 @@ var (
 	positionId uint64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize pool, mint position, stake")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. Owner cannot transfer staked NFT (was approved before stake)")
-	ownerCannotTransferAfterStake()
+	ownerCannotTransferAfterStake(cur)
 	println()
 
 	println("[SCENARIO] 3. Operator (SetApprovalForAll) cannot transfer staked NFT")
-	operatorCannotTransferStaked()
+	operatorCannotTransferStaked(cur)
 	println()
 
 	println("[SCENARIO] 4. SafeTransferFrom on staked NFT is also blocked")
-	safeTransferOnStakedBlocked()
+	safeTransferOnStakedBlocked(cur)
 	println()
 
 	println("[SCENARIO] 5. After unstake, owner regains transfer rights")
-	unstakeAndTransfer()
+	unstakeAndTransfer(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	pool.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, aliceAddr, int64(100000000))
-	foo.Transfer(cross, aliceAddr, int64(100000000))
+	bar.Transfer(cross(cur), aliceAddr, int64(100000000))
+	foo.Transfer(cross(cur), aliceAddr, int64(100000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -102,11 +102,11 @@ func setup() {
 
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	testing.SetRealm(adminRealm)
-	staker.SetPoolTier(cross, poolPath, 1)
+	staker.SetPoolTier(cross(cur), poolPath, 1)
 
 	testing.SetRealm(aliceRealm)
 	id, _, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		-6960, 6960,
 		"10000000", "10000000",
@@ -115,15 +115,15 @@ func setup() {
 		aliceAddr, "")
 	positionId = id
 
-	gnft.Approve(cross, stakerAddr, tokenIdOf(positionId))
-	staker.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId))
+	staker.StakeToken(cross(cur), positionId, "")
 
-	owner := gnft.MustOwnerOf(tokenIdOf(positionId))
+	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Owner after stake is staker:", owner == stakerAddr)
 }
 
-func ownerCannotTransferAfterStake() {
+func ownerCannotTransferAfterStake(cur realm) {
 	// Alice approved the staker for this token before stake. The token now
 	// belongs to the staker, but Alice is still the original depositor and
 	// might think she can move the NFT. The new permission gate must reject
@@ -132,59 +132,62 @@ func ownerCannotTransferAfterStake() {
 
 	uassert.AbortsContains(
 		t,
+		cur,
 		"[GNOSWAP-GNFT-009] staked token is locked",
 		func() {
-			gnft.TransferFrom(cross, stakerAddr, bobAddr, tokenIdOf(positionId))
+			gnft.TransferFrom(cross(cur), stakerAddr, bobAddr, tokenIdOf(cur, positionId))
 		},
 	)
 	println("[EXPECTED] Alice's TransferFrom on staked NFT was blocked")
 }
 
-func operatorCannotTransferStaked() {
+func operatorCannotTransferStaked(cur realm) {
 	// A previously-set operator must not be able to move a staked token
 	// either. Alice grants Bob operator-for-all rights *while* the token is
 	// staked, then Bob attempts the transfer.
 	testing.SetRealm(aliceRealm)
-	gnft.SetApprovalForAll(cross, bobAddr, true)
+	gnft.SetApprovalForAll(cross(cur), bobAddr, true)
 
 	testing.SetRealm(testing.NewUserRealm(bobAddr))
 	uassert.AbortsContains(
 		t,
+		cur,
 		"[GNOSWAP-GNFT-009] staked token is locked",
 		func() {
-			gnft.TransferFrom(cross, stakerAddr, bobAddr, tokenIdOf(positionId))
+			gnft.TransferFrom(cross(cur), stakerAddr, bobAddr, tokenIdOf(cur, positionId))
 		},
 	)
 	println("[EXPECTED] Operator Bob's TransferFrom on staked NFT was blocked")
 }
 
-func safeTransferOnStakedBlocked() {
+func safeTransferOnStakedBlocked(cur realm) {
 	testing.SetRealm(aliceRealm)
 	uassert.AbortsContains(
 		t,
+		cur,
 		"[GNOSWAP-GNFT-009] staked token is locked",
 		func() {
-			gnft.SafeTransferFrom(cross, stakerAddr, bobAddr, tokenIdOf(positionId))
+			gnft.SafeTransferFrom(cross(cur), stakerAddr, bobAddr, tokenIdOf(cur, positionId))
 		},
 	)
 	println("[EXPECTED] SafeTransferFrom on staked NFT was blocked")
 }
 
-func unstakeAndTransfer() {
+func unstakeAndTransfer(cur realm) {
 	// After unstake the NFT returns to the original depositor (Alice), and
 	// the locked-token rule no longer applies. Alice can transfer freely.
 	testing.SetRealm(aliceRealm)
-	staker.UnStakeToken(cross, positionId)
+	staker.UnStakeToken(cross(cur), positionId)
 
-	owner := gnft.MustOwnerOf(tokenIdOf(positionId))
+	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after unstake is alice:", owner == aliceAddr)
 
-	gnft.TransferFrom(cross, aliceAddr, bobAddr, tokenIdOf(positionId))
-	owner = gnft.MustOwnerOf(tokenIdOf(positionId))
+	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId))
+	owner = gnft.MustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after transfer is bob:", owner == bobAddr)
 }
 
-func tokenIdOf(id uint64) grc721.TokenID {
+func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
 }
 

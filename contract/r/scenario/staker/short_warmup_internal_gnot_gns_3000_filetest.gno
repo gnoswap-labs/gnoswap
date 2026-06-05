@@ -59,52 +59,52 @@ var (
 	maxInt64   int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup short warm-up periods")
-	initWithShortWarmUp()
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	initWithShortWarmUp(cur)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initWithShortWarmUpPostDeposit()
+	initWithShortWarmUpPostDeposit(cur)
 	println()
 
 	println("[SCENARIO] 2. Create wugnot:gns:3000 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint wugnot:gns position 01")
-	mintWugnotGnsPos01()
+	mintWugnotGnsPos01(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake token 01")
-	stakeToken01()
+	stakeToken01(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect reward")
-	collectReward01()
+	collectReward01(cur)
 }
 
-func initWithShortWarmUp() {
+func initWithShortWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, math.MaxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, math.MaxInt64)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] set community pool distribution to 0%")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
 		0,    // communityPoolPct
@@ -113,12 +113,12 @@ func initWithShortWarmUp() {
 
 	println("[INFO] prepare wugnot")
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	// Deposit is done in main()
+	// Deposit is done in main(cur)
 }
 
-func initWithShortWarmUpPostDeposit() {
+func initWithShortWarmUpPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 	wugnotBalance := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[EXPECTED] wugnot balance: %d\n", wugnotBalance)
@@ -129,26 +129,26 @@ func initWithShortWarmUpPostDeposit() {
 	testing.SkipHeights(1)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create wugnot:gns:3000 pool at tick 0")
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 	ufmt.Printf("[INFO] pool created, current height: %d\n", runtime.ChainHeight())
 }
 
-func mintWugnotGnsPos01() {
+func mintWugnotGnsPos01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -1020 ~ 1020)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -167,24 +167,24 @@ func mintWugnotGnsPos01() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
 }
 
-func stakeToken01() {
+func stakeToken01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve and stake token 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	testing.SkipHeights(1)
 	ufmt.Printf("[INFO] token staked at height: %d\n", runtime.ChainHeight())
 }
 
-func collectReward01() {
+func collectReward01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	communityPoolAddr, _ := access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
@@ -197,7 +197,7 @@ func collectReward01() {
 	ufmt.Printf("[INFO] community pool GNS balance before: %d\n", communityPoolBefore)
 
 	println("[INFO] collect reward for position 01")
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	gnsAfter := gns.BalanceOf(adminUser)
 	communityPoolAfter := gns.BalanceOf(communityPoolAddr)
@@ -215,7 +215,7 @@ func collectReward01() {
 	testing.SkipHeights(1)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

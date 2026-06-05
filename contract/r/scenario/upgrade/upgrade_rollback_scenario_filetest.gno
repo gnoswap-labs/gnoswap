@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Upgrade and rollback scenario test for all upgradable contracts
 package main
 
@@ -64,49 +66,49 @@ const (
 	stakerTestPath        = "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize all contracts with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Pool Contract Upgrade and Rollback")
-	testPoolUpgradeRollback()
+	testPoolUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Position Contract Upgrade and Rollback")
-	testPositionUpgradeRollback()
+	testPositionUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 4. Test ProtocolFee Contract Upgrade and Rollback")
-	testProtocolFeeUpgradeRollback()
+	testProtocolFeeUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Router Contract Upgrade and Rollback")
-	testRouterUpgradeRollback()
+	testRouterUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 6. Test Staker Contract Upgrade and Rollback")
-	testStakerUpgradeRollback()
+	testStakerUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 7. Test Gov/Governance Contract Upgrade and Rollback")
-	testGovGovernanceUpgradeRollback()
+	testGovGovernanceUpgradeRollback(cur)
 	println()
 
 	println("[SCENARIO] 8. Test Gov/Staker Contract Upgrade and Rollback")
-	testGovStakerUpgradeRollback()
+	testGovStakerUpgradeRollback(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolV1Path)
-	position.UpgradeImpl(cross, positionV1Path)
-	protocolFee.UpgradeImpl(cross, protocolFeeV1Path)
-	router.UpgradeImpl(cross, routerV1Path)
-	staker.UpgradeImpl(cross, stakerV1Path)
-	govGovernance.UpgradeImpl(cross, govGovernanceV1Path)
-	govStaker.UpgradeImpl(cross, govStakerV1Path)
+	pool.UpgradeImpl(cross(cur), poolV1Path)
+	position.UpgradeImpl(cross(cur), positionV1Path)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeV1Path)
+	router.UpgradeImpl(cross(cur), routerV1Path)
+	staker.UpgradeImpl(cross(cur), stakerV1Path)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceV1Path)
+	govStaker.UpgradeImpl(cross(cur), govStakerV1Path)
 
 	println("[INFO] All contracts initialized with v1")
 	println("[EXPECTED] All pool implementations path is: %s", poolV1Path)
@@ -118,7 +120,7 @@ func initializeV1() {
 	println("[EXPECTED] All govStaker implementations path is: %s", govStakerV1Path)
 }
 
-func testPoolUpgradeRollback() {
+func testPoolUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := pool.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -129,7 +131,7 @@ func testPoolUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolTestPath)
+	pool.UpgradeImpl(cross(cur), poolTestPath)
 	currentVersion = pool.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != poolTestPath {
@@ -139,7 +141,7 @@ func testPoolUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolV1Path)
+	pool.UpgradeImpl(cross(cur), poolV1Path)
 	currentVersion = pool.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != poolV1Path {
@@ -147,7 +149,7 @@ func testPoolUpgradeRollback() {
 	}
 }
 
-func testPositionUpgradeRollback() {
+func testPositionUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := position.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -158,7 +160,7 @@ func testPositionUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	position.UpgradeImpl(cross, positionTestPath)
+	position.UpgradeImpl(cross(cur), positionTestPath)
 	currentVersion = position.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != positionTestPath {
@@ -168,7 +170,7 @@ func testPositionUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	position.UpgradeImpl(cross, positionV1Path)
+	position.UpgradeImpl(cross(cur), positionV1Path)
 	currentVersion = position.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != positionV1Path {
@@ -176,7 +178,7 @@ func testPositionUpgradeRollback() {
 	}
 }
 
-func testProtocolFeeUpgradeRollback() {
+func testProtocolFeeUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -187,7 +189,7 @@ func testProtocolFeeUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	protocolFee.UpgradeImpl(cross, protocolFeeTestPath)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeTestPath)
 	currentVersion = protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != protocolFeeTestPath {
@@ -197,7 +199,7 @@ func testProtocolFeeUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	protocolFee.UpgradeImpl(cross, protocolFeeV1Path)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeV1Path)
 	currentVersion = protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != protocolFeeV1Path {
@@ -205,7 +207,7 @@ func testProtocolFeeUpgradeRollback() {
 	}
 }
 
-func testRouterUpgradeRollback() {
+func testRouterUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := router.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -216,7 +218,7 @@ func testRouterUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	router.UpgradeImpl(cross, routerTestPath)
+	router.UpgradeImpl(cross(cur), routerTestPath)
 	currentVersion = router.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != routerTestPath {
@@ -226,7 +228,7 @@ func testRouterUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	router.UpgradeImpl(cross, routerV1Path)
+	router.UpgradeImpl(cross(cur), routerV1Path)
 	currentVersion = router.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != routerV1Path {
@@ -234,7 +236,7 @@ func testRouterUpgradeRollback() {
 	}
 }
 
-func testStakerUpgradeRollback() {
+func testStakerUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -245,7 +247,7 @@ func testStakerUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	staker.UpgradeImpl(cross, stakerTestPath)
+	staker.UpgradeImpl(cross(cur), stakerTestPath)
 	currentVersion = staker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != stakerTestPath {
@@ -255,7 +257,7 @@ func testStakerUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	staker.UpgradeImpl(cross, stakerV1Path)
+	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	currentVersion = staker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != stakerV1Path {
@@ -263,7 +265,7 @@ func testStakerUpgradeRollback() {
 	}
 }
 
-func testGovGovernanceUpgradeRollback() {
+func testGovGovernanceUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -274,7 +276,7 @@ func testGovGovernanceUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	govGovernance.UpgradeImpl(cross, govGovernanceTestPath)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceTestPath)
 	currentVersion = govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != govGovernanceTestPath {
@@ -284,7 +286,7 @@ func testGovGovernanceUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	govGovernance.UpgradeImpl(cross, govGovernanceV1Path)
+	govGovernance.UpgradeImpl(cross(cur), govGovernanceV1Path)
 	currentVersion = govGovernance.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != govGovernanceV1Path {
@@ -292,7 +294,7 @@ func testGovGovernanceUpgradeRollback() {
 	}
 }
 
-func testGovStakerUpgradeRollback() {
+func testGovStakerUpgradeRollback(cur realm) {
 	// Check initial state
 	currentVersion := govStaker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Initial version: %s\n", currentVersion)
@@ -303,7 +305,7 @@ func testGovStakerUpgradeRollback() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	govStaker.UpgradeImpl(cross, govStakerTestPath)
+	govStaker.UpgradeImpl(cross(cur), govStakerTestPath)
 	currentVersion = govStaker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Upgraded to: %s\n", currentVersion)
 	if currentVersion != govStakerTestPath {
@@ -313,7 +315,7 @@ func testGovStakerUpgradeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back to v1")
 	testing.SetRealm(adminRealm)
-	govStaker.UpgradeImpl(cross, govStakerV1Path)
+	govStaker.UpgradeImpl(cross(cur), govStakerV1Path)
 	currentVersion = govStaker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Rolled back to: %s\n", currentVersion)
 	if currentVersion != govStakerV1Path {

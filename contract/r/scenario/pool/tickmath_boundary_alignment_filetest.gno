@@ -43,7 +43,7 @@ const (
 	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970342"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] TickMath Boundary Alignment Test")
 	println()
 
@@ -58,8 +58,8 @@ func main() {
 	tickAtMin := gnsmath.TickMathGetTickAtSqrtRatio(minSqrtRatio)
 	println("[INFO] tick_math tick:", tickAtMin)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, 500, MIN_SQRT_RATIO)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, 500, MIN_SQRT_RATIO)
 	println("[INFO] pool.CreatePool accepted")
 	println()
 
@@ -67,8 +67,8 @@ func main() {
 	tickAtMaxMinusOne := gnsmath.TickMathGetTickAtSqrtRatio(maxMinusOne)
 	println("[INFO] tick_math tick:", tickAtMaxMinusOne)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, quxPath, 3000, maxMinusOne.ToString())
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), bazPath, quxPath, 3000, maxMinusOne.ToString())
 	println("[INFO] pool.CreatePool accepted")
 	println()
 

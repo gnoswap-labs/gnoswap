@@ -59,75 +59,75 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive")
-	createExternalIncentive()
+	createExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint and stake position")
-	mintAndStakePosition()
+	mintAndStakePosition(cur)
 	println()
 
 	println("[SCENARIO] 5. First external reward collection period")
-	firstExternalRewardCollection()
+	firstExternalRewardCollection(cur)
 	println()
 
 	println("[SCENARIO] 6. Second external reward collection period")
-	secondExternalRewardCollection()
+	secondExternalRewardCollection(cur)
 	println()
 
 	println("[SCENARIO] 7. Third external reward collection with longer interval")
-	thirdExternalRewardCollectionLonger()
+	thirdExternalRewardCollectionLonger(cur)
 	println()
 
 	println("[SCENARIO] 8. Compare external reward accumulation patterns")
-	compareExternalRewardPatterns()
+	compareExternalRewardPatterns(cur)
 	println()
 
 	println("[SCENARIO] 9. Final verification with multiple external collections")
-	finalVerificationMultipleExternalCollections()
+	finalVerificationMultipleExternalCollections(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentive() {
+func createExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with bar token")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		90_000_000_000, // 90 billion bar tokens for 90 days
@@ -144,17 +144,17 @@ func createExternalIncentive() {
 	}
 }
 
-func mintAndStakePosition() {
+func mintAndStakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -173,14 +173,14 @@ func mintAndStakePosition() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 	testing.SkipHeights(1)
 }
 
-func firstExternalRewardCollection() {
+func firstExternalRewardCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 5 blocks for first external reward accumulation")
@@ -188,7 +188,7 @@ func firstExternalRewardCollection() {
 
 	println("[INFO] collect first external reward")
 	beforeBar1 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar1 := bar.BalanceOf(adminUser)
 	firstExternalReward := afterBar1 - beforeBar1
 
@@ -201,7 +201,7 @@ func firstExternalRewardCollection() {
 	println("[INFO] first external reward collection completed")
 }
 
-func secondExternalRewardCollection() {
+func secondExternalRewardCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 5 blocks for second external reward accumulation")
@@ -209,7 +209,7 @@ func secondExternalRewardCollection() {
 
 	println("[INFO] collect second external reward")
 	beforeBar2 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar2 := bar.BalanceOf(adminUser)
 	secondExternalReward := afterBar2 - beforeBar2
 
@@ -222,7 +222,7 @@ func secondExternalRewardCollection() {
 	println("[INFO] second external reward collection completed")
 }
 
-func thirdExternalRewardCollectionLonger() {
+func thirdExternalRewardCollectionLonger(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10 blocks for third external reward accumulation (longer period)")
@@ -230,7 +230,7 @@ func thirdExternalRewardCollectionLonger() {
 
 	println("[INFO] collect third external reward")
 	beforeBar3 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar3 := bar.BalanceOf(adminUser)
 	thirdExternalReward := afterBar3 - beforeBar3
 
@@ -243,7 +243,7 @@ func thirdExternalRewardCollectionLonger() {
 	println("[INFO] third external reward collection completed")
 }
 
-func compareExternalRewardPatterns() {
+func compareExternalRewardPatterns(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] analyze external reward accumulation patterns")
@@ -256,7 +256,7 @@ func compareExternalRewardPatterns() {
 	for i := 0; i < 5; i++ {
 		testing.SkipHeights(2)
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, 1)
+		sr.CollectReward(cross(cur), 1)
 		afterBar := bar.BalanceOf(adminUser)
 		rewardFromSmallExternalCollection := afterBar - beforeBar
 		totalFromFrequentExternalCollections += rewardFromSmallExternalCollection
@@ -269,7 +269,7 @@ func compareExternalRewardPatterns() {
 	println("[INFO] test pattern: single large external collection")
 	testing.SkipHeights(10)
 	beforeBarLarge := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBarLarge := bar.BalanceOf(adminUser)
 	rewardFromLargeExternalCollection := afterBarLarge - beforeBarLarge
 
@@ -286,7 +286,7 @@ func compareExternalRewardPatterns() {
 	}
 }
 
-func finalVerificationMultipleExternalCollections() {
+func finalVerificationMultipleExternalCollections(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] final verification with multiple rapid external collections")
@@ -302,19 +302,19 @@ func finalVerificationMultipleExternalCollections() {
 	println("[INFO] perform 3 consecutive external collections")
 
 	collection1Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection1After := bar.BalanceOf(adminUser)
 	externalReward1 := collection1After - collection1Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 1: %d\n", externalReward1)
 
 	collection2Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection2After := bar.BalanceOf(adminUser)
 	externalReward2 := collection2After - collection2Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 2: %d\n", externalReward2)
 
 	collection3Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection3After := bar.BalanceOf(adminUser)
 	externalReward3 := collection3After - collection3Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 3: %d\n", externalReward3)
@@ -340,7 +340,7 @@ func finalVerificationMultipleExternalCollections() {
 	println("[INFO] confirmed: external rewards accumulate over time and are collected when requested")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

@@ -54,7 +54,7 @@ const (
 // turn protocol fee on
 func init() {
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 6, 6)
+	pool.SetFeeProtocol(cross(cur), 6, 6)
 }
 
 type BalanceSnapshot struct {
@@ -66,32 +66,32 @@ type BalanceSnapshot struct {
 	protocolFeeFoo int64
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Swap Balance Validation - Single In-Range Position")
 	println("[INFO] Purpose: Validate exact balance conservation for basic in-range swaps")
 	println()
 
 	println("[SCENARIO] 1. Setup Pool with In-Range Position")
-	initial := setupPool()
-	printBalanceSnapshot("After Pool Setup", initial)
+	initial := setupPool(cur)
+	printBalanceSnapshot(cur, "After Pool Setup", initial)
 	println()
 
 	println("[SCENARIO] 2. ExactInput Swap (BAR -> FOO)")
-	afterExactIn := testExactInputSwap(initial)
-	printBalanceSnapshot("After ExactInput Swap", afterExactIn)
-	validateBalanceChange(initial, afterExactIn, "ExactInput")
+	afterExactIn := testExactInputSwap(cur, initial)
+	printBalanceSnapshot(cur, "After ExactInput Swap", afterExactIn)
+	validateBalanceChange(cur, initial, afterExactIn, "ExactInput")
 	println()
 
 	println("[SCENARIO] 3. ExactOutput Swap (FOO -> BAR)")
-	afterExactOut := testExactOutputSwap(afterExactIn)
-	printBalanceSnapshot("After ExactOutput Swap", afterExactOut)
-	validateBalanceChange(afterExactIn, afterExactOut, "ExactOutput")
+	afterExactOut := testExactOutputSwap(cur, afterExactIn)
+	printBalanceSnapshot(cur, "After ExactOutput Swap", afterExactOut)
+	validateBalanceChange(cur, afterExactIn, afterExactOut, "ExactOutput")
 	println()
 
 	println("[SCENARIO] Complete - All in-range position validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	return BalanceSnapshot{
 		userBar:        bar.BalanceOf(adminAddr),
 		userFoo:        foo.BalanceOf(adminAddr),
@@ -102,7 +102,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	}
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User BAR balance:", snapshot.userBar)
 	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
@@ -112,18 +112,18 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
 }
 
-func setupPool() BalanceSnapshot {
+func setupPool(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, "79228162514264337593543950336")
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, "79228162514264337593543950336")
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -136,10 +136,10 @@ func setupPool() BalanceSnapshot {
 	println("[INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)")
 	println("[INFO] Minted amounts - bar:", amount0, "foo:", amount1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
+func testExactInputSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(barPath, fooPath, fee500)
@@ -148,11 +148,11 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 100000 BAR -> FOO (exact input)")
 
-	bar.Approve(cross, poolAddr, 100000)
+	bar.Approve(cross(cur), poolAddr, 100000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -162,7 +162,7 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -174,10 +174,10 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Tick:", tickBefore, "->", tickAfter)
 	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
+func testExactOutputSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(barPath, fooPath, fee500)
@@ -186,11 +186,11 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping FOO -> 50000 BAR (exact output)")
 
-	foo.Approve(cross, poolAddr, 200000)
+	foo.Approve(cross(cur), poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -200,7 +200,7 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -212,10 +212,10 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Tick:", tickBefore, "->", tickAfter)
 	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
 	userBarDiff := after.userBar - before.userBar
@@ -246,14 +246,14 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

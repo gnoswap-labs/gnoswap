@@ -57,50 +57,50 @@ var (
 	positionId uint64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup pool and alice's position")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. Alice transfers NFT to Bob")
-	aliceTransfersToBob()
+	aliceTransfersToBob(cur)
 	println()
 
 	println("[SCENARIO] 3. Alice can no longer increase or decrease liquidity")
-	aliceLosesRights()
+	aliceLosesRights(cur)
 	println()
 
 	println("[SCENARIO] 4. Bob can increase liquidity on the inherited position")
-	bobIncreases()
+	bobIncreases(cur)
 	println()
 
 	println("[SCENARIO] 5. Bob can decrease liquidity on the inherited position")
-	bobDecreases()
+	bobDecreases(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	pool.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, aliceAddr, int64(100000000))
-	foo.Transfer(cross, aliceAddr, int64(100000000))
-	bar.Transfer(cross, bobAddr, int64(100000000))
-	foo.Transfer(cross, bobAddr, int64(100000000))
+	bar.Transfer(cross(cur), aliceAddr, int64(100000000))
+	foo.Transfer(cross(cur), aliceAddr, int64(100000000))
+	bar.Transfer(cross(cur), bobAddr, int64(100000000))
+	foo.Transfer(cross(cur), bobAddr, int64(100000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	id, liquidity, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		-6960, 6960,
 		"10000000", "10000000",
@@ -113,15 +113,15 @@ func setup() {
 	println("[EXPECTED] Initial liquidity:", liquidity)
 }
 
-func aliceTransfersToBob() {
+func aliceTransfersToBob(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gnft.TransferFrom(cross, aliceAddr, bobAddr, tokenIdOf(positionId))
+	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId))
 
-	owner := gnft.MustOwnerOf(tokenIdOf(positionId))
+	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after transfer is bob:", owner == bobAddr)
 }
 
-func aliceLosesRights() {
+func aliceLosesRights(cur realm) {
 	// Alice retained her token approvals to the pool but no longer owns the
 	// position NFT. Both IncreaseLiquidity and DecreaseLiquidity must reject
 	// her on the ownership check before any token movement.
@@ -129,10 +129,11 @@ func aliceLosesRights() {
 
 	uassert.AbortsContains(
 		t,
+		cur,
 		"caller has no permission",
 		func() {
 			position.IncreaseLiquidity(
-				cross,
+				cross(cur),
 				positionId,
 				"1000000", "1000000",
 				"0", "0",
@@ -144,10 +145,11 @@ func aliceLosesRights() {
 
 	uassert.AbortsContains(
 		t,
+		cur,
 		"caller has no permission",
 		func() {
 			position.DecreaseLiquidity(
-				cross,
+				cross(cur),
 				positionId,
 				"1000000",
 				"0", "0",
@@ -158,14 +160,14 @@ func aliceLosesRights() {
 	println("[EXPECTED] Alice's DecreaseLiquidity blocked")
 }
 
-func bobIncreases() {
+func bobIncreases(cur realm) {
 	testing.SetRealm(bobRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	liquidityBefore := position.GetPositionLiquidity(positionId)
 	_, liquidityAdded, _, _, _ := position.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"5000000", "5000000",
 		"0", "0",
@@ -178,12 +180,12 @@ func bobIncreases() {
 	println("[EXPECTED] Liquidity after:", liquidityAfter)
 }
 
-func bobDecreases() {
+func bobDecreases(cur realm) {
 	testing.SetRealm(bobRealm)
 
 	liquidityBefore := position.GetPositionLiquidity(positionId)
 	_, liquidityRemoved, _, _, _, _, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"1000000",
 		"0", "0",
@@ -196,7 +198,7 @@ func bobDecreases() {
 	println("[EXPECTED] Liquidity after:", liquidityAfter)
 }
 
-func tokenIdOf(id uint64) grc721.TokenID {
+func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
 }
 

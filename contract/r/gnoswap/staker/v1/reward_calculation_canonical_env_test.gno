@@ -595,7 +595,7 @@ func (self *canonicalRewardState) MoveTick(cur realm, t *testing.T, poolPath str
 			// persisted (the canonicalPool/canonicalRewardState structs are
 			// persisted, and that fails finalization with "cannot persist realm
 			// value"). cur is threaded in from MoveTick's caller at call time.
-			getMockInstance().tickCrossHook(cross(cur), pool.poolPath, i, zeroForOne, self.CurrentTime())
+			getMockInstance().tickCrossHook(0, cur, pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	} else {
 		// forward
@@ -607,7 +607,7 @@ func (self *canonicalRewardState) MoveTick(cur realm, t *testing.T, poolPath str
 
 			// update global state (see comment in the backward branch above for
 			// why this crossing method is invoked inline with cross(cur)).
-			getMockInstance().tickCrossHook(cross(cur), pool.poolPath, i, zeroForOne, self.CurrentTime())
+			getMockInstance().tickCrossHook(0, cur, pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	}
 

@@ -13,7 +13,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -45,43 +44,43 @@ var (
 	maxInt64 int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 	println()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (WUGNOT:GNS:500)")
-	createPool(wugnotPath, gnsPath, 500, 0)
+	createPool(cur, wugnotPath, gnsPath, 500, 0)
 
-	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
+	mintPosition(cur, wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 	println("[SCENARIO] 3. First User Swap with Referrer (should register referrer)")
 
 	user1Addr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
 
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.IssueCoins(user1Addr, chain.Coins{{"ugnot", 100000000}})
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 
 	testing.SetOriginSend(chain.Coins{})
-	setupUser(user1Addr)
+	setupUser(cur, user1Addr)
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	beforeReferral := referral.GetReferral(user1Addr.String())
 	ufmt.Printf("[INFO] User1 referral before swap: '%s'\n", beforeReferral)
 
-	swapWithReferrer(user1Addr, referrerAddr.String())
+	swapWithReferrer(cur, user1Addr, referrerAddr.String())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	afterReferral := referral.GetReferral(user1Addr.String())
@@ -89,7 +88,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)")
-	swapWithReferrer(user1Addr, referral.ContractAddress())
+	swapWithReferrer(cur, user1Addr, referral.ContractAddress())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	stillReferral := referral.GetReferral(user1Addr.String())
@@ -99,7 +98,7 @@ func main() {
 	println("[SCENARIO] 5. Register Referrer Again and Swap with Different Referrer")
 
 	// Register referrer again
-	swapWithReferrer(user1Addr, referrerAddr.String())
+	swapWithReferrer(cur, user1Addr, referrerAddr.String())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	reRegisteredReferral := referral.GetReferral(user1Addr.String())
@@ -107,7 +106,7 @@ func main() {
 
 	// Try to change to different referrer (should fail due to rate limit)
 	differentReferrer := testutils.TestAddress("referrer2")
-	swapWithReferrer(user1Addr, differentReferrer.String())
+	swapWithReferrer(cur, user1Addr, differentReferrer.String())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	unchangedReferral := referral.GetReferral(user1Addr.String())
@@ -118,21 +117,21 @@ func main() {
 	user2Addr := testutils.TestAddress("user2")
 	referrer2Addr := testutils.TestAddress("referrer3")
 
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.IssueCoins(user2Addr, chain.Coins{{"ugnot", 100000000}})
 	testing.SetRealm(testing.NewUserRealm(user2Addr))
 
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 
 	testing.SetOriginSend(chain.Coins{})
-	setupUser(user2Addr)
+	setupUser(cur, user2Addr)
 
 	testing.SetRealm(testing.NewUserRealm(user2Addr))
 	beforeUser2Referral := referral.GetReferral(user2Addr.String())
 	ufmt.Printf("[INFO] User2 referral before swap: '%s'\n", beforeUser2Referral)
 
-	swapWithReferrer(user2Addr, referrer2Addr.String())
+	swapWithReferrer(cur, user2Addr, referrer2Addr.String())
 
 	testing.SetRealm(testing.NewUserRealm(user2Addr))
 	afterUser2Referral := referral.GetReferral(user2Addr.String())
@@ -153,7 +152,7 @@ func main() {
 	beforeSkipReferral := referral.GetReferral(user1Addr.String())
 	ufmt.Printf("[INFO] User1 referral before re-registration: '%s'\n", beforeSkipReferral)
 
-	swapWithReferrer(user1Addr, newReferrerAddr.String())
+	swapWithReferrer(cur, user1Addr, newReferrerAddr.String())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	afterSkipReferral := referral.GetReferral(user1Addr.String())
@@ -161,35 +160,35 @@ func main() {
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 
-	gns.Approve(cross, poolAddr, maxInt64)
-	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
 
-	gns.Approve(cross, routerAddr, maxInt64)
-	wugnot.Approve(cross, routerAddr, maxInt64)
+	gns.Approve(cross(cur), routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
 }
 
-func setupUser(userAddr address) {
-	// Approve router (Deposit and IssueCoins done in main())
+func setupUser(cur realm, userAddr address) {
+	// Approve router (Deposit and IssueCoins done in main(cur))
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-	wugnot.Approve(cross, routerAddr, maxInt64)
-	gns.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
+	gns.Approve(cross(cur), routerAddr, maxInt64)
 
 	ufmt.Printf("[INFO] User %s setup complete - WUGNOT: %d\n", userAddr.String(), wugnot.BalanceOf(userAddr))
 }
 
-func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
+func createPool(cur realm, token0Path string, token1Path string, fee uint32, startTick int32) {
 	testing.SetRealm(adminRealm)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -199,14 +198,14 @@ func createPool(token0Path string, token1Path string, fee uint32, startTick int3
 	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)
 }
 
-func mintPosition(token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string) {
+func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
 
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -227,7 +226,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	ufmt.Printf("[EXPECTED] amount1: %s\n", amount1)
 }
 
-func swapWithReferrer(userAddr address, referrer string) {
+func swapWithReferrer(cur realm, userAddr address, referrer string) {
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 
 	ufmt.Printf("[INFO] Swapping with referrer: '%s'\n", referrer)
@@ -237,7 +236,7 @@ func swapWithReferrer(userAddr address, referrer string) {
 
 	testing.SetOriginSend(chain.Coins{})
 	inputAmount, outputAmount := router.ExactInSingleSwapRoute(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		"1000000",

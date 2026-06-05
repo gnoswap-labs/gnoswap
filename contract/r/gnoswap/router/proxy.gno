@@ -92,13 +92,14 @@ func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, a
 //   - string: estimated output amount
 //   - bool: success status
 func DrySwapRoute(
+	cur realm,
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
 ) (string, string, bool) {
-	return getImplementation().DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
+	return getImplementation().DrySwapRoute(0, cur, inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
 // SwapCallback is called by pools to transfer tokens during a swap.

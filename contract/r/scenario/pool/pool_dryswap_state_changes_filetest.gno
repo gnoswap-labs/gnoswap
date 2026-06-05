@@ -60,37 +60,37 @@ var (
 // DrySwap Test - ZeroForOne True with Positive Amount Specified
 // Testing DrySwap functionality with zeroForOne=true and amountSpecified=16000
 // Expected behavior: Calculate swap amounts without executing the actual swap
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create pool and mint position")
-	createPoolAndMintPosition(t)
+	createPoolAndMintPosition(cur, t)
 	println()
 
 	println("[SCENARIO] 2. DrySwap Test - ZeroForOne True with Positive Amount Specified")
-	printChanges(poolPath, func() {
-		drySwap(t, true, "30000000000")
+	printChanges(cur, poolPath, func() {
+		drySwap(cur, t, true, "30000000000")
 	})
 	println()
 
 	println("[SCENARIO] 3. DrySwap With Cross Test - ZeroForOne True with Positive Amount Specified")
-	printChanges(poolPath, func() {
-		drySwapWithCross(t, true, "30000000000")
+	printChanges(cur, poolPath, func() {
+		drySwapWithCross(cur, t, true, "30000000000")
 	})
 	println()
 
 	println("[SCENARIO] 4. Swap Test - ZeroForOne True with Positive Amount Specified")
-	printChanges(poolPath, func() {
-		swap(t, true, "30000000000")
+	printChanges(cur, poolPath, func() {
+		swap(cur, t, true, "30000000000")
 	})
 }
 
-func createPoolAndMintPosition(t *testing.T) {
+func createPoolAndMintPosition(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Creating pool")
 
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -104,8 +104,8 @@ func createPoolAndMintPosition(t *testing.T) {
 	println("[EXPECTED] Tick range:", tickLower, "to", tickUpper)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	println()
 	println("[INFO] Minting position")
@@ -113,7 +113,7 @@ func createPoolAndMintPosition(t *testing.T) {
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -128,7 +128,7 @@ func createPoolAndMintPosition(t *testing.T) {
 	println("[EXPECTED] Position minted successfully")
 
 	pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -140,7 +140,7 @@ func createPoolAndMintPosition(t *testing.T) {
 }
 
 // drySwap tests DrySwap with zeroForOne=true and positive amountSpecified
-func drySwap(t *testing.T, zeroForOne bool, amountSpecified string) {
+func drySwap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 	// When: Perform DrySwap with zeroForOne=true and positive amountSpecified
 	println("[INFO] Performing DrySwap with zeroForOne=true")
 	println("[INFO] Amount specified:", amountSpecified)
@@ -158,8 +158,8 @@ func drySwap(t *testing.T, zeroForOne bool, amountSpecified string) {
 	println("[EXPECTED] Actual pool output amount:", poolOut)
 }
 
-// drySwapWithCross tests DrySwap with zeroForOne=true and positive amountSpecified with cross
-func drySwapWithCross(t *testing.T, zeroForOne bool, amountSpecified string) {
+// drySwapWithCross tests DrySwap with zeroForOne=true and positive amountSpecified with cross(cur)
+func drySwapWithCross(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 	// When: Perform DrySwap with zeroForOne=true and positive amountSpecified
 	println("[INFO] Performing DrySwap with zeroForOne=true")
 	println("[INFO] Amount specified:", amountSpecified)
@@ -175,14 +175,14 @@ func drySwapWithCross(t *testing.T, zeroForOne bool, amountSpecified string) {
 			amountSpecified,
 			MIN_PRICE,
 		)
-	}(cross)
+	}(cross(cur))
 
 	println("[EXPECTED] Actual pool input amount:", poolIn)
 	println("[EXPECTED] Actual pool output amount:", poolOut)
 }
 
 // swap tests Swap with zeroForOne=true and positive amountSpecified
-func swap(t *testing.T, zeroForOne bool, amountSpecified string) {
+func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 	println("[INFO] Performing Swap with zeroForOne=true")
 	println("[INFO] Amount specified:", amountSpecified)
 
@@ -196,14 +196,14 @@ func swap(t *testing.T, zeroForOne bool, amountSpecified string) {
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
+				common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
+				common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
 			}
-		}(cross)
+		}(cross(cur))
 
 		return nil
 	}
@@ -213,7 +213,7 @@ func swap(t *testing.T, zeroForOne bool, amountSpecified string) {
 
 		testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
 		poolIn, poolOut = pool.Swap(
-			cross,
+			cross(cur),
 			barPath,
 			fooPath,
 			FeeTier500,
@@ -224,13 +224,13 @@ func swap(t *testing.T, zeroForOne bool, amountSpecified string) {
 			adminAddr,
 			swapCallback,
 		)
-	}(cross)
+	}(cross(cur))
 
 	println("[EXPECTED] Actual pool input amount:", poolIn)
 	println("[EXPECTED] Actual pool output amount:", poolOut)
 }
 
-func printChanges(poolPath string, fn func()) {
+func printChanges(cur realm, poolPath string, fn func()) {
 	previousTick := pool.GetSlot0Tick(poolPath)
 	previousBalance0, previousBalance1 := pool.GetBalances(poolPath)
 	previousFeeGrowthGlobal0X128, previousFeeGrowthGlobal1X128 := pool.GetFeeGrowthGlobalX128(poolPath)

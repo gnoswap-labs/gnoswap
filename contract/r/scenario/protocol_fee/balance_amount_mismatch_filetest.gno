@@ -30,77 +30,77 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveBarFromStaker(amount int64) {
+func fundAndApproveBarFromStaker(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerRealm.Address(), amount)
+	bar.Transfer(cross(cur), stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	bar.Approve(cross(cur), protocolFeeAddr, amount)
+	bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing protocol fee distribution with balance/amount mismatches")
 	println()
 
 	println("[TEST CASE 1] Exact match - balance equals recorded amount")
-	testExactMatch()
+	testExactMatch(cur)
 	println()
 
 	println("[TEST CASE 2] External transfer - balance exceeds recorded amount")
-	testExternalTransfer()
+	testExternalTransfer(cur)
 	println()
 
 	println("[TEST CASE 3] Multiple external transfers - only recorded amount distributed")
-	testMultipleExternalTransfers()
+	testMultipleExternalTransfers(cur)
 	println()
 
 	println("[TEST CASE 4] Zero recorded amount with external balance")
-	testZeroRecordedAmount()
+	testZeroRecordedAmount(cur)
 	println()
 
 	println("[TEST CASE 5] 100% to DevOps with external transfer")
-	test100PercentToDevOps()
+	test100PercentToDevOps(cur)
 	println()
 }
 
-func prepareRecordedProtocolFee(amount int64) {
-	fundAndApproveBarFromStaker(amount)
+func prepareRecordedProtocolFee(cur realm, amount int64) {
+	fundAndApproveBarFromStaker(cur, amount)
 	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", amount)
 }
 
-func testExactMatch() {
-	resetBalances()
+func testExactMatch(cur realm) {
+	resetBalances(cur)
 
 	println("[INFO] Setting DevOps percentage to 20%")
 	testing.SetRealm(adminRealm)
-	pf.SetDevOpsPct(cross, 2000)
+	pf.SetDevOpsPct(cross(cur), 2000)
 
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	println("[INFO] Distributing protocol fees")
 	testing.SetRealm(govStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] After distribution - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func testExternalTransfer() {
-	resetBalances()
+func testExternalTransfer(cur realm) {
+	resetBalances(cur)
 
 	println("[INFO] Setting DevOps percentage to 20%")
 	testing.SetRealm(adminRealm)
-	pf.SetDevOpsPct(cross, 2000)
+	pf.SetDevOpsPct(cross(cur), 2000)
 
 	println("[INFO] Admin transfers 1000 bar tokens to staker for recording")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] External user sends additional 500 bar tokens")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 500)
+	bar.Transfer(cross(cur), protocolFeeAddr, 500)
 
 	println("[INFO] Recording only 1000 bar protocol fee (not including external 500)")
 
@@ -108,27 +108,27 @@ func testExternalTransfer() {
 
 	println("[INFO] Distributing protocol fees (only recorded 1000 should be distributed)")
 	testing.SetRealm(govStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] After distribution - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 	println("[EXPECTED] External 500 tokens remain in protocol_fee")
 }
 
-func testMultipleExternalTransfers() {
-	resetBalances()
+func testMultipleExternalTransfers(cur realm) {
+	resetBalances(cur)
 
 	println("[INFO] Setting DevOps percentage to 10%")
 	testing.SetRealm(adminRealm)
-	pf.SetDevOpsPct(cross, 1000)
+	pf.SetDevOpsPct(cross(cur), 1000)
 
 	println("[INFO] Admin transfers 100 bar tokens to staker for recording")
-	prepareRecordedProtocolFee(100)
+	prepareRecordedProtocolFee(cur, 100)
 
 	println("[INFO] Multiple external transfers: 200 + 300 + 400 = 900 bar tokens")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 200)
-	bar.Transfer(cross, protocolFeeAddr, 300)
-	bar.Transfer(cross, protocolFeeAddr, 400)
+	bar.Transfer(cross(cur), protocolFeeAddr, 200)
+	bar.Transfer(cross(cur), protocolFeeAddr, 300)
+	bar.Transfer(cross(cur), protocolFeeAddr, 400)
 
 	println("[INFO] Recording only 100 bar protocol fee")
 
@@ -136,22 +136,22 @@ func testMultipleExternalTransfers() {
 
 	println("[INFO] Distributing protocol fees")
 	testing.SetRealm(govStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] After distribution - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 	println("[EXPECTED] 900 external tokens remain in protocol_fee")
 }
 
-func testZeroRecordedAmount() {
-	resetBalances()
+func testZeroRecordedAmount(cur realm) {
+	resetBalances(cur)
 
 	println("[INFO] Setting DevOps percentage to 50%")
 	testing.SetRealm(adminRealm)
-	pf.SetDevOpsPct(cross, 5000)
+	pf.SetDevOpsPct(cross(cur), 5000)
 
 	println("[INFO] External user transfers 1000 bar tokens to protocol_fee")
 	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	bar.Transfer(cross(cur), protocolFeeAddr, 1000)
 
 	println("[INFO] No amount recorded in protocol fee (0 recorded)")
 
@@ -159,25 +159,25 @@ func testZeroRecordedAmount() {
 
 	println("[INFO] Distributing protocol fees")
 	testing.SetRealm(govStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] After distribution - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 	println("[EXPECTED] Nothing distributed as recorded amount is 0")
 }
 
-func test100PercentToDevOps() {
-	resetBalances()
+func test100PercentToDevOps(cur realm) {
+	resetBalances(cur)
 
 	println("[INFO] Setting DevOps percentage to 100%")
 	testing.SetRealm(adminRealm)
-	pf.SetDevOpsPct(cross, 10000)
+	pf.SetDevOpsPct(cross(cur), 10000)
 
 	println("[INFO] Admin transfers 800 bar tokens to staker for recording")
-	prepareRecordedProtocolFee(800)
+	prepareRecordedProtocolFee(cur, 800)
 
 	println("[INFO] External transfer of 200 bar tokens")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 200)
+	bar.Transfer(cross(cur), protocolFeeAddr, 200)
 
 	println("[INFO] Recording 800 bar protocol fee")
 
@@ -185,24 +185,24 @@ func test100PercentToDevOps() {
 
 	println("[INFO] Distributing protocol fees")
 	testing.SetRealm(govStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] After distribution - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 	println("[EXPECTED] All recorded amount (800) goes to DevOps, 200 external tokens remain")
 }
 
-func resetBalances() {
+func resetBalances(cur realm) {
 	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 	}
 	if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(devOpsAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 	}
 	if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(govStakerAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 	}
 
 	testing.SetRealm(adminRealm)

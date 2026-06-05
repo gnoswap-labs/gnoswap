@@ -227,6 +227,8 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			amountIn, amountOut, success := router.DrySwapRoute(
+				0,
+				cur,
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
@@ -343,6 +345,8 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			amountIn, amountOut, success := router.DrySwapRoute(
+				0,
+				cur,
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
@@ -681,6 +685,8 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
 					router.DrySwapRoute(
+					0,
+					cur,
 						tt.swapParams.inputToken,
 						tt.swapParams.outputToken,
 						tt.swapParams.specifiedAmount,
@@ -692,6 +698,8 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 				})
 			} else {
 				amountIn, amountOut, success := router.DrySwapRoute(
+				0,
+				cur,
 					tt.swapParams.inputToken,
 					tt.swapParams.outputToken,
 					tt.swapParams.specifiedAmount,
@@ -855,6 +863,8 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 			if tt.expectPanic {
 				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
 					router.DrySwapRoute(
+					0,
+					cur,
 						tt.swapParams.inputToken,
 						tt.swapParams.outputToken,
 						tt.swapParams.specifiedAmount,
@@ -866,6 +876,8 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				})
 			} else {
 				amountIn, amountOut, success := router.DrySwapRoute(
+				0,
+				cur,
 					tt.swapParams.inputToken,
 					tt.swapParams.outputToken,
 					tt.swapParams.specifiedAmount,
@@ -933,6 +945,8 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			amountIn, amountOut, success := router.DrySwapRoute(
+				0,
+				cur,
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,

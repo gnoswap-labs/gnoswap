@@ -15,7 +15,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -58,68 +57,68 @@ var (
 	maxInt64   int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize with default settings")
-	initializeWithDefaults()
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	initializeWithDefaults(cur)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 	println()
 
 	println("[SCENARIO] 2. Create ugnot:gns:3000 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint and stake position 01")
-	mintAndStakePosition01()
+	mintAndStakePosition01(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint and stake position 02")
-	mintAndStakePosition02()
+	mintAndStakePosition02(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards for both positions")
-	collectRewardsBothPositions()
+	collectRewardsBothPositions(cur)
 	println()
 
 	println("[SCENARIO] 6. Unstake position 02")
-	unstakePosition02()
+	unstakePosition02(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect rewards after unstaking")
-	collectRewardsAfterUnstaking()
+	collectRewardsAfterUnstaking(cur)
 }
 
-func initializeWithDefaults() {
+func initializeWithDefaults(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] prepare wugnot by depositing ugnot")
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	// Deposit is done in main()
+	// Deposit is done in main(cur)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] create wugnot:gns:3000 pool")
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -129,18 +128,18 @@ func createPool() {
 	ufmt.Printf("[EXPECTED] pool created with price ratio 1:1\n")
 }
 
-func mintAndStakePosition01() {
+func mintAndStakePosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 01 (tick range: -60 ~ 60)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -159,24 +158,24 @@ func mintAndStakePosition01() {
 	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	ufmt.Printf("[EXPECTED] position 01 staked\n")
 }
 
-func mintAndStakePosition02() {
+func mintAndStakePosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 02 (tick range: -60 ~ 60)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -195,56 +194,56 @@ func mintAndStakePosition02() {
 	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 	testing.SkipHeights(1)
 
 	ufmt.Printf("[EXPECTED] position 02 staked\n")
 }
 
-func collectRewardsBothPositions() {
+func collectRewardsBothPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] clear any accumulated rewards first")
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for position 01")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward1 := afterGns - beforeGns
 
 	ufmt.Printf("[EXPECTED] position 01 reward: %d\n", reward1)
 
 	// Expected calculation: 10702054 * 50% * 30% = 1605307
-	if !isInErrorRange(uint64(reward1), 1605307) {
+	if !isInErrorRange(cur, uint64(reward1), 1605307) {
 		ufmt.Printf("[WARNING] expected around 1605307, got %d\n", reward1)
 	}
 
 	println("[INFO] collect reward for position 02")
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterGns = gns.BalanceOf(adminUser)
 	reward2 := afterGns - beforeGns
 
 	ufmt.Printf("[EXPECTED] position 02 reward: %d\n", reward2)
 
 	// Both positions should get equal rewards as they have same liquidity
-	if !isInErrorRange(uint64(reward2), 1605307) {
+	if !isInErrorRange(cur, uint64(reward2), 1605307) {
 		ufmt.Printf("[WARNING] expected around 1605307, got %d\n", reward2)
 	}
 }
 
-func unstakePosition02() {
+func unstakePosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 02")
-	sr.UnStakeToken(cross, 2)
+	sr.UnStakeToken(cross(cur), 2)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(2))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
 	if owner != adminAddr {
@@ -252,27 +251,27 @@ func unstakePosition02() {
 	}
 }
 
-func collectRewardsAfterUnstaking() {
+func collectRewardsAfterUnstaking(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect reward for position 01 after position 02 unstaked")
 	beforeGns := gns.BalanceOf(adminUser)
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 
 	ufmt.Printf("[EXPECTED] position 01 reward after unstaking pos 02: %d\n", reward)
 
 	// Now position 01 should get full reward: 10702054 * 30% = 3210615
-	if !isInErrorRange(uint64(reward), 3210615) {
+	if !isInErrorRange(cur, uint64(reward), 3210615) {
 		ufmt.Printf("[WARNING] expected around 3210615, got %d\n", reward)
 	}
 
 	println("[INFO] position 01 now receives full rewards since position 02 is unstaked")
 }
 
-func isInErrorRange(actual, expected uint64) bool {
+func isInErrorRange(cur realm, actual, expected uint64) bool {
 	diff := uint64(0)
 	if actual > expected {
 		diff = actual - expected
@@ -289,7 +288,7 @@ func isInErrorRange(actual, expected uint64) bool {
 	return diff <= errorMargin
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

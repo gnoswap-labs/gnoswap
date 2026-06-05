@@ -13,7 +13,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -52,58 +51,58 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Fee Tier 100 (0.01%) - Tick Spacing 1")
-	testFeeTier100()
+	testFeeTier100(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Fee Tier 500 (0.05%) - Tick Spacing 10")
-	testFeeTier500()
+	testFeeTier500(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Fee Tier 3000 (0.3%) - Tick Spacing 60")
-	testFeeTier3000()
+	testFeeTier3000(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Fee Tier 10000 (1%) - Tick Spacing 200")
-	testFeeTier10000()
+	testFeeTier10000(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Setup tokens for all test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
-	foo.Transfer(cross, aliceAddr, testAmount)
-	qux.Transfer(cross, aliceAddr, testAmount)
+	bar.Transfer(cross(cur), aliceAddr, testAmount)
+	baz.Transfer(cross(cur), aliceAddr, testAmount)
+	foo.Transfer(cross(cur), aliceAddr, testAmount)
+	qux.Transfer(cross(cur), aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	foo.Approve(cross, poolAddr, testAmount)
-	qux.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
-	foo.Approve(cross, positionAddr, testAmount)
-	qux.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	foo.Approve(cross(cur), poolAddr, testAmount)
+	qux.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
+	foo.Approve(cross(cur), positionAddr, testAmount)
+	qux.Approve(cross(cur), positionAddr, testAmount)
 
 	println("[INFO] Test setup completed with all tokens")
 }
 
-func testFeeTier100() {
+func testFeeTier100(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with fee tier 100 (0.01%)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -118,7 +117,7 @@ func testFeeTier100() {
 	// Test 1: Full range position (min to max)
 	println("[TEST] Full range position (-887272 to 887272)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		-887272, 887272,
 		"1000000000", "1000000000",
@@ -132,7 +131,7 @@ func testFeeTier100() {
 	// Test 2: Single tick at minimum boundary
 	println("[TEST] Single tick at MIN boundary (-887272 to -887271)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		-887272, -887271,
 		"1000000", "1000000",
@@ -146,7 +145,7 @@ func testFeeTier100() {
 	// Test 3: Single tick at maximum boundary
 	println("[TEST] Single tick at MAX boundary (887271 to 887272)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		887271, 887272,
 		"1000000", "1000000",
@@ -158,12 +157,12 @@ func testFeeTier100() {
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
-func testFeeTier500() {
+func testFeeTier500(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with fee tier 500 (0.05%)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		500,
@@ -178,7 +177,7 @@ func testFeeTier500() {
 	// Test 1: Full range position
 	println("[TEST] Full range position (-887270 to 887270)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, fooPath, 500,
 		-887270, 887270,
 		"1000000000", "1000000000",
@@ -192,7 +191,7 @@ func testFeeTier500() {
 	// Test 2: Single tick spacing at minimum
 	println("[TEST] Single tick spacing at MIN (-887270 to -887260)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, fooPath, 500,
 		-887270, -887260,
 		"1000000", "1000000",
@@ -206,7 +205,7 @@ func testFeeTier500() {
 	// Test 3: Single tick spacing at maximum
 	println("[TEST] Single tick spacing at MAX (887260 to 887270)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, fooPath, 500,
 		887260, 887270,
 		"1000000", "1000000",
@@ -218,12 +217,12 @@ func testFeeTier500() {
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
-func testFeeTier3000() {
+func testFeeTier3000(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with fee tier 3000 (0.3%)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		bazPath,
 		fooPath,
 		3000,
@@ -238,7 +237,7 @@ func testFeeTier3000() {
 	// Test 1: Full range position
 	println("[TEST] Full range position (-887220 to 887220)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		bazPath, fooPath, 3000,
 		-887220, 887220,
 		"1000000000", "1000000000",
@@ -252,7 +251,7 @@ func testFeeTier3000() {
 	// Test 2: Single tick spacing at minimum
 	println("[TEST] Single tick spacing at MIN (-887220 to -887160)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		bazPath, fooPath, 3000,
 		-887220, -887160,
 		"1000000", "1000000",
@@ -266,7 +265,7 @@ func testFeeTier3000() {
 	// Test 3: Single tick spacing at maximum
 	println("[TEST] Single tick spacing at MAX (887160 to 887220)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
-		cross,
+		cross(cur),
 		bazPath, fooPath, 3000,
 		887160, 887220,
 		"1000000", "1000000",
@@ -278,12 +277,12 @@ func testFeeTier3000() {
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
-func testFeeTier10000() {
+func testFeeTier10000(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with fee tier 10000 (1%)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		fooPath,
 		quxPath,
 		10000,
@@ -298,7 +297,7 @@ func testFeeTier10000() {
 	// Test 1: Full range position
 	println("[TEST] Full range position (-887200 to 887200)")
 	posId1, liq1, amt0_1, amt1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath, quxPath, 10000,
 		-887200, 887200,
 		"1000000000", "1000000000",
@@ -312,7 +311,7 @@ func testFeeTier10000() {
 	// Test 2: Single tick spacing at minimum
 	println("[TEST] Single tick spacing at MIN (-887200 to -887000)")
 	posId2, liq2, amt0_2, amt1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath, quxPath, 10000,
 		-887200, -887000,
 		"1000000", "1000000",
@@ -326,7 +325,7 @@ func testFeeTier10000() {
 	// Test 3: Single tick spacing at maximum
 	println("[TEST] Single tick spacing at MAX (887000 to 887200)")
 	posId3, liq3, amt0_3, amt1_3 := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath, quxPath, 10000,
 		887000, 887200,
 		"1000000", "1000000",
@@ -342,7 +341,7 @@ func testFeeTier10000() {
 	// So we'll test a valid tick spacing at the boundary instead
 	println("[TEST] Valid tick spacing at boundary (887000 divisible by 200)")
 	posId4, liq4, amt0_4, amt1_4 := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath, quxPath, 10000,
 		887000, 887200, // Both divisible by 200
 		"1000000", "1000000",

@@ -12,8 +12,8 @@ func NewV3ValidGovernance(store governance.IGovernanceStore, stakerAccessor gove
 	}
 }
 
-func init() {
-	governance.RegisterInitializer(cross, func(store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+func init(cur realm) {
+	governance.RegisterInitializer(cross(cur), func(_ int, rlm realm, store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
 		return NewV3ValidGovernance(store, stakerAccessor)
 	})
 }
@@ -24,32 +24,32 @@ type TestGovernance struct {
 }
 
 // IGovernanceManager interface
-func (t *TestGovernance) ProposeText(title string, description string) int64 {
-	return t.instance.ProposeText(title, description)
+func (t *TestGovernance) ProposeText(_ int, rlm realm, title string, description string) int64 {
+	return t.instance.ProposeText(0, rlm, title, description)
 }
 
-func (t *TestGovernance) ProposeCommunityPoolSpend(title string, description string, to address, tokenPath string, amount int64) int64 {
-	return t.instance.ProposeCommunityPoolSpend(title, description, to, tokenPath, amount)
+func (t *TestGovernance) ProposeCommunityPoolSpend(_ int, rlm realm, title string, description string, to address, tokenPath string, amount int64) int64 {
+	return t.instance.ProposeCommunityPoolSpend(0, rlm, title, description, to, tokenPath, amount)
 }
 
-func (t *TestGovernance) ProposeParameterChange(title string, description string, numToExecute int64, executions string) int64 {
-	return t.instance.ProposeParameterChange(title, description, numToExecute, executions)
+func (t *TestGovernance) ProposeParameterChange(_ int, rlm realm, title string, description string, numToExecute int64, executions string) int64 {
+	return t.instance.ProposeParameterChange(0, rlm, title, description, numToExecute, executions)
 }
 
-func (t *TestGovernance) Vote(proposalId int64, yes bool) string {
-	return t.instance.Vote(proposalId, yes)
+func (t *TestGovernance) Vote(_ int, rlm realm, proposalId int64, yes bool) string {
+	return t.instance.Vote(0, rlm, proposalId, yes)
 }
 
-func (t *TestGovernance) Execute(proposalId int64) int64 {
-	return t.instance.Execute(proposalId)
+func (t *TestGovernance) Execute(_ int, rlm realm, proposalId int64) int64 {
+	return t.instance.Execute(0, rlm, proposalId)
 }
 
-func (t *TestGovernance) Cancel(proposalId int64) int64 {
-	return t.instance.Cancel(proposalId)
+func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
+	return t.instance.Cancel(0, rlm, proposalId)
 }
 
-func (t *TestGovernance) Reconfigure(votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {
-	return t.instance.Reconfigure(votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
+func (t *TestGovernance) Reconfigure(_ int, rlm realm, votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {
+	return t.instance.Reconfigure(0, rlm, votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
 }
 
 // IGovernanceGetter interface - Store data getters

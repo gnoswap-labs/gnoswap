@@ -3,7 +3,6 @@ package v1
 import (
 	"strings"
 
-	"chain/runtime/unsafe"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -28,9 +27,7 @@ const (
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
-	// payer identifies the user for dry-run simulations. It is resolved once at
-	// the entry point via unsafe.PreviousRealm since dry-run paths are
-	// read-only and carry no realm value to thread.
+	// payer identifies the user for dry-run simulations.
 	payer address
 }
 
@@ -168,6 +165,8 @@ func (p *SwapProcessor) AddSwapResults(
 //
 // Note: Does not validate deadline or execute actual transfers.
 func (r *routerV1) DrySwapRoute(
+	_ int,
+	rlm realm,
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
@@ -175,6 +174,7 @@ func (r *routerV1) DrySwapRoute(
 	tokenAmountLimit string,
 ) (string, string, bool) {
 	inputAmount, outputAmount, success := r.drySwapRoute(
+		rlm.Previous().Address(),
 		inputToken,
 		outputToken,
 		safeParseInt64(specifiedAmount),
@@ -189,6 +189,7 @@ func (r *routerV1) DrySwapRoute(
 
 // drySwapRoute is a function for applying cross realm.
 func (r *routerV1) drySwapRoute(
+	payer address,
 	inputToken, outputToken string,
 	specifiedAmount int64,
 	swapTypeStr string,
@@ -198,7 +199,7 @@ func (r *routerV1) drySwapRoute(
 	common.MustRegistered(inputToken, outputToken)
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}
+	processor := &SwapProcessor{router: r, payer: payer}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)

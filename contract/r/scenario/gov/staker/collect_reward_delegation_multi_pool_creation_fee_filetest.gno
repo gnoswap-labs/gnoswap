@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // staker protocol fee reward - delegation added in the middle (pool creation fee)
 
 package main
@@ -41,71 +43,71 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Admin delegates first")
-	delegateWithMint(adminAddr, adminAddr, 1_000_000)
+	delegateWithMint(cur, adminAddr, adminAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 2. First pool creation (before alice delegation)")
-	createPoolByAdmin(barPath, quxPath, 3000)
+	createPoolByAdmin(cur, barPath, quxPath, 3000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3. Alice delegates in the middle")
-	delegateWithMint(aliceAddr, adminAddr, 1_000_000)
+	delegateWithMint(cur, aliceAddr, adminAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4. Second pool creation (after alice delegation)")
-	createPoolByAdmin(barPath, quxPath, 500)
+	createPoolByAdmin(cur, barPath, quxPath, 500)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 5. Check and collect protocol fee reward for admin")
-	checkBalanceFn(gnsPath, adminAddr, func() {
-		collectProtocolFee(adminAddr)
+	checkBalanceFn(cur, gnsPath, adminAddr, func() {
+		collectProtocolFee(cur, adminAddr)
 	})
 	println()
 
 	println("[SCENARIO] 6. Check and collect protocol fee reward for alice")
-	checkBalanceFn(gnsPath, aliceAddr, func() {
-		collectProtocolFee(aliceAddr)
+	checkBalanceFn(cur, gnsPath, aliceAddr, func() {
+		collectProtocolFee(cur, aliceAddr)
 	})
 	println("[EXPECTED] remained protocol fee reward is", common.BalanceOf(gnsPath, gnoStakerAddr))
 }
 
-func delegateWithMint(from, to address, amount int64) {
+func delegateWithMint(cur realm, from, to address, amount int64) {
 	if from != adminAddr {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, from, amount)
+		gns.Transfer(cross(cur), from, amount)
 	}
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, to, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), to, int64(amount), "")
 
 	ufmt.Printf("[INFO] delegated %d GNS from %s to %s\n", amount, from, to)
 }
 
-func createPoolByAdmin(token0, token1 string, fee int64) {
+func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 	poolCreationFee := pool.GetPoolCreationFee()
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 
-	pool.CreatePool(cross, token0, token1, uint32(fee), gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), token0, token1, uint32(fee), gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	ufmt.Printf("[INFO] created %s:%s:%d pool (poolCreationFee: %d)\n", token0, token1, fee, poolCreationFee)
 }
 
-func collectProtocolFee(addr address) {
+func collectProtocolFee(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(addr))
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 
 	println("[INFO] collected protocol fee reward for", addr)
 }
 
-func checkBalanceFn(tokenPath string, addr address, fn func()) {
+func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 
 	balanceBefore := common.BalanceOf(tokenPath, addr)

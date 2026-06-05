@@ -13,8 +13,8 @@ func NewV3ValidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccesso
 	}
 }
 
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+func init(cur realm) {
+	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
 		return NewV3ValidStaker(store, poolAccessor, emissionAccessor, nftAccessor)
 	})
 }
@@ -25,68 +25,68 @@ type TestStaker struct {
 }
 
 // IStakerManager interface
-func (t *TestStaker) StakeToken(positionId uint64, referrer string) string {
-	return t.instance.StakeToken(positionId, referrer)
+func (t *TestStaker) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
+	return t.instance.StakeToken(0, rlm, positionId, referrer)
 }
 
-func (t *TestStaker) UnStakeToken(positionId uint64) string {
-	return t.instance.UnStakeToken(positionId)
+func (t *TestStaker) UnStakeToken(_ int, rlm realm, positionId uint64) string {
+	return t.instance.UnStakeToken(0, rlm, positionId)
 }
 
-func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	return t.instance.CollectReward(positionId)
+func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
+	return t.instance.CollectReward(0, rlm, positionId)
 }
 
-func (t *TestStaker) SetPoolTier(poolPath string, tier uint64) {
-	t.instance.SetPoolTier(poolPath, tier)
+func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
+	t.instance.SetPoolTier(0, rlm, poolPath, tier)
 }
 
-func (t *TestStaker) ChangePoolTier(poolPath string, tier uint64) {
-	t.instance.ChangePoolTier(poolPath, tier)
+func (t *TestStaker) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
+	t.instance.ChangePoolTier(0, rlm, poolPath, tier)
 }
 
-func (t *TestStaker) RemovePoolTier(poolPath string) {
-	t.instance.RemovePoolTier(poolPath)
+func (t *TestStaker) RemovePoolTier(_ int, rlm realm, poolPath string) {
+	t.instance.RemovePoolTier(0, rlm, poolPath)
 }
 
-func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
-	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
+func (t *TestStaker) CreateExternalIncentive(_ int, rlm realm, targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
+	t.instance.CreateExternalIncentive(0, rlm, targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
+func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	t.instance.EndExternalIncentive(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
-func (t *TestStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
-	return t.instance.CollectExternalIncentivePenalty(targetPoolPath, incentiveId, refundAddress)
+func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
+	return t.instance.CollectExternalIncentivePenalty(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
-func (t *TestStaker) AddToken(tokenPath string) {
-	t.instance.AddToken(tokenPath)
+func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
+	t.instance.AddToken(0, rlm, tokenPath)
 }
 
-func (t *TestStaker) RemoveToken(tokenPath string) {
-	t.instance.RemoveToken(tokenPath)
+func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
+	t.instance.RemoveToken(0, rlm, tokenPath)
 }
 
-func (t *TestStaker) SetWarmUp(pct, timeDuration int64) {
-	t.instance.SetWarmUp(pct, timeDuration)
+func (t *TestStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
+	t.instance.SetWarmUp(0, rlm, pct, timeDuration)
 }
 
-func (t *TestStaker) SetDepositGnsAmount(amount int64) {
-	t.instance.SetDepositGnsAmount(amount)
+func (t *TestStaker) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
+	t.instance.SetDepositGnsAmount(0, rlm, amount)
 }
 
-func (t *TestStaker) SetMinimumRewardAmount(amount int64) {
-	t.instance.SetMinimumRewardAmount(amount)
+func (t *TestStaker) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
+	t.instance.SetMinimumRewardAmount(0, rlm, amount)
 }
 
-func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
-	t.instance.SetTokenMinimumRewardAmount(paramsStr)
+func (t *TestStaker) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
+	t.instance.SetTokenMinimumRewardAmount(0, rlm, paramsStr)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee uint64) {
-	t.instance.SetUnStakingFee(fee)
+func (t *TestStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
+	t.instance.SetUnStakingFee(0, rlm, fee)
 }
 
 // IStakerGetter interface

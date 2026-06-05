@@ -16,7 +16,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -64,62 +63,62 @@ var (
 	thirdCollectReward  int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and set tier")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint and stake position")
-	mintAndStakePosition()
+	mintAndStakePosition(cur)
 	println()
 
 	println("[SCENARIO] 4. First partial collect (5 blocks)")
-	firstPartialCollect()
+	firstPartialCollect(cur)
 	println()
 
 	println("[SCENARIO] 5. Remove pool from tier")
-	removePoolFromTier()
+	removePoolFromTier(cur)
 	println()
 
 	println("[SCENARIO] 6. Second collect after tier removal")
-	secondCollectAfterRemoval()
+	secondCollectAfterRemoval(cur)
 	println()
 
 	println("[SCENARIO] 7. Wait and collect again (should be 0)")
-	thirdCollectNoReward()
+	thirdCollectNoReward(cur)
 	println()
 
 	println("[SCENARIO] 8. Verify partial collection logic")
-	verifyPartialCollection()
+	verifyPartialCollection(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool to tier 2")
-	sr.SetPoolTier(cross, poolPath, 2)
+	sr.SetPoolTier(cross(cur), poolPath, 2)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier: %d (should be 2)\n", currentTier)
@@ -129,17 +128,17 @@ func createPoolAndSetTier() {
 	}
 }
 
-func mintAndStakePosition() {
+func mintAndStakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -158,14 +157,14 @@ func mintAndStakePosition() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	println("[INFO] position staked successfully")
 	testing.SkipHeights(1)
 }
 
-func firstPartialCollect() {
+func firstPartialCollect(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 5 blocks to accumulate rewards")
@@ -173,7 +172,7 @@ func firstPartialCollect() {
 
 	println("[INFO] first partial collect")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	firstCollectReward = afterGns - beforeGns
 
@@ -187,11 +186,11 @@ func firstPartialCollect() {
 	testing.SkipHeights(5)
 }
 
-func removePoolFromTier() {
+func removePoolFromTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system")
-	sr.RemovePoolTier(cross, poolPath)
+	sr.RemovePoolTier(cross(cur), poolPath)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier: %d (should be 0)\n", currentTier)
@@ -201,12 +200,12 @@ func removePoolFromTier() {
 	}
 }
 
-func secondCollectAfterRemoval() {
+func secondCollectAfterRemoval(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect remaining rewards from before tier removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondCollectReward = afterGns - beforeGns
 
@@ -219,7 +218,7 @@ func secondCollectAfterRemoval() {
 	println("[INFO] confirmed: past rewards can be collected after tier removal")
 }
 
-func thirdCollectNoReward() {
+func thirdCollectNoReward(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10 blocks (no rewards expected as tier is 0)")
@@ -227,7 +226,7 @@ func thirdCollectNoReward() {
 
 	println("[INFO] third collect attempt")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	thirdCollectReward = afterGns - beforeGns
 
@@ -240,7 +239,7 @@ func thirdCollectNoReward() {
 	println("[INFO] confirmed: no new rewards accumulate after tier removal")
 }
 
-func verifyPartialCollection() {
+func verifyPartialCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] verify partial collection logic")
@@ -270,7 +269,7 @@ func verifyPartialCollection() {
 	println("[INFO] confirmed: rewards can be partially collected and tier removal preserves uncollected rewards")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -52,7 +54,7 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #2 All Liquidity ExactOut 1route 1hop")
 	println("[INFO] Starting scenario: All liquidity exact out 1route 1hop")
 
@@ -60,17 +62,17 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 	println("[INFO] Creating bar-baz pool (fee: 500)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(1).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(1).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, 100000)
-	baz.Approve(cross, poolAddr, 100000)
+	bar.Approve(cross(cur), poolAddr, 100000)
+	baz.Approve(cross(cur), poolAddr, 100000)
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross(cur), barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -90,15 +92,15 @@ func main() {
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
 	println("[INFO] Setting up additional pools and positions")
-	createPoolWithoutFee(t)
-	makeForthMintPositionWithoutFee(t)
+	createPoolWithoutFee(cur, t)
+	makeForthMintPositionWithoutFee(cur, t)
 
 	println("[INFO] Setting swap permissions")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	expectedAmountSpecified := "119820"
 
@@ -109,10 +111,11 @@ func main() {
 
 	uassert.AbortsWithMessage(
 		t,
+		cur,
 		`[GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
 		func() {
 			router.ExactOutSwapRoute(
-				cross,
+				cross(cur),
 				barPath,                 // inputToken
 				bazPath,                 // outputToken
 				expectedAmountSpecified, // amountSpecified
@@ -126,17 +129,17 @@ func main() {
 	println("[INFO] Scenario completed")
 }
 
-func createPoolWithoutFee(t *testing.T) {
+func createPoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFee(cross, 0)
-	createPool(t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, bazPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	createPool(cur, t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(cur, t, bazPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(cur, t, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(cur, t, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
-func createPool(t *testing.T,
+func createPool(cur realm, t *testing.T,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -148,23 +151,23 @@ func createPool(t *testing.T,
 	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
-		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
-		sr.SetPoolTier(cross, poolPath, tier1)
+		pl.CreatePool(cross(cur), token0, token1, fee, sqrtPriceX96)
+		sr.SetPoolTier(cross(cur), poolPath, tier1)
 	}
 }
 
-func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+func makeForthMintPositionWithoutFee(cur realm, t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
 	// make actual data to test resetting not only position's state but also pool's state
 	testing.SetRealm(adminRealm)
 
-	barApprove(t, adminAddr, poolAddr, max_approve)
-	bazApprove(t, adminAddr, poolAddr, max_approve)
+	barApprove(cur, t, adminAddr, poolAddr, max_approve)
+	bazApprove(cur, t, adminAddr, poolAddr, max_approve)
 
 	// mint position
 	return pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -180,16 +183,16 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func barApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	bar.Approve(cross(cur), spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func bazApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	baz.Approve(cross(cur), spender, amount)
 }
 
 // Output:

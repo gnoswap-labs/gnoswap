@@ -29,7 +29,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -89,99 +88,99 @@ var (
 	actualIncentiveID string
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing lazy sync with multiple users")
 	println()
 
 	println("[SCENARIO] 1. Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and set tier")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. User1 and User2 mint and stake positions (before incentive)")
-	user1MintThenStake()
-	user2MintThenStake()
+	user1MintThenStake(cur)
+	user2MintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 4. Create and start external incentive")
-	createAndStartIncentive()
+	createAndStartIncentive(cur)
 	println()
 
 	println("[SCENARIO] 5. User3 mints and stakes position (after incentive)")
-	user3MintThenStake()
+	user3MintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 6. Skip 30 days for rewards to accumulate")
-	skipTime()
+	skipTime(cur)
 	println()
 
 	println("[SCENARIO] 7. User1 collects rewards (lazy sync should discover incentive)")
-	user1CollectRewards()
+	user1CollectRewards(cur)
 	println()
 
 	println("[SCENARIO] 8. User2 collects rewards (lazy sync should discover incentive)")
-	user2CollectRewards()
+	user2CollectRewards(cur)
 	println()
 
 	println("[SCENARIO] 9. User3 collects rewards (already knows about incentive)")
-	user3CollectRewards()
+	user3CollectRewards(cur)
 	println()
 
 	println("[SCENARIO] 10. Skip to end and collect final rewards")
-	skipToEnd()
-	collectAllFinalRewards()
+	skipToEnd(cur)
+	collectAllFinalRewards(cur)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	sr.SetUnStakingFee(cross, 0)
-	pl.SetPoolCreationFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 	testing.SkipHeights(1)
 
 	// Transfer tokens to users for minting positions
-	bar.Transfer(cross, user1User, 10000)
-	qux.Transfer(cross, user1User, 10000)
-	bar.Transfer(cross, user2User, 10000)
-	qux.Transfer(cross, user2User, 10000)
-	bar.Transfer(cross, user3User, 10000)
-	qux.Transfer(cross, user3User, 10000)
+	bar.Transfer(cross(cur), user1User, 10000)
+	qux.Transfer(cross(cur), user1User, 10000)
+	bar.Transfer(cross(cur), user2User, 10000)
+	qux.Transfer(cross(cur), user2User, 10000)
+	bar.Transfer(cross(cur), user3User, 10000)
+	qux.Transfer(cross(cur), user3User, 10000)
 
 	// Transfer GNS to external creator
-	gns.Transfer(cross, externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
+	gns.Transfer(cross(cur), externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
 
 	println("[INFO] initialized accounts")
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
-func user1MintThenStake() {
+func user1MintThenStake(cur realm) {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -196,21 +195,21 @@ func user1MintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user1 staked position %d\n", lpTokenId)
 }
 
-func user2MintThenStake() {
+func user2MintThenStake(cur realm) {
 	testing.SetRealm(user2Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -225,16 +224,16 @@ func user2MintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user2 staked position %d\n", lpTokenId)
 }
 
-func createAndStartIncentive() {
+func createAndStartIncentive(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
-	gns.Approve(cross, stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	startTime := int64(1234569600) // +1 day midnight
 	endTime := startTime + INCENTIVE_DURATION
@@ -242,7 +241,7 @@ func createAndStartIncentive() {
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
 		REWARD_AMOUNT,
@@ -259,15 +258,15 @@ func createAndStartIncentive() {
 	ufmt.Printf("[INFO] created incentive %s\n", actualIncentiveID)
 }
 
-func user3MintThenStake() {
+func user3MintThenStake(cur realm) {
 	testing.SetRealm(user3Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -282,75 +281,75 @@ func user3MintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user3 staked position %d (after incentive creation)\n", lpTokenId)
 }
 
-func skipTime() {
+func skipTime(cur realm) {
 	// Skip 30 days
 	blocksToSkip := int64((30 * 24 * 60 * 60) / 5)
 	testing.SkipHeights(blocksToSkip)
 	println("[INFO] skipped 30 days")
 }
 
-func user1CollectRewards() {
+func user1CollectRewards(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
 	ufmt.Printf("[INFO] user1 collected %d GNS (lazy sync discovered incentive)\n", rewards)
 }
 
-func user2CollectRewards() {
+func user2CollectRewards(cur realm) {
 	testing.SetRealm(user2Realm)
 
 	gnsBefore := gns.BalanceOf(user2User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	gnsAfter := gns.BalanceOf(user2User)
 
 	rewards := gnsAfter - gnsBefore
 	ufmt.Printf("[INFO] user2 collected %d GNS (lazy sync discovered incentive)\n", rewards)
 }
 
-func user3CollectRewards() {
+func user3CollectRewards(cur realm) {
 	testing.SetRealm(user3Realm)
 
 	gnsBefore := gns.BalanceOf(user3User)
-	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross(cur), 3)
 	gnsAfter := gns.BalanceOf(user3User)
 
 	rewards := gnsAfter - gnsBefore
 	ufmt.Printf("[INFO] user3 collected %d GNS (already knew about incentive)\n", rewards)
 }
 
-func skipToEnd() {
+func skipToEnd(cur realm) {
 	// Skip remaining time + buffer (61 days to go past 90-day end)
 	blocksToSkip := int64((61 * 24 * 60 * 60) / 5)
 	testing.SkipHeights(blocksToSkip)
 	println("[INFO] skipped to end of incentive")
 }
 
-func collectAllFinalRewards() {
+func collectAllFinalRewards(cur realm) {
 	testing.SetRealm(user1Realm)
 	gnsBefore1 := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	gnsAfter1 := gns.BalanceOf(user1User)
 	ufmt.Printf("[INFO] user1 final rewards: %d GNS\n", gnsAfter1-gnsBefore1)
 
 	testing.SetRealm(user2Realm)
 	gnsBefore2 := gns.BalanceOf(user2User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	gnsAfter2 := gns.BalanceOf(user2User)
 	ufmt.Printf("[INFO] user2 final rewards: %d GNS\n", gnsAfter2-gnsBefore2)
 
 	testing.SetRealm(user3Realm)
 	gnsBefore3 := gns.BalanceOf(user3User)
-	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross(cur), 3)
 	gnsAfter3 := gns.BalanceOf(user3User)
 	ufmt.Printf("[INFO] user3 final rewards: %d GNS\n", gnsAfter3-gnsBefore3)
 
@@ -358,7 +357,7 @@ func collectAllFinalRewards() {
 	ufmt.Printf("[VERIFIED] all users collected final rewards, total: %d GNS\n", totalRewards)
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

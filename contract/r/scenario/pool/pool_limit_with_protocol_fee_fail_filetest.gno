@@ -70,10 +70,10 @@ var (
 // turn protocol fee on
 func init() {
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 4, 4)
+	pool.SetFeeProtocol(cross(cur), 4, 4)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Limit Order Thru Negative 1 With Fee")
 	println("[INFO] Starting scenario: Limit order thru negative 1 with fee")
 
@@ -82,18 +82,18 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	println()
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-1).ToString())
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-1).ToString())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 
 	println("[SCENARIO] 1. Minting position spanning current tick")
 	testing.SetRealm(posRealm)
 	mint0, mint1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -111,7 +111,7 @@ func main() {
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swap0, swap1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -121,7 +121,7 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 	println("[EXPECTED] swap0:", swap0, "expected: 59707210")
@@ -131,7 +131,7 @@ func main() {
 	println("[SCENARIO] 3. Burning position")
 	testing.SetRealm(posRealm)
 	burn0, burn1 := pool.Burn(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -147,7 +147,7 @@ func main() {
 	println("[SCENARIO] 4. Collecting position")
 	testing.SetRealm(posRealm)
 	collect0, collect1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -169,14 +169,14 @@ func main() {
 	println("[INFO] Scenario completed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
