@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Router contract upgrade scenario test with collect fee
 package main
 
@@ -10,7 +12,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -44,110 +45,106 @@ const (
 	routerV2MockPath = "gno.land/r/gnoswap/router/v2_mock"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Router Contract Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool with v1")
-	createPool(barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(cur, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position with v1")
-	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	mintPosition(cur, barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Check pool data by v1 version")
-	checkPoolData(barFoo500PoolPath)
+	checkPoolData(cur, barFoo500PoolPath)
 	println()
 
 	println("[SCENARIO] 6. Check position data by v1 version")
-	checkPositionData(positionId)
+	checkPositionData(cur, positionId)
 	println()
 
 	println("[SCENARIO] 6. Router Contract Upgrade to v2_mock")
-	upgradeRouterContractToV2Mock()
+	upgradeRouterContractToV2Mock(cur)
 	println()
 
 	println("[SCENARIO] 7. Perform swap to generate fees (check swap by v2_mock)")
-	exactInSwapRouteBy(fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 8. Check pool data by v2_mock version")
-	checkPoolData(barFoo500PoolPath)
+	checkPoolData(cur, barFoo500PoolPath)
 	println()
 
 	println("[SCENARIO] 9. Check position data by v2_mock version")
-	checkPositionData(positionId)
+	checkPositionData(cur, positionId)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
-	router.UpgradeImpl(cross, routerV1Path)
+	router.UpgradeImpl(cross(cur), routerV1Path)
 	println("[EXPECTED] Initialized router contract with v1:", routerV1Path)
 
-	initializeV2Mock()
+	initializeV2Mock(cur)
 }
 
-func initializeV2Mock() {
+func initializeV2Mock(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v2_mock"))
-	router.RegisterInitializer(cross, func(store router.IRouterStore) router.IRouter {
-		r := mock.NewMockRouter(store)
-		r.SetMockFn("ExactInSwapRoute", func(args ...any) any {
-			println("[INFO] ExactInSwapRoute called by v2_mock contract")
-			amountIn, amountOut := r.GetInstance().ExactInSwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
-			return []any{amountIn, amountOut}
-		})
-
-		return r
+	router.RegisterInitializer(cross(cur), func(_ int, rlm realm, store router.IRouterStore) router.IRouter {
+		return mock.NewMockRouter(store)
 	})
 }
 
-func createPool(barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
+func createPool(cur realm, barPath, fooPath string, fee uint32, sqrtPriceX96 string) {
 	println("[INFO] Create pool")
 	testing.SetRealm(adminRealm)
 
-	pool.CreatePool(cross, barPath, fooPath, fee, sqrtPriceX96)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee, sqrtPriceX96)
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
 
 	println("[EXPECTED] Created pool path:", poolPath)
 }
 
-func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
+func mintPosition(cur realm, barPath, fooPath string, fee uint32, tickLower, tickUpper int32, amount0Desired, amount1Desired string, amount0Min, amount1Min string, deadline int64, recipient, operator address) {
 	println("[INFO] Mint position")
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, math.MaxInt64)
-	foo.Approve(cross, poolAddr, math.MaxInt64)
+	bar.Approve(cross(cur), poolAddr, math.MaxInt64)
+	foo.Approve(cross(cur), poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross(cur), barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, adminAddr, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 }
 
-func exactInSwapRouteBy(inputToken string, outputToken string, specifiedAmount string, routeQueryString string, queryRatios string, minAmountOut string) {
+func exactInSwapRouteBy(cur realm, inputToken string, outputToken string, specifiedAmount string, routeQueryString string, queryRatios string, minAmountOut string) {
 	println("[INFO] Exact-In Swap Route")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, math.MaxInt64)
-	foo.Approve(cross, routerAddr, math.MaxInt64)
+	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
+	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross, inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
+	if router.GetImplementationPackagePath() == routerV2MockPath {
+		println("[INFO] ExactInSwapRoute called by v2_mock contract")
+	}
+	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(cross(cur), inputToken, outputToken, specifiedAmount, routeQueryString, queryRatios, minAmountOut, int64(9999999999), "")
 
 	println("[EXPECTED] Input token amount:", inputTokenAmount)
 	println("[EXPECTED] Output token amount:", outputTokenAmount)
 }
 
-func checkPoolData(poolPath string) {
+func checkPoolData(cur realm, poolPath string) {
 	println("[INFO] Check pool data")
 	testing.SetRealm(adminRealm)
 
@@ -155,7 +152,7 @@ func checkPoolData(poolPath string) {
 	println("[EXPECTED] Pool data:", poolData.PoolPath())
 }
 
-func checkPositionData(positionId uint64) {
+func checkPositionData(cur realm, positionId uint64) {
 	println("[INFO] Check position data")
 	testing.SetRealm(adminRealm)
 
@@ -167,11 +164,11 @@ func checkPositionData(positionId uint64) {
 	println("[EXPECTED] Tick upper:", positionData.TickUpper())
 }
 
-func upgradeRouterContractToV2Mock() {
+func upgradeRouterContractToV2Mock(cur realm) {
 	println("[INFO] Upgrade router contract to v2_mock")
 	testing.SetRealm(adminRealm)
 
-	router.UpgradeImpl(cross, routerV2MockPath)
+	router.UpgradeImpl(cross(cur), routerV2MockPath)
 	println("[EXPECTED] Upgraded router contract to v2_mock:", routerV2MockPath)
 }
 

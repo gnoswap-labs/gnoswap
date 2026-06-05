@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // ProtocolFee contract upgrade scenario test
 package main
 
@@ -27,28 +29,28 @@ const (
 	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize protocol_fee contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade protocol_fee contract to test version")
-	testProtocolFeeUpgrade()
+	testProtocolFeeUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != protocolFeeV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		protocolFee.UpgradeImpl(cross, protocolFeeV1Path)
+		protocolFee.UpgradeImpl(cross(cur), protocolFeeV1Path)
 		currentVersion = protocolFee.GetImplementationPackagePath()
 	}
 
@@ -58,7 +60,7 @@ func initializeV1() {
 	}
 }
 
-func testProtocolFeeUpgrade() {
+func testProtocolFeeUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -69,7 +71,7 @@ func testProtocolFeeUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading protocol_fee contract to test version")
 	testing.SetRealm(adminRealm)
-	protocolFee.UpgradeImpl(cross, protocolFeeTestPath)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeTestPath)
 
 	currentVersion = protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] ProtocolFee upgraded to: %s\n", currentVersion)
@@ -78,7 +80,7 @@ func testProtocolFeeUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -89,32 +91,32 @@ func verifyTestImplementation() {
 	// Test DistributeProtocolFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing DistributeProtocolFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: DistributeProtocolFee not supported", func() {
-		protocolFee.DistributeProtocolFee(cross)
+	uassert.AbortsWithMessage(t, cur, "test implementation: DistributeProtocolFee not supported", func() {
+		protocolFee.DistributeProtocolFee(cross(cur))
 	})
 	ufmt.Println("[EXPECTED] DistributeProtocolFee panics correctly")
 
 	// Test SetDevOpsPct - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetDevOpsPct function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetDevOpsPct not supported", func() {
-		protocolFee.SetDevOpsPct(cross, 50)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetDevOpsPct not supported", func() {
+		protocolFee.SetDevOpsPct(cross(cur), 50)
 	})
 	ufmt.Println("[EXPECTED] SetDevOpsPct panics correctly")
 
 	// Test AddToProtocolFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing AddToProtocolFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: AddToProtocolFee not supported", func() {
-		protocolFee.AddToProtocolFee(cross, "gno.land/r/onbloc/foo", 100)
+	uassert.AbortsWithMessage(t, cur, "test implementation: AddToProtocolFee not supported", func() {
+		protocolFee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/foo", 100)
 	})
 	ufmt.Println("[EXPECTED] AddToProtocolFee panics correctly")
 
 	// Test SetGovStakerPct - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetGovStakerPct function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetGovStakerPct not supported", func() {
-		protocolFee.SetGovStakerPct(cross, 50)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetGovStakerPct not supported", func() {
+		protocolFee.SetGovStakerPct(cross(cur), 50)
 	})
 	ufmt.Println("[EXPECTED] SetGovStakerPct panics correctly")
 

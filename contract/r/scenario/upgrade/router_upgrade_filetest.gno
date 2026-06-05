@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Router contract upgrade scenario test
 package main
 
@@ -27,28 +29,28 @@ const (
 	routerTestPath = "gno.land/r/gnoswap/router/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize router contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade router contract to test version")
-	testRouterUpgrade()
+	testRouterUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := router.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != routerV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		router.UpgradeImpl(cross, routerV1Path)
+		router.UpgradeImpl(cross(cur), routerV1Path)
 		currentVersion = router.GetImplementationPackagePath()
 	}
 
@@ -58,7 +60,7 @@ func initializeV1() {
 	}
 }
 
-func testRouterUpgrade() {
+func testRouterUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := router.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -69,7 +71,7 @@ func testRouterUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading router contract to test version")
 	testing.SetRealm(adminRealm)
-	router.UpgradeImpl(cross, routerTestPath)
+	router.UpgradeImpl(cross(cur), routerTestPath)
 
 	currentVersion = router.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Router upgraded to: %s\n", currentVersion)
@@ -78,7 +80,7 @@ func testRouterUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := router.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -89,40 +91,40 @@ func verifyTestImplementation() {
 	// Test ExactInSwapRoute - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ExactInSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ExactInSwapRoute not supported", func() {
-		router.ExactInSwapRoute(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "0", 9999999999, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ExactInSwapRoute not supported", func() {
+		router.ExactInSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactInSwapRoute panics correctly")
 
 	// Test SetSwapFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetSwapFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetSwapFee not supported", func() {
-		router.SetSwapFee(cross, 15)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetSwapFee not supported", func() {
+		router.SetSwapFee(cross(cur), 15)
 	})
 	ufmt.Println("[EXPECTED] SetSwapFee panics correctly")
 
 	// Test ExactInSingleSwapRoute - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ExactInSingleSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ExactInSingleSwapRoute not supported", func() {
-		router.ExactInSingleSwapRoute(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "0", "0", 9999999999, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ExactInSingleSwapRoute not supported", func() {
+		router.ExactInSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "0", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactInSingleSwapRoute panics correctly")
 
 	// Test ExactOutSwapRoute - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ExactOutSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ExactOutSwapRoute not supported", func() {
-		router.ExactOutSwapRoute(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "10000", 9999999999, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ExactOutSwapRoute not supported", func() {
+		router.ExactOutSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "10000", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactOutSwapRoute panics correctly")
 
 	// Test ExactOutSingleSwapRoute - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ExactOutSingleSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ExactOutSingleSwapRoute not supported", func() {
-		router.ExactOutSingleSwapRoute(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "10000", "0", 9999999999, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: ExactOutSingleSwapRoute not supported", func() {
+		router.ExactOutSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "10000", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactOutSingleSwapRoute panics correctly")
 }
