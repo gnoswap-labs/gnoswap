@@ -499,6 +499,22 @@ func (s *MockStakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewar
 	return nil
 }
 
+func (s *MockStakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error {
+	if s.tokenSpecificMinimumRewards == nil {
+		s.tokenSpecificMinimumRewards = make(map[string]int64)
+	}
+	s.tokenSpecificMinimumRewards[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error {
+	if s.tokenSpecificMinimumRewards == nil {
+		return nil
+	}
+	delete(s.tokenSpecificMinimumRewards, tokenPath)
+	return nil
+}
+
 // UnstakingFee
 func (s *MockStakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.unstakingFee != 0
@@ -742,33 +758,33 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(cross(cur), poolPath, tickId, zeroForOne, timestamp)
+		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
-		hook(cross(cur), poolPath, timestamp)
+		hook(0, cur, poolPath, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
-		return hook(cross(cur), poolPath)
+		return hook(0, cur, poolPath)
 	})
 }
 
