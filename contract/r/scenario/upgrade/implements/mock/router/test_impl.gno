@@ -92,11 +92,11 @@ func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string
 	return result[0].(string), result[1].(string)
 }
 
-func (t *TestRouter) DrySwapRoute(_ int, rlm realm, inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
+func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
 	result := t.ExecuteFn(
 		"DrySwapRoute",
 		func(args ...any) any {
-			r1, r2, r3 := t.instance.DrySwapRoute(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(string))
+			r1, r2, r3 := t.instance.DrySwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(string))
 			return []any{r1, r2, r3}
 		},
 		inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit,
