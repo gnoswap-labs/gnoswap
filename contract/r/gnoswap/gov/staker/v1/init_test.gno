@@ -13,7 +13,7 @@ func TestInit_initStoreData(cur realm, t *testing.T) {
 		store := newMockGovStakerStore()
 
 		// when
-		err := initStoreData(store)
+		err := initStoreData(0, cur, store)
 
 		// then
 		uassert.Nil(t, err)
@@ -49,7 +49,7 @@ func TestInit_initStoreData(cur realm, t *testing.T) {
 		store := newMockGovStakerStore()
 
 		// First initialization
-		err := initStoreData(store)
+		err := initStoreData(0, cur, store)
 		uassert.Nil(t, err)
 
 		// Set a custom value
@@ -58,7 +58,7 @@ func TestInit_initStoreData(cur realm, t *testing.T) {
 		uassert.Nil(t, err)
 
 		// when - initialize again
-		err = initStoreData(store)
+		err = initStoreData(0, cur, store)
 		uassert.Nil(t, err)
 
 		// then - custom value should be preserved

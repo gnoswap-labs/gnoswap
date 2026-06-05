@@ -483,24 +483,25 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
-			// When: Add stake from launchpad
+			// When: Record launchpad deposit (avoids protocol-fee cross-realm auth in mock frame)
+			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				gs.addStakeFromLaunchpad(0, cur, tt.address, tt.amount, tt.currentHeight)
+				gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, tt.amount)
 			}(cross(cur))
 
 			// Then: Should create deposit record
-			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.amount)
 
-			// When: Remove stake from launchpad
-			gs.removeStakeFromLaunchpad(0, cur, tt.address, tt.amount, tt.currentHeight)
+			// When: Clear deposit via production launchpad path
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+			staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
 
 			// Then:
-			launchpadDepositAmount, _ := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+			launchpadDepositAmount, _ := staker.GetLaunchpadProjectDeposit(tt.address)
 			uassert.Equal(t, launchpadDepositAmount, int64(0))
 		})
 	}
@@ -510,21 +511,24 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 func TestRemoveLaunchpadProjectDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func(gs *govStakerV1) string
+		setupState    func(cur realm, gs *govStakerV1) string
 		expectSuccess bool
 	}{
 		{
 			name: "Remove existing deposit",
-			setupState: func(gs *govStakerV1) string {
+			setupState: func(cur realm, gs *govStakerV1) string {
 				ownerAddress := "g1projectowner9876543210abcdefghijklm"
-				gs.setLaunchpadProjectDeposit(0, cur, ownerAddress, 3000)
+				testing.SetRealm(adminRealm)
+				func(cur realm) {
+					gs.setLaunchpadProjectDeposit(0, cur, ownerAddress, 3000)
+				}(cross(cur))
 				return ownerAddress
 			},
 			expectSuccess: true,
 		},
 		{
 			name: "Remove non-existent deposit",
-			setupState: func(_ *govStakerV1) string {
+			setupState: func(_ realm, _ *govStakerV1) string {
 				return "g1nonexistentowner1234567890abcdefgh"
 			},
 			expectSuccess: false,
@@ -535,7 +539,7 @@ func TestRemoveLaunchpadProjectDeposit(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 			// Given: Setup state
-			ownerAddress := tt.setupState(gs)
+			ownerAddress := tt.setupState(cur, gs)
 
 			// When: Remove launchpad project deposit
 			result := gs.removeLaunchpadProjectDeposit(ownerAddress)
@@ -574,23 +578,16 @@ func TestPartialLaunchpadStakeRemoval(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
+			projectAddr := address(tt.address)
 
-			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				// Given: Initial stake
-				gs.addStakeFromLaunchpad(0, cur, tt.address, tt.initialAmount, tt.currentHeight)
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+			staker.SetAmountByProjectWallet(cross(cur), projectAddr, tt.initialAmount, true)
+			staker.SetAmountByProjectWallet(cross(cur), projectAddr, tt.removeAmount, false)
 
-				// When: Remove partial stake
-				gs.removeStakeFromLaunchpad(0, cur, tt.address, tt.removeAmount, tt.currentHeight)
-
-				// Then: Should have remaining deposit
-				launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
-				deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
-				uassert.True(t, exists)
-				uassert.Equal(t, deposit, tt.expectedRemaining)
-			}(cross(cur))
+			deposit, exists := staker.GetLaunchpadProjectDeposit(tt.address)
+			uassert.True(t, exists)
+			uassert.Equal(t, deposit, tt.expectedRemaining)
 		})
 	}
 }

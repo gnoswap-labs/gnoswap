@@ -160,17 +160,17 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 func TestStoreSetAndGetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get lockup period successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				gs.SetUnDelegationLockupPeriod(0, cur, 86400)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasUnDelegationLockupPeriodStoreKey(), "should have lockup period after setting")
 				retrieved := gs.GetUnDelegationLockupPeriod()
 				uassert.Equal(t, int64(86400), retrieved)
@@ -178,13 +178,13 @@ func TestStoreSetAndGetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have lockup period initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasUnDelegationLockupPeriodStoreKey(), "should not have lockup period initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized lockup period",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetUnDelegationLockupPeriod()
 			},
 			shouldPanic:  true,
@@ -198,7 +198,7 @@ func TestStoreSetAndGetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -208,7 +208,7 @@ func TestStoreSetAndGetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -216,17 +216,17 @@ func TestStoreSetAndGetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 func TestStoreSetAndGetTotalDelegatedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get total delegated amount successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				gs.SetTotalDelegatedAmount(0, cur, 500000)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasTotalDelegatedAmountStoreKey(), "should have total delegated amount after setting")
 				retrieved := gs.GetTotalDelegatedAmount()
 				uassert.Equal(t, int64(500000), retrieved)
@@ -234,13 +234,13 @@ func TestStoreSetAndGetTotalDelegatedAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have total delegated amount initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasTotalDelegatedAmountStoreKey(), "should not have total delegated amount initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized total delegated amount",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetTotalDelegatedAmount()
 			},
 			shouldPanic:  true,
@@ -254,7 +254,7 @@ func TestStoreSetAndGetTotalDelegatedAmount(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -264,7 +264,7 @@ func TestStoreSetAndGetTotalDelegatedAmount(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -272,17 +272,17 @@ func TestStoreSetAndGetTotalDelegatedAmount(cur realm, t *testing.T) {
 func TestStoreSetAndGetTotalLockedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get total locked amount successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				gs.SetTotalLockedAmount(0, cur, 250000)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasTotalLockedAmountStoreKey(), "should have total locked amount after setting")
 				retrieved := gs.GetTotalLockedAmount()
 				uassert.Equal(t, int64(250000), retrieved)
@@ -290,13 +290,13 @@ func TestStoreSetAndGetTotalLockedAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have total locked amount initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasTotalLockedAmountStoreKey(), "should not have total locked amount initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized total locked amount",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetTotalLockedAmount()
 			},
 			shouldPanic:  true,
@@ -310,7 +310,7 @@ func TestStoreSetAndGetTotalLockedAmount(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -320,7 +320,7 @@ func TestStoreSetAndGetTotalLockedAmount(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -328,18 +328,18 @@ func TestStoreSetAndGetTotalLockedAmount(cur realm, t *testing.T) {
 func TestStoreSetAndGetDelegations(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get delegations successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				delegations := bptree.NewBPTreeN(16)
 				gs.SetDelegations(0, cur, delegations)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasDelegationsStoreKey(), "should have delegations after setting")
 				retrieved := gs.GetAllDelegations()
 				uassert.NotEqual(t, nil, retrieved)
@@ -347,13 +347,13 @@ func TestStoreSetAndGetDelegations(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have delegations initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasDelegationsStoreKey(), "should not have delegations initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized delegations",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetAllDelegations()
 			},
 			shouldPanic:  true,
@@ -367,7 +367,7 @@ func TestStoreSetAndGetDelegations(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -377,7 +377,7 @@ func TestStoreSetAndGetDelegations(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -446,21 +446,21 @@ func TestStoreSetAndGetDelegation(cur realm, t *testing.T) {
 func TestStoreSetAndGetDelegationCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get delegation counter successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				counter := NewCounter()
 				for i := 0; i < 10; i++ {
 					counter.Next()
 				}
 				gs.SetDelegationCounter(0, cur, counter)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasDelegationCounterStoreKey(), "should have delegation counter after setting")
 				retrieved := gs.GetDelegationCounter()
 				uassert.NotEqual(t, nil, retrieved)
@@ -469,13 +469,13 @@ func TestStoreSetAndGetDelegationCounter(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have delegation counter initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasDelegationCounterStoreKey(), "should not have delegation counter initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized delegation counter",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetDelegationCounter()
 			},
 			shouldPanic:  true,
@@ -489,7 +489,7 @@ func TestStoreSetAndGetDelegationCounter(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -499,7 +499,7 @@ func TestStoreSetAndGetDelegationCounter(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -507,18 +507,18 @@ func TestStoreSetAndGetDelegationCounter(cur realm, t *testing.T) {
 func TestStoreSetAndGetTotalDelegationHistory(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get total delegation history successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				history := NewUintTree()
 				gs.SetTotalDelegationHistory(0, cur, history)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasTotalDelegationHistoryStoreKey(), "should have total delegation history after setting")
 				retrieved := gs.GetTotalDelegationHistory()
 				uassert.NotEqual(t, nil, retrieved)
@@ -526,13 +526,13 @@ func TestStoreSetAndGetTotalDelegationHistory(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have total delegation history initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasTotalDelegationHistoryStoreKey(), "should not have total delegation history initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized total delegation history",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetTotalDelegationHistory()
 			},
 			shouldPanic:  true,
@@ -546,7 +546,7 @@ func TestStoreSetAndGetTotalDelegationHistory(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -556,7 +556,7 @@ func TestStoreSetAndGetTotalDelegationHistory(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -564,18 +564,18 @@ func TestStoreSetAndGetTotalDelegationHistory(cur realm, t *testing.T) {
 func TestStoreSetAndGetUserDelegationHistory(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get user delegation history successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				history := bptree.NewBPTreeN(16)
 				gs.SetUserDelegationHistory(0, cur, history)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasUserDelegationHistoryStoreKey(), "should have user delegation history after setting")
 				retrieved := gs.GetUserDelegationHistory()
 				uassert.NotEqual(t, nil, retrieved)
@@ -583,13 +583,13 @@ func TestStoreSetAndGetUserDelegationHistory(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have user delegation history initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasUserDelegationHistoryStoreKey(), "should not have user delegation history initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized user delegation history",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetUserDelegationHistory()
 			},
 			shouldPanic:  true,
@@ -603,7 +603,7 @@ func TestStoreSetAndGetUserDelegationHistory(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -613,7 +613,7 @@ func TestStoreSetAndGetUserDelegationHistory(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -621,18 +621,18 @@ func TestStoreSetAndGetUserDelegationHistory(cur realm, t *testing.T) {
 func TestStoreSetAndGetEmissionRewardManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get emission reward manager successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				manager := &EmissionRewardManager{}
 				gs.SetEmissionRewardManager(0, cur, manager)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasEmissionRewardManagerStoreKey(), "should have emission reward manager after setting")
 				retrieved := gs.GetEmissionRewardManager()
 				uassert.NotEqual(t, nil, retrieved)
@@ -640,13 +640,13 @@ func TestStoreSetAndGetEmissionRewardManager(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have emission reward manager initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasEmissionRewardManagerStoreKey(), "should not have emission reward manager initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized emission reward manager",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetEmissionRewardManager()
 			},
 			shouldPanic:  true,
@@ -660,7 +660,7 @@ func TestStoreSetAndGetEmissionRewardManager(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -670,7 +670,7 @@ func TestStoreSetAndGetEmissionRewardManager(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -678,18 +678,18 @@ func TestStoreSetAndGetEmissionRewardManager(cur realm, t *testing.T) {
 func TestStoreSetAndGetProtocolFeeRewardManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get protocol fee reward manager successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				manager := &ProtocolFeeRewardManager{}
 				gs.SetProtocolFeeRewardManager(0, cur, manager)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasProtocolFeeRewardManagerStoreKey(), "should have protocol fee reward manager after setting")
 				retrieved := gs.GetProtocolFeeRewardManager()
 				uassert.NotEqual(t, nil, retrieved)
@@ -697,13 +697,13 @@ func TestStoreSetAndGetProtocolFeeRewardManager(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have protocol fee reward manager initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasProtocolFeeRewardManagerStoreKey(), "should not have protocol fee reward manager initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized protocol fee reward manager",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetProtocolFeeRewardManager()
 			},
 			shouldPanic:  true,
@@ -717,7 +717,7 @@ func TestStoreSetAndGetProtocolFeeRewardManager(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -727,7 +727,7 @@ func TestStoreSetAndGetProtocolFeeRewardManager(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -735,18 +735,18 @@ func TestStoreSetAndGetProtocolFeeRewardManager(cur realm, t *testing.T) {
 func TestStoreSetAndGetDelegationManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get delegation manager successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				manager := &DelegationManager{}
 				gs.SetDelegationManager(0, cur, manager)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasDelegationManagerStoreKey(), "should have delegation manager after setting")
 				retrieved := gs.GetDelegationManager()
 				uassert.NotEqual(t, nil, retrieved)
@@ -754,13 +754,13 @@ func TestStoreSetAndGetDelegationManager(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have delegation manager initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasDelegationManagerStoreKey(), "should not have delegation manager initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized delegation manager",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetDelegationManager()
 			},
 			shouldPanic:  true,
@@ -774,7 +774,7 @@ func TestStoreSetAndGetDelegationManager(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -784,7 +784,7 @@ func TestStoreSetAndGetDelegationManager(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -792,18 +792,18 @@ func TestStoreSetAndGetDelegationManager(cur realm, t *testing.T) {
 func TestStoreSetAndGetLaunchpadProjectDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
+		setupFn      func(cur realm, gs IGovStakerStore)
+		testFn       func(cur realm, t *testing.T, gs IGovStakerStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get launchpad project deposits successfully",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				deposits := &LaunchpadProjectDeposits{}
 				gs.SetLaunchpadProjectDeposits(0, cur, deposits)
 			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasLaunchpadProjectDepositsStoreKey(), "should have launchpad project deposits after setting")
 				retrieved := gs.GetLaunchpadProjectDeposits()
 				uassert.NotEqual(t, nil, retrieved)
@@ -811,13 +811,13 @@ func TestStoreSetAndGetLaunchpadProjectDeposits(cur realm, t *testing.T) {
 		},
 		{
 			name: "should not have launchpad project deposits initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.False(t, gs.HasLaunchpadProjectDepositsStoreKey(), "should not have launchpad project deposits initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized launchpad project deposits",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				gs.GetLaunchpadProjectDeposits()
 			},
 			shouldPanic:  true,
@@ -831,7 +831,7 @@ func TestStoreSetAndGetLaunchpadProjectDeposits(cur realm, t *testing.T) {
 			gs := NewGovStakerStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -841,7 +841,7 @@ func TestStoreSetAndGetLaunchpadProjectDeposits(cur realm, t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
@@ -849,12 +849,12 @@ func TestStoreSetAndGetLaunchpadProjectDeposits(cur realm, t *testing.T) {
 func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(IGovStakerStore)
-		verifyFn func(*testing.T, IGovStakerStore)
+		setupFn  func(cur realm, gs IGovStakerStore)
+		verifyFn func(cur realm, t *testing.T, gs IGovStakerStore)
 	}{
 		{
 			name: "set and get all store values",
-			setupFn: func(gs IGovStakerStore) {
+			setupFn: func(cur realm, gs IGovStakerStore) {
 				gs.SetUnDelegationLockupPeriod(0, cur, 86400)
 				gs.SetTotalDelegatedAmount(0, cur, 500000)
 				gs.SetTotalLockedAmount(0, cur, 250000)
@@ -874,7 +874,7 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				userHistory := bptree.NewBPTreeN(16)
 				gs.SetUserDelegationHistory(0, cur, userHistory)
 			},
-			verifyFn: func(t *testing.T, gs IGovStakerStore) {
+			verifyFn: func(cur realm, t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasUnDelegationLockupPeriodStoreKey())
 				uassert.True(t, gs.HasTotalDelegatedAmountStoreKey())
 				uassert.True(t, gs.HasTotalLockedAmountStoreKey())
@@ -899,8 +899,8 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovStakerStore(kvStore)
 
-			tt.setupFn(gs)
-			tt.verifyFn(t, gs)
+			tt.setupFn(cur, gs)
+			tt.verifyFn(cur, t, gs)
 		})
 	}
 }

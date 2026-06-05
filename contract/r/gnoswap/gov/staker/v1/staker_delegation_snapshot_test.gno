@@ -46,15 +46,13 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(cur realm
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
+						gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					// Should not panic for admin
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
+					gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
 				}(cross(cur))
 			}
 		})
@@ -77,9 +75,9 @@ func TestStakerDelegationSnapshot_EdgeCases(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(admin))
 
 				func(cur realm) {
-					gs.SetUnDelegationLockupPeriodByAdmin(1000)
-					gs.SetUnDelegationLockupPeriodByAdmin(2000)
-					gs.SetUnDelegationLockupPeriodByAdmin(3000)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 1000)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 2000)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 3000)
 				}(cross(cur))
 			},
 		},
@@ -95,7 +93,7 @@ func TestStakerDelegationSnapshot_EdgeCases(cur realm, t *testing.T) {
 
 				// Then: Should not panic
 				func(cur realm) {
-					gs.SetUnDelegationLockupPeriodByAdmin(largeHeight)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, largeHeight)
 				}(cross(cur))
 			},
 		},
@@ -104,7 +102,7 @@ func TestStakerDelegationSnapshot_EdgeCases(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute test function
-			tt.testFunction(t)
+			tt.testFunction(cur, t)
 		})
 	}
 }

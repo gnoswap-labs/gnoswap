@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetReservedTokensIsolation(cur realm, t *testing.T) {
-	resetTestState(t)
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := []string{"foo", "bar"}
@@ -25,7 +25,7 @@ func TestGetReservedTokensIsolation(cur realm, t *testing.T) {
 }
 
 func TestDistributeProtocolFeeForwardsCall(cur realm, t *testing.T) {
-	resetTestState(t)
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 
@@ -35,7 +35,7 @@ func TestDistributeProtocolFeeForwardsCall(cur realm, t *testing.T) {
 }
 
 func TestGetAccuTransfersToGovStakerIsolation(cur realm, t *testing.T) {
-	resetTestState(t)
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := map[string]int64{"foo": 10, "bar": 20}
@@ -51,7 +51,7 @@ func TestGetAccuTransfersToGovStakerIsolation(cur realm, t *testing.T) {
 }
 
 func TestGetAccuTransfersToDevOpsIsolation(cur realm, t *testing.T) {
-	resetTestState(t)
+	resetTestState(cur, t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
 	stored := map[string]int64{"foo": 10, "bar": 20}

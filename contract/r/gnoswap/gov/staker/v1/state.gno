@@ -135,7 +135,7 @@ func (g *govStakerV1) getUserDelegations(user address) *bptree.BPTree {
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
-		return bptree.NewBPTreeN(16)
+		return staker.NewUserDelegationTree()
 	}
 
 	return userDelegations

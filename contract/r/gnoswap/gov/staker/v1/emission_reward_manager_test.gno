@@ -334,7 +334,7 @@ func TestEmissionRewardManager_claimRewards(cur realm, t *testing.T) {
 			println("=== Before claiming rewards ===")
 			claimableReward, _ := resolver.GetClaimableRewardAmount(resolver.GetDistributedAmount(), tt.address, tt.currentHeight)
 			println("Claimable reward amount:", claimableReward)
-			reward, err := resolver.claimRewards(0, cur, tt.address, tt.currentHeight)
+			reward, err := resolver.claimRewards(tt.address, tt.currentHeight)
 			println("Actual claimed reward:", reward)
 
 			// Then: Check result
@@ -358,10 +358,10 @@ func TestEmissionRewardManager_claimRewards_MultipleTimes(cur realm, t *testing.
 		resolver.updateAccumulatedRewardX128PerStake(1000, 20)
 
 		// when - claim rewards multiple times
-		claimed1, err1 := resolver.claimRewards(0, cur, "user1", 30)
+		claimed1, err1 := resolver.claimRewards("user1", 30)
 		uassert.NoError(t, err1)
 
-		claimed2, err2 := resolver.claimRewards(0, cur, "user1", 40)
+		claimed2, err2 := resolver.claimRewards("user1", 40)
 		uassert.NoError(t, err2)
 
 		// then - second claim should return zero (no new rewards)
@@ -609,7 +609,7 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(cur realm, t *t
 	uassert.Equal(t, rs.GetStakedAmount(), int64(700))
 
 	// Extra check: subsequent operations should remain consistent
-	claimed, err := resolver.claimRewards(0, cur, addr, 120)
+	claimed, err := resolver.claimRewards(addr, 120)
 	uassert.NoError(t, err)
 	// Since no rewards were distributed, claimed amount should be zero
 	uassert.Equal(t, claimed, int64(0))
@@ -738,7 +738,7 @@ func TestEmissionRewardManager_ZeroStakeEdgeCases(cur realm, t *testing.T) {
 		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 
 		// when - Try to claim rewards after stake removal
-		claimed, err := resolver.claimRewards(0, cur, addr, 40)
+		claimed, err := resolver.claimRewards(addr, 40)
 
 		// then - Should successfully claim earned rewards
 		uassert.NoError(t, err)

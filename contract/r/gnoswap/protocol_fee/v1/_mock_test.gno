@@ -40,7 +40,7 @@ func (s *mockProtocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToGovStaker(_ int, rlm realm) error {
-	s.accuToGovStaker = bptree.NewBPTreeN(16)
+	s.accuToGovStaker = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (s *mockProtocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToDevOps(_ int, rlm realm) error {
-	s.accuToDevOps = bptree.NewBPTreeN(16)
+	s.accuToDevOps = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (s *mockProtocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeDistributedToGovStakerHistory(_ int, rlm realm) error {
-	s.distributedToGovStakerHistory = bptree.NewBPTreeN(16)
+	s.distributedToGovStakerHistory = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -139,7 +139,7 @@ func (s *mockProtocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeDistributedToDevOpsHistory(_ int, rlm realm) error {
-	s.distributedToDevOpsHistory = bptree.NewBPTreeN(16)
+	s.distributedToDevOpsHistory = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -198,10 +198,10 @@ func (s *mockProtocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath stri
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
-		accuToGovStaker:               bptree.NewBPTreeN(16),
-		accuToDevOps:                  bptree.NewBPTreeN(16),
-		distributedToGovStakerHistory: bptree.NewBPTreeN(16),
-		distributedToDevOpsHistory:    bptree.NewBPTreeN(16),
+		accuToGovStaker:               protocol_fee.NewBPTreeN(16),
+		accuToDevOps:                  protocol_fee.NewBPTreeN(16),
+		distributedToGovStakerHistory: protocol_fee.NewBPTreeN(16),
+		distributedToDevOpsHistory:    protocol_fee.NewBPTreeN(16),
 		reservedTokens:                []string{},
 	}
 }

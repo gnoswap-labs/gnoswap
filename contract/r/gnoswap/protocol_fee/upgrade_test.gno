@@ -55,7 +55,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			if tt.setup != nil {
 				tt.setup(cur, t)
@@ -131,7 +131,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			if tt.setup != nil {
 				tt.setup(cur, t)
@@ -164,7 +164,7 @@ func TestDistributeProtocolFee(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -195,7 +195,7 @@ func TestSetDevOpsPct(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -226,7 +226,7 @@ func TestSetGovStakerPct(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -259,7 +259,7 @@ func TestAddToProtocolFee(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -288,7 +288,7 @@ func TestGetDevOpsPct(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -317,7 +317,7 @@ func TestGetGovStakerPct(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -346,7 +346,7 @@ func TestGetReservedTokens(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -375,7 +375,7 @@ func TestGetAccuTransfersToGovStaker(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -404,7 +404,7 @@ func TestGetAccuTransfersToDevOps(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -435,7 +435,7 @@ func TestGetAccuTransferToGovStakerByTokenPath(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
@@ -466,7 +466,7 @@ func TestGetAccuTransferToDevOpsByTokenPath(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
 			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 

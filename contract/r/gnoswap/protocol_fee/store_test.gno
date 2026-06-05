@@ -30,7 +30,7 @@ func TestStoreInitialization(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			tt.verifyFn(t)
 		})
 	}
@@ -83,7 +83,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			ps := NewProtocolFeeStore(kvStore)
 
@@ -158,7 +158,7 @@ func TestStoreSetAndGetDevOpsPct(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			ps := NewProtocolFeeStore(kvStore)
 
 			if tt.setupFn != nil {
@@ -214,7 +214,7 @@ func TestStoreSetAndGetAccuToGovStaker(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			ps := NewProtocolFeeStore(kvStore)
 
 			if tt.setupFn != nil {
@@ -263,7 +263,7 @@ func TestStoreSetAndGetAccuToGovStakerItem(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			ps := NewProtocolFeeStore(kvStore)
 
@@ -320,7 +320,7 @@ func TestStoreSetAndGetAccuToDevOps(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			ps := NewProtocolFeeStore(kvStore)
 
 			if tt.setupFn != nil {
@@ -369,7 +369,7 @@ func TestStoreSetAndGetAccuToDevOpsItem(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			ps := NewProtocolFeeStore(kvStore)
 
@@ -437,7 +437,7 @@ func TestStoreSetAndGetReservedTokens(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			ps := NewProtocolFeeStore(kvStore)
 
 			if tt.setupFn != nil {
@@ -477,7 +477,7 @@ func TestStoreAddReservedToken(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 
 			ps := NewProtocolFeeStore(kvStore)
 
@@ -542,7 +542,7 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
+			resetTestState(cur, t)
 			ps := NewProtocolFeeStore(kvStore)
 
 			tt.setupFn(cur, ps)
