@@ -12,9 +12,9 @@ type PoolAccessor interface {
 	GetSlot0Tick(poolPath string) int32
 	GetSlot0SqrtPriceX96(poolPath string) string
 
-	SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
-	SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64))
-	SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error)
+	SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64))
+	SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error)
 }
 
 type poolAccessor struct{}
@@ -31,33 +31,33 @@ func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(ErrSpoofedRealm)
 	}
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(cross(cur), poolPath, tickId, zeroForOne, timestamp)
+		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
-func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(ErrSpoofedRealm)
 	}
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
-		hook(cross(cur), poolPath, timestamp)
+		hook(0, cur, poolPath, timestamp)
 	})
 }
 
-func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
 	if !rlm.IsCurrent() {
 		panic(ErrSpoofedRealm)
 	}
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
-		return hook(cross(cur), poolPath)
+		return hook(0, cur, poolPath)
 	})
 }
 

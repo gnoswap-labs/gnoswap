@@ -67,7 +67,7 @@ func NewTickResolver(tick *sr.Tick) *TickResolver {
 
 // swapStartHook is called when a swap starts
 // This hook initializes the batch processor for accumulating tick crosses
-func (s *stakerV1) swapStartHook(cur realm, poolPath string, timestamp int64) {
+func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
 		return
@@ -76,7 +76,7 @@ func (s *stakerV1) swapStartHook(cur realm, poolPath string, timestamp int64) {
 	// Initialize batch processor for this swap
 	// This will accumulate all tick crosses until swap completion
 	currentSwapBatch := sr.NewSwapBatchProcessor(poolPath, pool, timestamp)
-	err := s.store.SetCurrentSwapBatch(0, cur, currentSwapBatch)
+	err := s.store.SetCurrentSwapBatch(0, rlm, currentSwapBatch)
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +88,7 @@ func (s *stakerV1) swapStartHook(cur realm, poolPath string, timestamp int64) {
 // 1. O(1) pool state updates instead of O(n) where n = number of tick crosses
 // 2. Reduced computational overhead for reward calculations
 // 3. Atomic processing ensuring consistency across all tick updates
-func (s *stakerV1) swapEndHook(cur realm, poolPath string) error {
+func (s *stakerV1) swapEndHook(_ int, rlm realm, poolPath string) error {
 	// Validate batch processor state
 	currentSwapBatch := s.store.GetCurrentSwapBatch()
 
@@ -102,13 +102,13 @@ func (s *stakerV1) swapEndHook(cur realm, poolPath string) error {
 	// Process all accumulated tick crosses in a single batch
 	// This is where the optimization happens - instead of processing
 	// each tick cross individually, we calculate cumulative effects
-	err := s.processBatchedTickCrosses(0, cur)
+	err := s.processBatchedTickCrosses(0, rlm)
 	if err != nil {
 		return err
 	}
 
 	// Clean up batch processor
-	err = s.store.SetCurrentSwapBatch(0, cur, nil)
+	err = s.store.SetCurrentSwapBatch(0, rlm, nil)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *stakerV1) swapEndHook(cur realm, poolPath string) error {
 // - During swaps: accumulates tick crosses for batch processing at swap end
 // - Outside swaps: processes tick crosses immediately for real-time updates
 // The hybrid approach optimizes for both swap performance and non-swap responsiveness
-func (s *stakerV1) tickCrossHook(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
 		return
