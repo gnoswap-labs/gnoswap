@@ -243,11 +243,7 @@ func (s *mockPositionStore) HasPosition(positionId uint64) bool {
 func (s *mockPositionStore) GetPosition(positionId uint64) (position.Position, bool) {
 	value, exists := s.positions.Get(strconv.FormatUint(positionId, 10))
 	if !exists {
-		s.positions.IterateByOffset(0, 1, func(_ string, stored any) bool {
-			value = stored
-			return false
-		})
-		return value.(position.Position), false
+		return *position.NewPosition("", 0, 0, "", "", "", 0, 0, false, ""), false
 	}
 	return value.(position.Position), true
 }
