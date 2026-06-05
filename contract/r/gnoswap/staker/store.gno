@@ -62,6 +62,10 @@ func (s *stakerStore) GetDepositGnsAmount() int64 {
 }
 
 func (s *stakerStore) SetDepositGnsAmount(_ int, rlm realm, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyDepositGnsAmount.String(), amount)
 }
 
@@ -85,6 +89,10 @@ func (s *stakerStore) GetMinimumRewardAmount() int64 {
 }
 
 func (s *stakerStore) SetMinimumRewardAmount(_ int, rlm realm, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyMinimumRewardAmount.String(), amount)
 }
 
@@ -108,6 +116,10 @@ func (s *stakerStore) GetDeposits() *bptree.BPTree {
 }
 
 func (s *stakerStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)
 }
 
@@ -131,6 +143,10 @@ func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 }
 
 func (s *stakerStore) SetExternalIncentives(_ int, rlm realm, incentives *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyExternalIncentives.String(), incentives)
 }
 
@@ -154,6 +170,10 @@ func (s *stakerStore) GetTotalEmissionSent() int64 {
 }
 
 func (s *stakerStore) SetTotalEmissionSent(_ int, rlm realm, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyTotalEmissionSent.String(), amount)
 }
 
@@ -177,6 +197,10 @@ func (s *stakerStore) GetAllowedTokens() []string {
 }
 
 func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
 }
 
@@ -200,6 +224,10 @@ func (s *stakerStore) GetIncentiveCounter() *Counter {
 }
 
 func (s *stakerStore) SetIncentiveCounter(_ int, rlm realm, counter *Counter) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyIncentiveCounter.String(), counter)
 }
 
@@ -228,6 +256,10 @@ func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 }
 
 func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), rewards)
 }
 
@@ -251,6 +283,10 @@ func (s *stakerStore) GetUnstakingFee() uint64 {
 }
 
 func (s *stakerStore) SetUnstakingFee(_ int, rlm realm, fee uint64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyUnstakingFee.String(), fee)
 }
 
@@ -273,6 +309,10 @@ func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
 }
 
 func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
 }
 
@@ -296,6 +336,10 @@ func (s *stakerStore) GetPools() *bptree.BPTree {
 }
 
 func (s *stakerStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPools.String(), pools)
 }
 
@@ -319,6 +363,10 @@ func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 }
 
 func (s *stakerStore) SetPoolTierMemberships(_ int, rlm realm, memberships *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierMemberships.String(), memberships)
 }
 
@@ -342,6 +390,10 @@ func (s *stakerStore) GetPoolTierRatio() TierRatio {
 }
 
 func (s *stakerStore) SetPoolTierRatio(_ int, rlm realm, ratio TierRatio) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierRatio.String(), ratio)
 }
 
@@ -365,6 +417,10 @@ func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
 }
 
 func (s *stakerStore) SetPoolTierCounts(_ int, rlm realm, counts [AllTierCount]uint64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierCounts.String(), counts)
 }
 
@@ -388,6 +444,10 @@ func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
 }
 
 func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(_ int, rlm realm, timestamp int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierLastRewardCacheTimestamp.String(), timestamp)
 }
 
@@ -411,6 +471,10 @@ func (s *stakerStore) GetPoolTierCurrentEmission() int64 {
 }
 
 func (s *stakerStore) SetPoolTierCurrentEmission(_ int, rlm realm, emission int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierCurrentEmission.String(), emission)
 }
 
@@ -434,6 +498,10 @@ func (s *stakerStore) GetPoolTierGetEmission() func() int64 {
 }
 
 func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierGetEmission.String(), fn)
 }
 
@@ -457,6 +525,10 @@ func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64
 }
 
 func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierGetHalvingBlocksInRange.String(), fn)
 }
 
@@ -479,6 +551,10 @@ func (s *stakerStore) GetWarmupTemplate() []Warmup {
 }
 
 func (s *stakerStore) SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyWarmupTemplate.String(), warmups)
 }
 
@@ -502,6 +578,10 @@ func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 }
 
 func (s *stakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProcessor) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyCurrentSwapBatch.String(), batch)
 }
 
@@ -526,6 +606,10 @@ func (s *stakerStore) GetExternalIncentivesByCreationTime() *UintTree {
 }
 
 func (s *stakerStore) SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *UintTree) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
