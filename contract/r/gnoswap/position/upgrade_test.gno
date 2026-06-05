@@ -1,6 +1,7 @@
 package position
 
 import (
+	"chain/runtime"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -21,7 +22,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 		name                 string
 		setup                func(cur realm, t *testing.T)
 		initializer          func(_ int, rlm realm, s IPositionStore) IPosition
-		callerRealmPath      string
+		callerRealm          runtime.Realm
 		callerAddress        address
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -29,7 +30,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}{
 		{
 			name:            "register initializer is success",
-			callerRealmPath: "gno.land/r/gnoswap/position/v1",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
 			initializer:     makeMockInitializer("v1"),
 			expectedVersion: "v1",
 		},
@@ -39,7 +40,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
 				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
-			callerRealmPath: "gno.land/r/gnoswap/position/new_version",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"),
 			initializer:     makeMockInitializer("new_version"),
 			expectedVersion: "v1",
 		},
@@ -49,14 +50,14 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
 				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
-			callerRealmPath:      "gno.land/r/gnoswap/position/v1",
+			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
 			initializer:          makeMockInitializer("v1"),
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer already registered",
 		},
 		{
 			name:                 "register initializer is failed by invalid domain path",
-			callerRealmPath:      "gno.land/r/gnoswap/invalid",
+			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
 			initializer:          makeMockInitializer("v1"),
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: caller is not in the domain path",
@@ -64,16 +65,14 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// Setup
 		resetTestState(t)
 
 		if tt.setup != nil {
 			tt.setup(cur, t)
 		}
 
-		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
+		testing.SetRealm(tt.callerRealm)
 
-		// Action
 		if tt.expectedHasAbort {
 			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
 				RegisterInitializer(cross(cur), tt.initializer)
@@ -122,8 +121,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 		name                 string
 		setup                func(cur realm, t *testing.T)
 		packagePath          string
-		callerRealmPath      string
-		callerAddress        address
+		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
@@ -138,7 +136,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:     "gno.land/r/gnoswap/position/new_version",
-			callerAddress:   adminAddr,
+			callerRealm:     testing.NewUserRealm(adminAddr),
 			expectedVersion: "new_version",
 		},
 		{
@@ -151,7 +149,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:          "gno.land/r/gnoswap/position/new_version",
-			callerRealmPath:      "gno.land/r/gnoswap/invalid",
+			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
 			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1ute9mjth6la3nrkeaaj4ec0nh3ypj4ngy0jnjh is not admin",
@@ -163,7 +161,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			packagePath:          "gno.land/r/gnoswap/position/nonexistent",
-			callerAddress:        adminAddr,
+			callerRealm:          testing.NewUserRealm(adminAddr),
 			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/position/nonexistent",
@@ -171,16 +169,14 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// Setup
 		resetTestState(t)
 
 		if tt.setup != nil {
 			tt.setup(cur, t)
 		}
 
-		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
+		testing.SetRealm(tt.callerRealm)
 
-		// Action
 		if tt.expectedHasAbort {
 			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
 				UpgradeImpl(cross(cur), tt.packagePath)
