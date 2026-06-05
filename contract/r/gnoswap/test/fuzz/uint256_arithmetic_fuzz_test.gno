@@ -11,7 +11,7 @@ import (
 
 // Arithmetic Identity Laws Tests
 // TestFuzzUint256Arithmetic_AdditionAssociativity tests (a + b) + c == a + (b + c)
-func TestFuzzUint256Arithmetic_AdditionAssociativity(t *testing.T) {
+func TestFuzzUint256Arithmetic_AdditionAssociativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -47,7 +47,7 @@ func TestFuzzUint256Arithmetic_AdditionAssociativity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_AdditionCommutativity tests a + b == b + a
-func TestFuzzUint256Arithmetic_AdditionCommutativity(t *testing.T) {
+func TestFuzzUint256Arithmetic_AdditionCommutativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -69,7 +69,7 @@ func TestFuzzUint256Arithmetic_AdditionCommutativity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_MultiplicationAssociativity tests (a * b) * c == a * (b * c)
-func TestFuzzUint256Arithmetic_MultiplicationAssociativity(t *testing.T) {
+func TestFuzzUint256Arithmetic_MultiplicationAssociativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use small values to avoid overflow
 		params := NewValidIdentityLawParams(ft)
@@ -97,7 +97,7 @@ func TestFuzzUint256Arithmetic_MultiplicationAssociativity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_MultiplicationCommutativity tests a * b == b * a
-func TestFuzzUint256Arithmetic_MultiplicationCommutativity(t *testing.T) {
+func TestFuzzUint256Arithmetic_MultiplicationCommutativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -119,7 +119,7 @@ func TestFuzzUint256Arithmetic_MultiplicationCommutativity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_DistributiveLaw tests a * (b + c) == a*b + a*c
-func TestFuzzUint256Arithmetic_DistributiveLaw(t *testing.T) {
+func TestFuzzUint256Arithmetic_DistributiveLaw(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use small values to avoid overflow
 		params := NewValidIdentityLawParams(ft)
@@ -148,7 +148,7 @@ func TestFuzzUint256Arithmetic_DistributiveLaw(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_AdditionIdentity tests a + 0 == a
-func TestFuzzUint256Arithmetic_AdditionIdentity(t *testing.T) {
+func TestFuzzUint256Arithmetic_AdditionIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -168,7 +168,7 @@ func TestFuzzUint256Arithmetic_AdditionIdentity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_MultiplicationIdentity tests a * 1 == a
-func TestFuzzUint256Arithmetic_MultiplicationIdentity(t *testing.T) {
+func TestFuzzUint256Arithmetic_MultiplicationIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -188,7 +188,7 @@ func TestFuzzUint256Arithmetic_MultiplicationIdentity(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_MultiplicationZero tests a * 0 == 0
-func TestFuzzUint256Arithmetic_MultiplicationZero(t *testing.T) {
+func TestFuzzUint256Arithmetic_MultiplicationZero(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -208,7 +208,7 @@ func TestFuzzUint256Arithmetic_MultiplicationZero(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_SubtractionInverse tests a - a == 0
-func TestFuzzUint256Arithmetic_SubtractionInverse(t *testing.T) {
+func TestFuzzUint256Arithmetic_SubtractionInverse(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedIdentityLawParams(ft)
@@ -227,7 +227,7 @@ func TestFuzzUint256Arithmetic_SubtractionInverse(t *testing.T) {
 }
 
 // TestFuzzUint256Arithmetic_DivModRelation tests Div(x, y) * y + Mod(x, y) == x
-func TestFuzzUint256Arithmetic_DivModRelation(t *testing.T) {
+func TestFuzzUint256Arithmetic_DivModRelation(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		x := fuzz.Uint256().Draw(ft, "x").(*u256.Uint)
@@ -304,7 +304,7 @@ func umulHopLocal(z, x, y uint64) (hi, lo uint64) {
 }
 
 // TestFuzzUint256UmulSparse_ValidParams tests umul with sparse patterns
-func TestFuzzUmulSparse_ValidParams(t *testing.T) {
+func TestFuzzUmulSparse_ValidParams(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidUmulSparseParams(ft)
@@ -331,7 +331,7 @@ func TestFuzzUmulSparse_ValidParams(t *testing.T) {
 }
 
 // TestFuzzUint256UmulSparse_RandomizedParams tests umul with randomized parameters
-func TestFuzzUmulSparse_RandomizedParams(t *testing.T) {
+func TestFuzzUmulSparse_RandomizedParams(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedUmulSparseParams(ft)
@@ -358,7 +358,7 @@ func TestFuzzUmulSparse_RandomizedParams(t *testing.T) {
 }
 
 // TestFuzzUint256UmulSparse_Commutativity tests umul(x, y) == umul(y, x) for lower 256 bits
-func TestFuzzUmulSparse_Commutativity(t *testing.T) {
+func TestFuzzUmulSparse_Commutativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedUmulSparseParams(ft)
@@ -382,7 +382,7 @@ func TestFuzzUmulSparse_Commutativity(t *testing.T) {
 }
 
 // TestFuzzUint256UmulSparse_ZeroMultiplication tests umul(0, y) == 0 and umul(x, 0) == 0
-func TestFuzzUmulSparse_ZeroMultiplication(t *testing.T) {
+func TestFuzzUmulSparse_ZeroMultiplication(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedUmulSparseParams(ft)
@@ -409,7 +409,7 @@ func TestFuzzUmulSparse_ZeroMultiplication(t *testing.T) {
 }
 
 // TestFuzzUint256UmulSparse_IdentityMultiplication tests umul(x, 1) == x
-func TestFuzzUmulSparse_IdentityMultiplication(t *testing.T) {
+func TestFuzzUmulSparse_IdentityMultiplication(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedUmulSparseParams(ft)

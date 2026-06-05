@@ -10,7 +10,7 @@ import (
 )
 
 // TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless tests TickMathGetSqrtRatioAtTick with valid parameters
-func TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless(t *testing.T) {
+func TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidTickMathGetSqrtRatioAtTickParams(ft)
@@ -24,7 +24,7 @@ func TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzTickMathGetSqrtRatioAtTick_RandomizedParams_Stateless tests TickMathGetSqrtRatioAtTick with randomized parameters
-func TestFuzzTickMathGetSqrtRatioAtTick_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzTickMathGetSqrtRatioAtTick_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedTickMathGetSqrtRatioAtTickParams(ft)
@@ -38,7 +38,7 @@ func TestFuzzTickMathGetSqrtRatioAtTick_RandomizedParams_Stateless(t *testing.T)
 }
 
 // TestFuzzTickMathGetTickAtSqrtRatio_ValidParams_Stateless tests TickMathGetTickAtSqrtRatio with valid parameters
-func TestFuzzTickMathGetTickAtSqrtRatio_ValidParams_Stateless(t *testing.T) {
+func TestFuzzTickMathGetTickAtSqrtRatio_ValidParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidTickMathGetTickAtSqrtRatioParams(ft)
@@ -53,7 +53,7 @@ func TestFuzzTickMathGetTickAtSqrtRatio_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzTickMathGetTickAtSqrtRatio_RandomizedParams_Stateless tests TickMathGetTickAtSqrtRatio with randomized parameters
-func TestFuzzTickMathGetTickAtSqrtRatio_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzTickMathGetTickAtSqrtRatio_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedTickMathGetTickAtSqrtRatioParams(ft)

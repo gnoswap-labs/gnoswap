@@ -236,8 +236,7 @@ func (p *poolSwapParams) hasEnoughBalance(tokenPath string, requiredAmount *u256
 // drySwap calls pool.DrySwap with panic recovery
 func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success bool) {
 	revive(func() {
-		func(cur realm) {
-			amountIn, amountOut, success = pool.DrySwap(
+		amountIn, amountOut, success = pool.DrySwap(
 				p.token0Path,
 				p.token1Path,
 				p.fee,
@@ -245,7 +244,6 @@ func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success b
 				p.amountSpecified,
 				p.sqrtPriceLimitX96,
 			)
-		}(cross)
 	})
 
 	if amountIn == "0" || amountOut == "0" {

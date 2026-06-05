@@ -15,87 +15,88 @@ import (
 )
 
 // TestFuzzPoolSwap_ValidParams_Stateless tests DrySwap and Swap with valid parameters
-func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
+func TestFuzzPoolSwap_ValidParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewValidPoolSwapParams(ft)
 
 		setupIterations := 25
 		for i := 0; i < setupIterations; i++ {
-			setupPoolSwapLiquidity(ft, params)
+			setupPoolSwapLiquidity(cur, ft, params)
 		}
 
 		params.PreDrySwap()
 
-		mintTestToken(params.token0Path, params.SwapAmount())
-		mintTestToken(params.token1Path, params.SwapAmount())
+		mintTestToken(cur, params.token0Path, params.SwapAmount())
+		mintTestToken(cur, params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
 
 		// then
-		runTestPoolSwap(ft, params)
+		runTestPoolSwap(cur, ft, params)
 	})
 }
 
 // TestFuzzPoolSwap_RandomizedParams_Stateless tests DrySwap and Swap with randomized parameters
-func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzPoolSwap_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewRandomizedPoolSwapParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
 		for i := 0; i < setupIterations; i++ {
-			setupPoolSwapLiquidity(ft, params)
+			setupPoolSwapLiquidity(cur, ft, params)
 		}
 
 		params.PreDrySwap()
 
-		mintTestToken(params.token0Path, params.SwapAmount())
-		mintTestToken(params.token1Path, params.SwapAmount())
+		mintTestToken(cur, params.token0Path, params.SwapAmount())
+		mintTestToken(cur, params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
 
 		// then
-		runTestPoolSwap(ft, params)
+		runTestPoolSwap(cur, ft, params)
 	})
 }
 
 // TestFuzzPoolSwap_RandomizedParams_Stateful tests DrySwap and Swap with randomized parameters in stateful mode
-func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
+func TestFuzzPoolSwap_RandomizedParams_Stateful(cur realm, t *testing.T) {
 	// given
-	initStates(t)
+	initStates(cur, t)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedPoolSwapParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
 		for i := 0; i < setupIterations; i++ {
-			setupPoolSwapLiquidity(ft, params)
+			setupPoolSwapLiquidity(cur, ft, params)
 		}
 
 		params.PreDrySwap()
 
-		mintTestToken(params.token0Path, params.SwapAmount())
-		mintTestToken(params.token1Path, params.SwapAmount())
+		mintTestToken(cur, params.token0Path, params.SwapAmount())
+		mintTestToken(cur, params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
 
 		// then
-		runTestPoolSwap(ft, params)
+		runTestPoolSwap(cur, ft, params)
 	})
 }
 
 // runTestPoolSwap runs the test swap by calling DrySwap and Swap
-func runTestPoolSwap(ft *fuzz.T, params *poolSwapParams) {
+func runTestPoolSwap(cur realm, ft *fuzz.T, params *poolSwapParams) {
 	// Execute Swap
 	swapAmount0, swapAmount1 := callPoolSwap(
+		cur,
 		params.token0Path,
 		params.token1Path,
 		params.fee,
@@ -116,6 +117,7 @@ func runTestPoolSwap(ft *fuzz.T, params *poolSwapParams) {
 
 // callPoolSwap calls pool.Swap from a mock contract realm to bypass EOA restriction
 func callPoolSwap(
+	cur realm,
 	token0Path, token1Path string,
 	fee uint32,
 	zeroForOne bool,
@@ -128,8 +130,8 @@ func callPoolSwap(
 
 	// Approve tokens for swap
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 	// Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
@@ -138,14 +140,14 @@ func callPoolSwap(
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+				common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+				common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 			}
-		}(cross)
+		}(cross(cur))
 
 		return nil
 	}
@@ -154,7 +156,7 @@ func callPoolSwap(
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
 		amount0, amount1 = pool.Swap(
-			cross,
+			cross(cur),
 			token0Path,
 			token1Path,
 			fee,
@@ -165,13 +167,13 @@ func callPoolSwap(
 			adminAddr,
 			swapCallback,
 		)
-	}(cross)
+	}(cross(cur))
 
 	return amount0, amount1
 }
 
 // setupPoolSwapLiquidity sets up pool and liquidity for swap test
-func setupPoolSwapLiquidity(ft *fuzz.T, params *poolSwapParams) {
+func setupPoolSwapLiquidity(cur realm, ft *fuzz.T, params *poolSwapParams) {
 	poolIdentifier := ufmt.Sprintf("%s:%s:%d", params.token0Path, params.token1Path, params.fee)
-	setupRouterMintPositionByRoutePath(ft, poolIdentifier)
+	setupRouterMintPositionByRoutePath(cur, ft, poolIdentifier)
 }
