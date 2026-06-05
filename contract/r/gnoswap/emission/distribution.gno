@@ -105,7 +105,7 @@ func ChangeDistributionPct(
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
 		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
 
 	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
@@ -295,10 +295,14 @@ func GetStakerEmissionAmountPerSecond() int64 {
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
 func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
-	halvingBlocks, halvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
+	gnsHalvingBlocks, gnsHalvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
+	halvingBlocks := make([]int64, len(gnsHalvingBlocks))
+	halvingEmissions := make([]int64, len(gnsHalvingEmissions))
+
 	for i := range halvingBlocks {
+		halvingBlocks[i] = gnsHalvingBlocks[i]
 		// Applying staker ratio for past halving blocks
-		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
+		halvingEmissions[i] = calculateAmount(gnsHalvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
 	}
 
 	return halvingBlocks, halvingEmissions

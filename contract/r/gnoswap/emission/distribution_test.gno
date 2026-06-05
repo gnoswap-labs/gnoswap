@@ -444,7 +444,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 		name                   string
 		setup                  func(cur realm)
 		caller                 address
-		callback               func(int64)
+		callback               func(cur realm, emissionAmountPerSecond int64)
 		emissionAmount         int64
 		expectedEmissionAmount int64
 		wantErr                bool
@@ -453,7 +453,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 		{
 			name:   "success - staker can set callback",
 			caller: stakerAddr,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -463,7 +463,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 		{
 			name:   "panic - non-staker cannot set callback",
 			caller: adminAddr,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -474,7 +474,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 		{
 			name:   "panic - regular user cannot set callback",
 			caller: alice,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -496,11 +496,11 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 			setup: func(cur realm) {
 				// Set initial callback
 				testing.SetRealm(stakerRealm)
-				SetOnDistributionPctChangeCallback(cross(cur), func(amount int64) {
+				SetOnDistributionPctChangeCallback(cross(cur), func(cur realm, amount int64) {
 					currentEmissionAmount = amount
 				})
 			},
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -537,7 +537,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 
 			// Then - callback is called with 100
 			if onDistributionPctChangeCallback != nil {
-				onDistributionPctChangeCallback(tt.emissionAmount)
+				onDistributionPctChangeCallback(cross(cur), tt.emissionAmount)
 			}
 
 			// Then

@@ -1,5 +1,7 @@
 package position
 
+import bptree "gno.land/p/nt/bptree/v0"
+
 // Position represents a liquidity position in a pool.
 // Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 // All uint256 fields are stored as decimal strings to reduce realm object overhead.
@@ -132,4 +134,10 @@ func NewPosition(
 		burned:                   burned,
 		operator:                 operator,
 	}
+}
+
+// NewPositionsTree allocates the positions BP-tree
+// under /r/gnoswap/position's realm context (the realm that declares Position).
+func NewPositionsTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
 }

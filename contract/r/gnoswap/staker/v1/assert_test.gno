@@ -9,7 +9,7 @@ import (
 
 // Test assertIsValidAmount
 
-func TestAssertIsValidAmount(t *testing.T) {
+func TestAssertIsValidAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
@@ -43,13 +43,13 @@ func TestAssertIsValidAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be positive", func() {
+				uassert.PanicsContains(t, cur, "must be positive", func() {
 					assertIsValidAmount(tt.amount)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidAmount(tt.amount)
 				})
 			}
@@ -59,7 +59,7 @@ func TestAssertIsValidAmount(t *testing.T) {
 
 // Test assertIsValidRewardAmountFormat
 
-func TestAssertIsValidRewardAmountFormat(t *testing.T) {
+func TestAssertIsValidRewardAmountFormat(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		rewardAmtStr  string
@@ -117,13 +117,13 @@ func TestAssertIsValidRewardAmountFormat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.expectedError, func() {
+				uassert.PanicsContains(t, cur, tt.expectedError, func() {
 					assertIsValidRewardAmountFormat(tt.rewardAmtStr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidRewardAmountFormat(tt.rewardAmtStr)
 				})
 			}
@@ -133,7 +133,7 @@ func TestAssertIsValidRewardAmountFormat(t *testing.T) {
 
 // Test assertIsValidPoolTier
 
-func TestAssertIsValidPoolTier(t *testing.T) {
+func TestAssertIsValidPoolTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tier        uint64
@@ -177,13 +177,13 @@ func TestAssertIsValidPoolTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be less than", func() {
+				uassert.PanicsContains(t, cur, "must be less than", func() {
 					assertIsValidPoolTier(tt.tier)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidPoolTier(tt.tier)
 				})
 			}
@@ -193,7 +193,7 @@ func TestAssertIsValidPoolTier(t *testing.T) {
 
 // Test assertIsValidFeeRate
 
-func TestAssertIsValidFeeRate(t *testing.T) {
+func TestAssertIsValidFeeRate(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		fee         uint64
@@ -232,13 +232,13 @@ func TestAssertIsValidFeeRate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be in range", func() {
+				uassert.PanicsContains(t, cur, "must be in range", func() {
 					assertIsValidFeeRate(tt.fee)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidFeeRate(tt.fee)
 				})
 			}
@@ -248,7 +248,7 @@ func TestAssertIsValidFeeRate(t *testing.T) {
 
 // Test assertIsValidIncentiveEndTime
 
-func TestAssertIsValidIncentiveEndTime(t *testing.T) {
+func TestAssertIsValidIncentiveEndTime(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		endTime     int64
@@ -287,13 +287,13 @@ func TestAssertIsValidIncentiveEndTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "cannot be later than", func() {
+				uassert.PanicsContains(t, cur, "cannot be later than", func() {
 					assertIsValidIncentiveEndTime(tt.endTime)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidIncentiveEndTime(tt.endTime)
 				})
 			}
@@ -303,7 +303,7 @@ func TestAssertIsValidIncentiveEndTime(t *testing.T) {
 
 // Test assertIsValidIncentiveDuration
 
-func TestAssertIsValidIncentiveDuration(t *testing.T) {
+func TestAssertIsValidIncentiveDuration(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		duration    int64
@@ -352,13 +352,13 @@ func TestAssertIsValidIncentiveDuration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be 90, 180, 365 days", func() {
+				uassert.PanicsContains(t, cur, "must be 90, 180, 365 days", func() {
 					assertIsValidIncentiveDuration(tt.duration)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidIncentiveDuration(tt.duration)
 				})
 			}
@@ -368,7 +368,7 @@ func TestAssertIsValidIncentiveDuration(t *testing.T) {
 
 // Test isMidnight
 
-func TestIsMidnight(t *testing.T) {
+func TestIsMidnight(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		time     time.Time
@@ -412,7 +412,7 @@ func TestIsMidnight(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := isMidnight(tt.time)
 			uassert.Equal(t, tt.expected, result)
 		})
@@ -421,7 +421,7 @@ func TestIsMidnight(t *testing.T) {
 
 // Test assertIsValidIncentiveStartTime
 
-func TestAssertIsValidIncentiveStartTime(t *testing.T) {
+func TestAssertIsValidIncentiveStartTime(cur realm, t *testing.T) {
 	// Calculate reference times
 	now := time.Now()
 	tomorrowMidnight := now.AddDate(0, 0, 1).Truncate(24 * time.Hour)
@@ -472,13 +472,13 @@ func TestAssertIsValidIncentiveStartTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.expectedError, func() {
+				uassert.PanicsContains(t, cur, tt.expectedError, func() {
 					assertIsValidIncentiveStartTime(tt.startTime)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidIncentiveStartTime(tt.startTime)
 				})
 			}
@@ -488,7 +488,7 @@ func TestAssertIsValidIncentiveStartTime(t *testing.T) {
 
 // Edge case tests
 
-func TestAssertIsValidAmount_Boundaries(t *testing.T) {
+func TestAssertIsValidAmount_Boundaries(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
@@ -522,13 +522,13 @@ func TestAssertIsValidAmount_Boundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be positive", func() {
+				uassert.PanicsContains(t, cur, "must be positive", func() {
 					assertIsValidAmount(tt.amount)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidAmount(tt.amount)
 				})
 			}
@@ -536,7 +536,7 @@ func TestAssertIsValidAmount_Boundaries(t *testing.T) {
 	}
 }
 
-func TestAssertIsValidFeeRate_Boundaries(t *testing.T) {
+func TestAssertIsValidFeeRate_Boundaries(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		fee         uint64
@@ -565,13 +565,13 @@ func TestAssertIsValidFeeRate_Boundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "must be in range", func() {
+				uassert.PanicsContains(t, cur, "must be in range", func() {
 					assertIsValidFeeRate(tt.fee)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidFeeRate(tt.fee)
 				})
 			}
@@ -579,11 +579,11 @@ func TestAssertIsValidFeeRate_Boundaries(t *testing.T) {
 	}
 }
 
-func TestAssertIsValidPoolTier_AllValues(t *testing.T) {
+func TestAssertIsValidPoolTier_AllValues(cur realm, t *testing.T) {
 	// Test all valid tiers
 	for tier := uint64(0); tier < AllTierCount; tier++ {
-		t.Run("valid_tier_"+string(rune('0'+tier)), func(t *testing.T) {
-			uassert.NotPanics(t, func() {
+		t.Run("valid_tier_"+string(rune('0'+tier)), func(cur realm, t *testing.T) {
+			uassert.NotPanics(t, cur, func() {
 				assertIsValidPoolTier(tier)
 			})
 		})
@@ -592,33 +592,33 @@ func TestAssertIsValidPoolTier_AllValues(t *testing.T) {
 	// Test some invalid tiers
 	invalidTiers := []uint64{AllTierCount, AllTierCount + 1, 100, 1000}
 	for _, tier := range invalidTiers {
-		t.Run("invalid_tier", func(t *testing.T) {
-			uassert.PanicsContains(t, "must be less than", func() {
+		t.Run("invalid_tier", func(cur realm, t *testing.T) {
+			uassert.PanicsContains(t, cur, "must be less than", func() {
 				assertIsValidPoolTier(tier)
 			})
 		})
 	}
 }
 
-func TestIncentiveDuration_Constants(t *testing.T) {
+func TestIncentiveDuration_Constants(cur realm, t *testing.T) {
 	// Verify the duration constants are correct
 	uassert.Equal(t, int64(7776000), TIMESTAMP_90DAYS)   // 90 * 24 * 60 * 60
 	uassert.Equal(t, int64(15552000), TIMESTAMP_180DAYS) // 180 * 24 * 60 * 60
 	uassert.Equal(t, int64(31536000), TIMESTAMP_365DAYS) // 365 * 24 * 60 * 60
 
 	// Test that all three constants work
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		assertIsValidIncentiveDuration(TIMESTAMP_90DAYS)
 	})
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		assertIsValidIncentiveDuration(TIMESTAMP_180DAYS)
 	})
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		assertIsValidIncentiveDuration(TIMESTAMP_365DAYS)
 	})
 }
 
-func TestAssertIsValidAddress(t *testing.T) {
+func TestAssertIsValidAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		addr        address
@@ -645,13 +645,13 @@ func TestAssertIsValidAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.expectedMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedMsg, func() {
 					assertIsValidAddress(tt.addr)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidAddress(tt.addr)
 				})
 			}
@@ -660,7 +660,7 @@ func TestAssertIsValidAddress(t *testing.T) {
 }
 
 // TestAssertIsPositionOwner covers the strict caller==owner check that gates StakeToken. It must allow only the exact match between the NFT
-func TestAssertIsPositionOwner(t *testing.T) {
+func TestAssertIsPositionOwner(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		owner       address
@@ -730,13 +730,13 @@ func TestAssertIsPositionOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.expectedMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedMsg, func() {
 					assertIsPositionOwner(tt.owner, tt.caller)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsPositionOwner(tt.owner, tt.caller)
 				})
 			}

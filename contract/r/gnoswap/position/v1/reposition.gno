@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -24,6 +23,8 @@ import (
 //
 // Returns positionId, liquidity, tickLower, tickUpper, amount0, amount1.
 func (p *positionV1) Reposition(
+	_ int,
+	rlm realm,
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
@@ -33,13 +34,18 @@ func (p *positionV1) Reposition(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
 	assertIsOwnerForToken(p, positionId, caller)
 	assertIsNotExpired(deadline)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// position should be burned to reposition
 	position := p.mustGetPosition(positionId)
@@ -70,6 +76,8 @@ func (p *positionV1) Reposition(
 	poolKey := position.PoolKey()
 
 	liquidity, amount0, amount1 := p.addLiquidity(
+		0,
+		rlm,
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      tickLower,
@@ -102,7 +110,7 @@ func (p *positionV1) Reposition(
 	position.SetTokensOwed0(0)
 	position.SetTokensOwed1(0)
 	position.SetBurned(false)
-	p.mustUpdatePosition(positionId, *position)
+	p.mustUpdatePosition(0, rlm, positionId, *position)
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
 	poolToken0Balance := pl.GetBalanceToken0(poolKey)
@@ -110,7 +118,6 @@ func (p *positionV1) Reposition(
 
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolKey, 0)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Reposition",
 		"prevAddr", previousRealm.Address().String(),
