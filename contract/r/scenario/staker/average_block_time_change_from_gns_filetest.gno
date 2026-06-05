@@ -15,7 +15,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -61,70 +60,70 @@ var (
 	poolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	initAccountAndEmission(cur)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initAccountAndEmissionPostDeposit()
+	initAccountAndEmissionPostDeposit(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint wugnot gns position 01")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake position 01")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect reward for 1 blocks")
-	collectRewardWithSkippingBlocks(1, 1)
+	collectRewardWithSkippingBlocks(cur, 1, 1)
 	println()
 
 	println("[SCENARIO] 6. Collect reward for 1 blocks")
-	collectRewardWithSkippingBlocks(1, 1)
+	collectRewardWithSkippingBlocks(cur, 1, 1)
 }
 
-func initAccountAndEmission() {
+func initAccountAndEmission(cur realm) {
 	println("[INFO] send coins to admin")
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 
 	testing.SetRealm(adminRealm)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	// Deposit is done in main()
+	// Deposit is done in main(cur)
 }
 
-func initAccountAndEmissionPostDeposit() {
+func initAccountAndEmissionPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	// set unstaking fee to 0
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] create pool gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0")
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -132,15 +131,15 @@ func createPool() {
 	)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)")
 	pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -156,18 +155,18 @@ func mintPosition() {
 	)
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 	testing.SkipHeights(1)
 
 	// stake
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	before := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	after := gns.BalanceOf(adminUser)
 
@@ -175,20 +174,20 @@ func stakePosition() {
 	ufmt.Println("[INFO] balance changes by 100 blocks", diff)
 }
 
-func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
+func collectRewardWithSkippingBlocks(cur realm, positionId uint64, blocks int64) {
 	testing.SetRealm(adminRealm)
 
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(blocks)
 
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	after := gns.BalanceOf(adminUser)
 	diff := after - before
 
 	ufmt.Printf("[EXPECTED] position %d's reward for %d blocks: %d\n", positionId, blocks, diff)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

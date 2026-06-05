@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -46,7 +48,7 @@ var (
 	fee100 uint32 = 100
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #8 2-Route 2-Hop Swap Test")
 	println("[INFO] Starting scenario: Multi-route 2-hop swap tests")
 
@@ -54,48 +56,48 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fees")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*2)
 
 	println("[INFO] Creating bar-baz pool (fee: 500)")
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(cross(cur), barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	println("[INFO] Creating baz-qux pool (fee: 500)")
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(cross(cur), bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
 	println("[INFO] Executing test scenarios")
-	testPositionMint()
-	testDrySwapRouteBarQuxExactIn()
-	testSwapRouteBarQuxExactIn()
-	testSwapRouteBarQuxExactOut()
-	testSwapRouteQuxBarExactIn()
-	testwapRouteQuxBarExactOut()
+	testPositionMint(cur)
+	testDrySwapRouteBarQuxExactIn(cur)
+	testSwapRouteBarQuxExactIn(cur)
+	testSwapRouteBarQuxExactOut(cur)
+	testSwapRouteQuxBarExactIn(cur)
+	testwapRouteQuxBarExactOut(cur)
 
 	println("[INFO] Scenario completed")
 }
 
-func testPositionMint() {
+func testPositionMint(cur realm) {
 	println("[SCENARIO] Given: Position minting preparation for multiple pools")
 	// bar_baz_500 by admin
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	qux.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	qux.Approve(cross(cur), poolAddr, max_approve)
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 	println("[INFO] Minting position in baz-qux pool")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 	println()
 }
 
-func testDrySwapRouteBarQuxExactIn() {
+func testDrySwapRouteBarQuxExactIn(cur realm) {
 	println("[SCENARIO] Given: Dry swap route bar to qux exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route with 2 routes (bar → baz → qux)")
-	_, dryResult, _ := router.DrySwapRoute(
+	_, dryResult, _ := router.DrySwapRoute(cross(cur),
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
@@ -109,17 +111,17 @@ func testDrySwapRouteBarQuxExactIn() {
 	println()
 }
 
-func testSwapRouteBarQuxExactIn() {
+func testSwapRouteBarQuxExactIn(cur realm) {
 	println("[SCENARIO] Given: Swap route bar to qux exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, chain.PackageAddress("gno.land/r/gnoswap/router"), 10000)
-	qux.Approve(cross, chain.PackageAddress("gno.land/r/gnoswap/router"), 10000)
+	bar.Approve(cross(cur), chain.PackageAddress("gno.land/r/gnoswap/router"), 10000)
+	qux.Approve(cross(cur), chain.PackageAddress("gno.land/r/gnoswap/router"), 10000)
 
 	println("[INFO] Executing ExactIn swap with 2 routes (1000 bar → baz → qux)")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
@@ -135,13 +137,13 @@ func testSwapRouteBarQuxExactIn() {
 	println()
 }
 
-func testSwapRouteBarQuxExactOut() {
+func testSwapRouteBarQuxExactOut(cur realm) {
 	println("[SCENARIO] Given: Swap route bar to qux exact out preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing ExactOut swap with 2 routes (bar → baz → 1000 qux)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
@@ -157,13 +159,13 @@ func testSwapRouteBarQuxExactOut() {
 	println()
 }
 
-func testSwapRouteQuxBarExactIn() {
+func testSwapRouteQuxBarExactIn(cur realm) {
 	println("[SCENARIO] Given: Swap route qux to bar exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing ExactIn swap with 2 routes (1000 qux → baz → bar)")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
@@ -179,17 +181,17 @@ func testSwapRouteQuxBarExactIn() {
 	println()
 }
 
-func testwapRouteQuxBarExactOut() {
+func testwapRouteQuxBarExactOut(cur realm) {
 	println("[SCENARIO] Given: Swap route qux to bar exact out preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, routerAddr, 10000)
-	bar.Approve(cross, routerAddr, 10000)
+	qux.Approve(cross(cur), routerAddr, 10000)
+	bar.Approve(cross(cur), routerAddr, 10000)
 
 	println("[INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified

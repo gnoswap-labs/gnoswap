@@ -52,55 +52,55 @@ var (
 	fee     = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Execute multiple swaps")
-	executeMultipleSwaps()
+	executeMultipleSwaps(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Decrease liquidity partially")
-	decreaseLiquidityPartially()
+	decreaseLiquidityPartially(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Execute more swaps")
-	executeMoreSwaps()
+	executeMoreSwaps(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Verify final tokens owed")
-	verifyFinalTokensOwed()
+	verifyFinalTokensOwed(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(10000000000)
 
 	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -108,14 +108,14 @@ func initPool() {
 	)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -136,16 +136,16 @@ func mintPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func executeMultipleSwaps() {
+func executeMultipleSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -155,7 +155,7 @@ func executeMultipleSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -164,7 +164,7 @@ func executeMultipleSwaps() {
 
 	ufmt.Println("[INFO] Executing second swap FOO -> BAR")
 	amount0, amount1 = pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -174,7 +174,7 @@ func executeMultipleSwaps() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -182,14 +182,14 @@ func executeMultipleSwaps() {
 	ufmt.Printf("[EXPECTED] Swap2 amount1 should be %s\n", amount1)
 }
 
-func decreaseLiquidityPartially() {
+func decreaseLiquidityPartially(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity by 50%")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"614189560",
 		"0",
@@ -202,16 +202,16 @@ func decreaseLiquidityPartially() {
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 }
 
-func executeMoreSwaps() {
+func executeMoreSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -221,7 +221,7 @@ func executeMoreSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -229,23 +229,23 @@ func executeMoreSwaps() {
 	ufmt.Printf("[EXPECTED] Swap3 amount1 should be %s\n", amount1)
 }
 
-func verifyFinalTokensOwed() {
+func verifyFinalTokensOwed(cur realm) {
 	testing.SetRealm(aliceRealm)
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

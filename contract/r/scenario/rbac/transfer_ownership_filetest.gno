@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario Test: RBAC Transfer Ownership Process
 // Tests the complete ownership transfer cycle in the RBAC system
 // including initiation, pending state, acceptance, and verification
@@ -34,52 +36,52 @@ var (
 	randomRealm = testing.NewUserRealm(randomAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] RBAC Transfer Ownership Process - Full Cycle Test")
 	println()
 
 	println("[STEP 1] Verify initial ownership state")
-	verifyInitialOwnershipState()
+	verifyInitialOwnershipState(cur)
 	println()
 
 	println("[STEP 2] Non-owner cannot initiate ownership transfer")
-	testNonOwnerCannotTransfer()
+	testNonOwnerCannotTransfer(cur)
 	println()
 
 	println("[STEP 3] Owner initiates ownership transfer")
-	testOwnerInitiatesTransfer()
+	testOwnerInitiatesTransfer(cur)
 	println()
 
 	println("[STEP 4] Verify pending owner state")
-	verifyPendingOwnerState()
+	verifyPendingOwnerState(cur)
 	println()
 
 	println("[STEP 5] Non-pending owner cannot accept ownership")
-	testNonPendingOwnerCannotAccept()
+	testNonPendingOwnerCannotAccept(cur)
 	println()
 
 	println("[STEP 6] Pending owner accepts ownership")
-	testPendingOwnerAccepts()
+	testPendingOwnerAccepts(cur)
 	println()
 
 	println("[STEP 7] Verify ownership transfer completed")
-	verifyOwnershipTransferCompleted()
+	verifyOwnershipTransferCompleted(cur)
 	println()
 
 	println("[STEP 8] Verify ROLE_ADMIN updated in access module")
-	verifyRoleAdminUpdated()
+	verifyRoleAdminUpdated(cur)
 	println()
 
 	println("[STEP 9] Previous owner can no longer transfer ownership")
-	testPreviousOwnerCannotTransfer()
+	testPreviousOwnerCannotTransfer(cur)
 	println()
 
 	println("[STEP 10] New owner can initiate another transfer")
-	testNewOwnerCanTransfer()
+	testNewOwnerCanTransfer(cur)
 	println()
 }
 
-func verifyInitialOwnershipState() {
+func verifyInitialOwnershipState(cur realm) {
 	owner := rbac.GetOwner()
 	pendingOwner := rbac.GetPendingOwner()
 	roleAdminAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -102,29 +104,29 @@ func verifyInitialOwnershipState() {
 	println("[SUCCESS] Initial state verified - Owner and ROLE_ADMIN are unified")
 }
 
-func testNonOwnerCannotTransfer() {
+func testNonOwnerCannotTransfer(cur realm) {
 	testing.SetRealm(randomRealm)
 
 	ufmt.Printf("[INFO] Attempting transfer by non-owner (%s)\n", randomAddr.String())
 
-	uassert.AbortsContains(t, "caller is not owner", func() {
-		rbac.TransferOwnership(cross, newOwnerAddr)
+	uassert.AbortsContains(t, cur, "caller is not owner", func() {
+		rbac.TransferOwnership(cross(cur), newOwnerAddr)
 	})
 
 	println("[SUCCESS] Non-owner correctly blocked from initiating transfer")
 }
 
-func testOwnerInitiatesTransfer() {
+func testOwnerInitiatesTransfer(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Printf("[INFO] Owner (%s) initiating transfer to new owner (%s)\n", adminAddr.String(), newOwnerAddr.String())
 
-	rbac.TransferOwnership(cross, newOwnerAddr)
+	rbac.TransferOwnership(cross(cur), newOwnerAddr)
 
 	println("[SUCCESS] Ownership transfer initiated by current owner")
 }
 
-func verifyPendingOwnerState() {
+func verifyPendingOwnerState(cur realm) {
 	owner := rbac.GetOwner()
 	pendingOwner := rbac.GetPendingOwner()
 
@@ -145,13 +147,13 @@ func verifyPendingOwnerState() {
 	println("[SUCCESS] Pending owner state verified correctly")
 }
 
-func testNonPendingOwnerCannotAccept() {
+func testNonPendingOwnerCannotAccept(cur realm) {
 	testing.SetRealm(randomRealm)
 
 	ufmt.Printf("[INFO] Attempting accept by non-pending owner (%s)\n", randomAddr.String())
 
-	uassert.AbortsContains(t, "caller is not pending owner", func() {
-		rbac.AcceptOwnership(cross)
+	uassert.AbortsContains(t, cur, "caller is not pending owner", func() {
+		rbac.AcceptOwnership(cross(cur))
 	})
 
 	// Also verify original owner cannot accept
@@ -159,24 +161,24 @@ func testNonPendingOwnerCannotAccept() {
 
 	ufmt.Printf("[INFO] Attempting accept by original owner (%s)\n", adminAddr.String())
 
-	uassert.AbortsContains(t, "caller is not pending owner", func() {
-		rbac.AcceptOwnership(cross)
+	uassert.AbortsContains(t, cur, "caller is not pending owner", func() {
+		rbac.AcceptOwnership(cross(cur))
 	})
 
 	println("[SUCCESS] Non-pending owners correctly blocked from accepting")
 }
 
-func testPendingOwnerAccepts() {
+func testPendingOwnerAccepts(cur realm) {
 	testing.SetRealm(newOwnerRealm)
 
 	ufmt.Printf("[INFO] Pending owner (%s) accepting ownership\n", newOwnerAddr.String())
 
-	rbac.AcceptOwnership(cross)
+	rbac.AcceptOwnership(cross(cur))
 
 	println("[SUCCESS] Ownership accepted by pending owner")
 }
 
-func verifyOwnershipTransferCompleted() {
+func verifyOwnershipTransferCompleted(cur realm) {
 	owner := rbac.GetOwner()
 	pendingOwner := rbac.GetPendingOwner()
 	roleAdminAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -204,7 +206,7 @@ func verifyOwnershipTransferCompleted() {
 	println("[SUCCESS] Ownership transfer completed - Owner and ROLE_ADMIN remain unified")
 }
 
-func verifyRoleAdminUpdated() {
+func verifyRoleAdminUpdated(cur realm) {
 	// Verify that previous owner is no longer ROLE_ADMIN
 	accessAdminAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String())
 
@@ -219,24 +221,24 @@ func verifyRoleAdminUpdated() {
 	println("[SUCCESS] Previous owner is no longer ROLE_ADMIN - authority transferred")
 }
 
-func testPreviousOwnerCannotTransfer() {
+func testPreviousOwnerCannotTransfer(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Printf("[INFO] Previous owner (%s) attempting to transfer ownership\n", adminAddr.String())
 
-	uassert.AbortsContains(t, "caller is not owner", func() {
-		rbac.TransferOwnership(cross, randomAddr)
+	uassert.AbortsContains(t, cur, "caller is not owner", func() {
+		rbac.TransferOwnership(cross(cur), randomAddr)
 	})
 
 	println("[SUCCESS] Previous owner correctly blocked from transferring")
 }
 
-func testNewOwnerCanTransfer() {
+func testNewOwnerCanTransfer(cur realm) {
 	testing.SetRealm(newOwnerRealm)
 
 	ufmt.Printf("[INFO] New owner (%s) initiating transfer to another address (%s)\n", newOwnerAddr.String(), randomAddr.String())
 
-	rbac.TransferOwnership(cross, randomAddr)
+	rbac.TransferOwnership(cross(cur), randomAddr)
 
 	// Verify pending owner is set
 	pendingOwner := rbac.GetPendingOwner()

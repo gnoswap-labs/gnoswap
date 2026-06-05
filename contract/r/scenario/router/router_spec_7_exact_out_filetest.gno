@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -17,11 +19,10 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
-
-	"gno.land/r/gnoswap/gns"
 )
 
 var (
@@ -35,68 +36,55 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 	fooPath = "gno.land/r/onbloc/foo"
+	quxPath = "gno.land/r/onbloc/qux"
 
-	min_tick    int32 = -887220
-	max_tick    int32 = 887220
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
 )
 
-const (
-	FEE_MEDIUM uint32 = 3000
-)
-
-func main() {
-	println("[SCENARIO] #4 ExactIn Router Test")
-	println("[INFO] Starting scenario: Multi-hop ExactIn swap test (bar → baz → foo)")
+func main(cur realm) {
+	println("[SCENARIO] #7 ExactOut Router Test")
+	println("[INFO] Starting scenario: Multi-hop ExactOut swap test (bar → baz → foo)")
 
 	println("[INFO] Setting up pools and positions")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Approving pool creation fees")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+	println("[INFO] Approving pool creation fee")
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*2)
 
 	println("[INFO] Creating bar-baz pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950336")
 	println("[INFO] Creating baz-foo pool (fee: 3000)")
-	pl.CreatePool(cross, bazPath, fooPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), bazPath, fooPath, 3000, "79228162514264337593543950336")
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
-	// Mint
 	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 	println("[INFO] Minting position in baz-foo pool")
-	pn.Mint(cross, bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
-	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, 1000000)
-	foo.Approve(cross, routerAddr, 1000000)
+	bar.Approve(cross(cur), routerAddr, 1000000)
+	foo.Approve(cross(cur), routerAddr, 1000000)
 
-	println("[INFO] Checking balances before swap")
 	token0Before := bar.BalanceOf(adminAddr)
 	token2Before := foo.BalanceOf(adminAddr)
 
-	println("[INFO] admin bar balance:", token0Before)
-	println("[INFO] admin foo balance:", token2Before)
-
-	println("[INFO] Executing ExactIn swap (5 bar → baz → foo)")
-	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+	amountIn, amountOut := router.ExactOutSwapRoute(
+		cross(cur),
 		barPath, // inputToken
 		fooPath, // outputToken
-		"5",     // amountSpecified
+		"1",     // amountSpecified
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000", // strRouteArr
 		"100", // quoteArr
-		"1",   // tokenAmountLimit
+		"5",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
-		"",
+		"", // referrer
 	)
 
-	println("[INFO] Checking balances after swap")
 	token0After := bar.BalanceOf(adminAddr)
 	token2After := foo.BalanceOf(adminAddr)
 
@@ -110,21 +98,15 @@ func main() {
 }
 
 // Output:
-// [SCENARIO] #4 ExactIn Router Test
-// [INFO] Starting scenario: Multi-hop ExactIn swap test (bar → baz → foo)
+// [SCENARIO] #7 ExactOut Router Test
+// [INFO] Starting scenario: Multi-hop ExactOut swap test (bar → baz → foo)
 // [INFO] Setting up pools and positions
-// [INFO] Approving pool creation fees
+// [INFO] Approving pool creation fee
 // [INFO] Creating bar-baz pool (fee: 3000)
 // [INFO] Creating baz-foo pool (fee: 3000)
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in bar-baz pool
 // [INFO] Minting position in baz-foo pool
-// [INFO] Approving tokens for swap
-// [INFO] Checking balances before swap
-// [INFO] admin bar balance: 99999999000000
-// [INFO] admin foo balance: 99999999000000
-// [INFO] Executing ExactIn swap (5 bar → baz → foo)
-// [INFO] Checking balances after swap
 // [EXPECTED] amountIn: 5 expected: 5
 // [EXPECTED] amountOut: -1 expected: -1
 // [EXPECTED] admin bar balance change: 99999998999995 expected: 99999998999995

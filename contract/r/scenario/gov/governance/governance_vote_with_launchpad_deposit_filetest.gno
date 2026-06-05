@@ -49,24 +49,24 @@ var (
 	currentBlockTime = int64(5)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Check Initial xGNS Supply")
-	checkInitialXgnsSupply()
+	checkInitialXgnsSupply(cur)
 	println()
 
 	println("[SCENARIO] 2. Delegate GNS to dummy (staker delegation)")
-	delegateGnsToDummy()
+	delegateGnsToDummy(cur)
 	println()
 
 	println("[SCENARIO] 3. Create Launchpad Project and Deposit GNS")
-	projectTierId := createAndDepositLaunchpad()
+	projectTierId := createAndDepositLaunchpad(cur)
 	println()
 
 	println("[SCENARIO] 4. Check xGNS Supply after launchpad deposit")
-	checkXgnsSupplyAfterLaunchpad()
+	checkXgnsSupplyAfterLaunchpad(cur)
 	println()
 
 	println("[SCENARIO] 5. Skip smoothing period for proposal creation")
@@ -75,7 +75,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 6. Propose Text")
-	proposalId := proposeText()
+	proposalId := proposeText(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip voting start delay for ready to vote")
@@ -84,26 +84,26 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Vote for the proposal with dummy")
-	voteProposalWithDummy(proposalId)
+	voteProposalWithDummy(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 9. Verify voting weight")
-	verifyVotingWeight(proposalId, projectTierId)
+	verifyVotingWeight(cur, proposalId, projectTierId)
 	println()
 }
 
-func checkInitialXgnsSupply() {
+func checkInitialXgnsSupply(cur realm) {
 	totalSupply := xgns.TotalSupply()
 	ufmt.Printf("[INFO] xGNS total supply: %d\n", totalSupply)
 	ufmt.Printf("[EXPECTED] Both should be 0 initially\n")
 }
 
-func delegateGnsToDummy() {
+func delegateGnsToDummy(cur realm) {
 	delegatedAmount := int64(2_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, dummyAddr, delegatedAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), dummyAddr, delegatedAmount, "")
 
 	xgnsBalance := xgns.BalanceOf(dummyAddr)
 	ufmt.Printf("[INFO] GNS delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
@@ -111,15 +111,15 @@ func delegateGnsToDummy() {
 	ufmt.Printf("[EXPECTED] xGNS total supply: %d\n", xgns.TotalSupply())
 }
 
-func createAndDepositLaunchpad() string {
+func createAndDepositLaunchpad(cur realm) string {
 	depositAmount := int64(5_000_000_000)
 
 	// Create launchpad project
 	println("[INFO] Creating launchpad project")
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Approve(cross, launchpadAddr, int64(10_000_000))
+	obl.Approve(cross(cur), launchpadAddr, int64(10_000_000))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		"Test OBL Project",
 		"gno.land/r/onbloc/obl",
 		projectAddr,
@@ -138,13 +138,13 @@ func createAndDepositLaunchpad() string {
 
 	// Transfer GNS to depositor and deposit
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 
 	projectTierId := projectId + ":30"
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 	ufmt.Printf("[INFO] GNS deposited to launchpad (depositId: %d, amount: %d)\n", depositId, depositAmount)
 
 	// Check xGNS balance of launchpad
@@ -154,7 +154,7 @@ func createAndDepositLaunchpad() string {
 	return projectTierId
 }
 
-func checkXgnsSupplyAfterLaunchpad() {
+func checkXgnsSupplyAfterLaunchpad(cur realm) {
 	totalSupply := xgns.TotalSupply()
 	launchpadBalance := xgns.BalanceOf(launchpadAddr)
 
@@ -163,21 +163,21 @@ func checkXgnsSupplyAfterLaunchpad() {
 	ufmt.Printf("[EXPECTED] voting supply = total supply - launchpad balance = %d\n", totalSupply-launchpadBalance)
 }
 
-func proposeText() int64 {
+func proposeText(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] Created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposalWithDummy(proposalId int64) {
+func voteProposalWithDummy(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Vote submitted, proposal state: %s\n", state)
 }
 
-func verifyVotingWeight(proposalId int64, projectTierId string) {
+func verifyVotingWeight(cur realm, proposalId int64, projectTierId string) {
 	// Get vote info
 	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
 	nayWeight, _ := governance.GetNayByProposalId(proposalId)

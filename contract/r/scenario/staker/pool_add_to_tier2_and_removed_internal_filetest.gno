@@ -14,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -57,73 +56,73 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Set pool to tier 2")
-	setPoolToTier2()
+	setPoolToTier2(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint and stake position")
-	mintAndStakePosition()
+	mintAndStakePosition(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect reward with tier 2")
-	collectRewardWithTier2()
+	collectRewardWithTier2(cur)
 	println()
 
 	println("[SCENARIO] 6. Remove pool from tier system")
-	removePoolFromTier()
+	removePoolFromTier(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect reward after tier removal")
-	collectRewardAfterTierRemoval()
+	collectRewardAfterTierRemoval(cur)
 	println()
 
 	println("[SCENARIO] 8. Verify pool removal effects")
-	verifyPoolRemovalEffects()
+	verifyPoolRemovalEffects(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func mintAndStakePosition() {
+func mintAndStakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -142,18 +141,18 @@ func mintAndStakePosition() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 	testing.SkipHeights(1)
 }
 
-func setPoolToTier2() {
+func setPoolToTier2(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool to tier 2")
-	sr.SetPoolTier(cross, poolPath, 2)
+	sr.SetPoolTier(cross(cur), poolPath, 2)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier set to: %d\n", currentTier)
@@ -165,7 +164,7 @@ func setPoolToTier2() {
 	println("[INFO] pool successfully set to tier 2")
 }
 
-func collectRewardWithTier2() {
+func collectRewardWithTier2(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards with tier 2")
@@ -173,7 +172,7 @@ func collectRewardWithTier2() {
 
 	println("[INFO] collect reward with tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	tier2Reward := afterGns - beforeGns
 
@@ -186,11 +185,11 @@ func collectRewardWithTier2() {
 	println("[INFO] confirmed: rewards are distributed with tier 2")
 }
 
-func removePoolFromTier() {
+func removePoolFromTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system")
-	sr.RemovePoolTier(cross, poolPath)
+	sr.RemovePoolTier(cross(cur), poolPath)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier after removal: %d (should be 0)\n", currentTier)
@@ -202,7 +201,7 @@ func removePoolFromTier() {
 	println("[INFO] pool successfully removed from tier system")
 }
 
-func collectRewardAfterTierRemoval() {
+func collectRewardAfterTierRemoval(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to test rewards after tier removal")
@@ -210,14 +209,14 @@ func collectRewardAfterTierRemoval() {
 
 	println("[INFO] collect reward after tier removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRemoval := afterGns - beforeGns
 
 	ufmt.Printf("[EXPECTED] reward after tier removal: %d\n", rewardAfterRemoval)
 }
 
-func verifyPoolRemovalEffects() {
+func verifyPoolRemovalEffects(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] verify pool removal effects")
@@ -232,7 +231,7 @@ func verifyPoolRemovalEffects() {
 
 	// Test adding back to tier system
 	println("[INFO] test adding pool back to tier system")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	restoredTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] restored pool tier: %d\n", restoredTier)
@@ -246,7 +245,7 @@ func verifyPoolRemovalEffects() {
 
 	println("[INFO] collect reward after tier restoration")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRestoration := afterGns - beforeGns
 
@@ -260,7 +259,7 @@ func verifyPoolRemovalEffects() {
 	println("[INFO] confirmed: tier removal stops rewards, tier restoration resumes rewards")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

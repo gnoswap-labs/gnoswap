@@ -13,7 +13,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -48,35 +47,35 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Pool with Minimum Tick Spacing")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Single Tick Range Position")
-	testSingleTickRange()
+	testSingleTickRange(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Multiple Positions at Same Ultra-Tight Range")
-	testMultipleUltraTightPositions()
+	testMultipleUltraTightPositions(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Large Amounts in Minimal Range")
-	testLargeAmountsMinimalRange()
+	testLargeAmountsMinimalRange(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Liquidity Calculation Precision")
-	testLiquidityPrecision()
+	testLiquidityPrecision(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Create pool with fee tier 100 (tick spacing = 1, most sensitive)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100, // fee tier with tick spacing 1
@@ -85,20 +84,20 @@ func initializeSetup() {
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	bar.Transfer(cross(cur), aliceAddr, testAmount)
+	baz.Transfer(cross(cur), aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
 
 	println("[INFO] Pool created with tick spacing 1 (most sensitive to edge cases)")
 	println("[INFO] Test accounts funded and approved")
 }
 
-func testSingleTickRange() {
+func testSingleTickRange(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	// Single tick range is the absolute minimum and most sensitive
@@ -109,7 +108,7 @@ func testSingleTickRange() {
 	amount1 := "1000000000" // 1e9
 
 	positionId, liquidity, actualAmount0, actualAmount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -133,7 +132,7 @@ func testSingleTickRange() {
 	// Single tick ranges should not produce extreme liquidity values
 }
 
-func testMultipleUltraTightPositions() {
+func testMultipleUltraTightPositions(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	// Test overlapping ultra-tight positions
@@ -141,7 +140,7 @@ func testMultipleUltraTightPositions() {
 
 	// First position
 	pos1Id, liq1, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -156,7 +155,7 @@ func testMultipleUltraTightPositions() {
 
 	// Second position at same range
 	pos2Id, liq2, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -174,7 +173,7 @@ func testMultipleUltraTightPositions() {
 	ufmt.Printf("[EXPECTED] Multiple positions in same ultra-tight range handled correctly\n")
 }
 
-func testLargeAmountsMinimalRange() {
+func testLargeAmountsMinimalRange(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	// Test with large amounts in minimal range
@@ -187,7 +186,7 @@ func testLargeAmountsMinimalRange() {
 	amount1 := "1000000000" // 1e9
 
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -207,7 +206,7 @@ func testLargeAmountsMinimalRange() {
 	ufmt.Printf("[EXPECTED] Calculations handled large amounts without overflow\n")
 }
 
-func testLiquidityPrecision() {
+func testLiquidityPrecision(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	// Test precision with incrementally different amounts
@@ -218,7 +217,7 @@ func testLiquidityPrecision() {
 
 	// Position with base amount
 	_, liq1, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -233,7 +232,7 @@ func testLiquidityPrecision() {
 
 	// Position with +1 wei
 	_, liq2, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,

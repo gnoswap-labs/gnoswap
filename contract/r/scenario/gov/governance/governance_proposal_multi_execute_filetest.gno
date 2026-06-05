@@ -37,12 +37,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
@@ -51,7 +51,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose Multi Execute (SetPoolCreationFee + CommunityPoolSpend)")
-	proposalID := proposeMultiExecute()
+	proposalID := proposeMultiExecute(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
@@ -60,7 +60,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
-	voteProposal(proposalID)
+	voteProposal(cur, proposalID)
 	println()
 
 	println("[SCENARIO] 6. Skip voting period and execution delay for ready to execute")
@@ -70,27 +70,27 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Execute Multi Proposal")
-	executeMultiProposal(proposalID)
+	executeMultiProposal(cur, proposalID)
 	println()
 }
 
 // [SCENARIO] 1. Delegate gns to admin
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
 // [SCENARIO] 2. Propose Multi Execute
-func proposeMultiExecute() int64 {
+func proposeMultiExecute(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"test_title",
 		"test_description",
 		int64(2),
@@ -101,12 +101,12 @@ func proposeMultiExecute() int64 {
 }
 
 // [SCENARIO] 3. Vote for the proposal
-func voteProposal(proposalID int64) {
+func voteProposal(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	prevYea, _ := governance.GetYeaByProposalId(proposalID)
 	prevNay, _ := governance.GetNayByProposalId(proposalID)
 
-	governance.Vote(cross, proposalID, true)
+	governance.Vote(cross(cur), proposalID, true)
 
 	afterYea, _ := governance.GetYeaByProposalId(proposalID)
 	afterNay, _ := governance.GetNayByProposalId(proposalID)
@@ -116,12 +116,12 @@ func voteProposal(proposalID int64) {
 }
 
 // [SCENARIO] 4. Execute Multi Proposal
-func executeMultiProposal(proposalID int64) {
+func executeMultiProposal(cur realm, proposalID int64) {
 	communityPoolAddr := address("g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7")
 
 	prevBlockTime := currentBlockTime
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 
 	afterBlockTime := currentBlockTime
 	afterCommunityPool := gns.BalanceOf(communityPoolAddr)

@@ -52,59 +52,59 @@ var (
 	fee     = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint positions with same range")
-	mintSameRangePositions()
+	mintSameRangePositions(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint positions with different ranges")
-	mintDifferentRangePositions()
+	mintDifferentRangePositions(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Execute swaps")
-	executeSwaps()
+	executeSwaps(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Check fee distribution for same range")
-	checkSameRangeFees()
+	checkSameRangeFees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Check fee distribution for different ranges")
-	checkDifferentRangeFees()
+	checkDifferentRangeFees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Verify final balances")
-	verifyFinalBalances()
+	verifyFinalBalances(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(10000000000)
 
 	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -112,14 +112,14 @@ func initPool() {
 	)
 }
 
-func mintSameRangePositions() {
+func mintSameRangePositions(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting first position in same range")
 	positionId1, liquidity1, amount01, amount11 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -141,7 +141,7 @@ func mintSameRangePositions() {
 
 	ufmt.Println("[INFO] Minting second position in same range")
 	positionId2, liquidity2, amount02, amount12 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -162,14 +162,14 @@ func mintSameRangePositions() {
 	ufmt.Printf("[EXPECTED] Position 2 amount1 should be %s\n", amount12)
 }
 
-func mintDifferentRangePositions() {
+func mintDifferentRangePositions(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position in lower range")
 	positionId3, liquidity3, amount03, amount13 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -191,7 +191,7 @@ func mintDifferentRangePositions() {
 
 	ufmt.Println("[INFO] Minting position in upper range")
 	positionId4, liquidity4, amount04, amount14 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -212,16 +212,16 @@ func mintDifferentRangePositions() {
 	ufmt.Printf("[EXPECTED] Position 4 amount1 should be %s\n", amount14)
 }
 
-func executeSwaps() {
+func executeSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -231,7 +231,7 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -240,7 +240,7 @@ func executeSwaps() {
 
 	ufmt.Println("[INFO] Executing swap FOO -> BAR")
 	amount0, amount1 = pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -250,7 +250,7 @@ func executeSwaps() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -258,43 +258,43 @@ func executeSwaps() {
 	ufmt.Printf("[EXPECTED] Swap2 amount1 should be %s\n", amount1)
 }
 
-func checkSameRangeFees() {
+func checkSameRangeFees(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 1")
-	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1)
+	_, fee01, fee11, _, _, _ := position.CollectFee(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] Position 1 fee0 should be %s\n", fee01)
 	ufmt.Printf("[EXPECTED] Position 1 fee1 should be %s\n", fee11)
 
 	ufmt.Println("[INFO] Collecting fees from position 2")
-	_, fee02, fee12, _, _, _ := position.CollectFee(cross, 2)
+	_, fee02, fee12, _, _, _ := position.CollectFee(cross(cur), 2)
 
 	ufmt.Printf("[EXPECTED] Position 2 fee0 should be %s\n", fee02)
 	ufmt.Printf("[EXPECTED] Position 2 fee1 should be %s\n", fee12)
 }
 
-func checkDifferentRangeFees() {
+func checkDifferentRangeFees(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 3")
-	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3)
+	_, fee03, fee13, _, _, _ := position.CollectFee(cross(cur), 3)
 
 	ufmt.Printf("[EXPECTED] Position 3 fee0 should be %s\n", fee03)
 	ufmt.Printf("[EXPECTED] Position 3 fee1 should be %s\n", fee13)
 
 	ufmt.Println("[INFO] Collecting fees from position 4")
-	_, fee04, fee14, _, _, _ := position.CollectFee(cross, 4)
+	_, fee04, fee14, _, _, _ := position.CollectFee(cross(cur), 4)
 
 	ufmt.Printf("[EXPECTED] Position 4 fee0 should be %s\n", fee04)
 	ufmt.Printf("[EXPECTED] Position 4 fee1 should be %s\n", fee14)
 }
 
-func verifyFinalBalances() {
+func verifyFinalBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking final balances")
@@ -305,15 +305,15 @@ func verifyFinalBalances() {
 	ufmt.Printf("[EXPECTED] Alice FOO balance should be %d\n", aliceFooBalance)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Test partial collection with multiple undelegations at different times
 
 package main
@@ -42,58 +44,58 @@ var (
 	minAmount = int64(1_000_000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup - Transfer GNS to alice")
-	setupGNS()
+	setupGNS(cur)
 	println()
 
 	println("[SCENARIO] 2. Alice delegates to delegatee")
-	delegateToDelegatee()
+	delegateToDelegatee(cur)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3. Create pool by protocol fee")
-	createPoolByProtocolFee()
+	createPoolByProtocolFee(cur)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4. Check and collect claimable reward for alice")
-	getClaimableRewardByAddress(aliceAddr)
+	getClaimableRewardByAddress(cur, aliceAddr)
 	println()
 
 	println("[SCENARIO] 5. Collect reward for alice")
-	collectReward(aliceAddr)
+	collectReward(cur, aliceAddr)
 	println()
 }
 
-func setupGNS() {
+func setupGNS(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, 1_000_000_000)
+	gns.Transfer(cross(cur), aliceAddr, 1_000_000_000)
 	ufmt.Println("[INFO] Transferred 1,000,000,000 GNS to alice")
 }
 
-func delegateToDelegatee() {
+func delegateToDelegatee(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gns.Approve(cross, govStakerAddr, minAmount)
-	staker.Delegate(cross, delegateeAddr, minAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, minAmount)
+	staker.Delegate(cross(cur), delegateeAddr, minAmount, "")
 	ufmt.Printf("[INFO] Alice delegated %d GNS to delegatee\n", minAmount)
 }
 
-func createPoolByProtocolFee() {
+func createPoolByProtocolFee(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, math.MaxInt64)
-	pool.CreatePool(cross, barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, math.MaxInt64)
+	pool.CreatePool(cross(cur), barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	ufmt.Printf("[INFO] Created %s:%s:%d pool\n", barPath, fooPath, 3000)
 }
 
-func getClaimableRewardByAddress(addr address) {
+func getClaimableRewardByAddress(cur realm, addr address) {
 	// alice has not authorized to protocol fee distribution
 	// testing.SetRealm(aliceRealm)
 
 	// admin can get claimable reward
 	testing.SetRealm(adminRealm)
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	protocol_fee.DistributeProtocolFee(cross(cur))
 
 	previousGovStakerGNSBalance := gns.BalanceOf(govStakerAddr)
 
@@ -117,10 +119,10 @@ func getClaimableRewardByAddress(addr address) {
 	ufmt.Printf("[EXPECTED] collected gov staker GNS balance: %d\n", afterGovStakerGNSBalance-previousGovStakerGNSBalance)
 }
 
-func collectReward(addr address) {
+func collectReward(cur realm, addr address) {
 	testing.SetRealm(aliceRealm)
 	previousGNSBalance := gns.BalanceOf(addr)
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 	afterGNSBalance := gns.BalanceOf(addr)
 	ufmt.Printf("[EXPECTED] collected GNS balance of %s: %d\n", addr, afterGNSBalance-previousGNSBalance)
 }

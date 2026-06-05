@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // staker protocol fee reward
 
 package main
@@ -47,98 +49,98 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func fundAndApproveProtocolFeeCallerBar(amount int64) {
+func fundAndApproveProtocolFeeCallerBar(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
+	bar.Transfer(cross(cur), stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	bar.Approve(cross(cur), protocolFeeAddr, amount)
+	bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveProtocolFeeCallerQux(amount int64) {
+func fundAndApproveProtocolFeeCallerQux(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerAddr, amount)
+	qux.Transfer(cross(cur), stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	qux.Approve(cross(cur), protocolFeeAddr, amount)
+	qux.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Admin delegates GNS to Alice")
-	adminDelegateToAlice()
+	adminDelegateToAlice(cur)
 	println()
 
 	println("[SCENARIO] 2. Mock protocol fee deposit (bar, qux)")
-	mockProtocolFeeDeposit()
+	mockProtocolFeeDeposit(cur)
 	println()
 
 	println("[SCENARIO] 3. Bob delegates GNS to Bob")
-	bobDelegateToBob()
+	bobDelegateToBob(cur)
 	println()
 
 	println("[SCENARIO] 4. Mock protocol fee deposit again (bar, qux)")
-	mockProtocolFeeDepositAgain()
+	mockProtocolFeeDepositAgain(cur)
 	println()
 
 	println("[SCENARIO] 5. Skip blocks and distribute protocol fee")
-	skipBlocksAndDistribute()
+	skipBlocksAndDistribute(cur)
 	println()
 
 	println("[SCENARIO] 6. Check and collect protocol fee reward for Bob")
-	protocolFeeRewardBob()
+	protocolFeeRewardBob(cur)
 	println()
 
 	println("[SCENARIO] 7. Check and collect protocol fee reward for Admin")
-	protocolFeeRewardAdmin()
+	protocolFeeRewardAdmin(cur)
 	println()
 }
 
-func adminDelegateToAlice() {
+func adminDelegateToAlice(cur realm) {
 	amount := int64(1_000_000)
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, aliceAddr, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), aliceAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from adminAddr to alice\n", amount)
 }
 
-func mockProtocolFeeDeposit() {
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+func mockProtocolFeeDeposit(cur realm) {
+	fundAndApproveProtocolFeeCallerBar(cur, 1000)
+	fundAndApproveProtocolFeeCallerQux(cur, 2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
+	bar.Approve(cross(cur), protocolFeeAddr, 1000)
+	qux.Approve(cross(cur), protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross(cur), barPath, 1000)
+	pf.AddToProtocolFee(cross(cur), quxPath, 2500)
 	print("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
 }
 
-func bobDelegateToBob() {
+func bobDelegateToBob(cur realm) {
 	amount := int64(5_000_000)
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, bobAddr, amount)
+	gns.Transfer(cross(cur), bobAddr, amount)
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, bobAddr, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), bobAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from bob to bob\n", amount)
 }
 
-func mockProtocolFeeDepositAgain() {
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+func mockProtocolFeeDepositAgain(cur realm) {
+	fundAndApproveProtocolFeeCallerBar(cur, 1000)
+	fundAndApproveProtocolFeeCallerQux(cur, 2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
+	bar.Approve(cross(cur), protocolFeeAddr, 1000)
+	qux.Approve(cross(cur), protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross(cur), barPath, 1000)
+	pf.AddToProtocolFee(cross(cur), quxPath, 2500)
 	println("[INFO] protocol fee deposited again: bar(1000), qux(2500)")
 }
 
-func skipBlocksAndDistribute() {
+func skipBlocksAndDistribute(cur realm) {
 	testing.SkipHeights(10)
 	println("[INFO] skipped 10 blocks")
 }
 
-func formatProtocolFees(fees map[string]int64) string {
+func formatProtocolFees(cur realm, fees map[string]int64) string {
 	if len(fees) == 0 {
 		return "map[]"
 	}
@@ -155,29 +157,29 @@ func formatProtocolFees(fees map[string]int64) string {
 	return result
 }
 
-func protocolFeeRewardBob() {
+func protocolFeeRewardBob(cur realm) {
 	testing.SetRealm(gnoStakerRealm)
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	protocol_fee.DistributeProtocolFee(cross(cur))
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
-	ufmt.Printf("[INFO] claimable reward (bob): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
+	ufmt.Printf("[INFO] claimable reward (bob): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(cur, protocolFees))
 	testing.SetRealm(bobRealm)
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 	println("[INFO] collected protocol fee reward for bob")
 }
 
-func protocolFeeRewardAdmin() {
+func protocolFeeRewardAdmin(cur realm) {
 	testing.SetRealm(gnoStakerRealm)
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	protocol_fee.DistributeProtocolFee(cross(cur))
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
-	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
+	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(cur, protocolFees))
 
 	prevBarBalance := bar.BalanceOf(adminAddr)
 	prevQuxBalance := qux.BalanceOf(adminAddr)
 
 	testing.SetRealm(adminRealm)
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 
 	afterBarBalance := bar.BalanceOf(adminAddr)
 	afterQuxBalance := qux.BalanceOf(adminAddr)

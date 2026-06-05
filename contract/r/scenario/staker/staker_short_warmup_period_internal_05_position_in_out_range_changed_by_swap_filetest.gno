@@ -56,73 +56,73 @@ var (
 	MUST_EXISTS_IN_TIER_1        = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position 01 (narrow range)")
-	mintBarQux100_1()
+	mintBarQux100_1(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint position 02 (wide range)")
-	mintBarQux100_2()
+	mintBarQux100_2(cur)
 	println()
 
 	println("[SCENARIO] 5. Stake both positions and check initial rewards")
-	stakeToken_1_2()
+	stakeToken_1_2(cur)
 	println()
 
 	println("[SCENARIO] 6. Make position 01 out of range via swap")
-	makePosition1OutRange()
+	makePosition1OutRange(cur)
 	println()
 
 	println("[SCENARIO] 7. Check rewards after position goes out of range")
-	checkRewardAfter1Block()
+	checkRewardAfter1Block(cur)
 	println()
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, maxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	testing.SetRealm(stakerRealm)
 	testing.SkipHeights(1)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross, poolPath, 1)
+	pl.CreatePool(cross(cur), barPath, quxPath, 100, "79228162514264337593543950337")
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintBarQux100_1(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -145,14 +145,14 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_2() {
+func mintBarQux100_2(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -175,20 +175,20 @@ func mintBarQux100_2() {
 	testing.SkipHeights(1)
 }
 
-func stakeToken_1_2() {
+func stakeToken_1_2(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 
 	testing.SkipHeights(1)
 
 	// clear reward
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
 
 	ufmt.Printf("[EXPECTED] both positions staked and initial rewards cleared\n")
 	testing.SkipHeights(1)
@@ -209,7 +209,7 @@ func stakeToken_1_2() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 01 (in-range) reward: %d GNS\n", diff)
@@ -221,7 +221,7 @@ func stakeToken_1_2() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterGns = gns.BalanceOf(adminUser)
 	diff = afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 (in-range) reward: %d GNS\n", diff)
@@ -230,7 +230,7 @@ func stakeToken_1_2() {
 	// total 10364802
 }
 
-func makePosition1OutRange() {
+func makePosition1OutRange(cur realm) {
 	testing.SetRealm(adminRealm)
 	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
@@ -240,14 +240,14 @@ func makePosition1OutRange() {
 	// ROUTER SWAP
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
-	bar.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	bar.Approve(cross(cur), routerAddr, maxInt64)
+	qux.Approve(cross(cur), routerAddr, maxInt64)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		"10000",
@@ -269,12 +269,12 @@ func makePosition1OutRange() {
 	// position-02 is only in-range position
 }
 
-func checkRewardAfter1Block() {
+func checkRewardAfter1Block(cur realm) {
 	println("[INFO] checking reward for position 01 (now out-range)")
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	if diff != 0 {
@@ -286,7 +286,7 @@ func checkRewardAfter1Block() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterGns = gns.BalanceOf(adminUser)
 	diff = afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 (in-range) reward: %d GNS\n", diff)
@@ -298,7 +298,7 @@ func checkRewardAfter1Block() {
 	// so position-02 will get entire block reward
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId := positionId.(type) {
 	case string:
 		return grc721.TokenID(positionId)

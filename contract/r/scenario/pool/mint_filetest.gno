@@ -18,7 +18,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -61,16 +60,16 @@ var (
 	test_liquidityExpectStr = "1000"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Mint Miscellaneous")
 	println("[INFO] Starting scenario: Mint miscellaneous")
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 
@@ -83,7 +82,7 @@ func main() {
 	liqBefore := thisPool.Liquidity().ToString()
 
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -104,7 +103,7 @@ func main() {
 	liqBefore = thisPool.Liquidity().ToString()
 
 	amount0, amount1 = pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -125,10 +124,11 @@ func main() {
 	expectedPanic := `liquidity_math: underflow (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`
 	uassert.AbortsWithMessage(
 		t,
+		cur,
 		expectedPanic,
 		func() {
 			pool.Burn(
-				cross,
+				cross(cur),
 				barPath,
 				fooPath,
 				fee500,

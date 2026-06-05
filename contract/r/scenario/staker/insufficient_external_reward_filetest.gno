@@ -13,7 +13,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 
@@ -61,71 +60,71 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Demonstrate permanent reward loss bug with multiple positions")
 	println()
 
 	println("[STEP 1] Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[STEP 2] Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[STEP 3] Create external incentive with minimum rewards and short duration")
-	createShortDurationIncentive()
+	createShortDurationIncentive(cur)
 	println()
 
 	println("[STEP 4] Mint and stake multiple positions to increase reward rate")
-	mintAndStakeMultiplePositions()
+	mintAndStakeMultiplePositions(cur)
 	println()
 
 	println("[STEP 5] Drain incentive through multiple collections")
-	drainIncentiveFunds()
+	drainIncentiveFunds(cur)
 	println()
 
 	println("[STEP 6] Demonstrate bug: permanent reward loss after fund depletion")
-	demonstratePermanentRewardLoss()
+	demonstratePermanentRewardLoss(cur)
 	println()
 
 	println("[STEP 7] Verify permanent loss")
-	verifyPermanentLoss()
+	verifyPermanentLoss(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func createShortDurationIncentive() {
+func createShortDurationIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	// Create incentive with minimum rewards and shorter duration for higher reward rate
 	println("[INFO] create external incentive with SHORT duration (90 days)")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		1_000_000_000, // Minimum allowed
@@ -142,12 +141,12 @@ func createShortDurationIncentive() {
 	}
 }
 
-func mintAndStakeMultiplePositions() {
+func mintAndStakeMultiplePositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	// Mint MANY positions with MAX liquidity to maximize reward consumption
@@ -155,7 +154,7 @@ func mintAndStakeMultiplePositions() {
 	for i := 1; i <= 50; i++ {
 		// Use same tight range for all positions to maximize liquidity
 		positionId, liquidity, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath,
 			bazPath,
 			fee100,
@@ -176,15 +175,15 @@ func mintAndStakeMultiplePositions() {
 			println("[INFO] ... minting positions 6-49 ...")
 		}
 
-		gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-		sr.StakeToken(cross, positionId, "")
+		gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+		sr.StakeToken(cross(cur), positionId, "")
 	}
 
 	testing.SkipHeights(1)
 	println("[INFO] all 50 positions staked - reward consumption rate is now 50x with maximum liquidity")
 }
 
-func drainIncentiveFunds() {
+func drainIncentiveFunds(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	totalCollected := int64(0)
@@ -196,7 +195,7 @@ func drainIncentiveFunds() {
 	println("[INFO] collect rewards from all 50 positions - this should drain most of the incentive")
 	for i := 1; i <= 50; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
 		totalCollected += reward
@@ -217,7 +216,7 @@ func drainIncentiveFunds() {
 	round2Total := int64(0)
 	for i := 1; i <= 50; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
 		round2Total += reward
@@ -232,7 +231,7 @@ func drainIncentiveFunds() {
 	}
 }
 
-func demonstratePermanentRewardLoss() {
+func demonstratePermanentRewardLoss(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10,000 blocks - HUGE time gap for reward accumulation")
@@ -248,7 +247,7 @@ func demonstratePermanentRewardLoss() {
 		beforeBar := bar.BalanceOf(adminUser)
 
 		// This will update lastCollectTime even if external rewards fail
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
@@ -269,7 +268,7 @@ func demonstratePermanentRewardLoss() {
 	ufmt.Printf("[INFO] Estimated total unclaimed rewards: %d bar\n", totalUnclaimed)
 }
 
-func verifyPermanentLoss() {
+func verifyPermanentLoss(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("\n[VERIFY] Try immediate re-collection to confirm lastCollectTime was updated")
@@ -277,7 +276,7 @@ func verifyPermanentLoss() {
 	zeroCount := 0
 	for i := 1; i <= 10; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		immediateReward := afterBar - beforeBar
 
@@ -299,7 +298,7 @@ func verifyPermanentLoss() {
 // 	 3. Tested behavior when external incentive funds are insufficient
 // 	 4. Verified immediate re-collection yields 0 rewards as expected
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

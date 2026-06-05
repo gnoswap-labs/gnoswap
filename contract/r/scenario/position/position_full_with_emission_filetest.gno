@@ -58,45 +58,45 @@ var (
 	fee        = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool and emission")
-	initPoolAndEmission()
+	initPoolAndEmission(cur)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 150000000}})
 
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
-	initPoolAndEmissionPostDeposit()
+	initPoolAndEmissionPostDeposit(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position for Alice")
-	mintAlicePosition()
+	mintAlicePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Check initial emission state")
-	checkInitialEmissionState()
+	checkInitialEmissionState(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Execute swaps to generate fees")
-	executeSwaps()
+	executeSwaps(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Wait for emission period")
-	waitForEmissionPeriod()
+	waitForEmissionPeriod(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Collect fees and emission rewards")
-	collectFeesAndRewards()
+	collectFeesAndRewards(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Verify final balances")
-	verifyFinalBalances()
+	verifyFinalBalances(cur)
 	println()
 }
 
-func initPoolAndEmission() {
+func initPoolAndEmission(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm(STAKER_PATH))
 
 	testing.SetRealm(adminRealm)
@@ -104,8 +104,8 @@ func initPoolAndEmission() {
 	defaultTokenAmount := int64(50000000)
 
 	ufmt.Println("[INFO] Distributing GNS tokens")
-	gns.Transfer(cross, aliceAddr, defaultTokenAmount)
-	gns.Transfer(cross, bobAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), bobAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
@@ -113,31 +113,31 @@ func initPoolAndEmission() {
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 }
 
-func initPoolAndEmissionPostDeposit() {
+func initPoolAndEmissionPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(50000000)
 	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
-	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
+	wugnot.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial GNS balance of Alice: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial WUGNOT balance of Alice: %d\n", wugnot.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -147,15 +147,15 @@ func initPoolAndEmissionPostDeposit() {
 	ufmt.Println("[INFO] Setting up emission rewards")
 }
 
-func mintAlicePosition() {
+func mintAlicePosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -176,7 +176,7 @@ func mintAlicePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkInitialEmissionState() {
+func checkInitialEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
@@ -184,16 +184,16 @@ func checkInitialEmissionState() {
 	ufmt.Printf("[EXPECTED] Initial emission rewards should be 0\n")
 }
 
-func executeSwaps() {
+func executeSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap WUGNOT -> GNS")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -203,7 +203,7 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, token0Path, token1Path, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -211,18 +211,18 @@ func executeSwaps() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func waitForEmissionPeriod() {
+func waitForEmissionPeriod(cur realm) {
 	ufmt.Println("[INFO] Waiting for emission period")
 	testing.SkipHeights(100)
 }
 
-func collectFeesAndRewards() {
+func collectFeesAndRewards(cur realm) {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees and rewards")
-	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
@@ -230,7 +230,7 @@ func collectFeesAndRewards() {
 	ufmt.Printf("[EXPECTED] Collected emission1 should be %s\n", emission1)
 }
 
-func verifyFinalBalances() {
+func verifyFinalBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking final balances")
@@ -241,13 +241,13 @@ func verifyFinalBalances() {
 	ufmt.Printf("[EXPECTED] Alice final GNS balance should be %d\n", aliceGnsBalance)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

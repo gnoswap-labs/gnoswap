@@ -56,72 +56,72 @@ var (
 	TIMESTAMP_90DAYS = int64(7776000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint 4 positions on bar:baz:3000")
-	mintBarBaz3000_1_4()
+	mintBarBaz3000_1_4(cur)
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with QUX for 90 days")
-	createExternalIncentiveQux90()
+	createExternalIncentiveQux90(cur)
 	println()
 
 	println("[SCENARIO] 5. Stake positions 1-4")
-	stakeToken_1_4()
+	stakeToken_1_4(cur)
 	println()
 
 	println("[SCENARIO] 6. Prepare for active period")
-	beforeActive()
+	beforeActive(cur)
 	println()
 
 	println("[SCENARIO] 7. Check rewards for 1 block of 90 days external")
-	rewardFor1Block()
+	rewardFor1Block(cur)
 	println()
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, maxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	testing.SetRealm(stakerRealm)
 	testing.SkipHeights(1)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950337")
 
 	ufmt.Printf("[EXPECTED] bar:baz:3000 pool created successfully\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarBaz3000_1_4() {
+func mintBarBaz3000_1_4(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
 	testing.SkipHeights(1)
 
 	t1Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(1))
@@ -148,15 +148,15 @@ func mintBarBaz3000_1_4() {
 		t1pct.ToString(), t2pct.ToString(), t3pct.ToString(), t4pct.ToString())
 }
 
-func createExternalIncentiveQux90() {
+func createExternalIncentiveQux90(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	qux.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	qux.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
-	sr.AddToken(cross, quxPath)
+	sr.AddToken(cross(cur), quxPath)
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000",
 		quxPath,
 		50_000_000_000,
@@ -168,40 +168,40 @@ func createExternalIncentiveQux90() {
 	testing.SkipHeights(1)
 }
 
-func stakeToken_1_4() {
+func stakeToken_1_4(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(3))
-	sr.StakeToken(cross, 3, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 3))
+	sr.StakeToken(cross(cur), 3, "")
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(4))
-	sr.StakeToken(cross, 4, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 4))
+	sr.StakeToken(cross(cur), 4, "")
 
 	ufmt.Printf("[EXPECTED] all 4 positions staked successfully\n")
 	testing.SkipHeights(1)
 }
 
-func beforeActive() {
+func beforeActive(cur realm) {
 	testing.SetRealm(adminRealm)
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(cur))
 	testing.SkipHeights(1)
 }
 
-func rewardFor1Block() {
+func rewardFor1Block(cur realm) {
 	testing.SkipHeights(849) // in active
 	testing.SkipHeights(1)   // active // but no block passed since active
 	testing.SetRealm(adminRealm)
 
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
-	sr.CollectReward(cross, 3)
-	sr.CollectReward(cross, 4)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
+	sr.CollectReward(cross(cur), 3)
+	sr.CollectReward(cross(cur), 4)
 
 	println("[INFO] skipping 1 block to check rewards")
 	testing.SkipHeights(1)
@@ -221,7 +221,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux := qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	newQux := qux.BalanceOf(adminUser)
 	diff := newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 01 reward: %d QUX\n", diff)
@@ -234,7 +234,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 02 reward: %d QUX\n", diff)
@@ -247,7 +247,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross(cur), 3)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 03 reward: %d QUX\n", diff)
@@ -260,7 +260,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4)
+	sr.CollectReward(cross(cur), 4)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 04 reward: %d QUX\n", diff)
@@ -269,7 +269,7 @@ func rewardFor1Block() {
 	// 12860 * 0.0069% = 0.88734
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId := positionId.(type) {
 	case string:
 		return grc721.TokenID(positionId)
@@ -284,7 +284,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	}
 }
 
-func isInErrorRange(target, actual uint64) bool {
+func isInErrorRange(cur realm, target, actual uint64) bool {
 	diff := int64(target) - int64(actual)
 	if diff < 0 {
 		diff = -diff

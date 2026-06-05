@@ -49,51 +49,51 @@ var (
 	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectId := "gno.land/r/onbloc/obl:123"
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	println()
 
 	// [SCENARIO] 2. Protocol fee setup
 	println("[SCENARIO] 2. Protocol fee setup")
-	setupProtocolFee(1000, 2500)
+	setupProtocolFee(cur, 1000, 2500)
 	println()
 
 	// [SCENARIO] 3. Deposit GNS to OBL project tier 30
 	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30")
-	depositGnsTo(projectId, projectTier30Id, 1_000_000)
+	depositGnsTo(cur, projectId, projectTier30Id, 1_000_000)
 	println()
 
 	// [SCENARIO] 4. Protocol fee setup 2
 	println("[SCENARIO] 4. Protocol fee setup 2")
-	setupProtocolFee(1000, 2500)
+	setupProtocolFee(cur, 1000, 2500)
 	println()
 
 	// [SCENARIO] 5. Collect protocol fee for OBL project recipient
 	println("[SCENARIO] 5. Collect protocol fee for OBL project recipient")
-	collectProtocolFeeForOBLProjectRecipient()
+	collectProtocolFeeForOBLProjectRecipient(cur)
 	println()
 
 	// [SCENARIO] 6. Deposit GNS to OBL project tier 30 again
 	println("[SCENARIO] 6. Deposit GNS to OBL project tier 30 again")
-	depositGnsTo(projectId, projectTier30Id, 1_000_000)
+	depositGnsTo(cur, projectId, projectTier30Id, 1_000_000)
 	println()
 
 	// [SCENARIO] 7. Protocol fee setup 3
 	println("[SCENARIO] 7. Protocol fee setup 3")
-	setupProtocolFee(1000, 2500)
+	setupProtocolFee(cur, 1000, 2500)
 	println()
 
 	// [SCENARIO] 8. Collect protocol fee for OBL project recipient 2
 	println("[SCENARIO] 8. Collect protocol fee for OBL project recipient 2")
-	collectProtocolFeeForOBLProjectRecipient2()
+	collectProtocolFeeForOBLProjectRecipient2(cur)
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := testutils.TestAddress("project-owner")
@@ -109,9 +109,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -152,20 +152,20 @@ func createOBLProject() {
 }
 
 // Mock protocol fee setup
-func setupProtocolFee(barAmount, quxAmount int64) {
+func setupProtocolFee(cur realm, barAmount, quxAmount int64) {
 	println("[INFO] Setting up mock protocol fees")
 	// admin > staker, protocol_fee pulls from caller via TransferFrom
 	println("[INFO] Admin transferring tokens to staker caller")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	println("[INFO] Adding tokens to protocol fee")
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
 	testing.SkipHeights(1)
 
 	println("[INFO] Validating protocol fee balances")
@@ -177,32 +177,32 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	reservedTokens := protocol_fee.GetReservedTokens()
 	println("[EXPECTED] Reserved protocol fee token count:", len(reservedTokens))
 
-	protocol_fee.DistributeProtocolFee(cross)
+	protocol_fee.DistributeProtocolFee(cross(cur))
 	println("[EXPECTED] Accumulated transfer to gov staker - Bar:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Accumulated transfer to gov staker - Qux:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/qux"))
 }
 
 // Deposit GNS to OBL project tier 30
-func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
+func depositGnsTo(cur realm, projectId, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	println("[INFO] Depositing GNS to OBL project tier 30")
 
 	println("[INFO] Admin transferring GNS to Bob for deposit")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, bobAddr, depositAmount*2) // to deposit
+	gns.Transfer(cross(cur), bobAddr, depositAmount*2) // to deposit
 
 	// delegate gns to gov staker
 	println("[INFO] Bob delegating GNS to gov staker")
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, govStakerAddr, depositAmount)
-	staker.Delegate(cross, bobAddr, int64(depositAmount), "") // bob has xgns 1_000_000
+	gns.Approve(cross(cur), govStakerAddr, depositAmount)
+	staker.Delegate(cross(cur), bobAddr, int64(depositAmount), "") // bob has xgns 1_000_000
 
 	println("[INFO] Skipping blocks to make project active")
 	testing.SkipHeights(4) // project is active
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		int64(depositAmount),
 		"",
@@ -220,7 +220,7 @@ func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
 }
 
 // Collect protocol fee for OBL project recipient
-func collectProtocolFeeForOBLProjectRecipient() {
+func collectProtocolFeeForOBLProjectRecipient(cur realm) {
 	println("[INFO] Collecting protocol fee for OBL project recipient")
 
 	println("[INFO] Project recipient collecting protocol fee")
@@ -231,7 +231,7 @@ func collectProtocolFeeForOBLProjectRecipient() {
 	println("[INFO] Qux balance in protocol fee:", qux.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(projectRealm)
-	launchpad.CollectProtocolFee(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 
 	// 1000 + 1000 - 499 = 1501
 	// 2500 + 2500 - 1249 = 3751
@@ -245,7 +245,7 @@ func collectProtocolFeeForOBLProjectRecipient() {
 }
 
 // Collect protocol fee for OBL project recipient 2
-func collectProtocolFeeForOBLProjectRecipient2() {
+func collectProtocolFeeForOBLProjectRecipient2(cur realm) {
 	println("[INFO] Collecting protocol fee for OBL project recipient 2")
 
 	println("[INFO] Project recipient collecting protocol fee")
@@ -257,7 +257,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 	testing.SkipHeights(1)
 
 	testing.SetRealm(projectRealm)
-	launchpad.CollectProtocolFee(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 
 	// 1501 + 1000 = 2501
 	// 3751 + 2500 = 6251

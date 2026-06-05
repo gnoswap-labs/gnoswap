@@ -33,12 +33,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
@@ -47,39 +47,39 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose community pool spend")
-	proposalId := proposeCommunityPoolSpend()
+	proposalId := proposeCommunityPoolSpend(cur)
 	println()
 
 	println("[SCENARIO] 4. Cancel Proposal")
-	cancelProposal(proposalId)
+	cancelProposal(cur, proposalId)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeCommunityPoolSpend() int64 {
+func proposeCommunityPoolSpend(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/gns", 100)
+	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/gns", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposal(proposalId int64) {
+func voteProposal(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
-func cancelProposal(proposalId int64) {
+func cancelProposal(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	governance.Cancel(cross, proposalId)
+	governance.Cancel(cross(cur), proposalId)
 	ufmt.Printf("[EXPECTED] proposal canceled and archived\n")
 }
 

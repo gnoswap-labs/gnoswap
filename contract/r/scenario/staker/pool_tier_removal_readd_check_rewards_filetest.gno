@@ -20,7 +20,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -75,104 +74,104 @@ var (
 	thirdTierRewards     int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test: Pool Tier Removal and Re-addition")
 	println()
 
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pools(Tier 1) and mint position")
-	createPoolsAndMintPosition()
+	createPoolsAndMintPosition(cur)
 	println()
 
 	println("[SCENARIO] 3. Skip warmup period")
-	collectEmissionRewardsWithSkipHeights(86400 * 30)
+	collectEmissionRewardsWithSkipHeights(cur, 86400 * 30)
 	println()
 
 	println("[SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
 	println("[SCENARIO] 4.1. Set pool tier to tier 1")
-	setPoolTier(1)
+	setPoolTier(cur, 1)
 	println()
 
 	println("[SCENARIO] 4.2. Collect emission rewards in tier 1 with after 10 blocks")
-	collectEmissionRewardsWithSkipHeights(10)
+	collectEmissionRewardsWithSkipHeights(cur, 10)
 	println()
 
 	println("[SCENARIO] 5. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
 	println("[SCENARIO] 5.1. Remove pool tier from tier 1")
-	setPoolTier(0)
+	setPoolTier(cur, 0)
 	println()
 
 	println("[SCENARIO] 5.2. Collect emission rewards in non-tier with after 10 blocks")
-	collectEmissionRewardsWithSkipHeights(10)
+	collectEmissionRewardsWithSkipHeights(cur, 10)
 	println()
 
 	println("[SCENARIO] 6. Check tier 2 reward (tier 1: 70%, tier 2: 30%, tier 3: 0%)")
 	println("[SCENARIO] 6.1. Set pool tier to tier 2")
-	setPoolTier(2)
+	setPoolTier(cur, 2)
 	println()
 
 	println("[SCENARIO] 6.2. Collect emission rewards in tier 2 with after 10 blocks")
-	collectEmissionRewardsWithSkipHeights(10)
+	collectEmissionRewardsWithSkipHeights(cur, 10)
 	println()
 
 	println("[SCENARIO] 6.3. Skip 10 blocks to rewards")
-	skipBlocks(10)
+	skipBlocks(cur, 10)
 	println()
 
 	println("[SCENARIO] 7. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
 	println("[SCENARIO] 7.1. Remove pool tier from tier 2")
-	setPoolTier(0)
-	skipBlocks(10)
+	setPoolTier(cur, 0)
+	skipBlocks(cur, 10)
 	println()
 
 	println("[SCENARIO] 8. Check tier 3 reward (tier 1: 80%, tier 2: 0%, tier 3: 20%)")
 	println("[SCENARIO] 8.1. Set pool tier to tier 3")
-	setPoolTier(3)
+	setPoolTier(cur, 3)
 	println()
 
 	println("[SCENARIO] 8.2. Collect emission rewards in tier 3 with after 10 blocks and tier2 10 blocks")
-	collectEmissionRewardsWithSkipHeights(10)
+	collectEmissionRewardsWithSkipHeights(cur, 10)
 	println()
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPoolsAndMintPosition() {
+func createPoolsAndMintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create main test pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 
-	setPoolTier(1)
+	setPoolTier(cur, 1)
 
 	tier := sr.GetPoolTier(barBazPoolPath)
 	ufmt.Printf("[VERIFY] main pool initial tier: %d\n", tier)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position (tick range: -200 ~ 200)")
 	tokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -190,13 +189,13 @@ func createPoolsAndMintPosition() {
 	ufmt.Printf("[VERIFY] position ID: %d, liquidity: %s\n", tokenId, liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(tokenId))
-	sr.StakeToken(cross, tokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, tokenId))
+	sr.StakeToken(cross(cur), tokenId, "")
 
 	println("[EXPECTED] staked position ID:", tokenId)
 }
 
-func setPoolTier(tier int) {
+func setPoolTier(cur realm, tier int) {
 	testing.SetRealm(adminRealm)
 
 	beforePoolTier := sr.GetPoolTier(barBazPoolPath)
@@ -205,7 +204,7 @@ func setPoolTier(tier int) {
 		beforePoolEmissionReward = sr.GetPoolReward(beforePoolTier)
 	}
 
-	sr.SetPoolTier(cross, barBazPoolPath, uint64(tier))
+	sr.SetPoolTier(cross(cur), barBazPoolPath, uint64(tier))
 
 	afterPoolTier := sr.GetPoolTier(barBazPoolPath)
 	afterPoolEmissionReward := int64(0)
@@ -217,41 +216,41 @@ func setPoolTier(tier int) {
 	ufmt.Printf("[EXPECTED] %s pool's emission reward changed: %d -> %d\n", barBazPoolPath, beforePoolEmissionReward, afterPoolEmissionReward)
 }
 
-func collectEmissionRewardsWithSkipHeights(skippedHeights int64) {
+func collectEmissionRewardsWithSkipHeights(cur realm, skippedHeights int64) {
 	testing.SetRealm(adminRealm)
 
 	currentPoolTier := sr.GetPoolTier(barBazPoolPath)
 	ufmt.Printf("[INFO] pool tier: %d\n", currentPoolTier)
 
-	skipBlocks(skippedHeights)
+	skipBlocks(cur, skippedHeights)
 
 	// collect rewards to get collected GNS amount
 	beforeGnsBalance := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGnsBalance := gns.BalanceOf(adminUser)
 	collectedGns := afterGnsBalance - beforeGnsBalance
 
 	ufmt.Printf("[EXPECTED] collected GNS amount: %d GNS\n", collectedGns)
 
 	beforeTime := time.Now().Unix()
-	skipBlocks(1)
+	skipBlocks(cur, 1)
 	afterTime := time.Now().Unix()
 
 	// collect rewards again to get reward amount per height
 	beforeGnsBalance = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGnsBalance = gns.BalanceOf(adminUser)
 	rewardPerHeight := afterGnsBalance - beforeGnsBalance
 
 	ufmt.Printf("[EXPECTED] reward amount per second: %d GNS\n", rewardPerHeight/(afterTime-beforeTime))
 }
 
-func skipBlocks(skippedHeights int64) {
+func skipBlocks(cur realm, skippedHeights int64) {
 	ufmt.Printf("[INFO] skip %d blocks, current height: %d, current time: %d\n", skippedHeights, runtime.ChainHeight(), time.Now().Unix())
 	testing.SkipHeights(skippedHeights)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

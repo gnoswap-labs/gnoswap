@@ -38,40 +38,40 @@ var (
 	fee500     uint32 = 500
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 100")
-	initPool()
+	initPool(cur)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
 
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (-12000~12000)")
-	checkBalanceChanges(mintInitialPositionWithNativeCoin)
+	checkBalanceChanges(cur, mintInitialPositionWithNativeCoin)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Increase position liquidity")
-	checkBalanceChanges(increasePositionLiquidity)
+	checkBalanceChanges(cur, increasePositionLiquidity)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000}})
 
-	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
+	currentBanker := banker.NewReadonlyBanker()
 	println("[INFO] GNOT balance of admin", currentBanker.GetCoins(adminAddr).AmountOf("ugnot"))
 
 	ufmt.Println("[INFO] Creating pool at tick 100")
 	ufmt.Println("[INFO] Pool path", pool.GetPoolPath(wugnotPath, fooPath, fee500))
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		fooPath,
 		fee500,
@@ -79,15 +79,15 @@ func initPool() {
 	)
 }
 
-func mintInitialPositionWithNativeCoin() {
+func mintInitialPositionWithNativeCoin(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	amount0Int := int64(50000000)
 	amount1Int := int64(50000000)
 
-	wugnot.Approve(cross, poolAddr, amount0Int)
-	wugnot.Approve(cross, positionAddr, amount0Int)
-	foo.Approve(cross, poolAddr, amount1Int)
+	wugnot.Approve(cross(cur), poolAddr, amount0Int)
+	wugnot.Approve(cross(cur), positionAddr, amount0Int)
+	foo.Approve(cross(cur), poolAddr, amount1Int)
 
 	inputToken0Path := wugnotPath
 	inputToken1Path := fooPath
@@ -109,7 +109,7 @@ func mintInitialPositionWithNativeCoin() {
 	ufmt.Printf("[INFO] Amount1 min: %s\n", amount1Min)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		inputToken0Path,
 		inputToken1Path,
 		fee500,
@@ -130,15 +130,15 @@ func mintInitialPositionWithNativeCoin() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func increasePositionLiquidity() {
+func increasePositionLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	amount0Int := int64(50000000)
 	amount1Int := int64(50000000)
 
-	wugnot.Approve(cross, poolAddr, amount0Int)
-	wugnot.Approve(cross, positionAddr, amount0Int)
-	foo.Approve(cross, poolAddr, amount1Int)
+	wugnot.Approve(cross(cur), poolAddr, amount0Int)
+	wugnot.Approve(cross(cur), positionAddr, amount0Int)
+	foo.Approve(cross(cur), poolAddr, amount1Int)
 
 	ufmt.Println("[INFO] Minting initial position with native coin")
 
@@ -155,7 +155,7 @@ func increasePositionLiquidity() {
 
 	ufmt.Println("[INFO] Increasing position liquidity")
 	_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		amount0Desired,
 		amount1Desired,
@@ -169,15 +169,15 @@ func increasePositionLiquidity() {
 	ufmt.Printf("[EXPECTED] Amount1 added should be %s\n", amount1)
 }
 
-func checkBalanceChanges(callback func()) {
-	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
+func checkBalanceChanges(cur realm, callback func()) {
+	currentBanker := banker.NewReadonlyBanker()
 	gnotBalanceBefore := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceBefore := wugnot.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
 
 	callback()
 
-	currentBanker = banker.NewBanker(banker.BankerTypeReadonly)
+	currentBanker = banker.NewReadonlyBanker()
 	gnotBalanceAfter := currentBanker.GetCoins(adminAddr).AmountOf("ugnot")
 	wugnotBalanceAfter := wugnot.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)

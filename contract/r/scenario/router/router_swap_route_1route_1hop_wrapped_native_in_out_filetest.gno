@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -5,7 +7,6 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -53,7 +54,7 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #5 Wrapped Native Token Swap Test")
 	println("[INFO] Starting scenario: Wrapped native token (wugnot) swap tests")
 
@@ -61,41 +62,41 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fees")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
 	println("[INFO] Creating qux-wugnot pool (fee: 500, tick: -10000)")
-	pl.CreatePool(cross, wrappedWugnot, quxPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pl.CreatePool(cross(cur), wrappedWugnot, quxPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Executing test scenarios")
 	println()
 
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
-	testPositionMintQuxGnot(t)
-	testDrySwapRouteQuxGnotExactIn(t)
-	testDrySwapRouteQuxGnotExactOut(t)
+	testPositionMintQuxGnot(cur, t)
+	testDrySwapRouteQuxGnotExactIn(cur, t)
+	testDrySwapRouteQuxGnotExactOut(cur, t)
 
 	println("[INFO] Scenario completed")
 }
 
-func testPositionMintQuxGnot(t *testing.T) {
+func testPositionMintQuxGnot(cur realm, t *testing.T) {
 	println("[SCENARIO] Given: Position minting preparation for qux-wugnot pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Deposit already done in main()")
+	println("[INFO] Deposit already done in main(cur)")
 
 	println("[INFO] Approving tokens for pool operations")
-	qux.Approve(cross, poolAddr, max_approve)
-	wugnot.Approve(cross, poolAddr, max_approve)
+	qux.Approve(cross(cur), poolAddr, max_approve)
+	wugnot.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Minting position in qux-wugnot pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross(cur), quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -108,12 +109,12 @@ func testPositionMintQuxGnot(t *testing.T) {
 	println()
 }
 
-func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
+func testDrySwapRouteQuxGnotExactIn(cur realm, t *testing.T) {
 	println("[SCENARIO] Given: Dry swap route qux to wugnot exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (qux → wugnot)")
-	_, dryResult, _ := router.DrySwapRoute(
+	_, dryResult, _ := router.DrySwapRoute(cross(cur),
 		quxPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
@@ -126,12 +127,12 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 	println()
 }
 
-func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
+func testDrySwapRouteQuxGnotExactOut(cur realm, t *testing.T) {
 	println("[SCENARIO] Given: Dry swap route qux to wugnot exact out preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route exact out (qux → wugnot)")
-	dryResult, _, _ := router.DrySwapRoute(
+	dryResult, _, _ := router.DrySwapRoute(cross(cur),
 		quxPath,       // inputToken
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
@@ -153,7 +154,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 // [INFO] Executing test scenarios
 //
 // [SCENARIO] Given: Position minting preparation for qux-wugnot pool
-// [INFO] Deposit already done in main()
+// [INFO] Deposit already done in main(cur)
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in qux-wugnot pool
 // [INFO] positionId: 1

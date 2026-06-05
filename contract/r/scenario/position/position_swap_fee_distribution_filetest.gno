@@ -45,39 +45,39 @@ var (
 	fee500  uint32 = 500
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 10000")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint wide range position (8000~12000)")
-	mintWidePosition()
+	mintWidePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint tight range position (9500~10500)")
-	mintTightPosition()
+	mintTightPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Check fees before swap")
-	checkFeesBeforeSwap()
+	checkFeesBeforeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Execute swap")
-	executeSwap()
+	executeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Check fee distribution after swap")
-	checkFeesAfterSwap()
+	checkFeesAfterSwap(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -85,14 +85,14 @@ func initPool() {
 	)
 }
 
-func mintWidePosition() {
+func mintWidePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 18394892)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position with wide range")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -113,14 +113,14 @@ func mintWidePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func mintTightPosition() {
+func mintTightPosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 18394892)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position with tight range")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -141,29 +141,29 @@ func mintTightPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkFeesBeforeSwap() {
+func checkFeesBeforeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 
 	ufmt.Println("[INFO] Checking fees for position 2")
-	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2)
+	_, fee0, fee1, _, _, _ = position.CollectFee(cross(cur), 2)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 }
 
-func executeSwap() {
+func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 1234567)
+	bar.Approve(cross(cur), poolAddr, 1234567)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -173,7 +173,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -181,31 +181,31 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func checkFeesAfterSwap() {
+func checkFeesAfterSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 
 	ufmt.Println("[INFO] Checking fees for position 2")
-	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2)
+	_, fee0, fee1, _, _, _ = position.CollectFee(cross(cur), 2)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

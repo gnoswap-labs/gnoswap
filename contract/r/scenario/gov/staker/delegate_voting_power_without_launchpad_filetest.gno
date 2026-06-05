@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // check delegate voting power without launchpad
 //
 // Scenario:
@@ -61,22 +63,22 @@ var (
 	blockTime = int64(5)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Delegate GNS from alice to alice")
-	initGNSBalance()
-	delegateWithMint(aliceAddr, aliceAddr, 1_000_000_000)
+	initGNSBalance(cur)
+	delegateWithMint(cur, aliceAddr, aliceAddr, 1_000_000_000)
 	testing.SkipHeights(60 * 60 * 24 / blockTime) // 1 days later, voting weight smoothing duration
 	println()
 
 	println("[SCENARIO] 2. Check xGNS balance of alice and admin")
-	checkXgnsBalance("alice", aliceAddr)
-	checkXgnsBalance("admin", adminAddr)
-	checkXgnsBalance("launchpad", launchpadAddr)
+	checkXgnsBalance(cur, "alice", aliceAddr)
+	checkXgnsBalance(cur, "admin", adminAddr)
+	checkXgnsBalance(cur, "launchpad", launchpadAddr)
 	println()
 
 	println("[SCENARIO] 3. Propose text check quorum amount and voting power")
 	println("[SCENARIO] 3.1. Propose text")
-	proposalId := proposeText("Proposal 1")
+	proposalId := proposeText(cur, "Proposal 1")
 	println()
 
 	println("[SCENARIO] 3.2. Skip heights to activate proposal")
@@ -84,17 +86,17 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3.3. Vote proposal with alice")
-	voteProposal(proposalId, aliceAddr)
+	voteProposal(cur, proposalId, aliceAddr)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3.4. Check quorum amount and voting power")
-	checkQuorumAmountAndVotingPower(proposalId)
+	checkQuorumAmountAndVotingPower(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 4. Create Launchpad project and deposit GNS to launchpad")
 	println("[SCENARIO] 4.1. Create Launchpad project")
-	projectId := createLaunchpadProjectByAdmin()
+	projectId := createLaunchpadProjectByAdmin(cur)
 	println()
 
 	println("[SCENARIO] 4.2. Skip heights to activate project")
@@ -102,19 +104,19 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4.3. Deposit GNS to launchpad")
-	depositGnsToLaunchpad(projectId, 30, 1_000_000)
+	depositGnsToLaunchpad(cur, projectId, 30, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4.4. Check xGNS balance of alice and admin")
-	checkXgnsBalance("alice", aliceAddr)
-	checkXgnsBalance("admin", adminAddr)
-	checkXgnsBalance("launchpad", launchpadAddr)
+	checkXgnsBalance(cur, "alice", aliceAddr)
+	checkXgnsBalance(cur, "admin", adminAddr)
+	checkXgnsBalance(cur, "launchpad", launchpadAddr)
 	println()
 
 	println("[SCENARIO] 5. Propose text check quorum amount and voting power (without launchpad)")
 	println("[SCENARIO] 5.1. Propose text")
-	proposalId = proposeText("Proposal 2")
+	proposalId = proposeText(cur, "Proposal 2")
 	println()
 
 	println("[SCENARIO] 5.2. Skip heights to activate proposal")
@@ -122,55 +124,55 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5.3. Vote proposal with alice")
-	voteProposal(proposalId, aliceAddr)
+	voteProposal(cur, proposalId, aliceAddr)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 5.4. Check quorum amount and voting power (without launchpad)")
-	checkQuorumAmountAndVotingPower(proposalId)
+	checkQuorumAmountAndVotingPower(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 6. Check xGNS balance of alice and admin")
-	checkXgnsBalance("alice", aliceAddr)
-	checkXgnsBalance("admin", adminAddr)
-	checkXgnsBalance("launchpad", launchpadAddr)
+	checkXgnsBalance(cur, "alice", aliceAddr)
+	checkXgnsBalance(cur, "admin", adminAddr)
+	checkXgnsBalance(cur, "launchpad", launchpadAddr)
 	println()
 }
 
-func initGNSBalance() {
+func initGNSBalance(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, 1_000_000_000)
+	gns.Transfer(cross(cur), aliceAddr, 1_000_000_000)
 }
 
-func delegateWithMint(from, to address, amount int64) {
+func delegateWithMint(cur realm, from, to address, amount int64) {
 	// if from is not admin, transfer GNS from admin to from
 	if from != adminAddr {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, from, amount)
+		gns.Transfer(cross(cur), from, amount)
 	}
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, to, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), to, int64(amount), "")
 
 	ufmt.Printf("[INFO] delegated %d GNS from %s to %s\n", amount, from, to)
 }
 
-func proposeText(title string) int64 {
+func proposeText(cur realm, title string) int64 {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	proposalId := governance.ProposeText(cross, title, "description")
+	proposalId := governance.ProposeText(cross(cur), title, "description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposal(proposalId int64, addr address) {
+func voteProposal(cur realm, proposalId int64, addr address) {
 	testing.SetRealm(testing.NewUserRealm(addr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Printf("[INFO] voted for proposal ID: %d\n", proposalId)
 }
 
-func checkQuorumAmountAndVotingPower(proposalId int64) {
+func checkQuorumAmountAndVotingPower(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 	votingPower, _ := governance.GetVoteWeight(proposalId, aliceAddr)
@@ -181,13 +183,13 @@ func checkQuorumAmountAndVotingPower(proposalId int64) {
 	ufmt.Printf("[EXPECTED] Proposal %d's yea weight: %d, nay weight: %d\n", proposalId, yeaWeight, nayWeight)
 }
 
-func createLaunchpadProjectByAdmin() string {
+func createLaunchpadProjectByAdmin(cur realm) string {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, launchpadAddr, 10000000)
+	bar.Approve(cross(cur), launchpadAddr, 10000000)
 	currentTime := time.Now().Unix()
 
 	projectID := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		"Test Project",
 		"gno.land/r/onbloc/bar",
 		aliceAddr,
@@ -204,20 +206,20 @@ func createLaunchpadProjectByAdmin() string {
 	return projectID
 }
 
-func depositGnsToLaunchpad(projectID string, tier int64, amount int64) {
+func depositGnsToLaunchpad(cur realm, projectID string, tier int64, amount int64) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, launchpadAddr, amount)
+	gns.Approve(cross(cur), launchpadAddr, amount)
 	targetProjectTierID := fmt.Sprintf("%s:%d", projectID, tier)
-	launchpad.DepositGns(cross, targetProjectTierID, amount, "")
+	launchpad.DepositGns(cross(cur), targetProjectTierID, amount, "")
 	ufmt.Printf("[EXPECTED] deposited GNS to launchpad by admin(tier: %d, amount: %d)\n", tier, amount)
 }
 
-func checkXgnsBalance(userName string, addr address) {
+func checkXgnsBalance(cur realm, userName string, addr address) {
 	balance := xgns.BalanceOf(addr)
 	ufmt.Printf("[EXPECTED] %s's xGNS balance: %d\n", userName, balance)
 }
 
-func checkBalanceFn(tokenPath string, addr address, fn func()) {
+func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 
 	balanceBefore := common.BalanceOf(tokenPath, addr)

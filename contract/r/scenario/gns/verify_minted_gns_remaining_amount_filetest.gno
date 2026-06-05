@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // verify minted gns remaining amount
 package main
 
@@ -26,34 +28,34 @@ const (
 	defaultBlockTime   = 2000        // 2000ms
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize emission")
-	initEmission()
+	initEmission(cur)
 	println()
 
 	println("[SCENARIO] 2. Mint GNS when skipped 31536000 blocks (skip 2 years)")
 	testing.SkipHeights(31536000)
 	println("[INFO] current block height", runtime.ChainHeight())
-	mintGNS()
+	mintGNS(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint GNS when skipped 12614400 blocks (40% of 3 year)")
 	testing.SkipHeights(12614400)
 	println("[INFO] current block height", runtime.ChainHeight())
-	mintGNS()
+	mintGNS(cur)
 	println()
 
 	println("[SCENARIO] 4. Verify minted GNS remaining amount")
-	verifyMintedGNSRemainingAmount()
+	verifyMintedGNSRemainingAmount(cur)
 	println()
 }
 
-func initEmission() {}
+func initEmission(cur realm) {}
 
-func mintGNS() {
+func mintGNS(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
-	mintedAmount := gns.MintGns(cross, user01Addr)
+	mintedAmount := gns.MintGns(cross(cur), user01Addr)
 
 	totalMintedAmount := gns.MintedEmissionAmount()
 
@@ -61,7 +63,7 @@ func mintGNS() {
 	ufmt.Printf("[EXPECTED] total minted amount should be %d\n", totalMintedAmount)
 }
 
-func verifyMintedGNSRemainingAmount() {
+func verifyMintedGNSRemainingAmount(cur realm) {
 	currentYear := gns.GetHalvingYear(time.Now().Unix())
 	remainingAmount := gns.GetHalvingYearMaxAmount(currentYear) - gns.GetHalvingYearMintAmount(currentYear)
 	endBlockTime := gns.GetHalvingYearEndTimestamp(currentYear)

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Test that empty delegations are automatically removed after collection
 
 package main
@@ -31,52 +33,52 @@ var (
 	minAmount = int64(1_000_000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test empty delegation removal after collection")
 	println()
 
 	println("[STEP 1] Setup - Transfer GNS to alice")
-	setupGNS()
+	setupGNS(cur)
 	println()
 
 	println("[STEP 2] Alice delegates to validator")
-	delegateToValidator()
+	delegateToValidator(cur)
 	println()
 
 	println("[STEP 3] Alice undelegates all amount")
-	undelegateAll()
+	undelegateAll(cur)
 	println()
 
 	println("[STEP 4] Wait for lockup period and collect")
 	testing.SkipHeights(120960) // 7 days lockup (7*24*60*60/5 = 120960 blocks)
-	collectAfterLockup()
+	collectAfterLockup(cur)
 	println()
 
 	println("[SCENARIO] Complete - Empty delegation automatically removed")
 }
 
-func setupGNS() {
+func setupGNS(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, minAmount*2)
+	gns.Transfer(cross(cur), aliceAddr, minAmount*2)
 	ufmt.Printf("[INFO] Transferred %d GNS to alice\n", minAmount*2)
 }
 
-func delegateToValidator() {
+func delegateToValidator(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gns.Approve(cross, govStakerAddr, minAmount)
-	staker.Delegate(cross, validatorAddr, minAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, minAmount)
+	staker.Delegate(cross(cur), validatorAddr, minAmount, "")
 	ufmt.Printf("[INFO] Alice delegated %d GNS to validator\n", minAmount)
 }
 
-func undelegateAll() {
+func undelegateAll(cur realm) {
 	testing.SetRealm(aliceRealm)
-	staker.Undelegate(cross, validatorAddr, minAmount)
+	staker.Undelegate(cross(cur), validatorAddr, minAmount)
 	ufmt.Printf("[INFO] Alice undelegated %d GNS from validator\n", minAmount)
 }
 
-func collectAfterLockup() {
+func collectAfterLockup(cur realm) {
 	testing.SetRealm(aliceRealm)
-	collected := staker.CollectUndelegatedGns(cross)
+	collected := staker.CollectUndelegatedGns(cross(cur))
 	ufmt.Printf("[EXPECTED] Alice collected %d GNS\n", collected)
 
 	balance := gns.BalanceOf(aliceAddr)

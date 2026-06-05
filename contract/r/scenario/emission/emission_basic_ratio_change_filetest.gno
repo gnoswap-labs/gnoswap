@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Emission basic ratio change scenario test
 // Scenario: Basic non-retroactive distribution when ratio changes
 //
@@ -32,15 +34,15 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 )
 
-func main() {
-	testNoRetroactiveApplication()
+func main(cur realm) {
+	testNoRetroactiveApplication(cur)
 }
 
-func testNoRetroactiveApplication() {
+func testNoRetroactiveApplication(cur realm) {
 	println("[SCENARIO] 1. Setup initial 50/50 distribution ratio")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		5000, // liquidityStakerPct
 		5000, // devOpsPct
 		0, // communityPoolPct
@@ -52,7 +54,7 @@ func testNoRetroactiveApplication() {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
-	emission.SetDistributionStartTime(cross, distributionStartTime)
+	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
 
@@ -75,7 +77,7 @@ func testNoRetroactiveApplication() {
 	println("[SCENARIO] 4. Change distribution ratio to 80/20")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		8000, // liquidityStakerPct
 		2000, // devOpsPct
 		0, // communityPoolPct
@@ -111,7 +113,7 @@ func testNoRetroactiveApplication() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(cur))
 	stakerAfterNew := emission.GetDistributedToStaker()
 	devopsAfterNew := emission.GetDistributedToDevOps()
 	communityAfterNew := emission.GetDistributedToCommunityPool()

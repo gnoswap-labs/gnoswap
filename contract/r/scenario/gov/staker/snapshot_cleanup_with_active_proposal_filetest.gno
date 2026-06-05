@@ -45,14 +45,14 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
 	ufmt.Printf("[INFO] max smoothing period: %d seconds\n", maxSmoothingPeriod)
 
 	println("[SCENARIO] 1. Setup: Delegate GNS to create initial snapshots")
-	setupDelegation()
+	setupDelegation(cur)
 	firstDelegationTime := time.Now().Unix()
 	ufmt.Printf("[INFO] first delegation time: %d\n", firstDelegationTime)
 	println()
@@ -62,7 +62,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Add more delegation to create additional snapshots")
-	addMoreDelegation()
+	addMoreDelegation(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting weight smoothing duration again")
@@ -70,7 +70,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Create a proposal (this creates a snapshot reference)")
-	proposalId := createProposal()
+	proposalId := createProposal(cur)
 	oldestActiveSnapshotTime, hasActive := governance.GetOldestActiveProposalSnapshotTime()
 	if hasActive {
 		ufmt.Printf("[INFO] oldest active proposal snapshot time: %d\n", oldestActiveSnapshotTime)
@@ -94,7 +94,7 @@ func main() {
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
-		cleanupSnapshots(1234783890 + 5)
+		cleanupSnapshots(cur, 1234783890 + 5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
 	}
@@ -103,49 +103,49 @@ func main() {
 	ufmt.Printf("[INFO] after delegation amount: %d\n", afterDelegationAmount)
 
 	println("[SCENARIO] 9. Verify proposal is still accessible after cleanup")
-	verifyProposalAccessible(proposalId)
+	verifyProposalAccessible(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 10. Verify total delegation preserved")
-	verifyTotalDelegation()
+	verifyTotalDelegation(cur)
 	println()
 }
 
-func setupDelegation() {
+func setupDelegation(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, aliceAddr, 2_000_000_000)
+	gns.Transfer(cross(cur), aliceAddr, 2_000_000_000)
 
-	gns.Approve(cross, govStakerAddr, 1_000_000_000)
-	gs.Delegate(cross, aliceAddr, 1_000_000_000, "")
+	gns.Approve(cross(cur), govStakerAddr, 1_000_000_000)
+	gs.Delegate(cross(cur), aliceAddr, 1_000_000_000, "")
 
 	ufmt.Printf("[INFO] admin delegated 1,000,000,000 GNS to alice\n")
 }
 
-func addMoreDelegation() {
+func addMoreDelegation(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	gns.Approve(cross, govStakerAddr, 500_000_000)
-	gs.Delegate(cross, aliceAddr, 500_000_000, "")
+	gns.Approve(cross(cur), govStakerAddr, 500_000_000)
+	gs.Delegate(cross(cur), aliceAddr, 500_000_000, "")
 
 	ufmt.Printf("[INFO] alice delegated additional 500,000,000 GNS\n")
 }
 
-func createProposal() int64 {
+func createProposal(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "Test Proposal for Snapshot Protection", "This proposal tests snapshot protection during cleanup")
+	proposalId := governance.ProposeText(cross(cur), "Test Proposal for Snapshot Protection", "This proposal tests snapshot protection during cleanup")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func cleanupSnapshots(cleanupTime int64) {
+func cleanupSnapshots(cur realm, cleanupTime int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gs.CleanStakerDelegationSnapshotByAdmin(cross, cleanupTime, aliceAddr)
+	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
 	ufmt.Printf("[INFO] cleaned snapshots older than %d\n", cleanupTime)
 	println("[EXPECTED] snapshot cleanup succeeded")
 }
 
-func verifyProposalAccessible(proposalId int64) {
+func verifyProposalAccessible(cur realm, proposalId int64) {
 	status, err := governance.GetProposalStatusByProposalId(proposalId)
 	if err == nil {
 		ufmt.Printf("[EXPECTED] proposal %d status: %s\n", proposalId, status)
@@ -155,7 +155,7 @@ func verifyProposalAccessible(proposalId int64) {
 	}
 }
 
-func verifyTotalDelegation() {
+func verifyTotalDelegation(cur realm) {
 	totalDelegated := gs.GetTotalDelegated()
 	ufmt.Printf("[INFO] total delegated amount: %d\n", totalDelegated)
 

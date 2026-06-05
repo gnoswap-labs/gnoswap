@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project by zero reward amount
 
 package main
@@ -30,22 +32,22 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] 1. Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] 2. Admin attempts to create project with zero reward amount
 	println("[SCENARIO] 2. Admin attempts to create project with zero reward amount")
-	createProjectByZeroRewardAmount()
+	createProjectByZeroRewardAmount(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Admin attempts to create project with zero reward amount
-func createProjectByZeroRewardAmount() {
+func createProjectByZeroRewardAmount(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
@@ -72,12 +74,12 @@ func createProjectByZeroRewardAmount() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || deposit amount cannot be 0"
-	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
+	uassert.AbortsWithMessage(t, cur, expectedPanicMessage, func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			projectName,
 			rewardTokenPath,
 			recipientAddr,

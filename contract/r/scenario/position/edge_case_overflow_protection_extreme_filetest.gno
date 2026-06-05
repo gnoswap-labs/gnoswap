@@ -14,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -48,55 +47,55 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 
-	// cross is already defined in test environment
+	// cross(cur) is already defined in test environment
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Exact Attack Vector (Narrow Range + Large Liquidity)")
-	testExactAttackVector()
+	testExactAttackVector(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Overflow at 2^192 Boundary")
-	testOverflowBoundary192()
+	testOverflowBoundary192(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Silent Overflow Prevention")
-	testSilentOverflowPrevention()
+	testSilentOverflowPrevention(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Get Delta Calculation Integrity")
-	testGetDeltaIntegrity()
+	testGetDeltaIntegrity(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Setup with smaller token amounts for shared test environment
 	largAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, largAmount)
-	baz.Transfer(cross, aliceAddr, largAmount)
+	bar.Transfer(cross(cur), aliceAddr, largAmount)
+	baz.Transfer(cross(cur), aliceAddr, largAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largAmount)
-	baz.Approve(cross, poolAddr, largAmount)
-	bar.Approve(cross, positionAddr, largAmount)
-	baz.Approve(cross, positionAddr, largAmount)
+	bar.Approve(cross(cur), poolAddr, largAmount)
+	baz.Approve(cross(cur), poolAddr, largAmount)
+	bar.Approve(cross(cur), positionAddr, largAmount)
+	baz.Approve(cross(cur), positionAddr, largAmount)
 
 	println("[INFO] Setup completed - simulating flash loan capital")
 }
 
-func testExactAttackVector() {
+func testExactAttackVector(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with minimum tick spacing (most vulnerable)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100, // 0.01% fee, tick spacing 1
@@ -113,7 +112,7 @@ func testExactAttackVector() {
 	largeAmount := "1000000000" // 1e9 (matches available balance)
 
 	_, liquidity1, amount0Used1, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		0, 1, // Extremely narrow range (like [300000, 300200])
 		largeAmount,
@@ -140,7 +139,7 @@ func testExactAttackVector() {
 
 	// Attack attempt 2: Try to mint with just 1 token (what attacker wants)
 	_, liquidity2, amount0Used2, amount1Used2 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		10, 11, // Different narrow range
 		"1", "1",
@@ -166,11 +165,11 @@ func testExactAttackVector() {
 	}
 }
 
-func testOverflowBoundary192() {
+func testOverflowBoundary192(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500,
@@ -186,7 +185,7 @@ func testOverflowBoundary192() {
 	largeButSafe := "1000000000000000" // 1e15, large but won't overflow
 
 	_, liquidity, amount0Used, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 500,
 		-10, 10,
 		largeButSafe,
@@ -208,11 +207,11 @@ func testOverflowBoundary192() {
 	ufmt.Printf("[INFO] Values like 2^128 would trigger overflow protection (panic)\n")
 }
 
-func testSilentOverflowPrevention() {
+func testSilentOverflowPrevention(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -239,7 +238,7 @@ func testSilentOverflowPrevention() {
 		ufmt.Printf("[TEST] %s\n", tc.desc)
 
 		_, liq, amt0, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 3000,
 			tc.tickLower, tc.tickUpper,
 			tc.amount, tc.amount,
@@ -264,11 +263,11 @@ func testSilentOverflowPrevention() {
 	}
 }
 
-func testGetDeltaIntegrity() {
+func testGetDeltaIntegrity(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		10000,
@@ -284,7 +283,7 @@ func testGetDeltaIntegrity() {
 
 	// Mint with normal amount first
 	_, _, normalAmt0, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 10000,
 		-200, 200,
 		"1000000", "1000000",
@@ -296,7 +295,7 @@ func testGetDeltaIntegrity() {
 
 	// Now with 1000x the amount in same range
 	_, _, largeAmt0, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 10000,
 		400, 600,
 		"1000000000", "1000000000",

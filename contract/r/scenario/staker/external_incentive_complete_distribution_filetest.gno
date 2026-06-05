@@ -32,7 +32,6 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	// "gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -85,82 +84,82 @@ var (
 	totalRewardsCollected int64 // Track total rewards collected
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing complete reward distribution with no dust")
 	println()
 
 	println("[SCENARIO] 1. Initialize account and settings")
-	initAccountAndSettings()
+	initAccountAndSettings(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with perfectly divisible rewards")
-	createExternalIncentiveNoDust()
+	createExternalIncentiveNoDust(cur)
 	println()
 
 	println("[SCENARIO] 5. Start external incentive")
-	startExternalIncentive()
+	startExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 6. Stake position")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip to middle of incentive period")
-	skipToMiddle()
+	skipToMiddle(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect rewards mid-way")
-	collectRewardsMidway()
+	collectRewardsMidway(cur)
 	println()
 
 	println("[SCENARIO] 9. Wait until incentive ends")
-	waitUntilEnd()
+	waitUntilEnd(cur)
 	println()
 
 	println("[SCENARIO] 10. Collect final rewards")
-	collectFinalRewards()
+	collectFinalRewards(cur)
 	println()
 
 	println("[SCENARIO] 11. Unstake position to collect all remaining rewards")
-	unstakePosition()
+	unstakePosition(cur)
 	println()
 
 	println("[SCENARIO] 12. End external incentive and verify no dust")
-	endExternalIncentiveAndVerifyNoDust()
+	endExternalIncentiveAndVerifyNoDust(cur)
 	println()
 }
 
-func initAccountAndSettings() {
+func initAccountAndSettings(cur realm) {
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] set pool tier for rewards")
 	testing.SkipHeights(1)
 
 	println("[INFO] transfer QUX reward and GNS deposit to external creator")
-	qux.Transfer(cross, externalCreatorUser, REWARD_AMOUNT)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	qux.Transfer(cross(cur), externalCreatorUser, REWARD_AMOUNT)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:qux:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -168,20 +167,20 @@ func createPool() {
 	)
 
 	println("[INFO] set pool tier")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -100 ~ 100)")
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -200,12 +199,12 @@ func mintPosition() {
 	ufmt.Printf("[INFO] amounts used - token0: %s, token1: %s\n", amount0, amount1)
 }
 
-func createExternalIncentiveNoDust() {
+func createExternalIncentiveNoDust(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
 	println("[INFO] approve QUX and GNS for external incentive creation")
-	qux.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, maxInt64)
+	qux.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	// Calculate expected values
 	expectedRewardPerSecond := REWARD_AMOUNT / INCENTIVE_DURATION
@@ -236,7 +235,7 @@ func createExternalIncentiveNoDust() {
 	endTime := startTime + INCENTIVE_DURATION
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		quxPath,
 		REWARD_AMOUNT,
@@ -256,7 +255,7 @@ func createExternalIncentiveNoDust() {
 	ufmt.Printf("[INFO] total QUX deposited as reward: %d\n", totalQuxDeposited)
 }
 
-func startExternalIncentive() {
+func startExternalIncentive(cur realm) {
 	// Skip to start time (1234569600)
 	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
@@ -269,27 +268,27 @@ func startExternalIncentive() {
 	println("[INFO] external incentive started")
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT for staking")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 
 	println("[INFO] stake position")
-	sr.StakeToken(cross, 1, "")
+	sr.StakeToken(cross(cur), 1, "")
 
-	owner := gnft.MustOwnerOf(positionIdFrom(1))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after staking: %s\n", owner)
 }
 
-func skipToMiddle() {
+func skipToMiddle(cur realm) {
 	// Skip to middle of incentive period (half of duration)
 	blocksToSkip := (INCENTIVE_DURATION / 2) / 5
 	testing.SkipHeights(blocksToSkip)
 	println("[INFO] reached middle of incentive period")
 }
 
-func collectRewardsMidway() {
+func collectRewardsMidway(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	adminQuxBefore := qux.BalanceOf(adminUser)
@@ -297,7 +296,7 @@ func collectRewardsMidway() {
 	println("[INFO] collecting rewards at midway point")
 
 	// Collect rewards without unwrap
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	adminQuxAfter := qux.BalanceOf(adminUser)
 	communityQuxAfter := qux.BalanceOf(communityPoolAddr)
@@ -309,14 +308,14 @@ func collectRewardsMidway() {
 	ufmt.Printf("[EXPECTED] community pool QUX unchanged on collect: %d -> %d\n", communityQuxBefore, communityQuxAfter)
 }
 
-func waitUntilEnd() {
+func waitUntilEnd(cur realm) {
 	// Skip remaining time
 	blocksToSkip := (INCENTIVE_DURATION/2)/5 + 10
 	testing.SkipHeights(blocksToSkip)
 	println("[INFO] incentive period has ended")
 }
 
-func collectFinalRewards() {
+func collectFinalRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	adminQuxBefore := qux.BalanceOf(adminUser)
@@ -324,7 +323,7 @@ func collectFinalRewards() {
 	println("[INFO] collecting final rewards")
 
 	// Collect remaining rewards
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	adminQuxAfter := qux.BalanceOf(adminUser)
 	communityQuxAfter := qux.BalanceOf(communityPoolAddr)
@@ -335,14 +334,14 @@ func collectFinalRewards() {
 	ufmt.Printf("[EXPECTED] community pool QUX unchanged on collect: %d -> %d\n", communityQuxBefore, communityQuxAfter)
 }
 
-func unstakePosition() {
+func unstakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	adminQuxBefore := qux.BalanceOf(adminUser)
 	println("[INFO] unstaking position to collect remaining rewards")
 
 	// Unstake position (this will collect any remaining rewards)
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
 	adminQuxAfter := qux.BalanceOf(adminUser)
 	unstakeRewards := adminQuxAfter - adminQuxBefore
@@ -352,11 +351,11 @@ func unstakePosition() {
 	ufmt.Printf("[INFO] total rewards collected so far: %d QUX\n", totalRewardsCollected)
 
 	// Verify NFT ownership returned
-	owner := gnft.MustOwnerOf(positionIdFrom(1))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after unstaking: %s\n", owner)
 }
 
-func endExternalIncentiveAndVerifyNoDust() {
+func endExternalIncentiveAndVerifyNoDust(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
 	println("[INFO] ending external incentive")
@@ -374,7 +373,7 @@ func endExternalIncentiveAndVerifyNoDust() {
 
 	// End the external incentive
 	sr.EndExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		actualIncentiveID,
 		externalCreatorUser,
@@ -420,7 +419,7 @@ func endExternalIncentiveAndVerifyNoDust() {
 	ufmt.Printf("  - Staker-retained penalty QUX: %d\n", stakerRetainedPenalty)
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

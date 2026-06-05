@@ -61,73 +61,73 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test partial incentive failure handling")
 	println()
 
 	println("[STEP 1] Initialize and setup pool")
-	initAndSetup()
-	createPool()
+	initAndSetup(cur)
+	createPool(cur)
 	println()
 
 	println("[STEP 2] Create MULTIPLE external incentives (bar with different periods, baz)")
-	createMultipleIncentives()
+	createMultipleIncentives(cur)
 	println()
 
 	println("[STEP 3] Mint and stake position")
-	positionId := mintAndStakePosition()
+	positionId := mintAndStakePosition(cur)
 	println()
 
 	println("[STEP 4] Accumulate rewards over time")
-	accumulateRewards()
+	accumulateRewards(cur)
 	println()
 
 	println("[STEP 5] Drain bar incentives to simulate fund shortage")
-	drainBarIncentive()
+	drainBarIncentive(cur)
 	println()
 
 	println("[STEP 6] Collect rewards - partial success expected")
-	demonstratePartialFailure(positionId)
+	demonstratePartialFailure(cur, positionId)
 	println()
 
 	println("[STEP 7] Verify reward collection behavior after time passes")
-	verifyPermanentLoss(positionId)
+	verifyPermanentLoss(cur, positionId)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] Set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func createMultipleIncentives() {
+func createMultipleIncentives(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approve tokens for MULTIPLE external incentives")
 	// Create multiple incentives with same token but different time periods
 	// This simulates multiple reward programs that could have different funding status
-	bar.Approve(cross, stakerAddr, depositAmount*3)
-	baz.Approve(cross, stakerAddr, depositAmount)
+	bar.Approve(cross(cur), stakerAddr, depositAmount*3)
+	baz.Approve(cross(cur), stakerAddr, depositAmount)
 
 	// Each external incentive requires 1000 GNS as deposit
 	gnsDepositPerIncentive := int64(1_000_000_000) // 1000 GNS
 	totalGnsRequired := gnsDepositPerIncentive * 4 // 4 incentives
-	gns.Approve(cross, stakerAddr, totalGnsRequired)
+	gns.Approve(cross(cur), stakerAddr, totalGnsRequired)
 
 	// Different time periods for different incentives
 	startTime1 := int64(1234569600)
@@ -141,7 +141,7 @@ func createMultipleIncentives() {
 
 	println("[INFO] Create external incentive #1: bar token (period 1)")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		depositAmount,
@@ -151,7 +151,7 @@ func createMultipleIncentives() {
 
 	println("[INFO] Create external incentive #2: bar token (period 2)")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		depositAmount,
@@ -161,7 +161,7 @@ func createMultipleIncentives() {
 
 	println("[INFO] Create external incentive #3: bar token (period 3)")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		depositAmount,
@@ -171,7 +171,7 @@ func createMultipleIncentives() {
 
 	println("[INFO] Create external incentive #4: baz token")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		bazPath,
 		depositAmount,
@@ -188,18 +188,18 @@ func createMultipleIncentives() {
 	}
 }
 
-func mintAndStakePosition() uint64 {
+func mintAndStakePosition(cur realm) uint64 {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approve tokens for minting position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(2)
 
 	println("[INFO] Mint position with significant liquidity")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -217,8 +217,8 @@ func mintAndStakePosition() uint64 {
 	ufmt.Printf("[SUCCESS] Minted position ID=%d with liquidity=%s\n", positionId, liquidity)
 
 	println("[INFO] Stake the position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	testing.SkipHeights(1)
 	println("[SUCCESS] Position staked")
@@ -226,13 +226,13 @@ func mintAndStakePosition() uint64 {
 	return positionId
 }
 
-func accumulateRewards() {
+func accumulateRewards(cur realm) {
 	println("[INFO] Skip 10,000 blocks to accumulate significant rewards")
 	testing.SkipHeights(10000)
 	println("[SUCCESS] Rewards accumulated for all incentives")
 }
 
-func drainBarIncentive() {
+func drainBarIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create multiple temporary positions to drain bar incentive
@@ -241,7 +241,7 @@ func drainBarIncentive() {
 	for i := 1; i <= 20; i++ { // Create MORE positions to drain more effectively
 		// Mint large position
 		tempPosId, _, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath,
 			bazPath,
 			fee100,
@@ -257,8 +257,8 @@ func drainBarIncentive() {
 		)
 
 		// Stake it
-		gnft.Approve(cross, stakerAddr, positionIdFrom(tempPosId))
-		sr.StakeToken(cross, tempPosId, "")
+		gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, tempPosId))
+		sr.StakeToken(cross(cur), tempPosId, "")
 
 		if i <= 5 || i == 20 {
 			ufmt.Printf("[INFO] Temporary position %d created and staked\n", tempPosId)
@@ -279,7 +279,7 @@ func drainBarIncentive() {
 
 		for i := 2; i <= 21; i++ { // Position IDs 2-21 are temporary
 			beforeBar := bar.BalanceOf(adminUser)
-			sr.CollectReward(cross, uint64(i))
+			sr.CollectReward(cross(cur), uint64(i))
 			afterBar := bar.BalanceOf(adminUser)
 			drained := afterBar - beforeBar
 			totalBarDrained += drained
@@ -298,7 +298,7 @@ func drainBarIncentive() {
 	}
 }
 
-func demonstratePartialFailure(positionId uint64) {
+func demonstratePartialFailure(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Skip 5,000 more blocks to accumulate new rewards")
@@ -310,7 +310,7 @@ func demonstratePartialFailure(positionId uint64) {
 
 	println("[ACTION] Collect rewards from main position (ID=1)")
 
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	// Check balances after collection
 	afterBar := bar.BalanceOf(adminUser)
@@ -330,7 +330,7 @@ func demonstratePartialFailure(positionId uint64) {
 	}
 }
 
-func verifyPermanentLoss(positionId uint64) {
+func verifyPermanentLoss(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Skip 10,000 blocks")
@@ -341,7 +341,7 @@ func verifyPermanentLoss(positionId uint64) {
 	beforeBar := bar.BalanceOf(adminUser)
 	beforeBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	afterBar := bar.BalanceOf(adminUser)
 	afterBaz := baz.BalanceOf(adminUser)
@@ -358,7 +358,7 @@ func verifyPermanentLoss(positionId uint64) {
 	beforeBar = bar.BalanceOf(adminUser)
 	beforeBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	immediateBar := bar.BalanceOf(adminUser) - beforeBar
 	immediateBaz := baz.BalanceOf(adminUser) - beforeBaz
@@ -375,7 +375,7 @@ func verifyPermanentLoss(positionId uint64) {
 	finalBeforeBar := bar.BalanceOf(adminUser)
 	finalBeforeBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	finalBar := bar.BalanceOf(adminUser) - finalBeforeBar
 	finalBaz := baz.BalanceOf(adminUser) - finalBeforeBaz
@@ -384,7 +384,7 @@ func verifyPermanentLoss(positionId uint64) {
 	ufmt.Printf("[RESULT] baz collected: %d\n", finalBaz)
 }
 
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

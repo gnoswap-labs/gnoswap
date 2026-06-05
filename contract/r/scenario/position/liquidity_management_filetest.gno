@@ -21,7 +21,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -64,86 +63,86 @@ var (
 // Pool setup flag to prevent duplicate creation
 var poolSetup bool = false
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Add Liquidity Success")
-	testAddLiquiditySuccess()
+	testAddLiquiditySuccess(cur)
 	println()
 
 	println("[SCENARIO] 2. Add Liquidity with Invalid Slippage")
-	testAddLiquidityWithInvalidSlippage()
+	testAddLiquidityWithInvalidSlippage(cur)
 	println()
 
 	println("[SCENARIO] 3. Add Liquidity with Zero Liquidity")
-	testAddLiquidityWithZeroLiquidity()
+	testAddLiquidityWithZeroLiquidity(cur)
 	println()
 
 	println("[SCENARIO] 4. Add Liquidity with Invalid Tick Range")
-	testAddLiquidityWithInvalidTickRange()
+	testAddLiquidityWithInvalidTickRange(cur)
 	println()
 
 	println("[SCENARIO] 5. Add Liquidity to Non-existent Pool")
-	testAddLiquidityToNonExistentPool()
+	testAddLiquidityToNonExistentPool(cur)
 	println()
 
 	println("[SCENARIO] 6. Add Liquidity with Insufficient Balance")
-	testAddLiquidityWithInsufficientBalance()
+	testAddLiquidityWithInsufficientBalance(cur)
 	println()
 
 	println("[SCENARIO] 7. Decrease Liquidity Success")
-	testDecreaseLiquiditySuccess()
+	testDecreaseLiquiditySuccess(cur)
 	println()
 
 	println("[SCENARIO] 8. Decrease Liquidity with Over-removal")
-	testDecreaseLiquidityWithOverRemoval()
+	testDecreaseLiquidityWithOverRemoval(cur)
 	println()
 
 	println("[SCENARIO] 9. Decrease Liquidity with Zero Liquidity")
-	testDecreaseLiquidityWithZeroLiquidity()
+	testDecreaseLiquidityWithZeroLiquidity(cur)
 	println()
 }
 
-func setupPool() {
+func setupPool(cur realm) {
 	if !poolSetup {
 		println("[INFO] Setting up pool for position tests")
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFee(cross, 0)
-		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.SetPoolCreationFee(cross(cur), 0)
+		gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
+		pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }
 
-func tokenFaucet(tokenPath string, to address) {
+func tokenFaucet(cur realm, tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case barPath:
-		bar.Transfer(cross, to, defaultAmount)
+		bar.Transfer(cross(cur), to, defaultAmount)
 	case fooPath:
-		foo.Transfer(cross, to, defaultAmount)
+		foo.Transfer(cross(cur), to, defaultAmount)
 	default:
 		panic("token not found")
 	}
 }
 
-func testAddLiquiditySuccess() {
+func testAddLiquiditySuccess(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -160,7 +159,7 @@ func testAddLiquiditySuccess() {
 
 	println("[INFO] Adding liquidity to existing position")
 	_, newLiquidity, amount0, amount1, poolPath := pn.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"500000",
 		"1000000",
@@ -179,23 +178,23 @@ func testAddLiquiditySuccess() {
 	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId))
 }
 
-func testAddLiquidityWithInvalidSlippage() {
+func testAddLiquidityWithInvalidSlippage(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -219,23 +218,23 @@ func testAddLiquidityWithInvalidSlippage() {
 	println("[EXPECTED] Error message should indicate slippage failure")
 }
 
-func testAddLiquidityWithZeroLiquidity() {
+func testAddLiquidityWithZeroLiquidity(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -259,23 +258,23 @@ func testAddLiquidityWithZeroLiquidity() {
 	println("[EXPECTED] Error message should indicate zero liquidity")
 }
 
-func testAddLiquidityWithInvalidTickRange() {
+func testAddLiquidityWithInvalidTickRange(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -299,19 +298,19 @@ func testAddLiquidityWithInvalidTickRange() {
 	println("[EXPECTED] Error message should indicate invalid tick range")
 }
 
-func testAddLiquidityToNonExistentPool() {
+func testAddLiquidityToNonExistentPool(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for liquidity addition")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Attempting to add liquidity to non-existent pool")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -322,9 +321,9 @@ func testAddLiquidityToNonExistentPool() {
 	println("[EXPECTED] Error message should indicate pool not found")
 }
 
-func testAddLiquidityWithInsufficientBalance() {
+func testAddLiquidityWithInsufficientBalance(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
@@ -337,23 +336,23 @@ func testAddLiquidityWithInsufficientBalance() {
 	println("[EXPECTED] Error message should indicate insufficient balance")
 }
 
-func testDecreaseLiquiditySuccess() {
+func testDecreaseLiquiditySuccess(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating position for decrease test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -373,12 +372,12 @@ func testDecreaseLiquiditySuccess() {
 
 	// alice is position owner, so she can approve gnft
 	testing.SetRealm(aliceRealm)
-	gnft.Approve(cross, positionAddr, positionIdFrom(positionId))
+	gnft.Approve(cross(cur), positionAddr, positionIdFrom(cur, positionId))
 
 	testing.SetRealm(aliceRealm)
 	println("[INFO] Decreasing liquidity")
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"50", // Remove 50% of liquidity
 		"0",
@@ -400,23 +399,23 @@ func testDecreaseLiquiditySuccess() {
 	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId))
 }
 
-func testDecreaseLiquidityWithOverRemoval() {
+func testDecreaseLiquidityWithOverRemoval(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating position for over-removal test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -442,23 +441,23 @@ func testDecreaseLiquidityWithOverRemoval() {
 	println("[EXPECTED] Error message should indicate invalid liquidity")
 }
 
-func testDecreaseLiquidityWithZeroLiquidity() {
+func testDecreaseLiquidityWithZeroLiquidity(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating position for zero liquidity test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -485,7 +484,7 @@ func testDecreaseLiquidityWithZeroLiquidity() {
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

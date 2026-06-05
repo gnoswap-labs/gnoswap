@@ -15,7 +15,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -53,7 +52,7 @@ const (
 
 var fee500 = uint32(500)
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Pool Oracle - Basic TWAP Test")
 	println("[INFO] Testing TWAP price query after 4 hours without price changes")
 	println()
@@ -63,14 +62,14 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 	println()
 
 	// Add liquidity
@@ -78,7 +77,7 @@ func main() {
 	testing.SetRealm(posRealm)
 	println("[INFO] Minting position: tick range [-1000, 1000], liquidity: 10000000")
 	pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,

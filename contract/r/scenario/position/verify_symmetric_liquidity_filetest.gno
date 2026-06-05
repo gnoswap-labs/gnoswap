@@ -13,7 +13,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -39,17 +38,17 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[TEST] Verifying Symmetric Liquidity Behavior")
 	println()
 
 	// Setup
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500, // 0.05% fee
@@ -58,19 +57,19 @@ func main() {
 
 	// Give Alice tokens
 	largeAmount := int64(10_000_000_000_000) // 1e13
-	bar.Transfer(cross, aliceAddr, largeAmount)
-	baz.Transfer(cross, aliceAddr, largeAmount)
+	bar.Transfer(cross(cur), aliceAddr, largeAmount)
+	baz.Transfer(cross(cur), aliceAddr, largeAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largeAmount)
-	baz.Approve(cross, poolAddr, largeAmount)
-	bar.Approve(cross, positionAddr, largeAmount)
-	baz.Approve(cross, positionAddr, largeAmount)
+	bar.Approve(cross(cur), poolAddr, largeAmount)
+	baz.Approve(cross(cur), poolAddr, largeAmount)
+	bar.Approve(cross(cur), positionAddr, largeAmount)
+	baz.Approve(cross(cur), positionAddr, largeAmount)
 
 	// Test 1: ASYMMETRIC amounts (reproducing the "issue")
 	println("[CASE 1] Asymmetric Amounts (1e12 vs 1e6)")
 	_, liq1, amt0_1, amt1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 500,
 		-10, 10,
 		"1000000000000", // 1e12 for token0
@@ -89,7 +88,7 @@ func main() {
 	// Test 2: SYMMETRIC amounts (the real test)
 	println("[CASE 2] Symmetric Amounts (1e12 vs 1e12)")
 	_, liq2, amt0_2, amt1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 500,
 		-20, 20,
 		"1000000000000", // 1e12 for token0
@@ -108,7 +107,7 @@ func main() {
 	// Test 3: Very narrow range with symmetric amounts
 	println("[CASE 3] Ultra-Narrow Range (1 tick) with Symmetric 1e10")
 	_, liq3, amt0_3, amt1_3 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 500,
 		0, 10, // Just 10 ticks!
 		"10000000000", // 1e10
@@ -137,7 +136,7 @@ func main() {
 
 	for _, r := range ranges {
 		_, liq, amt0, amt1 := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			r.lower, r.upper,
 			"1000000000000", // 1e12

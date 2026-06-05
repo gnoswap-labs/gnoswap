@@ -14,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -42,52 +41,52 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Monotonicity in Ultra-Tight Range")
-	testMonotonicityUltraTight()
+	testMonotonicityUltraTight(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Monotonicity Across Different Scales")
-	testMonotonicityScales()
+	testMonotonicityScales(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Monotonicity at Boundaries")
-	testMonotonicityBoundaries()
+	testMonotonicityBoundaries(cur)
 	println()
 
 	println("[SCENARIO] 5. Test No Discontinuous Jumps")
-	testNoDiscontinuousJumps()
+	testNoDiscontinuousJumps(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	bar.Transfer(cross(cur), aliceAddr, testAmount)
+	baz.Transfer(cross(cur), aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
 
 	println("[INFO] Setup completed")
 }
 
-func testMonotonicityUltraTight() {
+func testMonotonicityUltraTight(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with tick spacing 1 (most sensitive)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
@@ -117,7 +116,7 @@ func testMonotonicityUltraTight() {
 		tickUpper := int32(i*10 + 1)
 
 		_, liquidity, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 100,
 			tickLower, tickUpper,
 			amount, amount,
@@ -163,12 +162,12 @@ func testMonotonicityUltraTight() {
 	}
 }
 
-func testMonotonicityScales() {
+func testMonotonicityScales(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500,
@@ -193,7 +192,7 @@ func testMonotonicityScales() {
 	for _, scale := range scales {
 		// Position with base amount
 		_, liq1, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			-100, 100,
 			scale.base, scale.base,
@@ -205,7 +204,7 @@ func testMonotonicityScales() {
 
 		// Position with incremented amount
 		_, liq2, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			200, 300, // Different range
 			scale.inc, scale.base,
@@ -231,12 +230,12 @@ func testMonotonicityScales() {
 	}
 }
 
-func testMonotonicityBoundaries() {
+func testMonotonicityBoundaries(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -267,7 +266,7 @@ func testMonotonicityBoundaries() {
 
 		for _, amount := range amounts {
 			_, liq, _, _ := pn.Mint(
-				cross,
+				cross(cur),
 				barPath, bazPath, 3000,
 				boundary.tickLower, boundary.tickUpper,
 				amount, amount,
@@ -290,12 +289,12 @@ func testMonotonicityBoundaries() {
 	}
 }
 
-func testNoDiscontinuousJumps() {
+func testNoDiscontinuousJumps(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		10000,
@@ -317,7 +316,7 @@ func testNoDiscontinuousJumps() {
 		amount := baseAmount + i
 
 		_, liq, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 10000,
 			-200, 200,
 			ufmt.Sprintf("%d", amount),
