@@ -545,7 +545,11 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
+	stakedLiquidity := self.Pool.StakedLiquidity()
+	if stakedLiquidity.Has(currentTime) {
+		stakedLiquidity.Remove(currentTime)
+	}
+	stakedLiquidity.Set(currentTime, deltaApplied)
 
 	return result
 }

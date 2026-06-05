@@ -81,6 +81,7 @@ var (
 
 	initializedPool     bool
 	initializedPosition bool
+	initializedStaker   bool
 )
 
 func CreatePool(
@@ -377,6 +378,24 @@ func initStakerTest(cur realm, t *testing.T) {
 		emissionAccessor: newMockEmissionAccessor(),
 		nftAccessor:      mockGNFTAccessor,
 	}
+
+	initStakerProxyTest(cur, t)
+}
+
+func initStakerProxyTest(cur realm, t *testing.T) {
+	t.Helper()
+	const mockStakerPath = "gno.land/r/gnoswap/staker/mock"
+
+	if !initializedStaker {
+		initializedStaker = true
+		testing.SetRealm(testing.NewCodeRealm(mockStakerPath))
+		sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
+			return mockInstance
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	sr.UpgradeImpl(cross(cur), mockStakerPath)
 }
 
 func initPoolTest(cur realm, t *testing.T) {
