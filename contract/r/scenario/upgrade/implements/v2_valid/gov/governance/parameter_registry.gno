@@ -1,0 +1,1 @@
+../../../../../../gnoswap/gov/governance/v1/parameter_registry.gno

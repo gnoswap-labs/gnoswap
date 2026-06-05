@@ -1,0 +1,1 @@
+../../../../../../gnoswap/gov/staker/v1/state.gno

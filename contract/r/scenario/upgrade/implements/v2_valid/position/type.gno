@@ -1,0 +1,1 @@
+../../../../../gnoswap/position/v1/type.gno
