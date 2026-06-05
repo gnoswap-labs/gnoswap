@@ -298,69 +298,6 @@ func TestUtil_updateUint64InTree(cur realm, t *testing.T) {
 	}
 }
 
-// TestUtil_getOrCreateInnerTree tests getting or creating inner BPTree
-func TestUtil_getOrCreateInnerTree(cur realm, t *testing.T) {
-	tests := []struct {
-		name                 string
-		setup                func() (*bptree.BPTree, string)
-		expectedHasPanic     bool
-		expectedPanicMessage string
-	}{
-		{
-			name: "create new inner tree",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				return tree, "key1"
-			},
-		},
-		{
-			name: "get existing inner tree",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				innerTree := bptree.NewBPTreeN(16)
-				innerTree.Set("innerKey", "innerValue")
-				tree.Set("key1", innerTree)
-				return tree, "key1"
-			},
-		},
-		{
-			name: "panics on wrong type",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *bptree.BPTree)
-				return tree, "key1"
-			},
-			expectedHasPanic:     true,
-			expectedPanicMessage: "failed to cast value to *bptree.BPTree: uint64",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			tree, key := tc.setup()
-
-			// when/then
-			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, cur, "failed to cast value to *bptree.BPTree: uint64", func() {
-					getOrCreateInnerTree(tree, "key1")
-				})
-			} else {
-				innerTree := getOrCreateInnerTree(tree, key)
-
-				if innerTree == nil {
-					t.Errorf("innerTree should not be nil")
-				}
-
-				retrieved := getOrCreateInnerTree(tree, key)
-				if retrieved != innerTree {
-					t.Errorf("retrieved tree should be the same instance as innerTree")
-				}
-			}
-		})
-	}
-}
-
 // TestUtil_milliToSec tests milliseconds to seconds conversion
 func TestUtil_milliToSec(cur realm, t *testing.T) {
 	tests := []struct {

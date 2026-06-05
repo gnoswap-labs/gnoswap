@@ -64,7 +64,7 @@ func (dm *DelegationManager) GetDelegationIDs(delegator, delegatee string) ([]in
 func (dm *DelegationManager) SetDelegationIDs(delegator, delegatee string, ids []int64) {
 	delegations, exists := dm.GetDelegatorDelegations(delegator)
 	if !exists {
-		delegations = bptree.NewBPTreeN(16)
+		delegations = NewDelegationTree()
 		dm.userDelegations.Set(delegator, delegations)
 	}
 	delegations.Set(delegatee, ids)

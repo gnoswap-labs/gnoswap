@@ -46,14 +46,12 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(cur realm
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
 					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					// Should not panic for admin
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
 				}(cross(cur))
 			}

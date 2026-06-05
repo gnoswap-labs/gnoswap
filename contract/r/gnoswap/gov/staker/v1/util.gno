@@ -66,23 +66,6 @@ func updateUint64InTree(tree *bptree.BPTree, key string, delta uint64, add bool)
 	return newValue
 }
 
-// getOrCreateInnerTree returns the inner tree for the given key
-func getOrCreateInnerTree(tree *bptree.BPTree, key string) *bptree.BPTree {
-	value, exists := tree.Get(key)
-	if !exists {
-		innerTree := bptree.NewBPTreeN(16)
-		tree.Set(key, innerTree)
-		return innerTree
-	}
-
-	v, ok := value.(*bptree.BPTree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast value to *bptree.BPTree: %T", value))
-	}
-
-	return v
-}
-
 // milliToSec converts milliseconds to seconds
 func milliToSec(ms int64) int64 {
 	var msPerSec int64 = 1000

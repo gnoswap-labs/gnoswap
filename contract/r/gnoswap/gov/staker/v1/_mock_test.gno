@@ -24,7 +24,7 @@ type mockGovStakerStore struct {
 
 	// New delegation history structures
 	totalDelegationHistory       *staker.UintTree // timestamp -> int64
-	userDelegationHistory        *bptree.BPTree        // address -> *staker.UintTree[timestamp -> int64]
+	userDelegationHistory        *bptree.BPTree   // address -> *staker.UintTree[timestamp -> int64]
 	hasTotalDelegationHistoryKey bool             // for testing HasTotalDelegationHistoryStoreKey
 
 	// Manager states
@@ -115,6 +115,7 @@ func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) 
 }
 
 func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
+	m.delegations.Remove(uint64ToString(uint64(id)))
 	m.delegations.Set(uint64ToString(uint64(id)), delegation)
 	return nil
 }

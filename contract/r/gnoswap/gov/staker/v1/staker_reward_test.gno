@@ -2,10 +2,12 @@ package v1
 
 import (
 	"testing"
+	"time"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/bar"
 )
@@ -17,8 +19,8 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 		caller           address
 		expectPanic      bool
 		expectedError    string
-		setupRewards     func(gs *govStakerV1)
-		cleanupMocks     func()
+		setupRewards     func(cur realm, gs *govStakerV1)
+		cleanupMocks     func(cur realm)
 		expectedEmission int64
 		expectedProtocol map[string]int64
 	}{
@@ -26,11 +28,11 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			name:        "Successful reward collection with emission rewards",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupRewards: func(gs *govStakerV1) {
+			setupRewards: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 				setupStakerRewardTestEmissionRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 1000,
@@ -40,14 +42,14 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			name:        "Successful reward collection with protocol fee rewards",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupRewards: func(gs *govStakerV1) {
+			setupRewards: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 				setupStakerRewardTestProtocolFeeRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 500,
 					barPath:  300,
 				}, 1000)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
@@ -60,10 +62,10 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			name:        "No rewards available returns zero",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupRewards: func(gs *govStakerV1) {
+			setupRewards: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
@@ -73,7 +75,7 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 			name:        "Multiple token protocol fee rewards",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupRewards: func(gs *govStakerV1) {
+			setupRewards: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 				setupStakerRewardTestProtocolFeeRewards(cur, t, gs, testutils.TestAddress("alice"), 1000, map[string]int64{
 					GNS_PATH: 1000,
@@ -82,7 +84,7 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 					usdcPath: 500,
 				}, 1000)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 			expectedEmission: 0,
@@ -99,26 +101,17 @@ func TestStakerReward_CollectReward(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment with rewards
 			gs := createTestGovStaker()
-			tt.setupRewards(gs)
-			defer tt.cleanupMocks()
-
-			// Setup realm context for testing
-			testing.SetRealm(testing.NewUserRealm(tt.caller))
+			tt.setupRewards(cur, gs)
+			defer tt.cleanupMocks(cur)
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CollectReward(0, cur)
-					}(cross(cur))
+					callMockCollectReward(cur, gs, tt.caller)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CollectReward(0, cur)
-					}(cross(cur))
+					callMockCollectReward(cur, gs, tt.caller)
 				})
 			}
 		})
@@ -133,20 +126,20 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 		to             address
 		expectPanic    bool
 		expectedError  string
-		setupLaunchpad func(gs *govStakerV1)
-		cleanupMocks   func()
+		setupLaunchpad func(cur realm, gs *govStakerV1)
+		cleanupMocks   func(cur realm)
 	}{
 		{
 			name:        "Successful launchpad reward collection",
 			caller:      launchpadAddr,
 			to:          testutils.TestAddress("project1"),
 			expectPanic: false,
-			setupLaunchpad: func(gs *govStakerV1) {
+			setupLaunchpad: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 				setupStakerRewardTestLaunchpadDeposit(cur, t, gs, testutils.TestAddress("project1"), 1000)
 				setupStakerRewardTestLaunchpadRewards(cur, t, gs, testutils.TestAddress("project1"), 500)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -156,10 +149,10 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			to:            testutils.TestAddress("project1"),
 			expectPanic:   true,
 			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
-			setupLaunchpad: func(gs *govStakerV1) {
+			setupLaunchpad: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -169,10 +162,10 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			to:            testutils.TestAddress("nonexistent"),
 			expectPanic:   true,
 			expectedError: "[GNOSWAP-GOV_STAKER-003] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
-			setupLaunchpad: func(gs *govStakerV1) {
+			setupLaunchpad: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -182,26 +175,16 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment with launchpad context
 			gs := createTestGovStaker()
-			tt.setupLaunchpad(gs)
-			defer tt.cleanupMocks()
-
-			// Setup realm context for testing
-			testing.SetRealm(testing.NewUserRealm(tt.caller))
+			tt.setupLaunchpad(cur, gs)
+			defer tt.cleanupMocks(cur)
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CollectRewardFromLaunchPad(0, cur, tt.to)
-					}(cross(cur))
+					callMockCollectRewardFromLaunchPad(cur, gs, tt.caller, tt.to)
 				})
 			} else {
-				// Should not panic and collect rewards successfully
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.CollectRewardFromLaunchPad(0, cur, tt.to)
-				}(cross(cur))
+				callMockCollectRewardFromLaunchPad(cur, gs, tt.caller, tt.to)
 			}
 		})
 	}
@@ -217,8 +200,8 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 		add           bool
 		expectPanic   bool
 		expectedError string
-		setupMocks    func(gs *govStakerV1)
-		cleanupMocks  func()
+		setupMocks    func(cur realm, gs *govStakerV1)
+		cleanupMocks  func(cur realm)
 	}{
 		{
 			name:        "Launchpad can add amount",
@@ -227,10 +210,10 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			amount:      1000,
 			add:         true,
 			expectPanic: false,
-			setupMocks: func(_ *govStakerV1) {
+			setupMocks: func(cur realm, _ *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -241,11 +224,11 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			amount:      500,
 			add:         false,
 			expectPanic: false,
-			setupMocks: func(gs *govStakerV1) {
+			setupMocks: func(cur realm, gs *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 				setupStakerRewardTestLaunchpadStake(cur, t, gs, testutils.TestAddress("project1"), 1000)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -257,10 +240,10 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			add:           true,
 			expectPanic:   true,
 			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
-			setupMocks: func(_ *govStakerV1) {
+			setupMocks: func(cur realm, _ *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -272,10 +255,10 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			add:           true,
 			expectPanic:   true,
 			expectedError: "amount must be positive",
-			setupMocks: func(_ *govStakerV1) {
+			setupMocks: func(cur realm, _ *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(cur realm) {
 				cleanupStakerRewardTest(cur, t)
 			},
 		},
@@ -285,26 +268,16 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup test environment
 			gs := createTestGovStaker()
-			tt.setupMocks(gs)
-			defer tt.cleanupMocks()
-
-			// Setup realm context for testing
-			testing.SetRealm(testing.NewUserRealm(tt.caller))
+			tt.setupMocks(cur, gs)
+			defer tt.cleanupMocks(cur)
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.SetAmountByProjectWallet(0, cur, tt.addr, tt.amount, tt.add)
-					}(cross(cur))
+					callMockSetAmountByProjectWallet(cur, gs, tt.caller, tt.addr, tt.amount, tt.add)
 				})
 			} else {
-				// Should not panic
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.SetAmountByProjectWallet(0, cur, tt.addr, tt.amount, tt.add)
-				}(cross(cur))
+				callMockSetAmountByProjectWallet(cur, gs, tt.caller, tt.addr, tt.amount, tt.add)
 			}
 		})
 	}
@@ -319,12 +292,8 @@ func TestStakerReward_CollectReward_EmergencyHaltAllowsSettlement(cur realm, t *
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("alice")))
 	uassert.NotPanics(t, cur, func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			gs.CollectReward(0, cur)
-		}(cross(cur))
+		callMockCollectReward(cur, gs, testutils.TestAddress("alice"))
 	})
 
 	testing.SetRealm(adminRealm)
@@ -341,12 +310,8 @@ func TestStakerReward_CollectRewardFromLaunchPad_EmergencyHaltAllowsSettlement(c
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
 	uassert.NotPanics(t, cur, func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			gs.CollectRewardFromLaunchPad(0, cur, testutils.TestAddress("project1"))
-		}(cross(cur))
+		callMockCollectRewardFromLaunchPad(cur, gs, launchpadAddr, testutils.TestAddress("project1"))
 	})
 
 	testing.SetRealm(adminRealm)
@@ -362,19 +327,12 @@ func TestStakerReward_SetAmountByProjectWallet_EmergencyHaltPolicy(cur realm, t 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
 	uassert.NotPanics(t, cur, func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			gs.SetAmountByProjectWallet(0, cur, testutils.TestAddress("project1"), 500, false)
-		}(cross(cur))
+		callMockSetAmountByProjectWallet(cur, gs, launchpadAddr, testutils.TestAddress("project1"), 500, false)
 	})
 
 	uassert.AbortsWithMessage(t, cur, "halted: gov_staker", func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			gs.SetAmountByProjectWallet(0, cur, testutils.TestAddress("project1"), 500, true)
-		}(cross(cur))
+		callMockSetAmountByProjectWallet(cur, gs, launchpadAddr, testutils.TestAddress("project1"), 500, true)
 	})
 
 	testing.SetRealm(adminRealm)
@@ -543,22 +501,12 @@ func TestStakerReward_LaunchpadExclusionAndRewards(cur realm, t *testing.T) {
 				setupStakerRewardTestLaunchpadRewards(cur, t, gs, tt.caller, tt.launchpadXgns)
 			}
 
-			testing.SetRealm(testing.NewUserRealm(tt.caller))
-
 			// When: Collect rewards
 			if tt.expectRewardEligible {
-				// Should not panic and collect rewards successfully
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.CollectReward(0, cur)
-				}(cross(cur))
+				callMockCollectReward(cur, gs, tt.caller)
 			} else {
-				// Should panic if not eligible
 				uassert.AbortsWithMessage(t, cur, "no rewards available", func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CollectReward(0, cur)
-					}(cross(cur))
+					callMockCollectReward(cur, gs, tt.caller)
 				})
 			}
 
@@ -818,60 +766,91 @@ func setupStakerRewardStakerTokenBalance(cur realm, t *testing.T) {
 }
 
 func setupStakerRewardTestEmissionRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {
-	// Setup emission rewards for testing
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 	resolvedManager.updateAccumulatedRewardX128PerStake(emissionReward, currentHeight)
 	resolvedManager.addStake(addr.String(), amount, currentHeight)
-	gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
+	}(cross(cur))
 }
 
 func setupStakerRewardTestProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
-	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
-
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
 	resolvedManager.addStake(addr.String(), amount, currentHeight)
-
-	gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
+	}(cross(cur))
 }
 
 func setupStakerRewardTestAccumulateEmissionRewards(cur realm, t *testing.T, gs *govStakerV1, amount, currentHeight int64) {
-	// Setup emission rewards for testing
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 	resolvedManager.updateAccumulatedRewardX128PerStake(amount, currentHeight)
-	gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.store.SetEmissionRewardManager(0, cur, emissionRewardManager)
+	}(cross(cur))
 }
 
 func setupStakerRewardTestAccumulateProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
-	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
 	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
+	}(cross(cur))
 }
 
 func setupStakerRewardTestLaunchpadDeposit(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
-	// Setup launchpad project deposit
 	launchpadRewardID := gs.makeLaunchpadRewardID(addr.String())
-	gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount)
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount)
+	}(cross(cur))
 }
 
 func setupStakerRewardTestLaunchpadRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.addStakeFromLaunchpad(0, cur, addr.String(), amount, 100)
-	}(cross(cur))
+	setupStakerRewardTestLaunchpadDeposit(cur, t, gs, addr, amount)
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+	staker.SetAmountByProjectWallet(cross(cur), addr, amount, true)
 }
 
 func setupStakerRewardTestLaunchpadStake(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64) {
-	// Setup launchpad stake for removal test
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+	staker.SetAmountByProjectWallet(cross(cur), addr, amount, true)
+}
+
+func callMockCollectReward(cur realm, gs *govStakerV1, caller address) {
+	// Mock-store CollectReward cannot satisfy pf.DistributeProtocolFee(cross(rlm))
+	// auth without the gov/staker proxy frame. Exercise the emission claim path on
+	// the isolated store (protocol fee distribution is covered elsewhere).
+	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-		gs.addStakeFromLaunchpad(0, cur, addr.String(), amount, 100)
+		_, err := gs.claimRewardsEmissionReward(0, cur, caller.String(), time.Now().Unix())
+		if err != nil {
+			panic(err)
+		}
 	}(cross(cur))
+}
+
+func callMockCollectRewardFromLaunchPad(cur realm, gs *govStakerV1, caller, to address) {
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	staker.CollectRewardFromLaunchPad(cross(cur), to)
+}
+
+func callMockSetAmountByProjectWallet(cur realm, gs *govStakerV1, caller, addr address, amount int64, add bool) {
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	staker.SetAmountByProjectWallet(cross(cur), addr, amount, add)
 }
 
 func setupStakerRewardTestGNSBalance(cur realm, t *testing.T, user address, amount int64) {
