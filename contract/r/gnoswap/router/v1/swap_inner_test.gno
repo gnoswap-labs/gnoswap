@@ -142,12 +142,14 @@ func TestMustGetSqrtPriceLimit(cur realm, t *testing.T) {
 }
 
 func TestSwapInner(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name              string
-		setupFn           func(*TestEnv)
+		setupFn           func(cur realm, env *TestEnv)
 		amountSpecified   int64
 		recipient         address
 		sqrtPriceLimitX96 *u256.Uint
@@ -159,9 +161,9 @@ func TestSwapInner(cur realm, t *testing.T) {
 	}{
 		{
 			name: "normal swap - exact input",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-				TokenFaucet(cur, t, barPath, alice)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
+				TokenFaucet(cur, env.t, barPath, alice)
 			},
 			amountSpecified:   100,
 			recipient:         alice,
@@ -178,9 +180,9 @@ func TestSwapInner(cur realm, t *testing.T) {
 		},
 		{
 			name: "insufficient balance - large amount",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-				TokenFaucet(cur, t, barPath, alice)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
+				TokenFaucet(cur, env.t, barPath, alice)
 			},
 			amountSpecified:   9223372036854775807, // Large amount (int64 max)
 			recipient:         alice,
@@ -200,10 +202,11 @@ func TestSwapInner(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			env := NewTestEnv(t)
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 
 			// Additional setup for swapInner test requirements
@@ -220,7 +223,7 @@ func TestSwapInner(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			swapInnerFn := func(cur realm) (int64, int64) {
-				return router.swapInner(cur, 
+				return router.swapInner(0, cur,
 					tt.amountSpecified,
 					tt.recipient,
 					tt.sqrtPriceLimitX96,

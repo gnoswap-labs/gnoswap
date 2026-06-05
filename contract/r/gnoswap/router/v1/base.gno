@@ -23,16 +23,16 @@ const (
 
 type RouterOperation interface {
 	Validate() error
-	Process(rlm realm) (*SwapResult, error)
+	Process(_ int, rlm realm) (*SwapResult, error)
 }
 
 // executeSwapOperation validates and processes a swap operation.
-func executeSwapOperation(rlm realm, op RouterOperation) (*SwapResult, error) {
+func executeSwapOperation(_ int, rlm realm, op RouterOperation) (*SwapResult, error) {
 	if err := op.Validate(); err != nil {
 		return nil, err
 	}
 
-	result, err := op.Process(rlm)
+	result, err := op.Process(0, rlm)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ type baseSwapOperation struct {
 }
 
 // processRoutes processes all swap routes and returns total amounts.
-func (op *baseSwapOperation) processRoutes(rlm realm, r *routerV1, swapType SwapType) (int64, int64, error) {
+func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapType SwapType) (int64, int64, error) {
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := op.amountSpecified
 
@@ -81,7 +81,7 @@ func (op *baseSwapOperation) processRoutes(rlm realm, r *routerV1, swapType Swap
 			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(rlm, r, route, toSwapAmount, swapType)
+		amountIn, amountOut, err := op.processRoute(0, rlm, r, route, toSwapAmount, swapType)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -95,6 +95,7 @@ func (op *baseSwapOperation) processRoutes(rlm realm, r *routerV1, swapType Swap
 
 // processRoute processes a single route with specified swap amount.
 func (op *baseSwapOperation) processRoute(
+	_ int,
 	rlm realm,
 	r *routerV1,
 	route string,
@@ -106,16 +107,16 @@ func (op *baseSwapOperation) processRoute(
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = r.handleSingleSwap(rlm, route, toSwap, op.sqrtPriceLimitX96)
+		amountIn, amountOut = r.handleSingleSwap(0, rlm, route, toSwap, op.sqrtPriceLimitX96)
 	default:
-		amountIn, amountOut = r.handleMultiSwap(rlm, swapType, route, numHops, toSwap)
+		amountIn, amountOut = r.handleMultiSwap(0, rlm, swapType, route, numHops, toSwap)
 	}
 
 	return amountIn, amountOut, nil
 }
 
 // handleSingleSwap executes a single-hop swap with the specified amount.
-func (r *routerV1) handleSingleSwap(rlm realm, route string, amountSpecified int64, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
+func (r *routerV1) handleSingleSwap(_ int, rlm realm, route string, amountSpecified int64, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:           input,
@@ -125,11 +126,12 @@ func (r *routerV1) handleSingleSwap(rlm realm, route string, amountSpecified int
 		sqrtPriceLimitX96: sqrtPriceLimitX96,
 	}
 
-	return r.singleSwap(rlm, &singleParams)
+	return r.singleSwap(0, rlm, &singleParams)
 }
 
 // handleMultiSwap processes multi-hop swaps across multiple pools.
 func (r *routerV1) handleMultiSwap(
+	_ int,
 	rlm realm,
 	swapType SwapType,
 	route string,
@@ -142,11 +144,11 @@ func (r *routerV1) handleMultiSwap(
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
-		return r.multiSwap(rlm, *sp, numHops, route)
+		return r.multiSwap(0, rlm, *sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
-		return r.multiSwapNegative(rlm, *sp, numHops, route)
+		return r.multiSwapNegative(0, rlm, *sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
 	}
@@ -230,13 +232,13 @@ func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, 
 }
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
-func (r *routerV1) commonSwapRoute(rlm realm, params SwapRouteParams) (int64, int64, error) {
+func (r *routerV1) commonSwapRoute(_ int, rlm realm, params SwapRouteParams) (int64, int64, error) {
 	op, err := createSwapOperation(r, params)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	result, err := executeSwapOperation(rlm, op)
+	result, err := executeSwapOperation(0, rlm, op)
 	if err != nil {
 		msg := addDetailToError(
 			errInvalidInput,
@@ -246,6 +248,7 @@ func (r *routerV1) commonSwapRoute(rlm realm, params SwapRouteParams) (int64, in
 	}
 
 	inputAmount, outputAmount := r.finalizeSwap(
+		0,
 		rlm,
 		params.inputToken,
 		params.outputToken,

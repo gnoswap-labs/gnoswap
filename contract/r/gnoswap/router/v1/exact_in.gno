@@ -72,7 +72,7 @@ func (r *routerV1) ExactInSwapRoute(
 		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	inputAmount, outputAmount := r.exactInSwapRoute(rlm, params, referrer)
+	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
 
 	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
@@ -136,7 +136,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 
-	inputAmount, outputAmount := r.exactInSwapRoute(rlm, params, referrer)
+	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
 
 	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
@@ -158,11 +158,12 @@ func (r *routerV1) ExactInSingleSwapRoute(
 //
 // Panics if swap execution fails or token transfer fails.
 func (r *routerV1) exactInSwapRoute(
+	_ int,
 	rlm realm,
 	params SwapRouteParams,
 	referrer string,
 ) (int64, int64) {
-	inputAmount, outputAmount, err := r.commonSwapRoute(rlm, params)
+	inputAmount, outputAmount, err := r.commonSwapRoute(0, rlm, params)
 	if err != nil {
 		panic(err)
 	}
@@ -238,8 +239,8 @@ func (op *ExactInSwapOperation) Validate() error {
 }
 
 // Process executes the exact-in swap operation.
-func (op *ExactInSwapOperation) Process(rlm realm) (*SwapResult, error) {
-	resultAmountIn, resultAmountOut, err := op.processRoutes(rlm, op.router, ExactIn)
+func (op *ExactInSwapOperation) Process(_ int, rlm realm) (*SwapResult, error) {
+	resultAmountIn, resultAmountOut, err := op.processRoutes(0, rlm, op.router, ExactIn)
 	if err != nil {
 		return nil, err
 	}

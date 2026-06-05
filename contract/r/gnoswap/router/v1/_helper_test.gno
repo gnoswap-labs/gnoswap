@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	testutils "gno.land/p/nt/testutils/v0"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
@@ -87,6 +87,10 @@ var (
 	routerPath  = "gno.land/r/gnoswap/router"
 	routerRealm = testing.NewCodeRealm(routerPath)
 
+	// SwapCallback's assertIsRouterV1 compares the caller against the router
+	// v1 implementation address, so the callback caller must be the v1 realm.
+	routerV1Path = "gno.land/r/gnoswap/router/v1"
+
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
@@ -97,8 +101,9 @@ var (
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
 
-	registeredTestStore = false
-	registeredTestPool  = false
+	registeredTestStore   = false
+	registeredTestPool    = false
+	routerTestInitialized = false
 
 	mockInstance *routerV1
 )
@@ -262,10 +267,10 @@ func CreatePoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
 	pl.SetPoolCreationFee(cross(cur), 0)
-	CreatePool(cur, t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
-	CreatePool(cur, t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, bazPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
+	CreatePool(cur, t, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), admin)
 }
 
 func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
@@ -276,7 +281,7 @@ func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
 		bazPath,
 		quxPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 		admin,
 	)
 }
@@ -385,11 +390,15 @@ func MakeForthMintPositionWithoutFee(cur realm, t *testing.T) (uint64, string, s
 	)
 }
 
-func initRouterTest(t *testing.T) {
+func initRouterTest(cur realm, t *testing.T) {
 	t.Helper()
+	if routerTestInitialized {
+		return
+	}
+	routerTestInitialized = true
 
-	initPoolTest(t)
-	registerPositionTest(t)
+	initPoolTest(cur, t)
+	registerPositionTest(cur, t)
 
 	registeredTestStore = true
 
@@ -398,7 +407,7 @@ func initRouterTest(t *testing.T) {
 	}
 }
 
-func initPoolTest(t *testing.T) {
+func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
@@ -406,48 +415,39 @@ func initPoolTest(t *testing.T) {
 		registeredTestPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		func(cur realm) {
-			pl.RegisterInitializer(cross(cur), func(_ pl.IPoolStore) pl.IPool {
-				return pool_v1.NewPoolV1(mock.NewMockPoolStore())
-			})
-		}(cross1)
+		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pl.IPoolStore) pl.IPool {
+			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
+		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	func(cur realm) {
-		pl.UpgradeImpl(cross(cur), mockPoolPath)
-	}(cross1)
+	pl.UpgradeImpl(cross(cur), mockPoolPath)
 }
 
 // registerPositionTest registers the position mock implementation
-func registerPositionTest(t *testing.T) {
+func registerPositionTest(cur realm, t *testing.T) {
 	t.Helper()
 
 	positionMockPath := "gno.land/r/gnoswap/position/mock"
 
 	if registeredTestStore {
 		testing.SetRealm(adminRealm)
-		func(cur realm) {
-			pn.UpgradeImpl(cross(cur), positionMockPath)
-		}(cross1)
+		pn.UpgradeImpl(cross(cur), positionMockPath)
 		return
 	}
 
 	testing.SetRealm(testing.NewCodeRealm(positionMockPath))
-	func(cur realm) {
-		pn.RegisterInitializer(cross(cur), func(_ pn.IPositionStore) pn.IPosition {
-			return position_v1.NewPositionV1(newMockPositionStore(), newMockNFTAccessor())
-		})
-	}(cross1)
+	pn.RegisterInitializer(cross(cur), func(_ int, rlm realm, s pn.IPositionStore) pn.IPosition {
+		return position_v1.NewPositionV1(newMockPositionStore(), newMockNFTAccessor())
+	})
 
 	testing.SetRealm(adminRealm)
-	func(cur realm) {
-		pn.UpgradeImpl(cross(cur), positionMockPath)
-	}(cross1)
+	pn.UpgradeImpl(cross(cur), positionMockPath)
 }
 
 // mockInstanceSwapCallback is a helper function to call the SwapCallback function on the mock instance
 func mockInstanceSwapCallback(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	amount0Delta string,
@@ -462,9 +462,6 @@ func mockInstanceSwapCallback(
 	if err != nil {
 		return err
 	}
-	// mock instance using a closure
-	return func(cur realm) error {
-		testing.SetRealm(testing.NewCodeRealm(routerPath))
-		return mockInstance.SwapCallback(0, cur, token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
-	}(cross1)
+	testing.SetRealm(testing.NewCodeRealm(routerV1Path))
+	return mockInstance.SwapCallback(0, cur, token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 }

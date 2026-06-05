@@ -12,7 +12,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func(cur realm, t *testing.T)
-		initializer          func(s IRouterStore) IRouter
+		initializer          func(_ int, rlm realm, s IRouterStore) IRouter
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool

@@ -108,11 +108,12 @@ func TestExactInSwapRouteOperation_Validate(cur realm, t *testing.T) {
 }
 
 func TestExactInSwapRoute(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name         string
-		setupFn      func(*TestEnv)
 		inputToken   string
 		outputToken  string
 		amountIn     string
@@ -122,13 +123,7 @@ func TestExactInSwapRoute(cur realm, t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			name: "BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
-			},
+			name:         "BAR -> BAZ",
 			inputToken:   barPath,
 			outputToken:  bazPath,
 			amountIn:     "100",
@@ -141,17 +136,34 @@ func TestExactInSwapRoute(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			env := NewTestEnv(t)
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
-			if tt.setupFn != nil {
-				tt.setupFn(env)
-			}
+			routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+			testing.SetRealm(adminRealm)
+			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+				AndPositionMinted(cur)
+			testing.SetRealm(testing.NewUserRealm(user1Addr))
+			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
 			testing.SkipHeights(100)
 
-			// Additional approvals needed for pool operations
 			user1Realm := testing.NewUserRealm(user1Addr)
+			routerV1Addr := chain.PackageAddress("gno.land/r/gnoswap/router/v1")
+
 			testing.SetRealm(user1Realm)
+			bar.Transfer(cross(cur), routerAddr, 20000000)
+			bar.Transfer(cross(cur), routerV1Addr, 20000000)
+			baz.Transfer(cross(cur), routerAddr, 20000000)
+			bar.Approve(cross(cur), routerAddr, maxApprove)
+			baz.Approve(cross(cur), routerAddr, maxApprove)
+			TokenFaucet(cur, t, barPath, routerAddr)
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
+			bar.Approve(cross(cur), poolAddr, maxApprove)
+			bar.Approve(cross(cur), routerAddr, maxApprove)
+
+			testing.SetRealm(routerRealm)
 			bar.Approve(cross(cur), poolAddr, maxApprove)
 			baz.Approve(cross(cur), poolAddr, maxApprove)
 
@@ -167,8 +179,8 @@ func TestExactInSwapRoute(cur realm, t *testing.T) {
 
 			testing.SetRealm(user1Realm)
 			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
+				testing.SetRealm(routerRealm)
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -190,6 +202,8 @@ func TestExactInSwapRoute(cur realm, t *testing.T) {
 }
 
 func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	const maxTimeout int64 = 9999999999
 
 	alice := testutils.TestAddress("alice")
@@ -238,14 +252,13 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
 			expectedAmount1:  "-98",
-			expectPanic:      true,
+			expectPanic:      false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Pool Creation
-			initRouterTest(t)
+			routerV1Addr := chain.PackageAddress("gno.land/r/gnoswap/router/v1")
 
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross(cur), 0)
@@ -291,7 +304,12 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 			testing.SetOriginCaller(tt.recipient)
 			bar.Transfer(cross(cur), routerAddr, 20000000)
 			gns.Transfer(cross(cur), routerAddr, 20000000)
+			gns.Transfer(cross(cur), routerV1Addr, 20000000)
 			bar.Approve(cross(cur), routerAddr, maxApprove)
+			gns.Approve(cross(cur), routerAddr, maxApprove)
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
+			gns.Approve(cross(cur), poolAddr, maxApprove)
 			gns.Approve(cross(cur), routerAddr, maxApprove)
 
 			testing.SetRealm(routerRealm)
@@ -302,9 +320,10 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur, 
+				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -312,7 +331,7 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 					tt.quoteArr,
 					tt.amountOutMin,
 					time.Now().Add(time.Hour).Unix(),
-					"", // referrer
+					"",
 				)
 				testing.SkipHeights(1)
 
@@ -1025,7 +1044,9 @@ func TestExactOutSwapOperation_MultiRoute(cur realm, t *testing.T) {
 
 // TestSwapRoute_EmptyRoute tests validation of empty route parameter
 func TestSwapRoute_EmptyRoute(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1046,7 +1067,7 @@ func TestSwapRoute_EmptyRoute(cur realm, t *testing.T) {
 	// Empty route should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"100000",
@@ -1062,7 +1083,9 @@ func TestSwapRoute_EmptyRoute(cur realm, t *testing.T) {
 
 // TestSwapRoute_EmptyQuote tests validation of empty quote parameter
 func TestSwapRoute_EmptyQuote(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1083,7 +1106,7 @@ func TestSwapRoute_EmptyQuote(cur realm, t *testing.T) {
 	// Empty quote should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"100000",
@@ -1099,7 +1122,9 @@ func TestSwapRoute_EmptyQuote(cur realm, t *testing.T) {
 
 // TestSwapRoute_ZeroAmountIn tests validation of zero amount input
 func TestSwapRoute_ZeroAmountIn(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1120,7 +1145,7 @@ func TestSwapRoute_ZeroAmountIn(cur realm, t *testing.T) {
 	// Zero amount should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"0", // Zero amount
@@ -1136,7 +1161,9 @@ func TestSwapRoute_ZeroAmountIn(cur realm, t *testing.T) {
 
 // TestSwapRoute_SameTokenSwap tests validation of same input/output token
 func TestSwapRoute_SameTokenSwap(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1157,7 +1184,7 @@ func TestSwapRoute_SameTokenSwap(cur realm, t *testing.T) {
 	// Same input and output token should fail
 	uassert.AbortsContains(t, cur, "invalid route", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				barPath, // Same as input
 				"100000",
@@ -1173,7 +1200,9 @@ func TestSwapRoute_SameTokenSwap(cur realm, t *testing.T) {
 
 // TestSwapRoute_InvalidQuoteSum tests that quotes not summing to 100 should fail
 func TestSwapRoute_InvalidQuoteSum(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1194,7 +1223,7 @@ func TestSwapRoute_InvalidQuoteSum(cur realm, t *testing.T) {
 	// Quotes summing to 90 instead of 100 should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"100000",
@@ -1210,7 +1239,9 @@ func TestSwapRoute_InvalidQuoteSum(cur realm, t *testing.T) {
 
 // TestSwapRoute_NegativeDeadline tests validation of past deadline
 func TestSwapRoute_NegativeDeadline(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
+	testing.SkipHeights(100)
+	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -1231,7 +1262,7 @@ func TestSwapRoute_NegativeDeadline(cur realm, t *testing.T) {
 	// Past deadline should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactInSwapRoute(0, cur, 
+			router.ExactInSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"100000",

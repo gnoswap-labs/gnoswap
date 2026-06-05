@@ -27,9 +27,9 @@ type TestEnv struct {
 }
 
 // NewTestEnv initializes the base test environment
-func NewTestEnv(t *testing.T) *TestEnv {
+func NewTestEnv(cur realm, t *testing.T) *TestEnv {
 	t.Helper()
-	initRouterTest(t)
+	initRouterTest(cur, t)
 
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
@@ -43,12 +43,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 }
 
 // GivenPoolCreated creates a pool with specified parameters.
-//
-// TestEnv methods cannot be crossing functions (they have a receiver), so
-// SetRealm cannot mutate a threaded cur (see migration guide §11). Instead we
-// rely on the cross1 legacy sentinel, which mints a fresh cur from the
-// SetRealm'd origin caller — preserving the original bare-cross semantics.
-func (e *TestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX96 string) *TestEnv {
+func (e *TestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uint32, sqrtPriceX96 string) *TestEnv {
 	e.t.Helper()
 
 	poolKey := getPoolKey(token0, token1, fee)
@@ -56,30 +51,26 @@ func (e *TestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX
 		return e // pool already exists
 	}
 
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross1, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	CreatePool(cross1, e.t, token0, token1, fee, sqrtPriceX96, adminAddr)
+	CreatePool(cross(cur), e.t, token0, token1, fee, sqrtPriceX96, adminAddr)
 	e.pools[poolKey] = true
 
 	return e
 }
 
 // AndUserFundedAndApproved provides tokens and sets up approvals for a user
-func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tokens ...string) *TestEnv {
+func (e *TestEnv) AndUserFundedAndApproved(cur realm, user address, routerAddr address, tokens ...string) *TestEnv {
 	e.t.Helper()
-	userRealm := testing.NewUserRealm(user)
-	testing.SetRealm(userRealm)
-
 	for _, token := range tokens {
-		TokenFaucet(cross1, e.t, token, user)
+		TokenFaucet(cross(cur), e.t, token, user)
 		switch token {
 		case barPath:
-			bar.Approve(cross1, routerAddr, maxApprove)
+			bar.Approve(cross(cur), routerAddr, maxApprove)
 		case bazPath:
-			baz.Approve(cross1, routerAddr, maxApprove)
+			baz.Approve(cross(cur), routerAddr, maxApprove)
 		case quxPath:
-			qux.Approve(cross1, routerAddr, maxApprove)
+			qux.Approve(cross(cur), routerAddr, maxApprove)
 		}
 	}
 	e.users[user] = true
@@ -88,22 +79,19 @@ func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tok
 }
 
 // AndPositionMinted creates a position with liquidity
-func (e *TestEnv) AndPositionMinted() *TestEnv {
+func (e *TestEnv) AndPositionMinted(cur realm) *TestEnv {
 	e.t.Helper()
-	MakeMintPositionWithoutFee(cross1, e.t)
+	MakeMintPositionWithoutFee(cross(cur), e.t)
 	return e
 }
 
 // AndLiquidityProvided adds liquidity to a pool
-func (e *TestEnv) AndLiquidityProvided(provider address, params PositionParams) *TestEnv {
+func (e *TestEnv) AndLiquidityProvided(cur realm, provider address, params PositionParams) *TestEnv {
 	e.t.Helper()
-
-	providerRealm := testing.NewUserRealm(provider)
-	testing.SetRealm(providerRealm)
 
 	// Create position with provided parameters
 	tokenId, _, _, _ := pn.Mint(
-		cross1,
+		cross(cur),
 		params.token0,
 		params.token1,
 		params.fee,

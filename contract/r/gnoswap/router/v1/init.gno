@@ -13,8 +13,8 @@ func init(cur realm) {
 }
 
 func registerRouterV1(cur realm) {
-	router.RegisterInitializer(cross(cur), func(routerStore router.IRouterStore) router.IRouter {
-		err := initStoreData(routerStore)
+	router.RegisterInitializer(cross(cur), func(_ int, rlm realm, routerStore router.IRouterStore) router.IRouter {
+		err := initStoreData(0, rlm, routerStore)
 		if err != nil {
 			panic(err)
 		}
@@ -23,16 +23,16 @@ func registerRouterV1(cur realm) {
 	})
 }
 
-func initStoreData(routerStore router.IRouterStore) error {
+func initStoreData(_ int, rlm realm, routerStore router.IRouterStore) error {
 	if !routerStore.HasSwapFeeKey() {
-		err := routerStore.SetSwapFee(defaultSwapFeeBPS)
+		err := routerStore.SetSwapFee(0, rlm, defaultSwapFeeBPS)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !routerStore.HasPendingProtocolFeesKey() {
-		err := routerStore.SetPendingProtocolFees(make(map[string]int64))
+		err := routerStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
 		if err != nil {
 			return err
 		}

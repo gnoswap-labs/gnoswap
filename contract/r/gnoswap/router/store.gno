@@ -41,8 +41,8 @@ func (s *routerStore) GetSwapFee() uint64 {
 }
 
 // SetSwapFee stores the swap fee.
-func (s *routerStore) SetSwapFee(fee uint64) error {
-	return s.kvStore.Set(StoreKeySwapFee.String(), fee)
+func (s *routerStore) SetSwapFee(_ int, rlm realm, fee uint64) error {
+	return s.kvStore.Set(0, rlm, StoreKeySwapFee.String(), fee)
 }
 
 func (s *routerStore) HasPendingProtocolFeesKey() bool {
@@ -63,8 +63,8 @@ func (s *routerStore) GetPendingProtocolFees() map[string]int64 {
 	return pendingProtocolFees
 }
 
-func (s *routerStore) SetPendingProtocolFees(fees map[string]int64) error {
-	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), fees)
+func (s *routerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
 }
 
 // NewRouterStore creates a new router store instance with the provided KV store.

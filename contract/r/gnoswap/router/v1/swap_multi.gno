@@ -46,7 +46,7 @@ type RealMultiSwapExecutor struct {
 
 // Run performs a real swap operation with state changes.
 func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient address) (int64, int64) {
-	return e.router.swapInner(e.rlm, p.amountSpecified, recipient, zero, data)
+	return e.router.swapInner(0, e.rlm, p.amountSpecified, recipient, zero, data)
 }
 
 // MultiSwapProcessor handles the execution flow for multi-hop swaps.
@@ -66,7 +66,7 @@ var (
 )
 
 // newRealMultiSwapProcessor creates a processor that performs real swaps.
-func newRealMultiSwapProcessor(rlm realm, r *routerV1, direction SwapDirection, payer address) *MultiSwapProcessor {
+func newRealMultiSwapProcessor(_ int, rlm realm, r *routerV1, direction SwapDirection, payer address) *MultiSwapProcessor {
 	return &MultiSwapProcessor{
 		executor:   &RealMultiSwapExecutor{rlm: rlm, router: r},
 		direction:  direction,
@@ -222,6 +222,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		)
 
 		amountIn, amountOut := p.router.swapInner(
+			0,
 			rlm,
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
@@ -248,9 +249,9 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 }
 
 // multiSwap performs a multi-hop swap in forward direction.
-func (r *routerV1) multiSwap(rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
+func (r *routerV1) multiSwap(_ int, rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
 	payer := rlm.Previous().Address()
-	result, output, err := newRealMultiSwapProcessor(rlm, r, Forward, payer).
+	result, output, err := newRealMultiSwapProcessor(0, rlm, r, Forward, payer).
 		processForwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
@@ -259,9 +260,9 @@ func (r *routerV1) multiSwap(rlm realm, p SwapParams, numPools int, swapPath str
 }
 
 // multiSwapNegative performs a multi-hop swap in backward direction.
-func (r *routerV1) multiSwapNegative(rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
+func (r *routerV1) multiSwapNegative(_ int, rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
 	payer := rlm.Previous().Address()
-	result, output, err := newRealMultiSwapProcessor(rlm, r, Backward, payer).
+	result, output, err := newRealMultiSwapProcessor(0, rlm, r, Backward, payer).
 		processBackwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
