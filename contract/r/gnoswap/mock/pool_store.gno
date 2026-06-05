@@ -2,6 +2,8 @@ package mock
 
 import (
 	bptree "gno.land/p/nt/bptree/v0"
+
+	"gno.land/r/gnoswap/pool"
 )
 
 type MockPoolStore struct {
@@ -185,7 +187,7 @@ func NewMockPoolStoreWithHook(
 	}
 
 	return &MockPoolStore{
-		pools:                bptree.NewBPTreeN(32),
+		pools:                pool.NewPoolsTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
