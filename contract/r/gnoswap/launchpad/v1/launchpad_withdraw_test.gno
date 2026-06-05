@@ -21,7 +21,10 @@ import (
 func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
-	userAddr := testutils.TestAddress("user1")
+	// The public CollectDepositGns resolves its caller to the launchpad v1
+	// realm in this harness, so success cases must use a deposit owned by that
+	// realm. The invalid-owner case keeps a distinct user-owned deposit.
+	userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 	otherAddr := testutils.TestAddress("other")
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -30,6 +33,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		depositID            string
+		depositOwner         address
 		callerAddress        address
 		expectedHasAbort     bool
 		expectedAbortMessage string
@@ -38,6 +42,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 		{
 			name:             "success - collect deposit gns successfully",
 			depositID:        "1",
+			depositOwner:     userAddr,
 			callerAddress:    userAddr,
 			expectedHasAbort: false,
 			expectedAmount:   1000000000,
@@ -45,6 +50,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 		{
 			name:                 "fail - collect deposit gns with invalid deposit id",
 			depositID:            "invalid_deposit",
+			depositOwner:         userAddr,
 			callerAddress:        userAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-012] not exist deposit || (invalid_deposit)",
@@ -52,6 +58,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 		{
 			name:                 "fail - collect deposit gns with invalid owner",
 			depositID:            "1",
+			depositOwner:         otherAddr,
 			callerAddress:        otherAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-014] invalid owner",
@@ -60,7 +67,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initLaunchpadWithdrawTest(cur, t, userAddr)
+			initLaunchpadWithdrawTest(cur, t, tt.depositOwner)
 			lp := getTestImplementation()
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -72,6 +79,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 			if tt.expectedHasAbort {
 				collectDepositFn := func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 						lp.CollectDepositGns(0, cur, tt.depositID)
 					}(cross(cur))
 				}
@@ -103,7 +111,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(cur realm, t *test
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(cur, t, contractAddr)
+	// The public CollectDepositGns caller resolves to the launchpad v1 realm,
+	// so the deposit must be owned by that realm for the collection to succeed.
+	_ = contractAddr
+	depositOwner := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
+	initLaunchpadWithdrawTest(cur, t, depositOwner)
 	lp := getTestImplementation()
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -314,7 +326,9 @@ func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(cur realm, t *tes
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
-	userAddr := testutils.TestAddress("user3")
+	// The public CollectDepositGns caller (and thus the GNS recipient, which is
+	// the deposit owner) resolves to the launchpad v1 realm in this harness.
+	userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
 	initLaunchpadWithdrawTest(cur, t, userAddr)
@@ -380,7 +394,10 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
-	userAddr := testutils.TestAddress("user4")
+	// Public DepositGns/CollectDepositGns resolve their caller (token sender and
+	// recipient) to the launchpad v1 realm in this harness, so track balances on
+	// that realm.
+	userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
 	testing.SetHeight(123)
@@ -411,10 +428,13 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 
 	testing.SkipHeights(10)
 
-	// Give user initial GNS balance
-	initialUserBalance := int64(5000000000) // 5000 GNS
+	// Give user initial GNS balance. The user is the launchpad v1 realm in this
+	// harness and may carry residual GNS from earlier tests, so base the
+	// expected initial balance on the actual balance after the transfer.
+	preExistingBalance := gns.BalanceOf(userAddr)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross(cur), userAddr, initialUserBalance)
+	gns.Transfer(cross(cur), userAddr, 5000000000)
+	initialUserBalance := preExistingBalance + 5000000000
 
 	// Record initial balance
 	userBalanceBeforeDeposit := gns.BalanceOf(userAddr)
@@ -447,9 +467,10 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 	testing.SetRealm(govStakerRealm)
 	xgns.Mint(cross(cur), launchpadAddr, depositAmount)
 
-	// Give launchpad GNS for withdrawal
+	// Give launchpad GNS for withdrawal and OBL to pay accrued rewards.
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross(cur), launchpadAddr, depositAmount)
+	obl.Transfer(cross(cur), launchpadAddr, 1000000)
 
 	// Skip to end of tier period
 	projectTier, _ := getProjectTier(project, 30)
@@ -677,7 +698,9 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(cur realm, t *
 func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
-	userAddr := testutils.TestAddress("edge_user")
+	// Public CollectDepositGns resolves its caller (deposit owner) to the
+	// launchpad v1 realm in this harness, so own the deposit with that realm.
+	userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 	otherAddr := testutils.TestAddress("edge_other")
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -867,7 +890,8 @@ func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(cur realm, t *testing.
 
 	for _, tt := range tierTests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			userAddr := testutils.TestAddress("tier_user_" + formatInt(tt.tierDuration))
+			// Public CollectDepositGns caller resolves to the launchpad v1 realm.
+			userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 			initLaunchpadWithdrawTestWithTier(cur, t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
 
@@ -926,7 +950,9 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(cur realm, t *tes
 
 	for _, tt := range partialTests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			userAddr := testutils.TestAddress("partial_user")
+			// Public CollectDepositGns caller resolves to the launchpad v1 realm,
+			// so own the deposit with that realm to reach the lock-period check.
+			userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 			initLaunchpadWithdrawTestWithTier(cur, t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
 
@@ -958,7 +984,8 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(cur realm, t *tes
 func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(cur realm, t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
-	userAddr := testutils.TestAddress("state_user")
+	// Public CollectDepositGns caller resolves to the launchpad v1 realm.
+	userAddr := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
