@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestEncodeTickKey(t *testing.T) {
+func TestEncodeTickKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		tick int32
@@ -22,7 +22,7 @@ func TestEncodeTickKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := EncodeTickKey(tt.tick)
 			uassert.Equal(t, tt.want, got)
 			uassert.Equal(t, 10, len(got))
@@ -30,7 +30,7 @@ func TestEncodeTickKey(t *testing.T) {
 	}
 }
 
-func TestDecodeTickKey(t *testing.T) {
+func TestDecodeTickKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		encoded string
@@ -46,14 +46,14 @@ func TestDecodeTickKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := DecodeTickKey(tt.encoded)
 			uassert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestEncodeDecodeTickKey_RoundTrip(t *testing.T) {
+func TestEncodeDecodeTickKey_RoundTrip(cur realm, t *testing.T) {
 	ticks := []int32{-MAX_TICK, -500000, -100000, -60000, -1000, -100, -1, 0, 1, 100, 1000, 60000, 100000, 500000, MAX_TICK}
 
 	for _, tick := range ticks {
@@ -63,7 +63,7 @@ func TestEncodeDecodeTickKey_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestEncodeTickKey_Ordering(t *testing.T) {
+func TestEncodeTickKey_Ordering(cur realm, t *testing.T) {
 	key1 := EncodeTickKey(-100)
 	key2 := EncodeTickKey(0)
 	key3 := EncodeTickKey(100)
@@ -73,7 +73,7 @@ func TestEncodeTickKey_Ordering(t *testing.T) {
 	uassert.True(t, key1 < key3)
 }
 
-func TestEncodePositionKey(t *testing.T) {
+func TestEncodePositionKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		tickLower int32
@@ -86,7 +86,7 @@ func TestEncodePositionKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := EncodePositionKey(tt.tickLower, tt.tickUpper)
 			uassert.Equal(t, tt.want, got)
 			uassert.Equal(t, 20, len(got))
@@ -94,7 +94,7 @@ func TestEncodePositionKey(t *testing.T) {
 	}
 }
 
-func TestEncodePositionKey_ComposesTickKeys(t *testing.T) {
+func TestEncodePositionKey_ComposesTickKeys(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		tickLower int32
@@ -106,7 +106,7 @@ func TestEncodePositionKey_ComposesTickKeys(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			want := EncodeTickKey(tt.tickLower) + EncodeTickKey(tt.tickUpper)
 			got := EncodePositionKey(tt.tickLower, tt.tickUpper)
 
@@ -115,7 +115,7 @@ func TestEncodePositionKey_ComposesTickKeys(t *testing.T) {
 	}
 }
 
-func TestEncodePositionKey_Ordering(t *testing.T) {
+func TestEncodePositionKey_Ordering(cur realm, t *testing.T) {
 	left := EncodePositionKey(-120, 60)
 	middle := EncodePositionKey(-60, 60)
 	right := EncodePositionKey(-60, 120)
@@ -125,7 +125,7 @@ func TestEncodePositionKey_Ordering(t *testing.T) {
 	uassert.True(t, left < right)
 }
 
-func TestGetPoolPath(t *testing.T) {
+func TestGetPoolPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		token0Path string
@@ -157,7 +157,7 @@ func TestGetPoolPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
 			uassert.Equal(t, tt.want, got)
 		})

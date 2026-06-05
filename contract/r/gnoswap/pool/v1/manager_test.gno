@@ -7,7 +7,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestGetPoolPath(t *testing.T) {
+func TestGetPoolPath(cur realm, t *testing.T) {
 	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
 	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	if path != expected {
@@ -20,7 +20,7 @@ func TestGetPoolPath(t *testing.T) {
 	}
 }
 
-func TestTickSpacingMap(t *testing.T) {
+func TestTickSpacingMap(cur realm, t *testing.T) {
 	tests := []struct {
 		fee         uint32
 		tickSpacing int32
@@ -40,7 +40,7 @@ func TestTickSpacingMap(t *testing.T) {
 	}
 }
 
-func TestCreatePool(t *testing.T) {
+func TestCreatePool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		token0Path  string
@@ -190,20 +190,20 @@ func TestCreatePool(t *testing.T) {
 		},
 	}
 
-	initPoolTest(t)
+	initPoolTest(cur, t)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					mockInstanceCreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func() {
+					mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 				})
 			} else {
-				mockInstanceCreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
@@ -224,30 +224,30 @@ func TestCreatePool(t *testing.T) {
 	}
 }
 
-func TestGetPool(t *testing.T) {
+func TestGetPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setupFn     func(t *testing.T)
-		action      func(t *testing.T) *pl.Pool
+		setupFn     func(cur realm, t *testing.T)
+		action      func(cur realm, t *testing.T) *pl.Pool
 		shouldError bool
 		expected    string
 		verifyFn    func(t *testing.T, pool *pl.Pool)
 	}{
 		{
 			name: "Panic - unregistered poolPath",
-			setupFn: func(t *testing.T) {
+			setupFn: func(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstanceSetPoolCreationFee(0)
+				mockInstanceSetPoolCreationFee(0, cur, 0)
 			},
 			shouldError: true,
 			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
 		},
 		{
 			name: "success - get pool (bar:foo:500)",
-			setupFn: func(t *testing.T) {
+			setupFn: func(cur realm, t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstanceSetPoolCreationFee(0)
-				mockInstanceCreatePool(barPath, fooPath, fee500, "4295128740")
+				mockInstanceSetPoolCreationFee(0, cur, 0)
+				mockInstanceCreatePool(0, cur, barPath, fooPath, fee500, "4295128740")
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool) {
 				if pool.Token0Path() != barPath {
@@ -267,9 +267,9 @@ func TestGetPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.setupFn != nil {
-				tt.setupFn(t)
+				tt.setupFn(cur, t)
 			}
 
 			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
@@ -285,7 +285,7 @@ func TestGetPool(t *testing.T) {
 }
 
 // TestSetFeeProtocol_BoundaryValues tests edge cases for fee protocol values
-func TestSetFeeProtocol_BoundaryValues(t *testing.T) {
+func TestSetFeeProtocol_BoundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		feeProtocol0 uint8
@@ -401,10 +401,10 @@ func TestSetFeeProtocol_BoundaryValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetObject(cur, t)
 
-			newFee, err := getMockInstance().setFeeProtocol(tt.feeProtocol0, tt.feeProtocol1)
+			newFee, err := getMockInstance().setFeeProtocol(0, cur, tt.feeProtocol0, tt.feeProtocol1)
 
 			if tt.shouldError {
 				uassert.NotNil(t, err, tt.description)

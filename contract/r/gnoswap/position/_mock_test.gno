@@ -44,6 +44,8 @@ type MockPosition struct {
 }
 
 func (m *MockPosition) Mint(
+	_ int,
+	rlm realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -66,6 +68,8 @@ func (m *MockPosition) Mint(
 }
 
 func (m *MockPosition) IncreaseLiquidity(
+	_ int,
+	rlm realm,
 	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
@@ -82,6 +86,8 @@ func (m *MockPosition) IncreaseLiquidity(
 }
 
 func (m *MockPosition) DecreaseLiquidity(
+	_ int,
+	rlm realm,
 	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
@@ -97,6 +103,8 @@ func (m *MockPosition) DecreaseLiquidity(
 }
 
 func (m *MockPosition) Reposition(
+	_ int,
+	rlm realm,
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
@@ -115,6 +123,8 @@ func (m *MockPosition) Reposition(
 }
 
 func (m *MockPosition) CollectFee(
+	_ int,
+	rlm realm,
 	positionId uint64,
 ) (uint64, string, string, string, string, string) {
 	res, ok := m.Response.Get("CollectFee")
@@ -125,7 +135,7 @@ func (m *MockPosition) CollectFee(
 	return res[0].(uint64), res[1].(string), res[2].(string), res[3].(string), res[4].(string), res[5].(string)
 }
 
-func (m *MockPosition) SetPositionOperator(positionId uint64, operator address) {
+func (m *MockPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, operator address) {
 	m.Response.Get("SetPositionOperator")
 }
 
