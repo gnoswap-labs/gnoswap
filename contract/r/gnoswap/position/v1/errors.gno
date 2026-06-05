@@ -22,6 +22,7 @@ var (
 	errUnderflow            = errors.New("[GNOSWAP-POSITION-013] underflow")
 	errOverflow             = errors.New("[GNOSWAP-POSITION-014] overflow")
 	errCannotMintToStaker   = errors.New("[GNOSWAP-POSITION-015] cannot mint to staker")
+	errSpoofedRealm         = errors.New("[GNOSWAP-POSITION-016] rlm does not match the current crossing frame")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.

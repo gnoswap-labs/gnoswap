@@ -12,6 +12,8 @@ type IPosition interface {
 
 type IPositionManager interface {
 	Mint(
+		_ int,
+		rlm realm,
 		token0 string,
 		token1 string,
 		fee uint32,
@@ -27,6 +29,8 @@ type IPositionManager interface {
 	) (uint64, string, string, string)
 
 	IncreaseLiquidity(
+		_ int,
+		rlm realm,
 		positionId uint64,
 		amount0DesiredStr string,
 		amount1DesiredStr string,
@@ -36,6 +40,8 @@ type IPositionManager interface {
 	) (uint64, string, string, string, string)
 
 	DecreaseLiquidity(
+		_ int,
+		rlm realm,
 		positionId uint64,
 		liquidityStr string,
 		amount0MinStr string,
@@ -44,6 +50,8 @@ type IPositionManager interface {
 	) (uint64, string, string, string, string, string, string)
 
 	Reposition(
+		_ int,
+		rlm realm,
 		positionId uint64,
 		tickLower int32,
 		tickUpper int32,
@@ -55,10 +63,14 @@ type IPositionManager interface {
 	) (uint64, string, int32, int32, string, string)
 
 	CollectFee(
+		_ int,
+		rlm realm,
 		positionId uint64,
 	) (uint64, string, string, string, string, string)
 
 	SetPositionOperator(
+		_ int,
+		rlm realm,
 		positionId uint64,
 		operator address,
 	)
@@ -87,14 +99,14 @@ type IPositionGetter interface {
 type IPositionStore interface {
 	HasPositionsStoreKey() bool
 	GetPositions() *bptree.BPTree
-	SetPositions(positions *bptree.BPTree) error
+	SetPositions(_ int, rlm realm, positions *bptree.BPTree) error
 
 	HasPositionNextIDStoreKey() bool
 	GetPositionNextID() uint64
-	SetPositionNextID(nextID uint64) error
+	SetPositionNextID(_ int, rlm realm, nextID uint64) error
 
 	HasPosition(positionId uint64) bool
 	GetPosition(positionId uint64) (Position, bool)
-	SetPosition(positionId uint64, position Position) error
-	RemovePosition(positionId uint64) error
+	SetPosition(_ int, rlm realm, positionId uint64, position Position) error
+	RemovePosition(_ int, rlm realm, positionId uint64) error
 }
