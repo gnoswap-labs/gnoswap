@@ -50,6 +50,10 @@ func (r *routerV1) ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
@@ -113,6 +117,10 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()

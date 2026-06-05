@@ -41,6 +41,10 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Fee > 1000 bps (10%)
 //   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
 

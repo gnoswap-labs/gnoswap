@@ -40,6 +40,10 @@ func (r *routerV1) SwapCallback(
 	amount0Delta, amount1Delta int64,
 	payer address,
 ) error {
+	if !rlm.IsCurrent() {
+		return errSpoofedRealm
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	caller := rlm.Previous().Address()

@@ -1,9 +1,13 @@
 package router
 
 import (
+	"errors"
+
 	"gno.land/p/gnoswap/store"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
+
+var errSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 
 type StoreKey string
 
@@ -42,6 +46,10 @@ func (s *routerStore) GetSwapFee() uint64 {
 
 // SetSwapFee stores the swap fee.
 func (s *routerStore) SetSwapFee(_ int, rlm realm, fee uint64) error {
+	if !rlm.IsCurrent() {
+		return errSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeySwapFee.String(), fee)
 }
 
@@ -64,6 +72,10 @@ func (s *routerStore) GetPendingProtocolFees() map[string]int64 {
 }
 
 func (s *routerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
+	if !rlm.IsCurrent() {
+		return errSpoofedRealm
+	}
+
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
 }
 
