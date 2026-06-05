@@ -36,7 +36,7 @@ func Mint(
 	mintTo address,
 	referrer string,
 ) (uint64, string, string, string) {
-	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer)
+	return getImplementation().Mint(0, cur, token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer)
 }
 
 // IncreaseLiquidity adds liquidity to an existing position.
@@ -64,7 +64,7 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	return getImplementation().IncreaseLiquidity(positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
+	return getImplementation().IncreaseLiquidity(0, cur, positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 // DecreaseLiquidity removes liquidity from a position.
@@ -92,7 +92,7 @@ func DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	return getImplementation().DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
+	return getImplementation().DecreaseLiquidity(0, cur, positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 // Reposition changes the tick range of a position.
@@ -125,7 +125,7 @@ func Reposition(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
-	return getImplementation().Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
+	return getImplementation().Reposition(0, cur, positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 // CollectFee collects accumulated fees from a position.
@@ -144,7 +144,7 @@ func CollectFee(
 	cur realm,
 	positionId uint64,
 ) (uint64, string, string, string, string, string) {
-	return getImplementation().CollectFee(positionId)
+	return getImplementation().CollectFee(0, cur, positionId)
 }
 
 // SetPositionOperator sets an operator for a position.
@@ -157,5 +157,5 @@ func SetPositionOperator(
 	positionId uint64,
 	operator address,
 ) {
-	getImplementation().SetPositionOperator(positionId, operator)
+	getImplementation().SetPositionOperator(0, cur, positionId, operator)
 }

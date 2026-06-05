@@ -7,12 +7,12 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-func TestHookSetters_RespectHalt(t *testing.T) {
+func TestHookSetters_RespectHalt(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 	defer func() {
 		testing.SetRealm(adminRealm)
-		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 	}()
 
 	pool := newMockPosition()
@@ -24,43 +24,43 @@ func TestHookSetters_RespectHalt(t *testing.T) {
 		{
 			name: "SetTickCrossHook",
 			call: func() {
-				pool.SetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+				pool.SetTickCrossHook(0, cur, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapStartHook",
 			call: func() {
-				pool.SetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+				pool.SetSwapStartHook(0, cur, func(cur realm, poolPath string, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapEndHook",
 			call: func() {
-				pool.SetSwapEndHook(func(cur realm, poolPath string) error { return nil })
+				pool.SetSwapEndHook(0, cur, func(cur realm, poolPath string) error { return nil })
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, "halted: pool", func() {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			uassert.AbortsWithMessage(t, cur, "halted: pool", func() {
 				tt.call()
 			})
 		})
 	}
 }
 
-func TestHookSetters_NormalOperation(t *testing.T) {
+func TestHookSetters_NormalOperation(cur realm, t *testing.T) {
 	// Setup: ensure pool is not halted
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 
 	stakerPath := "gno.land/r/gnoswap/staker"
 	stakerRealm := testing.NewCodeRealm(stakerPath)
 
 	pool := newMockPosition()
 
-	t.Run("SetTickCrossHook succeeds when not halted", func(t *testing.T) {
+	t.Run("SetTickCrossHook succeeds when not halted", func(cur realm, t *testing.T) {
 		hook := func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 			// Hook implementation
 		}
@@ -68,38 +68,38 @@ func TestHookSetters_NormalOperation(t *testing.T) {
 		testing.SetRealm(stakerRealm)
 
 		// Verify hook was set by checking store
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetTickCrossHook(hook)
-			}(cross)
+				pool.SetTickCrossHook(0, cur, hook)
+			}(cross(cur))
 		})
 	})
 
-	t.Run("SetSwapStartHook succeeds when not halted", func(t *testing.T) {
+	t.Run("SetSwapStartHook succeeds when not halted", func(cur realm, t *testing.T) {
 		hook := func(cur realm, poolPath string, timestamp int64) {
 			// Hook implementation
 		}
 
 		testing.SetRealm(stakerRealm)
 
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetSwapStartHook(hook)
-			}(cross)
+				pool.SetSwapStartHook(0, cur, hook)
+			}(cross(cur))
 		})
 	})
 
-	t.Run("SetSwapEndHook succeeds when not halted", func(t *testing.T) {
+	t.Run("SetSwapEndHook succeeds when not halted", func(cur realm, t *testing.T) {
 		hook := func(cur realm, poolPath string) error {
 			return nil
 		}
 
 		testing.SetRealm(stakerRealm)
 
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetSwapEndHook(hook)
-			}(cross)
+				pool.SetSwapEndHook(0, cur, hook)
+			}(cross(cur))
 		})
 	})
 }

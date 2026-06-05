@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"chain/runtime"
+	"chain"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -17,7 +17,7 @@ var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 func resetTestState(t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
 
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(chain.PackageAddress("gno.land/r/gnoswap/pool"))
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/pool",
 		kvStore,
@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IPoolStore) IPool {
-	return func(_ IPoolStore) IPool {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IPoolStore) IPool {
+	return func(_ int, rlm realm, _ IPoolStore) IPool {
 		return newMockPool(version)
 	}
 }

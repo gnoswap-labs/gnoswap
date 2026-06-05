@@ -16,7 +16,7 @@ const (
 	UINT64_MAX uint64 = 18446744073709551615
 )
 
-func TestU256Min(t *testing.T) {
+func TestU256Min(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		num1     string
@@ -87,7 +87,7 @@ func TestU256Min(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			num1 := u256.MustFromDecimal(tt.num1)
 			num2 := u256.MustFromDecimal(tt.num2)
 			expected := u256.MustFromDecimal(tt.expected)
@@ -98,7 +98,7 @@ func TestU256Min(t *testing.T) {
 	}
 }
 
-func TestU256Min_AdditionalCases(t *testing.T) {
+func TestU256Min_AdditionalCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		num1     string
@@ -141,7 +141,7 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			num1 := u256.MustFromDecimal(tt.num1)
 			num2 := u256.MustFromDecimal(tt.num2)
 			expected := u256.MustFromDecimal(tt.expected)
@@ -156,7 +156,7 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToInt64(t *testing.T) {
+func TestSafeConvertToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		value     *u256.Uint
@@ -188,7 +188,7 @@ func TestSafeConvertToInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if !tt.wantPanic {
@@ -209,7 +209,7 @@ func TestSafeConvertToInt64(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToInt128(t *testing.T) {
+func TestSafeConvertToInt128(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		value     string
@@ -237,7 +237,7 @@ func TestSafeConvertToInt128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if !tt.wantPanic {
@@ -258,7 +258,7 @@ func TestSafeConvertToInt128(t *testing.T) {
 	}
 }
 
-func TestToUint128InputPreservation(t *testing.T) {
+func TestToUint128InputPreservation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                      string
 		input                     string
@@ -283,7 +283,7 @@ func TestToUint128InputPreservation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			original := u256.MustFromDecimal(tt.input)
 			result := toUint128(original)
 
@@ -302,7 +302,7 @@ func TestToUint128InputPreservation(t *testing.T) {
 	}
 }
 
-func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
+func TestToUint128_PowerOfTwoBoundaries(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -376,7 +376,7 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			original := u256.MustFromDecimal(tt.input)
 			originalStr := original.ToString()
 
@@ -388,7 +388,7 @@ func TestToUint128_PowerOfTwoBoundaries(t *testing.T) {
 	}
 }
 
-func TestVerifyToUint128MaskingLogic(t *testing.T) {
+func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 	// 1. Verify toUint128 function logic
 	// toUint128 keeps only lower 128 bits when value > MAX_UINT128
 
@@ -441,7 +441,7 @@ func TestVerifyToUint128MaskingLogic(t *testing.T) {
 }
 
 // Additional verification: Ensure masked values are within uint128 range
-func TestToUint128MaskedValuesRange(t *testing.T) {
+func TestToUint128MaskedValuesRange(cur realm, t *testing.T) {
 	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
 
 	// toUint128 results
@@ -457,7 +457,7 @@ func TestToUint128MaskedValuesRange(t *testing.T) {
 	uassert.Equal(t, "318775800626314356294205765087544249637", resultMaxPrice.ToString())
 }
 
-func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
+func TestCheckOverFlowInt128_BoundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -518,14 +518,14 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			value := i256.MustFromDecimal(tt.input)
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 					checkOverFlowInt128(value)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					checkOverFlowInt128(value)
 				})
 			}
@@ -533,7 +533,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 	}
 }
 
-func TestCheckTickSpacing(t *testing.T) {
+func TestCheckTickSpacing(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tick        int32
@@ -595,7 +595,7 @@ func TestCheckTickSpacing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if !tt.shouldPanic {
@@ -610,7 +610,7 @@ func TestCheckTickSpacing(t *testing.T) {
 	}
 }
 
-func TestCheckTickSpacing_EdgeCases(t *testing.T) {
+func TestCheckTickSpacing_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tick        int32
@@ -707,13 +707,13 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 					checkTickSpacing(tt.tick, tt.tickSpacing)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					checkTickSpacing(tt.tick, tt.tickSpacing)
 				})
 			}
@@ -722,8 +722,8 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 }
 
 // Additional edge case tests for better coverage
-func TestConversionBoundaryValues(t *testing.T) {
-	t.Run("int64 power of 2 boundary", func(t *testing.T) {
+func TestConversionBoundaryValues(cur realm, t *testing.T) {
+	t.Run("int64 power of 2 boundary", func(cur realm, t *testing.T) {
 		pow63 := u256.NewUint(1 << 63) // 9,223,372,036,854,775,808
 		defer func() {
 			if r := recover(); r == nil {
@@ -733,7 +733,7 @@ func TestConversionBoundaryValues(t *testing.T) {
 		safeConvertToInt64(pow63)
 	})
 
-	t.Run("edge case q values", func(t *testing.T) {
+	t.Run("edge case q values", func(cur realm, t *testing.T) {
 		// Q96 should work with int128
 		q96 := u256.MustFromDecimal(Q96)
 		result := safeConvertToInt128(q96)
@@ -751,8 +751,8 @@ func TestConversionBoundaryValues(t *testing.T) {
 	})
 }
 
-func TestSafeConversions_ExactBoundaries(t *testing.T) {
-	t.Run("int64 exact boundary", func(t *testing.T) {
+func TestSafeConversions_ExactBoundaries(cur realm, t *testing.T) {
+	t.Run("int64 exact boundary", func(cur realm, t *testing.T) {
 		// MAX_INT64
 		maxValue := u256.MustFromDecimal(MAX_INT64)
 		result := safeConvertToInt64(maxValue)
@@ -760,12 +760,12 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 
 		// MAX_INT64 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
-		uassert.PanicsWithMessage(t,
+		uassert.PanicsWithMessage(t, cur,
 			"[GNOSWAP-POOL-003] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
 			func() { safeConvertToInt64(overValue) })
 	})
 
-	t.Run("int128 exact boundary", func(t *testing.T) {
+	t.Run("int128 exact boundary", func(cur realm, t *testing.T) {
 		// MAX_INT128
 		maxValue := u256.MustFromDecimal(MAX_INT128)
 		result := safeConvertToInt128(maxValue)
@@ -773,14 +773,14 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 
 		// MAX_INT128 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
-		uassert.PanicsWithMessage(t,
+		uassert.PanicsWithMessage(t, cur,
 			"[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 			func() { safeConvertToInt128(overValue) })
 	})
 }
 
-func TestFormatFunctions(t *testing.T) {
-	t.Run("formatUint", func(t *testing.T) {
+func TestFormatFunctions(cur realm, t *testing.T) {
+	t.Run("formatUint", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name     string
 			input    any
@@ -833,9 +833,9 @@ func TestFormatFunctions(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				if tt.panics {
-					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 						formatUint(tt.input)
 					})
 				} else {
@@ -846,7 +846,7 @@ func TestFormatFunctions(t *testing.T) {
 		}
 	})
 
-	t.Run("formatInt", func(t *testing.T) {
+	t.Run("formatInt", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name     string
 			input    any
@@ -906,9 +906,9 @@ func TestFormatFunctions(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				if tt.panics {
-					uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 						formatInt(tt.input)
 					})
 				} else {
@@ -919,7 +919,7 @@ func TestFormatFunctions(t *testing.T) {
 		}
 	})
 
-	t.Run("formatBool", func(t *testing.T) {
+	t.Run("formatBool", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name     string
 			input    bool
@@ -938,7 +938,7 @@ func TestFormatFunctions(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				result := formatBool(tt.input)
 				uassert.Equal(t, tt.expected, result)
 			})
@@ -947,7 +947,7 @@ func TestFormatFunctions(t *testing.T) {
 }
 
 // TestToUint128 tests the toUint128 function with edge cases
-func TestToUint128(t *testing.T) {
+func TestToUint128(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       *u256.Uint
@@ -1000,9 +1000,9 @@ func TestToUint128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 					toUint128(tt.input)
 				})
 			} else {
@@ -1014,7 +1014,7 @@ func TestToUint128(t *testing.T) {
 }
 
 // TestCheckOverFlowInt128 tests overflow detection for int128
-func TestCheckOverFlowInt128(t *testing.T) {
+func TestCheckOverFlowInt128(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       *i256.Int
@@ -1050,7 +1050,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					if r := recover(); r == nil {
@@ -1059,7 +1059,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 				}()
 				checkOverFlowInt128(tt.input)
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					checkOverFlowInt128(tt.input)
 				})
 			}
@@ -1068,7 +1068,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 }
 
 // TestFormatUint_AdditionalEdgeCases tests additional edge cases for formatUint
-func TestFormatUint_AdditionalEdgeCases(t *testing.T) {
+func TestFormatUint_AdditionalEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       any
@@ -1109,9 +1109,9 @@ func TestFormatUint_AdditionalEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.errorMsg, func() {
 					formatUint(tt.input)
 				})
 			} else {
@@ -1122,7 +1122,7 @@ func TestFormatUint_AdditionalEdgeCases(t *testing.T) {
 	}
 }
 
-func TestSafeAddInt64(t *testing.T) {
+func TestSafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -1251,9 +1251,9 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeAddInt64(tt.a, tt.b)
 				})
 			} else {
@@ -1265,7 +1265,7 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 }
 
-func TestSafeSubInt64(t *testing.T) {
+func TestSafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -1408,9 +1408,9 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeSubInt64(tt.a, tt.b)
 				})
 			} else {
@@ -1423,7 +1423,7 @@ func TestSafeSubInt64(t *testing.T) {
 }
 
 // TestU256Min_EdgeCases tests the u256Min utility function
-func TestU256Min_EdgeCases(t *testing.T) {
+func TestU256Min_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           *u256.Uint
@@ -1497,14 +1497,14 @@ func TestU256Min_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := u256Min(tt.a, tt.b)
 			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
 		})
 	}
 }
 
-func TestIterateTicksBoundary(t *testing.T) {
+func TestIterateTicksBoundary(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupTicks    []int32
@@ -1588,8 +1588,8 @@ func TestIterateTicksBoundary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPoolTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPoolTest(cur, t)
 			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
 			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
 			pool := newPool(poolParams)

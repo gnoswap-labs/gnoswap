@@ -170,7 +170,7 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 	for i := currentCardinality; i < nextCardinality; i++ {
 		observation := pl.NewDefaultObservation()
 		observation.SetBlockTimestamp(1)
-		os.Observations()[i] = observation
+		os.SetObservation(i, observation)
 	}
 
 	return nextCardinality, nil
@@ -220,7 +220,7 @@ func writeObservation(
 
 	// Ensure the slot exists before writing
 	if _, ok := os.Observations()[nextIndex]; !ok {
-		os.Observations()[nextIndex] = pl.NewDefaultObservation()
+		os.SetObservation(nextIndex, pl.NewDefaultObservation())
 	}
 
 	observation, err := transform(lastObservation, currentTime, tick, liquidity)
@@ -228,7 +228,7 @@ func writeObservation(
 		return err
 	}
 
-	os.Observations()[nextIndex] = observation
+	os.SetObservation(nextIndex, observation)
 	os.SetIndex(nextIndex)
 
 	return nil

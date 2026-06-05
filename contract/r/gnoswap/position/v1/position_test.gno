@@ -46,25 +46,25 @@ func IsRegistered(t *testing.T, tokenPath string) error {
 	return errInvalidTokenPath
 }
 
-func setupPoolAndApprovals(t *testing.T, faucet bool) {
+func setupPoolAndApprovals(cur realm, t *testing.T, faucet bool) {
 	t.Helper()
 	testing.SetOriginCaller(adminAddr)
-	CreatePoolWithoutFee(t)
+	CreatePoolWithoutFee(cur, t)
 
 	if faucet {
-		TokenFaucet(t, barPath, alice)
-		TokenFaucet(t, fooPath, alice)
+		TokenFaucet(cur, t, barPath, alice)
+		TokenFaucet(cur, t, fooPath, alice)
 	}
 
 	testing.SetRealm(posRealm)
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(cur, t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(cur, t, fooPath, adminAddr, poolAddr, maxApprove)
 }
 
 // seedPosition mints a simple position owned by admin and returns its id.
-func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
+func seedPosition(cur realm, t *testing.T, amount0, amount1 string) uint64 {
 	t.Helper()
-	positionId, _, _, _ := mockInstance.Mint(
+	positionId, _, _, _ := mockInstance.Mint(0, cur,
 		barPath,
 		fooPath,
 		fee500,
@@ -98,7 +98,7 @@ func newDummyPosition(id uint64) position.Position {
 	return *pos
 }
 
-func TestMustGetPosition(t *testing.T) {
+func TestMustGetPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		positionId           uint64
@@ -122,19 +122,18 @@ func TestMustGetPosition(t *testing.T) {
 			positionId:           1,
 			inputPosition:        newDummyPosition(1),
 			inputPositionId:      999,
-			expectedPosition:     position.Position{},
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			mockInstance.mustUpdatePosition(tt.positionId, tt.inputPosition)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			mockInstance.mustUpdatePosition(0, cur, tt.positionId, tt.inputPosition)
 
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					mockInstance.mustGetPosition(tt.inputPositionId)
 				})
 			} else {
@@ -154,7 +153,7 @@ func TestMustGetPosition(t *testing.T) {
 	}
 }
 
-func TestSetPosition(t *testing.T) {
+func TestSetPosition(cur realm, t *testing.T) {
 	pos := newDummyPosition(1)
 	changedPosition := newDummyPosition(1)
 	changedPosition.SetOperator("user2")
@@ -185,10 +184,10 @@ func TestSetPosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			mockInstance.mustUpdatePosition(tt.positionId, tt.position)
-			mockInstance.setPosition(tt.positionId, tt.inputPosition)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			mockInstance.mustUpdatePosition(0, cur, tt.positionId, tt.position)
+			mockInstance.setPosition(0, cur, tt.positionId, tt.inputPosition)
 
 			storedPosition := mockInstance.mustGetPosition(tt.positionId)
 			uassert.Equal(t, tt.inputPosition.Operator(), storedPosition.Operator())
@@ -205,7 +204,7 @@ func TestSetPosition(t *testing.T) {
 	}
 }
 
-func TestRemovePosition(t *testing.T) {
+func TestRemovePosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		positionId      uint64
@@ -224,11 +223,11 @@ func TestRemovePosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			mockInstance.mustUpdatePosition(0, cur, tt.positionId, newDummyPosition(tt.positionId))
 
-			mockInstance.store.RemovePosition(tt.inputPositionId)
+			mockInstance.store.RemovePosition(0, cur, tt.inputPositionId)
 
 			_, found := mockInstance.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
@@ -236,7 +235,7 @@ func TestRemovePosition(t *testing.T) {
 	}
 }
 
-func TestExistPosition(t *testing.T) {
+func TestExistPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		positionId      uint64
@@ -258,15 +257,15 @@ func TestExistPosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			mockInstance.mustUpdatePosition(0, cur, tt.positionId, newDummyPosition(tt.positionId))
 			uassert.Equal(t, tt.expectedExist, mockInstance.ExistPosition(tt.inputPositionId))
 		})
 	}
 }
 
-func TestComputePositionKey(t *testing.T) {
+func TestComputePositionKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		owner     address
@@ -375,7 +374,7 @@ func TestComputePositionKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(posRealm)
 			result := computePositionKey(tt.tickLower, tt.tickUpper)
 
@@ -386,7 +385,7 @@ func TestComputePositionKey(t *testing.T) {
 	}
 }
 
-func TestNextIdFunctions(t *testing.T) {
+func TestNextIdFunctions(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialValue  uint64
@@ -401,11 +400,11 @@ func TestNextIdFunctions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			for range make([]struct{}, tt.increments) {
-				mockInstance.incrementNextId()
+				mockInstance.incrementNextId(0, cur)
 			}
 
 			uassert.Equal(t, tt.expectedValue, mockInstance.getNextId())
@@ -413,7 +412,7 @@ func TestNextIdFunctions(t *testing.T) {
 	}
 }
 
-func TestIsValidTokenPath(t *testing.T) {
+func TestIsValidTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPath string
@@ -457,8 +456,8 @@ func TestIsValidTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			result := isValidTokenPath(tt.tokenPath)
 			uassert.Equal(t, tt.expected, result)
@@ -466,7 +465,7 @@ func TestIsValidTokenPath(t *testing.T) {
 	}
 }
 
-func TestParseAmounts(t *testing.T) {
+func TestParseAmounts(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		amount0Desired    string
@@ -576,11 +575,11 @@ func TestParseAmounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					parseAmounts(tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min)
 				})
 			} else {
@@ -600,7 +599,7 @@ func TestParseAmounts(t *testing.T) {
 	}
 }
 
-func TestMint(t *testing.T) {
+func TestMint(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		token0             string
@@ -682,18 +681,18 @@ func TestMint(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(tc.token0, tc.token1, tc.fee, 0)
+			createPoolWithoutFee(cur, tc.token0, tc.token1, tc.fee, 0)
 
 			testing.SetRealm(testing.NewUserRealm(tc.caller))
 			amount0Int, _ := strconv.ParseInt(tc.amount0, 10, 64)
 			amount1Int, _ := strconv.ParseInt(tc.amount1, 10, 64)
 
 			if tc.shouldError {
-				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
-					mockInstanceMint(
+				uassert.AbortsWithMessage(t, cur, tc.expectedErrorMsg, func() {
+					mockInstanceMint(cur,
 						tc.token0, tc.token1, tc.fee,
 						tc.tickLower, tc.tickUpper,
 						tc.amount0, tc.amount1,
@@ -704,12 +703,12 @@ func TestMint(t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				common.SafeGRC20Transfer(cross, tc.token0, tc.caller, amount0Int)
-				common.SafeGRC20Transfer(cross, tc.token1, tc.caller, amount1Int)
+				common.SafeGRC20Transfer(cross(cur), tc.token0, tc.caller, amount0Int)
+				common.SafeGRC20Transfer(cross(cur), tc.token1, tc.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tc.caller))
 
-				positionId, liquidity, amount0, amount1 := mockInstanceMint(
+				positionId, liquidity, amount0, amount1 := mockInstanceMint(cur,
 					tc.token0, tc.token1, tc.fee,
 					tc.tickLower, tc.tickUpper,
 					tc.amount0, tc.amount1,
@@ -733,7 +732,7 @@ func TestMint(t *testing.T) {
 	}
 }
 
-func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
+func TestMint_ParticipantDerivationAndMintToValidation(cur realm, t *testing.T) {
 	directUser := testutils.TestAddress("direct-minter")
 	referrer := testutils.TestAddress("referrer").String()
 	mintUser := testutils.TestAddress("mint-stake-user")
@@ -787,35 +786,38 @@ func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			caller := tt.caller
 			mintTo := tt.mintTo
 			if tt.callerCodePath != "" {
-				callerRealm := testing.NewCodeRealm(tt.callerCodePath)
-				caller = callerRealm.Address()
+				caller = testing.NewCodeRealm(tt.callerCodePath).Address()
 			}
 			if tt.mintToCaller {
 				mintTo = caller
 			}
 
 			testing.SetRealm(adminRealm)
-			common.SafeGRC20Transfer(cross, barPath, caller, 1000000)
-			common.SafeGRC20Transfer(cross, fooPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross(cur), barPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross(cur), fooPath, caller, 1000000)
 
 			if tt.callerCodePath != "" {
 				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
 			} else {
 				testing.SetRealm(testing.NewUserRealm(caller))
 			}
-			common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-			common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross(cur), barPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, 1000000)
 
 			mint := func(cur realm) (uint64, string, string, string) {
-				testing.SetRealm(posRealm)
-				return mockInstance.Mint(
+				if tt.callerCodePath != "" {
+					testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
+				} else {
+					testing.SetRealm(testing.NewUserRealm(caller))
+				}
+				return position.Mint(cross(cur),
 					barPath, fooPath, fee500,
 					-500, 500,
 					"1000000", "1000000",
@@ -827,13 +829,13 @@ func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
 			}
 
 			if tt.expectAbort {
-				uassert.AbortsContains(t, tt.errorContains, func() {
-					mint(cross)
+				uassert.AbortsContains(t, cur, tt.errorContains, func() {
+					mint(cross(cur))
 				})
 				return
 			}
 
-			positionId, _, _, _ := mint(cross)
+			positionId, _, _, _ := mint(cross(cur))
 			owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
 			uassert.NoError(t, err)
 			expectedOwner := tt.expectedOwner
@@ -849,7 +851,7 @@ func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
 	}
 }
 
-func TestIncreaseLiquidity(t *testing.T) {
+func TestIncreaseLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		positionId       uint64
@@ -911,13 +913,13 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
-			_, _, _, _ = mockInstanceMint(
+			_, _, _, _ = mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -934,10 +936,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 			)
 
 			if tc.expectPanic {
-				uassert.AbortsWithMessage(t,
-					tc.expectedErrorMsg,
+				uassert.AbortsWithMessage(t, cur, tc.expectedErrorMsg,
 					func() {
-						mockInstanceIncreaseLiquidity(
+						mockInstanceIncreaseLiquidity(cur,
 							tc.positionId,
 							tc.amount0Desired,
 							tc.amount1Desired,
@@ -948,7 +949,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 						)
 					})
 			} else {
-				positionId, _, amount0, amount1, _ := mockInstanceIncreaseLiquidity(
+				positionId, _, amount0, amount1, _ := mockInstanceIncreaseLiquidity(cur,
 					tc.positionId,
 					tc.amount0Desired,
 					tc.amount1Desired,
@@ -965,7 +966,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}
 }
 
-func TestDecreaseLiquidity(t *testing.T) {
+func TestDecreaseLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		beforeIncrease    bool
@@ -1050,13 +1051,13 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -1069,10 +1070,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 
-			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			testing.SetRealm(adminRealm)
 			if tc.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
-					mockInstanceDecreaseLiquidity(
+				uassert.AbortsWithMessage(t, cur, tc.expectedErrorMsg, func() {
+					mockInstanceDecreaseLiquidity(cur,
 						1,
 						tc.liquidityToRemove,
 						tc.amount0Min,
@@ -1081,7 +1082,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 					)
 				})
 			} else {
-				_, liquidity, fee0, fee1, _, _, _ := mockInstanceDecreaseLiquidity(
+				_, liquidity, fee0, fee1, _, _, _ := mockInstanceDecreaseLiquidity(cur,
 					1,
 					tc.liquidityToRemove,
 					tc.amount0Min,
@@ -1096,7 +1097,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 }
 
-func TestCollectFees(t *testing.T) {
+func TestCollectFees(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		caller             address
@@ -1139,13 +1140,13 @@ func TestCollectFees(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -1163,7 +1164,7 @@ func TestCollectFees(t *testing.T) {
 			testing.SetOriginCaller(adminAddr)
 
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
-				_, _, _, _, _ = mockInstanceIncreaseLiquidity(
+				_, _, _, _, _ = mockInstanceIncreaseLiquidity(cur,
 					1,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
@@ -1174,7 +1175,7 @@ func TestCollectFees(t *testing.T) {
 				)
 			}
 			if tt.liquidityToRemove != "" {
-				_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+				_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 					1,
 					tt.liquidityToRemove,
 					"0",
@@ -1184,11 +1185,11 @@ func TestCollectFees(t *testing.T) {
 			}
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					mockInstanceCollectFee(1, adminAddr)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortError, func() {
+					mockInstanceCollectFee(cur, 1, adminAddr)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, adminAddr)
+				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(cur, 1, adminAddr)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1198,12 +1199,12 @@ func TestCollectFees(t *testing.T) {
 	}
 }
 
-func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
-	initPositionTest(t)
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 	testing.SetRealm(adminRealm)
-	mockInstanceMint(
+	mockInstanceMint(cur,
 		barPath,
 		fooPath,
 		fee500,
@@ -1215,11 +1216,11 @@ func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
 	)
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	uassert.NotPanics(t, func() {
-		_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+	testing.SetRealm(adminRealm)
+	uassert.NotPanics(t, cur, func() {
+		_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 			1,
 			"400000",
 			"0",
@@ -1229,15 +1230,15 @@ func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
 	})
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 }
 
-func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
-	initPositionTest(t)
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+func TestCollectFees_EmergencyHaltAllowsAccruedClaim(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 	testing.SetOriginCaller(adminAddr)
-	mockInstanceMint(
+	mockInstanceMint(cur,
 		barPath,
 		fooPath,
 		fee500,
@@ -1251,7 +1252,7 @@ func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
 		adminAddr,
 		"",
 	)
-	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 		1,
 		"50",
 		"0",
@@ -1260,17 +1261,17 @@ func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
 	)
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
-	uassert.NotPanics(t, func() {
-		_, _, _, _, _, _ = mockInstanceCollectFee(1, adminAddr)
+	uassert.NotPanics(t, cur, func() {
+		_, _, _, _, _, _ = mockInstanceCollectFee(cur, 1, adminAddr)
 	})
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 }
 
-func TestReposition(t *testing.T) {
+func TestReposition(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		mintAmount0          string
@@ -1320,14 +1321,14 @@ func TestReposition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			// no need to faucet tokens here.
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -1340,7 +1341,7 @@ func TestReposition(t *testing.T) {
 
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
-				_, _, _, _, _ = mockInstanceIncreaseLiquidity(
+				_, _, _, _, _ = mockInstanceIncreaseLiquidity(cur,
 					1,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
@@ -1352,7 +1353,7 @@ func TestReposition(t *testing.T) {
 			}
 
 			// Step 3: Decrease liquidity to clear the position
-			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 				1,
 				tt.liquidityToRemove,
 				"0",
@@ -1362,8 +1363,8 @@ func TestReposition(t *testing.T) {
 
 			// Step 4: Attempt Reposition
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
-					mockInstanceReposition(
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMessage, func() {
+					mockInstanceReposition(cur,
 						1,
 						tt.tickLower,
 						tt.tickUpper,
@@ -1377,7 +1378,7 @@ func TestReposition(t *testing.T) {
 				})
 			} else {
 				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
-				_, _, tickL, tickH, _, _ := mockInstanceReposition(
+				_, _, tickL, tickH, _, _ := mockInstanceReposition(cur,
 					1,
 					tt.tickLower,
 					tt.tickUpper,
@@ -1395,7 +1396,7 @@ func TestReposition(t *testing.T) {
 	}
 }
 
-func TestValidateTokenPath(t *testing.T) {
+func TestValidateTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		token0      string
@@ -1471,8 +1472,8 @@ func TestValidateTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			err := validateTokenPath(tt.token0, tt.token1)
 
@@ -1488,7 +1489,7 @@ func TestValidateTokenPath(t *testing.T) {
 	}
 }
 
-func TestComputePoolPath(t *testing.T) {
+func TestComputePoolPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		token0       string
@@ -1534,8 +1535,8 @@ func TestComputePoolPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			result := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
 			uassert.NotEqual(t, "", result, "pool path should not be empty")
@@ -1549,7 +1550,7 @@ func TestComputePoolPath(t *testing.T) {
 // TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
 // is enforced on actually collected amounts, not on burned amounts.
 // This prevents cases where user receives less than expected due to pool constraints.
-func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
+func TestDecreaseLiquidity_SlippageOnCollectedAmounts(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		liquidityToRemove string
@@ -1592,13 +1593,13 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -1611,10 +1612,10 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 
 			deadline := time.Now().Add(time.Hour).Unix()
 
-			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			testing.SetRealm(adminRealm)
 			if tc.expectedHasAbort {
-				uassert.AbortsContains(t, tc.expectedErrorMsg, func() {
-					mockInstanceDecreaseLiquidity(
+				uassert.AbortsContains(t, cur, tc.expectedErrorMsg, func() {
+					mockInstanceDecreaseLiquidity(cur,
 						1,
 						tc.liquidityToRemove,
 						tc.amount0Min,
@@ -1623,7 +1624,7 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 					)
 				})
 			} else {
-				_, liquidity, _, _, collect0, collect1, _ := mockInstanceDecreaseLiquidity(
+				_, liquidity, _, _, collect0, collect1, _ := mockInstanceDecreaseLiquidity(cur,
 					1,
 					tc.liquidityToRemove,
 					tc.amount0Min,
@@ -1647,14 +1648,14 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 // TestDecreaseLiquidity_PoolBalanceInsufficient tests the edge case where
 // pool balance is insufficient, causing collect amounts to be less than burn amounts.
 // This verifies that slippage check is enforced on actually collected amounts.
-func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
-	initPositionTest(t)
+func TestDecreaseLiquidity_PoolBalanceInsufficient(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 	testing.SetRealm(adminRealm)
 	// Step 1: Mint position to add liquidity
-	mockInstanceMint(
+	mockInstanceMint(cur,
 		barPath,
 		fooPath,
 		fee500,
@@ -1684,12 +1685,12 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	// but collect amounts will be limited by pool balance (~500,000 total / 2 = ~250,000 each)
 	// So if we set amount0Min = 400,000, it should fail because collect0 < 400,000
 
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SetRealm(adminRealm)
 
 	// This should FAIL because collect0 will be less than amount0Min
 	// Even though burn0 would be >= 400,000, collect0 will be limited by pool balance
-	uassert.AbortsContains(t, "collectAmount0", func() {
-		mockInstanceDecreaseLiquidity(
+	uassert.AbortsContains(t, cur, "collectAmount0", func() {
+		mockInstanceDecreaseLiquidity(cur,
 			1,
 			"500000", // Remove 50% liquidity
 			"400000", // amount0Min - higher than what pool can provide
@@ -1706,8 +1707,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	pool.SetBalanceToken0(currentBalance0) // Restore balance0
 	pool.SetBalanceToken1(reducedBalance1) // Keep balance1 reduced
 
-	uassert.AbortsContains(t, "collectAmount1", func() {
-		mockInstanceDecreaseLiquidity(
+	uassert.AbortsContains(t, cur, "collectAmount1", func() {
+		mockInstanceDecreaseLiquidity(cur,
 			1,
 			"500000", // Remove 50% liquidity
 			"1",      // amount0Min - low
@@ -1719,7 +1720,7 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 
 // TestReposition_DeadlineValidation tests that Reposition enforces deadline
 // to prevent stale transactions from being executed after market movements.
-func TestReposition_DeadlineValidation(t *testing.T) {
+func TestReposition_DeadlineValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		deadlineOffset   time.Duration
@@ -1746,14 +1747,14 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
 			// Step 1: Mint initial position
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath,
 				fooPath,
 				fee500,
@@ -1768,7 +1769,7 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 			position, _ := mockInstance.GetPosition(1)
 			liquidity := position.Liquidity()
 
-			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,
 				1,
 				liquidity,
 				"0",
@@ -1780,8 +1781,8 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 			deadline := time.Now().Add(tt.deadlineOffset).Unix()
 
 			if tt.expectAbort {
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-					mockInstanceReposition(
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
+					mockInstanceReposition(cur,
 						1,
 						-5000,
 						5000,
@@ -1794,7 +1795,7 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 					)
 				})
 			} else {
-				posId, liq, tickL, tickH, amt0, amt1 := mockInstanceReposition(
+				posId, liq, tickL, tickH, amt0, amt1 := mockInstanceReposition(cur,
 					1,
 					-5000,
 					5000,
@@ -1826,14 +1827,14 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 }
 
 // TestDecreaseLiquidity_NonOwner tests that non-owner cannot decrease liquidity
-func TestDecreaseLiquidity_NonOwner(t *testing.T) {
-	initPositionTest(t)
+func TestDecreaseLiquidity_NonOwner(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
 
 	// Setup pool and position owned by admin
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
-	testing.SetOriginCaller(adminAddr)
-	mockInstanceMint(
+	testing.SetRealm(adminRealm)
+	mockInstanceMint(cur,
 		barPath,
 		fooPath,
 		fee500,
@@ -1844,14 +1845,12 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
 	)
 
-	// Alice (non-owner) tries to decrease liquidity
+	// Alice (non-owner) tries to decrease liquidity through the public proxy.
 	testing.SetRealm(testing.NewUserRealm(alice))
 
-	uassert.PanicsWithMessage(t,
-		"[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
 		func() {
-			testing.SetRealm(testing.NewCodeRealm(posPath))
-			mockInstance.DecreaseLiquidity(
+			mockInstanceDecreaseLiquidity(cur,
 				1,
 				"100",
 				"0",

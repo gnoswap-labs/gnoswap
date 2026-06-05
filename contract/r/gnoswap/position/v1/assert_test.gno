@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/mock"
 )
 
-func TestAssertIsNotExpired(t *testing.T) {
+func TestAssertIsNotExpired(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		deadline             int64
@@ -65,11 +65,11 @@ func TestAssertIsNotExpired(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertIsNotExpired(tt.deadline)
 				})
 			} else {
@@ -80,7 +80,7 @@ func TestAssertIsNotExpired(t *testing.T) {
 	}
 }
 
-func TestAssertValidLiquidityAmount(t *testing.T) {
+func TestAssertValidLiquidityAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		liquidity            string
@@ -129,11 +129,11 @@ func TestAssertValidLiquidityAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertValidLiquidityAmount(tt.liquidity)
 				})
 			} else {
@@ -144,7 +144,7 @@ func TestAssertValidLiquidityAmount(t *testing.T) {
 	}
 }
 
-func TestAssertExistsPosition(t *testing.T) {
+func TestAssertExistsPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		positionId           uint64
@@ -182,19 +182,19 @@ func TestAssertExistsPosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.setupPosition {
 				position := newDummyPosition(tt.positionId)
-				mockInstance.mustUpdatePosition(tt.positionId, position)
-				mockInstance.incrementNextId()
+				mockInstance.mustUpdatePosition(0, cur, tt.positionId, position)
+				mockInstance.incrementNextId(0, cur)
 
-				mockInstance.nftAccessor.Mint(adminAddr, positionIdFrom(tt.positionId))
+				mockInstance.nftAccessor.Mint(0, cur, adminAddr, positionIdFrom(tt.positionId))
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertExistsPosition(mockInstance, tt.positionId)
 				})
 			} else {
@@ -205,7 +205,7 @@ func TestAssertExistsPosition(t *testing.T) {
 	}
 }
 
-func TestAssertIsOwnerForToken(t *testing.T) {
+func TestAssertIsOwnerForToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		positionId           uint64
@@ -260,19 +260,19 @@ func TestAssertIsOwnerForToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.setupPosition {
 				testing.SetRealm(posRealm)
-				mockInstance.nftAccessor.Mint(tt.setupOwner, positionIdFrom(tt.positionId))
+				mockInstance.nftAccessor.Mint(0, cur, tt.setupOwner, positionIdFrom(tt.positionId))
 				position := newDummyPosition(tt.positionId)
-				mockInstance.mustUpdatePosition(tt.positionId, position)
-				mockInstance.incrementNextId()
+				mockInstance.mustUpdatePosition(0, cur, tt.positionId, position)
+				mockInstance.incrementNextId(0, cur)
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertIsOwnerForToken(mockInstance, tt.positionId, tt.caller)
 				})
 			} else {
@@ -283,7 +283,7 @@ func TestAssertIsOwnerForToken(t *testing.T) {
 	}
 }
 
-func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
+func TestAssertIsOwnerOrOperatorForToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		positionId           uint64
@@ -358,12 +358,12 @@ func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.setupPosition {
 				testing.SetRealm(posRealm)
-				mockInstance.nftAccessor.Mint(tt.setupOwner, positionIdFrom(tt.positionId))
+				mockInstance.nftAccessor.Mint(0, cur, tt.setupOwner, positionIdFrom(tt.positionId))
 
 				position := newDummyPosition(tt.positionId)
 				if tt.setupOperator != "" {
@@ -375,12 +375,12 @@ func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
 
 					position.SetOperator(tt.setupOperator)
 				}
-				mockInstance.mustUpdatePosition(tt.positionId, position)
-				mockInstance.incrementNextId()
+				mockInstance.mustUpdatePosition(0, cur, tt.positionId, position)
+				mockInstance.incrementNextId(0, cur)
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertIsOwnerOrOperatorForToken(mockInstance, tt.positionId, tt.caller)
 				})
 			} else {
@@ -391,13 +391,14 @@ func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
 	}
 }
 
-func TestAssertEqualsAddress(t *testing.T) {
+func TestAssertEqualsAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		prevAddr             address
 		otherAddr            address
 		expectedPanicMessage string
 		shouldPanic          bool
+		shouldAbort          bool
 	}{
 		{
 			name:        "Valid equal addresses",
@@ -424,6 +425,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			otherAddr:            alice,
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Second address is invalid (empty)",
@@ -431,6 +433,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			otherAddr:            "",
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Both addresses are invalid (empty)",
@@ -438,6 +441,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			otherAddr:            "",
 			expectedPanicMessage: "invalid address: ",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Different valid addresses",
@@ -445,6 +449,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			otherAddr:            "g1charlie",
 			expectedPanicMessage: "invalid address: g1charlie",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name:                 "Same address with different case (should be equal)",
@@ -452,15 +457,20 @@ func TestAssertEqualsAddress(t *testing.T) {
 			otherAddr:            "g1alice",
 			expectedPanicMessage: "invalid address: g1alice",
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+			if tt.shouldAbort {
+				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMessage, func() {
+					assertEqualsAddress(tt.prevAddr, tt.otherAddr)
+				})
+			} else if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertEqualsAddress(tt.prevAddr, tt.otherAddr)
 				})
 			} else {
@@ -471,7 +481,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 	}
 }
 
-func TestAssertValidOperatorAddress(t *testing.T) {
+func TestAssertValidOperatorAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		operator             address
@@ -514,11 +524,11 @@ func TestAssertValidOperatorAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertValidOperatorAddress(tt.operator)
 				})
 			} else {
@@ -531,7 +541,7 @@ func TestAssertValidOperatorAddress(t *testing.T) {
 
 // TestAssertIsNotMintToStaker covers the guard that prevents users from
 // minting a position NFT directly to the staker contract.
-func TestAssertIsNotMintToStaker(t *testing.T) {
+func TestAssertIsNotMintToStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		mintTo               address
@@ -570,15 +580,15 @@ func TestAssertIsNotMintToStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					assertIsNotMintToStaker(tt.mintTo)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsNotMintToStaker(tt.mintTo)
 				})
 			}
