@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -793,7 +792,7 @@ func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *gov
 
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {
-		gov.store.SetProposalVotingInfos(0, cur, proposal.ID(), bptree.NewBPTreeN(16))
+		gov.store.SetProposalVotingInfos(0, cur, proposal.ID(), governance.NewVotingInfoTree())
 	}
 }
 
@@ -818,7 +817,7 @@ func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID 
 	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
 
 	if !exists {
-		votingInfos = bptree.NewBPTreeN(16)
+		votingInfos = governance.NewVotingInfoTree()
 	}
 	votingInfos.Set(voter, votingInfo)
 

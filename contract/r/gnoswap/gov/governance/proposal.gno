@@ -165,10 +165,14 @@ func NewProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
 
-func NewProposalUserVotingInfoTree() *bptree.BPTree {
+func NewUserProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
 
-func NewUserProposalTree() *bptree.BPTree {
+func NewVotingInfoTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewProposalUserVotingInfoTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
