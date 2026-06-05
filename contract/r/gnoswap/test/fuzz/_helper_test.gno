@@ -104,20 +104,20 @@ var (
 )
 
 // initStates initializes the states for the fuzz test
-func initStates(t *testing.T) {
-	burnTestTokens(t)
+func initStates(cur realm, t *testing.T) {
+	burnTestTokens(cur, t)
 
 	defaultNFTAccessor = newMockNFTAccessor()
 	defaultPoolAccessor = newMockPoolAccessor()
 	defaultEmissionAccessor = newMockEmissionAccessor()
 
-	initPoolState(t)
-	initPositionState(t)
-	initRouterState(t)
-	initStakerState(t)
+	initPoolState(cur, t)
+	initPositionState(cur, t)
+	initRouterState(cur, t)
+	initStakerState(cur, t)
 }
 
-func initPoolState(t *testing.T) {
+func initPoolState(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
@@ -125,17 +125,17 @@ func initPoolState(t *testing.T) {
 		initializedPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pool.RegisterInitializer(cross, func(_ pool.IPoolStore) pool.IPool {
+		pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ pool.IPoolStore) pool.IPool {
 			return pool_v1.NewPoolV1(newMockPoolStore())
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	pool.UpgradeImpl(cross, mockPoolPath)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.UpgradeImpl(cross(cur), mockPoolPath)
+	pool.SetPoolCreationFee(cross(cur), 0)
 }
 
-func initPositionState(t *testing.T) {
+func initPositionState(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
 
@@ -143,16 +143,16 @@ func initPositionState(t *testing.T) {
 		initializedPosition = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
-		position.RegisterInitializer(cross, func(_ position.IPositionStore) position.IPosition {
+		position.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ position.IPositionStore) position.IPosition {
 			return position_v1.NewPositionV1(newMockPositionStore(), defaultNFTAccessor)
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	position.UpgradeImpl(cross, mockPositionPath)
+	position.UpgradeImpl(cross(cur), mockPositionPath)
 }
 
-func initRouterState(t *testing.T) {
+func initRouterState(cur realm, t *testing.T) {
 	t.Helper()
 	const mockRouterPath = "gno.land/r/gnoswap/router/mock"
 
@@ -160,16 +160,16 @@ func initRouterState(t *testing.T) {
 		initializedRouter = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockRouterPath))
-		router.RegisterInitializer(cross, func(_ router.IRouterStore) router.IRouter {
+		router.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ router.IRouterStore) router.IRouter {
 			return router_v1.NewRouterV1(newMockRouterStore())
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	router.UpgradeImpl(cross, mockRouterPath)
+	router.UpgradeImpl(cross(cur), mockRouterPath)
 }
 
-func initStakerState(t *testing.T) {
+func initStakerState(cur realm, t *testing.T) {
 	t.Helper()
 	const mockStakerPath = "gno.land/r/gnoswap/staker/mock"
 
@@ -179,16 +179,16 @@ func initStakerState(t *testing.T) {
 		initializedStaker = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockStakerPath))
-		staker.RegisterInitializer(cross, func(_ staker.IStakerStore, _ staker.PoolAccessor, _ staker.EmissionAccessor, _ staker.NFTAccessor) staker.IStaker {
+		staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ staker.IStakerStore, _ staker.PoolAccessor, _ staker.EmissionAccessor, _ staker.NFTAccessor) staker.IStaker {
 			return staker_v1.NewStakerV1(defaultStakerStore, defaultPoolAccessor, defaultEmissionAccessor, defaultNFTAccessor)
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	staker.UpgradeImpl(cross, mockStakerPath)
+	staker.UpgradeImpl(cross(cur), mockStakerPath)
 }
 
-func mintTestToken(tokenPath string, amount int64) {
+func mintTestToken(cur realm, tokenPath string, amount int64) {
 	if amount > MAX_TEST_MINT_AMOUNT {
 		panic("mint amount exceeds fuzz test limit")
 	}
@@ -197,15 +197,15 @@ func mintTestToken(tokenPath string, amount int64) {
 
 	switch tokenPath {
 	case barPath:
-		bar.Mint(cross, adminAddr, amount)
+		bar.Mint(cross(cur), adminAddr, amount)
 	case bazPath:
-		baz.Mint(cross, adminAddr, amount)
+		baz.Mint(cross(cur), adminAddr, amount)
 	case fooPath:
-		foo.Mint(cross, adminAddr, amount)
+		foo.Mint(cross(cur), adminAddr, amount)
 	case quxPath:
-		qux.Mint(cross, adminAddr, amount)
+		qux.Mint(cross(cur), adminAddr, amount)
 	case oblPath:
-		obl.Mint(cross, adminAddr, amount)
+		obl.Mint(cross(cur), adminAddr, amount)
 	default:
 		return
 	}
@@ -229,7 +229,7 @@ func getTokenTotalSupply(tokenPath string) int64 {
 	}
 }
 
-func burnTestTokens(t *testing.T) {
+func burnTestTokens(cur realm, t *testing.T) {
 	t.Helper()
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
@@ -242,11 +242,11 @@ func burnTestTokens(t *testing.T) {
 	addrs := []address{adminAddr, poolAddr, positionAddr, protocolFeeAddr, stakerAddr}
 
 	for _, addr := range addrs {
-		bar.Burn(cross, addr, bar.BalanceOf(addr))
-		baz.Burn(cross, addr, baz.BalanceOf(addr))
-		foo.Burn(cross, addr, foo.BalanceOf(addr))
-		qux.Burn(cross, addr, qux.BalanceOf(addr))
-		obl.Burn(cross, addr, obl.BalanceOf(addr))
+		bar.Burn(cross(cur), addr, bar.BalanceOf(addr))
+		baz.Burn(cross(cur), addr, baz.BalanceOf(addr))
+		foo.Burn(cross(cur), addr, foo.BalanceOf(addr))
+		qux.Burn(cross(cur), addr, qux.BalanceOf(addr))
+		obl.Burn(cross(cur), addr, obl.BalanceOf(addr))
 	}
 }
 
