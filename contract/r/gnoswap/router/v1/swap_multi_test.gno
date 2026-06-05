@@ -25,13 +25,6 @@ func TestMultiSwap(cur realm, t *testing.T) {
 	}{
 		{
 			name: "single hop swap BAR -> BAZ",
-			setupFn: func(cur realm, env *TestEnv) {
-				testing.SetRealm(adminRealm)
-				env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted(cur)
-				testing.SetRealm(testing.NewUserRealm(user1Addr))
-				env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
-			},
 			params: NewSwapParams().
 				Recipient(alice).
 				TokenIn(barPath).
@@ -53,10 +46,11 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			initRouterTest(cur, t)
 
 			env := NewTestEnv(cur, t)
-
-			if tt.setupFn != nil {
-				tt.setupFn(cur, env)
-			}
+			testing.SetRealm(adminRealm)
+			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+				AndPositionMinted(cur)
+			testing.SetRealm(testing.NewUserRealm(user1Addr))
+			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
 			router := mockRouter()
 			multiSwapFn := func(cur realm) (int64, int64) {
