@@ -21,7 +21,7 @@ func resetTestState(t *testing.T) {
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/router",
 		kvStore,
-		func(_ store.KVStore) any {
+		func(_ int, rlm realm, _ store.KVStore) any {
 			return NewRouterStore(kvStore)
 		},
 	)

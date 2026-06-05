@@ -27,7 +27,7 @@ func resetGnsTokenObject(cur realm, t *testing.T) {
 	t.Helper()
 
 	token, privateLedger = grc20.NewToken(0, cur, "Gnoswap", "GNS", 6)
-	UserTeller = token.CallerTeller()
+	userTeller = token.CallerTeller()
 
 	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 }

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
@@ -16,7 +17,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -114,10 +114,10 @@ func setupPoolsAndLiquidity() {
 
 	// Create pools
 	println("[INFO] Creating WUGNOT/GNS pool (fee: 0.05%)")
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Creating GNS/USDC pool (fee: 0.05%)")
-	pl.CreatePool(cross, gnsPath, usdcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, gnsPath, usdcPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Mint positions with 100M each token
 	// WUGNOT/GNS pool

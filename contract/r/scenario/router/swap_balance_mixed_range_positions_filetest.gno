@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -153,7 +154,7 @@ func createPool() BalanceSnapshot {
 		barPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	return getBalanceSnapshot()

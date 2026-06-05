@@ -8,7 +8,7 @@ package version_manager
 //   - Enable zero-downtime upgrades through hot-swapping implementations
 //   - Maintain a single source of truth for storage across all versions
 //   - Enforce security through domain-scoped registration
-//   - Support backward compatibility by keeping old versions available in read-only mode
+//   - Support backward compatibility by keeping old versions registered for later activation
 //
 // Implementation Note:
 // The actual implementations of each version must satisfy a common domain interface
@@ -16,19 +16,19 @@ package version_manager
 type VersionManager interface {
 	// RegisterInitializer registers a version's implementation.
 	// Must be called by each version package during initialization.
-	// First registration becomes the active implementation with write access.
-	// Subsequent registrations are granted read-only access.
+	// First registration becomes the active implementation.
+	// Subsequent registrations are retained for later switching.
 	//
 	// The leading `_ int, rlm realm` is the v2 interrealm-spec marker pattern:
 	// the `0` sentinel surfaces at every call site so the realm threading is
 	// visible to the reader, and rlm is the live crossing-frame token that
 	// the implementation validates via rlm.IsCurrent() and reads via
 	// rlm.Previous() to identify the version package.
-	RegisterInitializer(_ int, rlm realm, initializer func(store any) any) error
+	RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error
 
 	// ChangeImplementation switches the active version at runtime.
-	// The new active version gets write access, while others remain read-only.
-	// This enables hot-swapping without downtime or data migration.
+	// This enables hot-swapping without downtime or data migration while storage
+	// ownership stays with the domain KVStore.
 	//
 	// The leading `_ int, rlm realm` is the v2 interrealm-spec marker pattern;
 	// rlm is validated via rlm.IsCurrent() to reject spoofed/stale tokens.
@@ -39,7 +39,7 @@ type VersionManager interface {
 	GetDomainPath() string
 
 	// GetInitializers returns all registered version initializers
-	GetInitializers() map[string]func(store any) any
+	GetInitializers() map[string]func(_ int, rlm realm, store any) any
 
 	// GetCurrentPackagePath returns the package path of the active implementation
 	GetCurrentPackagePath() string

@@ -8,7 +8,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	plp "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -77,7 +77,7 @@ func main() {
 	gns.Approve(cross, poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 100, tick: -24081)")
-	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
+	testSqrt := gnsmath.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
 	pool.CreatePool(cross, barPath, fooPath, fee100, testSqrt.ToString())
 
@@ -127,7 +127,7 @@ func main() {
 	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
 	{
 		println("[INFO] Computing swap step with sqrt price change")
-		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
+		sqrtQ, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
 			testSqrt,
 			testSqrtSubOne,
 			u256.MustFromDecimal(liqToMint),

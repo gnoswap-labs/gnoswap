@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"fmt"
@@ -173,7 +174,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
@@ -181,7 +182,7 @@ func createPools() {
 		"gno.land/r/gnoland/wugnot",
 		"gno.land/r/gnoswap/gns",
 		500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] set pool tiers")

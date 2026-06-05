@@ -20,7 +20,7 @@ func (s *mockProtocolFeeStore) HasDevOpsPctStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeDevOpsPct() error {
+func (s *mockProtocolFeeStore) InitializeDevOpsPct(_ int, rlm realm) error {
 	s.devOpsPct = 0
 	return nil
 }
@@ -29,7 +29,7 @@ func (s *mockProtocolFeeStore) GetDevOpsPct() int64 {
 	return s.devOpsPct
 }
 
-func (s *mockProtocolFeeStore) SetDevOpsPct(pct int64) error {
+func (s *mockProtocolFeeStore) SetDevOpsPct(_ int, rlm realm, pct int64) error {
 	s.devOpsPct = pct
 	return nil
 }
@@ -39,8 +39,8 @@ func (s *mockProtocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeAccuToGovStaker() error {
-	s.accuToGovStaker = bptree.NewBPTreeN(16)
+func (s *mockProtocolFeeStore) InitializeAccuToGovStaker(_ int, rlm realm) error {
+	s.accuToGovStaker = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -62,7 +62,7 @@ func (s *mockProtocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, 
 	return amount, true
 }
 
-func (s *mockProtocolFeeStore) SetAccuToGovStakerItem(tokenPath string, amount int64) error {
+func (s *mockProtocolFeeStore) SetAccuToGovStakerItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	s.accuToGovStaker.Set(tokenPath, amount)
 
 	return nil
@@ -73,8 +73,8 @@ func (s *mockProtocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeAccuToDevOps() error {
-	s.accuToDevOps = bptree.NewBPTreeN(16)
+func (s *mockProtocolFeeStore) InitializeAccuToDevOps(_ int, rlm realm) error {
+	s.accuToDevOps = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (s *mockProtocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, boo
 	return amount, true
 }
 
-func (s *mockProtocolFeeStore) SetAccuToDevOpsItem(tokenPath string, amount int64) error {
+func (s *mockProtocolFeeStore) SetAccuToDevOpsItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	s.accuToDevOps.Set(tokenPath, amount)
 
 	return nil
@@ -106,8 +106,8 @@ func (s *mockProtocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeDistributedToGovStakerHistory() error {
-	s.distributedToGovStakerHistory = bptree.NewBPTreeN(16)
+func (s *mockProtocolFeeStore) InitializeDistributedToGovStakerHistory(_ int, rlm realm) error {
+	s.distributedToGovStakerHistory = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -129,7 +129,7 @@ func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath st
 	return amount, true
 }
 
-func (s *mockProtocolFeeStore) SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error {
+func (s *mockProtocolFeeStore) SetDistributedToGovStakerHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	s.distributedToGovStakerHistory.Set(tokenPath, amount)
 	return nil
 }
@@ -138,8 +138,8 @@ func (s *mockProtocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeDistributedToDevOpsHistory() error {
-	s.distributedToDevOpsHistory = bptree.NewBPTreeN(16)
+func (s *mockProtocolFeeStore) InitializeDistributedToDevOpsHistory(_ int, rlm realm) error {
+	s.distributedToDevOpsHistory = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
@@ -161,7 +161,7 @@ func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath strin
 	return amount, true
 }
 
-func (s *mockProtocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error {
+func (s *mockProtocolFeeStore) SetDistributedToDevOpsHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	s.distributedToDevOpsHistory.Set(tokenPath, amount)
 	return nil
 }
@@ -171,7 +171,7 @@ func (s *mockProtocolFeeStore) HasReservedTokensStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeReservedTokens() error {
+func (s *mockProtocolFeeStore) InitializeReservedTokens(_ int, rlm realm) error {
 	s.reservedTokens = []string{}
 	return nil
 }
@@ -180,12 +180,12 @@ func (s *mockProtocolFeeStore) GetReservedTokens() []string {
 	return s.reservedTokens
 }
 
-func (s *mockProtocolFeeStore) SetReservedTokens(reservedTokens []string) error {
+func (s *mockProtocolFeeStore) SetReservedTokens(_ int, rlm realm, reservedTokens []string) error {
 	s.reservedTokens = reservedTokens
 	return nil
 }
 
-func (s *mockProtocolFeeStore) AddReservedToken(tokenPath string) error {
+func (s *mockProtocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath string) error {
 	for _, reservedToken := range s.reservedTokens {
 		if reservedToken == tokenPath {
 			return nil
@@ -198,10 +198,10 @@ func (s *mockProtocolFeeStore) AddReservedToken(tokenPath string) error {
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
-		accuToGovStaker:               bptree.NewBPTreeN(16),
-		accuToDevOps:                  bptree.NewBPTreeN(16),
-		distributedToGovStakerHistory: bptree.NewBPTreeN(16),
-		distributedToDevOpsHistory:    bptree.NewBPTreeN(16),
+		accuToGovStaker:               protocol_fee.NewBPTreeN(16),
+		accuToDevOps:                  protocol_fee.NewBPTreeN(16),
+		distributedToGovStakerHistory: protocol_fee.NewBPTreeN(16),
+		distributedToDevOpsHistory:    protocol_fee.NewBPTreeN(16),
 		reservedTokens:                []string{},
 	}
 }

@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestFromDecimal(t *testing.T) {
+func TestFromDecimal(cur realm, t *testing.T) {
 	t.Run("valid_inputs", func(t *testing.T) {
 		tests := []struct {
 			name     string
@@ -43,7 +43,7 @@ func TestFromDecimal(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					MustFromDecimal(tt.input)
 				})
 			})
@@ -310,7 +310,7 @@ func TestOperationConsistency(t *testing.T) {
 	})
 }
 
-func TestInt64Conversion(t *testing.T) {
+func TestInt64Conversion(cur realm, t *testing.T) {
 	t.Run("Int64", func(t *testing.T) {
 		tests := []struct {
 			name string
@@ -345,7 +345,7 @@ func TestInt64Conversion(t *testing.T) {
 		})
 
 		t.Run("negative panics", func(t *testing.T) {
-			uassert.PanicsContains(t, "val is negative", func() {
+			uassert.PanicsContains(t, cur, "val is negative", func() {
 				NewUintFromInt64(-1)
 			})
 		})

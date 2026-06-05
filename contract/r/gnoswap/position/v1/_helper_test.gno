@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/r/gnoswap/common"
@@ -208,7 +209,7 @@ func CreatePoolWithoutFee(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	CreatePool(t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
@@ -479,7 +480,7 @@ func initPositionTest(t *testing.T) {
 func createPoolWithoutFee(token0 string, token1 string, fee uint32, tick int32) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
-	pl.CreatePool(cross, token0, token1, fee, common.TickMathGetSqrtRatioAtTick(tick).ToString())
+	pl.CreatePool(cross, token0, token1, fee, gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString())
 }
 
 func mockInstanceMint(

@@ -10,6 +10,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
@@ -155,7 +156,7 @@ func createPoolsAndMintPosition() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create main test pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 

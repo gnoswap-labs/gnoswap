@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -90,10 +91,10 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	pl.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	println("[INFO] create bar:foo:100 pool")
-	pl.CreatePool(cross, barPath, fooPath, 100, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	pl.CreatePool(cross, barPath, fooPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	testing.SkipHeights(1)
 }

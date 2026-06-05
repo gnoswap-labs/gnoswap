@@ -18,7 +18,7 @@ import (
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(positionStore IPositionStore) IPosition) {
-	initializerFunc := func(domainStore any) any {
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentPositionStore, ok := domainStore.(IPositionStore)
 		if !ok {
 			panic("domainStore is not an IPositionStore")

@@ -1,10 +1,9 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
-
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -61,7 +60,7 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 	println("[INFO] Creating bar-baz pool (fee: 500)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(1).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
 	bar.Approve(cross, poolAddr, 100000)
@@ -130,10 +129,10 @@ func createPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	// set pool create fee to 0 for testing
 	pl.SetPoolCreationFee(cross, 0)
-	createPool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	createPool(t, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, bazPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	createPool(t, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
 func createPool(t *testing.T,

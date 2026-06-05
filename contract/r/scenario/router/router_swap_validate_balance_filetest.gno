@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -185,7 +186,7 @@ func createPoolWithGnot() BalanceSnapshot {
 		wugnotPath,
 		gnsPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	return getBalanceSnapshot()

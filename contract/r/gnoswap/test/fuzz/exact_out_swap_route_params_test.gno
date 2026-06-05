@@ -99,11 +99,11 @@ func (p *exactOutSwapRouteParams) isValidAmount() bool {
 	}
 
 	if p.amountIn != "" && p.amountIn != "0" {
-        amountIn := u256.MustFromDecimal(p.amountIn)
-        if amountIn.Gt(maxAmountIn) {
-            return false
-        }
-    }
+		amountIn := u256.MustFromDecimal(p.amountIn)
+		if amountIn.Gt(maxAmountIn) {
+			return false
+		}
+	}
 
 	return true
 }
@@ -237,8 +237,8 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
 	}
 
 	p.preDrySwapResult = true
-	p.amountIn = amountIn      // actual required input amount
-	p.amountOut = amountOut    // use DrySwap's achievable output amount
+	p.amountIn = amountIn   // actual required input amount
+	p.amountOut = amountOut // use DrySwap's achievable output amount
 }
 
 func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {

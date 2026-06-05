@@ -188,7 +188,7 @@ func TestChangeImplementation_Errors(cur realm, t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/protocol_fee",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            make(map[string]func(store any) any),
+					initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 				}
 				return vm, "gno.land/r/gnoswap/protocol_fee/v999"
 			},
@@ -202,7 +202,7 @@ func TestChangeImplementation_Errors(cur realm, t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/pool",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            make(map[string]func(store any) any),
+					initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 				}
 				return vm, ""
 			},
@@ -217,7 +217,7 @@ func TestChangeImplementation_Errors(cur realm, t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/position",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            make(map[string]func(store any) any),
+					initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 				}
 				vm.initializers["gno.land/r/gnoswap/position/v1"] = nil
 				return vm, "gno.land/r/gnoswap/position/v1"
@@ -245,14 +245,14 @@ func newMockStore(version string) *mockStore {
 }
 
 // Mock initializer function that returns a store wrapper
-func mockInitializer(version string) func(store any) any {
-	return func(store any) any {
+func mockInitializer(version string) func(_ int, rlm realm, store any) any {
+	return func(_ int, rlm realm, store any) any {
 		return newMockStore(version)
 	}
 }
 
 // initializeDomainStoreFn wrapper function
-func mockInitializeDomainStoreFn(kvStore store.KVStore) any {
+func mockInitializeDomainStoreFn(_ int, rlm realm, kvStore store.KVStore) any {
 	return kvStore
 }
 
@@ -394,7 +394,7 @@ func TestChangeImplementation_Success(cur realm, t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            make(map[string]func(store any) any),
+				initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}
@@ -412,10 +412,10 @@ func TestChangeImplementation_Success(cur realm, t *testing.T) {
 
 				got := vmInternal.GetCurrentPackagePath()
 				uassert.Equal(t, tt.expectedCurrent, got,
-				    ufmt.Sprintf("GetCurrentPackagePath() = %s, want %s", got, tt.expectedCurrent))
+					ufmt.Sprintf("GetCurrentPackagePath() = %s, want %s", got, tt.expectedCurrent))
 
 				uassert.NotNil(t, vmInternal.GetCurrentImplementation(),
-				    "GetCurrentImplementation() should not be nil after successful change")
+					"GetCurrentImplementation() should not be nil after successful change")
 			}
 		})
 	}
@@ -428,7 +428,7 @@ func TestGetInitializers(cur realm, t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/protocol_fee",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            make(map[string]func(store any) any),
+			initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 		}
 
 		vm.initializers["gno.land/r/gnoswap/protocol_fee/v1"] = mockInitializer("v1")
@@ -449,7 +449,7 @@ func TestGetInitializers(cur realm, t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/pool",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            make(map[string]func(store any) any),
+			initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 		}
 
 		versions := []string{"v1", "v2", "v3"}
@@ -475,13 +475,27 @@ func TestGetInitializers(cur realm, t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/position",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            make(map[string]func(store any) any),
+			initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 		}
 
 		initializers := vm.GetInitializers()
 		uassert.NotNil(t, initializers, "initializers should not be nil")
 		uassert.True(t, len(initializers) == 0, "len(initializers) should be 0")
 	})
+}
+
+// makeInitializerSafe creates a safe copy of an initializer function for test inspection.
+func makeInitializerSafe(data any) any {
+	fn, ok := data.(func(_ int, rlm realm, store any) any)
+	if !ok {
+		panic(ufmt.Sprintf("expected func(_ int, rlm realm, store any) any, got %T", data))
+	}
+
+	cpy := func(_ int, rlm realm, store any) any {
+		return fn(0, rlm, store)
+	}
+
+	return cpy
 }
 
 // TestMakeInitializerSafe_InvalidType tests panic on invalid type
@@ -508,7 +522,7 @@ func TestMakeInitializerSafe_InvalidType(cur realm, t *testing.T) {
 		},
 		{
 			name: "valid function does not panic",
-			input: func(store any) any {
+			input: func(_ int, rlm realm, store any) any {
 				return store
 			},
 			wantPanic: false,
@@ -628,12 +642,12 @@ func TestIsContainDomainPath(cur realm, t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            make(map[string]func(store any) any),
+				initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 			}
 
 			result := vm.isContainDomainPath(tt.testPath)
 			uassert.True(t, result == tt.expected,
-			    ufmt.Sprintf("isContainDomainPath(%q) = %v, want %v", tt.testPath, result, tt.expected))
+				ufmt.Sprintf("isContainDomainPath(%q) = %v, want %v", tt.testPath, result, tt.expected))
 		})
 	}
 }
@@ -691,7 +705,7 @@ func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            make(map[string]func(store any) any),
+				initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}
@@ -707,7 +721,7 @@ func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 				fullPath := tt.domainPath + "/" + pkg
 				err := vmInternal.ChangeImplementation(0, cur, fullPath)
 				uassert.Nil(t, err,
-				    ufmt.Sprintf("unexpected error during change to %s: %v", pkg, err))
+					ufmt.Sprintf("unexpected error during change to %s: %v", pkg, err))
 			}
 
 			// Verify final state
@@ -718,7 +732,7 @@ func TestChangeImplementation_StateConsistency(cur realm, t *testing.T) {
 
 			// Verify implementation is not nil
 			uassert.NotNil(t, vmInternal.GetCurrentImplementation(),
-			    "implementation should not be nil after changes")
+				"implementation should not be nil after changes")
 		})
 	}
 }

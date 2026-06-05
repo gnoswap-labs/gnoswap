@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"fmt"
@@ -19,7 +20,6 @@ import (
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -156,8 +156,8 @@ func initWithShortWarmUp() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] register gns change callback")
@@ -172,7 +172,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
@@ -180,7 +180,7 @@ func createPools() {
 		"gno.land/r/gnoland/wugnot",
 		"gno.land/r/gnoswap/gns",
 		500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] set pool tiers")

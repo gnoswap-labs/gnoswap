@@ -126,7 +126,7 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/invalid/token)",
+			errorMessage: "[GNOSWAP-COMMON-001] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Unregistered output token",
@@ -141,7 +141,7 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/invalid/token)",
+			errorMessage: "[GNOSWAP-COMMON-001] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Invalid fee tier 1",

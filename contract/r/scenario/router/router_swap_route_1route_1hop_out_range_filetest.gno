@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -61,7 +62,7 @@ func main() {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 	println("[INFO] Creating bar-baz pool (fee: 500, tick: 10000)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	println("[INFO] Checking pool creation")
 

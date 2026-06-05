@@ -2,6 +2,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
@@ -50,7 +51,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Create pool with v1")
-	createPool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	createPool(barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	println()
 
 	println("[SCENARIO] 3. Mint position with v1")
