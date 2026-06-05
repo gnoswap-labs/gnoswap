@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	// Package-init reads use chain/runtime/unsafe.CurrentRealm because there
-	// is no `cur realm` in scope at package-initialization time. The values
-	// captured here describe the governance realm itself, not any caller.
+	// currentAddress and domainPath describe the governance realm itself.
+	// They are captured from the `cur realm` parameter in init(cur realm),
+	// which resolves to this governance domain realm.
 	currentAddress address
 	domainPath     string
 
@@ -20,6 +20,10 @@ var (
 
 	versionManager version_manager.VersionManager
 	implementation IGovernance
+
+	// ErrSpoofedRealm is returned/panicked when a captured realm token no
+	// longer matches the live crossing frame (rlm.IsCurrent() == false).
+	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 )
 
 func init(cur realm) {

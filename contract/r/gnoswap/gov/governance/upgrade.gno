@@ -22,6 +22,10 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, governanc
 	// the initializer performs run under the proxy's identity rather than
 	// the version package's, which would fail the kvStore ACL.
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
+		if !rlm.IsCurrent() {
+			panic(ErrSpoofedRealm)
+		}
+
 		currentGovernanceStore, ok := domainStore.(IGovernanceStore)
 		if !ok {
 			panic("domainStore is not an IGovernanceStore")
