@@ -29,7 +29,7 @@ var (
 
 	// onDistributionPctChangeCallback is called when distribution percentages change
 	// This allows external contracts (like staker) to update their caches
-	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
+	onDistributionPctChangeCallback func(cur realm, emissionAmountPerSecond int64)
 )
 
 func init(cur realm) {
@@ -216,7 +216,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 // This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
 //
 // Only callable by the staker contract.
-func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
+func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) {
 	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
@@ -224,6 +224,6 @@ func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
 
 	if onDistributionPctChangeCallback != nil {
 		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
 }
