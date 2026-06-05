@@ -147,6 +147,8 @@ type IStakerStore interface {
 	HasTokenSpecificMinimumRewardsStoreKey() bool
 	GetTokenSpecificMinimumRewards() map[string]int64
 	SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error
+	SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error
+	RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error
 
 	// UnstakingFee
 	HasUnstakingFeeStoreKey() bool

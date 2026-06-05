@@ -127,10 +127,14 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 	if amount64 == 0 {
 		// Only attempt removal if an entry actually existed
 		if found {
-			delete(s.store.GetTokenSpecificMinimumRewards(), tokenPath)
+			if err := s.store.RemoveTokenSpecificMinimumRewardItem(0, rlm, tokenPath); err != nil {
+				panic(err)
+			}
 		}
 	} else {
-		s.store.GetTokenSpecificMinimumRewards()[tokenPath] = amount64
+		if err := s.store.SetTokenSpecificMinimumRewardItem(0, rlm, tokenPath, amount64); err != nil {
+			panic(err)
+		}
 	}
 
 	chain.Emit(
