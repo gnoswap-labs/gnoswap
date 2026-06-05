@@ -4,10 +4,9 @@ import (
 	"chain"
 	"chain/runtime"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/common"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -37,7 +36,7 @@ func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint
 // modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
 func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 	// update staker side tick info
-	self.SetStakedLiquidityGross(common.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
+	self.SetStakedLiquidityGross(gnsmath.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
 	if self.StakedLiquidityGross().Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}
@@ -46,7 +45,7 @@ func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.
 
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
 func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
-	self.SetStakedLiquidityGross(common.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
+	self.SetStakedLiquidityGross(gnsmath.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
 	if self.StakedLiquidityGross().Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}

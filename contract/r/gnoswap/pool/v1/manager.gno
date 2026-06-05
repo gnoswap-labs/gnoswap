@@ -14,7 +14,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"
-
 )
 
 const GNS_PATH string = "gno.land/r/gnoswap/gns"

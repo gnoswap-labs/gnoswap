@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -80,7 +80,7 @@ func testSymmetricNarrowRange() {
 		barPath,
 		bazPath,
 		100, // 0.01% fee
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -135,7 +135,7 @@ func testRangeWidthEfficiency() {
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -194,7 +194,7 @@ func testActualLimits() {
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)

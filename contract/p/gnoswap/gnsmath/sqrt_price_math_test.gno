@@ -3,14 +3,13 @@ package gnsmath
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // Test data constants
 var (
-	Q96         = u256.MustFromDecimal("79228162514264337593543950336") // 2^96
 	MAX_UINT256 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
 	MAX_UINT160 = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
 	UINT160_MAX = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
@@ -34,14 +33,14 @@ func TestSqrtPriceMath_getNextPriceAmount0Add(t *testing.T) {
 		},
 		{
 			name:             "normal_addition",
-			currentSqrtPrice: Q96,
+			currentSqrtPrice: u256.MustFromDecimal(Q96),
 			liquidity:        u256.MustFromDecimal("1000000000000000000"),
 			amountToAdd:      u256.MustFromDecimal("100000000000000000"),
 			expected:         u256.MustFromDecimal("72025602285694852357767227579"),
 		},
 		{
 			name:             "small_amount_high_liquidity",
-			currentSqrtPrice: Q96,
+			currentSqrtPrice: u256.MustFromDecimal(Q96),
 			liquidity:        u256.MustFromDecimal("100000000000000000000"),
 			amountToAdd:      u256.One(),
 			expected:         u256.MustFromDecimal("79228162514264337592751668711"),
@@ -79,7 +78,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
 	}{
 		{
 			name:             "quotient_check_passes_denominator_gte",
-			currentSqrtPrice: Q96,
+			currentSqrtPrice: u256.MustFromDecimal(Q96),
 			liquidity:        u256.MustFromDecimal("1000000000000000000"),
 			amountToAdd:      u256.MustFromDecimal("100000000000000000"),
 		},
@@ -107,7 +106,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
 }
 
 // TestGetNextPriceAmount0Remove tests the internal helper for removing token0
-func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 	tiny := u256.One()
 	medium := u256.MustFromDecimal("100000000000000000")
 	huge := u256.MustFromDecimal("1000000000000000000000000000000")
@@ -123,7 +122,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 	}{
 		{
 			name:           "tiny_removal_monotonic",
-			current:        Q96,
+			current:        u256.MustFromDecimal(Q96),
 			liquidity:      u256.MustFromDecimal("100000000000000000000"),
 			amountToRemove: tiny,
 			validate: func(t *testing.T, before, after *u256.Uint) {
@@ -132,7 +131,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		},
 		{
 			name:           "medium_removal_larger_increase",
-			current:        Q96,
+			current:        u256.MustFromDecimal(Q96),
 			liquidity:      u256.MustFromDecimal("1000000000000000000"),
 			amountToRemove: medium,
 			validate: func(t *testing.T, before, after *u256.Uint) {
@@ -170,7 +169,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		},
 		{
 			name:           "overflow_check_fail",
-			current:        Q96,
+			current:        u256.MustFromDecimal(Q96),
 			liquidity:      u256.MustFromDecimal("1"),
 			amountToRemove: MAX_UINT256,
 			shouldPanic:    true,
@@ -178,7 +177,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		},
 		{
 			name:           "insufficient_liquidity",
-			current:        Q96,
+			current:        u256.MustFromDecimal(Q96),
 			liquidity:      u256.MustFromDecimal("1000"),
 			amountToRemove: u256.MustFromDecimal("100000000000000000000"),
 			shouldPanic:    true,
@@ -186,7 +185,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		},
 		{
 			name:           "overflow_path_large_remove_panics",
-			current:        Q96,
+			current:        u256.MustFromDecimal(Q96),
 			liquidity:      u256.MustFromDecimal("1000000000000000000"),
 			amountToRemove: huge,
 			shouldPanic:    true,
@@ -214,7 +213,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			before := tt.current.Clone()
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					_ = getNextPriceAmount0Remove(tt.current, tt.liquidity, tt.amountToRemove)
 				})
 				return
@@ -226,7 +225,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromAmount0RoundingUp tests price calculation when adding/removing token0
-func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -240,15 +239,15 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 		// Basic functionality
 		{
 			name:      "zero_amount_returns_same_price",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("2000000"),
 			amount:    u256.Zero(),
 			add:       true,
-			expected:  Q96,
+			expected:  u256.MustFromDecimal(Q96),
 		},
 		{
 			name:      "add_token0_decreases_price",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			add:       true,
@@ -256,7 +255,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 		},
 		{
 			name:      "remove_token0_increases_price",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			add:       false,
@@ -298,7 +297,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 		// Error cases
 		{
 			name:        "remove_causes_overflow",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.MustFromDecimal("1"),
 			amount:      MAX_UINT256,
 			add:         false,
@@ -307,7 +306,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 		},
 		{
 			name:        "remove_insufficient_liquidity",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.MustFromDecimal("1000"),
 			amount:      u256.MustFromDecimal("100000000000000000000"),
 			add:         false,
@@ -319,7 +318,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromAmount0RoundingUp(tt.sqrtPX96, tt.liquidity, tt.amount, tt.add)
 				})
 				return
@@ -332,7 +331,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 }
 
 // TestGetNextPriceAmount1Add tests the internal helper for adding token1
-func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount1Add(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -344,28 +343,28 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 	}{
 		{
 			name:      "normal_addition",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			expected:  u256.MustFromDecimal("87150978765690771352898345369"),
 		},
 		{
 			name:      "amount_lte_max160",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("1000000000000000000"),
 			expected:  u256.MustFromDecimal("158456325028528675187087900672"),
 		},
 		{
 			name:      "amount_gt_max160",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.Zero().Lsh(u256.One(), 200),
 			amount:    new(u256.Uint).Add(MAX_UINT160, u256.MustFromDecimal("1000000000000000000")),
 			expected:  u256.MustFromDecimal("79228162514336392479134175740"),
 		},
 		{
 			name:      "very_small_liquidity",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.One(),
 			amount:    u256.MustFromDecimal("1000"),
 			expected:  u256.MustFromDecimal("79307390676778601931137494286336"),
@@ -394,7 +393,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 		{
 			name:        "panic_when_result_exceeds_uint160_range",
 			sqrtPX96:    UINT160_MAX,
-			liquidity:   Q96,
+			liquidity:   u256.MustFromDecimal(Q96),
 			amount:      u256.One(),
 			shouldPanic: true,
 			panicMsg:    errSqrtPriceOverflow.Error(),
@@ -402,7 +401,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 		{
 			name:        "panic_when_uint256_add_overflows",
 			sqrtPX96:    u256.Zero().SetAllOne(),
-			liquidity:   Q96,
+			liquidity:   u256.MustFromDecimal(Q96),
 			amount:      u256.One(),
 			shouldPanic: true,
 			panicMsg:    errSqrtPriceOverflow.Error(),
@@ -412,7 +411,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextPriceAmount1Add(tt.sqrtPX96, tt.liquidity, tt.amount)
 				})
 				return
@@ -433,20 +432,20 @@ func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
 	}{
 		{
 			name:      "amount_exactly_MAX_UINT160",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: MAX_UINT160,
 			amount:    MAX_UINT160,
 		},
 		{
 			name:      "amount_one_below_MAX_UINT160",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: MAX_UINT160,
 			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
 		},
 		{
 			name:      "sum_exactly_at_uint160_max_boundary",
 			sqrtPX96:  new(u256.Uint).Sub(UINT160_MAX, u256.One()),
-			liquidity: Q96,
+			liquidity: u256.MustFromDecimal(Q96),
 			amount:    u256.One(),
 		},
 	}
@@ -461,7 +460,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
 }
 
 // TestGetNextPriceAmount1Remove tests the internal helper for removing token1
-func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
+func TestSqrtPriceMath_getNextPriceAmount1Remove(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -473,14 +472,14 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 	}{
 		{
 			name:      "normal_removal_small",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"), // 0.1
 			expected:  u256.MustFromDecimal("71305346262837903834189555302"),
 		},
 		{
 			name:      "normal_removal_medium",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("500000000000000000"), // 0.5
 			expected:  u256.MustFromDecimal("39614081257132168796771975168"),
@@ -488,35 +487,35 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 
 		{
 			name:      "zero_amount_no_change",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.Zero(),
-			expected:  Q96,
+			expected:  u256.MustFromDecimal(Q96),
 		},
 		{
 			name:      "tiny_amount_tiny_change",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("100000000000000000000"),
 			amount:    u256.One(),
 			expected:  u256.MustFromDecimal("79228162514264337592751668710"),
 		},
 		{
 			name:      "amount_lte_max160_path_small",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("10000000000000000000"),
 			amount:    u256.MustFromDecimal("1000000000000000000"),
 			expected:  u256.MustFromDecimal("71305346262837903834189555302"),
 		},
 		{
 			name:      "medium_amount_normal_path",
-			sqrtPX96:  new(u256.Uint).Mul(Q96, u256.NewUint(2)),
+			sqrtPX96:  new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("10000000000000000"),
 			expected:  u256.MustFromDecimal("157664043403386031811152461168"),
 		},
 		{
 			name:        "very_small_liquidity",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.One(),
 			amount:      u256.MustFromDecimal("1"),
 			shouldPanic: true,
@@ -524,7 +523,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 		},
 		{
 			name:      "very_large_liquidity",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000000000000"),
 			amount:    u256.MustFromDecimal("1000000000000000000"),
 			expected:  u256.MustFromDecimal("79228162435036175079279612742"),
@@ -538,7 +537,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 		},
 		{
 			name:        "insufficient_liquidity_panic",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.MustFromDecimal("1000"),
 			amount:      u256.MustFromDecimal("1000000000000000000"),
 			shouldPanic: true,
@@ -554,7 +553,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 		},
 		{
 			name:      "rounding_up_verification",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("999999999999999999"),
 			amount:    u256.MustFromDecimal("333333333333333333"),
 			expected:  u256.MustFromDecimal("52818775009509558395695966890"),
@@ -584,7 +583,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 		},
 		{
 			name:        "exact_division_no_rounding",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.MustFromDecimal("1000000000000000000"),
 			amount:      u256.MustFromDecimal("1000000000000000000"),
 			shouldPanic: true,
@@ -618,7 +617,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
 				})
 				return
@@ -661,7 +660,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromAmount1RoundingDown tests price calculation when adding/removing token1
-func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -674,15 +673,15 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 	}{
 		{
 			name:      "zero_amount_returns_same_price",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.Zero(),
 			add:       true,
-			expected:  Q96,
+			expected:  u256.MustFromDecimal(Q96),
 		},
 		{
 			name:      "delegates_to_add_function",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			add:       true,
@@ -690,7 +689,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 		},
 		{
 			name:      "delegates_to_remove_function",
-			sqrtPX96:  Q96,
+			sqrtPX96:  u256.MustFromDecimal(Q96),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			add:       false,
@@ -701,7 +700,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromAmount1RoundingDown(tt.sqrtPX96, tt.liquidity, tt.amount, tt.add)
 				})
 				return
@@ -714,7 +713,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromInput tests input swap calculations
-func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromInput(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -745,7 +744,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 		},
 		{
 			name:       "delegates_to_amount0_function",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountIn:   u256.MustFromDecimal("100000000000000000"),
 			zeroForOne: true,
@@ -753,7 +752,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 		},
 		{
 			name:       "delegates_to_amount1_function",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountIn:   u256.MustFromDecimal("100000000000000000"),
 			zeroForOne: false,
@@ -761,18 +760,18 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 		},
 		{
 			name:       "zero_amount_no_change",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountIn:   u256.Zero(),
 			zeroForOne: true,
-			expected:   Q96.ToString(),
+			expected:   u256.MustFromDecimal(Q96).ToString(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromInput(tt.sqrtPX96, tt.liquidity, tt.amountIn, tt.zeroForOne)
 				})
 				return
@@ -785,7 +784,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromInput(t *testing.T) {
 }
 
 // TestGetNextSqrtPriceFromOutput tests output swap calculations
-func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
+func TestSqrtPriceMath_getNextSqrtPriceFromOutput(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		sqrtPX96    *u256.Uint
@@ -816,7 +815,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 		},
 		{
 			name:       "delegates_to_amount1_for_zeroForOne",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountOut:  u256.MustFromDecimal("100000000000000000"),
 			zeroForOne: true,
@@ -824,7 +823,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 		},
 		{
 			name:       "delegates_to_amount0_for_oneForZero",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountOut:  u256.MustFromDecimal("100000000000000000"),
 			zeroForOne: false,
@@ -832,15 +831,15 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 		},
 		{
 			name:       "zero_amount_no_change",
-			sqrtPX96:   Q96,
+			sqrtPX96:   u256.MustFromDecimal(Q96),
 			liquidity:  u256.MustFromDecimal("1000000000000000000"),
 			amountOut:  u256.Zero(),
 			zeroForOne: true,
-			expected:   Q96.ToString(),
+			expected:   u256.MustFromDecimal(Q96).ToString(),
 		},
 		{
 			name:        "delegates_panic_from_internal",
-			sqrtPX96:    Q96,
+			sqrtPX96:    u256.MustFromDecimal(Q96),
 			liquidity:   u256.MustFromDecimal("1000000000000000000"),
 			amountOut:   u256.MustFromDecimal("1000000000000000000"),
 			zeroForOne:  true,
@@ -852,7 +851,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getNextSqrtPriceFromOutput(tt.sqrtPX96, tt.liquidity, tt.amountOut, tt.zeroForOne)
 				})
 				return
@@ -865,7 +864,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromOutput(t *testing.T) {
 }
 
 // TestGetAmount0DeltaHelper tests amount0 calculation helper
-func TestSqrtPriceMath_getAmount0DeltaHelper(t *testing.T) {
+func TestSqrtPriceMath_getAmount0DeltaHelper(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -959,7 +958,7 @@ func TestSqrtPriceMath_getAmount0DeltaHelper(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					getAmount0DeltaHelper(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity, tt.roundUp)
 				})
 				return
@@ -1060,7 +1059,7 @@ func TestSqrtPriceMath_getAmount1DeltaHelper(t *testing.T) {
 }
 
 // TestGetAmount0Delta tests string representation with signed liquidity
-func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
+func TestSqrtPriceMath_GetAmount0Delta(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -1131,7 +1130,7 @@ func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					GetAmount0Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return
@@ -1144,7 +1143,7 @@ func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
 }
 
 // TestGetAmount1Delta tests string representation with signed liquidity
-func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
+func TestSqrtPriceMath_GetAmount1Delta(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		sqrtRatioAX96 *u256.Uint
@@ -1195,8 +1194,8 @@ func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
 		},
 		{
 			name:          "positive_liquidity_large_values",
-			sqrtRatioAX96: Q96,
-			sqrtRatioBX96: new(u256.Uint).Mul(Q96, u256.NewUint(2)),
+			sqrtRatioAX96: u256.MustFromDecimal(Q96),
+			sqrtRatioBX96: new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
 			liquidity:     i256.FromUint256(u256.MustFromDecimal("1000000000000000000000000000")),
 			expected:      "1000000000000000000000000000",
 		},
@@ -1211,8 +1210,8 @@ func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
 		// Equal prices
 		{
 			name:          "equal_prices_positive_liquidity",
-			sqrtRatioAX96: Q96,
-			sqrtRatioBX96: Q96,
+			sqrtRatioAX96: u256.MustFromDecimal(Q96),
+			sqrtRatioBX96: u256.MustFromDecimal(Q96),
 			liquidity:     i256.FromUint256(u256.MustFromDecimal("1000000000000000000")),
 			expected:      "0",
 		},
@@ -1229,7 +1228,7 @@ func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					GetAmount1Delta(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
 				})
 				return
@@ -1257,7 +1256,7 @@ func TestSqrtPriceMath_InputParameterImmutability(t *testing.T) {
 		{
 			name: "getNextPriceAmount0Add_immutable",
 			fn: func(t *testing.T) {
-				sqrtP := Q96
+				sqrtP := u256.MustFromDecimal(Q96)
 				liquidity := u256.MustFromDecimal("1000000000000000000")
 				amount := u256.MustFromDecimal("100000000000000000")
 
@@ -1291,7 +1290,7 @@ func TestSqrtPriceMath_InputParameterImmutability(t *testing.T) {
 		{
 			name: "all_input_functions_immutable",
 			fn: func(t *testing.T) {
-				sqrtP := Q96
+				sqrtP := u256.MustFromDecimal(Q96)
 				liquidity := u256.MustFromDecimal("1000000000000000000")
 				amount := u256.MustFromDecimal("1000000")
 
@@ -1331,14 +1330,14 @@ func TestSqrtPriceMath_RoundingConsistency(t *testing.T) {
 	}{
 		{
 			name:      "amount0_minimal_difference",
-			sqrtA:     Q96,
+			sqrtA:     u256.MustFromDecimal(Q96),
 			sqrtB:     u256.MustFromDecimal("79228162514264337593543950337"),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			isToken0:  true,
 		},
 		{
 			name:      "amount1_minimal_difference",
-			sqrtA:     Q96,
+			sqrtA:     u256.MustFromDecimal(Q96),
 			sqrtB:     u256.MustFromDecimal("79228162514264337593543950337"),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			isToken0:  false,
@@ -1384,7 +1383,7 @@ func TestSqrtPriceMath_MathematicalInvariants(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			sqrtP := Q96
+			sqrtP := u256.MustFromDecimal(Q96)
 			liquidity := u256.MustFromDecimal(tc.liquidity)
 			amount := u256.MustFromDecimal(tc.amount)
 			maxError := u256.MustFromDecimal(tc.maxError)
@@ -1411,7 +1410,7 @@ func TestSqrtPriceMath_MathematicalInvariants(t *testing.T) {
 
 	// Test 2: Monotonicity
 	t.Run("monotonicity", func(t *testing.T) {
-		sqrtP := Q96
+		sqrtP := u256.MustFromDecimal(Q96)
 		liquidity := u256.MustFromDecimal("1000000000000000000")
 
 		amounts := []*u256.Uint{
@@ -1437,7 +1436,7 @@ func TestSqrtPriceMath_MathematicalInvariants(t *testing.T) {
 
 	// Test 3: Symmetry
 	t.Run("symmetry", func(t *testing.T) {
-		sqrtP := Q96
+		sqrtP := u256.MustFromDecimal(Q96)
 		liquidity := u256.MustFromDecimal("1000000000000000000")
 		amount := u256.MustFromDecimal("100000000000000000")
 
@@ -1499,7 +1498,7 @@ func TestSqrtPriceMath_PathIndependence(t *testing.T) {
 
 // TestHelperFunctionConsistency verifies helper functions work together correctly
 func TestSqrtPriceMath_HelperFunctionConsistency(t *testing.T) {
-	sqrtP := Q96
+	sqrtP := u256.MustFromDecimal(Q96)
 	liquidity := u256.MustFromDecimal("1000000000000000000")
 	amount := u256.MustFromDecimal("100000000000000000")
 

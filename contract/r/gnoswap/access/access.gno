@@ -1,7 +1,7 @@
 package access
 
 import (
-    "chain"
+	"chain"
 	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -17,7 +17,7 @@ func init() {
 // Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
-//   - cur: current realm (required by interrealm spec; not used directly)
+//   - cur: current realm
 //   - roleName: name of the role
 //   - roleAddress: address for the role
 //
@@ -34,7 +34,7 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	}
 
 	chain.Emit(
-	    "SetRoleAddress",
+		"SetRoleAddress",
 		"prevAddr", prev.Address().String(),
 		"role", roleName,
 		"prevRoleAddr", oldAddr.String(),
@@ -45,8 +45,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 // setRoleAddress is the internal implementation of SetRoleAddress.
 // Separated for testability.
 func setRoleAddress(roleName string, roleAddress address) error {
-    roleName = strings.TrimSpace(roleName)
-    if roleName == "" {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
 		panic("role name cannot be empty")
 	}
 
@@ -106,7 +106,7 @@ func IsAuthorized(role string, caller address) bool {
 
 // GetAddress returns the address for a role and whether it exists.
 func GetAddress(role string) (address, bool) {
-    role = strings.TrimSpace(role)
+	role = strings.TrimSpace(role)
 	addr, ok := roleAddresses[role]
 	return addr, ok
 }
@@ -125,7 +125,7 @@ func GetRoleAddresses() map[string]address {
 // MustGetAddress returns the address for a role or panics if it doesn't exist.
 // Use this when the role is expected to exist and failure is critical.
 func MustGetAddress(role string) address {
-    role = strings.TrimSpace(role)
+	role = strings.TrimSpace(role)
 	addr, ok := GetAddress(role)
 	if !ok {
 		panic(ufmt.Errorf(errRoleNotFound, role))

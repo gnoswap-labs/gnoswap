@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"chain/runtime"
@@ -15,8 +16,6 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -108,8 +107,8 @@ func initWithShortWarmUp() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] prepare wugnot")
@@ -134,7 +133,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create wugnot:gns:3000 pool at tick 0")
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 	ufmt.Printf("[INFO] pool created, current height: %d\n", runtime.ChainHeight())
@@ -268,4 +267,3 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] collect reward for position 01
 // [EXPECTED] user reward: 8026540
 // [EXPECTED] community pool reward: 93642972
-

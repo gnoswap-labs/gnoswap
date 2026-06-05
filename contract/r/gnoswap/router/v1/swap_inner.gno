@@ -3,10 +3,9 @@ package v1
 import (
 	"chain/runtime"
 
+	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -35,7 +34,7 @@ func init() {
 	for _, fee := range []uint32{plv1.FeeTier100, plv1.FeeTier500, plv1.FeeTier3000, plv1.FeeTier10000} {
 		// zeroForOne=true: price must stay above minimum
 		minTick := getMinTick(fee) + 1
-		fwd := common.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
+		fwd := gnsmath.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
 		if fwd.IsZero() {
 			fwd = u256.MustFromDecimal(MIN_SQRT_RATIO)
 		}
@@ -44,7 +43,7 @@ func init() {
 
 		// zeroForOne=false: price must stay below maximum
 		maxTick := getMaxTick(fee) - 1
-		bwd := common.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
+		bwd := gnsmath.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
 		if bwd.IsZero() {
 			bwd = u256.MustFromDecimal(MAX_SQRT_RATIO)
 		}

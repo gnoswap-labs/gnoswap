@@ -2,6 +2,8 @@ package gnsmath
 
 import (
 	"errors"
+
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var (
@@ -17,4 +19,13 @@ var (
 	errLSBZeroInput             = errors.New("input for LSB calculation should not be zero")
 	errGetAmount0DeltaNilInput  = errors.New("GetAmount0Delta: input parameters cannot be nil")
 	errGetAmount1DeltaNilInput  = errors.New("GetAmount1Delta: input parameters cannot be nil")
+	errTickMathOutOfRange       = errors.New("tick_math: value out of range")
+	errTickMathInvalidInput     = errors.New("tick_math: invalid input data")
+	errTickMathOverflow         = errors.New("tick_math: overflow")
+	errLiquidityIdenticalTicks  = errors.New("liquidity_math: identical ticks")
+	errLiquidityOverflow        = errors.New("liquidity_math: overflow")
 )
+
+func newErrorWithDetail(err error, detail string) string {
+	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
+}
