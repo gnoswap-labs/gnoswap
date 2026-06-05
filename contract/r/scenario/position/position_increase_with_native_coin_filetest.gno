@@ -51,11 +51,11 @@ func main(cur realm) {
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (-12000~12000)")
-	checkBalanceChanges(cur, mintInitialPositionWithNativeCoin)
+	checkBalanceChanges(cur, func() { mintInitialPositionWithNativeCoin(cur) })
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Increase position liquidity")
-	checkBalanceChanges(cur, increasePositionLiquidity)
+	checkBalanceChanges(cur, func() { increasePositionLiquidity(cur) })
 	println()
 }
 

@@ -40,8 +40,8 @@ const (
 var (
 	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm           = testing.NewUserRealm(adminAddr)
-	poolAddr     address = "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
-	positionAddr address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
+	poolAddr, _         = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _     = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -135,6 +135,7 @@ func testAddLiquiditySuccess(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for liquidity addition")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -187,6 +188,7 @@ func testAddLiquidityWithInvalidSlippage(cur realm) {
 	println("[INFO] Providing tokens to bob")
 	tokenFaucet(cur, barPath, bobAddr)
 	tokenFaucet(cur, fooPath, bobAddr)
+	testing.SetRealm(bobRealm)
 
 	println("[INFO] Approving tokens for liquidity addition")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -227,6 +229,7 @@ func testAddLiquidityWithZeroLiquidity(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for liquidity addition")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -267,6 +270,7 @@ func testAddLiquidityWithInvalidTickRange(cur realm) {
 	println("[INFO] Providing tokens to bob")
 	tokenFaucet(cur, barPath, bobAddr)
 	tokenFaucet(cur, fooPath, bobAddr)
+	testing.SetRealm(bobRealm)
 
 	println("[INFO] Approving tokens for liquidity addition")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -307,6 +311,7 @@ func testAddLiquidityToNonExistentPool(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for liquidity addition")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -345,6 +350,7 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for position creation")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -408,6 +414,7 @@ func testDecreaseLiquidityWithOverRemoval(cur realm) {
 	println("[INFO] Providing tokens to bob")
 	tokenFaucet(cur, barPath, bobAddr)
 	tokenFaucet(cur, fooPath, bobAddr)
+	testing.SetRealm(bobRealm)
 
 	println("[INFO] Approving tokens for position creation")
 	bar.Approve(cross(cur), poolAddr, maxApprove)
@@ -450,6 +457,7 @@ func testDecreaseLiquidityWithZeroLiquidity(cur realm) {
 	println("[INFO] Providing tokens to alice")
 	tokenFaucet(cur, barPath, aliceAddr)
 	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for position creation")
 	bar.Approve(cross(cur), poolAddr, maxApprove)

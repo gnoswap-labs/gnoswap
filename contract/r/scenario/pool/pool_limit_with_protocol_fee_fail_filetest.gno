@@ -67,12 +67,6 @@ var (
 	MIN_PRICE string = "4295128740"
 )
 
-// turn protocol fee on
-func init() {
-	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross(cur), 4, 4)
-}
-
 func main(cur realm) {
 	println("[SCENARIO] Limit Order Thru Negative 1 With Fee")
 	println("[INFO] Starting scenario: Limit order thru negative 1 with fee")
@@ -82,6 +76,7 @@ func main(cur realm) {
 	println("[INFO] Approving pool creation fee")
 	println()
 	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross(cur), 4, 4)
 	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-1).ToString())
 

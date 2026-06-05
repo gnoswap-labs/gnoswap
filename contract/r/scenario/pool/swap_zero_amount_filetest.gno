@@ -56,12 +56,10 @@ var (
 	callbackCalled       bool
 )
 
-func init() {
+func main(cur realm) {
 	testing.SetRealm(adminRealm)
 	pool.SetFeeProtocol(cross(cur), 6, 6)
-}
 
-func main(cur realm) {
 	println("[SCENARIO] Swap with Zero Amount Delta")
 	println("[INFO] Purpose: Verify swaps complete successfully with zero deltas")
 	println()
@@ -195,4 +193,3 @@ func zeroAmountSwapCallback(cur realm, token0Path string, token1Path string, amo
 // [EXPECTED] amount1Delta is zero - partial zero handled correctly
 //
 // [SCENARIO] Complete - Zero amount swap handled correctly
-
