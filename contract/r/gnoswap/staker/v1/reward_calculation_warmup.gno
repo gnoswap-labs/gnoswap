@@ -45,11 +45,7 @@ func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmu
 	for i, warmup := range warmupTemplate {
 		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
-		warmups = append(warmups, sr.Warmup{
-			TimeDuration:   warmup.TimeDuration,
-			NextWarmupTime: nextWarmupTime,
-			WarmupRatio:    warmup.WarmupRatio,
-		})
+		warmups = append(warmups, sr.NewWarmup(warmup.TimeDuration, nextWarmupTime, warmup.WarmupRatio))
 
 		// Only update currentTime if not the last tier
 		if i < len(warmupTemplate)-1 {

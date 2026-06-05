@@ -328,7 +328,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 	}
 }
 
-func TestCollectRewardIsolation(t *testing.T) {
+func TestCollectRewardIsolation(cur realm, t *testing.T) {
 	resetTestState(t)
 	mockStaker := newMockStaker("v1")
 	implementation = mockStaker
@@ -336,7 +336,7 @@ func TestCollectRewardIsolation(t *testing.T) {
 	storedExternalRewards := map[string]int64{"bonus": 20}
 	mockStaker.Response.Set("CollectReward", "pool", "100", storedInternalRewards, storedExternalRewards)
 
-	poolPath, stakingDetails, internalRewards, externalRewards := CollectReward(cross, 1)
+	poolPath, stakingDetails, internalRewards, externalRewards := CollectReward(cross(cur), 1)
 
 	uassert.Equal(t, "pool", poolPath)
 	uassert.Equal(t, "100", stakingDetails)

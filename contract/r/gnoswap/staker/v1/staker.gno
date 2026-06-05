@@ -39,7 +39,7 @@ type Deposits struct {
 // NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: bptree.NewBPTreeN(16), // positionId -> *Deposit
+		tree: sr.NewBPTreeN(16), // positionId -> *Deposit
 	}
 }
 
@@ -111,7 +111,7 @@ type ExternalIncentives struct {
 // NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
-		tree: bptree.NewBPTreeN(16),
+		tree: sr.NewBPTreeN(16),
 	}
 }
 
@@ -148,9 +148,9 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
-// emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
+// EmissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
+func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
@@ -165,7 +165,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 		// Now apply the new emission rate to each pool individually
 		poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
 
-		s.updatePoolTier(poolTier)
+		s.updatePoolTier(0, rlm, poolTier)
 	}
 }
 
@@ -189,21 +189,25 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 //   - Position not already staked
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
-func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
+func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
 	assertIsNotStaked(s, positionId)
 
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	currentTime := time.Now().Unix()
 
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	assertIsPositionOwner(owner, caller)
 
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
 	if err := tokenHasLiquidity(positionId); err != nil {
 		panic(err.Error())
@@ -264,16 +268,16 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
+	if err := s.transferDeposit(0, rlm, positionId, owner, caller, stakerAddr); err != nil {
 		panic(err.Error())
 	}
 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	pn.SetPositionOperator(cross, positionId, caller)
+	pn.SetPositionOperator(cross(rlm), positionId, caller)
 
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(currentTime, pools)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
@@ -353,7 +357,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
-func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address) error {
+func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, caller, to address) error {
 	// If the recipient already owns the NFT, no transfer is needed.
 	if owner == to {
 		return nil
@@ -367,7 +371,7 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 	}
 
 	// transfer NFT ownership
-	return s.nftAccessor.TransferFrom(owner, to, positionIdFrom(positionId))
+	return s.nftAccessor.TransferFrom(0, rlm, owner, to, positionIdFrom(positionId))
 }
 
 // CollectReward harvests accumulated rewards for a staked position. This includes both
@@ -391,20 +395,24 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //   - positionId: LP position NFT token ID
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
-func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
+func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
 
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
 	currentTime := time.Now().Unix()
 	blockHeight := runtime.ChainHeight()
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	// get all internal and external rewards
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
@@ -489,13 +497,13 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		// update
 		s.getExternalIncentives().set(incentiveId, incentive)
 
-		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
+		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
 		if err != nil {
 			panic(err.Error())
 		}
 
 		if toUser > 0 {
-			common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
+			common.SafeGRC20Transfer(cross(rlm), rewardToken, deposit.Owner(), toUser)
 		}
 
 		chain.Emit(
@@ -554,7 +562,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 
 	// internal reward to user
 	if !skipInternalUpdate {
-		toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
+		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_PATH, reward.Internal, true)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -598,7 +606,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err := s.store.SetTotalEmissionSent(totalEmissionSent)
+	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}
@@ -615,15 +623,15 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	deposits.set(positionId, deposit)
 
 	if internalRewardToUser > 0 {
-		gns.Transfer(cross, deposit.Owner(), internalRewardToUser)
+		gns.Transfer(cross(rlm), deposit.Owner(), internalRewardToUser)
 	}
 
 	if internalRewardPenalty > 0 {
-		gns.Transfer(cross, communityPoolAddr, internalRewardPenalty)
+		gns.Transfer(cross(rlm), communityPoolAddr, internalRewardPenalty)
 	}
 
 	if unClaimableInternal > 0 {
-		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
+		gns.Transfer(cross(rlm), communityPoolAddr, unClaimableInternal)
 	}
 
 	rewardToUser := formatAnyInt(internalRewardToUser)
@@ -687,8 +695,12 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 // Requirements:
 //   - Caller must be the depositor
 //   - Position must be currently staked
-func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
-	caller := runtime.PreviousRealm().Address()
+func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { // poolPath
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
+	caller := rlm.Previous().Address()
 	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, caller, positionId)
 
@@ -698,7 +710,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	poolPath := deposit.TargetPoolPath()
 
 	// claim All Rewards
-	s.CollectReward(positionId)
+	s.CollectReward(0, rlm, positionId)
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)
@@ -706,8 +718,8 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 
 	// transfer NFT ownership to origin owner
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-	s.nftAccessor.TransferFrom(stakerAddr, deposit.Owner(), positionIdFrom(positionId))
-	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
+	s.nftAccessor.TransferFrom(0, rlm, stakerAddr, deposit.Owner(), positionIdFrom(positionId))
+	pn.SetPositionOperator(cross(rlm), positionId, ZERO_ADDRESS)
 
 	// get position information for event
 	liquidity := getLiquidity(positionId)
@@ -724,7 +736,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"UnStakeToken",
 		"prevAddr", previousRealm.Address().String(),
