@@ -24,7 +24,7 @@ const (
 	defaultBlockTime   = 2000        // 2 seconds = 2000 milliseconds
 )
 
-var t *testing.T
+var t = &testing.T{}
 
 var (
 	emissionAddr = chain.PackageAddress("gno.land/r/gnoswap/emission")
