@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
@@ -87,7 +88,7 @@ func setupPool() {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross, 0)
 		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }

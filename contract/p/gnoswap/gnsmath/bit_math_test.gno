@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestBitMath_BitMathMostSignificantBit(t *testing.T) {
+func TestBitMath_BitMathMostSignificantBit(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -164,7 +164,7 @@ func TestBitMath_BitMathMostSignificantBit(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, errMSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errMSBZeroInput.Error(), func() {
 					BitMathMostSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return
@@ -186,7 +186,7 @@ func TestBitMath_BitMathMostSignificantBit_PowersOfTwo(t *testing.T) {
 	}
 }
 
-func TestBitMath_BitMathLeastSignificantBit(t *testing.T) {
+func TestBitMath_BitMathLeastSignificantBit(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -342,7 +342,7 @@ func TestBitMath_BitMathLeastSignificantBit(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, errLSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errLSBZeroInput.Error(), func() {
 					BitMathLeastSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return

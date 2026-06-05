@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -99,7 +100,7 @@ func testPoolInitializationBehavior() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
@@ -146,7 +147,7 @@ func testUnclaimablePeriodRewardDistribution() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, fooPath, quxPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
@@ -269,7 +270,7 @@ func testClaimablePeriodCollection() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:foo:500")
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")

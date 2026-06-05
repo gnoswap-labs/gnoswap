@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
@@ -185,7 +186,7 @@ func createPoolWugnotGns3000Tier01() {
 
 	println("[INFO] approve gns and create pool")
 	gns.Approve(cross, poolAddr, maxInt64)
-	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	totalSupply := gns.TotalSupply()
 	ufmt.Printf("[EXPECTED] gns total supply: %d\n", totalSupply)
@@ -246,7 +247,7 @@ func createBarBaz500Tier02() {
 
 	println("[INFO] create bar:baz:500 pool")
 	gns.Approve(cross, poolAddr, maxInt64)
-	pl.CreatePool(cross, barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
@@ -378,7 +379,7 @@ func createPoolBarFoo100Tier03() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:foo:100 pool")
-	pl.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(600000).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(600000).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
@@ -448,7 +449,7 @@ func createPoolExternalOnly() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create baz:qux:3000 pool (external only)")
-	pl.CreatePool(cross, bazPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, bazPath, quxPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 

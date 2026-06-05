@@ -8,6 +8,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -100,7 +101,7 @@ func initPoolAndCreatePosition() {
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Setup pool tier for staking

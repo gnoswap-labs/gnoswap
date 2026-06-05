@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -130,7 +131,7 @@ func initTokensAndPoolPostDeposit() {
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(1).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(1).ToString(),
 	)
 }
 

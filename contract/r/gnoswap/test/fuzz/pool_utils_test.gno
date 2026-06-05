@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
@@ -172,7 +173,7 @@ func setupCreatePool(
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		currentTick := fuzz.Int32Range(-10000, 10000).Draw(ft, "currentTick").(int32)
-		startPrice := common.TickMathGetSqrtRatioAtTick(currentTick)
+		startPrice := gnsmath.TickMathGetSqrtRatioAtTick(currentTick)
 		pool.CreatePool(
 			cross,
 			token0Path,

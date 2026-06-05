@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 
@@ -93,7 +94,7 @@ func createPool(token0Path string, token1Path string, fee uint32, startTick int3
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(startTick).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(startTick).ToString(),
 	)
 
 	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)
@@ -157,7 +158,7 @@ func exactOutSingleSwapRouteBy(
 		specifiedAmount,
 		routeQueryString,
 		maxAmountOut,
-		common.TickMathGetSqrtRatioAtTick(-10).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10).ToString(),
 		int64(9999999999),
 		"",
 	)

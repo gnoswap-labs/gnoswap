@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetDistributableAmount(t *testing.T) {
+func TestGetDistributableAmount(cur realm, t *testing.T) {
 	resetObject(t)
 
 	distributionStartTimestamp = 1000
@@ -20,7 +20,7 @@ func TestGetDistributableAmount(t *testing.T) {
 	uassert.Equal(t, int64(0), distributed[GOV_STAKER])
 }
 
-func TestGetDistributableAmount_WithRemainder(t *testing.T) {
+func TestGetDistributableAmount_WithRemainder(cur realm, t *testing.T) {
 	resetObject(t)
 
 	distributionStartTimestamp = 1000
@@ -34,7 +34,7 @@ func TestGetDistributableAmount_WithRemainder(t *testing.T) {
 	uassert.Equal(t, int64(0), distributed[GOV_STAKER])
 }
 
-func TestGetDistributableAmount_OutsideWindow(t *testing.T) {
+func TestGetDistributableAmount_OutsideWindow(cur realm, t *testing.T) {
 	resetObject(t)
 
 	distributionStartTimestamp = 1000
@@ -49,7 +49,7 @@ func TestGetDistributableAmount_OutsideWindow(t *testing.T) {
 	uassert.Equal(t, 0, len(distributedAfter))
 }
 
-func TestGetDistributableAmountIsolation(t *testing.T) {
+func TestGetDistributableAmountIsolation(cur realm, t *testing.T) {
 	resetObject(t)
 
 	distributionStartTimestamp = 1000
@@ -63,14 +63,14 @@ func TestGetDistributableAmountIsolation(t *testing.T) {
 	uassert.Equal(t, false, exists)
 }
 
-func TestGetLeftGNSAmount(t *testing.T) {
+func TestGetLeftGNSAmount(cur realm, t *testing.T) {
 	resetObject(t)
 
 	leftGNSAmount = 12345
 	uassert.Equal(t, int64(12345), GetLeftGNSAmount())
 }
 
-func TestGetDistributionStartTimestamp(t *testing.T) {
+func TestGetDistributionStartTimestamp(cur realm, t *testing.T) {
 	resetObject(t)
 
 	uassert.Equal(t, int64(0), GetDistributionStartTimestamp())
@@ -79,7 +79,7 @@ func TestGetDistributionStartTimestamp(t *testing.T) {
 	uassert.Equal(t, int64(1000), GetDistributionStartTimestamp())
 }
 
-func TestGetLastExecutedTimestamp(t *testing.T) {
+func TestGetLastExecutedTimestamp(cur realm, t *testing.T) {
 	resetObject(t)
 
 	uassert.Equal(t, int64(0), GetLastExecutedTimestamp())
@@ -88,7 +88,7 @@ func TestGetLastExecutedTimestamp(t *testing.T) {
 	uassert.Equal(t, int64(2000), GetLastExecutedTimestamp())
 }
 
-func TestGetAllDistributionBpsPct(t *testing.T) {
+func TestGetAllDistributionBpsPct(cur realm, t *testing.T) {
 	resetObject(t)
 
 	all := GetAllDistributionBpsPct()
@@ -105,7 +105,7 @@ func TestGetAllDistributionBpsPct(t *testing.T) {
 	uassert.Equal(t, 0, len(empty))
 }
 
-func TestGetTotalAccuDistributed(t *testing.T) {
+func TestGetTotalAccuDistributed(cur realm, t *testing.T) {
 	resetObject(t)
 
 	accuDistributedToStaker = 10
@@ -116,7 +116,7 @@ func TestGetTotalAccuDistributed(t *testing.T) {
 	uassert.Equal(t, int64(100), GetTotalAccuDistributed())
 }
 
-func TestGetTotalDistributed(t *testing.T) {
+func TestGetTotalDistributed(cur realm, t *testing.T) {
 	resetObject(t)
 
 	distributedToStaker = 1
@@ -127,7 +127,7 @@ func TestGetTotalDistributed(t *testing.T) {
 	uassert.Equal(t, int64(10), GetTotalDistributed())
 }
 
-func TestGetDistributionEndTimestamp(t *testing.T) {
+func TestGetDistributionEndTimestamp(cur realm, t *testing.T) {
 	resetObject(t)
 
 	uassert.Equal(t, int64(0), GetDistributionEndTimestamp())

@@ -16,6 +16,7 @@ var (
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
+	emissionRealm  = testing.NewUserRealm(emissionAddr)
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewUserRealm(stakerAddr)
 	govRealm       = testing.NewUserRealm(govAddr)

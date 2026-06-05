@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -74,7 +75,7 @@ func initPoolAndUsers() {
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Transfer initial tokens to users")

@@ -1,4 +1,4 @@
-package common
+package gnsmath
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -86,7 +86,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	// Validate critical constants are initialized
 	if ratio0 == nil || ratio1 == nil {
 		panic(newErrorWithDetail(
-			errInvalidInput,
+			errTickMathInvalidInput,
 			"ratio constants are not initialized",
 		))
 	}
@@ -109,13 +109,13 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 			r := ratioConstants[i-1]
 			if r == nil {
 				panic(newErrorWithDetail(
-					errInvalidInput,
+					errTickMathInvalidInput,
 					"ratio constants are not initialized",
 				))
 			}
 			temp, overflow := temp.MulOverflow(ratio, r)
 			if overflow {
-				panic(errOverflow)
+				panic(errTickMathOverflow)
 			}
 			ratio = ratio.Rsh(temp, 128)
 		}
@@ -219,14 +219,14 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	if sqrtPriceX96 == nil {
 		panic(newErrorWithDetail(
-			errInvalidInput,
+			errTickMathInvalidInput,
 			"sqrtPriceX96 cannot be nil",
 		))
 	}
 
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
-			errOutOfRange,
+			errTickMathOutOfRange,
 			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),
 		))
 	}
@@ -259,7 +259,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	for i := 0; i < 14; i++ {
 		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
-			panic(errOverflow)
+			panic(errTickMathOverflow)
 		}
 		r = tempR.Rsh(tempR, 127)
 
@@ -275,7 +275,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	// Calculate tick from log_sqrt10001
 	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
 	if overflow {
-		panic(errOverflow)
+		panic(errTickMathOverflow)
 	}
 
 	// Calculate tick bounds
@@ -313,13 +313,13 @@ func abs(x int32) int32 {
 func assertValidTickRange(tick int32) {
 	if tick > maxTick {
 		panic(newErrorWithDetail(
-			errOutOfRange,
+			errTickMathOutOfRange,
 			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
 		))
 	}
 	if tick < minTick {
 		panic(newErrorWithDetail(
-			errOutOfRange,
+			errTickMathOutOfRange,
 			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", tick),
 		))
 	}
