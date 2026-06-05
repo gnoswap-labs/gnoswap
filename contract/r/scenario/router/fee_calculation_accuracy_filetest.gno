@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -90,10 +91,10 @@ func initPoolsWithDifferentFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pools with different fee tiers")
-	pl.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee10000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, fooPath, fee10000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Add liquidity to all pools
 	testing.SetRealm(aliceRealm)

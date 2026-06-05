@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -233,7 +234,7 @@ func setupCollectScenario() {
 	gns.Transfer(cross, bobAddr2, 5000000000)
 	gns.Transfer(cross, projectAddr2, 5000000000)
 	gns.Transfer(cross, carolAddr2, 5000000000)
-	pool.CreatePool(cross, barPath2, fooPath2, fee2, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath2, fooPath2, fee2, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	pool.SetFeeProtocol(cross, 10, 10)
 	staker.SetPoolTier(cross, barPath2+":"+fooPath2+":3000", 1)
 	staker.AddToken(cross, barPath2)

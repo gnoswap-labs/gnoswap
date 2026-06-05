@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -106,7 +107,7 @@ func testFeeTier100() {
 		barPath,
 		bazPath,
 		100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -166,7 +167,7 @@ func testFeeTier500() {
 		barPath,
 		fooPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -226,7 +227,7 @@ func testFeeTier3000() {
 		bazPath,
 		fooPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -286,7 +287,7 @@ func testFeeTier10000() {
 		fooPath,
 		quxPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)

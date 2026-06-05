@@ -3,12 +3,11 @@ package v1
 import (
 	"time"
 
-	plp "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -64,7 +63,7 @@ func positionUpdate(
 	if isZeroLiquidityDelta {
 		liquidityNext = posLiquidity
 	} else {
-		liquidityNext = common.LiquidityMathAddDelta(posLiquidity, liquidityDelta)
+		liquidityNext = gnsmath.LiquidityMathAddDelta(posLiquidity, liquidityDelta)
 	}
 
 	feeGrowthLast0 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
@@ -103,12 +102,12 @@ func positionUpdate(
 
 // calculateToken0Amount calculates the amount of token0 based on price range and liquidity delta.
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	return plp.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
+	return gnsmath.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
 // calculateToken1Amount calculates the amount of token1 based on price range and liquidity delta.
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
-	return plp.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
+	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
 // PositionLiquidity returns the liquidity of a position.
@@ -230,8 +229,8 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 
 	// covert ticks to sqrt price to use in amount calculations
 	// price = 1.0001^tick, but we use sqrtPriceX96
-	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)
-	sqrtRatioUpper := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
+	sqrtRatioLower := gnsmath.TickMathGetSqrtRatioAtTick(params.tickLower)
+	sqrtRatioUpper := gnsmath.TickMathGetSqrtRatioAtTick(params.tickUpper)
 	sqrtPriceX96 := p.Slot0SqrtPriceX96()
 
 	// calculate token amounts based on current price position relative to range
@@ -259,7 +258,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 		// update pool's active liquidity since price is in range
-		p.SetLiquidity(common.LiquidityMathAddDelta(liquidityBefore, liqDelta))
+		p.SetLiquidity(gnsmath.LiquidityMathAddDelta(liquidityBefore, liqDelta))
 
 	default:
 		// case 3

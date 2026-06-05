@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -31,10 +31,10 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
@@ -52,14 +52,14 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userFoo          int64
-	poolBar          int64
-	poolFoo          int64
-	routerBar        int64
-	routerFoo        int64
-	protocolFeeBar   int64
-	protocolFeeFoo   int64
+	userBar        int64
+	userFoo        int64
+	poolBar        int64
+	poolFoo        int64
+	routerBar      int64
+	routerFoo      int64
+	protocolFeeBar int64
+	protocolFeeFoo int64
 }
 
 func main() {
@@ -103,14 +103,14 @@ func main() {
 
 func getBalanceSnapshot() BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:          bar.BalanceOf(userAddr),
-		userFoo:          foo.BalanceOf(userAddr),
-		poolBar:          bar.BalanceOf(poolAddr),
-		poolFoo:          foo.BalanceOf(poolAddr),
-		routerBar:        bar.BalanceOf(routerAddr),
-		routerFoo:        foo.BalanceOf(routerAddr),
-		protocolFeeBar:   bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo:   foo.BalanceOf(protocolFeeAddr),
+		userBar:        bar.BalanceOf(userAddr),
+		userFoo:        foo.BalanceOf(userAddr),
+		poolBar:        bar.BalanceOf(poolAddr),
+		poolFoo:        foo.BalanceOf(poolAddr),
+		routerBar:      bar.BalanceOf(routerAddr),
+		routerFoo:      foo.BalanceOf(routerAddr),
+		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
+		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot
@@ -147,7 +147,7 @@ func createPool() BalanceSnapshot {
 		barPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	return getBalanceSnapshot()

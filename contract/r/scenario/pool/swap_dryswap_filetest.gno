@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	"gno.land/r/onbloc/bar"
@@ -60,7 +61,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[SCENARIO] 1. DrySwap ZeroForOne True AmountSpecified Positive 16000")
 	TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()

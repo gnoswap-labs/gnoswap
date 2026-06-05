@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -75,7 +76,7 @@ func setupPool() {
 	println("[INFO] Creating pool with fee tier 100")
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)

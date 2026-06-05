@@ -52,29 +52,29 @@ func TestPoolPathDivide(t *testing.T) {
 
 func TestTid(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       uint64
-		expected    string
+		name     string
+		input    uint64
+		expected string
 	}{
 		{
-			name:        "Success - uint64 min",
-			input:       uint64(0),
-			expected:    "0",
+			name:     "Success - uint64 min",
+			input:    uint64(0),
+			expected: "0",
 		},
 		{
-			name:        "Success - uint64",
-			input:       uint64(1),
-			expected:    "1",
+			name:     "Success - uint64",
+			input:    uint64(1),
+			expected: "1",
 		},
 		{
-			name:        "Success - uint64 1<<63",
-			input:       uint64(9223372036854775808),
-			expected:    "9223372036854775808",
+			name:     "Success - uint64 1<<63",
+			input:    uint64(9223372036854775808),
+			expected: "9223372036854775808",
 		},
 		{
-			name:        "Success - uint64 max",
-			input:       uint64(math.MaxUint64),
-			expected:    "18446744073709551615",
+			name:     "Success - uint64 max",
+			input:    uint64(math.MaxUint64),
+			expected: "18446744073709551615",
 		},
 	}
 	for _, tc := range tests {

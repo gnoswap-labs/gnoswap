@@ -6,14 +6,13 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 
@@ -111,7 +110,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }

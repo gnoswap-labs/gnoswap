@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -98,7 +99,7 @@ func testRoundTripUltraTight() {
 		barPath,
 		bazPath,
 		100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -195,7 +196,7 @@ func testRoundTripVariousAmounts() {
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -257,7 +258,7 @@ func testRoundTripPriceBoundaries() {
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -312,7 +313,7 @@ func testMultipleRoundTrips() {
 		barPath,
 		bazPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)

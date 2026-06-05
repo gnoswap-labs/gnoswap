@@ -23,7 +23,7 @@ func newProtocolFeeStateInternal(t *testing.T) *protocolFeeState {
 
 /* Main tests */
 
-func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
+func TestProtocolFeeStateAddAccuToGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
@@ -57,7 +57,7 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
@@ -65,7 +65,7 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 
 			// Add amounts sequentially
 			for _, amount := range test.amounts {
-				pfs.addAccuToGovStaker(test.tokenPath, amount)
+				pfs.addAccuToGovStaker(0, cur, test.tokenPath, amount)
 			}
 
 			// Check final sum
@@ -74,7 +74,7 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
+func TestProtocolFeeStateAddAccuToDevOps(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
@@ -108,7 +108,7 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
@@ -116,7 +116,7 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 
 			// Add amounts sequentially
 			for _, amount := range test.amounts {
-				pfs.addAccuToDevOps(test.tokenPath, amount)
+				pfs.addAccuToDevOps(0, cur, test.tokenPath, amount)
 			}
 
 			// Check final sum
@@ -125,7 +125,7 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
+func TestProtocolFeeStateSetDevOpsPct(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		percentage  int64
@@ -166,12 +166,12 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
 			uassert.Equal(t, pfs.DevOpsPct(), int64(0))
-			_, err := pfs.setDevOpsPct(test.percentage)
+			_, err := pfs.setDevOpsPct(0, cur, test.percentage)
 
 			if test.shouldError {
 				uassert.Equal(t, err.Error(), test.errorMsg)
@@ -182,7 +182,7 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeStateClearReservedTokens(t *testing.T) {
+func TestProtocolFeeStateClearReservedTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		initialData []string
@@ -206,27 +206,27 @@ func TestProtocolFeeStateClearReservedTokens(t *testing.T) {
 	}
 
 	for _, test := range tests {
-			t.Run(test.name, func(t *testing.T) {
-				pfs := newProtocolFeeStateInternal(t)
+		t.Run(test.name, func(cur realm, t *testing.T) {
+			pfs := newProtocolFeeStateInternal(t)
 
-				// Setup initial data
-				for _, token := range test.initialData {
-					pfs.store.AddReservedToken(token)
-				}
+			// Setup initial data
+			for _, token := range test.initialData {
+				pfs.store.AddReservedToken(0, cur, token)
+			}
 
-				// Verify initial state
-				uassert.Equal(t, len(pfs.store.GetReservedTokens()), len(test.initialData))
+			// Verify initial state
+			uassert.Equal(t, len(pfs.store.GetReservedTokens()), len(test.initialData))
 
-				// Clear the list
-				pfs.clearReservedTokens()
+			// Clear the list
+			pfs.clearReservedTokens(0, cur)
 
-				// Verify final state
-				uassert.Equal(t, len(pfs.store.GetReservedTokens()), test.expectedLen)
-			})
-		}
+			// Verify final state
+			uassert.Equal(t, len(pfs.store.GetReservedTokens()), test.expectedLen)
+		})
+	}
 }
 
-func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
+func TestProtocolFeeState_SetDevOpsPct_NegativeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		pct         int64
@@ -254,12 +254,12 @@ func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 
 			// When
-			_, err := pfs.setDevOpsPct(tt.pct)
+			_, err := pfs.setDevOpsPct(0, cur, tt.pct)
 
 			// Then
 			if tt.shouldError {
@@ -272,7 +272,7 @@ func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_SetGovStakerPct_EdgeCases(t *testing.T) {
+func TestProtocolFeeState_SetGovStakerPct_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		pct            int64
@@ -324,12 +324,12 @@ func TestProtocolFeeState_SetGovStakerPct_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 
 			// When
-			resultPct, err := pfs.setGovStakerPct(tt.pct)
+			resultPct, err := pfs.setGovStakerPct(0, cur, tt.pct)
 
 			// Then
 			if tt.shouldError {
@@ -345,7 +345,7 @@ func TestProtocolFeeState_SetGovStakerPct_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_AddAccuToGovStaker_Overflow(t *testing.T) {
+func TestProtocolFeeState_AddAccuToGovStaker_Overflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -394,20 +394,20 @@ func TestProtocolFeeState_AddAccuToGovStaker_Overflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 			if tt.initialValue > 0 {
-				pfs.store.SetAccuToGovStakerItem(tt.tokenPath, tt.initialValue)
+				pfs.store.SetAccuToGovStakerItem(0, cur, tt.tokenPath, tt.initialValue)
 			}
 
 			// When & Then
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					pfs.addAccuToGovStaker(tt.tokenPath, tt.addAmount)
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
+					pfs.addAccuToGovStaker(0, cur, tt.tokenPath, tt.addAmount)
 				})
 			} else {
-				pfs.addAccuToGovStaker(tt.tokenPath, tt.addAmount)
+				pfs.addAccuToGovStaker(0, cur, tt.tokenPath, tt.addAmount)
 				expectedTotal := tt.initialValue + tt.addAmount
 				uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), expectedTotal)
 			}
@@ -415,7 +415,7 @@ func TestProtocolFeeState_AddAccuToGovStaker_Overflow(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_AddAccuToDevOps_Overflow(t *testing.T) {
+func TestProtocolFeeState_AddAccuToDevOps_Overflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -464,20 +464,20 @@ func TestProtocolFeeState_AddAccuToDevOps_Overflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 			if tt.initialValue > 0 {
-				pfs.addAccuToDevOps(tt.tokenPath, tt.initialValue)
+				pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.initialValue)
 			}
 
 			// When & Then
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					pfs.addAccuToDevOps(tt.tokenPath, tt.addAmount)
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
+					pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.addAmount)
 				})
 			} else {
-				pfs.addAccuToDevOps(tt.tokenPath, tt.addAmount)
+				pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.addAmount)
 				expectedTotal := tt.initialValue + tt.addAmount
 				uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(tt.tokenPath), expectedTotal)
 			}
@@ -485,7 +485,7 @@ func TestProtocolFeeState_AddAccuToDevOps_Overflow(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_RetrieveAmount_NonExistentKey(t *testing.T) {
+func TestProtocolFeeState_RetrieveAmount_NonExistentKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
@@ -517,11 +517,11 @@ func TestProtocolFeeState_RetrieveAmount_NonExistentKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 			for token, amount := range tt.setupData {
-				pfs.store.SetAccuToGovStakerItem(token, amount)
+				pfs.store.SetAccuToGovStakerItem(0, cur, token, amount)
 			}
 
 			// When
@@ -533,7 +533,7 @@ func TestProtocolFeeState_RetrieveAmount_NonExistentKey(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_ClearReservedTokens_MultipleTokens(t *testing.T) {
+func TestProtocolFeeState_ClearReservedTokens_MultipleTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		initialData []string
@@ -549,24 +549,24 @@ func TestProtocolFeeState_ClearReservedTokens_MultipleTokens(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Given
-				pfs := newProtocolFeeStateInternal(t)
-				for _, token := range tt.initialData {
-					pfs.store.AddReservedToken(token)
-				}
-				uassert.Equal(t, len(pfs.ReservedTokens()), len(tt.initialData))
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+			for _, token := range tt.initialData {
+				pfs.store.AddReservedToken(0, cur, token)
+			}
+			uassert.Equal(t, len(pfs.ReservedTokens()), len(tt.initialData))
 
-				// When
-				pfs.clearReservedTokens()
+			// When
+			pfs.clearReservedTokens(0, cur)
 
-				// Then
-				uassert.Equal(t, len(pfs.ReservedTokens()), 0)
-			})
-		}
+			// Then
+			uassert.Equal(t, len(pfs.ReservedTokens()), 0)
+		})
+	}
 }
 
-func TestProtocolFeeState_DevOpsPct(t *testing.T) {
+func TestProtocolFeeState_DevOpsPct(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
@@ -583,7 +583,7 @@ func TestProtocolFeeState_DevOpsPct(t *testing.T) {
 			name: "success - get custom devOps percentage (4000)",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetDevOpsPct(4000)
+				pfs.store.SetDevOpsPct(0, cur, 4000)
 				return pfs
 			},
 			expected: 4000,
@@ -591,7 +591,7 @@ func TestProtocolFeeState_DevOpsPct(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			result := pfs.DevOpsPct()
 			uassert.Equal(t, result, tt.expected)
@@ -599,7 +599,7 @@ func TestProtocolFeeState_DevOpsPct(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_GovStakerPct(t *testing.T) {
+func TestProtocolFeeState_GovStakerPct(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
@@ -616,7 +616,7 @@ func TestProtocolFeeState_GovStakerPct(t *testing.T) {
 			name: "success - get govStaker percentage when devOps is 4000",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetDevOpsPct(4000)
+				pfs.store.SetDevOpsPct(0, cur, 4000)
 				return pfs
 			},
 			expected: 6000,
@@ -624,7 +624,7 @@ func TestProtocolFeeState_GovStakerPct(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			result := pfs.GovStakerPct()
 			uassert.Equal(t, result, tt.expected)
@@ -632,7 +632,7 @@ func TestProtocolFeeState_GovStakerPct(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
+func TestProtocolFeeState_AccuToGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
@@ -652,8 +652,8 @@ func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
 			name: "success - get tree with data",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetAccuToGovStakerItem("token1", 1000)
-				pfs.store.SetAccuToGovStakerItem("token2", 2000)
+				pfs.store.SetAccuToGovStakerItem(0, cur, "token1", 1000)
+				pfs.store.SetAccuToGovStakerItem(0, cur, "token2", 2000)
 				return pfs
 			},
 			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
@@ -664,7 +664,7 @@ func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			tree := pfs.AccuToGovStaker()
 			tt.verifyFn(t, tree)
@@ -672,7 +672,7 @@ func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
+func TestProtocolFeeState_AccuToDevOps(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
@@ -692,8 +692,8 @@ func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
 			name: "success - get tree with data",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetAccuToDevOpsItem("token1", 500)
-				pfs.store.SetAccuToDevOpsItem("token2", 1500)
+				pfs.store.SetAccuToDevOpsItem(0, cur, "token1", 500)
+				pfs.store.SetAccuToDevOpsItem(0, cur, "token2", 1500)
 				return pfs
 			},
 			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
@@ -704,7 +704,7 @@ func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			tree := pfs.AccuToDevOps()
 			tt.verifyFn(t, tree)
@@ -712,7 +712,7 @@ func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_GetAccuTransferToGovStakerByTokenPath(t *testing.T) {
+func TestProtocolFeeState_GetAccuTransferToGovStakerByTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setupFn   func() *protocolFeeState
@@ -723,7 +723,7 @@ func TestProtocolFeeState_GetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 			name: "success - get existing token",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetAccuToGovStakerItem("token1", 3000)
+				pfs.store.SetAccuToGovStakerItem(0, cur, "token1", 3000)
 				return pfs
 			},
 			tokenPath: "token1",
@@ -740,7 +740,7 @@ func TestProtocolFeeState_GetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			result := pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath)
 			uassert.Equal(t, result, tt.expected)
@@ -748,7 +748,7 @@ func TestProtocolFeeState_GetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_GetAccuTransferToDevOpsByTokenPath(t *testing.T) {
+func TestProtocolFeeState_GetAccuTransferToDevOpsByTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setupFn   func() *protocolFeeState
@@ -759,7 +759,7 @@ func TestProtocolFeeState_GetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 			name: "success - get existing token",
 			setupFn: func() *protocolFeeState {
 				pfs := newProtocolFeeStateInternal(t)
-				pfs.store.SetAccuToDevOpsItem("token1", 1200)
+				pfs.store.SetAccuToDevOpsItem(0, cur, "token1", 1200)
 				return pfs
 			},
 			tokenPath: "token1",
@@ -776,7 +776,7 @@ func TestProtocolFeeState_GetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pfs := tt.setupFn()
 			result := pfs.GetAccuTransferToDevOpsByTokenPath(tt.tokenPath)
 			uassert.Equal(t, result, tt.expected)
@@ -784,7 +784,7 @@ func TestProtocolFeeState_GetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 	}
 }
 
-func TestNewProtocolFeeStateBy(t *testing.T) {
+func TestNewProtocolFeeStateBy(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() protocol_fee.IProtocolFeeStore
@@ -805,7 +805,7 @@ func TestNewProtocolFeeStateBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := tt.setupFn()
 			pfs := NewProtocolFeeStateBy(store)
 			tt.verifyFn(t, pfs)

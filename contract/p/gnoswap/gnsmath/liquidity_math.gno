@@ -1,16 +1,10 @@
-package common
+package gnsmath
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-)
-
-const (
-	Q96_RESOLUTION = 96
-	MAX_UINT128    = "340282366920938463463374607431768211455" // 2^128 - 1
-	Q96            = "79228162514264337593543950336"           // 2^96
 )
 
 var (
@@ -42,7 +36,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
-			errIdenticalTicks,
+			errLiquidityIdenticalTicks,
 			ufmt.Sprintf("sqrtRatioAX96 (%s) and sqrtRatioBX96 (%s) are identical", sqrtRatioAX96.ToString(), sqrtRatioBX96.ToString()),
 		))
 	}
@@ -77,7 +71,7 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
-			errIdenticalTicks,
+			errLiquidityIdenticalTicks,
 			ufmt.Sprintf("sqrtRatioAX96 (%s) and sqrtRatioBX96 (%s) are identical", sqrtRatioAX96.ToString(), sqrtRatioBX96.ToString()),
 		))
 	}
@@ -340,7 +334,7 @@ func SafeConvertToUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(maxUint128) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint128 range",
-			errOverflow, value.ToString()))
+			errLiquidityOverflow, value.ToString()))
 	}
 	return value
 }

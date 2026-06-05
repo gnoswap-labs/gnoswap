@@ -6,11 +6,10 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -113,7 +112,7 @@ func CreateSecondPoolWithoutFee(t *testing.T) {
 		barPath,
 		bazPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 		adminAddr,
 	)
 }

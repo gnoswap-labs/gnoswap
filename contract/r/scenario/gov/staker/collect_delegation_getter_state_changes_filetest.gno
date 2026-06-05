@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 
@@ -12,7 +13,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
@@ -82,7 +82,7 @@ func delegateToDelegatee() {
 func createPoolByProtocolFee() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, poolAddr, math.MaxInt64)
-	pool.CreatePool(cross, barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross, barPath, fooPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	ufmt.Printf("[INFO] Created %s:%s:%d pool\n", barPath, fooPath, 3000)
 }
 

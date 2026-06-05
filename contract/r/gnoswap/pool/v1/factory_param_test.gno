@@ -4,11 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	"gno.land/r/gnoswap/common"
 )
 
 func TestNewPoolParams(cur realm, t *testing.T) {
@@ -113,7 +112,7 @@ func TestIsInOrder(cur realm, t *testing.T) {
 
 func TestUpdateWithWrapping(cur realm, t *testing.T) {
 	tick := int32(-11242)
-	sqrtPriceX96FromTick := common.TickMathGetSqrtRatioAtTick(tick)
+	sqrtPriceX96FromTick := gnsmath.TickMathGetSqrtRatioAtTick(tick)
 
 	tests := []struct {
 		name            string
@@ -180,7 +179,7 @@ func TestUpdateWithWrapping(cur realm, t *testing.T) {
 		},
 		{
 			name:            "fail - tokens not in order, below MIN_SQRT_RATIO",
-			token0Path:      bazPath,  // not in order: baz > bar
+			token0Path:      bazPath, // not in order: baz > bar
 			token1Path:      barPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1

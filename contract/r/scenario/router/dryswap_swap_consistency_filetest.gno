@@ -2,6 +2,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -155,35 +156,35 @@ func initPoolMultiPosition() {
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	pl.CreatePool(
 		cross,
 		barPath,
 		bazPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString(),
 	)
 	pl.CreatePool(
 		cross,
 		bazPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	pl.CreatePool(
 		cross,
 		fooPath,
 		quxPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	pl.CreatePool(
 		cross,
 		barPath,
 		quxPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Minting 6 positions (same as bug scenario)")

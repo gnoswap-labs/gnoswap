@@ -12,6 +12,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"fmt"
 	"strconv"
 	"testing"
@@ -135,7 +136,7 @@ func createPool() {
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
 	)
 }
 
