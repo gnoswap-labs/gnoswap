@@ -266,6 +266,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 		maxLiquidity         *u256.Uint
 		wantFlipped          bool
 		shouldPanic          bool
+		shouldAbort          bool
 		verify               func()
 	}{
 		{
@@ -373,6 +374,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"), // maxUint128
 			wantFlipped:          false,
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name: "assumes all growth happens below ticks lte current tick",
@@ -442,7 +444,20 @@ func TestTickUpdate(cur realm, t *testing.T) {
 				tt.preconditions()
 			}
 
-			if tt.shouldPanic {
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, cur, "result exceeds uint128 range", func() {
+					tickUpdate(
+						pool,
+						tt.tick,
+						tt.tickCurrent,
+						tt.liquidityDelta,
+						tt.feeGrowthGlobal0X128,
+						tt.feeGrowthGlobal1X128,
+						tt.upper,
+						tt.maxLiquidity,
+					)
+				})
+			} else if tt.shouldPanic {
 				defer func() {
 					if r := recover(); r == nil {
 						t.Errorf("expected panic, but got nil")

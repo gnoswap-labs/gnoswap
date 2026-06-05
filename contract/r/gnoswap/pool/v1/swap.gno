@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -551,7 +550,7 @@ func (i *poolV1) computeSwapStep(
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 		newState = i.tickTransition(step, zeroForOne, newState, pool, cache, onTickCross)
 	} else if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
-		newState.setTick(gnsmath.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
+		newState.setTick(pl.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
 
 	return newState, nil
@@ -594,7 +593,7 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = gnsmath.TickMathGetSqrtRatioAtTick(step.tickNext)
+	step.sqrtPriceNextX96 = pl.TickMathGetSqrtRatioAtTick(step.tickNext)
 	return step
 }
 
@@ -616,7 +615,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := pl.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -749,7 +748,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = gnsmath.LiquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = pl.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if onTickCross != nil {
 			onTickCross(pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)
