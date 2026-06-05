@@ -16,22 +16,22 @@ import (
 )
 
 // TestFuzzPositionCollectFee_ValidParams_Stateless tests CollectFee with valid parameters
-func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
+func TestFuzzPositionCollectFee_ValidParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
 		swapCount := fuzz.IntRange(1, 30).Draw(ft, "swapCount").(int)
-		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
+		generateFeesWithSwap(cur, ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -39,7 +39,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 
 		// when - collect fee
 		_, fee0, fee1, _, _, poolPath := position.CollectFee(
-			cross,
+			cross(cur),
 			collectParams.positionId,
 		)
 
@@ -56,22 +56,22 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzPositionCollectFee_RandomizedParams_Stateless tests CollectFee with randomized parameters
-func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzPositionCollectFee_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
 		swapCount := fuzz.IntRange(0, 30).Draw(ft, "swapCount").(int)
-		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
+		generateFeesWithSwap(cur, ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
@@ -79,22 +79,22 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 
 		// when - collect fee (may panic with invalid params)
 		position.CollectFee(
-			cross,
+			cross(cur),
 			collectParams.positionId,
 		)
 	})
 }
 
 // TestFuzzPositionCollectFee_ValidParams_Stateful tests CollectFee with valid parameters in stateful manner
-func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionCollectFee_ValidParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	// Track total fees collected
 	type feeCollection struct {
@@ -108,7 +108,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 
 		// Generate fees by executing swaps
 		swapCount := fuzz.IntRange(1, 30).Draw(ft, "swapCount").(int)
-		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
+		generateFeesWithSwap(cur, ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -116,7 +116,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 
 		// when - collect fee
 		_, fee0, fee1, _, _, _ := position.CollectFee(
-			cross,
+			cross(cur),
 			collectParams.positionId,
 		)
 
@@ -136,15 +136,15 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 }
 
 // TestFuzzPositionCollectFee_RandomizedParams_Stateful tests CollectFee with randomized parameters in stateful manner
-func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionCollectFee_RandomizedParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	// Track successful collections
 	successfulCollections := 0
@@ -154,7 +154,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 
 		// Generate fees by executing swaps
 		swapCount := fuzz.IntRange(0, 30).Draw(ft, "swapCount").(int)
-		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
+		generateFeesWithSwap(cur, ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
@@ -162,7 +162,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 
 		// when - collect fee (may panic with invalid params)
 		_, fee0, fee1, _, _, _ := position.CollectFee(
-			cross,
+			cross(cur),
 			collectParams.positionId,
 		)
 
@@ -176,7 +176,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 }
 
 // Helper function to generate fees by executing swaps
-func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId uint64, swapCount int) {
+func generateFeesWithSwap(cur realm, ft *fuzz.T, adminAddr, poolAddr address, positionId uint64, swapCount int) {
 	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	if !pool.ExistsPoolPath(poolPath) {
@@ -184,8 +184,8 @@ func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId ui
 	}
 
 	// Approve tokens for swap
-	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 	// Swap callback function
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
@@ -193,16 +193,16 @@ func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId ui
 		if amount0Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
-			}(cross)
+				common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+			}(cross(cur))
 		}
 
 		// Pay token1 if delta1 > 0
 		if amount1Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
-			}(cross)
+				common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+			}(cross(cur))
 		}
 
 		return nil
@@ -216,16 +216,16 @@ func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId ui
 
 		sqrtPriceLimitX96 := MIN_PRICE_LIMIT_ZERO_FOR_ONE
 		if zeroForOne {
-			mintTestToken(token0Path, amountSpecified)
+			mintTestToken(cur, token0Path, amountSpecified)
 		} else {
-			mintTestToken(token1Path, amountSpecified)
+			mintTestToken(cur, token1Path, amountSpecified)
 			sqrtPriceLimitX96 = MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE
 		}
 
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
 			pool.Swap(
-				cross,
+				cross(cur),
 				token0Path,
 				token1Path,
 				fee,
@@ -236,6 +236,6 @@ func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId ui
 				adminAddr,
 				swapCallback,
 			)
-		}(cross)
+		}(cross(cur))
 	}
 }

@@ -19,8 +19,7 @@ func (p *positionCollectFeeParams) IsValid() bool {
 		return false
 	}
 
-	_, err := position.GetPosition(p.positionId)
-	if err != nil {
+	if !positionExists(p.positionId) {
 		return false
 	}
 
@@ -34,6 +33,17 @@ func (p *positionCollectFeeParams) IsValid() bool {
 	}
 
 	return true
+}
+
+func positionExists(positionId uint64) bool {
+	positionIDs := position.GetPositionIDs(0, position.GetPositionCount())
+	for _, id := range positionIDs {
+		if id == positionId {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (p *positionCollectFeeParams) ToString() string {

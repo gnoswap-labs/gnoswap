@@ -29,8 +29,7 @@ func (p *positionIncreaseLiquidityParams) IsValid() bool {
 		return false
 	}
 
-	_, err := position.GetPosition(p.positionId)
-	if err != nil {
+	if !positionExists(p.positionId) {
 		return false
 	}
 

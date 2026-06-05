@@ -17,60 +17,60 @@ func generateInternalIncentiveTierByRange(ft *fuzz.T, minTier uint64, maxTier ui
 	return fuzz.Uint64Range(minTier, maxTier).Draw(ft, "poolTier").(uint64)
 }
 
-func setupInternalIncentivePoolAndPosition(ft *fuzz.T) (string, uint64, uint64) {
-	return setupInternalIncentivePoolAndPositionByRange(ft, 0, 3)
+func setupInternalIncentivePoolAndPosition(cur realm, ft *fuzz.T) (string, uint64, uint64) {
+	return setupInternalIncentivePoolAndPositionByRange(cur, ft, 0, 3)
 }
 
-func setupInternalIncentivePoolAndPositionByRange(ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64, uint64) {
-	poolPath, internalIncentiveTier := setupInternalIncentivePoolByRange(ft, minTier, maxTier)
+func setupInternalIncentivePoolAndPositionByRange(cur realm, ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64, uint64) {
+	poolPath, internalIncentiveTier := setupInternalIncentivePoolByRange(cur, ft, minTier, maxTier)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
 	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
 	amountDesired := int64(1_000_000_000_000)
-	positionID, _, _, _ := setupMintPosition(ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
+	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
 	return poolPath, internalIncentiveTier, positionID
 }
 
 // setupInternalIncentivePool sets up a router pool and position for each route path.
-func setupInternalIncentivePoolByRange(ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64) {
+func setupInternalIncentivePoolByRange(cur realm, ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64) {
 	token0Path, token1Path := generateTokenPair(ft)
 	feeTier := generateFeeTier(ft)
-	poolPath := setupCreatePool(ft, token0Path, token1Path, feeTier)
+	poolPath := setupCreatePool(cur, ft, token0Path, token1Path, feeTier)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	internalIncentiveTier := generateInternalIncentiveTierByRange(ft, minTier, maxTier)
-	staker.SetPoolTier(cross, poolPath, internalIncentiveTier)
+	staker.SetPoolTier(cross(cur), poolPath, internalIncentiveTier)
 
 	return poolPath, internalIncentiveTier
 }
 
-func setupExternalRewardPoolAndPosition(ft *fuzz.T) (string, string, uint64) {
-	poolPath, incentiveID := setupExternalRewardPool(ft)
+func setupExternalRewardPoolAndPosition(cur realm, ft *fuzz.T) (string, string, uint64) {
+	poolPath, incentiveID := setupExternalRewardPool(cur, ft)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
 	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
 	amountDesired := int64(1_000_000)
-	positionID, _, _, _ := setupMintPosition(ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
+	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
 	return poolPath, incentiveID, positionID
 }
 
 // setupExternalRewardPool sets up a router pool and position for each route path.
-func setupExternalRewardPool(ft *fuzz.T) (string, string) {
+func setupExternalRewardPool(cur realm, ft *fuzz.T) (string, string) {
 	token0Path, token1Path := generateTokenPair(ft)
 	feeTier := generateFeeTier(ft)
-	poolPath := setupCreatePool(ft, token0Path, token1Path, feeTier)
+	poolPath := setupCreatePool(cur, ft, token0Path, token1Path, feeTier)
 	incentivizeAmount := int64(1_000_000_000)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	mintTestToken(oblPath, incentivizeAmount)
+	mintTestToken(cur, oblPath, incentivizeAmount)
 
 	stakerAddr := access.MustGetAddress(prabc.ROLE_STAKER.String())
-	obl.Approve(cross, stakerAddr, incentivizeAmount)
+	obl.Approve(cross(cur), stakerAddr, incentivizeAmount)
 	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	incentiveEndTimestamp := incentiveStartTimestamp + 180*24*60*60
 
 	staker.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		oblPath,
 		incentivizeAmount,
@@ -83,9 +83,9 @@ func setupExternalRewardPool(ft *fuzz.T) (string, string) {
 	return poolPath, incentiveID
 }
 
-func setupStakePosition(ft *fuzz.T, positionID uint64) uint64 {
+func setupStakePosition(cur realm, ft *fuzz.T, positionID uint64) uint64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	staker.StakeToken(cross, positionID, "")
+	staker.StakeToken(cross(cur), positionID, "")
 
 	return positionID
 }
