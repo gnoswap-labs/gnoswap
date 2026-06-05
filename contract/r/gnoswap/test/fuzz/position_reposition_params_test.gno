@@ -30,7 +30,8 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	if !positionExists(p.positionId) {
+	_, err := position.GetPosition(p.positionId)
+	if err != nil {
 		return false
 	}
 
