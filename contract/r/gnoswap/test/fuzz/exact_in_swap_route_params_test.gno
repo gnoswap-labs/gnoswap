@@ -220,7 +220,6 @@ func (p *exactInSwapRouteParams) drySwapRoute(cur realm) (string, string, bool) 
 
 	revive(func() {
 		amountIn, amountOut, success = router.DrySwapRoute(
-			cross(cur),
 			p.inputToken,
 			p.outputToken,
 			p.amountIn,

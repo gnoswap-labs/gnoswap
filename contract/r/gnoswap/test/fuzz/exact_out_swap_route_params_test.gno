@@ -241,7 +241,6 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap(cur realm) {
 func (p *exactOutSwapRouteParams) drySwapRoute(cur realm) (amountIn string, amountOut string, success bool) {
 	r := revive(func() {
 		amountIn, amountOut, success = router.DrySwapRoute(
-			cross(cur),
 			p.inputToken,
 			p.outputToken,
 			p.amountOut,

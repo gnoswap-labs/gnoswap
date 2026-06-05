@@ -742,33 +742,33 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
+		hook(cross(cur), poolPath, tickId, zeroForOne, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
+func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
-		hook(0, cur, poolPath, timestamp)
+		hook(cross(cur), poolPath, timestamp)
 	})
 }
 
-func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
+func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	if !rlm.IsCurrent() {
 		panic(sr.ErrSpoofedRealm)
 	}
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
-		return hook(0, cur, poolPath)
+		return hook(cross(cur), poolPath)
 	})
 }
 
