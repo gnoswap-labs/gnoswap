@@ -9,7 +9,7 @@ import (
 )
 
 // Test DelegationType
-func TestDelegationType(t *testing.T) {
+func TestDelegationType(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		delegationType       staker.DelegationType
@@ -34,7 +34,7 @@ func TestDelegationType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Check delegation type methods
 			resultString := tt.delegationType.String()
 			resultIsDelegate := tt.delegationType.IsDelegate()
@@ -49,7 +49,7 @@ func TestDelegationType(t *testing.T) {
 }
 
 // Test Delegation creation
-func TestNewDelegation(t *testing.T) {
+func TestNewDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		id             int64
@@ -77,7 +77,7 @@ func TestNewDelegation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Create new delegation
 			delegation := NewDelegation(
 				tt.id,
@@ -110,7 +110,7 @@ func TestNewDelegation(t *testing.T) {
 }
 
 // Test delegation getter methods
-func TestDelegationGetters(t *testing.T) {
+func TestDelegationGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		setupDelegation        func() *staker.Delegation
@@ -219,7 +219,7 @@ func TestDelegationGetters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup delegation
 			delegation := tt.setupDelegation()
 
@@ -238,7 +238,7 @@ func TestDelegationGetters(t *testing.T) {
 }
 
 // Test unDelegate
-func TestDelegation_unDelegate(t *testing.T) {
+func TestDelegation_unDelegate(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		initialAmount         int64
@@ -278,7 +278,7 @@ func TestDelegation_unDelegate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Fresh delegation
 			delegation := NewDelegation(
 				1,
@@ -310,7 +310,7 @@ func TestDelegation_unDelegate(t *testing.T) {
 }
 
 // Test UnDelegateWithoutLockup
-func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
+func TestDelegation_unDelegateWithoutLockup(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		initialAmount       int64
@@ -338,7 +338,7 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Fresh delegation
 			delegation := NewDelegation(
 				1,
@@ -363,7 +363,7 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 }
 
 // Test collect
-func TestDelegation_collect(t *testing.T) {
+func TestDelegation_collect(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		setupDelegation   func() *staker.Delegation
@@ -459,7 +459,7 @@ func TestDelegation_collect(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup delegation
 			delegation := tt.setupDelegation()
 			resolver := NewDelegationResolver(delegation)
@@ -480,7 +480,7 @@ func TestDelegation_collect(t *testing.T) {
 }
 
 // Test complex delegation scenarios
-func TestDelegation_ComplexScenarios(t *testing.T) {
+func TestDelegation_ComplexScenarios(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		operations  func(*DelegationResolver)
@@ -586,7 +586,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Fresh delegation with sufficient amount
 			delegation := NewDelegation(
 				1,
@@ -609,7 +609,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 }
 
 // Test edge cases and error conditions
-func TestDelegation_EdgeCases(t *testing.T) {
+func TestDelegation_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		testFunc    func()
@@ -684,7 +684,7 @@ func TestDelegation_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Execute test function
 			tt.testFunc()
 
@@ -695,7 +695,7 @@ func TestDelegation_EdgeCases(t *testing.T) {
 }
 
 // TestDelegation_addToCollectedAmount tests the private addToCollectedAmount function
-func TestDelegation_addToCollectedAmount(t *testing.T) {
+func TestDelegation_addToCollectedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		collectedAmount      int64
@@ -751,10 +751,10 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedErrorMessage, func() {
 					addToCollectedAmount(tc.collectedAmount, tc.amount)
 				})
 			} else if tc.expectedHasError {
@@ -770,8 +770,8 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 }
 
 // TestDelegation_CollectErrors tests error cases for Collect function
-func TestDelegation_CollectErrors(t *testing.T) {
-	t.Run("Collect amount exceeds collectable", func(t *testing.T) {
+func TestDelegation_CollectErrors(cur realm, t *testing.T) {
+	t.Run("Collect amount exceeds collectable", func(cur realm, t *testing.T) {
 		// given
 		delegation := NewDelegation(
 			1,
@@ -794,7 +794,7 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		uassert.Equal(t, collectedAmount, int64(0))
 	})
 
-	t.Run("Collect with negative amount", func(t *testing.T) {
+	t.Run("Collect with negative amount", func(cur realm, t *testing.T) {
 		// given
 		delegation := NewDelegation(
 			1,
@@ -818,7 +818,7 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		uassert.Equal(t, collectedAmount, collectableBefore) // nothing was collected
 	})
 
-	t.Run("Collect exact collectable amount", func(t *testing.T) {
+	t.Run("Collect exact collectable amount", func(cur realm, t *testing.T) {
 		// given
 		delegation := NewDelegation(
 			1,
@@ -842,7 +842,7 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		uassert.Equal(t, resolver.CollectableAmount(currentTime), int64(0))
 	})
 
-	t.Run("Collect zero amount", func(t *testing.T) {
+	t.Run("Collect zero amount", func(cur realm, t *testing.T) {
 		// given
 		delegation := NewDelegation(
 			1,
@@ -866,8 +866,8 @@ func TestDelegation_CollectErrors(t *testing.T) {
 }
 
 // Test boundary conditions for safe arithmetic in delegation operations
-func TestDelegation_BoundaryConditions(t *testing.T) {
-	t.Run("DelegatedAmount with large total near max", func(t *testing.T) {
+func TestDelegation_BoundaryConditions(cur realm, t *testing.T) {
+	t.Run("DelegatedAmount with large total near max", func(cur realm, t *testing.T) {
 		// given: delegation with very large amount
 		delegation := NewDelegation(
 			1,
@@ -886,7 +886,7 @@ func TestDelegation_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, delegatedAmount, int64(math.MaxInt64/2))
 	})
 
-	t.Run("UnDelegate accumulation causing overflow", func(t *testing.T) {
+	t.Run("UnDelegate accumulation causing overflow", func(cur realm, t *testing.T) {
 		// given: delegation with very large total delegated amount
 		delegation := NewDelegation(
 			1,
@@ -920,7 +920,7 @@ func TestDelegation_BoundaryConditions(t *testing.T) {
 		uassert.True(t, didPanic)
 	})
 
-	t.Run("Collect with amount accumulation near boundary", func(t *testing.T) {
+	t.Run("Collect with amount accumulation near boundary", func(cur realm, t *testing.T) {
 		// given: delegation with large amounts
 		delegation := NewDelegation(
 			1,

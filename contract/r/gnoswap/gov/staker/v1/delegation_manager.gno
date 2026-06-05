@@ -70,22 +70,10 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []i
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation
 func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address, delegationID int64) {
-	delegatorAddress := delegator.String()
-	delegateeAddress := delegatee.String()
-
-	// Get existing IDs
-	ids, _ := dm.GetDelegationIDs(delegatorAddress, delegateeAddress)
-
-	// Check for duplicates
-	for _, id := range ids {
-		if id == delegationID {
-			return
-		}
-	}
-
-	// Add the new delegation ID
-	ids = append(ids, delegationID)
-	dm.SetDelegationIDs(delegatorAddress, delegateeAddress, ids)
+	// Delegate the read-modify-write to the domain method so the nested BPTree
+	// mutation stays within the owning realm; splitting the get and set across
+	// the realm boundary here would taint the re-fetched inner tree.
+	dm.AddDelegationID(delegator.String(), delegatee.String(), delegationID)
 }
 
 // removeDelegation removes a delegation ID from the manager's tracking system.
@@ -96,27 +84,7 @@ func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address,
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation to remove
 func (dm *DelegationManagerResolver) removeDelegation(delegator, delegatee address, delegationID int64) {
-	delegatorAddress := delegator.String()
-	delegateeAddress := delegatee.String()
-
-	// Get existing IDs
-	ids, exists := dm.GetDelegationIDs(delegatorAddress, delegateeAddress)
-	if !exists {
-		return
-	}
-
-	// Find and remove the delegation ID
-	index := -1
-	for i, id := range ids {
-		if id == delegationID {
-			index = i
-			break
-		}
-	}
-
-	// Remove the delegation ID if found
-	if index != -1 {
-		ids = append(ids[:index], ids[index+1:]...)
-		dm.SetDelegationIDs(delegatorAddress, delegateeAddress, ids)
-	}
+	// Delegate the read-modify-write to the domain method so the nested BPTree
+	// mutation stays within the owning realm.
+	dm.RemoveDelegationID(delegator.String(), delegatee.String(), delegationID)
 }
