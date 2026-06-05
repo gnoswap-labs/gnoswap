@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
-
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 )
@@ -42,12 +40,13 @@ func (e *DryMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, _ addres
 
 // RealMultiSwapExecutor implements MultiSwapExecutor for actual swap operations.
 type RealMultiSwapExecutor struct {
+	rlm    realm
 	router *routerV1
 }
 
 // Run performs a real swap operation with state changes.
 func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient address) (int64, int64) {
-	return e.router.swapInner(p.amountSpecified, recipient, zero, data)
+	return e.router.swapInner(0, e.rlm, p.amountSpecified, recipient, zero, data)
 }
 
 // MultiSwapProcessor handles the execution flow for multi-hop swaps.
@@ -56,6 +55,9 @@ type MultiSwapProcessor struct {
 	direction  SwapDirection
 	router     *routerV1
 	isSimulate bool
+	// payer is the address used to identify the user. For real swaps it is the
+	// PreviousRealm address; for dry-run paths it is resolved at the entry point.
+	payer address
 }
 
 var (
@@ -63,26 +65,31 @@ var (
 	_ MultiSwapExecutor = (*RealMultiSwapExecutor)(nil)
 )
 
-// NewMultiSwapProcessor creates a new MultiSwapProcessor with the specified configuration.
-func NewMultiSwapProcessor(r *routerV1, isSimulate bool, direction SwapDirection) *MultiSwapProcessor {
-	var executor MultiSwapExecutor
-	if isSimulate {
-		executor = &DryMultiSwapExecutor{router: r}
-	} else {
-		executor = &RealMultiSwapExecutor{router: r}
-	}
-
+// newRealMultiSwapProcessor creates a processor that performs real swaps.
+func newRealMultiSwapProcessor(_ int, rlm realm, r *routerV1, direction SwapDirection, payer address) *MultiSwapProcessor {
 	return &MultiSwapProcessor{
-		executor:   executor,
+		executor:   &RealMultiSwapExecutor{rlm: rlm, router: r},
 		direction:  direction,
 		router:     r,
-		isSimulate: isSimulate,
+		isSimulate: false,
+		payer:      payer,
+	}
+}
+
+// newDryMultiSwapProcessor creates a processor that performs dry-run simulations.
+func newDryMultiSwapProcessor(r *routerV1, direction SwapDirection, payer address) *MultiSwapProcessor {
+	return &MultiSwapProcessor{
+		executor:   &DryMultiSwapExecutor{router: r},
+		direction:  direction,
+		router:     r,
+		isSimulate: true,
+		payer:      payer,
 	}
 }
 
 // processForwardSwap handles forward direction swaps (exactIn).
 func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swapPath string) (int64, int64, error) {
-	payer := runtime.PreviousRealm().Address() // Initial payer is the user
+	payer := p.payer // Initial payer is the user
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	firstAmountIn := int64(0)
@@ -177,7 +184,7 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int
 		}
 
 		// dry simulation to calculate input amount
-		amountIn, _ := p.router.singleDrySwap(&thisSwap)
+		amountIn, _ := p.router.singleDrySwap(p.payer, &thisSwap)
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
@@ -198,11 +205,14 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int
 }
 
 // executeCollectedSwaps performs the collected swaps in forward order.
+// Only invoked from the real (non-simulated) backward swap path, so the
+// executor is always a *RealMultiSwapExecutor carrying the realm value.
 func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, recipient address) (int64, int64, error) {
 	firstAmountIn := int64(0)
 	currentPoolIndex := len(swapInfo) - 1
-	payer := runtime.PreviousRealm().Address() // Initial payer is the user
+	payer := p.payer // Initial payer is the user
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	rlm := p.executor.(*RealMultiSwapExecutor).rlm
 
 	for currentPoolIndex >= 0 {
 		// Execute the swap
@@ -212,6 +222,8 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		)
 
 		amountIn, amountOut := p.router.swapInner(
+			0,
+			rlm,
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
 			zero,
@@ -237,8 +249,9 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 }
 
 // multiSwap performs a multi-hop swap in forward direction.
-func (r *routerV1) multiSwap(p SwapParams, numPools int, swapPath string) (int64, int64) {
-	result, output, err := NewMultiSwapProcessor(r, false, Forward).
+func (r *routerV1) multiSwap(_ int, rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
+	payer := rlm.Previous().Address()
+	result, output, err := newRealMultiSwapProcessor(0, rlm, r, Forward, payer).
 		processForwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
@@ -247,8 +260,9 @@ func (r *routerV1) multiSwap(p SwapParams, numPools int, swapPath string) (int64
 }
 
 // multiSwapNegative performs a multi-hop swap in backward direction.
-func (r *routerV1) multiSwapNegative(p SwapParams, numPools int, swapPath string) (int64, int64) {
-	result, output, err := NewMultiSwapProcessor(r, false, Backward).
+func (r *routerV1) multiSwapNegative(_ int, rlm realm, p SwapParams, numPools int, swapPath string) (int64, int64) {
+	payer := rlm.Previous().Address()
+	result, output, err := newRealMultiSwapProcessor(0, rlm, r, Backward, payer).
 		processBackwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
@@ -257,13 +271,13 @@ func (r *routerV1) multiSwapNegative(p SwapParams, numPools int, swapPath string
 }
 
 // multiDrySwap simulates a multi-hop swap in forward direction.
-func (r *routerV1) multiDrySwap(p SwapParams, numPool int, swapPath string) (int64, int64, error) {
-	return NewMultiSwapProcessor(r, true, Forward).
+func (r *routerV1) multiDrySwap(payer address, p SwapParams, numPool int, swapPath string) (int64, int64, error) {
+	return newDryMultiSwapProcessor(r, Forward, payer).
 		processForwardSwap(p, numPool, swapPath)
 }
 
 // multiDrySwapNegative simulates a multi-hop swap in backward direction.
-func (r *routerV1) multiDrySwapNegative(p SwapParams, numPool int, swapPath string) (int64, int64, error) {
-	return NewMultiSwapProcessor(r, true, Backward).
+func (r *routerV1) multiDrySwapNegative(payer address, p SwapParams, numPool int, swapPath string) (int64, int64, error) {
+	return newDryMultiSwapProcessor(r, Backward, payer).
 		processBackwardSwap(p, numPool, swapPath)
 }

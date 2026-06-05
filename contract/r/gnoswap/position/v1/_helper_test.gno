@@ -16,6 +16,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 	pl "gno.land/r/gnoswap/pool"
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -27,8 +28,6 @@ import (
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/rbac"
-
-	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (
@@ -84,9 +83,6 @@ var (
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	rouPath  = "gno.land/r/gnoswap/router"
-	rouRealm = testing.NewCodeRealm(rouPath)
-
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
 
@@ -94,29 +90,30 @@ var (
 	mockPoolStore       *mock.MockPoolStore
 	registeredTestStore = false
 
-	initializedPool = false
+	initializedPool          = false
+	initializedPositionProxy = false
 )
 
-func TokenFaucet(t *testing.T, tokenPath string, to address) {
+func TokenFaucet(cur realm, t *testing.T, tokenPath string, to address) {
 	t.Helper()
 	testing.SetOriginCaller(adminAddr)
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
+		wugnotTransfer(cur, t, to, defaultAmount)
 	case gnsPath:
-		gnsTransfer(t, to, defaultAmount)
+		gnsTransfer(cur, t, to, defaultAmount)
 	case barPath:
-		barTransfer(t, to, defaultAmount)
+		barTransfer(cur, t, to, defaultAmount)
 	case bazPath:
-		bazTransfer(t, to, defaultAmount)
+		bazTransfer(cur, t, to, defaultAmount)
 	case fooPath:
-		fooTransfer(t, to, defaultAmount)
+		fooTransfer(cur, t, to, defaultAmount)
 	case oblPath:
-		oblTransfer(t, to, defaultAmount)
+		oblTransfer(cur, t, to, defaultAmount)
 	case quxPath:
-		quxTransfer(t, to, defaultAmount)
+		quxTransfer(cur, t, to, defaultAmount)
 	default:
 		panic("token not found")
 	}
@@ -166,29 +163,29 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 	}
 }
 
-func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
+func TokenApprove(cur realm, t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
 	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
+		wugnotApprove(cur, t, owner, spender, amount)
 	case gnsPath:
-		gnsApprove(t, owner, spender, amount)
+		gnsApprove(cur, t, owner, spender, amount)
 	case barPath:
-		barApprove(t, owner, spender, amount)
+		barApprove(cur, t, owner, spender, amount)
 	case bazPath:
-		bazApprove(t, owner, spender, amount)
+		bazApprove(cur, t, owner, spender, amount)
 	case fooPath:
-		fooApprove(t, owner, spender, amount)
+		fooApprove(cur, t, owner, spender, amount)
 	case oblPath:
-		oblApprove(t, owner, spender, amount)
+		oblApprove(cur, t, owner, spender, amount)
 	case quxPath:
-		quxApprove(t, owner, spender, amount)
+		quxApprove(cur, t, owner, spender, amount)
 	default:
 		panic("token not found")
 	}
 }
 
-func CreatePool(t *testing.T,
+func CreatePool(cur realm, t *testing.T,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -200,50 +197,43 @@ func CreatePool(t *testing.T,
 	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
-		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
+		pl.CreatePool(cross(cur), token0, token1, fee, sqrtPriceX96)
 	}
 }
 
 // set pool create fee to 0 for testing
-func CreatePoolWithoutFee(t *testing.T) {
+func CreatePoolWithoutFee(cur realm, t *testing.T) {
 	t.Helper()
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pl.SetPoolCreationFee(cross(cur), 0)
+	CreatePool(cur, t, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
 }
 
-func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+func MakeMintPositionWithoutFee(cur realm, t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
-	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
-	testing.SetRealm(adminRealm)
-
-	// mint position
-	return func(cur realm) (uint64, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Mint(
-			barPath,
-			fooPath,
-			fee500,
-			-887270,
-			887270,
-			"50000",
-			"50000",
-			"0",
-			"0",
-			max_timeout,
-			adminAddr,
-			"",
-		)
-	}(cross)
+	return mockInstanceMint(
+		cur,
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
 }
 
-func LPTokenApprove(t *testing.T, owner, operator address, positionId uint64) {
+func LPTokenApprove(cur realm, t *testing.T, owner, operator address, positionId uint64) {
 	t.Helper()
 	testing.SetOriginCaller(owner)
-	gnft.Approve(cross, operator, positionIdFrom(positionId))
+	gnft.Approve(cross(cur), operator, positionIdFrom(positionId))
 }
 
 // func LPTokenStake(t *testing.T, owner std.Address, positionId uint64) {
@@ -258,106 +248,106 @@ func LPTokenApprove(t *testing.T, owner, operator address, positionId uint64) {
 // 	sr.UnStakeToken(positionId, unwrap)
 // }
 
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
+func wugnotApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
+	wugnot.Approve(cross(cur), spender, amount)
 }
 
-func gnsApprove(t *testing.T, owner, spender address, amount int64) {
+func gnsApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	gns.Approve(cross, spender, amount)
+	gns.Approve(cross(cur), spender, amount)
 }
 
-func barApprove(t *testing.T, owner, spender address, amount int64) {
+func barApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	bar.Approve(cross, spender, amount)
+	bar.Approve(cross(cur), spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender address, amount int64) {
+func bazApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	baz.Approve(cross, spender, amount)
+	baz.Approve(cross(cur), spender, amount)
 }
 
-func fooApprove(t *testing.T, owner, spender address, amount int64) {
+func fooApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	foo.Approve(cross, spender, amount)
+	foo.Approve(cross(cur), spender, amount)
 }
 
-func oblApprove(t *testing.T, owner, spender address, amount int64) {
+func oblApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	obl.Approve(cross, spender, amount)
+	obl.Approve(cross(cur), spender, amount)
 }
 
-func quxApprove(t *testing.T, owner, spender address, amount int64) {
+func quxApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
-	qux.Approve(cross, spender, amount)
+	qux.Approve(cross(cur), spender, amount)
 }
 
-func wugnotTransfer(t *testing.T, to address, amount int64) {
+func wugnotTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	wugnot.Transfer(cross, to, amount)
+	wugnot.Transfer(cross(cur), to, amount)
 }
 
-func gnsTransfer(t *testing.T, to address, amount int64) {
+func gnsTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, to, amount)
+	gns.Transfer(cross(cur), to, amount)
 }
 
-func barTransfer(t *testing.T, to address, amount int64) {
+func barTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	bar.Transfer(cross, to, amount)
+	bar.Transfer(cross(cur), to, amount)
 }
 
-func bazTransfer(t *testing.T, to address, amount int64) {
+func bazTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	baz.Transfer(cross, to, amount)
+	baz.Transfer(cross(cur), to, amount)
 }
 
-func fooTransfer(t *testing.T, to address, amount int64) {
+func fooTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	foo.Transfer(cross, to, amount)
+	foo.Transfer(cross(cur), to, amount)
 }
 
-func oblTransfer(t *testing.T, to address, amount int64) {
+func oblTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Transfer(cross, to, amount)
+	obl.Transfer(cross(cur), to, amount)
 }
 
-func quxTransfer(t *testing.T, to address, amount int64) {
+func quxTransfer(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	qux.Transfer(cross, to, amount)
+	qux.Transfer(cross(cur), to, amount)
 }
 
 // ----------------------------------------------------------------------------
 // ugnot
 
-func ugnotTransfer(t *testing.T, from, to address, amount int64) {
+func ugnotTransfer(cur realm, t *testing.T, from, to address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(testing.NewUserRealm(from))
 	testing.SetOriginSend(chain.Coins{{gnotDenom, amount}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, amount}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
+func ugnotBalanceOf(cur realm, t *testing.T, addr address) int64 {
 	t.Helper()
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue, cur)
 	coins := banker_.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
@@ -371,70 +361,70 @@ func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
 	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
 }
 
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
+func ugnotBurn(cur realm, t *testing.T, addr address, denom string, amount int64) {
 	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue, cur)
 	banker_.RemoveCoin(addr, denom, amount)
 }
 
-func ugnotFaucet(t *testing.T, to address, amount int64) {
+func ugnotFaucet(cur realm, t *testing.T, to address, amount int64) {
 	t.Helper()
 	faucetAddress := adminAddr
 	testing.SetOriginCaller(faucetAddress)
 
-	if ugnotBalanceOf(t, faucetAddress) < amount {
+	if ugnotBalanceOf(cur, t, faucetAddress) < amount {
 		newCoins := chain.Coins{{gnotDenom, amount}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
 	}
-	ugnotTransfer(t, faucetAddress, to, amount)
+	ugnotTransfer(cur, t, faucetAddress, to, amount)
 }
 
-func burnTokens(t *testing.T) {
+func burnTokens(cur realm, t *testing.T) {
 	t.Helper()
 
 	// burn tokens
 	for _, addr := range addrUsedInTest {
-		burnFoo(addr)
-		burnBar(addr)
-		burnBaz(addr)
-		burnQux(addr)
-		burnObl(addr)
-		burnUsdc(addr)
+		burnFoo(cur, addr)
+		burnBar(cur, addr)
+		burnBaz(cur, addr)
+		burnQux(cur, addr)
+		burnObl(cur, addr)
+		burnUsdc(cur, addr)
 	}
 }
 
-func burnFoo(addr address) {
+func burnFoo(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	foo.Burn(cross, addr, foo.BalanceOf(addr))
+	foo.Burn(cross(cur), addr, foo.BalanceOf(addr))
 }
 
-func burnBar(addr address) {
+func burnBar(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	bar.Burn(cross, addr, bar.BalanceOf(addr))
+	bar.Burn(cross(cur), addr, bar.BalanceOf(addr))
 }
 
-func burnBaz(addr address) {
+func burnBaz(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	baz.Burn(cross, addr, baz.BalanceOf(addr))
+	baz.Burn(cross(cur), addr, baz.BalanceOf(addr))
 }
 
-func burnQux(addr address) {
+func burnQux(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	qux.Burn(cross, addr, qux.BalanceOf(addr))
+	qux.Burn(cross(cur), addr, qux.BalanceOf(addr))
 }
 
-func burnObl(addr address) {
+func burnObl(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	obl.Burn(cross, addr, obl.BalanceOf(addr))
+	obl.Burn(cross(cur), addr, obl.BalanceOf(addr))
 }
 
-func burnUsdc(addr address) {
+func burnUsdc(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
+	usdc.Burn(cross(cur), addr, usdc.BalanceOf(addr))
 }
 
-func initPoolTest(t *testing.T) {
+func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 	mockPoolStore = mock.NewMockPoolStore()
@@ -443,13 +433,13 @@ func initPoolTest(t *testing.T) {
 		initializedPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pool.RegisterInitializer(cross, func(_ pool.IPoolStore) pool.IPool {
+		pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, _ pool.IPoolStore) pool.IPool {
 			return pool_v1.NewPoolV1(mockPoolStore)
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	pool.UpgradeImpl(cross, mockPoolPath)
+	pool.UpgradeImpl(cross(cur), mockPoolPath)
 }
 
 func mustGetStoredTestPool(poolPath string) *pl.Pool {
@@ -467,23 +457,42 @@ func mustGetStoredTestPool(poolPath string) *pl.Pool {
 	return storedPool
 }
 
-func initPositionTest(t *testing.T) {
+func initPositionTest(cur realm, t *testing.T) {
 	t.Helper()
-	initPoolTest(t)
+	initPoolTest(cur, t)
 	mockInstance = &positionV1{
 		store:       mock.NewMockPositionStore(),
 		nftAccessor: mock.NewMockNFTAccessor(),
 	}
+	initPositionProxyTest(cur, t)
+}
+
+func initPositionProxyTest(cur realm, t *testing.T) {
+	t.Helper()
+	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
+
+	if !initializedPositionProxy {
+		initializedPositionProxy = true
+
+		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
+		position.RegisterInitializer(cross(cur), func(_ int, rlm realm, positionStore position.IPositionStore) position.IPosition {
+			return mockInstance
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	position.UpgradeImpl(cross(cur), mockPositionPath)
 }
 
 // set pool create fee to 0 for testing
-func createPoolWithoutFee(token0 string, token1 string, fee uint32, tick int32) {
+func createPoolWithoutFee(cur realm, token0 string, token1 string, fee uint32, tick int32) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
-	pl.CreatePool(cross, token0, token1, fee, gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString())
+	pl.SetPoolCreationFee(cross(cur), 0)
+	pl.CreatePool(cross(cur), token0, token1, fee, gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString())
 }
 
 func mockInstanceMint(
+	cur realm,
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -502,29 +511,28 @@ func mockInstanceMint(
 	amount1Int, _ := strconv.ParseInt(amount1Desired, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross, token0, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross, token1, poolAddr, amount1Int)
+	common.SafeGRC20Approve(cross(cur), token0, poolAddr, amount0Int)
+	common.SafeGRC20Approve(cross(cur), token1, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Mint(
-			token0,
-			token1,
-			fee,
-			tickLower,
-			tickUpper,
-			amount0Desired,
-			amount1Desired,
-			amount0Min,
-			amount1Min,
-			deadline,
-			mintTo,
-			referrer,
-		)
-	}(cross)
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.Mint(cross(cur),
+		token0,
+		token1,
+		fee,
+		tickLower,
+		tickUpper,
+		amount0Desired,
+		amount1Desired,
+		amount0Min,
+		amount1Min,
+		deadline,
+		mintTo,
+		referrer,
+	)
 }
 
 func mockInstanceIncreaseLiquidity(
+	cur realm,
 	positionId uint64,
 	amount0DesiredStr string,
 	amount1DesiredStr string,
@@ -537,42 +545,39 @@ func mockInstanceIncreaseLiquidity(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross, fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.IncreaseLiquidity(
-			positionId,
-			amount0DesiredStr,
-			amount1DesiredStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross)
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.IncreaseLiquidity(cross(cur),
+		positionId,
+		amount0DesiredStr,
+		amount1DesiredStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceDecreaseLiquidity(
+	cur realm,
 	positionId uint64,
 	liquidityStr string,
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	return func(cur realm) (uint64, string, string, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.DecreaseLiquidity(
-			positionId,
-			liquidityStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross)
+	return position.DecreaseLiquidity(cross(cur),
+		positionId,
+		liquidityStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceReposition(
+	cur realm,
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
@@ -587,32 +592,28 @@ func mockInstanceReposition(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross, fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
 
-	return func(cur realm) (uint64, string, int32, int32, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.Reposition(
-			positionId,
-			tickLower,
-			tickUpper,
-			amount0DesiredStr,
-			amount1DesiredStr,
-			amount0MinStr,
-			amount1MinStr,
-			deadline,
-		)
-	}(cross)
+	testing.SetRealm(testing.NewUserRealm(caller))
+	return position.Reposition(cross(cur),
+		positionId,
+		tickLower,
+		tickUpper,
+		amount0DesiredStr,
+		amount1DesiredStr,
+		amount0MinStr,
+		amount1MinStr,
+		deadline,
+	)
 }
 
 func mockInstanceCollectFee(
+	cur realm,
 	positionId uint64,
 	caller address,
 ) (uint64, string, string, string, string, string) {
 	testing.SetRealm(testing.NewUserRealm(caller))
 
-	return func(cur realm) (uint64, string, string, string, string, string) {
-		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.CollectFee(positionId)
-	}(cross)
+	return position.CollectFee(cross(cur), positionId)
 }

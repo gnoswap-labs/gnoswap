@@ -34,7 +34,11 @@ import (
 //   - Voting period typically 7 days
 //
 // Returns voting weight used as string.
-func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
+func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
 	// Get current blockchain state and caller information
@@ -42,14 +46,15 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	currentAt := time.Now()
 
 	// Mint and distribute GNS tokens as part of the voting process
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Extract voter address from realm context
-	voterRealm := runtime.PreviousRealm()
+	voterRealm := rlm.Previous()
 	voter := voterRealm.Address()
 
 	// Process the vote and get updated vote tallies
 	userVote, totalYesVoteWeight, totalNoVoteWeight, err := gv.vote(
+		0, rlm,
 		proposalID,
 		voter,
 		yes,
@@ -61,7 +66,6 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	}
 
 	// Emit voting event for tracking and transparency
-	// previousRealm := runtime.PreviousRealm()
 	userVoteWeight := formatInt(userVote.VotedWeight())
 	voterStr := voter.String()
 
@@ -82,6 +86,7 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 
 // vote handles core voting logic.
 func (gv *governanceV1) vote(
+	_ int, rlm realm,
 	proposalID int64,
 	voterAddress address,
 	votedYes bool,
@@ -147,7 +152,7 @@ func (gv *governanceV1) vote(
 	}
 
 	votingInfosTree.Set(voterAddress.String(), userVote)
-	err = gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	err = gv.store.SetProposalVotingInfos(0, rlm, proposalID, votingInfosTree)
 	if err != nil {
 		return nil, 0, 0, err
 	}

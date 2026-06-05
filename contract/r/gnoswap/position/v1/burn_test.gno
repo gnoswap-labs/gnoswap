@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/position"
 )
 
-func TestBurn_CalculateTokensOwed(t *testing.T) {
+func TestBurn_CalculateTokensOwed(cur realm, t *testing.T) {
 	tests := []struct {
 		name                            string
 		feeGrowthInsideLastX128         *u256.Uint
@@ -103,11 +103,11 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					calculateTokensOwed(tt.feeGrowthInsideLastX128, tt.positionFeeGrowthInsideLastX128, tt.positionLiquidity)
 				})
 			} else {
@@ -118,7 +118,7 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 	}
 }
 
-func TestBurn_CalculateFees(t *testing.T) {
+func TestBurn_CalculateFees(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setupPosition        func() *position.Position
@@ -379,13 +379,13 @@ func TestBurn_CalculateFees(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
 			position := tt.setupPosition()
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					mockInstance.calculateFees(position, tt.feeGrowthInside)
 				})
 			} else {
@@ -397,7 +397,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 	}
 }
 
-func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
+func TestDecreaseLiquidity_TokensOwedOverflow(cur realm, t *testing.T) {
 	MAX_INT64 := int64(9223372036854775807)
 
 	tests := []struct {
@@ -427,12 +427,12 @@ func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
-			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
+			createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 			testing.SetRealm(adminRealm)
-			mockInstanceMint(
+			mockInstanceMint(cur,
 				barPath, fooPath, fee500,
 				-10000, 10000,
 				"1000000", "1000000",
@@ -444,11 +444,11 @@ func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 			pos := mockInstance.mustGetPosition(1)
 			pos.SetTokensOwed0(tc.tokensOwed0)
 			pos.SetTokensOwed1(tc.tokensOwed1)
-			mockInstance.mustUpdatePosition(1, *pos)
+			mockInstance.mustUpdatePosition(0, cur, 1, *pos)
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			uassert.AbortsContains(t, tc.expectedPanicMsg, func() {
-				mockInstanceDecreaseLiquidity(
+			uassert.AbortsContains(t, cur, tc.expectedPanicMsg, func() {
+				mockInstanceDecreaseLiquidity(cur,
 					1,
 					"100",
 					"0", "0",

@@ -25,7 +25,7 @@ type twapConsistencyCase struct {
 }
 
 // TestOracle_TWAPConsistencyCases covers canonical TWAP consistency cases.
-func TestOracle_TWAPConsistencyCases(t *testing.T) {
+func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 	tests := []twapConsistencyCase{
 		{
 			name:        "constant tick exact window",
@@ -141,7 +141,7 @@ func TestOracle_TWAPConsistencyCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			restoreContext := setOracleTestContext(tt.currentTime)
 			defer restoreContext()
 

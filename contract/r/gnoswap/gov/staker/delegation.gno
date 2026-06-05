@@ -1,5 +1,7 @@
 package staker
 
+import bptree "gno.land/p/nt/bptree/v0"
+
 // DelegationType represents the type of delegation operation
 type DelegationType string
 
@@ -95,4 +97,12 @@ func (d *Delegation) Clone() *Delegation {
 		createdAt:        d.createdAt,
 		withdraws:        clonedWithdraws,
 	}
+}
+
+func NewDelegationTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewUserDelegationTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 // TestNewDelegationWithdraw tests the creation of new delegation withdraws
-func TestNewDelegationWithdraw(t *testing.T) {
+func TestNewDelegationWithdraw(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		delegationID             int64
@@ -43,7 +43,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			withdraw := NewDelegationWithdraw(
 				tc.delegationID,
@@ -67,7 +67,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 }
 
 // TestNewDelegationWithdrawWithoutLockup tests creating withdraw without lockup
-func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
+func TestNewDelegationWithdrawWithoutLockup(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		delegationID     int64
@@ -85,7 +85,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			withdraw := NewDelegationWithdrawWithoutLockup(
 				tc.delegationID,
@@ -108,7 +108,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 }
 
 // TestDelegationWithdrawResolver_IsCollectable tests the collectable status
-func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
+func TestDelegationWithdrawResolver_IsCollectable(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		withdraw            staker.DelegationWithdraw
@@ -165,7 +165,7 @@ func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
 
@@ -179,7 +179,7 @@ func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 }
 
 // TestDelegationWithdrawResolver_CollectableAmount tests the collectable amount calculation
-func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
+func TestDelegationWithdrawResolver_CollectableAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		withdraw       staker.DelegationWithdraw
@@ -224,7 +224,7 @@ func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
 
@@ -238,7 +238,7 @@ func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
 }
 
 // TestDelegationWithdrawResolver_Collect tests the collection functionality
-func TestDelegationWithdrawResolver_Collect(t *testing.T) {
+func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		withdraw                staker.DelegationWithdraw
@@ -304,9 +304,13 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
+			// Copy into a local so the value is owned by the executing realm;
+			// the domain composite literal carries domain provenance and a
+			// non-crossing setter would otherwise hit the cross-realm guard.
+			withdraw := tc.withdraw
+			resolver := NewDelegationWithdrawResolver(&withdraw)
 
 			// when
 			err := resolver.Collect(tc.collectAmount, tc.currentTime)
@@ -316,17 +320,17 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 				uassert.ErrorIs(t, err, tc.expectedError)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, tc.withdraw.IsCollected(), tc.expectedCollected)
-				uassert.Equal(t, tc.withdraw.CollectedAmount(), tc.expectedCollectedAmount)
-				uassert.Equal(t, tc.withdraw.CollectedAt(), tc.currentTime)
+				uassert.Equal(t, withdraw.IsCollected(), tc.expectedCollected)
+				uassert.Equal(t, withdraw.CollectedAmount(), tc.expectedCollectedAmount)
+				uassert.Equal(t, withdraw.CollectedAt(), tc.currentTime)
 			}
 		})
 	}
 }
 
 // TestDelegationWithdrawResolver_CollectErrors tests additional error cases
-func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
-	t.Run("Collect with negative amount", func(t *testing.T) {
+func TestDelegationWithdrawResolver_CollectErrors(cur realm, t *testing.T) {
+	t.Run("Collect with negative amount", func(cur realm, t *testing.T) {
 		// given
 		withdraw := staker.NewDelegationWithdraw(
 			1,
@@ -346,7 +350,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		uassert.Equal(t, withdraw.CollectedAmount(), int64(-50))
 	})
 
-	t.Run("Collect exactly at collectable time", func(t *testing.T) {
+	t.Run("Collect exactly at collectable time", func(cur realm, t *testing.T) {
 		// given
 		createdAt := int64(1000)
 		lockupPeriod := int64(500)
@@ -369,7 +373,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		uassert.Equal(t, withdraw.CollectedAmount(), int64(100))
 	})
 
-	t.Run("Collect one second before collectable time", func(t *testing.T) {
+	t.Run("Collect one second before collectable time", func(cur realm, t *testing.T) {
 		// given
 		createdAt := int64(1000)
 		lockupPeriod := int64(500)
@@ -391,7 +395,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		uassert.False(t, withdraw.IsCollected())
 	})
 
-	t.Run("Collect with large amount value", func(t *testing.T) {
+	t.Run("Collect with large amount value", func(cur realm, t *testing.T) {
 		// given
 		largeAmount := int64(9223372036854775807) // max int64
 		withdraw := staker.NewDelegationWithdraw(
@@ -413,7 +417,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		uassert.Equal(t, withdraw.CollectedAmount(), largeAmount)
 	})
 
-	t.Run("IsCollectable with negative undelegate amount", func(t *testing.T) {
+	t.Run("IsCollectable with negative undelegate amount", func(cur realm, t *testing.T) {
 		// given
 		withdraw := staker.NewDelegationWithdraw(
 			1,
@@ -431,7 +435,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		uassert.False(t, result)
 	})
 
-	t.Run("CollectableAmount with partial collection", func(t *testing.T) {
+	t.Run("CollectableAmount with partial collection", func(cur realm, t *testing.T) {
 		// given
 		withdraw := staker.NewDelegationWithdraw(
 			1,
@@ -453,8 +457,8 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 }
 
 // Test boundary conditions for safe arithmetic in delegation withdraw operations
-func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
-	t.Run("CollectableAmount with large amounts near max", func(t *testing.T) {
+func TestDelegationWithdraw_BoundaryConditions(cur realm, t *testing.T) {
+	t.Run("CollectableAmount with large amounts near max", func(cur realm, t *testing.T) {
 		// given: withdrawal with very large amount
 		withdraw := staker.NewDelegationWithdraw(
 			1,
@@ -472,7 +476,7 @@ func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, collectable, int64(math.MaxInt64/2))
 	})
 
-	t.Run("Collect causing overflow in collected amount", func(t *testing.T) {
+	t.Run("Collect causing overflow in collected amount", func(cur realm, t *testing.T) {
 		// given: withdrawal at max
 		withdraw := staker.NewDelegationWithdraw(
 			1,
@@ -501,7 +505,7 @@ func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
 		uassert.True(t, didPanic)
 	})
 
-	t.Run("CollectableAmount subtraction with exact amounts", func(t *testing.T) {
+	t.Run("CollectableAmount subtraction with exact amounts", func(cur realm, t *testing.T) {
 		// given: withdrawal with specific amounts
 		undelegateAmount := int64(1000000)
 		withdraw := staker.NewDelegationWithdraw(

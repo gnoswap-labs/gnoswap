@@ -16,8 +16,8 @@ import (
 //
 // Parameters:
 //   - period: new lockup period in seconds
-func (g *govStakerV1) setUnDelegationLockupPeriod(period int64) {
-	if err := g.store.SetUnDelegationLockupPeriod(period); err != nil {
+func (g *govStakerV1) setUnDelegationLockupPeriod(_ int, rlm realm, period int64) {
+	if err := g.store.SetUnDelegationLockupPeriod(0, rlm, period); err != nil {
 		panic(err)
 	}
 }
@@ -55,8 +55,8 @@ func (g *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
 //
 // Returns:
 //   - bool: true if successfully stored
-func (g *govStakerV1) setDelegation(delegationID int64, delegation *staker.Delegation) bool {
-	if err := g.store.SetDelegation(delegationID, delegation); err != nil {
+func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
+	if err := g.store.SetDelegation(0, rlm, delegationID, delegation); err != nil {
 		return false
 	}
 	return true
@@ -70,8 +70,8 @@ func (g *govStakerV1) setDelegation(delegationID int64, delegation *staker.Deleg
 //
 // Returns:
 //   - bool: true if successfully added
-func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Delegation) bool {
-	if ok := g.setDelegation(delegationID, delegation); !ok {
+func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
+	if ok := g.setDelegation(0, rlm, delegationID, delegation); !ok {
 		return false
 	}
 
@@ -83,7 +83,7 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(delegationManager); err != nil {
+	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
 		return false
 	}
 
@@ -97,14 +97,14 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 //
 // Returns:
 //   - bool: true if successfully removed
-func (g *govStakerV1) removeDelegation(delegationID int64) bool {
+func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) bool {
 	delegation := g.getDelegation(delegationID)
 	if delegation == nil {
 		return false
 	}
 
 	// Remove from store
-	if err := g.store.RemoveDelegation(delegationID); err != nil {
+	if err := g.store.RemoveDelegation(0, rlm, delegationID); err != nil {
 		return false
 	}
 
@@ -116,7 +116,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(delegationManager); err != nil {
+	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
 		return false
 	}
 
@@ -135,7 +135,7 @@ func (g *govStakerV1) getUserDelegations(user address) *bptree.BPTree {
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
-		return bptree.NewBPTreeN(16)
+		return staker.NewUserDelegationTree()
 	}
 
 	return userDelegations
@@ -178,12 +178,12 @@ func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee 
 //   - delegateeAddr: address of the delegatee
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the delegation change
-func (g *govStakerV1) addDelegationRecord(delegateeAddr address, amount int64, timestamp int64) {
+func (g *govStakerV1) addDelegationRecord(_ int, rlm realm, delegateeAddr address, amount int64, timestamp int64) {
 	// Update total delegation history
-	g.updateTotalDelegationHistory(amount, timestamp)
+	g.updateTotalDelegationHistory(0, rlm, amount, timestamp)
 
 	// Update user delegation history
-	g.updateUserDelegationHistory(delegateeAddr, amount, timestamp)
+	g.updateUserDelegationHistory(0, rlm, delegateeAddr, amount, timestamp)
 }
 
 // updateTotalDelegationHistory updates the total delegation history with cumulative value.
@@ -191,7 +191,7 @@ func (g *govStakerV1) addDelegationRecord(delegateeAddr address, amount int64, t
 // Parameters:
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
-func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64) {
+func (g *govStakerV1) updateTotalDelegationHistory(_ int, rlm realm, amount int64, timestamp int64) {
 	history := g.store.GetTotalDelegationHistory()
 
 	// Get current total from the most recent entry
@@ -204,7 +204,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 
 	history.Set(timestamp, newTotal)
 
-	if err := g.store.SetTotalDelegationHistory(history); err != nil {
+	if err := g.store.SetTotalDelegationHistory(0, rlm, history); err != nil {
 		panic(err)
 	}
 }
@@ -216,7 +216,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 //   - delegateeAddr: address of the delegatee
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
-func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount int64, timestamp int64) {
+func (g *govStakerV1) updateUserDelegationHistory(_ int, rlm realm, delegateeAddr address, amount int64, timestamp int64) {
 	history := g.store.GetUserDelegationHistory()
 	addrStr := delegateeAddr.String()
 
@@ -230,7 +230,7 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	// Store new cumulative value under composite key
 	history.Set(makeUserHistoryKey(addrStr, timestamp), newAmount)
 
-	if err := g.store.SetUserDelegationHistory(history); err != nil {
+	if err := g.store.SetUserDelegationHistory(0, rlm, history); err != nil {
 		panic(err)
 	}
 }
@@ -285,7 +285,7 @@ func (g *govStakerV1) getLatestUserDelegationByAddress(history *bptree.BPTree, a
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
+func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
 	emissionRewardManager := g.store.GetEmissionRewardManager()
@@ -299,7 +299,7 @@ func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, curre
 		return err
 	}
 
-	return g.store.SetEmissionRewardManager(emissionRewardManager)
+	return g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -309,7 +309,7 @@ func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, curre
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
+func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
 	emissionRewardManager := g.store.GetEmissionRewardManager()
@@ -323,7 +323,7 @@ func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, cu
 		return err
 	}
 
-	return g.store.SetEmissionRewardManager(emissionRewardManager)
+	return g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -336,7 +336,7 @@ func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, cu
 // Returns:
 //   - int64: amount of emission rewards claimed
 //   - error: nil on success, error if claiming fails
-func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
+func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
 	emissionRewardManager := g.store.GetEmissionRewardManager()
@@ -351,7 +351,7 @@ func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestam
 		return 0, err
 	}
 
-	if err := g.store.SetEmissionRewardManager(emissionRewardManager); err != nil {
+	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
 		return 0, err
 	}
 
@@ -379,8 +379,8 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross)
+func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
+	pf.DistributeProtocolFee(cross(rlm))
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
@@ -395,7 +395,7 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 		return err
 	}
 
-	return g.store.SetProtocolFeeRewardManager(protocolFeeRewardManager)
+	return g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -405,8 +405,8 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross)
+func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
+	pf.DistributeProtocolFee(cross(rlm))
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
@@ -421,7 +421,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 		return err
 	}
 
-	return g.store.SetProtocolFeeRewardManager(protocolFeeRewardManager)
+	return g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -434,8 +434,8 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 // Returns:
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
-	pf.DistributeProtocolFee(cross)
+func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address string, currentTimestamp int64) (map[string]int64, error) {
+	pf.DistributeProtocolFee(cross(rlm))
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
@@ -451,7 +451,7 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimes
 		return nil, err
 	}
 
-	if err := g.store.SetProtocolFeeRewardManager(protocolFeeRewardManager); err != nil {
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return nil, err
 	}
 
@@ -489,11 +489,11 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 //
 // Returns:
 //   - bool: true if successfully set
-func (g *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
+func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) bool {
 	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	resolvedDeposits.setLaunchpadProjectDeposit(ownerAddress, deposit)
-	if err := g.store.SetLaunchpadProjectDeposits(launchpadDeposits); err != nil {
+	if err := g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits); err != nil {
 		return false
 	}
 	return true
@@ -506,14 +506,14 @@ func (g *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit in
 //   - address: project wallet address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
+func (g *govStakerV1) addStakeFromLaunchpad(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := g.makeLaunchpadRewardID(address)
-	err := g.addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	err := g.addStakeEmissionReward(0, rlm, launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	err = g.addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err = g.addStakeProtocolFeeReward(0, rlm, launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
@@ -524,7 +524,7 @@ func (g *govStakerV1) addStakeFromLaunchpad(address string, amount int64, curren
 	}
 
 	deposit = safeAddInt64(deposit, amount)
-	g.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
 
 	return nil
 }
@@ -536,14 +536,14 @@ func (g *govStakerV1) addStakeFromLaunchpad(address string, amount int64, curren
 //   - address: project wallet address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
+func (g *govStakerV1) removeStakeFromLaunchpad(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := g.makeLaunchpadRewardID(address)
-	err := g.removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	err := g.removeStakeEmissionReward(0, rlm, launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	err = g.removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err = g.removeStakeProtocolFeeReward(0, rlm, launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
@@ -558,7 +558,7 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 		deposit = 0
 	}
 
-	g.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
 
 	return nil
 }

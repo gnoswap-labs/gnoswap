@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestTrySwapTypeFromStr(t *testing.T) {
+func TestTrySwapTypeFromStr(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -40,7 +40,7 @@ func TestTrySwapTypeFromStr(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got, err := trySwapTypeFromStr(tt.input)
 
 			if !tt.wantErr {

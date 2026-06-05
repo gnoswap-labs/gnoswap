@@ -13,27 +13,37 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-func defaultSetupFn(env *TestEnv) {
-	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-	env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-		AndPositionMinted().
-		AndUserFundedAndApproved(user1Addr, routerAddr, barPath)
+func defaultAdminSetup(cur realm, env *TestEnv) {
+	env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+		AndPositionMinted(cur)
 }
 
-func TestSingleSwap(t *testing.T) {
+func defaultUserSetup(cur realm, env *TestEnv) {
+	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath)
+}
+
+func runDefaultSetup(cur realm, env *TestEnv) {
+	testing.SetRealm(adminRealm)
+	defaultAdminSetup(cur, env)
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+	defaultUserSetup(cur, env)
+}
+
+func TestSingleSwap(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	tests := []struct {
 		name        string
-		setupFn     func(*TestEnv)
+		setupFn     func(cur realm, env *TestEnv)
 		params      SingleSwapParams
 		expectedIn  string
 		expectedOut string
 		expectError bool
 	}{
 		{
-			name: "exact input swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-			},
+			name:    "exact input swap BAR -> BAZ",
+			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
 				TokenOut(bazPath).
@@ -45,10 +55,8 @@ func TestSingleSwap(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "exact output swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-			},
+			name:    "exact output swap BAR -> BAZ",
+			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
 				TokenOut(bazPath).
@@ -62,23 +70,24 @@ func TestSingleSwap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			env := NewTestEnv(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 			router := mockRouter()
 			singleSwapFn := func(cur realm) (int64, int64) {
-				return router.singleSwap(&tt.params)
+				return router.singleSwap(0, cur, &tt.params)
 			}
 
 			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			common.Approve(cross, tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(cross, tt.params.tokenOut, poolAddr, maxApprove)
+			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
 
-			amountIn, amountOut := singleSwapFn(cross)
+			amountIn, amountOut := singleSwapFn(cross(cur))
 
 			uassert.Equal(t, strconv.FormatInt(amountIn, 10), tt.expectedIn)
 			uassert.Equal(t, strconv.FormatInt(amountOut, 10), tt.expectedOut)
@@ -86,12 +95,14 @@ func TestSingleSwap(t *testing.T) {
 	}
 }
 
-func TestSingleSwapInputValidation(t *testing.T) {
+func TestSingleSwapInputValidation(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	invalidTokenPath := "gno.land/r/invalid/token"
 
 	tests := []struct {
 		name         string
-		setupFn      func(*TestEnv)
+		setupFn      func(cur realm, env *TestEnv)
 		params       SingleSwapParams
 		expectError  bool
 		errType      string
@@ -99,8 +110,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 	}{
 		{
 			name: "Fail: Same token swap attempt",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -114,9 +125,9 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Fail: Unregistered input token",
-			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted()
+			setupFn: func(cur realm, env *TestEnv) {
+				testing.SetRealm(adminRealm)
+				defaultAdminSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(invalidTokenPath).
@@ -130,8 +141,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Fail: Unregistered output token",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -145,8 +156,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Fail: Invalid fee tier 1",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -160,8 +171,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -175,8 +186,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Fail: Zero amount specified",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -190,8 +201,8 @@ func TestSingleSwapInputValidation(t *testing.T) {
 		},
 		{
 			name: "Success: Valid parameters",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -204,30 +215,26 @@ func TestSingleSwapInputValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			env := NewTestEnv(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 
 			router := mockRouter()
 
 			if tt.expectError {
-				switch tt.errType {
-				case "panic":
-					uassert.PanicsWithMessage(t, tt.errorMessage, func() {
-						router.singleSwap(&tt.params)
-					})
-				case "abort":
-					uassert.AbortsWithMessage(t, tt.errorMessage, func() {
-						router.singleSwap(&tt.params)
-					})
-				default:
-					t.Errorf("unexpected error type: %s", tt.errType)
-				}
+				uassert.AbortsWithMessage(t, cur, tt.errorMessage, func() {
+					func(cur realm) {
+						router.singleSwap(0, cur, &tt.params)
+					}(cross(cur))
+				})
 			} else {
-				amountIn, amountOut := router.singleSwap(&tt.params)
+				amountIn, amountOut := func(cur realm) (int64, int64) {
+					return router.singleSwap(0, cur, &tt.params)
+				}(cross(cur))
 
 				if amountIn == 0 {
 					t.Error("Expected non-zero input amount")
@@ -241,22 +248,22 @@ func TestSingleSwapInputValidation(t *testing.T) {
 }
 
 // TestSingleSwapRoute_PriceLimitValidation tests validation of sqrtPriceLimitX96 parameter
-func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
-	initRouterTest(t)
-	CreatePoolWithoutFee(t)
-	MakeMintPositionWithoutFee(t)
+func TestSingleSwapRoute_PriceLimitValidation(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+	CreatePoolWithoutFee(cur, t)
+	MakeMintPositionWithoutFee(cur, t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(cur, t, barPath, userAddr)
+	TokenApprove(cur, t, barPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
 	// Disable swap fee for this test
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		router.SetSwapFee(0)
-	}(cross)
+		router.SetSwapFee(0, cur, 0)
+	}(cross(cur))
 
 	tests := []struct {
 		name       string
@@ -294,14 +301,14 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(userAddr))
 
 			if tt.shouldFail {
 				// Should panic or abort on invalid price limit
-				uassert.AbortsContains(t, tt.errorMsg, func() {
+				uassert.AbortsContains(t, cur, tt.errorMsg, func() {
 					func(cur realm) {
-						router.ExactInSingleSwapRoute(
+						router.ExactInSingleSwapRoute(0, cur,
 							barPath,
 							bazPath,
 							"100000",
@@ -311,7 +318,7 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 							deadline,
 							"",
 						)
-					}(cross)
+					}(cross(cur))
 				})
 			}
 		})
@@ -319,29 +326,29 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 }
 
 // TestExactOutSingleSwapRoute_PriceLimitParameter tests price limit parameter in ExactOut mode
-func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
-	initRouterTest(t)
-	CreatePoolWithoutFee(t)
-	MakeMintPositionWithoutFee(t)
+func TestExactOutSingleSwapRoute_PriceLimitParameter(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+	CreatePoolWithoutFee(cur, t)
+	MakeMintPositionWithoutFee(cur, t)
 
 	userAddr := testutils.TestAddress("user1")
-	TokenFaucet(t, barPath, userAddr)
-	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+	TokenFaucet(cur, t, barPath, userAddr)
+	TokenApprove(cur, t, barPath, userAddr, routerAddr, maxApprove)
 
 	router := mockRouter()
 
 	// Disable swap fee
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		router.SetSwapFee(0)
-	}(cross)
+		router.SetSwapFee(0, cur, 0)
+	}(cross(cur))
 
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 
 	// Test with invalid price limit should fail
-	uassert.AbortsContains(t, "", func() {
+	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactOutSingleSwapRoute(
+			router.ExactOutSingleSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"50000",
@@ -351,6 +358,6 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
 				deadline,
 				"",
 			)
-		}(cross)
+		}(cross(cur))
 	})
 }

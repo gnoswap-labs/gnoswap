@@ -11,31 +11,33 @@ type IStaker interface {
 }
 
 type IStakerManager interface {
-	StakeToken(positionId uint64, referrer string) string
-	UnStakeToken(positionId uint64) string
-	CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64)
+	StakeToken(_ int, rlm realm, positionId uint64, referrer string) string
+	UnStakeToken(_ int, rlm realm, positionId uint64) string
+	CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64)
 
-	SetPoolTier(poolPath string, tier uint64)
-	ChangePoolTier(poolPath string, tier uint64)
-	RemovePoolTier(poolPath string)
+	SetPoolTier(_ int, rlm realm, poolPath string, tier uint64)
+	ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64)
+	RemovePoolTier(_ int, rlm realm, poolPath string)
 
 	CreateExternalIncentive(
+		_ int,
+		rlm realm,
 		targetPoolPath string,
 		rewardToken string,
 		rewardAmount int64,
 		startTimestamp int64,
 		endTimestamp int64,
 	)
-	EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address)
-	CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64
-	AddToken(tokenPath string)
-	RemoveToken(tokenPath string)
+	EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address)
+	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
+	AddToken(_ int, rlm realm, tokenPath string)
+	RemoveToken(_ int, rlm realm, tokenPath string)
 
-	SetWarmUp(pct, timeDuration int64)
-	SetDepositGnsAmount(amount int64)
-	SetMinimumRewardAmount(amount int64)
-	SetTokenMinimumRewardAmount(paramsStr string)
-	SetUnStakingFee(fee uint64)
+	SetWarmUp(_ int, rlm realm, pct, timeDuration int64)
+	SetDepositGnsAmount(_ int, rlm realm, amount int64)
+	SetMinimumRewardAmount(_ int, rlm realm, amount int64)
+	SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string)
+	SetUnStakingFee(_ int, rlm realm, fee uint64)
 }
 
 type IStakerGetter interface {
@@ -108,104 +110,104 @@ type IStakerStore interface {
 	// DepositGnsAmount
 	HasDepositGnsAmountStoreKey() bool
 	GetDepositGnsAmount() int64
-	SetDepositGnsAmount(amount int64) error
+	SetDepositGnsAmount(_ int, rlm realm, amount int64) error
 
 	// MinimumRewardAmount
 	HasMinimumRewardAmountStoreKey() bool
 	GetMinimumRewardAmount() int64
-	SetMinimumRewardAmount(amount int64) error
+	SetMinimumRewardAmount(_ int, rlm realm, amount int64) error
 
 	// Deposits
 	HasDepositsStoreKey() bool
 	GetDeposits() *bptree.BPTree
-	SetDeposits(deposits *bptree.BPTree) error
+	SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error
 
 	// ExternalIncentives
 	HasExternalIncentivesStoreKey() bool
 	GetExternalIncentives() *bptree.BPTree
-	SetExternalIncentives(incentives *bptree.BPTree) error
+	SetExternalIncentives(_ int, rlm realm, incentives *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool
 	GetTotalEmissionSent() int64
-	SetTotalEmissionSent(amount int64) error
+	SetTotalEmissionSent(_ int, rlm realm, amount int64) error
 
 	// AllowedTokens
 	HasAllowedTokensStoreKey() bool
 	GetAllowedTokens() []string
-	SetAllowedTokens(tokens []string) error
+	SetAllowedTokens(_ int, rlm realm, tokens []string) error
 
 	// IncentiveCounter
 	HasIncentiveCounterStoreKey() bool
 	GetIncentiveCounter() *Counter
-	SetIncentiveCounter(counter *Counter) error
+	SetIncentiveCounter(_ int, rlm realm, counter *Counter) error
 	NextIncentiveID(creator address, timestamp int64) string
 
 	// TokenSpecificMinimumRewards
 	HasTokenSpecificMinimumRewardsStoreKey() bool
 	GetTokenSpecificMinimumRewards() map[string]int64
-	SetTokenSpecificMinimumRewards(rewards map[string]int64) error
+	SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error
 
 	// UnstakingFee
 	HasUnstakingFeeStoreKey() bool
 	GetUnstakingFee() uint64
-	SetUnstakingFee(fee uint64) error
+	SetUnstakingFee(_ int, rlm realm, fee uint64) error
 
 	HasPendingProtocolFeesStoreKey() bool
 	GetPendingProtocolFees() map[string]int64
-	SetPendingProtocolFees(fees map[string]int64) error
+	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
 
 	// Pools
 	HasPoolsStoreKey() bool
 	GetPools() *bptree.BPTree
-	SetPools(pools *bptree.BPTree) error
+	SetPools(_ int, rlm realm, pools *bptree.BPTree) error
 
 	// PoolTierMemberships
 	HasPoolTierMembershipsStoreKey() bool
 	GetPoolTierMemberships() *bptree.BPTree
-	SetPoolTierMemberships(memberships *bptree.BPTree) error
+	SetPoolTierMemberships(_ int, rlm realm, memberships *bptree.BPTree) error
 
 	// PoolTierRatio
 	HasPoolTierRatioStoreKey() bool
 	GetPoolTierRatio() TierRatio
-	SetPoolTierRatio(ratio TierRatio) error
+	SetPoolTierRatio(_ int, rlm realm, ratio TierRatio) error
 
 	// PoolTierCounts
 	HasPoolTierCountsStoreKey() bool
 	GetPoolTierCounts() [AllTierCount]uint64
-	SetPoolTierCounts(counts [AllTierCount]uint64) error
+	SetPoolTierCounts(_ int, rlm realm, counts [AllTierCount]uint64) error
 
 	// PoolTierLastRewardCacheTimestamp
 	HasPoolTierLastRewardCacheTimestampStoreKey() bool
 	GetPoolTierLastRewardCacheTimestamp() int64
-	SetPoolTierLastRewardCacheTimestamp(timestamp int64) error
+	SetPoolTierLastRewardCacheTimestamp(_ int, rlm realm, timestamp int64) error
 
 	// PoolTierCurrentEmission
 	HasPoolTierCurrentEmissionStoreKey() bool
 	GetPoolTierCurrentEmission() int64
-	SetPoolTierCurrentEmission(emission int64) error
+	SetPoolTierCurrentEmission(_ int, rlm realm, emission int64) error
 
 	// PoolTierGetEmission
 	HasPoolTierGetEmissionStoreKey() bool
 	GetPoolTierGetEmission() func() int64
-	SetPoolTierGetEmission(fn func() int64) error
+	SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error
 
 	// PoolTierGetHalvingBlocksInRange
 	HasPoolTierGetHalvingBlocksInRangeStoreKey() bool
 	GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64)
-	SetPoolTierGetHalvingBlocksInRange(fn func(start, end int64) ([]int64, []int64)) error
+	SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error
 
 	HasWarmupTemplateStoreKey() bool
 	GetWarmupTemplate() []Warmup
-	SetWarmupTemplate(warmups []Warmup) error
+	SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) error
 
 	// CurrentSwapBatch
 	HasCurrentSwapBatchStoreKey() bool
 	GetCurrentSwapBatch() *SwapBatchProcessor
-	SetCurrentSwapBatch(batch *SwapBatchProcessor) error
+	SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProcessor) error
 
 	// ExternalIncentivesByCreationTime
 	HasExternalIncentivesByCreationTimeStoreKey() bool
 	GetExternalIncentivesByCreationTime() *UintTree
-	SetExternalIncentivesByCreationTime(tree *UintTree) error
+	SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *UintTree) error
 }

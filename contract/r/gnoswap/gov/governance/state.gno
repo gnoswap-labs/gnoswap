@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"chain/runtime"
 	"errors"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
@@ -11,16 +10,26 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	// currentAddress and domainPath describe the governance realm itself.
+	// They are captured from the `cur realm` parameter in init(cur realm),
+	// which resolves to this governance domain realm.
+	currentAddress address
+	domainPath     string
 
 	kvStore store.KVStore
 
 	versionManager version_manager.VersionManager
 	implementation IGovernance
+
+	// ErrSpoofedRealm is returned/panicked when a captured realm token no
+	// longer matches the live crossing frame (rlm.IsCurrent() == false).
+	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+	domainPath = cur.PkgPath()
+
 	kvStore = store.NewKVStore(currentAddress)
 	versionManager = version_manager.NewVersionManager(domainPath, kvStore, initializeDomainStore)
 

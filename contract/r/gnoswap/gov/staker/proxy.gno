@@ -12,7 +12,7 @@ package staker
 // Returns:
 //   - int64: delegation ID
 func Delegate(cur realm, to address, amount int64, referrer string) int64 {
-	return getImplementation().Delegate(to, amount, referrer)
+	return getImplementation().Delegate(0, cur, to, amount, referrer)
 }
 
 // Undelegate initiates the undelegation process for staked GNS.
@@ -24,7 +24,7 @@ func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 // Returns:
 //   - int64: undelegation result code
 func Undelegate(cur realm, from address, amount int64) int64 {
-	return getImplementation().Undelegate(from, amount)
+	return getImplementation().Undelegate(0, cur, from, amount)
 }
 
 // Redelegate moves delegation from one delegatee to another.
@@ -37,7 +37,7 @@ func Undelegate(cur realm, from address, amount int64) int64 {
 // Returns:
 //   - int64: redelegation result code
 func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
-	return getImplementation().Redelegate(delegatee, newDelegatee, amount)
+	return getImplementation().Redelegate(0, cur, delegatee, newDelegatee, amount)
 }
 
 // CollectUndelegatedGns collects GNS tokens after the undelegation lockup period.
@@ -45,14 +45,14 @@ func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 
 // Returns:
 //   - int64: amount of GNS collected
 func CollectUndelegatedGns(cur realm) int64 {
-	return getImplementation().CollectUndelegatedGns()
+	return getImplementation().CollectUndelegatedGns(0, cur)
 }
 
 // Reward operations
 
 // CollectReward claims accumulated staking rewards.
 func CollectReward(cur realm) {
-	getImplementation().CollectReward()
+	getImplementation().CollectReward(0, cur)
 }
 
 // CollectRewardFromLaunchPad claims rewards from launchpad projects.
@@ -60,7 +60,7 @@ func CollectReward(cur realm) {
 // Parameters:
 //   - to: address to collect rewards for
 func CollectRewardFromLaunchPad(cur realm, to address) {
-	getImplementation().CollectRewardFromLaunchPad(to)
+	getImplementation().CollectRewardFromLaunchPad(0, cur, to)
 }
 
 // SetAmountByProjectWallet sets reward amount for a project wallet.
@@ -71,7 +71,7 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 //   - amount: reward amount
 //   - add: true to add, false to subtract
 func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
-	getImplementation().SetAmountByProjectWallet(addr, amount, add)
+	getImplementation().SetAmountByProjectWallet(0, cur, addr, amount, add)
 }
 
 // Admin functions
@@ -84,7 +84,7 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 //   - threshold: timestamp threshold for cleanup
 //   - target: user address whose delegation history to clean
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target address) {
-	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold, target)
+	getImplementation().CleanStakerDelegationSnapshotByAdmin(0, cur, threshold, target)
 }
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.
@@ -93,5 +93,5 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target add
 // Parameters:
 //   - period: lockup period in seconds
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
-	getImplementation().SetUnDelegationLockupPeriodByAdmin(period)
+	getImplementation().SetUnDelegationLockupPeriodByAdmin(0, cur, period)
 }

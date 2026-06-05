@@ -1,5 +1,7 @@
 package governance
 
+import bptree "gno.land/p/nt/bptree/v0"
+
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
@@ -157,4 +159,20 @@ func (p *Proposal) Clone() *Proposal {
 		snapshotTime:  p.snapshotTime,
 		createdHeight: p.createdHeight,
 	}
+}
+
+func NewProposalTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewUserProposalTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewVotingInfoTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewProposalUserVotingInfoTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
 }
