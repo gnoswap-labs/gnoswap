@@ -27,38 +27,38 @@ func (s *stakerV1) getPoolTier() *PoolTier {
 	)
 }
 
-func (s *stakerV1) updatePoolTier(poolTier *PoolTier) {
-	err := s.store.SetPoolTierMemberships(poolTier.membership)
+func (s *stakerV1) updatePoolTier(_ int, rlm realm, poolTier *PoolTier) {
+	err := s.store.SetPoolTierMemberships(0, rlm, poolTier.membership)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierRatio(poolTier.tierRatio)
+	err = s.store.SetPoolTierRatio(0, rlm, poolTier.tierRatio)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierCounts(poolTier.counts)
+	err = s.store.SetPoolTierCounts(0, rlm, poolTier.counts)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierLastRewardCacheTimestamp(poolTier.lastRewardCacheTimestamp)
+	err = s.store.SetPoolTierLastRewardCacheTimestamp(0, rlm, poolTier.lastRewardCacheTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierCurrentEmission(poolTier.currentEmission)
+	err = s.store.SetPoolTierCurrentEmission(0, rlm, poolTier.currentEmission)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierGetEmission(poolTier.getEmission)
+	err = s.store.SetPoolTierGetEmission(0, rlm, poolTier.getEmission)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.store.SetPoolTierGetHalvingBlocksInRange(poolTier.getHalvingBlocksInRange)
+	err = s.store.SetPoolTierGetHalvingBlocksInRange(0, rlm, poolTier.getHalvingBlocksInRange)
 	if err != nil {
 		panic(err)
 	}
@@ -84,8 +84,8 @@ func (s *stakerV1) getExternalIncentivesByCreationTime() *sr.UintTree {
 	return s.store.GetExternalIncentivesByCreationTime()
 }
 
-func (s *stakerV1) updateExternalIncentivesByCreationTime(externalIncentivesByCreationTime *sr.UintTree) {
-	err := s.store.SetExternalIncentivesByCreationTime(externalIncentivesByCreationTime)
+func (s *stakerV1) updateExternalIncentivesByCreationTime(_ int, rlm realm, externalIncentivesByCreationTime *sr.UintTree) {
+	err := s.store.SetExternalIncentivesByCreationTime(0, rlm, externalIncentivesByCreationTime)
 	if err != nil {
 		panic(err)
 	}

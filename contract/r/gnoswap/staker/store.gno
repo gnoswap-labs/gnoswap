@@ -61,8 +61,8 @@ func (s *stakerStore) GetDepositGnsAmount() int64 {
 	return amount
 }
 
-func (s *stakerStore) SetDepositGnsAmount(amount int64) error {
-	return s.kvStore.Set(StoreKeyDepositGnsAmount.String(), amount)
+func (s *stakerStore) SetDepositGnsAmount(_ int, rlm realm, amount int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyDepositGnsAmount.String(), amount)
 }
 
 // MinimumRewardAmount
@@ -84,8 +84,8 @@ func (s *stakerStore) GetMinimumRewardAmount() int64 {
 	return amount
 }
 
-func (s *stakerStore) SetMinimumRewardAmount(amount int64) error {
-	return s.kvStore.Set(StoreKeyMinimumRewardAmount.String(), amount)
+func (s *stakerStore) SetMinimumRewardAmount(_ int, rlm realm, amount int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyMinimumRewardAmount.String(), amount)
 }
 
 // Deposits
@@ -107,8 +107,8 @@ func (s *stakerStore) GetDeposits() *bptree.BPTree {
 	return deposits
 }
 
-func (s *stakerStore) SetDeposits(deposits *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
+func (s *stakerStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
+	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)
 }
 
 // ExternalIncentives
@@ -130,8 +130,8 @@ func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 	return incentives
 }
 
-func (s *stakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyExternalIncentives.String(), incentives)
+func (s *stakerStore) SetExternalIncentives(_ int, rlm realm, incentives *bptree.BPTree) error {
+	return s.kvStore.Set(0, rlm, StoreKeyExternalIncentives.String(), incentives)
 }
 
 // TotalEmissionSent
@@ -153,8 +153,8 @@ func (s *stakerStore) GetTotalEmissionSent() int64 {
 	return amount
 }
 
-func (s *stakerStore) SetTotalEmissionSent(amount int64) error {
-	return s.kvStore.Set(StoreKeyTotalEmissionSent.String(), amount)
+func (s *stakerStore) SetTotalEmissionSent(_ int, rlm realm, amount int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyTotalEmissionSent.String(), amount)
 }
 
 // AllowedTokens
@@ -176,8 +176,8 @@ func (s *stakerStore) GetAllowedTokens() []string {
 	return tokens
 }
 
-func (s *stakerStore) SetAllowedTokens(tokens []string) error {
-	return s.kvStore.Set(StoreKeyAllowedTokens.String(), tokens)
+func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
+	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
 }
 
 // IncentiveCounter
@@ -199,8 +199,8 @@ func (s *stakerStore) GetIncentiveCounter() *Counter {
 	return counter
 }
 
-func (s *stakerStore) SetIncentiveCounter(counter *Counter) error {
-	return s.kvStore.Set(StoreKeyIncentiveCounter.String(), counter)
+func (s *stakerStore) SetIncentiveCounter(_ int, rlm realm, counter *Counter) error {
+	return s.kvStore.Set(0, rlm, StoreKeyIncentiveCounter.String(), counter)
 }
 
 func (s *stakerStore) NextIncentiveID(creator address, timestamp int64) string {
@@ -227,8 +227,8 @@ func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 	return rewards
 }
 
-func (s *stakerStore) SetTokenSpecificMinimumRewards(rewards map[string]int64) error {
-	return s.kvStore.Set(StoreKeyTokenSpecificMinimumRewards.String(), rewards)
+func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), rewards)
 }
 
 // UnstakingFee
@@ -250,8 +250,8 @@ func (s *stakerStore) GetUnstakingFee() uint64 {
 	return fee
 }
 
-func (s *stakerStore) SetUnstakingFee(fee uint64) error {
-	return s.kvStore.Set(StoreKeyUnstakingFee.String(), fee)
+func (s *stakerStore) SetUnstakingFee(_ int, rlm realm, fee uint64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyUnstakingFee.String(), fee)
 }
 
 func (s *stakerStore) HasPendingProtocolFeesStoreKey() bool {
@@ -272,8 +272,8 @@ func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
 	return fees
 }
 
-func (s *stakerStore) SetPendingProtocolFees(fees map[string]int64) error {
-	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), fees)
+func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
 }
 
 // Pools
@@ -295,8 +295,8 @@ func (s *stakerStore) GetPools() *bptree.BPTree {
 	return pools
 }
 
-func (s *stakerStore) SetPools(pools *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyPools.String(), pools)
+func (s *stakerStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPools.String(), pools)
 }
 
 // PoolTierMemberships
@@ -318,8 +318,8 @@ func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	return memberships
 }
 
-func (s *stakerStore) SetPoolTierMemberships(memberships *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyPoolTierMemberships.String(), memberships)
+func (s *stakerStore) SetPoolTierMemberships(_ int, rlm realm, memberships *bptree.BPTree) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierMemberships.String(), memberships)
 }
 
 // PoolTierRatio
@@ -341,8 +341,8 @@ func (s *stakerStore) GetPoolTierRatio() TierRatio {
 	return ratio
 }
 
-func (s *stakerStore) SetPoolTierRatio(ratio TierRatio) error {
-	return s.kvStore.Set(StoreKeyPoolTierRatio.String(), ratio)
+func (s *stakerStore) SetPoolTierRatio(_ int, rlm realm, ratio TierRatio) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierRatio.String(), ratio)
 }
 
 // PoolTierCounts
@@ -364,8 +364,8 @@ func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
 	return counts
 }
 
-func (s *stakerStore) SetPoolTierCounts(counts [AllTierCount]uint64) error {
-	return s.kvStore.Set(StoreKeyPoolTierCounts.String(), counts)
+func (s *stakerStore) SetPoolTierCounts(_ int, rlm realm, counts [AllTierCount]uint64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierCounts.String(), counts)
 }
 
 // PoolTierLastRewardCacheTimestamp
@@ -387,8 +387,8 @@ func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
 	return timestamp
 }
 
-func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(timestamp int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierLastRewardCacheTimestamp.String(), timestamp)
+func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(_ int, rlm realm, timestamp int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierLastRewardCacheTimestamp.String(), timestamp)
 }
 
 // PoolTierCurrentEmission
@@ -410,8 +410,8 @@ func (s *stakerStore) GetPoolTierCurrentEmission() int64 {
 	return emission
 }
 
-func (s *stakerStore) SetPoolTierCurrentEmission(emission int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierCurrentEmission.String(), emission)
+func (s *stakerStore) SetPoolTierCurrentEmission(_ int, rlm realm, emission int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierCurrentEmission.String(), emission)
 }
 
 // PoolTierGetEmission
@@ -433,8 +433,8 @@ func (s *stakerStore) GetPoolTierGetEmission() func() int64 {
 	return fn
 }
 
-func (s *stakerStore) SetPoolTierGetEmission(fn func() int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierGetEmission.String(), fn)
+func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierGetEmission.String(), fn)
 }
 
 // PoolTierGetHalvingBlocksInRange
@@ -456,8 +456,8 @@ func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64
 	return fn
 }
 
-func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(fn func(start, end int64) ([]int64, []int64)) error {
-	return s.kvStore.Set(StoreKeyPoolTierGetHalvingBlocksInRange.String(), fn)
+func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+	return s.kvStore.Set(0, rlm, StoreKeyPoolTierGetHalvingBlocksInRange.String(), fn)
 }
 
 func (s *stakerStore) HasWarmupTemplateStoreKey() bool {
@@ -478,8 +478,8 @@ func (s *stakerStore) GetWarmupTemplate() []Warmup {
 	return warmups
 }
 
-func (s *stakerStore) SetWarmupTemplate(warmups []Warmup) error {
-	return s.kvStore.Set(StoreKeyWarmupTemplate.String(), warmups)
+func (s *stakerStore) SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) error {
+	return s.kvStore.Set(0, rlm, StoreKeyWarmupTemplate.String(), warmups)
 }
 
 // CurrentSwapBatch
@@ -501,8 +501,8 @@ func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 	return batch
 }
 
-func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
-	return s.kvStore.Set(StoreKeyCurrentSwapBatch.String(), batch)
+func (s *stakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProcessor) error {
+	return s.kvStore.Set(0, rlm, StoreKeyCurrentSwapBatch.String(), batch)
 }
 
 // ExternalIncentivesByCreationTime
@@ -525,8 +525,8 @@ func (s *stakerStore) GetExternalIncentivesByCreationTime() *UintTree {
 	return tree
 }
 
-func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *UintTree) error {
-	return s.kvStore.Set(StoreKeyExternalIncentivesByCreationTime.String(), tree)
+func (s *stakerStore) SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *UintTree) error {
+	return s.kvStore.Set(0, rlm, StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
 // NewStakerStore creates a new staker store instance with the provided KV store.

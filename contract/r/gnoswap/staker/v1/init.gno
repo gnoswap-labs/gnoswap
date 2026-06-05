@@ -3,7 +3,6 @@ package v1
 import (
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -28,7 +27,7 @@ func registerStakerV1(cur realm) {
 			panic(sr.ErrSpoofedRealm)
 		}
 
-		err := initStoreData(stakerStore, emissionAccessor)
+		err := initStoreData(0, rlm, stakerStore, emissionAccessor)
 		if err != nil {
 			panic(err)
 		}
@@ -41,88 +40,92 @@ func registerStakerV1(cur realm) {
 	})
 }
 
-func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) error {
+func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) error {
 	if !stakerStore.HasDepositGnsAmountStoreKey() {
-		err := stakerStore.SetDepositGnsAmount(defaultDepositGnsAmount)
+		err := stakerStore.SetDepositGnsAmount(0, rlm, defaultDepositGnsAmount)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasMinimumRewardAmountStoreKey() {
-		err := stakerStore.SetMinimumRewardAmount(defaultMinimumRewardAmount)
+		err := stakerStore.SetMinimumRewardAmount(0, rlm, defaultMinimumRewardAmount)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasDepositsStoreKey() {
-		err := stakerStore.SetDeposits(bptree.NewBPTreeN(16))
+		err := stakerStore.SetDeposits(0, rlm, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasExternalIncentivesStoreKey() {
-		err := stakerStore.SetExternalIncentives(bptree.NewBPTreeN(16))
+		err := stakerStore.SetExternalIncentives(0, rlm, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasTotalEmissionSentStoreKey() {
-		err := stakerStore.SetTotalEmissionSent(0)
+		err := stakerStore.SetTotalEmissionSent(0, rlm, 0)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasAllowedTokensStoreKey() {
-		defaultAllowedTokens := []string{GNS_PATH, WUGNOT_PATH}
-
-		err := stakerStore.SetAllowedTokens(defaultAllowedTokens)
+		// Copy the package-level default slice so each store owns its own
+		// allowed-tokens slice. Storing sr.DefaultAllowedTokens directly would
+		// alias the shared (sr-owned) slice across every store, leaking
+		// mutations and tripping the readonly-taint gate on later writes.
+		defaultAllowedTokens := make([]string, len(sr.DefaultAllowedTokens))
+		copy(defaultAllowedTokens, sr.DefaultAllowedTokens)
+		err := stakerStore.SetAllowedTokens(0, rlm, defaultAllowedTokens)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasIncentiveCounterStoreKey() {
-		err := stakerStore.SetIncentiveCounter(sr.NewCounter())
+		err := stakerStore.SetIncentiveCounter(0, rlm, sr.NewCounter())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
-		err := stakerStore.SetTokenSpecificMinimumRewards(make(map[string]int64))
+		err := stakerStore.SetTokenSpecificMinimumRewards(0, rlm, make(map[string]int64))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasUnstakingFeeStoreKey() {
-		err := stakerStore.SetUnstakingFee(defaultUnstakingFee)
+		err := stakerStore.SetUnstakingFee(0, rlm, defaultUnstakingFee)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPendingProtocolFeesStoreKey() {
-		err := stakerStore.SetPendingProtocolFees(make(map[string]int64))
+		err := stakerStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasWarmupTemplateStoreKey() {
-		err := stakerStore.SetWarmupTemplate(sr.DefaultWarmupTemplate())
+		err := stakerStore.SetWarmupTemplate(0, rlm, sr.DefaultWarmupTemplate())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasExternalIncentivesByCreationTimeStoreKey() {
-		err := stakerStore.SetExternalIncentivesByCreationTime(sr.NewUintTree())
+		err := stakerStore.SetExternalIncentivesByCreationTime(0, rlm, sr.NewUintTree())
 		if err != nil {
 			return err
 		}
@@ -131,42 +134,42 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	initializedPoolTier, initializedPools := initializePoolTier(stakerStore)
 
 	if !stakerStore.HasPoolsStoreKey() {
-		err := stakerStore.SetPools(initializedPools.tree)
+		err := stakerStore.SetPools(0, rlm, initializedPools.tree)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPoolTierMembershipsStoreKey() {
-		err := stakerStore.SetPoolTierMemberships(initializedPoolTier.membership)
+		err := stakerStore.SetPoolTierMemberships(0, rlm, initializedPoolTier.membership)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPoolTierRatioStoreKey() {
-		err := stakerStore.SetPoolTierRatio(initializedPoolTier.tierRatio)
+		err := stakerStore.SetPoolTierRatio(0, rlm, initializedPoolTier.tierRatio)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPoolTierCountsStoreKey() {
-		err := stakerStore.SetPoolTierCounts(initializedPoolTier.counts)
+		err := stakerStore.SetPoolTierCounts(0, rlm, initializedPoolTier.counts)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPoolTierLastRewardCacheTimestampStoreKey() {
-		err := stakerStore.SetPoolTierLastRewardCacheTimestamp(initializedPoolTier.lastRewardCacheTimestamp)
+		err := stakerStore.SetPoolTierLastRewardCacheTimestamp(0, rlm, initializedPoolTier.lastRewardCacheTimestamp)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasPoolTierCurrentEmissionStoreKey() {
-		err := stakerStore.SetPoolTierCurrentEmission(initializedPoolTier.currentEmission)
+		err := stakerStore.SetPoolTierCurrentEmission(0, rlm, initializedPoolTier.currentEmission)
 		if err != nil {
 			return err
 		}
@@ -177,7 +180,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 			return emissionAccessor.GetStakerEmissionAmountPerSecond()
 		}
 
-		err := stakerStore.SetPoolTierGetEmission(getEmissionFn)
+		err := stakerStore.SetPoolTierGetEmission(0, rlm, getEmissionFn)
 		if err != nil {
 			return err
 		}
@@ -188,14 +191,14 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 			return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
 		}
 
-		err := stakerStore.SetPoolTierGetHalvingBlocksInRange(getHalvingBlocksInRangeFn)
+		err := stakerStore.SetPoolTierGetHalvingBlocksInRange(0, rlm, getHalvingBlocksInRangeFn)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasCurrentSwapBatchStoreKey() {
-		err := stakerStore.SetCurrentSwapBatch(nil)
+		err := stakerStore.SetCurrentSwapBatch(0, rlm, nil)
 		if err != nil {
 			return err
 		}

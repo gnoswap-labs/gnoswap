@@ -6,6 +6,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
+	"gno.land/r/gnoswap/access"
 )
 
 var (

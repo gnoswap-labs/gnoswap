@@ -32,13 +32,13 @@ func setupPermission(t *testing.T, caller address) {
 // Common test error messages
 const unauthorizedMsg = "unauthorized: caller %s is not admin or governance"
 
-func TestGetDepositGnsAmount(t *testing.T) {
+func TestGetDepositGnsAmount(cur realm, t *testing.T) {
 	expected := int64(1_000_000_000)
 	actual := getMockInstance().GetDepositGnsAmount()
 	uassert.Equal(t, expected, actual)
 }
 
-func TestSetDepositGnsAmount(t *testing.T) {
+func TestSetDepositGnsAmount(cur realm, t *testing.T) {
 	testPermissionBasedFunction(t, []permissionTest{
 		{
 			name:           "governance success",
@@ -76,7 +76,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 	})
 }
 
-func TestSetMinimumRewardAmount(t *testing.T) {
+func TestSetMinimumRewardAmount(cur realm, t *testing.T) {
 	testPermissionBasedFunction(t, []permissionTest{
 		{
 			name:           "governance success",
@@ -121,24 +121,24 @@ type permissionTest struct {
 func testPermissionBasedFunction(
 	t *testing.T,
 	tests []permissionTest,
-	testFunc func(inputAmount int64),
+	testFunc func(cur realm, inputAmount int64),
 	getterFunc func() int64,
 ) {
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
-			initStakerTest(t)
+			initStakerTest(cur, t)
 
 			// Set the caller
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// Execute the function
 			if tt.shouldAbort {
-				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
-					testFunc(tt.inputAmount)
+				uassert.AbortsWithMessage(t, cur, tt.expectedMsg, func() {
+					testFunc(cross(cur), tt.inputAmount)
 				})
 			} else {
-				testFunc(tt.inputAmount)
+				testFunc(cross(cur), tt.inputAmount)
 
 				// Verify the result
 				actual := getterFunc()
@@ -150,7 +150,7 @@ func testPermissionBasedFunction(
 
 // Test GetMinimumRewardAmountForToken
 
-func TestGetMinimumRewardAmountForToken(t *testing.T) {
+func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tokenPath      string
@@ -188,9 +188,9 @@ func TestGetMinimumRewardAmountForToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
-			initStakerTest(t)
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			if tt.setupFunc != nil {
@@ -205,7 +205,7 @@ func TestGetMinimumRewardAmountForToken(t *testing.T) {
 
 // Test GetSpecificTokenMinimumRewardAmount
 
-func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
+func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -243,9 +243,9 @@ func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
-			initStakerTest(t)
+			initStakerTest(cur, t)
 			instance := getMockInstance()
 
 			if tt.setupFunc != nil {
@@ -263,9 +263,9 @@ func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
 
 // Test internal getters and setters
 
-func TestInternalDepositGnsAmountGetterSetter(t *testing.T) {
+func TestInternalDepositGnsAmountGetterSetter(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
-	initStakerTest(t)
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	// Test initial value
@@ -274,14 +274,14 @@ func TestInternalDepositGnsAmountGetterSetter(t *testing.T) {
 
 	// Test setter and getter
 	newAmount := int64(5_000_000_000)
-	instance.setDepositGnsAmount(newAmount)
+	instance.setDepositGnsAmount(0, cur, newAmount)
 	result := instance.GetDepositGnsAmount()
 	uassert.Equal(t, newAmount, result)
 }
 
-func TestInternalMinimumRewardAmountGetterSetter(t *testing.T) {
+func TestInternalMinimumRewardAmountGetterSetter(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
-	initStakerTest(t)
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	// Test initial value
@@ -290,27 +290,27 @@ func TestInternalMinimumRewardAmountGetterSetter(t *testing.T) {
 
 	// Test setter and getter
 	newAmount := int64(2_000_000)
-	instance.setMinimumRewardAmount(newAmount)
+	instance.setMinimumRewardAmount(0, cur, newAmount)
 	result := instance.getMinimumRewardAmount()
 	uassert.Equal(t, newAmount, result)
 }
 
 // Edge case tests
 
-func TestValidAmount_NegativeValue(t *testing.T) {
-	uassert.PanicsContains(t, "must be positive", func() {
+func TestValidAmount_NegativeValue(cur realm, t *testing.T) {
+	uassert.PanicsContains(t, cur, "must be positive", func() {
 		assertIsValidAmount(-1)
 	})
 }
 
-func TestValidAmount_ZeroValue(t *testing.T) {
-	uassert.NotPanics(t, func() {
+func TestValidAmount_ZeroValue(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
 		assertIsValidAmount(0)
 	})
 }
 
-func TestValidAmount_PositiveValue(t *testing.T) {
-	uassert.NotPanics(t, func() {
+func TestValidAmount_PositiveValue(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
 		assertIsValidAmount(1000)
 	})
 }

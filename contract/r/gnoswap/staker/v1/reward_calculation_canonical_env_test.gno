@@ -21,8 +21,6 @@ type canonicalPool struct {
 	tier      uint64
 	tick      int32
 	incentive []*sr.ExternalIncentive
-
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 }
 
 func (self *canonicalPool) InternalReward(emission uint64, ratio sr.TierRatio, count uint64) int64 {
@@ -56,12 +54,9 @@ func (self *canonicalPool) ExternalReward(currentTimestamp int64) map[string]int
 }
 
 type canonicalRewardState struct {
-	t *testing.T
-
 	global *emulatedGlobalState
 
-	Pool          map[string]*canonicalPool
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	Pool map[string]*canonicalPool
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
@@ -76,16 +71,13 @@ type canonicalRewardState struct {
 }
 
 func NewCanonicalRewardState(
-	t *testing.T,
 	poolTier *PoolTier,
 	pools *Pools,
 	deposits *Deposits,
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64),
 ) *canonicalRewardState {
 	testing.SkipHeights(1)
 
 	result := &canonicalRewardState{
-		t: t,
 		global: &emulatedGlobalState{
 			poolTier: poolTier,
 			pools:    pools,
@@ -100,7 +92,6 @@ func NewCanonicalRewardState(
 
 		emulatedClaimedReward: make(map[uint64]int64),
 	}
-	result.tickCrossHook = tickCrossHook
 
 	currentTime := time.Now().Unix()
 
@@ -372,7 +363,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 }
 
 // Emulation of staker.gno public entrypoints
-func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath string, owner address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
+func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targetPoolPath string, owner address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
 	currentTimestamp := self.CurrentTime()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
@@ -420,7 +411,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	self.global.deposits.set(positionId, deposit)
 
 	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
-	getMockInstance().updatePoolTier(self.global.poolTier)
+	getMockInstance().updatePoolTier(0, cur, self.global.poolTier)
 
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
 	if self.isInRange(deposit) {
@@ -521,11 +512,10 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 	pool, ok := self.Pool[targetPoolPath]
 	if !ok {
 		self.Pool[targetPoolPath] = &canonicalPool{
-			poolPath:      targetPoolPath,
-			tier:          0,
-			tick:          0,
-			incentive:     make([]*sr.ExternalIncentive, 0),
-			tickCrossHook: self.tickCrossHook,
+			poolPath:  targetPoolPath,
+			tier:      0,
+			tick:      0,
+			incentive: make([]*sr.ExternalIncentive, 0),
 		}
 	}
 	pool.incentive = append(pool.incentive, incentive)
@@ -547,11 +537,10 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	pool, ok := self.Pool[poolPath]
 	if !ok {
 		pool = &canonicalPool{
-			poolPath:      poolPath,
-			tier:          tier,
-			tick:          0,
-			incentive:     make([]*sr.ExternalIncentive, 0),
-			tickCrossHook: self.tickCrossHook,
+			poolPath:  poolPath,
+			tier:      tier,
+			tick:      0,
+			incentive: make([]*sr.ExternalIncentive, 0),
 		}
 		self.Pool[poolPath] = pool
 	}
@@ -566,17 +555,16 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
 	self.Pool[poolPath] = &canonicalPool{
-		poolPath:      poolPath,
-		tier:          initialTier,
-		tick:          initialTick,
-		incentive:     make([]*sr.ExternalIncentive, 0),
-		tickCrossHook: self.tickCrossHook,
+		poolPath:  poolPath,
+		tier:      initialTier,
+		tick:      initialTick,
+		incentive: make([]*sr.ExternalIncentive, 0),
 	}
 	self.global.pools.set(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
 	self.global.poolTier.changeTier(self.CurrentTime(), self.global.pools, poolPath, initialTier)
 }
 
-func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
+func (self *canonicalRewardState) MoveTick(cur realm, t *testing.T, poolPath string, tick int32) {
 	pool, ok := self.Pool[poolPath]
 	if !ok {
 		panic(ufmt.Sprintf("canonical pool not found for tick movement: %s", poolPath))
@@ -590,7 +578,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 		return
 	}
 
-	self.t.Logf("	[%d] (%d->%d) %s", self.CurrentTime(), pool.tick, tick, pool.poolPath)
+	t.Logf("	[%d] (%d->%d) %s", self.CurrentTime(), pool.tick, tick, pool.poolPath)
 
 	zeroForOne := tick < pool.tick // true if moving left, false if moving right
 	if zeroForOne {
@@ -601,8 +589,13 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 				continue
 			}
 
-			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
+			// update global state. tickCrossHook is a crossing method, so it is
+			// invoked inline here with cross(cur) instead of being stored in a
+			// struct field: a func value whose type references realm cannot be
+			// persisted (the canonicalPool/canonicalRewardState structs are
+			// persisted, and that fails finalization with "cannot persist realm
+			// value"). cur is threaded in from MoveTick's caller at call time.
+			getMockInstance().tickCrossHook(cross(cur), pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	} else {
 		// forward
@@ -612,8 +605,9 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 				continue
 			}
 
-			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
+			// update global state (see comment in the backward branch above for
+			// why this crossing method is invoked inline with cross(cur)).
+			getMockInstance().tickCrossHook(cross(cur), pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	}
 
@@ -623,7 +617,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 
 // Testing helpers
 
-func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath string, expected int64) {
+func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(t *testing.T, poolPath string, expected int64) {
 	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
 	actual := internalRewardPerPool[poolPath]
 	if actual != expected {
@@ -631,53 +625,53 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 	}
 }
 
-func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
+func (self *canonicalRewardState) AssertEmulatedRewardOf(t *testing.T, depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
 	if reward.Internal < 0 {
 		panic("reward cannot be negative")
 	}
 	if !isInErrorRange(expected, uint64(reward.Internal/blockPerSecond)) {
-		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal/blockPerSecond)
+		t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal/blockPerSecond)
 		panic("emulated reward mismatch")
 	}
 }
 
-func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(depositId uint64, incentiveId string, expected uint64) {
+func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(t *testing.T, depositId uint64, incentiveId string, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
 	if reward.External[incentiveId] < 0 {
 		panic("external reward cannot be negative")
 	}
 	if !isInErrorRange(expected, uint64(reward.External[incentiveId])) {
-		self.t.Errorf("!!!!emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[incentiveId])
+		t.Errorf("!!!!emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[incentiveId])
 	}
 }
 
-func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expected uint64) {
+func (self *canonicalRewardState) AssertCanonicalRewardOf(t *testing.T, depositId uint64, expected uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	if reward.Internal < 0 {
 		panic("canonical reward cannot be negative")
 	}
 	if !isInErrorRange(expected, uint64(reward.Internal)) {
-		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
+		t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
 	}
 }
 
-func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
+func (self *canonicalRewardState) AssertEquivalence(t *testing.T, depositId uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	emulatedReward := self.EmulatedRewardOf(depositId)
 	if reward.Internal < 0 || emulatedReward.Internal < 0 {
 		panic("rewards cannot be negative")
 	}
 	if !isInErrorRange(uint64(reward.Internal), uint64(emulatedReward.Internal/blockPerSecond)) {
-		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.Internal, emulatedReward.Internal)
+		t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.Internal, emulatedReward.Internal)
 	}
 }
 
-func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]int64) {
+func (self *canonicalRewardState) AssertEmulatedRewardMap(t *testing.T, expected map[uint64]int64) {
 	for key, value := range expected {
 		if value < 0 {
 			panic("expected reward cannot be negative")
 		}
-		self.AssertEmulatedRewardOf(key, uint64(value))
+		self.AssertEmulatedRewardOf(t, key, uint64(value))
 	}
 }

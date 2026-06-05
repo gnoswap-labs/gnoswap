@@ -39,7 +39,7 @@ type Deposits struct {
 // NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: bptree.NewBPTreeN(16), // positionId -> *Deposit
+		tree: sr.NewBPTreeN(16), // positionId -> *Deposit
 	}
 }
 
@@ -111,7 +111,7 @@ type ExternalIncentives struct {
 // NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
-		tree: bptree.NewBPTreeN(16),
+		tree: sr.NewBPTreeN(16),
 	}
 }
 
@@ -148,9 +148,9 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
-// emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
+// EmissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
+func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
@@ -165,7 +165,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 		// Now apply the new emission rate to each pool individually
 		poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
 
-		s.updatePoolTier(poolTier)
+		s.updatePoolTier(0, rlm, poolTier)
 	}
 }
 
@@ -277,7 +277,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(currentTime, pools)
-	s.updatePoolTier(poolTier)
+	s.updatePoolTier(0, rlm, poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
@@ -606,7 +606,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err := s.store.SetTotalEmissionSent(totalEmissionSent)
+	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}
