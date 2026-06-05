@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -40,6 +39,8 @@ import (
 //
 // Reverts if input > amountInMax or deadline passed.
 func (r *routerV1) ExactOutSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -49,6 +50,10 @@ func (r *routerV1) ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
@@ -57,7 +62,7 @@ func (r *routerV1) ExactOutSwapRoute(
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	params := SwapRouteParams{
 		inputToken:        inputToken,
@@ -71,7 +76,7 @@ func (r *routerV1) ExactOutSwapRoute(
 		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	inputAmount, outputAmount := r.exactOutSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactOutSwapRoute(0, rlm, params, referrer)
 
 	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
@@ -101,6 +106,8 @@ func (r *routerV1) ExactOutSwapRoute(
 // Reverts the transaction if the input amount is greater than `amountInMax`,
 // the deadline has passed, or the price limit is exceeded.
 func (r *routerV1) ExactOutSingleSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -110,6 +117,10 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
@@ -119,7 +130,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	params := SwapRouteParams{
 		inputToken:        inputToken,
@@ -133,7 +144,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 
-	inputAmount, outputAmount := r.exactOutSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactOutSwapRoute(0, rlm, params, referrer)
 
 	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
@@ -155,20 +166,23 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 //
 // Panics if swap execution fails or token transfer fails.
 func (r *routerV1) exactOutSwapRoute(
+	_ int,
+	rlm realm,
 	params SwapRouteParams,
 	referrer string,
 ) (int64, int64) {
-	inputAmount, outputAmount, err := r.commonSwapRoute(params)
+	inputAmount, outputAmount, err := r.commonSwapRoute(0, rlm, params)
 	if err != nil {
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
+
+	common.SafeGRC20Transfer(cross(rlm), params.outputToken, caller, outputAmount)
 
 	// handle referral registration
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
 	resultInputAmount := inputAmount
 	resultOutputAmount := -outputAmount
@@ -234,8 +248,8 @@ func (op *ExactOutSwapOperation) Validate() error {
 }
 
 // Process executes the exact-out swap operation.
-func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
-	resultAmountIn, resultAmountOut, err := op.processRoutes(op.router, ExactOut)
+func (op *ExactOutSwapOperation) Process(_ int, rlm realm) (*SwapResult, error) {
+	resultAmountIn, resultAmountOut, err := op.processRoutes(0, rlm, op.router, ExactOut)
 	if err != nil {
 		return nil, err
 	}

@@ -10,16 +10,16 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func initialSetup(t *testing.T) {
+func initialSetup(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
-	pl.SetPoolCreationFee(cross, 0)
-	CreatePool(t, gnsPath, barPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
-	TokenFaucet(t, gnsPath, alice)
-	TokenFaucet(t, barPath, alice)
+	pl.SetPoolCreationFee(cross(cur), 0)
+	CreatePool(cur, t, gnsPath, barPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), adminAddr)
+	TokenFaucet(cur, t, gnsPath, alice)
+	TokenFaucet(cur, t, barPath, alice)
 }
 
-func TestLiquidityManagement_addLiquidity(t *testing.T) {
+func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 	poolKey := pl.GetPoolPath(gnsPath, barPath, fee3000)
 
 	tests := []struct {
@@ -142,7 +142,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 				caller:         alice,
 			},
 			expectError:     true,
-			errorType:       "panic",
+			errorType:       "abort",
 			expectedMessage: "liquidity_math: identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 		{
@@ -309,26 +309,26 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPositionTest(cur, t)
 
-			initialSetup(t)
+			initialSetup(cur, t)
+			TokenApprove(cur, t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
+			TokenApprove(cur, t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
 			testing.SetRealm(posRealm)
-			TokenApprove(t, gnsPath, alice, poolAddr, tt.params.amount0Desired.Int64())
-			TokenApprove(t, barPath, alice, poolAddr, tt.params.amount1Desired.Int64())
 
 			if tt.expectError {
 				if tt.errorType == "panic" {
-					uassert.PanicsWithMessage(t, tt.expectedMessage, func() {
-						mockInstance.addLiquidity(tt.params)
+					uassert.PanicsWithMessage(t, cur, tt.expectedMessage, func() {
+						mockInstance.addLiquidity(0, cur, tt.params)
 					})
 				} else {
-					uassert.AbortsWithMessage(t, tt.expectedMessage, func() {
-						mockInstance.addLiquidity(tt.params)
+					uassert.AbortsWithMessage(t, cur, tt.expectedMessage, func() {
+						mockInstance.addLiquidity(0, cur, tt.params)
 					})
 				}
 			} else {
-				_, amount0, amount1 := mockInstance.addLiquidity(tt.params)
+				_, amount0, amount1 := mockInstance.addLiquidity(0, cur, tt.params)
 				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
 				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
 			}

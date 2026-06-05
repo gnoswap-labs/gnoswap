@@ -9,7 +9,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetDataForSinglePath(t *testing.T) {
+func TestGetDataForSinglePath(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -34,7 +34,7 @@ func TestGetDataForSinglePath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.shouldPanic {
@@ -58,7 +58,7 @@ func TestGetDataForSinglePath(t *testing.T) {
 	}
 }
 
-func TestGetDataForMultiPath(t *testing.T) {
+func TestGetDataForMultiPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
@@ -102,7 +102,7 @@ func TestGetDataForMultiPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			token0, token1, fee := getDataForMultiPath(tt.input, tt.poolIdx)
 
 			if token0 != tt.wantToken0 {
@@ -118,7 +118,7 @@ func TestGetDataForMultiPath(t *testing.T) {
 	}
 }
 
-func TestSplitSingleChar(t *testing.T) {
+func TestSplitSingleChar(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    string
@@ -194,7 +194,7 @@ func TestSplitSingleChar(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			result := splitSingleChar(tc.input, tc.sep)
 
 			uassert.Equal(t, len(result), len(tc.expected))
@@ -206,7 +206,7 @@ func TestSplitSingleChar(t *testing.T) {
 	}
 }
 
-func TestValidateRoutePath(t *testing.T) {
+func TestValidateRoutePath(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		routePath   string
@@ -332,7 +332,7 @@ func TestValidateRoutePath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validateRoutePath(tt.routePath, tt.inputToken, tt.outputToken)
 
 			if tt.wantError {
@@ -350,7 +350,7 @@ func TestValidateRoutePath(t *testing.T) {
 	}
 }
 
-func TestValidateRoutePaths(t *testing.T) {
+func TestValidateRoutePaths(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		routePathArrString string
@@ -468,7 +468,7 @@ func TestValidateRoutePaths(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validateRoutePaths(tt.routePathArrString, tt.inputToken, tt.outputToken)
 
 			if tt.wantError {
@@ -483,7 +483,7 @@ func TestValidateRoutePaths(t *testing.T) {
 	}
 }
 
-func TestValidatePoolPathHopContinuity(t *testing.T) {
+func TestValidatePoolPathHopContinuity(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		pools       []string
@@ -553,7 +553,7 @@ func TestValidatePoolPathHopContinuity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validatePoolPathHopContinuity(tt.pools)
 
 			if tt.wantError {
@@ -569,7 +569,7 @@ func TestValidatePoolPathHopContinuity(t *testing.T) {
 	}
 }
 
-func TestSafeAddInt64(t *testing.T) {
+func TestSafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -705,7 +705,7 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -726,7 +726,7 @@ func TestSafeAddInt64(t *testing.T) {
 	}
 }
 
-func TestSafeSubInt64(t *testing.T) {
+func TestSafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -870,7 +870,7 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -891,7 +891,7 @@ func TestSafeSubInt64(t *testing.T) {
 	}
 }
 
-func TestSafeMulDivInt64(t *testing.T) {
+func TestSafeMulDivInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -1018,7 +1018,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -1046,7 +1046,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 }
 
-func TestSafeAbsInt64(t *testing.T) {
+func TestSafeAbsInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       int64
@@ -1114,9 +1114,9 @@ func TestSafeAbsInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					safeAbsInt64(tt.input)
 				})
 			} else {
@@ -1127,7 +1127,7 @@ func TestSafeAbsInt64(t *testing.T) {
 	}
 }
 
-func TestParsePoolPathsByRoutePathArr(t *testing.T) {
+func TestParsePoolPathsByRoutePathArr(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		routePathArr  string
@@ -1248,7 +1248,7 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := parsePoolPathsByRoutePathArr(tt.routePathArr)
 
 			if tt.wantError {

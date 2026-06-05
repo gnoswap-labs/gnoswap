@@ -11,7 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestAddToken(t *testing.T) {
+func TestAddToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		caller                address
@@ -52,25 +52,25 @@ func TestAddToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(defaultAllowed)
+			getMockInstance().store.SetAllowedTokens(0, cur, defaultAllowed)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// when
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					mockInstanceAddToken(tt.inputTokenPath)
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					mockInstanceAddToken(tt.inputTokenPath)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceAddToken(tt.inputTokenPath)
+				mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then
@@ -88,7 +88,7 @@ func TestAddToken(t *testing.T) {
 	}
 }
 
-func TestRemoveToken(t *testing.T) {
+func TestRemoveToken(cur realm, t *testing.T) {
 	customTokenPath := "gno.land/r/gnoswap/v1/custom"
 
 	currentDefaultTokens := make([]string, 0)
@@ -147,25 +147,25 @@ func TestRemoveToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(currentDefaultTokens)
+			getMockInstance().store.SetAllowedTokens(0, cur, currentDefaultTokens)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// when
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					mockInstanceRemoveToken(tt.inputTokenPath)
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					mockInstanceRemoveToken(tt.inputTokenPath)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceRemoveToken(tt.inputTokenPath)
+				mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then
@@ -183,7 +183,7 @@ func TestRemoveToken(t *testing.T) {
 	}
 }
 
-func TestModifyTokenList(t *testing.T) {
+func TestModifyTokenList(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		caller                address
@@ -219,11 +219,11 @@ func TestModifyTokenList(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(defaultAllowed)
+			getMockInstance().store.SetAllowedTokens(0, cur, defaultAllowed)
 
 			testing.SetOriginCaller(tt.caller)
 
@@ -231,10 +231,8 @@ func TestModifyTokenList(t *testing.T) {
 			modifyTokenListFn := func() error {
 				testing.SetRealm(adminRealm)
 
-				return func(cur realm) error {
-					testing.SetRealm(stakerRealm)
-					return modifyTokenList(getMockInstance(), tt.inputTokenPath, tt.inputValidator, tt.inputExecutor)
-				}(cross)
+				testing.SetRealm(stakerRealm)
+				return modifyTokenList(0, cur, getMockInstance(), tt.inputTokenPath, tt.inputValidator, tt.inputExecutor)
 			}
 
 			err := modifyTokenListFn()
@@ -289,7 +287,7 @@ func setupExternalDepositFeePermission(t *testing.T, caller address, permissionN
 }
 
 // Test addTokenExecutor edge cases
-func TestAddTokenExecutor(t *testing.T) {
+func TestAddTokenExecutor(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tokenPath      string
@@ -321,7 +319,7 @@ func TestAddTokenExecutor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := addTokenExecutor(tt.tokenPath, tt.initialTokens)
 			uassert.Equal(t, tt.expectedLength, len(result))
 
@@ -333,7 +331,7 @@ func TestAddTokenExecutor(t *testing.T) {
 }
 
 // Test removeTokenExecutor edge cases
-func TestRemoveTokenExecutor(t *testing.T) {
+func TestRemoveTokenExecutor(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tokenPath      string
@@ -379,7 +377,7 @@ func TestRemoveTokenExecutor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := removeTokenExecutor(tt.tokenPath, tt.initialTokens)
 			uassert.Equal(t, tt.expectedLength, len(result))
 
@@ -391,7 +389,7 @@ func TestRemoveTokenExecutor(t *testing.T) {
 }
 
 // Test addTokenValidator
-func TestAddTokenValidator(t *testing.T) {
+func TestAddTokenValidator(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -425,7 +423,7 @@ func TestAddTokenValidator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := addTokenValidator(tt.tokenPath)
 
 			if tt.expectError {
@@ -439,7 +437,7 @@ func TestAddTokenValidator(t *testing.T) {
 }
 
 // Test removeTokenValidator
-func TestRemoveTokenValidator(t *testing.T) {
+func TestRemoveTokenValidator(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -473,7 +471,7 @@ func TestRemoveTokenValidator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := removeTokenValidator(tt.tokenPath)
 
 			if tt.expectError {
@@ -487,7 +485,7 @@ func TestRemoveTokenValidator(t *testing.T) {
 }
 
 // Test contains helper function
-func TestContainsHelperFunction(t *testing.T) {
+func TestContainsHelperFunction(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		slice    []string
@@ -527,7 +525,7 @@ func TestContainsHelperFunction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := contains(tt.slice, tt.item)
 			uassert.Equal(t, tt.expected, result)
 		})

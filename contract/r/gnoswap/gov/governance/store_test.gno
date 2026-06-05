@@ -9,20 +9,20 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestStoreInitialization(t *testing.T) {
+func TestStoreInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "kvStore should be initialized",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 			},
 		},
 		{
 			name: "domain address should not be empty",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				domainAddr := kvStore.GetDomainAddress()
 				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
 			},
@@ -30,14 +30,14 @@ func TestStoreInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
-			tt.verifyFn(t)
+			tt.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStore_AuthorizedCallers(t *testing.T) {
+func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		callerRealm                   runtime.Realm
@@ -75,26 +75,26 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			gs := NewGovernanceStore(kvStore)
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 			if !gs.HasConfigsStoreKey() {
-				gs.SetConfigs(bptree.NewBPTreeN(16))
+				gs.SetConfigs(0, cur, bptree.NewBPTreeN(16))
 			}
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
-				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+				uassert.PanicsContains(t, cur, tc.expectedErrorMessageWithRead, func() {
 					gs.GetConfig(1)
 				})
 			} else {
 				gs.GetConfig(1)
 			}
 
-			err := gs.SetConfigs(bptree.NewBPTreeN(16))
+			err := gs.SetConfigs(0, cur, bptree.NewBPTreeN(16))
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -104,22 +104,22 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetConfigCounter(t *testing.T) {
+func TestStoreSetAndGetConfigCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get config counter successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				counter := NewCounter()
 				counter.Set(5)
-				gs.SetConfigCounter(counter)
+				gs.SetConfigCounter(0, cur, counter)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasConfigCounterStoreKey(), "should have config counter after setting")
 				retrieved := gs.GetConfigCounter()
 				uassert.NotEqual(t, nil, retrieved)
@@ -128,13 +128,13 @@ func TestStoreSetAndGetConfigCounter(t *testing.T) {
 		},
 		{
 			name: "should not have config counter initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasConfigCounterStoreKey(), "should not have config counter initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized config counter",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				gs.GetConfigCounter()
 			},
 			shouldPanic:  true,
@@ -143,12 +143,12 @@ func TestStoreSetAndGetConfigCounter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -158,27 +158,27 @@ func TestStoreSetAndGetConfigCounter(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreSetAndGetProposalCounter(t *testing.T) {
+func TestStoreSetAndGetProposalCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get proposal counter successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				counter := NewCounter()
 				counter.Set(10)
-				gs.SetProposalCounter(counter)
+				gs.SetProposalCounter(0, cur, counter)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasProposalCounterStoreKey(), "should have proposal counter after setting")
 				retrieved := gs.GetProposalCounter()
 				uassert.NotEqual(t, nil, retrieved)
@@ -187,13 +187,13 @@ func TestStoreSetAndGetProposalCounter(t *testing.T) {
 		},
 		{
 			name: "should not have proposal counter initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasProposalCounterStoreKey(), "should not have proposal counter initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized proposal counter",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				gs.GetProposalCounter()
 			},
 			shouldPanic:  true,
@@ -202,12 +202,12 @@ func TestStoreSetAndGetProposalCounter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -217,39 +217,39 @@ func TestStoreSetAndGetProposalCounter(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreSetAndGetConfigs(t *testing.T) {
+func TestStoreSetAndGetConfigs(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set configs successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				configs := bptree.NewBPTreeN(16)
-				gs.SetConfigs(configs)
+				gs.SetConfigs(0, cur, configs)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasConfigsStoreKey(), "should have configs after setting")
 			},
 		},
 		{
 			name: "should not have configs initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasConfigsStoreKey(), "should not have configs initially")
 			},
 		},
 		{
 			name: "panic when setting nil configs",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
-				gs.SetConfigs(nil)
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
+				gs.SetConfigs(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil configs",
@@ -257,12 +257,12 @@ func TestStoreSetAndGetConfigs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -272,24 +272,24 @@ func TestStoreSetAndGetConfigs(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreSetAndGetConfig(t *testing.T) {
+func TestStoreSetAndGetConfig(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				configs := bptree.NewBPTreeN(16)
-				err := gs.SetConfigs(configs)
+				err := gs.SetConfigs(0, cur, configs)
 				uassert.NoError(t, err)
 
 				_, exists := gs.GetConfig(1)
@@ -305,7 +305,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 					ExecutionWindow:               500,
 				}
 
-				err = gs.SetConfig(1, config)
+				err = gs.SetConfig(0, cur, 1, config)
 				uassert.NoError(t, err)
 
 				retrieved, exists := gs.GetConfig(1)
@@ -317,12 +317,12 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 		},
 		{
 			name: "NotInitialized",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				configs := bptree.NewBPTreeN(16)
-				err := gs.SetConfigs(configs)
+				err := gs.SetConfigs(0, cur, configs)
 				uassert.NoError(t, err)
 
 				_, exists := gs.GetConfig(1)
@@ -331,7 +331,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -340,47 +340,47 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 					VotingPeriod:     200,
 				}
 
-				err := gs.SetConfig(1, config)
+				err := gs.SetConfig(0, cur, 1, config)
 				uassert.ErrorContains(t, err, "configs store key not found")
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.verifyFn(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStoreSetAndGetProposals(t *testing.T) {
+func TestStoreSetAndGetProposals(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set proposals successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				proposals := bptree.NewBPTreeN(16)
-				gs.SetProposals(proposals)
+				gs.SetProposals(0, cur, proposals)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasProposalsStoreKey(), "should have proposals after setting")
 			},
 		},
 		{
 			name: "should not have proposals initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasProposalsStoreKey(), "should not have proposals initially")
 			},
 		},
 		{
 			name: "panic when setting nil proposals",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
-				gs.SetProposals(nil)
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
+				gs.SetProposals(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil proposals",
@@ -388,12 +388,12 @@ func TestStoreSetAndGetProposals(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -403,24 +403,24 @@ func TestStoreSetAndGetProposals(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreSetAndGetProposal(t *testing.T) {
+func TestStoreSetAndGetProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				proposals := bptree.NewBPTreeN(16)
-				err := gs.SetProposals(proposals)
+				err := gs.SetProposals(0, cur, proposals)
 				uassert.NoError(t, err)
 
 				_, exists := gs.GetProposal(1)
@@ -431,7 +431,7 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 					proposer: "g1test",
 				}
 
-				err = gs.SetProposal(1, proposal)
+				err = gs.SetProposal(0, cur, 1, proposal)
 				uassert.NoError(t, err)
 
 				retrieved, exists := gs.GetProposal(1)
@@ -443,7 +443,7 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -451,34 +451,34 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 					id: 1,
 				}
 
-				err := gs.SetProposal(1, proposal)
+				err := gs.SetProposal(0, cur, 1, proposal)
 				uassert.ErrorContains(t, err, "proposals store key not found")
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.verifyFn(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
+func TestStoreSetAndGetProposalUserVotingInfos(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get proposal user voting infos successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				votingInfos := bptree.NewBPTreeN(16)
-				gs.SetProposalUserVotingInfos(votingInfos)
+				gs.SetProposalUserVotingInfos(0, cur, votingInfos)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasProposalUserVotingInfosStoreKey(), "should have proposal user voting infos after setting")
 				retrieved := gs.GetProposalUserVotingInfos()
 				uassert.NotEqual(t, nil, retrieved)
@@ -486,13 +486,13 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 		},
 		{
 			name: "should not have proposal user voting infos initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasProposalUserVotingInfosStoreKey(), "should not have proposal user voting infos initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized proposal user voting infos",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				gs.GetProposalUserVotingInfos()
 			},
 			shouldPanic:  true,
@@ -500,8 +500,8 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 		},
 		{
 			name: "panic when setting nil proposal user voting infos",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
-				gs.SetProposalUserVotingInfos(nil)
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
+				gs.SetProposalUserVotingInfos(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil proposal user voting infos",
@@ -509,12 +509,12 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -524,24 +524,24 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
+func TestStoreSetAndGetProposalVotingInfos(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				votingInfos := bptree.NewBPTreeN(16)
-				err := gs.SetProposalUserVotingInfos(votingInfos)
+				err := gs.SetProposalUserVotingInfos(0, cur, votingInfos)
 				uassert.NoError(t, err)
 
 				_, exists := gs.GetProposalVotingInfos(1)
@@ -550,7 +550,7 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 				proposalVotingInfo := bptree.NewBPTreeN(16)
 				proposalVotingInfo.Set("user1", "vote_data")
 
-				err = gs.SetProposalVotingInfos(1, proposalVotingInfo)
+				err = gs.SetProposalVotingInfos(0, cur, 1, proposalVotingInfo)
 				uassert.NoError(t, err)
 
 				retrieved, exists := gs.GetProposalVotingInfos(1)
@@ -564,52 +564,52 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				votingInfo := bptree.NewBPTreeN(16)
-				err := gs.SetProposalVotingInfos(1, votingInfo)
+				err := gs.SetProposalVotingInfos(0, cur, 1, votingInfo)
 				uassert.ErrorContains(t, err, "proposal user voting infos store key not found")
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.verifyFn(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStoreSetAndGetUserProposals(t *testing.T) {
+func TestStoreSetAndGetUserProposals(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IGovernanceStore)
-		testFn       func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		testFn       func(cur realm, t *testing.T, gs IGovernanceStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set user proposals successfully",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				userProposals := bptree.NewBPTreeN(16)
-				gs.SetUserProposals(userProposals)
+				gs.SetUserProposals(0, cur, userProposals)
 			},
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.True(t, gs.HasUserProposalsStoreKey(), "should have user proposals after setting")
 			},
 		},
 		{
 			name: "should not have user proposals initially",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				uassert.False(t, gs.HasUserProposalsStoreKey(), "should not have user proposals initially")
 			},
 		},
 		{
 			name: "panic when setting nil user proposals",
-			testFn: func(t *testing.T, gs IGovernanceStore) {
-				gs.SetUserProposals(nil)
+			testFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
+				gs.SetUserProposals(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil user proposals",
@@ -617,12 +617,12 @@ func TestStoreSetAndGetUserProposals(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(gs)
+				tt.setupFn(cur, gs)
 			}
 
 			if tt.shouldPanic {
@@ -632,37 +632,37 @@ func TestStoreSetAndGetUserProposals(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, gs)
+			tt.testFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreGetUserProposalIDs(t *testing.T) {
+func TestStoreGetUserProposalIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(IGovernanceStore)
-		verifyFn func(*testing.T, IGovernanceStore)
+		setupFn      func(cur realm, gs IGovernanceStore)
+		verifyFn func(cur realm, t *testing.T, gs IGovernanceStore)
 	}{
 		{
 			name: "user with no proposals",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				userProposals := bptree.NewBPTreeN(16)
-				gs.SetUserProposals(userProposals)
+				gs.SetUserProposals(0, cur, userProposals)
 			},
-			verifyFn: func(t *testing.T, gs IGovernanceStore) {
+			verifyFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				_, exists := gs.GetUserProposalIDs("user1")
 				uassert.False(t, exists, "user1 proposals should not exist")
 			},
 		},
 		{
 			name: "user with multiple proposals",
-			setupFn: func(gs IGovernanceStore) {
+			setupFn: func(cur realm, gs IGovernanceStore) {
 				userProposals := bptree.NewBPTreeN(16)
 				proposalIDs := []int64{1, 2, 3}
 				userProposals.Set("user1", proposalIDs)
-				gs.SetUserProposals(userProposals)
+				gs.SetUserProposals(0, cur, userProposals)
 			},
-			verifyFn: func(t *testing.T, gs IGovernanceStore) {
+			verifyFn: func(cur realm, t *testing.T, gs IGovernanceStore) {
 				retrieved, exists := gs.GetUserProposalIDs("user1")
 				uassert.True(t, exists, "user1 proposals should exist")
 				uassert.Equal(t, 3, len(retrieved))
@@ -674,32 +674,32 @@ func TestStoreGetUserProposalIDs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			gs := NewGovernanceStore(kvStore)
 
-			tt.setupFn(gs)
-			tt.verifyFn(t, gs)
+			tt.setupFn(cur, gs)
+			tt.verifyFn(cur, t, gs)
 		})
 	}
 }
 
-func TestStoreAddUserProposal(t *testing.T) {
+func TestStoreAddUserProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "AddMultiple",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
 				userProposals := bptree.NewBPTreeN(16)
-				err := gs.SetUserProposals(userProposals)
+				err := gs.SetUserProposals(0, cur, userProposals)
 				uassert.NoError(t, err)
 
-				err = gs.AddUserProposal("user1", 1)
+				err = gs.AddUserProposal(0, cur, "user1", 1)
 				uassert.NoError(t, err)
 
 				retrieved, exists := gs.GetUserProposalIDs("user1")
@@ -707,7 +707,7 @@ func TestStoreAddUserProposal(t *testing.T) {
 				uassert.Equal(t, 1, len(retrieved))
 				uassert.Equal(t, int64(1), retrieved[0])
 
-				err = gs.AddUserProposal("user1", 2)
+				err = gs.AddUserProposal(0, cur, "user1", 2)
 				uassert.NoError(t, err)
 
 				retrieved, exists = gs.GetUserProposalIDs("user1")
@@ -719,52 +719,52 @@ func TestStoreAddUserProposal(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				err := gs.AddUserProposal("user1", 1)
+				err := gs.AddUserProposal(0, cur, "user1", 1)
 				uassert.ErrorContains(t, err, "user proposals store key not found")
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.verifyFn(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStoreMultipleSetAndGet(t *testing.T) {
+func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	resetTestState(t)
 
 	gs := NewGovernanceStore(kvStore)
 
 	configCounter := NewCounter()
 	configCounter.Set(1)
-	err := gs.SetConfigCounter(configCounter)
+	err := gs.SetConfigCounter(0, cur, configCounter)
 	uassert.NoError(t, err)
 
 	proposalCounter := NewCounter()
 	proposalCounter.Set(5)
-	err = gs.SetProposalCounter(proposalCounter)
+	err = gs.SetProposalCounter(0, cur, proposalCounter)
 	uassert.NoError(t, err)
 
 	configs := bptree.NewBPTreeN(16)
-	err = gs.SetConfigs(configs)
+	err = gs.SetConfigs(0, cur, configs)
 	uassert.NoError(t, err)
 
 	proposals := bptree.NewBPTreeN(16)
-	err = gs.SetProposals(proposals)
+	err = gs.SetProposals(0, cur, proposals)
 	uassert.NoError(t, err)
 
 	votingInfos := bptree.NewBPTreeN(16)
-	err = gs.SetProposalUserVotingInfos(votingInfos)
+	err = gs.SetProposalUserVotingInfos(0, cur, votingInfos)
 	uassert.NoError(t, err)
 
 	userProposals := bptree.NewBPTreeN(16)
-	err = gs.SetUserProposals(userProposals)
+	err = gs.SetUserProposals(0, cur, userProposals)
 	uassert.NoError(t, err)
 
 	uassert.True(t, gs.HasConfigCounterStoreKey())

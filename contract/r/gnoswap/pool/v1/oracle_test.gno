@@ -10,7 +10,7 @@ import (
 )
 
 // TestObservationState_Write tests basic write operations on ObservationState
-func TestObservationState_Write(t *testing.T) {
+func TestObservationState_Write(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	tests := []struct {
@@ -79,7 +79,7 @@ func TestObservationState_Write(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			os := pl.NewObservationState(tt.initialTime)
 
 			var err error
@@ -108,7 +108,7 @@ func TestObservationState_Write(t *testing.T) {
 }
 
 // TestObservationState_CircularBuffer tests circular buffer behavior with multiple cardinality
-func TestObservationState_CircularBuffer(t *testing.T) {
+func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	tests := []struct {
@@ -146,7 +146,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			os := pl.NewObservationState(currentTime)
 			os.SetCardinality(tt.cardinality)
 			os.SetCardinalityNext(tt.cardinalityNext)
@@ -165,7 +165,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 }
 
 // TestPool_IncreaseObservationCardinalityNext tests cardinality limit management
-func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
+func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		initialCardinality     uint16
@@ -215,8 +215,8 @@ func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPoolTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPoolTest(cur, t)
 			pool := createTestPool()
 			currentTime := time.Now().Unix()
 			observationState := pool.ObservationState()
@@ -243,7 +243,7 @@ func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
 }
 
 // TestObservationState_LiquidityAccumulation tests liquidity cumulative calculations
-func TestObservationState_LiquidityAccumulation(t *testing.T) {
+func TestObservationState_LiquidityAccumulation(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	tests := []struct {
@@ -277,7 +277,7 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			os := pl.NewObservationState(currentTime)
 
 			for _, write := range tt.writes {
@@ -294,7 +294,7 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 }
 
 // Verify TWAP rounding for a variety of tickDelta/secondsAgo combinations
-func TestGetTWAP_RoundingTable(t *testing.T) {
+func TestGetTWAP_RoundingTable(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		tickDelta  int64
@@ -334,7 +334,7 @@ func TestGetTWAP_RoundingTable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := createTestPool()
 			observationState := newObservationStateWithDelta(tt.secondsAgo, tt.tickDelta)
 			pool.SetObservationState(observationState)
@@ -348,7 +348,7 @@ func TestGetTWAP_RoundingTable(t *testing.T) {
 
 // TestGetTWAP_HarmonicMeanLiquidity tests harmonic mean liquidity calculation
 // Test cases from Uniswap V3 OracleLibrary.spec.ts
-func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
+func TestGetTWAP_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 	// Helper function to calculate expected harmonic mean liquidity
 	// Matches Uniswap's calculateHarmonicAvgLiq function
 	calculateHarmonicAvgLiq := func(period uint32, secondsPerLiq0, secondsPerLiq1 *u256.Uint) *u256.Uint {
@@ -392,7 +392,7 @@ func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := createTestPool()
 
 			secondsPerLiq0 := u256.MustFromDecimal(tt.secondsPerLiqCumulatives[0])
@@ -423,7 +423,7 @@ func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
 }
 
 // TestGetTWAP_ErrorCases tests error scenarios for TWAP calculation
-func TestGetTWAP_ErrorCases(t *testing.T) {
+func TestGetTWAP_ErrorCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupPool     func() *pl.Pool
@@ -453,7 +453,7 @@ func TestGetTWAP_ErrorCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := tt.setupPool()
 			_, _, err := getTWAP(pool, tt.secondsAgo)
 			uassert.ErrorContains(t, err, tt.expectedError)
@@ -471,13 +471,13 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 	os.SetCardinality(2)
 	os.SetCardinalityNext(2)
 	os.SetIndex(1)
-	os.Observations()[1] = pl.NewObservation(
+	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
 		"0",
 		"0",
 		true,
-	)
+	))
 	return os
 }
 
@@ -491,13 +491,13 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 	os.SetCardinality(2)
 	os.SetCardinalityNext(2)
 	os.SetIndex(1)
-	os.Observations()[1] = pl.NewObservation(
+	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
 		"0",
 		secondsPerLiquidityDelta.ToString(),
 		true,
-	)
+	))
 	return os
 }
 

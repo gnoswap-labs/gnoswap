@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestPoolPathDivide(t *testing.T) {
+func TestPoolPathDivide(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -27,7 +27,7 @@ func TestPoolPathDivide(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				// Test for panic cases
 				defer func() {
@@ -50,7 +50,7 @@ func TestPoolPathDivide(t *testing.T) {
 	}
 }
 
-func TestTid(t *testing.T) {
+func TestTid(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    uint64
@@ -78,14 +78,14 @@ func TestTid(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			got := positionIdFrom(tc.input)
 			uassert.Equal(t, tc.expected, string(got))
 		})
 	}
 }
 
-func TestSafeMulDivInt64(t *testing.T) {
+func TestSafeMulDivInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -212,7 +212,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -240,7 +240,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 }
 
-func TestSafeUint64ToInt64(t *testing.T) {
+func TestSafeUint64ToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       uint64
@@ -283,9 +283,9 @@ func TestSafeUint64ToInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					safeUint64ToInt64(tt.input)
 				})
 			} else {
@@ -296,7 +296,7 @@ func TestSafeUint64ToInt64(t *testing.T) {
 	}
 }
 
-func TestSafeMulInt64(t *testing.T) {
+func TestSafeMulInt64(cur realm, t *testing.T) {
 	overflowMsg := "int64 multiplication overflow"
 	underflowMsg := "int64 multiplication underflow"
 
@@ -364,9 +364,9 @@ func TestSafeMulInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					safeMulInt64(tt.a, tt.b)
 				})
 			} else {

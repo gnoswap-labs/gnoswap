@@ -9,7 +9,7 @@ import (
 )
 
 // TestProposalMetadata_Validation tests metadata validation
-func TestProposalMetadata_Validation(t *testing.T) {
+func TestProposalMetadata_Validation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		title         string
@@ -49,7 +49,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			metadata := governance.NewProposalMetadata(tc.title, tc.description)
 
@@ -69,7 +69,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 }
 
 // TestProposalData_Validation tests proposal data validation
-func TestProposalData_Validation(t *testing.T) {
+func TestProposalData_Validation(cur realm, t *testing.T) {
 	validTokenPath := "gno.land/r/gnoswap/gns"
 	tests := []struct {
 		name                 string
@@ -154,7 +154,7 @@ func TestProposalData_Validation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			data := governance.NewProposalData(tc.proposalType, tc.spendInfo, tc.execution)
 
@@ -187,7 +187,7 @@ func TestProposalData_Validation(t *testing.T) {
 }
 
 // TestParameterChangeInfo tests parameter change info functionality
-func TestParameterChangeInfo_Parsing(t *testing.T) {
+func TestParameterChangeInfo_Parsing(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		num           int64
@@ -215,7 +215,7 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			info := governance.NewExecutionInfo(tc.num, tc.msgs)
 
@@ -234,7 +234,7 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 	}
 }
 
-func TestProposalData_ParameterChangesInfos_MalformedMessage(t *testing.T) {
+func TestProposalData_ParameterChangesInfos_MalformedMessage(cur realm, t *testing.T) {
 	// given
 	info := governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1"})
 
@@ -247,7 +247,7 @@ func TestProposalData_ParameterChangesInfos_MalformedMessage(t *testing.T) {
 }
 
 // TestMakeExecuteMessage tests message creation
-func TestMakeExecuteMessage(t *testing.T) {
+func TestMakeExecuteMessage(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		pkgPath  string
@@ -272,7 +272,7 @@ func TestMakeExecuteMessage(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := makeExecuteMessage(tc.pkgPath, tc.function, tc.params)
 
