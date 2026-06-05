@@ -32,11 +32,12 @@ func TestAssertIsNotUserCall(cur realm, t *testing.T) {
 			testing.SetRealm(tt.currentRealm)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
-					assertIsNotUserCall(tt.currentRealm)
+				testing.SetRealm(tt.currentRealm)
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func(cur realm) {
+					assertIsNotUserCall(0, cur)
 				})
 			} else {
-				assertIsNotUserCall(tt.currentRealm)
+				assertIsNotUserCall(0, cur)
 			}
 		})
 	}
@@ -145,7 +146,7 @@ func TestAssertIsNotExistsPoolPath(cur realm, t *testing.T) {
 		{
 			name: "success - pool does not exist",
 			setupFn: func(cur realm, t *testing.T) {
-				initPoolTest(t)
+				initPoolTest(cur, t)
 			},
 			token0Path:  barPath,
 			token1Path:  fooPath,
@@ -155,12 +156,12 @@ func TestAssertIsNotExistsPoolPath(cur realm, t *testing.T) {
 		{
 			name: "fail - pool already exists",
 			setupFn: func(cur realm, t *testing.T) {
-				initPoolTest(t)
+				initPoolTest(cur, t)
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceSetPoolCreationFee(cur, 0)
+				mockInstanceSetPoolCreationFee(0, cur, 0)
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceCreatePool(cur, barPath, fooPath, fee3000, "4295128740")
+				mockInstanceCreatePool(0, cur, barPath, fooPath, fee3000, "4295128740")
 			},
 			token0Path:  barPath,
 			token1Path:  fooPath,

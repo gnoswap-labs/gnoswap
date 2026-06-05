@@ -16,7 +16,7 @@ func newPoolFixture() *Pool {
 	pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("5000"))
 	pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("6000"))
 	pool.SetLiquidity(u256.MustFromDecimal("7000"))
-	pool.SetSlot0(newSlot0(u256.MustFromDecimal("9000"), 11, 12, true))
+	pool.SetSlot0(NewSlot0(u256.MustFromDecimal("9000"), 11, 12, true))
 	return pool
 }
 

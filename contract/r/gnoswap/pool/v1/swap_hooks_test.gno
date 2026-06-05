@@ -24,26 +24,26 @@ func TestHookSetters_RespectHalt(cur realm, t *testing.T) {
 		{
 			name: "SetTickCrossHook",
 			call: func() {
-				pool.SetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+				pool.SetTickCrossHook(0, cur, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapStartHook",
 			call: func() {
-				pool.SetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+				pool.SetSwapStartHook(0, cur, func(cur realm, poolPath string, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapEndHook",
 			call: func() {
-				pool.SetSwapEndHook(func(cur realm, poolPath string) error { return nil })
+				pool.SetSwapEndHook(0, cur, func(cur realm, poolPath string) error { return nil })
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			uassert.PanicsWithMessage(t, cur, "halted: pool", func() {
+			uassert.AbortsWithMessage(t, cur, "halted: pool", func() {
 				tt.call()
 			})
 		})
@@ -70,7 +70,7 @@ func TestHookSetters_NormalOperation(cur realm, t *testing.T) {
 		// Verify hook was set by checking store
 		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetTickCrossHook(hook)
+				pool.SetTickCrossHook(0, cur, hook)
 			}(cross(cur))
 		})
 	})
@@ -84,7 +84,7 @@ func TestHookSetters_NormalOperation(cur realm, t *testing.T) {
 
 		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetSwapStartHook(hook)
+				pool.SetSwapStartHook(0, cur, hook)
 			}(cross(cur))
 		})
 	})
@@ -98,7 +98,7 @@ func TestHookSetters_NormalOperation(cur realm, t *testing.T) {
 
 		uassert.NotPanics(t, cur, func() {
 			func(cur realm) {
-				pool.SetSwapEndHook(hook)
+				pool.SetSwapEndHook(0, cur, hook)
 			}(cross(cur))
 		})
 	})

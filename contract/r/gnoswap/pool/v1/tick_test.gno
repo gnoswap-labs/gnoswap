@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
@@ -63,7 +62,7 @@ func TestcalculateMaxLiquidityPerTick(cur realm, t *testing.T) {
 func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
+		ticks: pl.NewPoolTicksTree(),
 	})
 
 	makeTickInfo := func(
@@ -73,7 +72,7 @@ func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 		feeGrowthOutside1X128 string,
 		initialized bool,
 	) pl.TickInfo {
-		tickInfo := pl.TickInfo{}
+		tickInfo := pl.NewTickInfo()
 		tickInfo.SetLiquidityGross(liquidityGross)
 		tickInfo.SetLiquidityNet(liquidityNet)
 		tickInfo.SetFeeGrowthOutside0X128(feeGrowthOutside0X128)
@@ -249,9 +248,11 @@ func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 }
 
 func TestTickUpdate(cur realm, t *testing.T) {
-	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
-	})
+	// Use pl.NewPool so the internal ticks BPTree is allocated and owned by the
+	// pool realm. makeMockPool would override it with a test-realm-owned tree
+	// (via SetTicks), and the in-place slot update performed by the second
+	// setTick would then trip the interrealm v2 readonly taint check.
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 0, 0)
 
 	tests := []struct {
 		name                 string
@@ -265,6 +266,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 		maxLiquidity         *u256.Uint
 		wantFlipped          bool
 		shouldPanic          bool
+		shouldAbort          bool
 		verify               func()
 	}{
 		{
@@ -372,6 +374,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"), // maxUint128
 			wantFlipped:          false,
 			shouldPanic:          true,
+			shouldAbort:          true,
 		},
 		{
 			name: "assumes all growth happens below ticks lte current tick",
@@ -441,7 +444,20 @@ func TestTickUpdate(cur realm, t *testing.T) {
 				tt.preconditions()
 			}
 
-			if tt.shouldPanic {
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, cur, "result exceeds uint128 range", func() {
+					tickUpdate(
+						pool,
+						tt.tick,
+						tt.tickCurrent,
+						tt.liquidityDelta,
+						tt.feeGrowthGlobal0X128,
+						tt.feeGrowthGlobal1X128,
+						tt.upper,
+						tt.maxLiquidity,
+					)
+				})
+			} else if tt.shouldPanic {
 				defer func() {
 					if r := recover(); r == nil {
 						t.Errorf("expected panic, but got nil")
@@ -482,9 +498,10 @@ func TestTickUpdate(cur realm, t *testing.T) {
 }
 
 func TestTickCross(cur realm, t *testing.T) {
-	pool := makeMockPool(createMockPoolParams{
-		ticks: bptree.NewBPTreeN(32),
-	})
+	// Use pl.NewPool so the internal ticks BPTree is owned by the pool realm;
+	// otherwise the in-place slot update in tickCross->setTick trips the
+	// interrealm v2 readonly taint check (see TestTickUpdate).
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 0, 0)
 
 	// Setup initial tick state
 
@@ -534,9 +551,7 @@ func TestTickCross(cur realm, t *testing.T) {
 }
 
 func TestGetTick(cur realm, t *testing.T) {
-	pool := &pl.Pool{}
-
-	ticks := bptree.NewBPTreeN(32)
+	ticks := pl.NewPoolTicksTree()
 	tickInfo := mockTickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
@@ -546,7 +561,9 @@ func TestGetTick(cur realm, t *testing.T) {
 	}
 	ticks.Set(pl.EncodeTickKey(50), tickInfo.toTickInfo())
 
-	pool.SetTicks(ticks)
+	pool := makeMockPool(createMockPoolParams{
+		ticks: ticks,
+	})
 
 	tests := []struct {
 		name     string

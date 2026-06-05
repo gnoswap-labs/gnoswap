@@ -5,7 +5,8 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func assertIsNotUserCall(previousRealm realm) {
+func assertIsNotUserCall(_ int, rlm realm) {
+	previousRealm := rlm.Previous()
 	if previousRealm.IsUserCall() {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,

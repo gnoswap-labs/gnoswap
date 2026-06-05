@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -36,12 +35,14 @@ var (
 //
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetTickCrossHook(0, rlm, hook)
 	if err != nil {
@@ -56,12 +57,14 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetSwapStartHook(0, rlm, hook)
 	if err != nil {
@@ -76,12 +79,14 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	err := i.store.SetSwapEndHook(0, rlm, hook)
 	if err != nil {
@@ -97,7 +102,8 @@ type SwapResult struct {
 	NewSqrtPrice         *u256.Uint
 	NewTick              int32
 	NewLiquidity         *u256.Uint
-	NewProtocolFees      pl.TokenPair
+	NewProtocolFeeToken0 int64
+	NewProtocolFeeToken1 int64
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
 }
@@ -146,10 +152,10 @@ func (i *poolV1) Swap(
 	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
-	previousRealm := rlm.Previous()
-	assertIsNotUserCall(previousRealm)
+	assertIsNotUserCall(0, rlm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
@@ -162,8 +168,8 @@ func (i *poolV1) Swap(
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
-	i.lockPool(rlm)
-	defer i.unlockPool(rlm)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
 
 	// no liquidity -> no swap, return zero amounts
 	if pool.Liquidity().IsZero() {
@@ -242,16 +248,16 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeTransfer(rlm, pool, recipient, token1Path, result.Amount1.Abs(), false)
+			i.safeTransfer(0, rlm, pool, recipient, token1Path, result.Amount1.Abs(), false)
 		}
-		i.safeSwapCallback(rlm, pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeTransfer(rlm, pool, recipient, token0Path, result.Amount0.Abs(), true)
+			i.safeTransfer(0, rlm, pool, recipient, token0Path, result.Amount0.Abs(), true)
 		}
-		i.safeSwapCallback(rlm, pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
+		i.safeSwapCallback(0, rlm, pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 	}
 
 	lastObservation, err := lastObservation(pool.ObservationState())
@@ -261,6 +267,8 @@ func (i *poolV1) Swap(
 
 	token0Amount := result.Amount0.ToString()
 	token1Amount := result.Amount1.ToString()
+
+	previousRealm := rlm.Previous()
 
 	chain.Emit(
 		"Swap",
@@ -395,7 +403,8 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross ti
 		NewSqrtPrice:         state.sqrtPriceX96,
 		NewTick:              state.tick,
 		NewLiquidity:         state.liquidity,
-		NewProtocolFees:      pool.ProtocolFees(),
+		NewProtocolFeeToken0: pool.ProtocolFeesToken0(),
+		NewProtocolFeeToken1: pool.ProtocolFeesToken1(),
 		FeeGrowthGlobal0X128: pool.FeeGrowthGlobal0X128(),
 		FeeGrowthGlobal1X128: pool.FeeGrowthGlobal1X128(),
 	}
@@ -403,12 +412,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross ti
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken0 = safeAddInt64(result.NewProtocolFeeToken0, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFeeToken1 = safeAddInt64(result.NewProtocolFeeToken1, safeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -425,7 +434,8 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 	pool.SetSlot0(slot0)
 
 	pool.SetLiquidity(result.NewLiquidity)
-	pool.SetProtocolFees(result.NewProtocolFees)
+	pool.SetProtocolFeesToken0(result.NewProtocolFeeToken0)
+	pool.SetProtocolFeesToken1(result.NewProtocolFeeToken1)
 	pool.SetFeeGrowthGlobal0X128(result.FeeGrowthGlobal0X128)
 	pool.SetFeeGrowthGlobal1X128(result.FeeGrowthGlobal1X128)
 }
@@ -540,7 +550,7 @@ func (i *poolV1) computeSwapStep(
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 		newState = i.tickTransition(step, zeroForOne, newState, pool, cache, onTickCross)
 	} else if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
-		newState.setTick(gnsmath.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
+		newState.setTick(pl.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
 
 	return newState, nil
@@ -583,7 +593,7 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = gnsmath.TickMathGetSqrtRatioAtTick(step.tickNext)
+	step.sqrtPriceNextX96 = pl.TickMathGetSqrtRatioAtTick(step.tickNext)
 	return step
 }
 
@@ -605,7 +615,7 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 
 // computeAmounts calculates the input and output amounts for the current swap step.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Pool, step StepComputations) (SwapState, StepComputations) {
-	sqrtPriceX96, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
+	sqrtPriceX96, amountIn, amountOut, feeAmount := pl.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
 		sqrtRatioTargetX96,
 		state.liquidity,
@@ -738,7 +748,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = gnsmath.LiquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = pl.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if onTickCross != nil {
 			onTickCross(pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)

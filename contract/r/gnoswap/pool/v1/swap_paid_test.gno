@@ -4,6 +4,7 @@ import (
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/common"
@@ -279,7 +280,7 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				recipient:           adminAddr,
 				payer:               adminAddr,
 				zeroForOne:          true,
-				sqrtPriceLimitX96:   common.TickMathGetSqrtRatioAtTick(-10).ToString(),
+				sqrtPriceLimitX96:   gnsmath.TickMathGetSqrtRatioAtTick(-10).ToString(),
 				isUseCallbackAmount: true,
 			},
 			expectedToken0PoolBalanceChange: 502882,
@@ -289,8 +290,8 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initSwapPaid(t)
-			defer initSwapPaid(t)
+			initSwapPaid(cur, t)
+			defer initSwapPaid(cur, t)
 
 			initSwapPaidCreatePool(cur, t, tt.poolInfo.token0Path, tt.poolInfo.token1Path, tt.poolInfo.feeTier)
 			for _, pos := range tt.positionInfo {
@@ -316,7 +317,7 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 				resultAmount0, resultAmount1 := mockInstanceSwap(
-					cur,
+					0, cur,
 					tt.swapInfo.token0Path,
 					tt.swapInfo.token1Path,
 					tt.poolInfo.feeTier,
@@ -390,17 +391,17 @@ func swapPaidSwapCallback(
 }
 
 // test helpers
-func initSwapPaid(t *testing.T) {
-	initPoolTest(t)
+func initSwapPaid(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
 }
 
 func initSwapPaidCreatePool(cur realm, t *testing.T, token0Path, token1Path string, feeTier uint32) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	mockInstanceSetPoolCreationFee(cur, 0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	if !getMockInstance().ExistsPoolPath(GetPoolPath(token0Path, token1Path, feeTier)) {
-		mockInstanceCreatePool(cur, token0Path, token1Path, feeTier, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		mockInstanceCreatePool(0, cur, token0Path, token1Path, feeTier, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	}
 }
 
@@ -428,10 +429,10 @@ func initSwapPaidSetFeeMintPosition(
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,
@@ -439,9 +440,9 @@ func initSwapPaidSetFeeMintPosition(
 		uint256.NewUintFromInt64(amount1Requested),
 	)
 
-	testing.SetRealm(testing.NewUserRealm(positionAddr))
+	testing.SetRealm(posRealm)
 	mockInstanceMint(
-		cur,
+		0, cur,
 		token0Path,
 		token1Path,
 		feeTier,

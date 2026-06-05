@@ -80,11 +80,16 @@ func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uin
 
 	// Set pool creation fee to 0 for testing
 	e.AsAdmin()
-	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(cur, 0)
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+		mockInstanceSetPoolCreationFee(0, cur, 0)
+	}(cross(cur))
 
 	// Create the pool
-	mockInstanceCreatePool(cur, token0, token1, fee, sqrtPriceX96)
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+		mockInstanceCreatePool(0, cur, token0, token1, fee, sqrtPriceX96)
+	}(cross(cur))
 	pool := getMockInstance().mustGetPool(poolKey)
 	e.pools[poolKey] = pool
 
@@ -92,24 +97,24 @@ func (e *PoolTestEnv) GivenPoolCreated(cur realm, token0, token1 string, fee uin
 }
 
 // AndUserFunded provides tokens to a user
-func (e *PoolTestEnv) AndUserFunded(user address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndUserFunded(cur realm, user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	e.AsAdmin()
 	for _, token := range tokens {
-		TokenFaucet(e.t, token, user)
+		TokenFaucet(cur, e.t, token, user)
 	}
 
 	return e
 }
 
 // AndTokensApproved approves tokens for pool operations
-func (e *PoolTestEnv) AndTokensApproved(user address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndTokensApproved(cur realm, user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	// TokenApprove already sets the realm internally, so we don't need to set it here
 	for _, token := range tokens {
-		TokenApprove(e.t, token, user, e.poolAddr, maxApprove)
+		TokenApprove(cur, e.t, token, user, e.poolAddr, maxApprove)
 	}
 
 	return e
@@ -127,7 +132,7 @@ func (e *PoolTestEnv) AndLiquidityProvided(cur realm, params LiquidityParams) *P
 	// Add liquidity
 	testing.SetRealm(posRealm)
 	amount0, amount1 := mockInstanceMint(
-		cur,
+		0, cur,
 		params.token0,
 		params.token1,
 		params.fee,
@@ -175,7 +180,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint
 	// Execute swap
 	testing.SetRealm(rouRealm)
 	amount0Str, amount1Str := mockInstanceSwap(
-		cur,
+		0, cur,
 		params.token0,
 		params.token1,
 		params.fee,

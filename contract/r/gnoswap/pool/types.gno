@@ -291,3 +291,12 @@ type IPoolStore interface {
 }
 
 type CallbackMarker struct{}
+
+// NewCallbackMarker allocates a CallbackMarker in the pool realm.
+// Construction must happen here because /r/-declared types can only be
+// allocated in their owning realm (interrealm v2 checkConstructionTime).
+// Callers in other realms (e.g. pool/v1 impl) borrow into pool via
+// borrow rule #1 (function defined in /r/ package).
+func NewCallbackMarker() *CallbackMarker {
+	return &CallbackMarker{}
+}
