@@ -11,7 +11,7 @@ import (
 
 // Test swap_callback.gno functions
 
-func TestSwapCallback_Token0Delta(t *testing.T) {
+func TestSwapCallback_Token0Delta(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		token0Path    string
@@ -63,7 +63,7 @@ func TestSwapCallback_Token0Delta(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			amount0 := i256.MustFromDecimal(tt.amount0Delta)
 			amount1 := i256.MustFromDecimal(tt.amount1Delta)
 
@@ -87,7 +87,7 @@ func TestSwapCallback_Token0Delta(t *testing.T) {
 	}
 }
 
-func TestTransferToPool_PayerType(t *testing.T) {
+func TestTransferToPool_PayerType(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		payer              address
@@ -109,7 +109,7 @@ func TestTransferToPool_PayerType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			isTransferByRouter := tt.payer == routerAddr
 
 			if tt.expectTransferBy == "router" {
@@ -123,7 +123,7 @@ func TestTransferToPool_PayerType(t *testing.T) {
 
 // Test swap_inner.gno functions
 
-func TestCalculateSqrtPriceLimitForSwap_ZeroForOne(t *testing.T) {
+func TestCalculateSqrtPriceLimitForSwap_ZeroForOne(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		zeroForOne        bool
@@ -159,7 +159,7 @@ func TestCalculateSqrtPriceLimitForSwap_ZeroForOne(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(tt.zeroForOne, tt.fee, tt.sqrtPriceLimitX96)
 
 			if tt.expectNonZero {
@@ -174,7 +174,7 @@ func TestCalculateSqrtPriceLimitForSwap_ZeroForOne(t *testing.T) {
 	}
 }
 
-func TestGetMinTick(t *testing.T) {
+func TestGetMinTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		fee         uint32
@@ -213,9 +213,9 @@ func TestGetMinTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "unknown fee", func() {
+				uassert.PanicsContains(t, cur, "unknown fee", func() {
 					getMinTick(tt.fee)
 				})
 			} else {
@@ -226,7 +226,7 @@ func TestGetMinTick(t *testing.T) {
 	}
 }
 
-func TestGetMaxTick(t *testing.T) {
+func TestGetMaxTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		fee         uint32
@@ -265,9 +265,9 @@ func TestGetMaxTick(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "unknown fee", func() {
+				uassert.PanicsContains(t, cur, "unknown fee", func() {
 					getMaxTick(tt.fee)
 				})
 			} else {
@@ -278,11 +278,11 @@ func TestGetMaxTick(t *testing.T) {
 	}
 }
 
-func TestMinMaxTick_Symmetry(t *testing.T) {
+func TestMinMaxTick_Symmetry(cur realm, t *testing.T) {
 	fees := []uint32{100, 500, 3000, 10000}
 
 	for _, fee := range fees {
-		t.Run("fee_"+u256.NewUint(uint64(fee)).ToString(), func(t *testing.T) {
+		t.Run("fee_"+u256.NewUint(uint64(fee)).ToString(), func(cur realm, t *testing.T) {
 			minTick := getMinTick(fee)
 			maxTick := getMaxTick(fee)
 
@@ -292,7 +292,7 @@ func TestMinMaxTick_Symmetry(t *testing.T) {
 	}
 }
 
-func TestSwapExecutor_Interface(t *testing.T) {
+func TestSwapExecutor_Interface(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		executorType string
@@ -308,7 +308,7 @@ func TestSwapExecutor_Interface(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var executor SwapExecutor
 
 			if tt.executorType == "real" {
@@ -324,7 +324,7 @@ func TestSwapExecutor_Interface(t *testing.T) {
 
 // Test swap_multi.gno functions
 
-func TestSwapDirection(t *testing.T) {
+func TestSwapDirection(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		direction SwapDirection
@@ -343,13 +343,13 @@ func TestSwapDirection(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, int(tt.expected), int(tt.direction))
 		})
 	}
 }
 
-func TestNewMultiSwapProcessor(t *testing.T) {
+func TestNewMultiSwapProcessor(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		isSimulate    bool
@@ -383,9 +383,14 @@ func TestNewMultiSwapProcessor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := &routerV1{}
-			processor := NewMultiSwapProcessor(router, tt.isSimulate, tt.direction)
+			var processor *MultiSwapProcessor
+			if tt.isSimulate {
+				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
+			} else {
+				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
+			}
 
 			uassert.NotNil(t, processor)
 			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
@@ -403,7 +408,7 @@ func TestNewMultiSwapProcessor(t *testing.T) {
 	}
 }
 
-func TestMultiSwapExecutor_Interface(t *testing.T) {
+func TestMultiSwapExecutor_Interface(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		executorType string
@@ -419,7 +424,7 @@ func TestMultiSwapExecutor_Interface(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var executor MultiSwapExecutor
 			router := &routerV1{}
 
@@ -434,7 +439,7 @@ func TestMultiSwapExecutor_Interface(t *testing.T) {
 	}
 }
 
-func TestSwapDirection_Values(t *testing.T) {
+func TestSwapDirection_Values(cur realm, t *testing.T) {
 	// Test that Forward and Backward have distinct values
 	uassert.NotEqual(t, int(Forward), int(Backward))
 
@@ -445,7 +450,7 @@ func TestSwapDirection_Values(t *testing.T) {
 	uassert.Equal(t, 2, int(Backward))
 }
 
-func TestMultiSwapProcessor_Fields(t *testing.T) {
+func TestMultiSwapProcessor_Fields(cur realm, t *testing.T) {
 	router := &routerV1{}
 
 	tests := []struct {
@@ -466,8 +471,13 @@ func TestMultiSwapProcessor_Fields(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			processor := NewMultiSwapProcessor(router, tt.isSimulate, tt.direction)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			var processor *MultiSwapProcessor
+			if tt.isSimulate {
+				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
+			} else {
+				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
+			}
 
 			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
 			uassert.Equal(t, int(tt.direction), int(processor.direction))
@@ -478,7 +488,7 @@ func TestMultiSwapProcessor_Fields(t *testing.T) {
 
 // Test swap_single.gno functions
 
-func TestExecuteSwap_SameToken(t *testing.T) {
+func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 	router := &routerV1{}
 	executor := &DrySwapExecutor{router: router}
 
@@ -489,7 +499,7 @@ func TestExecuteSwap_SameToken(t *testing.T) {
 	}
 
 	uassert.PanicsWithMessage(
-		t,
+		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
 			router.executeSwap(executor, params)
@@ -497,7 +507,7 @@ func TestExecuteSwap_SameToken(t *testing.T) {
 	)
 }
 
-func TestExecuteSwap_DifferentTokens(t *testing.T) {
+func TestExecuteSwap_DifferentTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		tokenIn  string
@@ -519,14 +529,14 @@ func TestExecuteSwap_DifferentTokens(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Verify tokens are different
 			uassert.NotEqual(t, tt.tokenIn, tt.tokenOut)
 		})
 	}
 }
 
-func TestSingleSwap_ExecutorType(t *testing.T) {
+func TestSingleSwap_ExecutorType(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		swapType     string
@@ -545,7 +555,7 @@ func TestSingleSwap_ExecutorType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := &routerV1{}
 			var executor SwapExecutor
 
@@ -568,7 +578,7 @@ func TestSingleSwap_ExecutorType(t *testing.T) {
 	}
 }
 
-func TestSwapExecutor_Consistency(t *testing.T) {
+func TestSwapExecutor_Consistency(cur realm, t *testing.T) {
 	// Verify both RealSwapExecutor and DrySwapExecutor implement SwapExecutor
 	var _ SwapExecutor = (*RealSwapExecutor)(nil)
 	var _ SwapExecutor = (*DrySwapExecutor)(nil)
@@ -576,7 +586,7 @@ func TestSwapExecutor_Consistency(t *testing.T) {
 
 // Additional edge case tests
 
-func TestSwapCallback_EdgeCases(t *testing.T) {
+func TestSwapCallback_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		amount0Delta string
@@ -610,7 +620,7 @@ func TestSwapCallback_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			amount0 := i256.MustFromDecimal(tt.amount0Delta)
 			amount1 := i256.MustFromDecimal(tt.amount1Delta)
 
@@ -620,11 +630,11 @@ func TestSwapCallback_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestCalculateSqrtPriceLimitForSwap_AllFees(t *testing.T) {
+func TestCalculateSqrtPriceLimitForSwap_AllFees(cur realm, t *testing.T) {
 	fees := []uint32{100, 500, 3000, 10000}
 
 	for _, fee := range fees {
-		t.Run("zero_for_one_fee_"+u256.NewUint(uint64(fee)).ToString(), func(t *testing.T) {
+		t.Run("zero_for_one_fee_"+u256.NewUint(uint64(fee)).ToString(), func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(true, fee, u256.Zero())
 			uassert.False(t, result.IsZero())
 
@@ -633,7 +643,7 @@ func TestCalculateSqrtPriceLimitForSwap_AllFees(t *testing.T) {
 			uassert.True(t, result.Gt(minSqrt))
 		})
 
-		t.Run("one_for_zero_fee_"+u256.NewUint(uint64(fee)).ToString(), func(t *testing.T) {
+		t.Run("one_for_zero_fee_"+u256.NewUint(uint64(fee)).ToString(), func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(false, fee, u256.Zero())
 			uassert.False(t, result.IsZero())
 
@@ -644,7 +654,7 @@ func TestCalculateSqrtPriceLimitForSwap_AllFees(t *testing.T) {
 	}
 }
 
-func TestSwapInner_ZeroForOneLogic(t *testing.T) {
+func TestSwapInner_ZeroForOneLogic(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		tokenIn    string
@@ -666,14 +676,14 @@ func TestSwapInner_ZeroForOneLogic(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			zeroForOne := tt.tokenIn < tt.tokenOut
 			uassert.Equal(t, tt.zeroForOne, zeroForOne)
 		})
 	}
 }
 
-func TestMultiSwapProcessor_DirectionMatching(t *testing.T) {
+func TestMultiSwapProcessor_DirectionMatching(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		swapType        string
@@ -695,7 +705,7 @@ func TestMultiSwapProcessor_DirectionMatching(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.swapType == "exactIn" {
 				uassert.False(t, tt.amountSpecified.IsNeg())
 				uassert.Equal(t, int(Forward), int(tt.direction))
@@ -707,7 +717,7 @@ func TestMultiSwapProcessor_DirectionMatching(t *testing.T) {
 	}
 }
 
-func TestZeroValue_Constant(t *testing.T) {
+func TestZeroValue_Constant(cur realm, t *testing.T) {
 	// Verify zero constant is properly initialized
 	uassert.NotNil(t, zero)
 	uassert.True(t, zero.IsZero())

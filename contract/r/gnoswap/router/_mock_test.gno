@@ -40,6 +40,8 @@ type MockRouter struct {
 }
 
 func (m *MockRouter) ExactInSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -58,6 +60,8 @@ func (m *MockRouter) ExactInSwapRoute(
 }
 
 func (m *MockRouter) ExactInSingleSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -76,6 +80,8 @@ func (m *MockRouter) ExactInSingleSwapRoute(
 }
 
 func (m *MockRouter) ExactOutSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -94,6 +100,8 @@ func (m *MockRouter) ExactOutSwapRoute(
 }
 
 func (m *MockRouter) ExactOutSingleSwapRoute(
+	_ int,
+	rlm realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -127,6 +135,8 @@ func (m *MockRouter) DrySwapRoute(
 }
 
 func (m *MockRouter) SwapCallback(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	amount0Delta int64,
@@ -146,7 +156,7 @@ func (m *MockRouter) GetSwapFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockRouter) SetSwapFee(fee uint64) {
+func (m *MockRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetSwapFee")
 }
 
