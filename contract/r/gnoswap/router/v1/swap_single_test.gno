@@ -42,7 +42,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 		expectError bool
 	}{
 		{
-			name: "exact input swap BAR -> BAZ",
+			name:    "exact input swap BAR -> BAZ",
 			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -55,7 +55,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "exact output swap BAR -> BAZ",
+			name:    "exact output swap BAR -> BAZ",
 			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -226,20 +226,15 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectError {
-				switch tt.errType {
-				case "panic":
-					uassert.PanicsWithMessage(t, cur, tt.errorMessage, func() {
+				uassert.AbortsWithMessage(t, cur, tt.errorMessage, func() {
+					func(cur realm) {
 						router.singleSwap(0, cur, &tt.params)
-					})
-				case "abort":
-					uassert.AbortsWithMessage(t, cur, tt.errorMessage, func() {
-						router.singleSwap(0, cur, &tt.params)
-					})
-				default:
-					t.Errorf("unexpected error type: %s", tt.errType)
-				}
+					}(cross(cur))
+				})
 			} else {
-				amountIn, amountOut := router.singleSwap(0, cur, &tt.params)
+				amountIn, amountOut := func(cur realm) (int64, int64) {
+					return router.singleSwap(0, cur, &tt.params)
+				}(cross(cur))
 
 				if amountIn == 0 {
 					t.Error("Expected non-zero input amount")

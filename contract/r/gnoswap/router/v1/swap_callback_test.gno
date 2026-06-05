@@ -24,10 +24,14 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				MakeMintPositionWithoutFee(cur, t)
-				TokenFaucet(cur, t, barPath, routerAddr)
-				TokenFaucet(cur, t, bazPath, routerAddr)
-				return routerAddr
+				// SwapCallback runs under the router v1 realm, so the GRC20
+				// transfer actor (and the payer == routerAddr check) resolves to
+				// routerV1Addr. Fund and self-approve that address.
+				TokenFaucet(cur, t, barPath, routerV1Addr)
+				TokenFaucet(cur, t, bazPath, routerV1Addr)
+				TokenApprove(cur, t, barPath, routerV1Addr, routerV1Addr, maxApprove)
+				TokenApprove(cur, t, bazPath, routerV1Addr, routerV1Addr, maxApprove)
+				return routerV1Addr
 			},
 			amount0Delta:    "1000",
 			amount1Delta:    "0",
@@ -39,10 +43,11 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				MakeMintPositionWithoutFee(cur, t)
-				TokenFaucet(cur, t, barPath, routerAddr)
-				TokenFaucet(cur, t, bazPath, routerAddr)
-				return routerAddr
+				TokenFaucet(cur, t, barPath, routerV1Addr)
+				TokenFaucet(cur, t, bazPath, routerV1Addr)
+				TokenApprove(cur, t, barPath, routerV1Addr, routerV1Addr, maxApprove)
+				TokenApprove(cur, t, bazPath, routerV1Addr, routerV1Addr, maxApprove)
+				return routerV1Addr
 			},
 			amount0Delta:    "0",
 			amount1Delta:    "1000",
@@ -54,7 +59,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				return routerAddr
+				return routerV1Addr
 			},
 			amount0Delta:    "0",
 			amount1Delta:    "0",
@@ -66,12 +71,13 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				MakeMintPositionWithoutFee(cur, t)
 				testUser := testutils.TestAddress("testUser")
 				TokenFaucet(cur, t, barPath, testUser)
 				TokenFaucet(cur, t, bazPath, testUser)
-				TokenApprove(cur, t, barPath, testUser, routerAddr, maxApprove)
-				TokenApprove(cur, t, bazPath, testUser, routerAddr, maxApprove)
+				// The TransferFrom spender is the router v1 realm (the callback
+				// caller), so approve routerV1Addr, not the router domain addr.
+				TokenApprove(cur, t, barPath, testUser, routerV1Addr, maxApprove)
+				TokenApprove(cur, t, bazPath, testUser, routerV1Addr, maxApprove)
 				return testUser
 			},
 			amount0Delta:    "1000",
@@ -97,7 +103,6 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
-				MakeMintPositionWithoutFee(cur, t)
 				poorUser := testutils.TestAddress("poorUser")
 				return poorUser
 			},
@@ -111,6 +116,8 @@ func TestSwapCallback(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPoolTest(cur, t)
+			initRouterTest(cur, t)
 			// Setup
 			payer := tt.setupFunc(cur, t)
 
@@ -121,7 +128,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			if tt.shouldError {
 				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
 					mockInstanceSwapCallback(
-						cur,
+						cross(cur),
 						barPath,
 						bazPath,
 						tt.amount0Delta,
@@ -131,7 +138,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 				})
 			} else {
 				err := mockInstanceSwapCallback(
-					cur,
+					cross(cur),
 					barPath,
 					bazPath,
 					tt.amount0Delta,

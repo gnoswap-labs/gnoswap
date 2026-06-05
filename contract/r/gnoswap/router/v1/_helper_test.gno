@@ -462,6 +462,5 @@ func mockInstanceSwapCallback(
 	if err != nil {
 		return err
 	}
-	testing.SetRealm(testing.NewCodeRealm(routerV1Path))
 	return mockInstance.SwapCallback(0, cur, token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 }
