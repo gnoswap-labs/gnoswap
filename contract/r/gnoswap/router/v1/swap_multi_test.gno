@@ -11,11 +11,12 @@ import (
 )
 
 func TestMultiSwap(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	tests := []struct {
 		name            string
-		setupFn         func(*TestEnv)
 		params          SwapParams
 		numPools        int
 		swapPath        string
@@ -25,11 +26,6 @@ func TestMultiSwap(cur realm, t *testing.T) {
 	}{
 		{
 			name: "single hop swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
-			},
 			params: NewSwapParams().
 				Recipient(alice).
 				TokenIn(barPath).
@@ -109,11 +105,14 @@ func TestMultiSwap(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			env := NewTestEnv(t)
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
-			if tt.setupFn != nil {
-				tt.setupFn(env)
-			}
+			testing.SetRealm(adminRealm)
+			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+				AndPositionMinted(cur)
+			testing.SetRealm(testing.NewUserRealm(user1Addr))
+			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
 			router := mockRouter()
 

@@ -12,8 +12,6 @@ import (
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -35,7 +33,7 @@ func (m *mockOperation) Validate() error {
 	return m.ValidateErr
 }
 
-func (m *mockOperation) Process() (*SwapResult, error) {
+func (m *mockOperation) Process(_ int, rlm realm) (*SwapResult, error) {
 	return m.Result, m.ProcessErr
 }
 
@@ -76,7 +74,7 @@ func TestExecuteSwapOperation(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result, err := executeSwapOperation(tt.operation)
+			result, err := executeSwapOperation(0, cur, tt.operation)
 			if tt.expectError && err == nil {
 				t.Errorf("expected an error but got nil (test case: %s)", tt.name)
 			}
@@ -126,29 +124,29 @@ func TestBuildRouteEventAttrs(cur realm, t *testing.T) {
 }
 
 func TestProcessRoute(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
 	op := &baseSwapOperation{}
 
-	t.Run("Single hop route", func(cur realm, t *testing.T) {
-		testing.SetRealm(adminRealm)
-		CreatePoolWithoutFee(cur, t)
-		MakeThirdMintPositionWithoutFee(cur, t)
-		common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
-		route := foobar500
-		toSwap := int64(1000)
-		swapType := ExactIn
+	testing.SetRealm(adminRealm)
+	CreatePoolWithoutFee(cur, t)
+	MakeThirdMintPositionWithoutFee(cur, t)
+	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
+	route := foobar500
+	toSwap := int64(1000)
+	swapType := ExactIn
 
-		router := mockRouter()
-		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(0, cur, router, route, toSwap, swapType)
-			uassert.Equal(t, err, nil)
-			uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
-			uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
-		}(cross(cur))
-	})
+	router := mockRouter()
+	func(cur realm) {
+		amountIn, amountOut, err := op.processRoute(0, cur, router, route, toSwap, swapType)
+		uassert.Equal(t, err, nil)
+		uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
+		uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
+	}(cross(cur))
 }
 
 // Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
 func TestProcessRoutesWithRemainder(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
 	oddAmount := int64(101)
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
@@ -257,6 +255,7 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initRouterTest(cur, t)
 			testing.SetRealm(adminRealm)
 			CreatePoolWithoutFee(cur, t)
 			MakeThirdMintPositionWithoutFee(cur, t)
@@ -740,35 +739,39 @@ func TestProcessRoutes_OverflowDetection(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initRouterTest(t)
+		initRouterTest(cur, t)
 
-			testing.SetRealm(adminRealm)
-			gns.Approve(cross(cur), poolAddr, math.MaxInt64)
-			bar.Approve(cross(cur), poolAddr, math.MaxInt64)
-			baz.Approve(cross(cur), poolAddr, math.MaxInt64)
-			bar.Approve(cross(cur), routerAddr, math.MaxInt64)
-			baz.Approve(cross(cur), routerAddr, math.MaxInt64)
+		testing.SetRealm(adminRealm)
+		gns.Approve(cross(cur), poolAddr, math.MaxInt64)
+		pl.SetPoolCreationFee(cross(cur), 0)
+		poolPath := pl.GetPoolPath(barPath, bazPath, 500)
+		if !pl.ExistsPoolPath(poolPath) {
 			pl.CreatePool(cross(cur), barPath, bazPath, 500, "79228162514264337593543950336")
-			pn.Mint(cross(cur), barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+		}
+		TokenApprove(cur, t, barPath, admin, poolAddr, maxApprove)
+		TokenApprove(cur, t, bazPath, admin, poolAddr, maxApprove)
+		pn.Mint(cross(cur), barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 
-			router := mockRouter()
+		swapperRealm := testing.NewUserRealm(alice)
+		testing.SetRealm(swapperRealm)
+		TokenFaucet(cur, t, barPath, alice)
+		TokenApprove(cur, t, barPath, alice, routerAddr, maxApprove)
 
-			processRoutesFn := func(cur realm) error {
-				testing.SetRealm(routerRealm)
-				_, _, err := tt.op.processRoutes(0, cur, router, ExactIn)
-				return err
-			}
+		router := mockRouter()
 
-			if tt.expectPanic {
-				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
-					processRoutesFn(cross(cur))
-				})
-			} else {
-				err := processRoutesFn(cross(cur))
-				uassert.NoError(t, err)
-			}
-		})
+		runProcessRoutes := func(cur realm) error {
+			_, _, err := tt.op.processRoutes(0, cur, router, ExactIn)
+			return err
+		}
+
+		if tt.expectPanic {
+			uassert.AbortsContains(t, cur, tt.panicMsg, func() {
+				runProcessRoutes(cross(cur))
+			})
+		} else {
+			err := runProcessRoutes(cross(cur))
+			uassert.NoError(t, err)
+		}
 	}
 }
 

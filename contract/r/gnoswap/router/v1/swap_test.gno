@@ -385,7 +385,12 @@ func TestNewMultiSwapProcessor(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := &routerV1{}
-			processor := NewMultiSwapProcessor(router, tt.isSimulate, tt.direction)
+			var processor *MultiSwapProcessor
+			if tt.isSimulate {
+				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
+			} else {
+				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
+			}
 
 			uassert.NotNil(t, processor)
 			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
@@ -467,7 +472,12 @@ func TestMultiSwapProcessor_Fields(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			processor := NewMultiSwapProcessor(router, tt.isSimulate, tt.direction)
+			var processor *MultiSwapProcessor
+			if tt.isSimulate {
+				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
+			} else {
+				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
+			}
 
 			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
 			uassert.Equal(t, int(tt.direction), int(processor.direction))
@@ -489,7 +499,7 @@ func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 	}
 
 	uassert.PanicsWithMessage(
-		t,
+		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
 			router.executeSwap(executor, params)

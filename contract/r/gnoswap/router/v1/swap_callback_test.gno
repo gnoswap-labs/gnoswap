@@ -22,7 +22,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "success with token0 payment",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				MakeMintPositionWithoutFee(cur, t)
 				TokenFaucet(cur, t, barPath, routerAddr)
@@ -37,7 +37,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "success with token1 payment",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				MakeMintPositionWithoutFee(cur, t)
 				TokenFaucet(cur, t, barPath, routerAddr)
@@ -52,7 +52,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "success with both deltas zero",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				return routerAddr
 			},
@@ -64,7 +64,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "success with user as payer",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				MakeMintPositionWithoutFee(cur, t)
 				testUser := testutils.TestAddress("testUser")
@@ -82,7 +82,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "fail with invalid caller",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				return routerAddr
 			},
@@ -95,7 +95,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		{
 			name: "fail with insufficient balance",
 			setupFunc: func(cur realm, t *testing.T) address {
-				initRouterTest(t)
+				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				MakeMintPositionWithoutFee(cur, t)
 				poorUser := testutils.TestAddress("poorUser")
@@ -112,7 +112,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			payer := tt.setupFunc(t)
+			payer := tt.setupFunc(cur, t)
 
 			// Set caller realm
 			testing.SetRealm(testing.NewCodeRealm(tt.callerRealmPath))
@@ -121,6 +121,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			if tt.shouldError {
 				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
 					mockInstanceSwapCallback(
+						cur,
 						barPath,
 						bazPath,
 						tt.amount0Delta,
@@ -130,6 +131,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 				})
 			} else {
 				err := mockInstanceSwapCallback(
+					cur,
 					barPath,
 					bazPath,
 					tt.amount0Delta,

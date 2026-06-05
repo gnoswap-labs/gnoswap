@@ -13,17 +13,29 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-func defaultSetupFn(env *TestEnv) {
+func defaultAdminSetup(cur realm, env *TestEnv) {
+	env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+		AndPositionMinted(cur)
+}
+
+func defaultUserSetup(cur realm, env *TestEnv) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-	env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-		AndPositionMinted().
-		AndUserFundedAndApproved(user1Addr, routerAddr, barPath)
+	env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath)
+}
+
+func runDefaultSetup(cur realm, env *TestEnv) {
+	testing.SetRealm(adminRealm)
+	defaultAdminSetup(cur, env)
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+	defaultUserSetup(cur, env)
 }
 
 func TestSingleSwap(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	tests := []struct {
 		name        string
-		setupFn     func(*TestEnv)
+		setupFn     func(cur realm, env *TestEnv)
 		params      SingleSwapParams
 		expectedIn  string
 		expectedOut string
@@ -31,9 +43,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 	}{
 		{
 			name: "exact input swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-			},
+			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
 				TokenOut(bazPath).
@@ -46,9 +56,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 		},
 		{
 			name: "exact output swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-			},
+			setupFn: runDefaultSetup,
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
 				TokenOut(bazPath).
@@ -63,10 +71,11 @@ func TestSingleSwap(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			env := NewTestEnv(t)
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 			router := mockRouter()
 			singleSwapFn := func(cur realm) (int64, int64) {
@@ -87,11 +96,13 @@ func TestSingleSwap(cur realm, t *testing.T) {
 }
 
 func TestSingleSwapInputValidation(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	invalidTokenPath := "gno.land/r/invalid/token"
 
 	tests := []struct {
 		name         string
-		setupFn      func(*TestEnv)
+		setupFn      func(cur realm, env *TestEnv)
 		params       SingleSwapParams
 		expectError  bool
 		errType      string
@@ -99,8 +110,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Fail: Same token swap attempt",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -114,9 +125,9 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Fail: Unregistered input token",
-			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted()
+			setupFn: func(cur realm, env *TestEnv) {
+				testing.SetRealm(adminRealm)
+				defaultAdminSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(invalidTokenPath).
@@ -130,8 +141,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Fail: Unregistered output token",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -145,8 +156,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Fail: Invalid fee tier 1",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -160,8 +171,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -175,8 +186,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Fail: Zero amount specified",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -190,8 +201,8 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 		},
 		{
 			name: "Success: Valid parameters",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -205,10 +216,11 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			env := NewTestEnv(t)
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 
 			router := mockRouter()
@@ -242,7 +254,7 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 
 // TestSingleSwapRoute_PriceLimitValidation tests validation of sqrtPriceLimitX96 parameter
 func TestSingleSwapRoute_PriceLimitValidation(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -301,7 +313,7 @@ func TestSingleSwapRoute_PriceLimitValidation(cur realm, t *testing.T) {
 				// Should panic or abort on invalid price limit
 				uassert.AbortsContains(t, cur, tt.errorMsg, func() {
 					func(cur realm) {
-						router.ExactInSingleSwapRoute(0, cur, 
+						router.ExactInSingleSwapRoute(0, cur,
 							barPath,
 							bazPath,
 							"100000",
@@ -320,7 +332,7 @@ func TestSingleSwapRoute_PriceLimitValidation(cur realm, t *testing.T) {
 
 // TestExactOutSingleSwapRoute_PriceLimitParameter tests price limit parameter in ExactOut mode
 func TestExactOutSingleSwapRoute_PriceLimitParameter(cur realm, t *testing.T) {
-	initRouterTest(t)
+	initRouterTest(cur, t)
 	CreatePoolWithoutFee(cur, t)
 	MakeMintPositionWithoutFee(cur, t)
 
@@ -341,7 +353,7 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(cur realm, t *testing.T) {
 	// Test with invalid price limit should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactOutSingleSwapRoute(0, cur, 
+			router.ExactOutSingleSwapRoute(0, cur,
 				barPath,
 				bazPath,
 				"50000",

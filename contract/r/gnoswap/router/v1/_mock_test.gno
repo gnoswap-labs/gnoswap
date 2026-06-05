@@ -23,7 +23,7 @@ func (s *mockPositionStore) GetPositions() *bptree.BPTree {
 	return s.positions
 }
 
-func (s *mockPositionStore) SetPositions(positions *bptree.BPTree) error {
+func (s *mockPositionStore) SetPositions(_ int, rlm realm, positions *bptree.BPTree) error {
 	s.positions = positions
 	return nil
 }
@@ -36,7 +36,7 @@ func (s *mockPositionStore) GetPositionNextID() uint64 {
 	return s.nextID
 }
 
-func (s *mockPositionStore) SetPositionNextID(nextID uint64) error {
+func (s *mockPositionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) error {
 	s.nextID = nextID
 	return nil
 }
@@ -53,12 +53,12 @@ func (s *mockPositionStore) GetPosition(positionId uint64) (position.Position, b
 	return value.(position.Position), true
 }
 
-func (s *mockPositionStore) SetPosition(positionId uint64, position position.Position) error {
+func (s *mockPositionStore) SetPosition(_ int, rlm realm, positionId uint64, position position.Position) error {
 	s.positions.Set(strconv.FormatUint(positionId, 10), position)
 	return nil
 }
 
-func (s *mockPositionStore) RemovePosition(positionId uint64) error {
+func (s *mockPositionStore) RemovePosition(_ int, rlm realm, positionId uint64) error {
 	s.positions.Remove(strconv.FormatUint(positionId, 10))
 	return nil
 }
@@ -80,7 +80,7 @@ func (r *mockRouterStore) GetSwapFee() uint64 {
 	return r.data[router.StoreKeySwapFee.String()].(uint64)
 }
 
-func (r *mockRouterStore) SetSwapFee(fee uint64) error {
+func (r *mockRouterStore) SetSwapFee(_ int, rlm realm, fee uint64) error {
 	r.data[router.StoreKeySwapFee.String()] = fee
 	return nil
 }
@@ -93,7 +93,7 @@ func (r *mockRouterStore) GetPendingProtocolFees() map[string]int64 {
 	return r.data[router.StoreKeyPendingProtocolFees.String()].(map[string]int64)
 }
 
-func (r *mockRouterStore) SetPendingProtocolFees(fees map[string]int64) error {
+func (r *mockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	r.data[router.StoreKeyPendingProtocolFees.String()] = fees
 	return nil
 }
@@ -104,18 +104,18 @@ type mockNFTAccessor struct {
 	owners   map[grc721.TokenID]address
 }
 
-func (n *mockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
+func (n *mockNFTAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	n.approved[tid][approved] = true
 	return nil
 }
 
-func (n *mockNFTAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
+func (n *mockNFTAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
 	n.owners[tid] = to
 	n.approved[tid] = make(map[address]bool)
 	return tid
 }
 
-func (n *mockNFTAccessor) Burn(tid grc721.TokenID) {
+func (n *mockNFTAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 	delete(n.owners, tid)
 	delete(n.approved, tid)
 }
