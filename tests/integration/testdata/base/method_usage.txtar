@@ -45,6 +45,13 @@ func CrossMethod(cur realm) {
 
 type Mock struct {}
 
+// NewMock constructs Mock inside the basic realm. Under interrealm v2 a
+// /r/-declared type cannot be allocated outside its owner realm, so callers
+// in other realms must construct it through this constructor.
+func NewMock() *Mock {
+    return &Mock{}
+}
+
 func (m *Mock) ReceiverMethod() {
     return
 }
@@ -66,20 +73,20 @@ func CallPureMethod(cur realm) {
 }
 
 func CallCrossMethod(cur realm) {
-    basic.CrossMethod(cross)
+    basic.CrossMethod(cross(cur))
 }
 
 func CallConstructor(cur realm) {
-    _ = &basic.Mock{}
+    _ = basic.NewMock()
 }
 
 func CallReceiverMethod(cur realm) {
-    m := &basic.Mock{}
+    m := basic.NewMock()
     m.ReceiverMethod()
 }
 
 func CallReceiverMethodTwice(cur realm) {
-    m := &basic.Mock{}
+    m := basic.NewMock()
     m.ReceiverMethod()
     m.ReceiverMethod()
 }

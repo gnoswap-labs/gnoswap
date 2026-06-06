@@ -1,6 +1,6 @@
 package fuzzutils
 
-import "testing"
+import "gno.land/p/gnoswap/fuzz"
 
 type Params interface {
 	IsValid() bool
@@ -52,7 +52,7 @@ func (r *Result) AddUnexpectedResult(iteration int) {
 	r.unexpectedResults[iteration] = true
 }
 
-func (r *Result) PrintLog(t *testing.T) {
+func (r *Result) PrintLog(t fuzz.TestingT) {
 	t.Logf("Total Count: %d", r.TotalCount())
 	t.Logf("Success: %d", r.SuccessCount())
 	t.Logf("Errors: %d", r.ErrorMessagesCount())
