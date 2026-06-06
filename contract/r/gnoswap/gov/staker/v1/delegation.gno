@@ -103,7 +103,7 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 
 	for i := range withdraws {
 		if !withdraws[i].IsCollected() {
-			withdraws[currentIndex] = withdraws[i]
+			r.delegation.SetWithdraw(currentIndex, withdraws[i])
 			currentIndex++
 		}
 	}

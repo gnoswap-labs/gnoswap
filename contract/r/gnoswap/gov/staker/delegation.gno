@@ -73,6 +73,10 @@ func (d *Delegation) AddWithdraw(withdraw DelegationWithdraw) {
 	d.withdraws = append(d.withdraws, withdraw)
 }
 
+func (d *Delegation) SetWithdraw(index int, withdraw DelegationWithdraw) {
+	d.withdraws[index] = withdraw
+}
+
 func (d *Delegation) SetWithdraws(withdraws []DelegationWithdraw) {
 	d.withdraws = withdraws
 }
