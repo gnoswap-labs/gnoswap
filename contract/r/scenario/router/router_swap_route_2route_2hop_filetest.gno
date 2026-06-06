@@ -97,15 +97,17 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route with 2 routes (bar → baz → qux)")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		barPath,    // inputToken
-		quxPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
-		"50,50", // quoteArr
-		"1",
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			barPath,    // inputToken
+			quxPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"1",
+		)
+	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7335")
 	println()

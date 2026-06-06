@@ -103,29 +103,33 @@ func drySwapQuote(cur realm) {
 	router.SetSwapFee(cross(cur), 0)
 
 	// DrySwap should report the true input cost including router fee
-	amountIn, amountOut, ok := router.DrySwapRoute(cross(cur),
-		barPath,   // inputToken
-		bazPath,   // outputToken
-		"1000000", // specifiedAmount (user wants exactly 1000000 baz)
-		"EXACT_OUT",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-		"100",
-		"9223372036854775807", // no limit for dry swap
-	)
+	amountIn, amountOut, ok := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			barPath,   // inputToken
+			bazPath,   // outputToken
+			"1000000", // specifiedAmount (user wants exactly 1000000 baz)
+			"EXACT_OUT",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			"100",
+			"9223372036854775807", // no limit for dry swap
+		)
+	}(cross(cur))
 
 	println("[INFO] setup router fee to 15")
 	router.SetSwapFee(cross(cur), 15)
 
 	// DrySwap should report the true input cost including router fee
-	amountInWithFee, amountOutWithFee, okWithFee := router.DrySwapRoute(cross(cur),
-		barPath,   // inputToken
-		bazPath,   // outputToken
-		"1000000", // specifiedAmount (user wants exactly 1000000 baz)
-		"EXACT_OUT",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-		"100",
-		"9223372036854775807", // no limit for dry swap
-	)
+	amountInWithFee, amountOutWithFee, okWithFee := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			barPath,   // inputToken
+			bazPath,   // outputToken
+			"1000000", // specifiedAmount (user wants exactly 1000000 baz)
+			"EXACT_OUT",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			"100",
+			"9223372036854775807", // no limit for dry swap
+		)
+	}(cross(cur))
 
 	ufmt.Printf("[INFO] DrySwap result: amountIn=%s, amountOut=%s, ok=%t\n", amountIn, amountOut, ok)
 	ufmt.Printf("[INFO] DrySwap result with fee: amountIn=%s, amountOut=%s, ok=%t\n", amountInWithFee, amountOutWithFee, okWithFee)

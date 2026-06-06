@@ -3,12 +3,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/gnoswap/gnsmath"
 
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -87,15 +87,17 @@ func main(cur realm) {
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-		"100", // quoteArr
-		"1",   // tokenAmountLimit
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			bazPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"100", // quoteArr
+			"1",   // tokenAmountLimit
+		)
+	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 367")
 

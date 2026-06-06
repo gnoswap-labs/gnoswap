@@ -3,10 +3,11 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -137,15 +138,17 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		gnsPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
-		"100", // quoteArr
-		"1",
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			gnsPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+			"100", // quoteArr
+			"1",
+		)
+	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7317")
 	println()
 }

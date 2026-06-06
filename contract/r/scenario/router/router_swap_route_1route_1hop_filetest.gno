@@ -84,15 +84,17 @@ func main(cur realm) {
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
 	println("[INFO] Executing dry swap to check expected output")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		barPath,
-		bazPath,
-		"1000",
-		"EXACT_IN",
-		barbaz500,
-		"100",
-		"1",
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			barPath,
+			bazPath,
+			"1000",
+			"EXACT_IN",
+			barbaz500,
+			"100",
+			"1",
+		)
+	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 2711")
 

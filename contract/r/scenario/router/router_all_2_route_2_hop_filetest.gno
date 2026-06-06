@@ -91,18 +91,20 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (bar → baz → qux)")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		barPath,    // inputToken
-		quxPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
-		"100", // quoteArr
-		"100",
-	)
+	func(cur realm) {
+		_, dryResult, _ := router.DrySwapRoute(
+			barPath,    // inputToken
+			quxPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"100", // quoteArr
+			"100",
+		)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 7326")
-	println()
+		println("[EXPECTED] dryResult:", dryResult, "expected: 7326")
+		println()
+	}(cross(cur))
 }
 
 func testSwapRouteBarQuxExactIn(cur realm) {
@@ -135,18 +137,20 @@ func testDrySwapRouteBarQuxExactOut(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route exact out (bar → baz → qux)")
-	dryResult, _, _ := router.DrySwapRoute(cross(cur),
-		barPath,     // inputToken
-		quxPath,     // outputToken
-		"1000",      // amountSpecified
-		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
-		"50,50", // quoteArr
-		"10000",
-	)
+	func(cur realm) {
+		dryResult, _, _ := router.DrySwapRoute(
+			barPath,     // inputToken
+			quxPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+			"10000",
+		)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 140")
-	println()
+		println("[EXPECTED] dryResult:", dryResult, "expected: 140")
+		println()
+	}(cross(cur))
 }
 
 func testSwapRouteBarQuxExactOut(cur realm) {
@@ -179,18 +183,20 @@ func TestDrySwapRouteQuxBarExactIn(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (qux → baz → bar)")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		quxPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-		"30,70", // quoteArr
-		"1",
-	)
+	func(cur realm) {
+		_, dryResult, _ := router.DrySwapRoute(
+			quxPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"1",
+		)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 135")
-	println()
+		println("[EXPECTED] dryResult:", dryResult, "expected: 135")
+		println()
+	}(cross(cur))
 }
 
 func TestSwapRouteQuxBarExactIn(cur realm) {
@@ -223,18 +229,20 @@ func TestDrySwapRouteQuxBarExactOut(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route exact out (qux → baz → bar)")
-	dryResult, _, _ := router.DrySwapRoute(cross(cur),
-		quxPath,     // inputToken
-		barPath,     // outputToken
-		"1000",      // amountSpecified
-		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-		"30,70", // quoteArr
-		"100000",
-	)
+	func(cur realm) {
+		dryResult, _, _ := router.DrySwapRoute(
+			quxPath,     // inputToken
+			barPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+			"100000",
+		)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 7359")
-	println()
+		println("[EXPECTED] dryResult:", dryResult, "expected: 7359")
+		println()
+	}(cross(cur))
 }
 
 func TestSwapRouteQuxBarExactOut(cur realm) {

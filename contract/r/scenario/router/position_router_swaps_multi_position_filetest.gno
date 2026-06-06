@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -170,15 +171,17 @@ func executeExactOutRouterSwaps(cur realm) {
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
-	dryAmountIn, dryAmountOut, success := router.DrySwapRoute(cross(cur),
-		fooPath,
-		barPath,
-		"10983000000",
-		"EXACT_OUT",
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
-		"100",
-		"1",
-	)
+	dryAmountIn, dryAmountOut, success := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			fooPath,
+			barPath,
+			"10983000000",
+			"EXACT_OUT",
+			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100",
+			"1",
+		)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] Dry swap amountIn should be %s\n", dryAmountIn)
 	ufmt.Printf("[EXPECTED] Dry swap amountOut should be %s\n", dryAmountOut)

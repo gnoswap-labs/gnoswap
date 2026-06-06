@@ -3,10 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -114,15 +114,17 @@ func testDrySwapRouteQuxGnotExactIn(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (qux → wugnot)")
-	_, dryResult, _ := router.DrySwapRoute(cross(cur),
-		quxPath,       // inputToken
-		wrappedWugnot, // outputToken
-		"1000",        // amountSpecified
-		"EXACT_IN",    // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
-		"100", // quoteArr
-		"1",
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			quxPath,       // inputToken
+			wrappedWugnot, // outputToken
+			"1000",        // amountSpecified
+			"EXACT_IN",    // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"100", // quoteArr
+			"1",
+		)
+	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 2707")
 	println()
 }
@@ -132,15 +134,17 @@ func testDrySwapRouteQuxGnotExactOut(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route exact out (qux → wugnot)")
-	dryResult, _, _ := router.DrySwapRoute(cross(cur),
-		quxPath,       // inputToken
-		wrappedWugnot, // outputToken
-		"1000",        // amountSpecified
-		"EXACT_OUT",   // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
-		"100", // quoteArr
-		"100000",
-	)
+	dryResult, _, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			quxPath,       // inputToken
+			wrappedWugnot, // outputToken
+			"1000",        // amountSpecified
+			"EXACT_OUT",   // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"100", // quoteArr
+			"100000",
+		)
+	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 370")
 	println()
 }
