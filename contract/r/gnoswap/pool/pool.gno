@@ -440,3 +440,12 @@ func NewPositionInfo() PositionInfo {
 		tokensOwed1:              0,
 	}
 }
+
+func NewDefaultFeeAmountTickSpacing() map[uint32]int32 {
+	return map[uint32]int32{
+		100:   1,
+		500:   10,
+		3000:  60,
+		10000: 200,
+	}
+}
