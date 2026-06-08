@@ -87,7 +87,7 @@ func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *bptree.BPTree) 
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) {
-	p.accumulatedProtocolFeeX128PerStake = accumulatedProtocolFeeX128PerStake
+	p.accumulatedProtocolFeeX128PerStake = u256.Zero().Set(accumulatedProtocolFeeX128PerStake)
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[string]int64) {

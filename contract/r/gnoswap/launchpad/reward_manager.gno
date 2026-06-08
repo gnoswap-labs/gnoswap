@@ -53,7 +53,7 @@ func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	rm.distributeAmountPerSecondX128 = amount
+	rm.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
 }
 
 // AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of the reward manager.
@@ -63,7 +63,7 @@ func (rm *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
 
 // SetAccumulatedRewardPerDepositX128 sets the accumulated reward per deposit (Q128) of the reward manager.
 func (rm *RewardManager) SetAccumulatedRewardPerDepositX128(amount *u256.Uint) {
-	rm.accumulatedRewardPerDepositX128 = amount
+	rm.accumulatedRewardPerDepositX128 = u256.Zero().Set(amount)
 }
 
 // TotalDistributeAmount returns the total distribute amount of the reward manager.

@@ -100,6 +100,10 @@ func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
 	p.stakedLiquidity = stakedLiquidity
 }
 
+func (p *Pool) SetStakedLiquidityAt(currentTime int64, delta *u256.Uint) {
+	p.StakedLiquidity().Set(currentTime, u256.Zero().Set(delta))
+}
+
 // LastUnclaimableTime returns the last unclaimable time
 func (p *Pool) LastUnclaimableTime() int64 {
 	return p.lastUnclaimableTime
@@ -211,7 +215,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.RewardCache().Set(currentTime, int64(0))
-	pool.StakedLiquidity().Set(currentTime, u256.Zero())
+	pool.SetStakedLiquidityAt(currentTime, u256.Zero())
 
 	return pool
 }
@@ -437,7 +441,7 @@ func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
 
 // SetRewardPerSecondX128 sets the Q128-scaled reward per second.
 func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
-	e.rewardPerSecondX128 = rewardPerSecondX128
+	e.rewardPerSecondX128 = u256.Zero().Set(rewardPerSecondX128)
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -678,7 +682,7 @@ func (t *Tick) StakedLiquidityGross() *u256.Uint {
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = u256.Zero().Set(stakedLiquidityGross)
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
@@ -688,7 +692,7 @@ func (t *Tick) StakedLiquidityDelta() *i256.Int {
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = i256.Zero().Set(stakedLiquidityDelta)
 }
 
 // OutsideAccumulation returns the outside accumulation tree

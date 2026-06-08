@@ -57,7 +57,7 @@ func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
 func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
 	copied := make(map[string]*u256.Uint, len(rewardDebtX128))
 	for token, value := range rewardDebtX128 {
-		copied[token] = value
+		copied[token] = u256.Zero().Set(value)
 	}
 	p.rewardDebtX128 = copied
 }
@@ -119,7 +119,7 @@ func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *
 	if p.rewardDebtX128 == nil {
 		p.rewardDebtX128 = make(map[string]*u256.Uint)
 	}
-	p.rewardDebtX128[token] = value
+	p.rewardDebtX128[token] = u256.Zero().Set(value)
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {

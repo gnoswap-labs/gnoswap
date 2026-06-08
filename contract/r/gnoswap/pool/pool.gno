@@ -89,11 +89,11 @@ func (p *Pool) SetSlot0(slot0 Slot0) {
 }
 
 func (p *Pool) SetFeeGrowthGlobal0X128(feeGrowthGlobal0X128 *u256.Uint) {
-	p.feeGrowthGlobal0X128 = feeGrowthGlobal0X128
+	p.feeGrowthGlobal0X128 = u256.Zero().Set(feeGrowthGlobal0X128)
 }
 
 func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint) {
-	p.feeGrowthGlobal1X128 = feeGrowthGlobal1X128
+	p.feeGrowthGlobal1X128 = u256.Zero().Set(feeGrowthGlobal1X128)
 }
 
 func (p *Pool) SetProtocolFees(protocolFees TokenPair) {
@@ -109,7 +109,7 @@ func (p *Pool) SetProtocolFeesToken1(token1 int64) {
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = liquidity
+	p.liquidity = u256.Zero().Set(liquidity)
 }
 
 func (p *Pool) SetTicks(ticks *bptree.BPTree) {
