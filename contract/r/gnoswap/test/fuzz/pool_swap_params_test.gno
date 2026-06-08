@@ -47,15 +47,15 @@ func (p *poolSwapParams) SwapAmount() int64 {
 
 	if amountInt > 0 {
 		return amountInt
-	} else {
-		if p.zeroForOne {
-			expectedAmount0Int, _ := strconv.ParseInt(p.expectedAmount0, 10, 64)
-			return expectedAmount0Int
-		}
-
-		expectedAmount1Int, _ := strconv.ParseInt(p.expectedAmount1, 10, 64)
-		return expectedAmount1Int
 	}
+
+	if p.zeroForOne {
+		expectedAmount0Int, _ := strconv.ParseInt(p.expectedAmount0, 10, 64)
+		return expectedAmount0Int
+	}
+
+	expectedAmount1Int, _ := strconv.ParseInt(p.expectedAmount1, 10, 64)
+	return expectedAmount1Int
 }
 
 func (p *poolSwapParams) ToString() string {
@@ -237,13 +237,13 @@ func (p *poolSwapParams) hasEnoughBalance(tokenPath string, requiredAmount *u256
 func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success bool) {
 	revive(func() {
 		amountIn, amountOut, success = pool.DrySwap(
-				p.token0Path,
-				p.token1Path,
-				p.fee,
-				p.zeroForOne,
-				p.amountSpecified,
-				p.sqrtPriceLimitX96,
-			)
+			p.token0Path,
+			p.token1Path,
+			p.fee,
+			p.zeroForOne,
+			p.amountSpecified,
+			p.sqrtPriceLimitX96,
+		)
 	})
 
 	if amountIn == "0" || amountOut == "0" {
