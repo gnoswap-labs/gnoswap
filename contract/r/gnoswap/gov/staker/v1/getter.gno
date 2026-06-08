@@ -249,8 +249,7 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map
 // GetLaunchpadProjectDeposit returns the deposit amount for a launchpad project.
 func (gs *govStakerV1) GetLaunchpadProjectDeposit(projectAddr string) (int64, bool) {
 	launchpadDeposits := gs.store.GetLaunchpadProjectDeposits()
-	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
-	return resolvedDeposits.getLaunchpadProjectDeposit(gs.makeLaunchpadRewardID(projectAddr))
+	return launchpadDeposits.GetDeposit(gs.makeLaunchpadRewardID(projectAddr))
 }
 
 // GetDelegationWithdrawCount returns the total number of delegation withdraws for a specific delegation.

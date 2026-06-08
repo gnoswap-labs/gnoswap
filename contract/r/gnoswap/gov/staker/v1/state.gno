@@ -367,9 +367,7 @@ func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address strin
 //   - bool: true if successfully removed
 func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 	launchpadProjectDeposits := g.store.GetLaunchpadProjectDeposits()
-
-	resolver := NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits)
-	return resolver.RemoveDeposit(ownerAddress)
+	return launchpadProjectDeposits.RemoveDeposit(ownerAddress)
 }
 
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.

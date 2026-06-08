@@ -33,7 +33,7 @@ func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(cur realm, t *testi
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner1").String(),
@@ -45,8 +45,8 @@ func TestLaunchpadProjectDeposits_getLaunchpadProjectDeposit(cur realm, t *testi
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
-				resolver.SetDeposit(testutils.TestAddress("owner2").String(), 2000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner2").String(), 2000000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner2").String(),
@@ -93,7 +93,7 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(cur realm, t *testi
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -105,7 +105,7 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(cur realm, t *testi
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -134,7 +134,7 @@ func TestLaunchpadProjectDeposits_setLaunchpadProjectDeposit(cur realm, t *testi
 
 			// then
 			uassert.True(t, result)
-			value, exists := resolver.GetDeposit(tc.ownerAddress)
+			value, exists := resolver.LaunchpadProjectDeposits.GetDeposit(tc.ownerAddress)
 			uassert.True(t, exists)
 			uassert.Equal(t, value, tc.expectedValue)
 		})
@@ -164,7 +164,7 @@ func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -176,7 +176,7 @@ func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -188,7 +188,7 @@ func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -200,7 +200,7 @@ func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 9223372036854775806)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 9223372036854775806)
 				return resolver
 			},
 			ownerAddress:  testutils.TestAddress("owner1").String(),
@@ -218,7 +218,7 @@ func TestLaunchpadProjectDeposits_addDeposit(cur realm, t *testing.T) {
 			resolver.addDeposit(tc.ownerAddress, tc.addAmount)
 
 			// then
-			value, _ := resolver.GetDeposit(tc.ownerAddress)
+			value, _ := resolver.LaunchpadProjectDeposits.GetDeposit(tc.ownerAddress)
 			uassert.Equal(t, value, tc.expectedValue)
 		})
 	}
@@ -238,7 +238,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner1").String(),
@@ -251,7 +251,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 500000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner1").String(),
@@ -275,7 +275,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner1").String(),
@@ -288,7 +288,7 @@ func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 			setup: func() *LaunchpadProjectDepositsResolver {
 				deposits := staker.NewLaunchpadProjectDeposits()
 				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
+				resolver.LaunchpadProjectDeposits.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
 				return resolver
 			},
 			ownerAddress:   testutils.TestAddress("owner1").String(),
@@ -307,164 +307,13 @@ func TestLaunchpadProjectDeposits_removeDeposit(cur realm, t *testing.T) {
 			resolver.removeDeposit(tc.ownerAddress, tc.removeAmount)
 
 			// then
-			value, exists := resolver.GetDeposit(tc.ownerAddress)
+			value, exists := resolver.LaunchpadProjectDeposits.GetDeposit(tc.ownerAddress)
 			uassert.Equal(t, value, tc.expectedValue)
 			uassert.Equal(t, exists, tc.expectedExists)
 		})
 	}
 }
 
-func TestLaunchpadProjectDeposits_GetDeposit(cur realm, t *testing.T) {
-	tests := []struct {
-		name           string
-		setup          func() *LaunchpadProjectDepositsResolver
-		ownerAddress   string
-		expectedValue  int64
-		expectedExists bool
-	}{
-		{
-			name: "returns zero and false when no deposit",
-			setup: func() *LaunchpadProjectDepositsResolver {
-				deposits := staker.NewLaunchpadProjectDeposits()
-				return NewLaunchpadProjectDepositsResolver(deposits)
-			},
-			ownerAddress:   testutils.TestAddress("owner1").String(),
-			expectedValue:  0,
-			expectedExists: false,
-		},
-		{
-			name: "returns deposit value when exists",
-			setup: func() *LaunchpadProjectDepositsResolver {
-				deposits := staker.NewLaunchpadProjectDeposits()
-				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
-				return resolver
-			},
-			ownerAddress:   testutils.TestAddress("owner1").String(),
-			expectedValue:  1000000,
-			expectedExists: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			resolver := tc.setup()
-
-			// when
-			value, exists := resolver.GetDeposit(tc.ownerAddress)
-
-			// then
-			uassert.Equal(t, value, tc.expectedValue)
-			uassert.Equal(t, exists, tc.expectedExists)
-		})
-	}
-}
-
-func TestLaunchpadProjectDeposits_SetDeposit(cur realm, t *testing.T) {
-	tests := []struct {
-		name          string
-		ownerAddress  string
-		depositAmount int64
-		expectedValue int64
-	}{
-		{
-			name:          "sets deposit",
-			ownerAddress:  testutils.TestAddress("owner1").String(),
-			depositAmount: 1000000,
-			expectedValue: 1000000,
-		},
-		{
-			name:          "sets zero deposit",
-			ownerAddress:  testutils.TestAddress("owner1").String(),
-			depositAmount: 0,
-			expectedValue: 0,
-		},
-		{
-			name:          "sets max int64 deposit",
-			ownerAddress:  testutils.TestAddress("owner1").String(),
-			depositAmount: 9223372036854775807,
-			expectedValue: 9223372036854775807,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			deposits := staker.NewLaunchpadProjectDeposits()
-			resolver := NewLaunchpadProjectDepositsResolver(deposits)
-
-			// when
-			resolver.SetDeposit(tc.ownerAddress, tc.depositAmount)
-
-			// then
-			value, exists := resolver.GetDeposit(tc.ownerAddress)
-			uassert.True(t, exists)
-			uassert.Equal(t, value, tc.expectedValue)
-		})
-	}
-}
-
-func TestLaunchpadProjectDeposits_RemoveDeposit(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		setup        func() *LaunchpadProjectDepositsResolver
-		ownerAddress string
-		expectedOk   bool
-		shouldExist  bool
-	}{
-		{
-			name: "removes existing deposit",
-			setup: func() *LaunchpadProjectDepositsResolver {
-				deposits := staker.NewLaunchpadProjectDeposits()
-				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
-				return resolver
-			},
-			ownerAddress: testutils.TestAddress("owner1").String(),
-			expectedOk:   true,
-			shouldExist:  false,
-		},
-		{
-			name: "returns false when deposit does not exist",
-			setup: func() *LaunchpadProjectDepositsResolver {
-				deposits := staker.NewLaunchpadProjectDeposits()
-				return NewLaunchpadProjectDepositsResolver(deposits)
-			},
-			ownerAddress: testutils.TestAddress("owner1").String(),
-			expectedOk:   false,
-			shouldExist:  false,
-		},
-		{
-			name: "does not affect other deposits",
-			setup: func() *LaunchpadProjectDepositsResolver {
-				deposits := staker.NewLaunchpadProjectDeposits()
-				resolver := NewLaunchpadProjectDepositsResolver(deposits)
-				resolver.SetDeposit(testutils.TestAddress("owner1").String(), 1000000)
-				resolver.SetDeposit(testutils.TestAddress("owner2").String(), 2000000)
-				return resolver
-			},
-			ownerAddress: testutils.TestAddress("owner1").String(),
-			expectedOk:   true,
-			shouldExist:  false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			resolver := tc.setup()
-
-			// when
-			ok := resolver.RemoveDeposit(tc.ownerAddress)
-
-			// then
-			uassert.Equal(t, ok, tc.expectedOk)
-			_, exists := resolver.GetDeposit(tc.ownerAddress)
-			uassert.Equal(t, exists, tc.shouldExist)
-		})
-	}
-}
 
 // Test boundary conditions for safe arithmetic in launchpad project deposits
 func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
@@ -474,7 +323,7 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
 		ownerAddr := testutils.TestAddress("owner1").String()
 
-		resolver.SetDeposit(ownerAddr, math.MaxInt64-1000)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, math.MaxInt64-1000)
 
 		// when: add amount causing overflow (uses safeAddInt64)
 		didPanic := false
@@ -497,13 +346,13 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
 		ownerAddr := testutils.TestAddress("owner1").String()
 
-		resolver.SetDeposit(ownerAddr, math.MaxInt64/2)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, math.MaxInt64/2)
 
 		// when: add more large amount (uses safeAddInt64)
 		resolver.addDeposit(ownerAddr, math.MaxInt64/4)
 
 		// then: should succeed without overflow
-		value, _ := resolver.GetDeposit(ownerAddr)
+		value, _ := resolver.LaunchpadProjectDeposits.GetDeposit(ownerAddr)
 		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
 		uassert.Equal(t, value, expected)
 	})
@@ -514,13 +363,13 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
 		ownerAddr := testutils.TestAddress("owner1").String()
 
-		resolver.SetDeposit(ownerAddr, 1000)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, 1000)
 
 		// when: add large negative amount (uses safeAddInt64)
 		resolver.addDeposit(ownerAddr, -5000)
 
 		// then: should clamp to zero
-		value, _ := resolver.GetDeposit(ownerAddr)
+		value, _ := resolver.LaunchpadProjectDeposits.GetDeposit(ownerAddr)
 		uassert.Equal(t, value, int64(0))
 	})
 
@@ -530,13 +379,13 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
 		ownerAddr := testutils.TestAddress("owner1").String()
 
-		resolver.SetDeposit(ownerAddr, 1000)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, 1000)
 
 		// when: remove more than available (uses safeSubInt64 with clamping)
 		resolver.removeDeposit(ownerAddr, 5000)
 
 		// then: should clamp to zero
-		value, exists := resolver.GetDeposit(ownerAddr)
+		value, exists := resolver.LaunchpadProjectDeposits.GetDeposit(ownerAddr)
 		uassert.True(t, exists)
 		uassert.Equal(t, value, int64(0))
 	})
@@ -548,13 +397,13 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		ownerAddr := testutils.TestAddress("owner1").String()
 
 		depositAmount := int64(1000000)
-		resolver.SetDeposit(ownerAddr, depositAmount)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, depositAmount)
 
 		// when: remove exact amount (uses safeSubInt64)
 		resolver.removeDeposit(ownerAddr, depositAmount)
 
 		// then: should result in zero
-		value, exists := resolver.GetDeposit(ownerAddr)
+		value, exists := resolver.LaunchpadProjectDeposits.GetDeposit(ownerAddr)
 		uassert.True(t, exists)
 		uassert.Equal(t, value, int64(0))
 	})
@@ -565,13 +414,13 @@ func TestLaunchpadProjectDeposits_BoundaryConditions(cur realm, t *testing.T) {
 		resolver := NewLaunchpadProjectDepositsResolver(deposits)
 		ownerAddr := testutils.TestAddress("owner1").String()
 
-		resolver.SetDeposit(ownerAddr, math.MaxInt64/2)
+		resolver.LaunchpadProjectDeposits.SetDeposit(ownerAddr, math.MaxInt64/2)
 
 		// when: remove partial large amount (uses safeSubInt64)
 		resolver.removeDeposit(ownerAddr, math.MaxInt64/4)
 
 		// then: should succeed without underflow
-		value, _ := resolver.GetDeposit(ownerAddr)
+		value, _ := resolver.LaunchpadProjectDeposits.GetDeposit(ownerAddr)
 		expected := int64((math.MaxInt64 / 2) - (math.MaxInt64 / 4))
 		uassert.Equal(t, value, expected)
 	})
