@@ -701,7 +701,7 @@ func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
 }
 
-// SetOutsideAccumulation sets the outside accumulation tree
+// SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
 func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
 	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
 }
