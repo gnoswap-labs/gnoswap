@@ -57,7 +57,7 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 
 	// Setup pool through the domain collection setter
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)
-	state.instance.getPools().SetPool(state.poolPath, state.pool)
+	state.instance.getPools().set(state.poolPath, state.pool)
 
 	// Setup external incentive through domain setters
 	state.incentive = sr.NewExternalIncentive(
@@ -73,7 +73,7 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 		state.fixedTimestamp,      // currentTime
 	)
 	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
-	state.instance.getExternalIncentives().SetIncentive(state.incentiveId, state.incentive)
+	state.instance.getExternalIncentives().set(state.incentiveId, state.incentive)
 
 	// Setup deposit through the domain collection setter
 	warmups := []sr.Warmup{
@@ -94,7 +94,7 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 	state.deposit.SetCollectedExternalReward(state.incentiveId, 2500)
 	state.deposit.SetExternalRewardLastCollectTime(state.incentiveId, state.fixedTimestamp+100)
 	state.deposit.AddExternalIncentiveId(state.incentiveId)
-	state.instance.getDeposits().SetDeposit(state.positionId, state.deposit)
+	state.instance.getDeposits().set(state.positionId, state.deposit)
 
 	// Setup pool tier
 	state.instance.setPoolTier(0, cur, state.poolPath, 1, state.fixedTimestamp)
@@ -522,7 +522,7 @@ func TestGetterPoolTierForUntieredPool(cur realm, t *testing.T) {
 	// Create a new pool without tier
 	untieredPoolPath := "gno.land/r/test:gno.land/r/test2:500"
 	untieredPool := sr.NewPool(untieredPoolPath, state.fixedTimestamp)
-	state.instance.getPools().SetPool(untieredPoolPath, untieredPool)
+	state.instance.getPools().set(untieredPoolPath, untieredPool)
 
 	// Should return 0 for untiered pool
 	tier := state.instance.GetPoolTier(untieredPoolPath)
@@ -543,7 +543,7 @@ func TestGetterMultipleDepositsForSameOwner(cur realm, t *testing.T) {
 		[]sr.Warmup{},
 	)
 	positionId2 := uint64(2)
-	state.instance.getDeposits().SetDeposit(positionId2, deposit2)
+	state.instance.getDeposits().set(positionId2, deposit2)
 
 	owner1 := state.instance.GetDepositOwner(state.positionId)
 	owner2 := state.instance.GetDepositOwner(positionId2)
@@ -560,7 +560,7 @@ func TestGetterIncentiveActiveStatus(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, fixedTime)
-	instance.getPools().SetPool(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 
 	tests := []struct {
 		name           string

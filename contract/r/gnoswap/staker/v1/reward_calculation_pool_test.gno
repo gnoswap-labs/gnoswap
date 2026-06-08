@@ -46,7 +46,7 @@ func TestPoolsGetSet(cur realm, t *testing.T) {
 
 			if tt.shouldSet {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.SetPool(tt.poolPath, pool)
+				pools.set(tt.poolPath, pool)
 
 				retrieved, ok := pools.Get(tt.poolPath)
 				uassert.True(t, ok)
@@ -89,7 +89,7 @@ func TestGetPoolOrNil(cur realm, t *testing.T) {
 
 			if tt.shouldExist {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.SetPool(tt.poolPath, pool)
+				pools.set(tt.poolPath, pool)
 			}
 
 			result := pools.GetPoolOrNil(tt.poolPath)
@@ -135,7 +135,7 @@ func TestPoolsHas(cur realm, t *testing.T) {
 
 			if tt.shouldAdd {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.SetPool(tt.poolPath, pool)
+				pools.set(tt.poolPath, pool)
 			}
 
 			result := pools.Has(tt.poolPath)
@@ -589,7 +589,7 @@ func TestProcessUnclaimableReward(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 			pools := NewPools()
-			pools.SetPool(tt.poolPath, pool)
+			pools.set(tt.poolPath, pool)
 
 			// Set up some unclaimable accumulation
 			poolResolver.Pool.SetUnclaimableAcc(500)
@@ -1060,7 +1060,7 @@ func TestPoolsIterateAll(cur realm, t *testing.T) {
 			for i := 0; i < tt.numPools; i++ {
 				poolPath := "pool_" + string(rune('A'+i))
 				pool := sr.NewPool(poolPath, currentTime)
-				pools.SetPool(poolPath, pool)
+				pools.set(poolPath, pool)
 			}
 
 			count := 0

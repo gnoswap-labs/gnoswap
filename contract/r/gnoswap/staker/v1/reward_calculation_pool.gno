@@ -47,8 +47,8 @@ func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	return pool
 }
 
-// SetPool sets the pool for the given poolPath.
-func (self *Pools) SetPool(poolPath string, pool *sr.Pool) {
+// set sets the pool for the given poolPath.
+func (self *Pools) set(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
 

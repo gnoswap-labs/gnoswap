@@ -116,7 +116,7 @@ func TestPoolTierChangeTier(cur realm, t *testing.T) {
 		func(start, end int64) ([]int64, []int64) { return nil, nil })
 
 	// Add second pool to tier 2
-	pools.SetPool(testPool2, sr.NewPool(testPool2, currentTime+1))
+	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
 	poolTier.changeTier(currentTime+1, pools, testPool2, 2)
 
 	// Verify tier assignments
@@ -152,10 +152,10 @@ func TestCurrentAllTierCounts(cur realm, t *testing.T) {
 		func(start, end int64) ([]int64, []int64) { return nil, nil })
 
 	// Add pools to different tiers
-	pools.SetPool(testPool2, sr.NewPool(testPool2, currentTime+1))
+	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
 	poolTier.changeTier(currentTime+1, pools, testPool2, 2)
 
-	pools.SetPool(testPool3, sr.NewPool(testPool3, currentTime+2))
+	pools.set(testPool3, sr.NewPool(testPool3, currentTime+2))
 	poolTier.changeTier(currentTime+2, pools, testPool3, 3)
 
 	counts := poolTier.CurrentAllTierCounts()
@@ -209,7 +209,7 @@ func TestCurrentRewardPerPool(cur realm, t *testing.T) {
 	}
 
 	// Add pool to tier 2
-	pools.SetPool(testPool2, sr.NewPool(testPool2, currentTime+1))
+	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
 	poolTier.changeTier(currentTime+1, pools, testPool2, 2)
 
 	// Now tier1 gets 70%, tier2 gets 30%
@@ -423,7 +423,7 @@ func TestApplyCacheToAllPools(cur realm, t *testing.T) {
 			for i := 0; i < tt.numPoolsToAdd; i++ {
 				poolPath := pl.GetPoolPath("gno.land/r/test/token"+string(rune('A'+i)), "gno.land/r/test/token"+string(rune('B'+i)), 3000)
 				pool := sr.NewPool(poolPath, currentTime)
-				pools.SetPool(poolPath, pool)
+				pools.set(poolPath, pool)
 				poolTier.membership.Set(poolPath, tier)
 
 				// Rotate through tiers
@@ -612,7 +612,7 @@ func TestCacheRewardForPool(cur realm, t *testing.T) {
 			var pool *sr.Pool
 			if tt.addPool {
 				pool = sr.NewPool(poolPath, currentTime)
-				pools.SetPool(poolPath, pool)
+				pools.set(poolPath, pool)
 				for _, ts := range tt.prewarmPoolCacheAt {
 					pool.SetRewardCacheAt(ts, int64(0))
 				}

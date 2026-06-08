@@ -273,7 +273,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 	pool, ok := self.global.pools.Get(poolPath)
 	if !ok {
 		pool = sr.NewPool(poolPath, currentTimestamp)
-		self.global.pools.SetPool(poolPath, pool)
+		self.global.pools.set(poolPath, pool)
 	}
 
 	poolResolver := NewPoolResolver(pool)
@@ -408,7 +408,7 @@ func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targe
 	})
 
 	// update global state
-	self.global.deposits.SetDeposit(positionId, deposit)
+	self.global.deposits.set(positionId, deposit)
 
 	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
 	getMockInstance().updatePoolTier(0, cur, self.global.poolTier)
@@ -442,7 +442,7 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 
 	// update global state
 	// we will not gonna actually remove the deposit in sake of logic simplicity
-	self.global.deposits.RemoveDeposit(positionId)
+	self.global.deposits.remove(positionId)
 
 	pool, ok := self.global.pools.Get(deposit.TargetPoolPath())
 	if !ok {
@@ -524,7 +524,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 	pl := self.global.pools.GetPoolOrNil(targetPoolPath)
 	if pl == nil {
 		pl = sr.NewPool(targetPoolPath, self.CurrentTime())
-		self.global.pools.SetPool(targetPoolPath, pl)
+		self.global.pools.set(targetPoolPath, pl)
 	}
 	plResolver := NewPoolResolver(pl)
 	plResolver.IncentivesResolver().create(incentive)
@@ -548,7 +548,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 
 	// update global state
 	if !self.global.pools.Has(poolPath) {
-		self.global.pools.SetPool(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
+		self.global.pools.set(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
 	}
 	self.global.poolTier.changeTier(self.CurrentTime(), self.global.pools, poolPath, tier)
 }
@@ -560,7 +560,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tick:      initialTick,
 		incentive: make([]*sr.ExternalIncentive, 0),
 	}
-	self.global.pools.SetPool(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
+	self.global.pools.set(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
 	self.global.poolTier.changeTier(self.CurrentTime(), self.global.pools, poolPath, initialTier)
 }
 

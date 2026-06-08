@@ -340,7 +340,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 
 	originalRewardAmount := incentive.RewardAmount()
 	incentive.SetRewardAmount(0)
-	incentives.SetIncentive(incentiveId, incentive)
+	incentives.set(incentiveId, incentive)
 
 	// First collect should skip external processing because rewardAmount is zero.
 	testing.SetRealm(testing.NewUserRealm(addr01))
@@ -357,7 +357,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 
 	// Restore reward amount and collect again; penalty should be processed once.
 	incentive.SetRewardAmount(originalRewardAmount)
-	incentives.SetIncentive(incentiveId, incentive)
+	incentives.set(incentiveId, incentive)
 
 	communityPoolBefore = TokenBalance(t, barPath, communityPoolAddr)
 	sr.CollectReward(cross(cur), positionId)
@@ -464,7 +464,7 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 
 	totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 	incentive.SetRewardAmount(totalRewardAmount - 1)
-	incentives.SetIncentive(incentiveId, incentive)
+	incentives.set(incentiveId, incentive)
 
 	depositResolver := getMockInstance().getDepositResolver(positionId)
 	beforeLastCollect := depositResolver.ExternalRewardLastCollectTime(incentiveId)

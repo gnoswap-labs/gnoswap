@@ -75,7 +75,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
 		pool = sr.NewPool(poolPath, param.CurrentTime)
-		param.Pools.SetPool(poolPath, pool)
+		param.Pools.set(poolPath, pool)
 	}
 	poolResolver := NewPoolResolver(pool)
 

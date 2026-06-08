@@ -92,7 +92,7 @@ func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmi
 		currentEmission:          getEmission(),
 	}
 
-	pools.SetPool(initialPoolPath, sr.NewPool(initialPoolPath, currentTime+1))
+	pools.set(initialPoolPath, sr.NewPool(initialPoolPath, currentTime+1))
 	result.changeTier(currentTime+1, pools, initialPoolPath, 1)
 	return result
 }

@@ -27,7 +27,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 	pool := sr.NewPool(poolPath, 100)
 
 	pools := getMockInstance().getPools()
-	pools.SetPool(poolPath, pool)
+	pools.set(poolPath, pool)
 
 	currentTime := time.Now().Unix()
 	startTime := currentTime + 86400   // 1 day later
@@ -288,7 +288,7 @@ func TestEndExternalIncentive(cur realm, t *testing.T) {
 
 			// Setup staker pool storage.
 			pool := sr.NewPool(poolPath, currentTime)
-			instance.getPools().SetPool(poolPath, pool)
+			instance.getPools().set(poolPath, pool)
 
 			// Create ended or active incentive based on the test case.
 			incentive := sr.NewExternalIncentive(
@@ -388,7 +388,7 @@ func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 
 			// Create pool
 			pool := sr.NewPool(poolPath, currentTime)
-			instance.getPools().SetPool(poolPath, pool)
+			instance.getPools().set(poolPath, pool)
 
 			// Create incentive
 			incentiveId := "test-incentive-1"
@@ -777,7 +777,7 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, currentTime)
-	instance.getPools().SetPool(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 
 	// Simulate multiple incentives created at the exact same time
 	// by directly manipulating the timestamp
@@ -873,7 +873,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, baseTime)
-	instance.getPools().SetPool(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 
 	// Create incentives at different times
 	timestamps := []int64{
@@ -1008,9 +1008,9 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 	pool1 := sr.NewPool(pool1Path, currentTime)
 	pool2 := sr.NewPool(pool2Path, currentTime)
 	pool3 := sr.NewPool(pool3Path, currentTime)
-	instance.getPools().SetPool(pool1Path, pool1)
-	instance.getPools().SetPool(pool2Path, pool2)
-	instance.getPools().SetPool(pool3Path, pool3)
+	instance.getPools().set(pool1Path, pool1)
+	instance.getPools().set(pool2Path, pool2)
+	instance.getPools().set(pool3Path, pool3)
 
 	poolPaths := []string{pool1Path, pool2Path, pool3Path}
 	pools := []*sr.Pool{pool1, pool2, pool3}
@@ -1185,7 +1185,7 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, baseTime)
-	instance.getPools().SetPool(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 	poolResolver := NewPoolResolver(pool)
 
 	// Create 3 concurrent incentives with different tokens
@@ -1347,7 +1347,7 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, startTime)
-	s.getPools().SetPool(poolPath, pool)
+	s.getPools().set(poolPath, pool)
 
 	// Create incentive
 	incentiveId := "refund-test"
@@ -1378,8 +1378,8 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
 	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, warmups)
 
-	s.getDeposits().SetDeposit(1, depositA)
-	s.getDeposits().SetDeposit(2, depositB)
+	s.getDeposits().set(1, depositA)
+	s.getDeposits().set(2, depositB)
 
 	depositResolverA := NewDepositResolver(depositA)
 	depositResolverB := NewDepositResolver(depositB)
@@ -1497,7 +1497,7 @@ func TestMultipleCollectionsBeforeUnstake(cur realm, t *testing.T) {
 
 	// Create pool and incentive
 	pool := sr.NewPool(poolPath, startTime)
-	s.getPools().SetPool(poolPath, pool)
+	s.getPools().set(poolPath, pool)
 
 	incentiveId := "multi-collect-test"
 	incentive := sr.NewExternalIncentive(
@@ -1517,7 +1517,7 @@ func TestMultipleCollectionsBeforeUnstake(cur realm, t *testing.T) {
 	poolResolver.IncentivesResolver().create(incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
-	s.getDeposits().SetDeposit(1, deposit)
+	s.getDeposits().set(1, deposit)
 
 	depositResolver := NewDepositResolver(deposit)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
@@ -1571,7 +1571,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(cur realm, t *test
 
 	// Create pool and incentive
 	pool := sr.NewPool(poolPath, startTime)
-	s.getPools().SetPool(poolPath, pool)
+	s.getPools().set(poolPath, pool)
 
 	incentiveId := "calc-total-test"
 	incentive := sr.NewExternalIncentive(
@@ -1592,7 +1592,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(cur realm, t *test
 
 	// Create deposit
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -887220, 887220, []sr.Warmup{})
-	s.getDeposits().SetDeposit(1, deposit)
+	s.getDeposits().set(1, deposit)
 
 	depositResolver := NewDepositResolver(deposit)
 
@@ -1637,7 +1637,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 
 	// Create pool and incentive
 	pool := sr.NewPool(poolPath, startTime)
-	s.getPools().SetPool(poolPath, pool)
+	s.getPools().set(poolPath, pool)
 
 	incentiveId := "no-double-test"
 	incentive := sr.NewExternalIncentive(
@@ -1657,7 +1657,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 	poolResolver.IncentivesResolver().create(incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
-	s.getDeposits().SetDeposit(1, deposit)
+	s.getDeposits().set(1, deposit)
 
 	depositResolver := NewDepositResolver(deposit)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
@@ -2487,7 +2487,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 				CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 				pool := sr.NewPool(poolPath, currentTime)
-				instance.getPools().SetPool(poolPath, pool)
+				instance.getPools().set(poolPath, pool)
 
 				if tt.setupIncentive {
 					incentive := sr.NewExternalIncentive(
@@ -2660,7 +2660,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) 
 		CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 		pool := sr.NewPool(poolPath, currentTime)
-		instance.getPools().SetPool(poolPath, pool)
+		instance.getPools().set(poolPath, pool)
 
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
@@ -2756,7 +2756,7 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 			totalRewardAmount := int64(1_000_000)
 
 			pool := sr.NewPool(poolPath, startTime)
-			s.getPools().SetPool(poolPath, pool)
+			s.getPools().set(poolPath, pool)
 
 			incentive := sr.NewExternalIncentive(
 				"test-id", poolPath, WUGNOT_PATH, totalRewardAmount,

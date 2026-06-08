@@ -94,12 +94,12 @@ func retrieveDeposit(data any) *sr.Deposit {
 }
 
 // set stores a deposit for a position ID.
-func (self *Deposits) SetDeposit(positionId uint64, deposit *sr.Deposit) {
+func (self *Deposits) set(positionId uint64, deposit *sr.Deposit) {
 	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
 // remove deletes a deposit by position ID.
-func (self *Deposits) RemoveDeposit(positionId uint64) {
+func (self *Deposits) remove(positionId uint64) {
 	self.tree.Remove(EncodeUint(positionId))
 }
 
@@ -139,12 +139,12 @@ func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
 }
 
 // set stores an external incentive.
-func (self *ExternalIncentives) SetIncentive(incentiveId string, incentive *sr.ExternalIncentive) {
+func (self *ExternalIncentives) set(incentiveId string, incentive *sr.ExternalIncentive) {
 	self.tree.Set(incentiveId, incentive)
 }
 
 // remove deletes an external incentive by ID.
-func (self *ExternalIncentives) RemoveIncentive(incentiveId string) {
+func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
@@ -264,7 +264,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
 
 	deposits := s.getDeposits()
-	deposits.SetDeposit(positionId, deposit)
+	deposits.set(positionId, deposit)
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
@@ -298,7 +298,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	// Ticks are negated if the token1 < token0.
 	poolResolver.TickResolver(tickUpper).modifyDepositUpper(currentTime, signedLiquidity)
 	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
-	s.getPools().SetPool(poolPath, pool)
+	s.getPools().set(poolPath, pool)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
@@ -495,7 +495,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		}
 
 		// update
-		s.getExternalIncentives().SetIncentive(incentiveId, incentive)
+		s.getExternalIncentives().set(incentiveId, incentive)
 
 		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
 		if err != nil {
@@ -620,7 +620,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	}
 
 	deposits := s.getDeposits()
-	deposits.SetDeposit(positionId, deposit)
+	deposits.set(positionId, deposit)
 
 	if internalRewardToUser > 0 {
 		gns.Transfer(cross(rlm), deposit.Owner(), internalRewardToUser)
@@ -780,7 +780,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
-	s.getDeposits().RemoveDeposit(positionId)
+	s.getDeposits().remove(positionId)
 
 	return nil
 }

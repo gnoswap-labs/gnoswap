@@ -214,7 +214,7 @@ func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
 	pl := NewPools().GetPoolOrNil(basicPoolPath)
 	if pl == nil {
 		pl = sr.NewPool(basicPoolPath, time.Now().Unix())
-		pools.SetPool(basicPoolPath, pl)
+		pools.set(basicPoolPath, pl)
 	}
 
 	poolTier := NewPoolTier(
