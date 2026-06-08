@@ -1385,9 +1385,9 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 	depositResolverB := NewDepositResolver(depositB)
 
 	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
-	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+	poolResolver.Pool.SetHistoricalTickAt(startTime+100, int32(0))
 	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
-	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
+	poolResolver.Pool.SetHistoricalTickAt(startTime+200, int32(0))
 
 	// User A collects 300
 	collectedA := int64(300)

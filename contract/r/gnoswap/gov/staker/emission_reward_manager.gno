@@ -76,7 +76,7 @@ func (e *EmissionRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 }
 
 func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
-	e.accumulatedRewardX128PerStake = accumulatedRewardX128PerStake
+	e.accumulatedRewardX128PerStake = u256.Zero().Set(accumulatedRewardX128PerStake)
 }
 
 func (e *EmissionRewardManager) SetDistributedAmount(distributedAmount int64) {

@@ -3,6 +3,7 @@ package v1
 import (
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -46,7 +47,7 @@ func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	return pool
 }
 
-// set sets the pool for the given poolPath
+// set sets the pool for the given poolPath.
 func (self *Pools) set(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
@@ -193,7 +194,7 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
-	self.RewardCache().Set(currentTime, currentTierReward)
+	self.Pool.SetRewardCacheAt(currentTime, currentTierReward)
 
 	if isInUnclaimable {
 		// Start/restart unclaimable period tracking
@@ -238,7 +239,7 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
 	// Persist as string to reduce stored object complexity.
-	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc.ToString())
+	self.Pool.SetGlobalRewardRatioAccumulationAt(currentTime, newAcc.ToString())
 	return newAcc
 }
 
@@ -518,13 +519,13 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := sr.LiquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := gnsmath.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
 	// because TickCrossHook is assured to be called for the staked-initialized ticks
 	if self.isChangedTick(currentTime, nextTick) {
-		self.HistoricalTick().Set(currentTime, nextTick)
+		self.Pool.SetHistoricalTickAt(currentTime, nextTick)
 	}
 
 	switch deltaApplied.Sign() {
@@ -544,7 +545,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
+	self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
 
 	return result
 }

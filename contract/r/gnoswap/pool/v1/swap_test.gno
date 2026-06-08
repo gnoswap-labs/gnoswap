@@ -391,7 +391,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 		})
 
 		step := StepComputations{initialized: true, tickNext: 1}
-		uassert.AbortsContains(t, cur, "result exceeds uint128 range", func() {
+		uassert.PanicsContains(t, cur, "result exceeds uint128 range", func() {
 			getMockInstance().tickTransition(step, false, state, pool, cache, nil)
 		})
 	})

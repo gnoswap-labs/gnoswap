@@ -614,7 +614,7 @@ func TestCacheRewardForPool(cur realm, t *testing.T) {
 				pool = sr.NewPool(poolPath, currentTime)
 				pools.set(poolPath, pool)
 				for _, ts := range tt.prewarmPoolCacheAt {
-					pool.RewardCache().Set(ts, int64(0))
+					pool.SetRewardCacheAt(ts, int64(0))
 				}
 			}
 

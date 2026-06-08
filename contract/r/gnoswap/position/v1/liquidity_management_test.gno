@@ -140,11 +140,11 @@ func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 				amount0Min:     u256.MustFromDecimal("900000"),
 				amount1Min:     u256.MustFromDecimal("1800000"),
 				caller:         alice,
-			},
-			expectError:     true,
-			errorType:       "abort",
-			expectedMessage: "liquidity_math: identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
+		expectError:     true,
+		errorType:       "panic",
+		expectedMessage: "liquidity_math: identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+	},
 		{
 			name: "add liquidity with exact minimum amounts",
 			params: AddLiquidityParams{

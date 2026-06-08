@@ -82,14 +82,14 @@ func TestCalculateFeeGrowthInside(cur realm, t *testing.T) {
 	}
 
 	// Setup test ticks
-	pool.Ticks().Set("0", makeTickInfo(
+	pool.SetTick(0, makeTickInfo(
 		"1000",
 		"100",
 		"5",
 		"7",
 		true,
 	))
-	pool.Ticks().Set("100", makeTickInfo(
+	pool.SetTick(100, makeTickInfo(
 		"2000",
 		"-100",
 		"10",
@@ -374,7 +374,6 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"), // maxUint128
 			wantFlipped:          false,
 			shouldPanic:          true,
-			shouldAbort:          true,
 		},
 		{
 			name: "assumes all growth happens below ticks lte current tick",
@@ -513,7 +512,7 @@ func TestTickCross(cur realm, t *testing.T) {
 		initialized:           true,
 	}
 
-	pool.Ticks().Set(pl.EncodeTickKey(100), tickInfo.toTickInfo())
+	pool.SetTick(100, tickInfo.toTickInfo())
 
 	tests := []struct {
 		name                 string

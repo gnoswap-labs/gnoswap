@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"testing"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -120,6 +121,155 @@ func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 			uassert.Equal(t, deposits.Size(), 1)
 			_, exists := deposits.Get("owner1")
 			uassert.False(t, exists)
+		})
+	}
+}
+
+func TestLaunchpadProjectDeposits_GetDeposit(cur realm, t *testing.T) {
+	tests := []struct {
+		name           string
+		setup          func() *LaunchpadProjectDeposits
+		ownerAddress   string
+		expectedValue  int64
+		expectedExists bool
+	}{
+		{
+			name: "returns zero and false when no deposit exists",
+			setup: func() *LaunchpadProjectDeposits {
+				return NewLaunchpadProjectDeposits()
+			},
+			ownerAddress:   "owner1",
+			expectedValue:  0,
+			expectedExists: false,
+		},
+		{
+			name: "returns deposit value when exists",
+			setup: func() *LaunchpadProjectDeposits {
+				deposits := NewLaunchpadProjectDeposits()
+				deposits.SetDeposit("owner1", 1000000)
+				return deposits
+			},
+			ownerAddress:   "owner1",
+			expectedValue:  1000000,
+			expectedExists: true,
+		},
+		{
+			name: "returns correct deposit for multiple owners",
+			setup: func() *LaunchpadProjectDeposits {
+				deposits := NewLaunchpadProjectDeposits()
+				deposits.SetDeposit("owner1", 1000000)
+				deposits.SetDeposit("owner2", 2000000)
+				return deposits
+			},
+			ownerAddress:   "owner2",
+			expectedValue:  2000000,
+			expectedExists: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			deposits := tc.setup()
+
+			value, exists := deposits.GetDeposit(tc.ownerAddress)
+
+			uassert.Equal(t, value, tc.expectedValue)
+			uassert.Equal(t, exists, tc.expectedExists)
+		})
+	}
+}
+
+func TestLaunchpadProjectDeposits_SetDeposit(cur realm, t *testing.T) {
+	tests := []struct {
+		name          string
+		ownerAddress  string
+		depositAmount int64
+		expectedValue int64
+	}{
+		{
+			name:          "sets deposit for new owner",
+			ownerAddress:  "owner1",
+			depositAmount: 1000000,
+			expectedValue: 1000000,
+		},
+		{
+			name:          "sets deposit to zero",
+			ownerAddress:  "owner1",
+			depositAmount: 0,
+			expectedValue: 0,
+		},
+		{
+			name:          "sets max int64 deposit",
+			ownerAddress:  "owner1",
+			depositAmount: math.MaxInt64,
+			expectedValue: math.MaxInt64,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			deposits := NewLaunchpadProjectDeposits()
+
+			deposits.SetDeposit(tc.ownerAddress, tc.depositAmount)
+
+			value, exists := deposits.GetDeposit(tc.ownerAddress)
+			uassert.True(t, exists)
+			uassert.Equal(t, value, tc.expectedValue)
+		})
+	}
+}
+
+func TestLaunchpadProjectDeposits_RemoveDeposit(cur realm, t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func() *LaunchpadProjectDeposits
+		ownerAddress string
+		expectedOk   bool
+		shouldExist  bool
+	}{
+		{
+			name: "removes existing deposit",
+			setup: func() *LaunchpadProjectDeposits {
+				deposits := NewLaunchpadProjectDeposits()
+				deposits.SetDeposit("owner1", 1000000)
+				return deposits
+			},
+			ownerAddress: "owner1",
+			expectedOk:   true,
+			shouldExist:  false,
+		},
+		{
+			name: "returns false when deposit does not exist",
+			setup: func() *LaunchpadProjectDeposits {
+				return NewLaunchpadProjectDeposits()
+			},
+			ownerAddress: "owner1",
+			expectedOk:   false,
+			shouldExist:  false,
+		},
+		{
+			name: "does not affect other deposits",
+			setup: func() *LaunchpadProjectDeposits {
+				deposits := NewLaunchpadProjectDeposits()
+				deposits.SetDeposit("owner1", 1000000)
+				deposits.SetDeposit("owner2", 2000000)
+				return deposits
+			},
+			ownerAddress: "owner1",
+			expectedOk:   true,
+			shouldExist:  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			deposits := tc.setup()
+
+			ok := deposits.RemoveDeposit(tc.ownerAddress)
+
+			uassert.Equal(t, ok, tc.expectedOk)
+			_, exists := deposits.GetDeposit(tc.ownerAddress)
+			uassert.Equal(t, exists, tc.shouldExist)
 		})
 	}
 }

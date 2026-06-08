@@ -89,11 +89,11 @@ func (p *Pool) SetSlot0(slot0 Slot0) {
 }
 
 func (p *Pool) SetFeeGrowthGlobal0X128(feeGrowthGlobal0X128 *u256.Uint) {
-	p.feeGrowthGlobal0X128 = feeGrowthGlobal0X128
+	p.feeGrowthGlobal0X128 = u256.Zero().Set(feeGrowthGlobal0X128)
 }
 
 func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint) {
-	p.feeGrowthGlobal1X128 = feeGrowthGlobal1X128
+	p.feeGrowthGlobal1X128 = u256.Zero().Set(feeGrowthGlobal1X128)
 }
 
 func (p *Pool) SetProtocolFees(protocolFees TokenPair) {
@@ -109,7 +109,7 @@ func (p *Pool) SetProtocolFeesToken1(token1 int64) {
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = liquidity
+	p.liquidity = u256.Zero().Set(liquidity)
 }
 
 func (p *Pool) SetTicks(ticks *bptree.BPTree) {
@@ -126,6 +126,10 @@ func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]string) {
 
 func (p *Pool) SetPositions(positions *bptree.BPTree) {
 	p.positions = positions
+}
+
+func (p *Pool) SetPosition(posKey string, positionInfo PositionInfo) {
+	p.positions.Set(posKey, positionInfo)
 }
 
 func (p *Pool) SetObservationState(observationState *ObservationState) {
@@ -438,5 +442,14 @@ func NewPositionInfo() PositionInfo {
 		feeGrowthInside1LastX128: "0",
 		tokensOwed0:              0,
 		tokensOwed1:              0,
+	}
+}
+
+func NewDefaultFeeAmountTickSpacing() map[uint32]int32 {
+	return map[uint32]int32{
+		100:   1,
+		500:   10,
+		3000:  60,
+		10000: 200,
 	}
 }

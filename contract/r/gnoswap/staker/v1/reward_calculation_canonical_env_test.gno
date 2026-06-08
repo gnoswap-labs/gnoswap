@@ -418,7 +418,7 @@ func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targe
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	poolResolver.HistoricalTick().Set(currentTimestamp, canonicalPool.tick)
+	poolResolver.Pool.SetHistoricalTickAt(currentTimestamp, canonicalPool.tick)
 
 	poolResolver.TickResolver(deposit.TickLower()).modifyDepositLower(currentTimestamp, signedLiquidity)
 	poolResolver.TickResolver(deposit.TickUpper()).modifyDepositUpper(currentTimestamp, signedLiquidity)

@@ -979,15 +979,15 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 				resolver := NewPoolResolver(pool)
 
 				// Keep reward constant in [start, end).
-				pool.RewardCache().Set(tt.startTime, tt.rewardPerSecond)
+				pool.SetRewardCacheAt(tt.startTime, tt.rewardPerSecond)
 
 				// Build deterministic global accumulation snapshots.
 				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
 				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
-				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc.ToString())
-				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc.ToString())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.startTime, startAcc.ToString())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.endTime, endAcc.ToString())
 				for _, h := range history {
-					pool.HistoricalTick().Set(h.at, h.tick)
+					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
 				// Ensure boundary ticks exist with zero outside accumulation.

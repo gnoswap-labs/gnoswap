@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -154,7 +155,7 @@ func (step *StepComputations) initSwapStep(state SwapState, p *pl.Pool, zeroForO
 	step.clampTickNext()
 
 	// get the price for the next tick
-	step.sqrtPriceNextX96 = pl.TickMathGetSqrtRatioAtTick(step.tickNext)
+	step.sqrtPriceNextX96 = gnsmath.TickMathGetSqrtRatioAtTick(step.tickNext)
 }
 
 // clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
@@ -168,7 +169,7 @@ func (step *StepComputations) clampTickNext() {
 }
 
 func newPool(poolInfo *poolCreateConfig) *pl.Pool {
-	tick := pl.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
+	tick := gnsmath.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 
 	return pl.NewPool(
 		poolInfo.Token0Path(),

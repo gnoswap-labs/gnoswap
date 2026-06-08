@@ -42,7 +42,7 @@ func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	pt.distributeAmountPerSecondX128 = amount
+	pt.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
 }
 
 // ID returns the ID of the project tier.

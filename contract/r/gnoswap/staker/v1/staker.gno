@@ -291,7 +291,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	}
 	// historical tick must be set regardless of the deposit's range
 	if poolResolver.isChangedTick(currentTime, currentTick) {
-		poolResolver.HistoricalTick().Set(currentTime, currentTick)
+		poolResolver.Pool.SetHistoricalTickAt(currentTime, currentTick)
 	}
 
 	// This could happen because of how position stores the ticks.

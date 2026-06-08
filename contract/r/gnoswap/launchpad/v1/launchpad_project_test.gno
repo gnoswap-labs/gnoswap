@@ -945,7 +945,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 			2000,    // end time
 			1100,    // claimable time
 		)
-		rm.Rewards().Set("deposit1", rewardState)
+		rm.SetReward("deposit1", rewardState)
 
 		// Calculate claimable rewards
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
@@ -974,14 +974,14 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit1", rewardState1)
+		rm.SetReward("deposit1", rewardState1)
 
 		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
 		rewardState2 := launchpad.NewRewardState(
 			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
 			200_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit2", rewardState2)
+		rm.SetReward("deposit2", rewardState2)
 
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
 
@@ -1013,7 +1013,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit1", rewardState)
+		rm.SetReward("deposit1", rewardState)
 		projectTierRewardManagers.Set(tierID, rm)
 		lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
@@ -1140,7 +1140,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			// Set price debt: Q128 / priceDebtRatio
 			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
-			rm.Rewards().Set("deposit1", rewardState)
+			rm.SetReward("deposit1", rewardState)
 
 			projectTierRewardManagers.Set(tierID, rm)
 			lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
@@ -1258,7 +1258,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			for i, dep := range tt.deposits {
 				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
-				rm.Rewards().Set("deposit"+formatInt(int64(i)), rewardState)
+				rm.SetReward("deposit"+formatInt(int64(i)), rewardState)
 			}
 
 			projectTierRewardManagers.Set(tierID, rm)

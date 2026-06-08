@@ -51,14 +51,7 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 	}
 
 	if !poolStore.HasFeeAmountTickSpacing() {
-		defaultFeeAmountTickSpacing := map[uint32]int32{
-			100:   1,
-			500:   10,
-			3000:  60,
-			10000: 200,
-		}
-
-		err := poolStore.SetFeeAmountTickSpacing(0, rlm, defaultFeeAmountTickSpacing)
+		err := poolStore.SetFeeAmountTickSpacing(0, rlm, pool.NewDefaultFeeAmountTickSpacing())
 		if err != nil {
 			return err
 		}

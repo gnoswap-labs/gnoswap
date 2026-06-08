@@ -55,11 +55,11 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 	// Setup warmup template via manager method (30%, 5 days)
 	mockInstanceSetWarmupPeriod(cross(cur), state.poolPath, 86400*5)
 
-	// Direct store access for complex state: Pool
+	// Setup pool through the domain collection setter
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)
-	state.instance.store.GetPools().Set(state.poolPath, state.pool)
+	state.instance.getPools().set(state.poolPath, state.pool)
 
-	// Direct store access for complex state: ExternalIncentive
+	// Setup external incentive through domain setters
 	state.incentive = sr.NewExternalIncentive(
 		state.incentiveId,
 		state.poolPath,
@@ -73,9 +73,9 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 		state.fixedTimestamp,      // currentTime
 	)
 	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
-	state.instance.store.GetExternalIncentives().Set(state.incentiveId, state.incentive)
+	state.instance.getExternalIncentives().set(state.incentiveId, state.incentive)
 
-	// Direct store access for complex state: Deposit
+	// Setup deposit through the domain collection setter
 	warmups := []sr.Warmup{
 		sr.NewWarmup(86400*5, state.fixedTimestamp+86400*5, 30),
 		sr.NewWarmup(86400*10, state.fixedTimestamp+86400*10, 50),
@@ -94,10 +94,10 @@ func setupBasicTestState(cur realm, t *testing.T) *testState {
 	state.deposit.SetCollectedExternalReward(state.incentiveId, 2500)
 	state.deposit.SetExternalRewardLastCollectTime(state.incentiveId, state.fixedTimestamp+100)
 	state.deposit.AddExternalIncentiveId(state.incentiveId)
-	state.instance.store.GetDeposits().Set(sr.EncodeUint(state.positionId), state.deposit)
+	state.instance.getDeposits().set(state.positionId, state.deposit)
 
 	// Setup pool tier
-	state.instance.store.GetPoolTierMemberships().Set(state.poolPath, uint64(1))
+	state.instance.setPoolTier(0, cur, state.poolPath, 1, state.fixedTimestamp)
 	counts := state.instance.store.GetPoolTierCounts()
 	counts[1] = 1
 	state.instance.store.SetPoolTierCounts(0, cur, counts)
@@ -410,7 +410,7 @@ func TestGetterPoolsByTier(cur realm, t *testing.T) {
 
 	// Add another pool to tier 1
 	pool2Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
-	state.instance.store.GetPoolTierMemberships().Set(pool2Path, uint64(1))
+	state.instance.setPoolTier(0, cur, pool2Path, 1, state.fixedTimestamp)
 
 	pools := state.instance.GetPoolsByTier(1)
 	uassert.Equal(t, 2, len(pools))
@@ -522,7 +522,7 @@ func TestGetterPoolTierForUntieredPool(cur realm, t *testing.T) {
 	// Create a new pool without tier
 	untieredPoolPath := "gno.land/r/test:gno.land/r/test2:500"
 	untieredPool := sr.NewPool(untieredPoolPath, state.fixedTimestamp)
-	state.instance.store.GetPools().Set(untieredPoolPath, untieredPool)
+	state.instance.getPools().set(untieredPoolPath, untieredPool)
 
 	// Should return 0 for untiered pool
 	tier := state.instance.GetPoolTier(untieredPoolPath)
@@ -543,7 +543,7 @@ func TestGetterMultipleDepositsForSameOwner(cur realm, t *testing.T) {
 		[]sr.Warmup{},
 	)
 	positionId2 := uint64(2)
-	state.instance.store.GetDeposits().Set(sr.EncodeUint(positionId2), deposit2)
+	state.instance.getDeposits().set(positionId2, deposit2)
 
 	owner1 := state.instance.GetDepositOwner(state.positionId)
 	owner2 := state.instance.GetDepositOwner(positionId2)
@@ -560,7 +560,7 @@ func TestGetterIncentiveActiveStatus(cur realm, t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, fixedTime)
-	instance.store.GetPools().Set(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 
 	tests := []struct {
 		name           string
@@ -621,9 +621,9 @@ func TestGetterPoolRewardCache(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
 	// Add some reward cache entries
-	state.pool.RewardCache().Set(state.fixedTimestamp, int64(1000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp, int64(1000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp+100, int64(2000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp+200, int64(3000))
 
 	// Test count
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
@@ -689,9 +689,9 @@ func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	acc2 := "2000000000000000000"
 	acc3 := "3000000000000000000"
 
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+100, acc1)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+200, acc2)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+300, acc3)
 
 	// Test count
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
@@ -717,9 +717,9 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
 	// Add some historical tick entries
-	state.pool.HistoricalTick().Set(state.fixedTimestamp, int32(-100))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+100, int32(50))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+200, int32(200))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp, int32(-100))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp+100, int32(50))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp+200, int32(200))
 
 	// Test count
 	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)

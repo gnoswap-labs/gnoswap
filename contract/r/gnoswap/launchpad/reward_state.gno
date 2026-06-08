@@ -44,7 +44,7 @@ func (rs *RewardState) PriceDebtX128() *u256.Uint {
 
 // SetPriceDebtX128 sets the price debt (Q128) of the reward state.
 func (rs *RewardState) SetPriceDebtX128(debt *u256.Uint) {
-	rs.priceDebtX128 = debt
+	rs.priceDebtX128 = u256.Zero().Set(debt)
 }
 
 // ClaimableTime returns the claimable time of the reward state.
