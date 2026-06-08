@@ -35,12 +35,12 @@ var (
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
-func main() {
-	testPartialLiquidityBurn()
+func main(cur realm) {
+	testPartialLiquidityBurn(cur)
 }
 
 // testPartialLiquidityBurn tests burning partial liquidity from a position
-func testPartialLiquidityBurn() {
+func testPartialLiquidityBurn(cur realm) {
 	// Given: Pool exists with minted position
 	barTokenPath := "gno.land/r/onbloc/bar"
 	bazTokenPath := "gno.land/r/onbloc/baz"
@@ -55,9 +55,9 @@ func testPartialLiquidityBurn() {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -65,13 +65,13 @@ func testPartialLiquidityBurn() {
 	)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -90,7 +90,7 @@ func testPartialLiquidityBurn() {
 	println("[INFO] Burning partial liquidity amount:", burnAmount, "(50% of total)")
 
 	amount0, amount1 := pool.Burn(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,

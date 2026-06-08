@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // gov/staker getter test
 
 package main
@@ -37,29 +39,29 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup test data")
-	delegationId1 := setupTestData()
+	delegationId1 := setupTestData(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Gov Staker Getters")
-	testGovStakerGetters(delegationId1)
+	testGovStakerGetters(cur, delegationId1)
 	println()
 }
 
-func setupTestData() int64 {
+func setupTestData(cur realm) int64 {
 	println("[INFO] Setting up test data")
 
 	// Transfer GNS to delegator
 	println("[INFO] Admin transferring GNS to delegator")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, delegatorAddr, 1_000_000_000)
+	gns.Transfer(cross(cur), delegatorAddr, 1_000_000_000)
 
 	// Delegate
 	println("[INFO] Delegator delegating to delegatee")
 	testing.SetRealm(delegatorRealm)
-	gns.Approve(cross, stakerAddr, 1_000_000_000)
-	staker.Delegate(cross, delegateeAddr, 500_000_000, "")
+	gns.Approve(cross(cur), stakerAddr, 1_000_000_000)
+	staker.Delegate(cross(cur), delegateeAddr, 500_000_000, "")
 
 	// Skip some height for better testing
 	testing.SkipHeights(100)
@@ -77,7 +79,7 @@ func setupTestData() int64 {
 	return delegationId
 }
 
-func testGovStakerGetters(delegationId1 int64) {
+func testGovStakerGetters(cur realm, delegationId1 int64) {
 	println("[INFO] Testing gov staker getters")
 
 	// Set realm to staker for getter calls

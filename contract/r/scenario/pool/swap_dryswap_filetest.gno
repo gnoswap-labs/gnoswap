@@ -16,7 +16,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -56,25 +55,25 @@ var (
 	MIN_PRICE string = "4295128740"
 )
 
-func main() {
+func main(cur realm) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[SCENARIO] 1. DrySwap ZeroForOne True AmountSpecified Positive 16000")
-	TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()
+	TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(cur)
 	println()
 
 	println("[SCENARIO] 2. DrySwap ZeroForOne True AmountSpecified Negative 16000")
-	TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000()
+	TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(cur)
 	println()
 
 	println("[INFO] Passed all tests")
 }
 
-func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
+func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(cur realm) {
 	testing.SetRealm(posRealm)
 
 	// no mint == no liquidity => swap will fail
@@ -83,8 +82,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	// not enough mint == swap will fail
 	testing.SetRealm(adminRealm)
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	pool.DrySwap(fooPath, barPath, fee500, true, "16000", MIN_PRICE)
@@ -92,7 +91,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	testing.SetRealm(adminRealm)
 
 	testing.SetRealm(posRealm)
-	pool.Mint(cross, fooPath, barPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
+	pool.Mint(cross(cur), fooPath, barPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
 
 	println("[INFO] dry swap")
 	println("[INFO] zeroForOne true, amountSpecified 16000")
@@ -108,7 +107,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	println("[EXPECTED] poolOut:", poolOut, "expected: should be -5883")
 }
 
-func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
+func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(cur realm) {
 	println("[INFO] zeroForOne true, amountSpecified -16000")
 
 	poolIn, poolOut, _ := pool.DrySwap(

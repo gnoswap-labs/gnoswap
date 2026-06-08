@@ -65,12 +65,12 @@ var (
 	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 )
 
-func main() {
+func main(cur realm) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 
 	// prepare ugnot
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1_010_000}})
@@ -79,21 +79,21 @@ func main() {
 	// simulate transfer
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1_010_000}})
 
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
 	println("[SCENARIO] 1. Mint LP and Get GNFT")
-	TestMint()
+	TestMint(cur)
 
 	println("[SCENARIO] 2. Swap Buy Native")
-	TestSwapBuyNative()
+	TestSwapBuyNative(cur)
 
 	println("[SCENARIO] 3. Swap Sell Native")
-	TestSwapSellNative()
+	TestSwapSellNative(cur)
 }
 
 // 2. Mint LP and Get GNFT
-func TestMint() {
+func TestMint(cur realm) {
 	token0, token1 := fooPath, WRAPPED_WUGNOT
 	if token1 < token0 {
 		token0, token1 = token1, token0
@@ -102,13 +102,13 @@ func TestMint() {
 	println("[INFO] token0:", token0, "token1:", token1)
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
-	wugnot.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	wugnot.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		WRAPPED_WUGNOT,
 		fee500,
@@ -123,7 +123,7 @@ func TestMint() {
 	println()
 }
 
-func TestSwapBuyNative() {
+func TestSwapBuyNative(cur realm) {
 	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
@@ -132,12 +132,12 @@ func TestSwapBuyNative() {
 	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
 
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, 10000)
+	foo.Approve(cross(cur), poolAddr, 10000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		WRAPPED_WUGNOT, // token0
 		fooPath,        // token1
 		fee500,
@@ -147,7 +147,7 @@ func TestSwapBuyNative() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -163,7 +163,7 @@ func TestSwapBuyNative() {
 	println()
 }
 
-func TestSwapSellNative() {
+func TestSwapSellNative(cur realm) {
 	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
@@ -172,12 +172,12 @@ func TestSwapSellNative() {
 	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
 
 	testing.SetRealm(adminRealm)
-	wugnot.Approve(cross, poolAddr, 27123)
+	wugnot.Approve(cross(cur), poolAddr, 27123)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
-		cross,
+		cross(cur),
 		WRAPPED_WUGNOT, // token0
 		fooPath,        // token1
 		fee500,
@@ -187,7 +187,7 @@ func TestSwapSellNative() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -203,13 +203,13 @@ func TestSwapSellNative() {
 	println()
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

@@ -44,15 +44,15 @@ var (
 	blockTime = int64(5)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create launchpad project")
-	projectId := createOBLProject()
+	projectId := createOBLProject(cur)
 	projectTier30 := projectId + ":30"
 	println()
 
 	println("[SCENARIO] 2. Contract deposits GNS in project tier30")
 	testing.SkipHeights(60 * 60 * 24 * 3 / blockTime)
-	depositId := depositGnsFromContract(projectTier30, 1_000_000)
+	depositId := depositGnsFromContract(cur, projectTier30, 1_000_000)
 	println()
 
 	println("[SCENARIO] 3. Skip blocks to end project")
@@ -61,11 +61,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Contract collects reward and withdraws GNS")
-	collectRewardAndWithdrawFromContract(depositId)
+	collectRewardAndWithdrawFromContract(cur, depositId)
 	println()
 }
 
-func createOBLProject() string {
+func createOBLProject(cur realm) string {
 	println("[INFO] Creating OBL launchpad project")
 
 	rewardAmount := int64(10_000_000)
@@ -74,9 +74,9 @@ func createOBLProject() string {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		"Test OBL Project",
 		"gno.land/r/onbloc/obl",
 		projectAddr,
@@ -96,13 +96,13 @@ func createOBLProject() string {
 	return projectId
 }
 
-func depositGnsFromContract(projectTierId string, depositAmount int64) string {
+func depositGnsFromContract(cur realm, projectTierId string, depositAmount int64) string {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, contractAddr, depositAmount)
+	gns.Transfer(cross(cur), contractAddr, depositAmount)
 
 	testing.SetRealm(contractRealm)
-	gns.Approve(cross, launchpadAddr, depositAmount)
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 
 	testing.SetRealm(launchpadRealm)
 	deposit, _ := launchpad.GetDeposit(depositId)
@@ -115,13 +115,13 @@ func depositGnsFromContract(projectTierId string, depositAmount int64) string {
 	return depositId
 }
 
-func collectRewardAndWithdrawFromContract(depositId string) {
+func collectRewardAndWithdrawFromContract(cur realm, depositId string) {
 	testing.SetRealm(contractRealm)
 
 	beforeOblBalance := obl.BalanceOf(contractAddr)
 	beforeGnsBalance := gns.BalanceOf(contractAddr)
-	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
-	gnsAmount, err := launchpad.CollectDepositGns(cross, depositId)
+	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	gnsAmount, err := launchpad.CollectDepositGns(cross(cur), depositId)
 	if err != nil {
 		panic(err)
 	}

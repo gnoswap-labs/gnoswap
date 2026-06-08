@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance proposal execute - SetGovStakerPct via governance
 
 package main
@@ -31,12 +33,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
@@ -45,11 +47,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Check current GovStakerPct before proposal")
-	checkGovStakerPct()
+	checkGovStakerPct(cur)
 	println()
 
 	println("[SCENARIO] 4. Propose SetGovStakerPct")
-	proposalID := proposeSetGovStakerPct()
+	proposalID := proposeSetGovStakerPct(cur)
 	println()
 
 	println("[SCENARIO] 5. Skip voting start delay for ready to vote")
@@ -58,7 +60,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 6. Vote for the proposal")
-	vote(proposalID, true)
+	vote(cur, proposalID, true)
 	println()
 
 	println("[SCENARIO] 7. Skip voting period for ready to execute")
@@ -67,36 +69,36 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Execute the SetGovStakerPct proposal")
-	executeSetGovStakerPct(proposalID)
+	executeSetGovStakerPct(cur, proposalID)
 	println()
 
 	println("[SCENARIO] 9. Check GovStakerPct after execution")
-	checkGovStakerPct()
+	checkGovStakerPct(cur)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	govStaker.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func checkGovStakerPct() {
+func checkGovStakerPct(cur realm) {
 	devOpsPct := pf.GetDevOpsPct()
 	govStakerPct := pf.GetGovStakerPct()
 	ufmt.Printf("[INFO] Current DevOpsPct: %d, GovStakerPct: %d\n", devOpsPct, govStakerPct)
 	ufmt.Printf("[EXPECTED] DevOpsPct + GovStakerPct = %d (should be 10000)\n", devOpsPct+govStakerPct)
 }
 
-func proposeSetGovStakerPct() int64 {
+func proposeSetGovStakerPct(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	// Set GovStakerPct to 6000 (60%)
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"protocol_fee",
 		"Set GovStakerPct to 60%",
 		1,
@@ -107,13 +109,13 @@ func proposeSetGovStakerPct() int64 {
 	return proposalID
 }
 
-func vote(proposalID int64, yea bool) {
+func vote(cur realm, proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
-	governance.Vote(cross, proposalID, yea)
+	governance.Vote(cross(cur), proposalID, yea)
 
 	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
@@ -121,10 +123,10 @@ func vote(proposalID int64, yea bool) {
 	ufmt.Printf("[INFO] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeSetGovStakerPct(proposalID int64) {
+func executeSetGovStakerPct(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 
 	ufmt.Printf("[INFO] Proposal %d executed successfully\n", proposalID)
 }

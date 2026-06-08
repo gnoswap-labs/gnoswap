@@ -47,12 +47,12 @@ var (
 	proposalId       int64
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Initialize governance and tokens")
-	initGovernanceAndTokens()
+	initGovernanceAndTokens(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
@@ -60,61 +60,61 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Create and vote on proposal with emission enabled")
-	createAndVoteProposalWithEmissionEnabled()
+	createAndVoteProposalWithEmissionEnabled(cur)
 	println()
 
 	println("[SCENARIO] 4. Set halt level to halt emission only")
-	setEmissionHalt()
+	setEmissionHalt(cur)
 	println()
 
 	println("[SCENARIO] 5. Create new proposal with emission halted")
-	createProposalWithEmissionHalted()
+	createProposalWithEmissionHalted(cur)
 	println()
 
 	println("[SCENARIO] 6. Vote on proposal with emission halted")
-	voteOnProposalWithEmissionHalted()
+	voteOnProposalWithEmissionHalted(cur)
 	println()
 
 	println("[SCENARIO] 7. Execute proposal with emission halted")
-	executeProposalWithEmissionHalted()
+	executeProposalWithEmissionHalted(cur)
 	println()
 
 	println("[SCENARIO] 8. Test vote integrity with emission halted")
-	resetProposalVotesWithEmissionHalted()
+	resetProposalVotesWithEmissionHalted(cur)
 	println()
 }
 
-func initGovernanceAndTokens() {
+func initGovernanceAndTokens(cur realm) {
 	// Distribute tokens
 	defaultTokenAmount := int64(2000000000) // 2B tokens to satisfy proposal threshold after delegation
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, defaultTokenAmount)
-	gns.Transfer(cross, bobAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), bobAddr, defaultTokenAmount)
 
 	// Delegate GNS tokens for voting power (leave some for proposal creation)
 	// Delegate less to ensure enough balance remains for proposal creation
 	delegatedAmount := defaultTokenAmount / 4 // Delegate only 25% instead of 50%
 
 	testing.SetRealm(aliceRealm)
-	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, aliceAddr, delegatedAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, INT64_MAX)
+	gs.Delegate(cross(cur), aliceAddr, delegatedAmount, "")
 
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, bobAddr, delegatedAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, INT64_MAX)
+	gs.Delegate(cross(cur), bobAddr, delegatedAmount, "")
 
 	ufmt.Printf("[INFO] Alice GNS balance: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Bob GNS balance: %d\n", gns.BalanceOf(bobAddr))
 	ufmt.Println("[INFO] Governance and tokens initialized")
 }
 
-func createAndVoteProposalWithEmissionEnabled() {
+func createAndVoteProposalWithEmissionEnabled(cur realm) {
 	// Create text proposal
 	testing.SetRealm(aliceRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 	proposalId = governance.ProposeText(
-		cross,
+		cross(cur),
 		"Test Proposal with Emission Enabled",
 		"This proposal tests governance works normally when emission is enabled",
 	)
@@ -127,11 +127,11 @@ func createAndVoteProposalWithEmissionEnabled() {
 
 	// Vote on proposal
 	testing.SetRealm(aliceRealm)
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Println("[EXPECTED] Alice voted YES on proposal")
 
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	ufmt.Println("[EXPECTED] Bob voted YES on proposal")
 
 	// Check voting info
@@ -144,11 +144,11 @@ func createAndVoteProposalWithEmissionEnabled() {
 	ufmt.Println("[INFO] Advanced past voting period; first proposal is now inactive")
 }
 
-func setEmissionHalt() {
+func setEmissionHalt(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Selectively halt only emission
-	halt.SetOperationStatus(cross, halt.OpTypeEmission, true)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
 
 	isEmissionHalted := halt.IsHaltedEmission()
 	isGovernanceHalted := halt.IsHaltedGovernance()
@@ -158,7 +158,7 @@ func setEmissionHalt() {
 	ufmt.Printf("[EXPECTED] Governance halted: %t (should be false)\n", isGovernanceHalted)
 }
 
-func createProposalWithEmissionHalted() {
+func createProposalWithEmissionHalted(cur realm) {
 	// Build a reconfigure execution with modified values to test parameter changes during emission halt
 	config := governance.GetLatestConfig()
 
@@ -186,7 +186,7 @@ func createProposalWithEmissionHalted() {
 	println("[INFO] Creating executable proposal with emission HALTED...")
 
 	proposalId = governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"Reconfigure while Emission Halted",
 		"Execute governance reconfigure to prove execution works while emission is halted",
 		1,
@@ -197,7 +197,7 @@ func createProposalWithEmissionHalted() {
 	println("[SUCCESS] Governance proposal creation not blocked by emission halt")
 }
 
-func voteOnProposalWithEmissionHalted() {
+func voteOnProposalWithEmissionHalted(cur realm) {
 	println("[INFO] Voting on proposal with emission HALTED...")
 
 	// Wait for voting to start on the new proposal
@@ -206,12 +206,12 @@ func voteOnProposalWithEmissionHalted() {
 
 	// Alice votes
 	testing.SetRealm(aliceRealm)
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	println("[EXPECTED] Alice voted YES successfully despite emission halt")
 
 	// Bob votes
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	println("[EXPECTED] Bob voted YES successfully despite emission halt")
 
 	// Check voting results
@@ -221,7 +221,7 @@ func voteOnProposalWithEmissionHalted() {
 	println("[SUCCESS] Governance voting not blocked by emission halt")
 }
 
-func executeProposalWithEmissionHalted() {
+func executeProposalWithEmissionHalted(cur realm) {
 	// Skip to voting end time by advancing blocks
 	config := governance.GetLatestConfig()
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
@@ -233,7 +233,7 @@ func executeProposalWithEmissionHalted() {
 	ufmt.Printf("[INFO] Config BEFORE Execute - ExecutionWindow: %d\n", configBefore.ExecutionWindow)
 
 	testing.SetRealm(adminRealm)
-	governance.Execute(cross, proposalId)
+	governance.Execute(cross(cur), proposalId)
 
 	configAfter := governance.GetLatestConfig()
 	ufmt.Printf("[INFO] Config AFTER Execute - ExecutionWindow: %d\n", configAfter.ExecutionWindow)
@@ -248,13 +248,13 @@ func executeProposalWithEmissionHalted() {
 	println("[SUCCESS] Governance execution not blocked by emission halt")
 }
 
-func resetProposalVotesWithEmissionHalted() {
+func resetProposalVotesWithEmissionHalted(cur realm) {
 	// Create a new proposal to test double voting (which should fail)
 	testing.SetRealm(aliceRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 
 	resetProposalId := governance.ProposeText(
-		cross,
+		cross(cur),
 		"Test Double Vote with Emission Halted",
 		"Testing that users cannot vote twice even with emission halted",
 	)
@@ -264,7 +264,7 @@ func resetProposalVotesWithEmissionHalted() {
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	// Vote on it
-	governance.Vote(cross, resetProposalId, true)
+	governance.Vote(cross(cur), resetProposalId, true)
 
 	println("[INFO] Testing double voting protection with emission HALTED...")
 

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // delegate and redelegate with emission reward distribution
 
 package main
@@ -36,30 +38,30 @@ var (
 	minAmount       = int64(1_000_000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Check initial GNS/xGNS state")
-	checkInitialState()
+	checkInitialState(cur)
 	println()
 
 	println("[SCENARIO] 2. Admin delegates GNS to dummy")
-	adminDelegateToDummy()
+	adminDelegateToDummy(cur)
 	println()
 
 	println("[SCENARIO] 3. Admin redelegates from dummy to reDelegate")
-	adminRedelegate(dummyAddr, reDelegateAddr)
+	adminRedelegate(cur, dummyAddr, reDelegateAddr)
 	println()
 
 	println("[SCENARIO] 4. Admin redelegates from reDelegate to thirdDelegatee")
-	adminRedelegate(reDelegateAddr, thirdDelegatee)
+	adminRedelegate(cur, reDelegateAddr, thirdDelegatee)
 	println()
 
 	println("[SCENARIO] 5. Admin redelegates from thirdDelegatee back to dummy")
-	adminRedelegate(thirdDelegatee, dummyAddr)
+	adminRedelegate(cur, thirdDelegatee, dummyAddr)
 	println()
 }
 
 // Check initial GNS/xGNS state
-func checkInitialState() {
+func checkInitialState(cur realm) {
 	// check admin's initial GNS and xGNS balance
 	ufmt.Printf("[INFO] admin GNS balance: %d\n", gns.BalanceOf(adminAddr))
 	ufmt.Printf("[INFO] admin xGNS balance: %d\n", xgns.BalanceOf(adminAddr))
@@ -67,11 +69,11 @@ func checkInitialState() {
 }
 
 // Admin delegates GNS to dummy
-func adminDelegateToDummy() {
+func adminDelegateToDummy(cur realm) {
 	// delegate GNS from admin to dummy
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, govStakerAddr, minAmount)
-	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, minAmount)
+	staker.Delegate(cross(cur), dummyAddr, int64(minAmount), "")
 	totalLockedAmount := staker.GetTotalLockedAmount()
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)
@@ -80,9 +82,9 @@ func adminDelegateToDummy() {
 }
 
 // Admin redelegates from one delegatee to another.
-func adminRedelegate(from, to address) {
+func adminRedelegate(cur realm, from, to address) {
 	testing.SetRealm(adminRealm)
-	staker.Redelegate(cross, from, to, int64(minAmount))
+	staker.Redelegate(cross(cur), from, to, int64(minAmount))
 	totalLockedAmount := staker.GetTotalLockedAmount()
 	ufmt.Printf("[INFO] redelegated %d GNS from %s to %s\n", minAmount, from.String(), to.String())
 	ufmt.Printf("[EXPECTED] total locked amount after redelegate from %s to %s: %d\n", from.String(), to.String(), totalLockedAmount)

@@ -51,12 +51,6 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-// turn protocol fee on
-func init() {
-	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 6, 6)
-}
-
 type BalanceSnapshot struct {
 	userObl         int64
 	userUsdc        int64
@@ -66,38 +60,41 @@ type BalanceSnapshot struct {
 	protocolFeeUsdc int64
 }
 
-func main() {
+func main(cur realm) {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross(cur), 6, 6)
+
 	println("[SCENARIO] Swap Balance Validation - Extreme Price Movements")
 	println("[INFO] Purpose: Validate balance conservation during extreme pool swaps")
 	println()
 
 	println("[SCENARIO] 1. Setup - Create Pool with Wide Range")
-	initial := setupWideRangePool()
-	printBalanceSnapshot("After Pool Setup", initial)
+	initial := setupWideRangePool(cur)
+	printBalanceSnapshot(cur, "After Pool Setup", initial)
 	println()
 
 	println("[SCENARIO] 2. Extreme Downward Price Movement")
-	afterDown := testExtremePriceDown(initial)
-	printBalanceSnapshot("After Extreme Down", afterDown)
-	validateBalanceChange(initial, afterDown, "Extreme Down")
+	afterDown := testExtremePriceDown(cur, initial)
+	printBalanceSnapshot(cur, "After Extreme Down", afterDown)
+	validateBalanceChange(cur, initial, afterDown, "Extreme Down")
 	println()
 
 	println("[SCENARIO] 3. Extreme Upward Price Movement")
-	afterUp := testExtremePriceUp(afterDown)
-	printBalanceSnapshot("After Extreme Up", afterUp)
-	validateBalanceChange(afterDown, afterUp, "Extreme Up")
+	afterUp := testExtremePriceUp(cur, afterDown)
+	printBalanceSnapshot(cur, "After Extreme Up", afterUp)
+	validateBalanceChange(cur, afterDown, afterUp, "Extreme Up")
 	println()
 
 	println("[SCENARIO] 4. Maximum Slippage Test")
-	afterSlippage := testMaximumSlippage(afterUp)
-	printBalanceSnapshot("After Maximum Slippage", afterSlippage)
-	validateBalanceChange(afterUp, afterSlippage, "Maximum Slippage")
+	afterSlippage := testMaximumSlippage(cur, afterUp)
+	printBalanceSnapshot(cur, "After Maximum Slippage", afterSlippage)
+	validateBalanceChange(cur, afterUp, afterSlippage, "Maximum Slippage")
 	println()
 
 	println("[SCENARIO] Complete - All extreme price movement validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	return BalanceSnapshot{
 		userObl:         obl.BalanceOf(adminAddr),
 		userUsdc:        usdc.BalanceOf(adminAddr),
@@ -108,7 +105,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	}
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User OBL balance:", snapshot.userObl)
 	println("[EXPECTED] User USDC balance:", snapshot.userUsdc)
@@ -118,19 +115,19 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee USDC balance:", snapshot.protocolFeeUsdc)
 }
 
-func setupWideRangePool() BalanceSnapshot {
+func setupWideRangePool(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 	// token0/token1 must be in lexicographical order: usdcPath < oblPath
-	pool.CreatePool(cross, usdcPath, oblPath, fee500, "79228162514264337593543950336")
+	pool.CreatePool(cross(cur), usdcPath, oblPath, fee500, "79228162514264337593543950336")
 
-	usdc.Approve(cross, poolAddr, maxApprove)
-	obl.Approve(cross, poolAddr, maxApprove)
+	usdc.Approve(cross(cur), poolAddr, maxApprove)
+	obl.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		usdcPath,
 		oblPath,
 		fee500,
@@ -145,10 +142,10 @@ func setupWideRangePool() BalanceSnapshot {
 	println("[INFO] Minted amounts - usdc:", amount0, "obl:", amount1)
 	println("[INFO] Initial tick:", pools.Slot0Tick())
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
+func testExtremePriceDown(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
@@ -156,12 +153,12 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)")
 
-	obl.Approve(cross, poolAddr, 10000000)
+	obl.Approve(cross(cur), poolAddr, 10000000)
 
 	testing.SetRealm(routerRealm)
 	// token0=usdc, token1=obl: swapping obl(token1) for usdc(token0) -> zeroForOne=false
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		usdcPath,
 		oblPath,
 		fee500,
@@ -171,7 +168,7 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -181,10 +178,10 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
 	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
+func testExtremePriceUp(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
@@ -192,12 +189,12 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)")
 
-	usdc.Approve(cross, poolAddr, 5000000)
+	usdc.Approve(cross(cur), poolAddr, 5000000)
 
 	testing.SetRealm(routerRealm)
 	// token0=usdc, token1=obl: swapping usdc(token0) for obl(token1) -> zeroForOne=true
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		usdcPath,
 		oblPath,
 		fee500,
@@ -207,7 +204,7 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -217,10 +214,10 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
 	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
+func testMaximumSlippage(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(usdcPath, oblPath, fee500)
@@ -228,12 +225,12 @@ func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 20000000 OBL -> USDC (maximum slippage)")
 
-	obl.Approve(cross, poolAddr, 20000000)
+	obl.Approve(cross(cur), poolAddr, 20000000)
 
 	testing.SetRealm(routerRealm)
 	// token0=usdc, token1=obl: swapping obl(token1) for usdc(token0) -> zeroForOne=false
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		usdcPath,
 		oblPath,
 		fee500,
@@ -243,7 +240,7 @@ func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(usdcPath, oblPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -253,10 +250,10 @@ func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
 	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
 	userOblDiff := after.userObl - before.userObl
@@ -287,14 +284,14 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

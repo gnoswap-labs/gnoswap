@@ -16,7 +16,6 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -86,76 +85,76 @@ var (
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and emission")
-	initAccount()
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	initAccount(cur)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initAccountPostDeposit()
+	initAccountPostDeposit(cur)
 	println()
 
 	println("[SCENARIO] 2. Create wugnot:gns:3000 pool (tier 1)")
-	createPoolWugnotGns3000Tier01()
+	createPoolWugnotGns3000Tier01(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive (GNS)")
-	createExternalIncentiveGns()
+	createExternalIncentiveGns(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint position 01 (in-range)")
-	mintPos01InRange()
+	mintPos01InRange(cur)
 	println()
 
 	println("[SCENARIO] 5. Create bar:baz:500 pool (tier 2)")
-	createBarBaz500Tier02()
+	createBarBaz500Tier02(cur)
 	println()
 
 	println("[SCENARIO] 6. Mint positions 02-06")
-	mintPositions02To06()
+	mintPositions02To06(cur)
 	println()
 
 	println("[SCENARIO] 7. Stake all tokens")
-	stakeAllTokens()
+	stakeAllTokens(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect rewards for all warm-up periods")
-	collectRewardsAllWarmUp()
+	collectRewardsAllWarmUp(cur)
 	println()
 
 	println("[SCENARIO] 9. Perform swaps")
-	performSwaps()
+	performSwaps(cur)
 	println()
 
 	println("[SCENARIO] 10. Create bar:foo:100 pool (tier 3)")
-	createPoolBarFoo100Tier03()
+	createPoolBarFoo100Tier03(cur)
 	println()
 
 	println("[SCENARIO] 11. Mint and stake position 07 (out-range)")
-	mintAndStakePos07OutRange()
+	mintAndStakePos07OutRange(cur)
 	println()
 
 	println("[SCENARIO] 12. Unstake token 01")
-	unstakeToken01()
+	unstakeToken01(cur)
 	println()
 
 	println("[SCENARIO] 13. Create pool with external incentive only")
-	createPoolExternalOnly()
+	createPoolExternalOnly(cur)
 	println()
 }
 
-func initAccount() {
+func initAccount(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] change distribution percentage")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
 		0,    // communityPoolPct
@@ -164,12 +163,12 @@ func initAccount() {
 
 	println("[INFO] issue coins and prepare wugnot")
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	// Deposit is done in main()
+	// Deposit is done in main(cur)
 }
 
-func initAccountPostDeposit() {
+func initAccountPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 	wugnotBalance := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[EXPECTED] wugnot balance: %d\n", wugnotBalance)
@@ -178,15 +177,15 @@ func initAccountPostDeposit() {
 	testing.SetRealm(stakerRealm)
 }
 
-func createPoolWugnotGns3000Tier01() {
+func createPoolWugnotGns3000Tier01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] approve gns and create pool")
-	gns.Approve(cross, poolAddr, maxInt64)
-	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, maxInt64)
+	pl.CreatePool(cross(cur), wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	totalSupply := gns.TotalSupply()
 	ufmt.Printf("[EXPECTED] gns total supply: %d\n", totalSupply)
@@ -194,15 +193,15 @@ func createPoolWugnotGns3000Tier01() {
 	testing.SkipHeights(3)
 }
 
-func createExternalIncentiveGns() {
+func createExternalIncentiveGns(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve gns for external incentive")
-	gns.Approve(cross, stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"gno.land/r/gnoswap/gns",
 		2_000_000_000,
@@ -213,15 +212,15 @@ func createExternalIncentiveGns() {
 	testing.SkipHeights(1)
 }
 
-func mintPos01InRange() {
+func mintPos01InRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens and mint position")
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -242,28 +241,28 @@ func mintPos01InRange() {
 	testing.SkipHeights(1)
 }
 
-func createBarBaz500Tier02() {
+func createBarBaz500Tier02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:500 pool")
-	gns.Approve(cross, poolAddr, maxInt64)
-	pl.CreatePool(cross, barPath, bazPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, maxInt64)
+	pl.CreatePool(cross(cur), barPath, bazPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
 	testing.SkipHeights(1)
 }
 
-func mintPositions02To06() {
+func mintPositions02To06(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint position 02 (bar:baz in-range)")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -283,11 +282,11 @@ func mintPositions02To06() {
 	println("[INFO] mint positions 03-06 (out-range)")
 	// Position 03 (wugnot:gns out-range)
 	for i := 3; i <= 6; i++ {
-		wugnot.Approve(cross, poolAddr, maxInt64)
-		gns.Approve(cross, poolAddr, maxInt64)
+		wugnot.Approve(cross(cur), poolAddr, maxInt64)
+		gns.Approve(cross(cur), poolAddr, maxInt64)
 
 		pn.Mint(
-			cross,
+			cross(cur),
 			wugnotPath,
 			gnsPath,
 			fee3000,
@@ -309,23 +308,23 @@ func mintPositions02To06() {
 	// (Similar pattern for positions 04, 05, 06)
 }
 
-func stakeAllTokens() {
+func stakeAllTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake tokens 01-06")
 	for i := 1; i <= 6; i++ {
-		gnft.Approve(cross, stakerAddr, positionIdFrom(i))
-		sr.StakeToken(cross, uint64(i), "")
+		gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, i))
+		sr.StakeToken(cross(cur), uint64(i), "")
 		testing.SkipHeights(1)
 	}
 }
 
-func collectRewardsAllWarmUp() {
+func collectRewardsAllWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect rewards for 30% warm-up")
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 	}
 	testing.SkipHeights(1)
 
@@ -336,22 +335,22 @@ func collectRewardsAllWarmUp() {
 	testing.SkipHeights(blocksIn5Days)
 
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i))
+		sr.CollectReward(cross(cur), uint64(i))
 	}
 	testing.SkipHeights(1)
 }
 
-func performSwaps() {
+func performSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] perform exact-in swaps")
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	gns.Approve(cross, poolAddr, maxInt64)
-	wugnot.Approve(cross, routerAddr, maxInt64)
-	gns.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
+	gns.Approve(cross(cur), routerAddr, maxInt64)
 
 	tokenIn, tokenOut := rr.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		"500",
@@ -367,7 +366,7 @@ func performSwaps() {
 
 	println("[INFO] check reward for position 01 after swap")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -375,29 +374,29 @@ func performSwaps() {
 	testing.SkipHeights(1)
 }
 
-func createPoolBarFoo100Tier03() {
+func createPoolBarFoo100Tier03(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:foo:100 pool")
-	pl.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(600000).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(600000).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
 	testing.SkipHeights(1)
 }
 
-func mintAndStakePos07OutRange() {
+func mintAndStakePos07OutRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint and stake position 07 (one-click)")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -412,8 +411,8 @@ func mintAndStakePos07OutRange() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(lpTokenId))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, lpTokenId))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] mint and stake result - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0, amount1)
@@ -422,7 +421,7 @@ func mintAndStakePos07OutRange() {
 
 	println("[INFO] collect reward for position 07")
 	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
-	sr.CollectReward(cross, 7)
+	sr.CollectReward(cross(cur), 7)
 	newAdminGnsBalance := gns.BalanceOf(adminAddr)
 
 	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
@@ -431,12 +430,12 @@ func mintAndStakePos07OutRange() {
 	testing.SkipHeights(1)
 }
 
-func unstakeToken01() {
+func unstakeToken01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns
@@ -445,27 +444,27 @@ func unstakeToken01() {
 	testing.SkipHeights(1)
 }
 
-func createPoolExternalOnly() {
+func createPoolExternalOnly(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create baz:qux:3000 pool (external only)")
-	pl.CreatePool(cross, bazPath, quxPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), bazPath, quxPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 
 	println("[INFO] create external incentive (baz)")
-	baz.Transfer(cross, externalCreator, 2_000_000_000)
-	gns.Transfer(cross, externalCreator, depositGnsAmount)
+	baz.Transfer(cross(cur), externalCreator, 2_000_000_000)
+	gns.Transfer(cross(cur), externalCreator, depositGnsAmount)
 
 	testing.SetRealm(testing.NewUserRealm(externalCreator))
-	baz.Approve(cross, stakerAddr, 2_000_000_000)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	baz.Approve(cross(cur), stakerAddr, 2_000_000_000)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	startTime := int64(1244332800)
 	endTime := startTime + TIMESTAMP_90DAYS
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
 		bazPath,
 		2_000_000_000,
@@ -478,7 +477,7 @@ func createPoolExternalOnly() {
 	testing.SkipHeights(1)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

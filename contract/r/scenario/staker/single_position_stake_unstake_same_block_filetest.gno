@@ -14,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -57,64 +56,64 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position 01")
-	mintPosition01()
+	mintPosition01(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake and unstake in same block")
-	stakeAndUnstakeInSameBlock()
+	stakeAndUnstakeInSameBlock(cur)
 	println()
 
 	println("[SCENARIO] 5. Verify final state")
-	verifyFinalState()
+	verifyFinalState(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintPosition01() {
+func mintPosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -133,29 +132,29 @@ func mintPosition01() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] initial position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
 }
 
-func stakeAndUnstakeInSameBlock() {
+func stakeAndUnstakeInSameBlock(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check initial state before staking")
-	initialOwner := gnft.MustOwnerOf(positionIdFrom(1))
+	initialOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	initialGnsBalance := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[INFO] initial owner: %s\n", initialOwner)
 	ufmt.Printf("[INFO] initial GNS balance: %d\n", initialGnsBalance)
 
 	println("[INFO] approve NFT to staker")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 
 	println("[INFO] stake position 01")
-	sr.StakeToken(cross, 1, "")
+	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] owner after stake: %s\n", ownerAfterStake)
 
@@ -164,9 +163,9 @@ func stakeAndUnstakeInSameBlock() {
 	}
 
 	println("[INFO] immediately unstake position 01 (same block)")
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[EXPECTED] owner after unstake: %s\n", ownerAfterUnstake)
@@ -189,12 +188,12 @@ func stakeAndUnstakeInSameBlock() {
 	println("[INFO] same block stake and unstake completed successfully")
 }
 
-func verifyFinalState() {
+func verifyFinalState(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] verify final state after same block operations")
 
-	finalOwner := gnft.MustOwnerOf(positionIdFrom(1))
+	finalOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] final position owner: %s\n", finalOwner)
 
@@ -206,12 +205,12 @@ func verifyFinalState() {
 
 	// Test that position can still be staked normally after same-block operations
 	println("[INFO] test normal staking after same-block operations")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	testing.SkipHeights(1)
 
-	verifyOwner := gnft.MustOwnerOf(positionIdFrom(1))
+	verifyOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] verification - owner after normal stake: %s\n", verifyOwner)
 
@@ -222,7 +221,7 @@ func verifyFinalState() {
 	println("[INFO] same-block operations do not affect normal staking functionality")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

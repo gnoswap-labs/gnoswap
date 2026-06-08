@@ -13,7 +13,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -56,39 +55,39 @@ var (
 )
 
 // 1. Create Foo:Bar Pool
-func main() {
+func main(cur realm) {
 	// call gns faucet to get creation fee
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Create Foo:Bar Pool")
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	testing.SkipHeights(1)
 
 	println("[INFO] Create Bar:Baz Pool")
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, bazPath, fee500, "130621891405341611593710811006")
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, bazPath, fee500, "130621891405341611593710811006")
 	testing.SkipHeights(1)
 
 	println("[SCENARIO] 1. Mint Foo:Bar Liquidity by admin")
-	TestMintFooBarLiquidity()
+	TestMintFooBarLiquidity(cur)
 
 	println("[SCENARIO] 2. Mint Bar:Baz Liquidity by admin")
-	TestMintBarBazLiquidity()
+	TestMintBarBazLiquidity(cur)
 
 	println("[INFO] Passed all tests")
 }
 
 // 3. Mint Foo:Bar Liquidity by admin
-func TestMintFooBarLiquidity() {
+func TestMintFooBarLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 	testing.SkipHeights(4)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -104,15 +103,15 @@ func TestMintFooBarLiquidity() {
 }
 
 // 4. Mint Bar:Baz Liquidity by admin
-func TestMintBarBazLiquidity() {
+func TestMintBarBazLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 	testing.SkipHeights(2)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,

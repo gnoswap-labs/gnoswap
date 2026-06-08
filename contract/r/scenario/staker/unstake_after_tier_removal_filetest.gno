@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Test file to verify unstaking works after tier removal
 // This test demonstrates the bug where positions CANNOT be unstaked from pools that have been de-tiered
 
@@ -49,7 +51,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("=== TEST: Unstaking After Tier Removal ===")
 	println()
 	println("This test demonstrates a critical bug where users cannot unstake")
@@ -57,49 +59,49 @@ func main() {
 	println()
 
 	println("[STEP 1] Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 
 	println("[STEP 2] Create pool and set to tier 2")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 
 	println("[STEP 3] Mint and stake position")
-	positionId := mintAndStakePosition()
+	positionId := mintAndStakePosition(cur)
 
 	println("[STEP 4] Verify position is staked")
-	verifyStaked(positionId)
+	verifyStaked(cur, positionId)
 
 	println("[STEP 5] Remove pool from tier system")
-	removePoolTier()
+	removePoolTier(cur)
 
 	println("[STEP 6] Attempt to unstake position after tier removal")
-	attemptUnstake(positionId)
+	attemptUnstake(cur, positionId)
 
 	println("[STEP 7] Verify unstaking was successful")
-	verifyUnstaked(positionId)
+	verifyUnstaked(cur, positionId)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	// Set pool creation fee to 0
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SkipHeights(1)
 	println("[INFO] Initialized")
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950337")
 
 	// Set pool to tier 2
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
 	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
 	ufmt.Printf("[INFO] Pool created and set to tier %d\n", tier)
@@ -107,17 +109,17 @@ func createPoolAndSetTier() {
 	testing.SkipHeights(1)
 }
 
-func mintAndStakePosition() uint64 {
+func mintAndStakePosition(cur realm) uint64 {
 	testing.SetRealm(adminRealm)
 
 	// Approve tokens
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	// Mint position
 	// fee3000 has tick spacing of 60, so ticks must be multiples of 60
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee3000,
@@ -135,8 +137,8 @@ func mintAndStakePosition() uint64 {
 	ufmt.Printf("[INFO] Minted position %d with liquidity %s\n", positionId, liquidity)
 
 	// Approve and stake
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	println("[INFO] Position staked")
 	testing.SkipHeights(1)
@@ -144,7 +146,7 @@ func mintAndStakePosition() uint64 {
 	return positionId
 }
 
-func verifyStaked(positionId uint64) {
+func verifyStaked(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	isStaked := sr.IsStaked(positionId)
 	ufmt.Printf("[INFO] Position %d staked status: %v\n", positionId, isStaked)
@@ -154,11 +156,11 @@ func verifyStaked(positionId uint64) {
 	}
 }
 
-func removePoolTier() {
+func removePoolTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("Removing pool from tier system...")
-	sr.RemovePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	sr.RemovePoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
 
 	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
 	ufmt.Printf("[INFO] Pool tier after removal: %d (0 means no tier)\n", tier)
@@ -171,13 +173,13 @@ func removePoolTier() {
 }
 
 // This should now work after the fix
-func attemptUnstake(positionId uint64) {
+func attemptUnstake(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
 	println("Attempting to unstake position from de-tiered pool...")
 
 	// This should now succeed after the fix
-	poolPath := sr.UnStakeToken(cross, positionId)
+	poolPath := sr.UnStakeToken(cross(cur), positionId)
 
 	println("[INFO] poolPath: ", poolPath)
 
@@ -186,7 +188,7 @@ func attemptUnstake(positionId uint64) {
 	println("Users CAN NOW unstake positions from pools that have been removed from the tier system.")
 }
 
-func verifyUnstaked(positionId uint64) {
+func verifyUnstaked(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	isStaked := sr.IsStaked(positionId)
 	ufmt.Printf("[INFO] Position %d staked status after unstaking: %v\n", positionId, isStaked)
@@ -196,7 +198,7 @@ func verifyUnstaked(positionId uint64) {
 	}
 
 	// Verify NFT ownership returned to user
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := gnft.OwnerOf(positionIdFrom(cur, positionId))
 	if err != nil {
 		panic(err)
 	}
@@ -211,7 +213,7 @@ func verifyUnstaked(positionId uint64) {
 	println("The bug has been fixed! Users can unstake from de-tiered pools.")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId := positionId.(type) {
 	case string:
 		return grc721.TokenID(positionId)

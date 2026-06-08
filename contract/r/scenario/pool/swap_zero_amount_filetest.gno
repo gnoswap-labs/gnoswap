@@ -56,39 +56,37 @@ var (
 	callbackCalled       bool
 )
 
-func init() {
+func main(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 6, 6)
-}
+	pool.SetFeeProtocol(cross(cur), 6, 6)
 
-func main() {
 	println("[SCENARIO] Swap with Zero Amount Delta")
 	println("[INFO] Purpose: Verify swaps complete successfully with zero deltas")
 	println()
 
 	println("[SCENARIO] 1. Setup Pool")
-	setupPool()
+	setupPool(cur)
 	println()
 
 	println("[SCENARIO] 2. Execute Swap with Minimal Amount (amount1=0 case)")
-	testZeroAmountSwap()
+	testZeroAmountSwap(cur)
 	println()
 
 	println("[SCENARIO] Complete - Zero amount swap handled correctly")
 }
 
-func setupPool() {
+func setupPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, "79228162514264337593543950336")
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, "79228162514264337593543950336")
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -102,7 +100,7 @@ func setupPool() {
 	println("[EXPECTED] Minted amounts - bar:", amount0, "foo:", amount1)
 }
 
-func testZeroAmountSwap() {
+func testZeroAmountSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(barPath, fooPath, fee500)
@@ -110,7 +108,7 @@ func testZeroAmountSwap() {
 
 	println("[INFO] Attempting swap with amount: 1")
 
-	bar.Approve(cross, poolAddr, 1)
+	bar.Approve(cross(cur), poolAddr, 1)
 
 	callbackCalled = false
 	callbackAmount0Delta = 0
@@ -118,7 +116,7 @@ func testZeroAmountSwap() {
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -128,7 +126,7 @@ func testZeroAmountSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return zeroAmountSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return zeroAmountSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -159,7 +157,7 @@ func testZeroAmountSwap() {
 	}
 }
 
-func zeroAmountSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func zeroAmountSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	callbackCalled = true
@@ -167,10 +165,10 @@ func zeroAmountSwapCallback(token0Path string, token1Path string, amount0Delta i
 	callbackAmount1Delta = amount1Delta
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -195,4 +193,3 @@ func zeroAmountSwapCallback(token0Path string, token1Path string, amount0Delta i
 // [EXPECTED] amount1Delta is zero - partial zero handled correctly
 //
 // [SCENARIO] Complete - Zero amount swap handled correctly
-

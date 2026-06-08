@@ -48,39 +48,39 @@ var (
 	redelegatedDaoDelegationID int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Fund DAO contract and verify initial balances")
-	setupDaoBalance()
+	setupDaoBalance(cur)
 	println()
 
 	println("[SCENARIO] 2. DAO contract delegates to validator1")
-	daoDelegateToValidator1()
+	daoDelegateToValidator1(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify delegation belongs to DAO contract, not origin user")
-	verifyDaoOwnedDelegationAfterDelegate()
+	verifyDaoOwnedDelegationAfterDelegate(cur)
 	println()
 
 	println("[SCENARIO] 4. DAO contract redelegates from validator1 to validator2")
-	daoRedelegateToValidator2()
+	daoRedelegateToValidator2(cur)
 	println()
 
 	println("[SCENARIO] 5. DAO contract undelegates partial amount from validator2")
-	daoUndelegatePartial()
+	daoUndelegatePartial(cur)
 	println()
 
 	println("[SCENARIO] 6. DAO contract collect before lockup returns zero")
-	collectBeforeLockup()
+	collectBeforeLockup(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip undelegation lockup and collect as DAO contract")
-	collectAfterLockup()
+	collectAfterLockup(cur)
 	println()
 }
 
-func setupDaoBalance() {
+func setupDaoBalance(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, daoAddr, transferredAmount)
+	gns.Transfer(cross(cur), daoAddr, transferredAmount)
 
 	ufmt.Printf("[INFO] transferred %d GNS to DAO contract\n", transferredAmount)
 	ufmt.Printf("[EXPECTED] DAO GNS balance: %d\n", gns.BalanceOf(daoAddr))
@@ -89,17 +89,17 @@ func setupDaoBalance() {
 	ufmt.Printf("[EXPECTED] origin user xGNS balance: %d\n", xgns.BalanceOf(originAddr))
 }
 
-func daoDelegateToValidator1() {
+func daoDelegateToValidator1(cur realm) {
 	testing.SetRealm(daoRealm)
-	gns.Approve(cross, govStakerAddr, delegateAmount)
+	gns.Approve(cross(cur), govStakerAddr, delegateAmount)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	func(cur realm) {
 		testing.SetRealm(daoRealm)
-		staker.Delegate(cross, validator1Addr, delegateAmount, "")
-	}(cross)
+		staker.Delegate(cross(cur), validator1Addr, delegateAmount, "")
+	}(cross(cur))
 
 	ufmt.Printf("[INFO] DAO delegated %d GNS to validator1\n", delegateAmount)
 	ufmt.Printf("[EXPECTED] DAO GNS balance after delegate: %d\n", gns.BalanceOf(daoAddr))
@@ -107,7 +107,7 @@ func daoDelegateToValidator1() {
 	ufmt.Printf("[EXPECTED] origin user xGNS balance after delegate: %d\n", xgns.BalanceOf(originAddr))
 }
 
-func verifyDaoOwnedDelegationAfterDelegate() {
+func verifyDaoOwnedDelegationAfterDelegate(cur realm) {
 	testing.SetRealm(govStakerRealm)
 	daoDelegationIDs := staker.GetUserDelegationIDs(daoAddr, validator1Addr)
 	originDelegationIDs := staker.GetUserDelegationIDs(originAddr, validator1Addr)
@@ -134,14 +134,14 @@ func verifyDaoOwnedDelegationAfterDelegate() {
 	ufmt.Printf("[EXPECTED] total locked amount after delegate: %d\n", staker.GetTotalLockedAmount())
 }
 
-func daoRedelegateToValidator2() {
+func daoRedelegateToValidator2(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	func(cur realm) {
 		testing.SetRealm(daoRealm)
-		staker.Redelegate(cross, validator1Addr, validator2Addr, delegateAmount)
-	}(cross)
+		staker.Redelegate(cross(cur), validator1Addr, validator2Addr, delegateAmount)
+	}(cross(cur))
 
 	testing.SetRealm(govStakerRealm)
 	oldDelegationIDs := staker.GetUserDelegationIDs(daoAddr, validator1Addr)
@@ -167,14 +167,14 @@ func daoRedelegateToValidator2() {
 	ufmt.Printf("[EXPECTED] total locked amount after redelegate: %d\n", staker.GetTotalLockedAmount())
 }
 
-func daoUndelegatePartial() {
+func daoUndelegatePartial(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	func(cur realm) {
 		testing.SetRealm(daoRealm)
-		staker.Undelegate(cross, validator2Addr, undelegateAmount)
-	}(cross)
+		staker.Undelegate(cross(cur), validator2Addr, undelegateAmount)
+	}(cross(cur))
 
 	testing.SetRealm(govStakerRealm)
 	daoDelegationIDs := staker.GetUserDelegationIDs(daoAddr, validator2Addr)
@@ -205,7 +205,7 @@ func daoUndelegatePartial() {
 	ufmt.Printf("[EXPECTED] total locked amount before collect: %d\n", staker.GetTotalLockedAmount())
 }
 
-func collectBeforeLockup() {
+func collectBeforeLockup(cur realm) {
 	balanceBefore := gns.BalanceOf(daoAddr)
 
 	testing.SetRealm(originRealm)
@@ -214,15 +214,15 @@ func collectBeforeLockup() {
 	var collected int64
 	func(cur realm) {
 		testing.SetRealm(daoRealm)
-		collected = staker.CollectUndelegatedGns(cross)
-	}(cross)
+		collected = staker.CollectUndelegatedGns(cross(cur))
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] collected before lockup: %d\n", collected)
 	ufmt.Printf("[EXPECTED] DAO GNS balance before lockup collect: %d\n", gns.BalanceOf(daoAddr))
 	ufmt.Printf("[EXPECTED] DAO GNS balance unchanged before lockup: %t\n", balanceBefore == gns.BalanceOf(daoAddr))
 }
 
-func collectAfterLockup() {
+func collectAfterLockup(cur realm) {
 	testing.SkipHeights(lockupHeights)
 	balanceBefore := gns.BalanceOf(daoAddr)
 
@@ -232,8 +232,8 @@ func collectAfterLockup() {
 	var collected int64
 	func(cur realm) {
 		testing.SetRealm(daoRealm)
-		collected = staker.CollectUndelegatedGns(cross)
-	}(cross)
+		collected = staker.CollectUndelegatedGns(cross(cur))
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] collected after lockup: %d\n", collected)
 	ufmt.Printf("[EXPECTED] DAO GNS balance after collect: %d\n", gns.BalanceOf(daoAddr))

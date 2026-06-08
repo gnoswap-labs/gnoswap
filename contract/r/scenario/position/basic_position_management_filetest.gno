@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -40,10 +41,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm           = testing.NewUserRealm(adminAddr)
-	poolAddr     address = "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
-	positionAddr address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = testing.NewUserRealm(adminAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -65,66 +66,67 @@ var (
 // Pool setup flag to prevent duplicate creation
 var poolSetup bool = false
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Pool and Create Position")
-	initializePoolAndCreatePosition()
+	initializePoolAndCreatePosition(cur)
 	println()
 
 	println("[SCENARIO] 2. Position Creation and Retrieval")
-	testPositionCreationAndRetrieval()
+	testPositionCreationAndRetrieval(cur)
 	println()
 
 	println("[SCENARIO] 3. Position Modification")
-	testPositionModification()
+	testPositionModification(cur)
 	println()
 
 	println("[SCENARIO] 4. Position Deletion")
-	testPositionDeletion()
+	testPositionDeletion(cur)
 	println()
 }
 
-func setupPool() {
+func setupPool(cur realm) {
 	if !poolSetup {
 		println("[INFO] Setting up pool for position tests")
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFee(cross, 0)
-		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.SetPoolCreationFee(cross(cur), 0)
+		gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
+		pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }
 
-func tokenFaucet(tokenPath string, to address) {
+func tokenFaucet(cur realm, tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case barPath:
-		bar.Transfer(cross, to, defaultAmount)
+		bar.Transfer(cross(cur), to, defaultAmount)
 	case fooPath:
-		foo.Transfer(cross, to, defaultAmount)
+		foo.Transfer(cross(cur), to, defaultAmount)
 	default:
 		panic("token not found")
 	}
 }
 
-func initializePoolAndCreatePosition() {
+func initializePoolAndCreatePosition(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
+	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating initial position")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -147,23 +149,24 @@ func initializePoolAndCreatePosition() {
 	println("[EXPECTED] Amount1:", amount1)
 }
 
-func testPositionCreationAndRetrieval() {
+func testPositionCreationAndRetrieval(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
+	testing.SetRealm(bobRealm)
 
 	println("[INFO] Approving tokens for bob")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating a new position for retrieval test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -197,15 +200,15 @@ func testPositionCreationAndRetrieval() {
 	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
 }
 
-func testPositionModification() {
+func testPositionModification(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Creating position for modification test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -222,7 +225,7 @@ func testPositionModification() {
 
 	println("[INFO] Increasing liquidity to modify position")
 	_, newLiquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"20000",
 		"20000",
@@ -247,15 +250,15 @@ func testPositionModification() {
 	println("[EXPECTED] Tokens owed 1:", tokensOwed1)
 }
 
-func testPositionDeletion() {
+func testPositionDeletion(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Creating position for deletion test")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -275,12 +278,12 @@ func testPositionDeletion() {
 
 	// need to add gnft approve
 	// by doing this, we can manage position
-	gnft.Approve(cross, positionAddr, positionIdFrom(positionId))
+	gnft.Approve(cross(cur), positionAddr, positionIdFrom(cur, positionId))
 
 	testing.SetRealm(aliceRealm)
 	println("[INFO] Burning position (deleting)")
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"100", // Remove all liquidity
 		"0",
@@ -301,7 +304,7 @@ func testPositionDeletion() {
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

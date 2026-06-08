@@ -14,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -63,48 +62,48 @@ type BalanceSnapshot struct {
 	protocolFeeFoo   int64
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Swap Balance Validation - Extreme Cases")
 	println("[INFO] Purpose: Validate balance changes in extreme swap scenarios")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	initial := setupEnvironment()
-	printBalanceSnapshot("Initial State", initial)
+	initial := setupEnvironment(cur)
+	printBalanceSnapshot(cur, "Initial State", initial)
 	println()
 
 	println("[SCENARIO] 2. Create Pool & Mint Large Position")
-	afterSetup := setupPoolAndPosition()
-	printBalanceSnapshot("After Setup", afterSetup)
+	afterSetup := setupPoolAndPosition(cur)
+	printBalanceSnapshot(cur, "After Setup", afterSetup)
 	println()
 
 	println("[SCENARIO] 3. Extreme Case 1: Very Large Swap (90% of liquidity)")
-	afterLargeSwap := performLargeSwap(afterSetup)
-	printBalanceSnapshot("After Large Swap", afterLargeSwap)
-	validateBalanceChange(afterSetup, afterLargeSwap, "Large ExactIn")
+	afterLargeSwap := performLargeSwap(cur, afterSetup)
+	printBalanceSnapshot(cur, "After Large Swap", afterLargeSwap)
+	validateBalanceChange(cur, afterSetup, afterLargeSwap, "Large ExactIn")
 	println()
 
 	println("[SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage")
-	afterReverseSwap := performReverseSwap(afterLargeSwap)
-	printBalanceSnapshot("After Reverse Swap", afterReverseSwap)
-	validateBalanceChange(afterLargeSwap, afterReverseSwap, "Large ExactOut")
+	afterReverseSwap := performReverseSwap(cur, afterLargeSwap)
+	printBalanceSnapshot(cur, "After Reverse Swap", afterReverseSwap)
+	validateBalanceChange(cur, afterLargeSwap, afterReverseSwap, "Large ExactOut")
 	println()
 
 	println("[SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement")
-	afterSmallSwap := performSmallSwap(afterReverseSwap)
-	printBalanceSnapshot("After Small Swap", afterSmallSwap)
-	validateBalanceChange(afterReverseSwap, afterSmallSwap, "Small ExactIn")
-	validateSmallSwapImpact(afterReverseSwap, afterSmallSwap)
+	afterSmallSwap := performSmallSwap(cur, afterReverseSwap)
+	printBalanceSnapshot(cur, "After Small Swap", afterSmallSwap)
+	validateBalanceChange(cur, afterReverseSwap, afterSmallSwap, "Small ExactIn")
+	validateSmallSwapImpact(cur, afterReverseSwap, afterSmallSwap)
 	println()
 
 	println("[SCENARIO] 6. Final Validation: Total System Balance Conservation")
-	validateSystemBalance(initial, afterSmallSwap)
+	validateSystemBalance(cur, initial, afterSmallSwap)
 	println()
 
 	println("[SCENARIO] Complete - All extreme case validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
 		userBar:          bar.BalanceOf(userAddr),
 		userFoo:          foo.BalanceOf(userAddr),
@@ -119,7 +118,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	return snapshot
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User BAR balance:", snapshot.userBar)
 	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
@@ -131,35 +130,35 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
 }
 
-func setupEnvironment() BalanceSnapshot {
+func setupEnvironment(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
+	bar.Transfer(cross(cur), userAddr, initialBalance)
+	foo.Transfer(cross(cur), userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func setupPoolAndPosition() BalanceSnapshot {
+func setupPoolAndPosition(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Create pool
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	// Mint very large position for extreme swaps
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -179,20 +178,20 @@ func setupPoolAndPosition() BalanceSnapshot {
 	println("[INFO] Amount0 (BAR):", amount0)
 	println("[INFO] Amount1 (FOO):", amount1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func performLargeSwap(before BalanceSnapshot) BalanceSnapshot {
+func performLargeSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	// Swap 90% of pool's FOO liquidity
 	swapAmount := int64(450_000_000_000) // 90% of 500B
 	println("[INFO] Extreme Swap: Swapping", swapAmount, "FOO -> BAR (90% of liquidity)")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -206,22 +205,22 @@ func performLargeSwap(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Large Swap - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Expected: Massive price impact and slippage")
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
+func performReverseSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
 
 	// Swap back with exact out
 	swapAmount := int64(200_000_000_000)
 	println("[INFO] Reverse Swap: Getting", swapAmount, "FOO back")
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -234,22 +233,22 @@ func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Reverse Swap - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
+func performSmallSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	// Very small swap after extreme price movement
 	swapAmount := int64(1_000_000) // just 1M
 	println("[INFO] Small Swap: Swapping", swapAmount, "FOO -> BAR (after extreme movement)")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -262,12 +261,12 @@ func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Small Swap - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance conservation for", swapType)
 
 	userBarDiff := after.userBar - before.userBar
@@ -285,7 +284,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
 
 	// Router must be empty
-	assertRouterIsEmpty(after)
+	assertRouterIsEmpty(cur, after)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
 	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
@@ -301,7 +300,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified - all tokens accounted for")
 }
 
-func validateSmallSwapImpact(before, after BalanceSnapshot) {
+func validateSmallSwapImpact(cur realm, before, after BalanceSnapshot) {
 	println("[INFO] Validating small swap impact")
 
 	userBarDiff := after.userBar - before.userBar
@@ -327,7 +326,7 @@ func validateSmallSwapImpact(before, after BalanceSnapshot) {
 	println("[EXPECTED] Small swap executed correctly despite extreme price")
 }
 
-func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+func assertRouterIsEmpty(cur realm, snapshot BalanceSnapshot) {
 	if snapshot.routerBar != 0 {
 		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
 	}
@@ -336,7 +335,7 @@ func assertRouterIsEmpty(snapshot BalanceSnapshot) {
 	}
 }
 
-func validateSystemBalance(initial, final BalanceSnapshot) {
+func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 	println("[INFO] Validating system-wide balance conservation")
 
 	// Total supply in system should be conserved

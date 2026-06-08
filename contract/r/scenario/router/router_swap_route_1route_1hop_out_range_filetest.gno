@@ -1,13 +1,14 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/gnoswap/gnsmath"
 
-	"gno.land/r/gnoswap/common"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -52,7 +53,7 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #3 Out of Range Swap Test")
 	println("[INFO] Starting scenario: Out of range swap with slippage check failure")
 
@@ -60,21 +61,21 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 	println("[INFO] Creating bar-baz pool (fee: 500, tick: 10000)")
-	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	println("[INFO] Checking pool creation")
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool (tick range: 8000-12000)")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross(cur), barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[EXPECTED] positionId:", positionId, "expected: 1")
 	println("[EXPECTED] liquidity:", liquidity, "expected: 637408")
@@ -86,15 +87,17 @@ func main() {
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")
-	_, dryResult, _ := router.DrySwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-		"100", // quoteArr
-		"1",   // tokenAmountLimit
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			bazPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"100", // quoteArr
+			"1",   // tokenAmountLimit
+		)
+	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 367")
 
@@ -104,10 +107,11 @@ func main() {
 
 	uassert.AbortsWithMessage(
 		t,
+		cur,
 		`[GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:2710, got:367)`,
 		func() {
 			router.ExactInSwapRoute(
-				cross,
+				cross(cur),
 				bazPath, // inputToken
 				barPath, // outputToken
 				"1000",  // amountSpecified

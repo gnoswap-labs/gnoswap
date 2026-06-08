@@ -35,7 +35,7 @@ func init(cur realm) {
 // AttemptStoreWrite tries to update the pool creation fee directly through the captured store.
 // When this package no longer has write permissions the call must fail with a write-permission error.
 func AttemptStoreWrite(cur realm, newFee int64) int64 {
-	err := capturedStore.Get().SetPoolCreationFee(newFee)
+	err := capturedStore.Get().SetPoolCreationFee(0, cur, newFee)
 	if err != nil {
 		panic(err)
 	}

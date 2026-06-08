@@ -42,28 +42,28 @@ var (
 	maxInt64 int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	// 1. Setup
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	// Deposit wugnot for pool creation
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
 	// Approve tokens
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
-	wugnot.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
+	qux.Approve(cross(cur), routerAddr, maxInt64)
 
 	// 2. Create wugnot/qux pool and mint position
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		quxPath,
 		3000,
@@ -71,7 +71,7 @@ func main() {
 	)
 
 	pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		quxPath,
 		3000,
@@ -90,7 +90,7 @@ func main() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 12345}})
 
 	router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		"ugnot", // inputToken (native coin)
 		quxPath, // outputToken
 		"3",     // amountSpecified

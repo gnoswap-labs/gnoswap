@@ -1,13 +1,15 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -45,7 +47,7 @@ var (
 	fee100 uint32 = 100
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #7 3-Hop Wrapped Native Token Middle Swap Test")
 	println("[INFO] Starting scenario: 3-hop swap with wrapped native token in middle")
 
@@ -53,47 +55,47 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fees")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*2)
 
 	println("[INFO] Creating gns-wugnot pool (fee: 100, tick: -10000)")
-	pl.CreatePool(cross, wrappedWugnot, gnsPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	pl.CreatePool(cross(cur), wrappedWugnot, gnsPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
 	println("[INFO] Creating wugnot-bar pool (fee: 100)")
-	pl.CreatePool(cross, wrappedWugnot, barPath, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(cross(cur), wrappedWugnot, barPath, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
 	println("[INFO] Note: 1 gns ≈ 7.29 bar")
 	println()
 
 	println("[INFO] Executing test scenarios")
 
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 200000}})
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 200000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
-	testPositionMintGnsGnot()
-	testPositionMintGnotBar()
-	testDrySwapRouteGnsBarExactIn()
-	testSwapRouteGnsBarExactIn()
+	testPositionMintGnsGnot(cur)
+	testPositionMintGnotBar(cur)
+	testDrySwapRouteGnsBarExactIn(cur)
+	testSwapRouteGnsBarExactIn(cur)
 
 	println("[INFO] Scenario completed")
 }
 
-func testPositionMintGnsGnot() {
+func testPositionMintGnsGnot(cur realm) {
 	println("[SCENARIO] Given: Position minting preparation for gns-wugnot pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Deposit already done in main()")
+	println("[INFO] Deposit already done in main(cur)")
 
 	println("[INFO] Approving tokens for pool operations")
-	gns.Approve(cross, poolAddr, max_approve)
-	wugnot.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross(cur), poolAddr, max_approve)
+	wugnot.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Minting position in gns-wugnot pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross(cur), gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -106,19 +108,19 @@ func testPositionMintGnsGnot() {
 	println()
 }
 
-func testPositionMintGnotBar() {
+func testPositionMintGnotBar(cur realm) {
 	println("[SCENARIO] Given: Position minting preparation for wugnot-bar pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Deposit already done in main()")
+	println("[INFO] Deposit already done in main(cur)")
 
 	println("[INFO] Approving tokens for pool operations")
-	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Minting position in wugnot-bar pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross(cur), wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -131,35 +133,37 @@ func testPositionMintGnotBar() {
 	println()
 }
 
-func testDrySwapRouteGnsBarExactIn() {
+func testDrySwapRouteGnsBarExactIn(cur realm) {
 	println("[SCENARIO] Given: Dry swap route gns to bar exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
-	_, dryResult, _ := router.DrySwapRoute(
-		gnsPath,    // inputToken
-		barPath,    // outputToken
-		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
-		"100", // quoteArr
-		"1",
-	)
+	_, dryResult, _ := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			gnsPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+			"100", // quoteArr
+			"1",
+		)
+	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7317")
 	println()
 }
 
-func testSwapRouteGnsBarExactIn() {
+func testSwapRouteGnsBarExactIn(cur realm) {
 	println("[SCENARIO] Given: Swap route gns to bar exact in preparation")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	gns.Approve(cross, routerAddr, 1000) // swap input amount
+	gns.Approve(cross(cur), routerAddr, 1000) // swap input amount
 
 	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
 	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		gnsPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
@@ -189,7 +193,7 @@ func testSwapRouteGnsBarExactIn() {
 //
 // [INFO] Executing test scenarios
 // [SCENARIO] Given: Position minting preparation for gns-wugnot pool
-// [INFO] Deposit already done in main()
+// [INFO] Deposit already done in main(cur)
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in gns-wugnot pool
 // [INFO] positionId: 1
@@ -201,7 +205,7 @@ func testSwapRouteGnsBarExactIn() {
 // [EXPECTED] amount1: 36790 expected: 36790
 //
 // [SCENARIO] Given: Position minting preparation for wugnot-bar pool
-// [INFO] Deposit already done in main()
+// [INFO] Deposit already done in main(cur)
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in wugnot-bar pool
 // [INFO] positionId: 2

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -47,48 +49,48 @@ const (
 	FEE_MEDIUM uint32 = 3000
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #1 ExactIn Router Test")
 	println("[INFO] Starting scenario: Pool creation → Position minting → ExactIn swap test")
 	println()
 
-	testcreatePool()
-	testPositionMint()
-	testExactInputSinglePool()
+	testcreatePool(cur)
+	testPositionMint(cur)
+	testExactInputSinglePool(cur)
 
 	println("[INFO] Scenario completed")
 }
 
-func testcreatePool() {
+func testcreatePool(cur realm) {
 	println("[SCENARIO] Given: Pool creation preparation")
 	println("[INFO] Setting pool creation permission with admin account")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
 	println("[INFO] Creating bar-baz pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
 	println("[INFO] Transferring 10000 bar tokens to user1")
-	bar.Transfer(cross, user1Addr, 10000)
+	bar.Transfer(cross(cur), user1Addr, 10000)
 
 	println("[EXPECTED] Pool creation completed")
 	println()
 }
 
-func testPositionMint() {
+func testPositionMint(cur realm) {
 	println("[SCENARIO] Given: Position minting preparation")
 	println("[INFO] Setting position minting permission with admin account")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving bar and baz tokens for pool")
-	bar.Approve(cross, poolAddr, 100000000)
-	baz.Approve(cross, poolAddr, 100000000)
+	bar.Approve(cross(cur), poolAddr, 100000000)
+	baz.Approve(cross(cur), poolAddr, 100000000)
 
 	println("[INFO] Minting position in bar-baz pool")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross, barPath, bazPath, FEE_MEDIUM,
+		cross(cur), barPath, bazPath, FEE_MEDIUM,
 		int32(-887220), int32(887220), "100000000", "100000000",
 		"0", "0", max_timeout, adminAddr, "")
 
@@ -108,7 +110,7 @@ func testPositionMint() {
 	println()
 }
 
-func testExactInputSinglePool() {
+func testExactInputSinglePool(cur realm) {
 	println("[SCENARIO] Given: ExactIn swap preparation")
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
@@ -117,8 +119,8 @@ func testExactInputSinglePool() {
 	testing.SetRealm(user1Realm)
 
 	println("[INFO] Approving bar and baz tokens")
-	bar.Approve(cross, routerAddr, maxApprove)
-	baz.Approve(cross, routerAddr, maxApprove)
+	bar.Approve(cross(cur), routerAddr, maxApprove)
+	baz.Approve(cross(cur), routerAddr, maxApprove)
 
 	println("[INFO] Checking balances before swap")
 	poolToken0Before := bar.BalanceOf(poolAddr)
@@ -133,7 +135,7 @@ func testExactInputSinglePool() {
 
 	println("[INFO] Executing ExactIn swap (3 bar → baz)")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		"3",

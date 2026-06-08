@@ -13,7 +13,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 
@@ -69,79 +68,79 @@ var (
 	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive")
-	createExternalIncentive()
+	createExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint narrow range position")
-	mintNarrowRangePosition()
+	mintNarrowRangePosition(cur)
 	println()
 
 	println("[SCENARIO] 5. Stake position and verify in-range")
-	stakePositionAndVerifyInRange()
+	stakePositionAndVerifyInRange(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect external reward while in-range")
-	collectExternalRewardWhileInRange()
+	collectExternalRewardWhileInRange(cur)
 	println()
 
 	println("[SCENARIO] 7. Perform swap to move price out of range")
-	performSwapToMovePrice()
+	performSwapToMovePrice(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect external reward while out-of-range")
-	collectExternalRewardWhileOutOfRange()
+	collectExternalRewardWhileOutOfRange(cur)
 	println()
 
 	println("[SCENARIO] 9. Perform reverse swap to move price back in-range")
-	performReverseSwap()
+	performReverseSwap(cur)
 	println()
 
 	println("[SCENARIO] 10. Collect external reward after returning to in-range")
-	collectExternalRewardAfterReturningInRange()
+	collectExternalRewardAfterReturningInRange(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentive() {
+func createExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with bar token")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		90_000_000_000, // 90 billion bar tokens for 90 days
@@ -158,17 +157,17 @@ func createExternalIncentive() {
 	}
 }
 
-func mintNarrowRangePosition() {
+func mintNarrowRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint narrow range position (tick range: -50 ~ 50)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -199,12 +198,12 @@ func mintNarrowRangePosition() {
 	testing.SkipHeights(1)
 }
 
-func stakePositionAndVerifyInRange() {
+func stakePositionAndVerifyInRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 
@@ -219,7 +218,7 @@ func stakePositionAndVerifyInRange() {
 	testing.SkipHeights(1)
 }
 
-func collectExternalRewardWhileInRange() {
+func collectExternalRewardWhileInRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate external rewards while in-range")
@@ -227,7 +226,7 @@ func collectExternalRewardWhileInRange() {
 
 	println("[INFO] collect external reward while position is in-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar := bar.BalanceOf(adminUser)
 	inRangeReward := afterBar - beforeBar
 
@@ -240,12 +239,12 @@ func collectExternalRewardWhileInRange() {
 	println("[INFO] confirmed: external rewards distributed while position is in-range")
 }
 
-func performSwapToMovePrice() {
+func performSwapToMovePrice(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for swapping")
-	bar.Approve(cross, routerAddr, maxInt64)
-	baz.Approve(cross, routerAddr, maxInt64)
+	bar.Approve(cross(cur), routerAddr, maxInt64)
+	baz.Approve(cross(cur), routerAddr, maxInt64)
 
 	// Check current tick before swap
 	currentTickBefore := pl.GetSlot0Tick(poolPath)
@@ -257,7 +256,7 @@ func performSwapToMovePrice() {
 
 	println("[INFO] swap bar for baz to move tick up")
 	_, amountOut := rt.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		swapAmount,
@@ -281,7 +280,7 @@ func performSwapToMovePrice() {
 		println("[INFO] perform additional swap")
 
 		rt.ExactInSwapRoute(
-			cross,
+			cross(cur),
 			barPath,
 			bazPath,
 			swapAmount,
@@ -299,7 +298,7 @@ func performSwapToMovePrice() {
 	testing.SkipHeights(1)
 }
 
-func collectExternalRewardWhileOutOfRange() {
+func collectExternalRewardWhileOutOfRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate external rewards while out-of-range")
@@ -307,7 +306,7 @@ func collectExternalRewardWhileOutOfRange() {
 
 	println("[INFO] collect external reward while position is out-of-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar := bar.BalanceOf(adminUser)
 	outOfRangeReward := afterBar - beforeBar
 
@@ -320,7 +319,7 @@ func collectExternalRewardWhileOutOfRange() {
 	println("[INFO] confirmed: no external rewards distributed while position is out-of-range")
 }
 
-func performReverseSwap() {
+func performReverseSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Check current tick before reverse swap
@@ -336,7 +335,7 @@ func performReverseSwap() {
 	var amountOut string = "0"
 
 	_, amountOut = rt.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		bazPath,
 		barPath,
 		reverseSwapAmount,
@@ -364,7 +363,7 @@ func performReverseSwap() {
 	testing.SkipHeights(1)
 }
 
-func collectExternalRewardAfterReturningInRange() {
+func collectExternalRewardAfterReturningInRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate external rewards after returning to in-range")
@@ -372,7 +371,7 @@ func collectExternalRewardAfterReturningInRange() {
 
 	println("[INFO] collect external reward after position returned to in-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar := bar.BalanceOf(adminUser)
 	backInRangeReward := afterBar - beforeBar
 
@@ -398,7 +397,7 @@ func collectExternalRewardAfterReturningInRange() {
 	println("[INFO] confirmed: external rewards are only distributed when positions are in-range")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

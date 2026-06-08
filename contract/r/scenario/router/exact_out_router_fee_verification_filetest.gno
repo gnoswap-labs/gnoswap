@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Verifies ExactOut router fee accounting across single-hop, multi-hop, and
 // different fee rates (0.15% default, 1% elevated).
 //
@@ -52,63 +54,63 @@ var (
 	max_approve int64 = 9223372036854775806
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] ExactOut Router Fee Verification")
 	println()
 
 	println("[SCENARIO] 1. Initialize pools")
-	setup()
+	setup(cur)
 	println()
 
 	// ── Single-hop, default 0.15% fee ──
 	println("[SCENARIO] 2. Single-hop ExactOut (0.15% fee, 1,000,000 bar)")
-	singleHopDefaultFee()
+	singleHopDefaultFee(cur)
 	println()
 
 	// ── Single-hop, 1% fee ──
 	println("[SCENARIO] 3. Single-hop ExactOut (1% fee, 1,000,000 bar)")
-	singleHop1PercentFee()
+	singleHop1PercentFee(cur)
 	println()
 
 	// Reset fee to default
 	testing.SetRealm(adminRealm)
-	router.SetSwapFee(cross, 15)
+	router.SetSwapFee(cross(cur), 15)
 
 	// ── Multi-hop, default 0.15% fee ──
 	println("[SCENARIO] 4. Multi-hop ExactOut (0.15% fee, 1,000 foo via bar→baz→foo)")
-	multiHopDefaultFee()
+	multiHopDefaultFee(cur)
 	println()
 
 	// ── Multi-hop, 1% fee ──
 	println("[SCENARIO] 5. Multi-hop ExactOut (1% fee, 1,000 foo via bar→baz→foo)")
-	multiHop1PercentFee()
+	multiHop1PercentFee(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	// Create pools at 1:1 price (sqrtPriceX96 = 2^96)
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
-	pl.CreatePool(cross, bazPath, fooPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), bazPath, fooPath, 3000, "79228162514264337593543950336")
 
 	// Mint deep liquidity in both pools
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
-	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), bazPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] created bar:baz:3000 and baz:foo:3000 pools with 100M liquidity each")
 }
 
-func singleHopDefaultFee() {
+func singleHopDefaultFee(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	userBarBefore := bar.BalanceOf(adminAddr)
 	userBazBefore := baz.BalanceOf(adminAddr)
@@ -116,7 +118,7 @@ func singleHopDefaultFee() {
 	feeBarBefore := bar.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		bazPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified (user wants exactly 1,000,000 bar)
@@ -149,21 +151,21 @@ func singleHopDefaultFee() {
 		protocolFee, poolBarChange, userBarChange)
 }
 
-func singleHop1PercentFee() {
+func singleHop1PercentFee(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Change fee to 1% (100 bps)
-	router.SetSwapFee(cross, 100)
+	router.SetSwapFee(cross(cur), 100)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	userBarBefore := bar.BalanceOf(adminAddr)
 	feeBarBefore := bar.BalanceOf(protocolFeeAddr)
 	poolBarBefore := bar.BalanceOf(poolAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		bazPath,
 		barPath,
 		"1000000", // user wants exactly 1,000,000 bar
@@ -192,21 +194,21 @@ func singleHop1PercentFee() {
 		protocolFee, poolBarChange, userBarChange)
 }
 
-func multiHopDefaultFee() {
+func multiHopDefaultFee(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Reset fee to default 0.15%
-	router.SetSwapFee(cross, 15)
+	router.SetSwapFee(cross(cur), 15)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	userFooBefore := foo.BalanceOf(adminAddr)
 	userBarBefore := bar.BalanceOf(adminAddr)
 	feeFooBefore := foo.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath,  // inputToken
 		fooPath,  // outputToken
 		"1000",   // user wants exactly 1,000 foo
@@ -233,21 +235,21 @@ func multiHopDefaultFee() {
 	ufmt.Printf("[EXPECTED] user receives exactly 1,000 foo: %d\n", userFooChange)
 }
 
-func multiHop1PercentFee() {
+func multiHop1PercentFee(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Change fee to 1%
-	router.SetSwapFee(cross, 100)
+	router.SetSwapFee(cross(cur), 100)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	userFooBefore := foo.BalanceOf(adminAddr)
 	userBarBefore := bar.BalanceOf(adminAddr)
 	feeFooBefore := foo.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		"1000", // user wants exactly 1,000 foo

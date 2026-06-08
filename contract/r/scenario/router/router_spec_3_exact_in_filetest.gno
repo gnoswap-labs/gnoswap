@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -40,7 +42,7 @@ var (
 	max_approve int64 = 9223372036854775806
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #3 ExactIn Router Test")
 	println("[INFO] Starting scenario: Multi-hop ExactIn swap test (foo → baz → bar)")
 
@@ -49,31 +51,31 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fees")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*2)
 
 	println("[INFO] Creating bar-baz pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950336")
 	println("[INFO] Creating baz-foo pool (fee: 3000)")
-	pl.CreatePool(cross, bazPath, fooPath, 3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), bazPath, fooPath, 3000, "79228162514264337593543950336")
 
 	// position mint
 	println("[INFO] Setting position minting permission")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 	println("[INFO] Minting position in baz-foo pool")
-	pn.Mint(cross, bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
 	// exact in swap foo -> bar
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, 1000000)
-	foo.Approve(cross, routerAddr, 1000000)
+	bar.Approve(cross(cur), routerAddr, 1000000)
+	foo.Approve(cross(cur), routerAddr, 1000000)
 
 	println("[INFO] Checking balances before swap")
 	token0Before := bar.BalanceOf(adminAddr)
@@ -84,7 +86,7 @@ func main() {
 
 	println("[INFO] Executing ExactIn swap (5 foo → baz → bar)")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath, // inputToken
 		barPath, // outputToken
 		"5",     // amountSpecified

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -44,34 +46,34 @@ const (
 	FEE_MEDIUM uint32 = 3000
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #2 ExactIn Router Test")
 	println("[INFO] Starting scenario: Single pool ExactIn swap test")
 
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
 	token0Path := "gno.land/r/onbloc/foo"
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross(cur), barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	println("[INFO] Minting position in bar-foo pool")
-	pn.Mint(cross, barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
 	pool, _ := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 1000000")
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	println("[INFO] Checking balances before swap")
 	poolToken0Before := bar.BalanceOf(poolAddr)
@@ -86,7 +88,7 @@ func main() {
 
 	println("[INFO] Executing ExactIn swap (3 bar → foo)")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath, // inputToken
 		barPath, // outputToken
 		"3",     // amountSpecified

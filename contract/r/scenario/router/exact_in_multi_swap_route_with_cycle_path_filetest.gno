@@ -12,7 +12,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -45,27 +44,27 @@ var (
 	maxInt64 int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)")
-	createPool(wugnotPath, gnsPath, 500, 0)
-	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
+	createPool(cur, wugnotPath, gnsPath, 500, 0)
+	mintPosition(cur, wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
 	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500)")
-	createPool(barPath, gnsPath, 500, 0)
-	mintPosition(barPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
+	createPool(cur, barPath, gnsPath, 500, 0)
+	mintPosition(cur, barPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
 	println("[SCENARIO] 4. ExactInSwapRoute (wugnot → gns → bar, multi-hop)")
-	exactInSwapRoute(
+	exactInSwapRoute(cur,
 		wugnotPath,
 		barPath,
 		"10000000",
@@ -76,9 +75,9 @@ func main() {
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
@@ -86,19 +85,19 @@ func initializeSetup() {
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 
-	gns.Approve(cross, poolAddr, maxInt64)
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross(cur), poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
 
-	gns.Approve(cross, routerAddr, maxInt64)
-	wugnot.Approve(cross, routerAddr, maxInt64)
-	bar.Approve(cross, routerAddr, maxInt64)
+	gns.Approve(cross(cur), routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
+	bar.Approve(cross(cur), routerAddr, maxInt64)
 }
 
-func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
+func createPool(cur realm, token0Path string, token1Path string, fee uint32, startTick int32) {
 	testing.SetRealm(adminRealm)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -108,13 +107,13 @@ func createPool(token0Path string, token1Path string, fee uint32, startTick int3
 	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)
 }
 
-func mintPosition(token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string) {
+func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -135,7 +134,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	ufmt.Printf("[EXPECTED] amount1: %s\n", amount1)
 }
 
-func exactInSwapRoute(
+func exactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	specifiedAmount string,
@@ -159,7 +158,7 @@ func exactInSwapRoute(
 	testing.SetRealm(adminRealm)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		inputToken,
 		outputToken,
 		specifiedAmount,

@@ -79,34 +79,34 @@ var (
 	reward4   int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create 3 pools and set tier 2")
-	createPoolsAndSetTier()
+	createPoolsAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. Users mint and stake positions on each pool")
-	mintAndStakePerPool()
+	mintAndStakePerPool(cur)
 	println()
 
 	println("[SCENARIO] 4. Accumulate rewards")
-	accumulateRewards()
+	accumulateRewards(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards from all positions")
-	collectRewards()
+	collectRewards(cur)
 	println()
 
 	println("[SCENARIO] 6. Verify reward behavior remains correct")
-	verifyScenario()
+	verifyScenario(cur)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range")
-	exactInSingleSwapRouteBy(
+	exactInSingleSwapRouteBy(cur,
 		poolPath1,
 		barPath,
 		bazPath,
@@ -119,12 +119,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Collect rewards from one position", position1)
-	collectRewardByTokenID(position1)
+	collectRewardByTokenID(cur, position1)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range", position2)
-	exactInSingleSwapRouteBy(
+	exactInSingleSwapRouteBy(cur,
 		poolPath1,
 		bazPath,
 		barPath,
@@ -137,47 +137,47 @@ func main() {
 	println()
 
 	println("[SCENARIO] 10. Collect rewards from all positions")
-	collectRewards()
+	collectRewards(cur)
 	println()
 
 	println("[SCENARIO] 11. Verify reward behavior remains correct")
-	verifyScenario()
+	verifyScenario(cur)
 	println()
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] initialize staker realm")
 	testing.SetRealm(stakerRealm)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] distribute tokens to users")
-	bar.Transfer(cross, user1Addr, 50000)
-	baz.Transfer(cross, user1Addr, 50000)
-	bar.Transfer(cross, user2Addr, 50000)
-	baz.Transfer(cross, user2Addr, 50000)
+	bar.Transfer(cross(cur), user1Addr, 50000)
+	baz.Transfer(cross(cur), user1Addr, 50000)
+	bar.Transfer(cross(cur), user2Addr, 50000)
+	baz.Transfer(cross(cur), user2Addr, 50000)
 }
 
-func createPoolsAndSetTier() {
+func createPoolsAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz pools with fee 100/500/3000")
-	pl.CreatePool(cross, barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set all pools to tier 2")
-	sr.SetPoolTier(cross, poolPath1, 2)
-	sr.SetPoolTier(cross, poolPath2, 2)
-	sr.SetPoolTier(cross, poolPath3, 2)
+	sr.SetPoolTier(cross(cur), poolPath1, 2)
+	sr.SetPoolTier(cross(cur), poolPath2, 2)
+	sr.SetPoolTier(cross(cur), poolPath3, 2)
 	testing.SkipHeights(1)
 
 	t1 := sr.GetPoolTier(poolPath1)
@@ -189,15 +189,15 @@ func createPoolsAndSetTier() {
 	}
 }
 
-func mintAndStakePerPool() {
+func mintAndStakePerPool(cur realm) {
 	testing.SetRealm(user1Realm)
 	println("[INFO] user1 approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] user1 mint+stake on fee100 pool")
 	p1, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -212,17 +212,17 @@ func mintAndStakePerPool() {
 		"",
 	)
 	position1 = uint64(p1)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(position1))
-	sr.StakeToken(cross, position1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, position1))
+	sr.StakeToken(cross(cur), position1, "")
 
 	testing.SetRealm(user2Realm)
 	println("[INFO] user2 approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] user2 mint+stake on fee500 pool")
 	p2, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -237,17 +237,17 @@ func mintAndStakePerPool() {
 		"",
 	)
 	position2 = uint64(p2)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(position2))
-	sr.StakeToken(cross, position2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, position2))
+	sr.StakeToken(cross(cur), position2, "")
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] admin approve tokens")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] admin mint+stake on fee3000 pool")
 	p3, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee3000,
@@ -262,12 +262,12 @@ func mintAndStakePerPool() {
 		"",
 	)
 	position3 = uint64(p3)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(position3))
-	sr.StakeToken(cross, position3, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, position3))
+	sr.StakeToken(cross(cur), position3, "")
 
 	println("[INFO] admin only mint on fee100 pool")
 	p4, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -286,7 +286,7 @@ func mintAndStakePerPool() {
 	ufmt.Printf("[EXPECTED] position IDs: %d,%d,%d,%d\n", position1, position2, position3, position4)
 }
 
-func accumulateRewards() {
+func accumulateRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 	println("[INFO] skip 20 blocks to accumulate rewards for all 3 pools")
 	testing.SkipHeights(20)
@@ -299,39 +299,39 @@ func accumulateRewards() {
 	}
 }
 
-func collectRewards() {
+func collectRewards(cur realm) {
 	testing.SetRealm(user1Realm)
 	before1 := gns.BalanceOf(user1Addr)
-	sr.CollectReward(cross, position1)
+	sr.CollectReward(cross(cur), position1)
 	after1 := gns.BalanceOf(user1Addr)
 	reward1 = after1 - before1
 
 	testing.SetRealm(user2Realm)
 	before2 := gns.BalanceOf(user2Addr)
-	sr.CollectReward(cross, position2)
+	sr.CollectReward(cross(cur), position2)
 	after2 := gns.BalanceOf(user2Addr)
 	reward2 = after2 - before2
 
 	testing.SetRealm(adminRealm)
 	before3 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, position3)
+	sr.CollectReward(cross(cur), position3)
 	after3 := gns.BalanceOf(adminUser)
 	reward3 = after3 - before3
 
 	ufmt.Printf("[EXPECTED] rewards: %d,%d,%d (all should be > 0)\n", reward1, reward2, reward3)
 }
 
-func collectRewardByTokenID(tokenID uint64) {
+func collectRewardByTokenID(cur realm, tokenID uint64) {
 	testing.SetRealm(user1Realm)
 
 	ufmt.Println("[INFO] collect reward by tokenID:", tokenID)
 	before := gns.BalanceOf(user1Addr)
-	sr.CollectReward(cross, tokenID)
+	sr.CollectReward(cross(cur), tokenID)
 	after := gns.BalanceOf(user1Addr)
 	ufmt.Printf("[EXPECTED] reward: %d (should be > 0)\n", after-before)
 }
 
-func verifyScenario() {
+func verifyScenario(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	if reward1 <= 0 || reward2 <= 0 || reward3 <= 0 {
@@ -349,7 +349,7 @@ func verifyScenario() {
 	println("[INFO] confirmed: rewards are computed correctly without tier change/removal")
 }
 
-func exactInSingleSwapRouteBy(
+func exactInSingleSwapRouteBy(cur realm,
 	poolPath string,
 	inputToken string,
 	outputToken string,
@@ -371,17 +371,17 @@ func exactInSingleSwapRouteBy(
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 	beforeBAZBalance := baz.BalanceOf(adminAddr)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
-	bar.Approve(cross, routerAddr, maxInt64)
-	baz.Approve(cross, routerAddr, maxInt64)
+	bar.Approve(cross(cur), routerAddr, maxInt64)
+	baz.Approve(cross(cur), routerAddr, maxInt64)
 
 	beforePoolTick := pl.GetSlot0Tick(poolPath)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
-		cross,
+		cross(cur),
 		inputToken,
 		outputToken,
 		specifiedAmount,
@@ -404,7 +404,7 @@ func exactInSingleSwapRouteBy(
 	ufmt.Printf("[EXPECTED] pool tick changed: %d to %d\n", beforePoolTick, afterPoolTick)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

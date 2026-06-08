@@ -61,69 +61,69 @@ var (
 	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	initAccountAndEmission(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:foo:500 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint positions for multiple users")
-	mintPositionsForUsers()
+	mintPositionsForUsers(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake positions for different users")
-	stakePositionsForUsers()
+	stakePositionsForUsers(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards for different users")
-	collectRewardsForUsers()
+	collectRewardsForUsers(cur)
 	println()
 
 	println("[SCENARIO] 6. Unstake and verify NFT ownership")
-	unstakeAndVerifyOwnership()
+	unstakeAndVerifyOwnership(cur)
 }
 
-func initAccountAndEmission() {
+func initAccountAndEmission(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:foo:500 pool")
-	pl.CreatePool(cross, barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintPositionsForUsers() {
+func mintPositionsForUsers(cur realm) {
 	// Mint position 1 for admin
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] admin: approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] admin: mint position 01 (tick range: -1000 ~ 1000)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -141,23 +141,23 @@ func mintPositionsForUsers() {
 	ufmt.Printf("[EXPECTED] admin position ID: %d, liquidity: %s\n", positionId1, liquidity1)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_1, amount1_1)
 
-	owner1 := gnft.MustOwnerOf(positionIdFrom(1))
+	owner1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner: %s\n", owner1)
 
-	bar.Transfer(cross, user2Addr, 1000)
-	foo.Transfer(cross, user2Addr, 1000)
+	bar.Transfer(cross(cur), user2Addr, 1000)
+	foo.Transfer(cross(cur), user2Addr, 1000)
 
 	// Mint position 2 for user2
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] user2: approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] user2: mint position 02 (tick range: -1000 ~ 1000)")
 	positionId2, liquidity2, amount0_2, amount1_2 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -175,37 +175,37 @@ func mintPositionsForUsers() {
 	ufmt.Printf("[EXPECTED] user2 position ID: %d, liquidity: %s\n", positionId2, liquidity2)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_2, amount1_2)
 
-	owner2 := gnft.MustOwnerOf(positionIdFrom(2))
+	owner2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner: %s\n", owner2)
 
 	testing.SkipHeights(1)
 }
 
-func stakePositionsForUsers() {
+func stakePositionsForUsers(cur realm) {
 	// Admin stakes position 1
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] admin: approve NFT to staker and stake position 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake1 := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterStake1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner after staking: %s\n", ownerAfterStake1)
 
 	// User2 stakes position 2
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] user2: approve NFT to staker and stake position 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 
-	ownerAfterStake2 := gnft.MustOwnerOf(positionIdFrom(2))
+	ownerAfterStake2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after staking: %s\n", ownerAfterStake2)
 
 	testing.SkipHeights(1)
 }
 
-func collectRewardsForUsers() {
+func collectRewardsForUsers(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards")
@@ -214,7 +214,7 @@ func collectRewardsForUsers() {
 	// Admin collects reward for position 1
 	println("[INFO] admin: collect reward for position 01")
 	beforeGns1 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns1 := gns.BalanceOf(adminUser)
 	reward1 := afterGns1 - beforeGns1
 
@@ -225,7 +225,7 @@ func collectRewardsForUsers() {
 
 	println("[INFO] user2: collect reward for position 02")
 	beforeGns2 := gns.BalanceOf(user2Addr)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterGns2 := gns.BalanceOf(user2Addr)
 	reward2 := afterGns2 - beforeGns2
 
@@ -241,14 +241,14 @@ func collectRewardsForUsers() {
 	}
 }
 
-func unstakeAndVerifyOwnership() {
+func unstakeAndVerifyOwnership(cur realm) {
 	// Admin unstakes position 1
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] admin: unstake position 01")
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake1 := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterUnstake1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner after unstaking: %s\n", ownerAfterUnstake1)
 
 	if ownerAfterUnstake1 != adminAddr {
@@ -259,9 +259,9 @@ func unstakeAndVerifyOwnership() {
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] user2: unstake position 02")
-	sr.UnStakeToken(cross, 2)
+	sr.UnStakeToken(cross(cur), 2)
 
-	ownerAfterUnstake2 := gnft.MustOwnerOf(positionIdFrom(2))
+	ownerAfterUnstake2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", ownerAfterUnstake2)
 
 	if ownerAfterUnstake2 != user2Addr {
@@ -271,7 +271,7 @@ func unstakeAndVerifyOwnership() {
 	println("[INFO] multi-user staking and ownership verification completed successfully")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

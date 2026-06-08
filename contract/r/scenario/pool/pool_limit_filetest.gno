@@ -62,20 +62,20 @@ var (
 	maxPrice = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
 
 	println("[SCENARIO] 1. Initialize Pool (Create pool with bar/foo tokens, fee 100)")
 	testing.SetRealm(posRealm)
 	mint0, mint1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -93,7 +93,7 @@ func main() {
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swap0, swap1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -103,7 +103,7 @@ func main() {
 		maxPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -116,7 +116,7 @@ func main() {
 	println("[SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)")
 	testing.SetRealm(posRealm)
 	burn0, burn1 := pool.Burn(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -132,7 +132,7 @@ func main() {
 	// COLLECT
 	println("[SCENARIO] 4. Collect Fees (Collect all fees from position)")
 	collect0, collect1 := pool.Collect(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -159,14 +159,14 @@ func main() {
 	println("[INFO] Scenario completed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

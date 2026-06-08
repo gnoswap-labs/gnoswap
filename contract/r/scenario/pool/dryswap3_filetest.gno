@@ -9,7 +9,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -60,12 +59,12 @@ var (
 // DrySwap Failure Cases Test
 // Testing DrySwap behavior when conditions are not met
 // Expected behavior: DrySwap should fail gracefully when liquidity is insufficient
-func main() {
-	testDrySwapFailureCases(t)
+func main(cur realm) {
+	testDrySwapFailureCases(cur, t)
 }
 
 // testDrySwapFailureCases tests DrySwap behavior in failure scenarios
-func testDrySwapFailureCases(t *testing.T) {
+func testDrySwapFailureCases(cur realm, t *testing.T) {
 	// Given: Pool exists but no liquidity is provided
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)
@@ -74,9 +73,9 @@ func testDrySwapFailureCases(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -110,13 +109,13 @@ func testDrySwapFailureCases(t *testing.T) {
 	println("[INFO] Adding minimal liquidity to test partial failure")
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint small position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,

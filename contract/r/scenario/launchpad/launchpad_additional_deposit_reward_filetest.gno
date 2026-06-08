@@ -47,16 +47,16 @@ var (
 	projectAddr = testutils.TestAddress("project-owner")
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	projectTier90Id := "gno.land/r/onbloc/obl:123:90"
 	projectTier180Id := "gno.land/r/onbloc/obl:123:180"
 	println()
 
 	println("[SCENARIO] 2. First deposit by Alice (1,000,000 GNS)")
-	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, aliceAddr, projectTier30Id, int64(1_000_000))
 	println("[INFO] Alice is the only depositor, receives 100% of rewards")
 	println()
 
@@ -67,7 +67,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Second deposit by Bob (1,000,000 GNS) - same amount as Alice")
-	depositGns(bobAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, bobAddr, projectTier30Id, int64(1_000_000))
 	println("[INFO] Now Alice and Bob each have 50% share of rewards")
 	println()
 
@@ -78,7 +78,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 6. Third deposit by Charlie (2,000,000 GNS) - double amount")
-	depositGns(charlieAddr, projectTier30Id, int64(2_000_000))
+	depositGns(cur, charlieAddr, projectTier30Id, int64(2_000_000))
 	println("[INFO] Share distribution: Alice 25%, Bob 25%, Charlie 50%")
 	println()
 
@@ -89,15 +89,15 @@ func main() {
 
 	println("[SCENARIO] 8. Collect rewards for all depositors")
 	println("[INFO] Collecting Alice's reward (deposit ID: 1)")
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 
 	println("[INFO] Collecting Bob's reward (deposit ID: 2)")
-	collectReward(bobAddr, "2")
+	collectReward(cur, bobAddr, "2")
 	println()
 
 	println("[INFO] Collecting Charlie's reward (deposit ID: 3)")
-	collectReward(charlieAddr, "3")
+	collectReward(cur, charlieAddr, "3")
 	println()
 
 	println("[SCENARIO] 9. Skip more blocks and collect again to verify ongoing distribution")
@@ -106,21 +106,21 @@ func main() {
 	println()
 
 	println("[INFO] Alice collecting additional reward")
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 
 	println("[INFO] Bob collecting additional reward")
-	collectReward(bobAddr, "2")
+	collectReward(cur, bobAddr, "2")
 	println()
 
 	println("[INFO] Charlie collecting additional reward")
-	collectReward(charlieAddr, "3")
+	collectReward(cur, charlieAddr, "3")
 	println()
 
-	validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id)
+	validateCollectableDurationByTier(cur, projectTier30Id, projectTier90Id, projectTier180Id)
 }
 
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -136,9 +136,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -158,18 +158,18 @@ func createOBLProject() {
 	println("[INFO] Tier 30 total reward: 100,000,000 OBL (10% of 1,000,000,000)")
 }
 
-func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
+func depositGns(cur realm, depositorAddr address, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	ufmt.Printf("[INFO] Admin transferring %d GNS to depositor\n", depositAmount)
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -180,49 +180,49 @@ func depositGns(depositorAddr address, projectTierId string, depositAmount int64
 	testing.SkipHeights(1)
 }
 
-func collectReward(ownerAddr address, depositId string) {
+func collectReward(cur realm, ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
+	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
-func validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id string) {
+func validateCollectableDurationByTier(cur realm, projectTier30Id, projectTier90Id, projectTier180Id string) {
 	dayTime := int64(60 * 60 * 24)
-	validateCollectableDurationForTier(davidAddr, projectTier30Id, dayTime/5)  // 1 days
-	validateCollectableDurationForTier(erinAddr, projectTier90Id, dayTime/5)   // 1 days
-	validateCollectableDurationForTier(frankAddr, projectTier180Id, dayTime/5) // 1 days
+	validateCollectableDurationForTier(cur, davidAddr, projectTier30Id, dayTime/5)  // 1 days
+	validateCollectableDurationForTier(cur, erinAddr, projectTier90Id, dayTime/5)   // 1 days
+	validateCollectableDurationForTier(cur, frankAddr, projectTier180Id, dayTime/5) // 1 days
 }
 
-func validateCollectableDurationForTier(depositorAddr address, projectTierId string, claimableBlocks int64) {
-	depositId := depositGnsSilent(depositorAddr, projectTierId, int64(1_000_000))
+func validateCollectableDurationForTier(cur realm, depositorAddr address, projectTierId string, claimableBlocks int64) {
+	depositId := depositGnsSilent(cur, depositorAddr, projectTierId, int64(1_000_000))
 
 	skipBeforeAssert := claimableBlocks - 2 // depositGnsSilent already advanced 1 block
 	if skipBeforeAssert > 0 {
 		testing.SkipHeights(skipBeforeAssert)
 	}
-	assertCollectNotYetClaimable(depositorAddr, depositId)
+	assertCollectNotYetClaimable(cur, depositorAddr, depositId)
 
 	testing.SkipHeights(1)
-	collectRewardSilent(depositorAddr, depositId)
+	collectRewardSilent(cur, depositorAddr, depositId)
 }
 
-func depositGnsSilent(depositorAddr address, projectTierId string, depositAmount int64) string {
+func depositGnsSilent(cur realm, depositorAddr address, projectTierId string, depositAmount int64) string {
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -232,16 +232,16 @@ func depositGnsSilent(depositorAddr address, projectTierId string, depositAmount
 	return depositId
 }
 
-func collectRewardSilent(ownerAddr address, depositId string) {
+func collectRewardSilent(cur realm, ownerAddr address, depositId string) {
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
-	launchpad.CollectRewardByDepositId(cross, depositId)
+	launchpad.CollectRewardByDepositId(cross(cur), depositId)
 }
 
-func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
+func assertCollectNotYetClaimable(cur realm, ownerAddr address, depositId string) {
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-011] invalid reward state"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
 		testing.SetRealm(testing.NewUserRealm(ownerAddr))
-		launchpad.CollectRewardByDepositId(cross, depositId)
+		launchpad.CollectRewardByDepositId(cross(cur), depositId)
 	})
 	ufmt.Printf("[EXPECTED] Collect should abort before claimable time: %s\n", expectedPanicMessage)
 }
