@@ -44,17 +44,17 @@ func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, b
 // Create a new external incentive
 // Panics if the incentive already exists.
 func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
 // update updates an existing incentive with new information
 func (self *IncentivesResolver) update(incentive *sr.ExternalIncentive) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
 // starts incentive unclaimable period for this pool
 func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
-	self.UnclaimablePeriods().Set(startTimestamp, int64(0))
+	self.Incentives.SetUnclaimablePeriod(startTimestamp, int64(0))
 }
 
 // ends incentive unclaimable period for this pool
@@ -81,9 +81,9 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	}
 
 	if startTimestamp == endTimestamp {
-		self.UnclaimablePeriods().Remove(startTimestamp)
+		self.Incentives.RemoveUnclaimablePeriod(startTimestamp)
 	} else {
-		self.UnclaimablePeriods().Set(startTimestamp, endTimestamp)
+		self.Incentives.SetUnclaimablePeriod(startTimestamp, endTimestamp)
 	}
 }
 

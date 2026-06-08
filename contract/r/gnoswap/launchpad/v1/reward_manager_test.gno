@@ -977,7 +977,7 @@ func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 
 			// Setup: Set initial claimed amount
 			rewardState.SetClaimedAmount(tt.initialClaimed)
-			manager.Rewards().Set(deposit.ID(), rewardState)
+			manager.SetReward(deposit.ID(), rewardState)
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			// Using priceDebtX128 for precise calculation

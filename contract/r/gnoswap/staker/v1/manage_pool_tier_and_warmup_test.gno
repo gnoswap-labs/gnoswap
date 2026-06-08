@@ -85,7 +85,7 @@ func TestSetPoolTier(cur realm, t *testing.T) {
 	// Create a test pool
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	pool := sr.NewPool(poolPath, 100)
-	instance.getPools().set(poolPath, pool)
+	instance.getPools().SetPool(poolPath, pool)
 
 	tests := []struct {
 		name        string
@@ -148,7 +148,7 @@ func TestChangePoolTier(cur realm, t *testing.T) {
 	// Create a test pool
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	pool := sr.NewPool(poolPath, 100)
-	instance.getPools().set(poolPath, pool)
+	instance.getPools().SetPool(poolPath, pool)
 
 	currentTime := int64(100)
 
@@ -204,7 +204,7 @@ func TestRemovePoolTier(cur realm, t *testing.T) {
 	// Create a test pool
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	pool := sr.NewPool(poolPath, 100)
-	instance.getPools().set(poolPath, pool)
+	instance.getPools().SetPool(poolPath, pool)
 
 	currentTime := int64(100)
 
@@ -369,7 +369,7 @@ func TestChangePoolTierWithPermission(cur realm, t *testing.T) {
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)
-			getMockInstance().getPools().set(poolPath, pool)
+			getMockInstance().getPools().SetPool(poolPath, pool)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
@@ -481,7 +481,7 @@ func TestRemovePoolTierWithPermission(cur realm, t *testing.T) {
 
 			// Create pool in staker
 			pool := sr.NewPool(poolPath, 100)
-			getMockInstance().getPools().set(poolPath, pool)
+			getMockInstance().getPools().SetPool(poolPath, pool)
 
 			// Reset tier before each test
 			testing.SetRealm(adminRealm)

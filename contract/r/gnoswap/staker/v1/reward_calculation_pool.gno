@@ -47,8 +47,8 @@ func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	return pool
 }
 
-// set sets the pool for the given poolPath
-func (self *Pools) set(poolPath string, pool *sr.Pool) {
+// SetPool sets the pool for the given poolPath.
+func (self *Pools) SetPool(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
 
@@ -194,7 +194,7 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
-	self.RewardCache().Set(currentTime, currentTierReward)
+	self.Pool.SetRewardCacheAt(currentTime, currentTierReward)
 
 	if isInUnclaimable {
 		// Start/restart unclaimable period tracking
@@ -239,7 +239,7 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
 	// Persist as string to reduce stored object complexity.
-	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc.ToString())
+	self.Pool.SetGlobalRewardRatioAccumulationAt(currentTime, newAcc.ToString())
 	return newAcc
 }
 
@@ -525,7 +525,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
 	// because TickCrossHook is assured to be called for the staked-initialized ticks
 	if self.isChangedTick(currentTime, nextTick) {
-		self.HistoricalTick().Set(currentTime, nextTick)
+		self.Pool.SetHistoricalTickAt(currentTime, nextTick)
 	}
 
 	switch deltaApplied.Sign() {

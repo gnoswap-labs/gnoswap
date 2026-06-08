@@ -74,7 +74,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	pool := s.getPools().GetPoolOrNil(targetPoolPath)
 	if pool == nil {
 		pool = sr.NewPool(targetPoolPath, currentTime)
-		s.getPools().set(targetPoolPath, pool)
+		s.getPools().SetPool(targetPoolPath, pool)
 	}
 
 	incentive := sr.NewExternalIncentive(

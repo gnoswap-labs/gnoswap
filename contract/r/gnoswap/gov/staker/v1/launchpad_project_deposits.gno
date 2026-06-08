@@ -72,26 +72,15 @@ func (lpdr *LaunchpadProjectDepositsResolver) removeDeposit(ownerAddress string,
 
 // GetDeposit retrieves the deposit amount for a specific owner.
 func (lpdr *LaunchpadProjectDepositsResolver) GetDeposit(ownerAddress string) (int64, bool) {
-	deposit, exists := lpdr.GetDeposits().Get(ownerAddress)
-	if !exists {
-		return 0, false
-	}
-
-	amount, ok := deposit.(int64)
-	if !ok {
-		return 0, false
-	}
-
-	return amount, true
+	return lpdr.LaunchpadProjectDeposits.GetDeposit(ownerAddress)
 }
 
 // SetDeposit sets the deposit amount for a specific owner.
 func (lpdr *LaunchpadProjectDepositsResolver) SetDeposit(ownerAddress string, amount int64) {
-	lpdr.GetDeposits().Set(ownerAddress, amount)
+	lpdr.LaunchpadProjectDeposits.SetDeposit(ownerAddress, amount)
 }
 
 // RemoveDeposit removes the deposit for a specific owner.
 func (lpdr *LaunchpadProjectDepositsResolver) RemoveDeposit(ownerAddress string) bool {
-	_, ok := lpdr.GetDeposits().Remove(ownerAddress)
-	return ok
+	return lpdr.LaunchpadProjectDeposits.RemoveDeposit(ownerAddress)
 }

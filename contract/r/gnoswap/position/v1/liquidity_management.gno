@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/position"
 )
 
 type AddLiquidityParams struct {
@@ -21,10 +21,10 @@ type AddLiquidityParams struct {
 // addLiquidity calculates liquidity amounts and mints position tokens to a pool.
 func (p *positionV1) addLiquidity(_ int, rlm realm, params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
 	sqrtPriceX96 := u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(params.poolKey))
-	sqrtRatioAX96 := position.TickMathGetSqrtRatioAtTick(params.tickLower)
-	sqrtRatioBX96 := position.TickMathGetSqrtRatioAtTick(params.tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(params.tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
-	liquidity := position.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

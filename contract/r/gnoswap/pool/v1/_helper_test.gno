@@ -535,13 +535,25 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	pool.SetSlot0(slot0)
 	pool.SetBalances(balances)
 	pool.SetProtocolFees(protocolFees)
-	pool.SetFeeGrowthGlobal0X128(params.feeGrowthGlobal0X128)
-	pool.SetFeeGrowthGlobal1X128(params.feeGrowthGlobal1X128)
-	pool.SetLiquidity(params.liquidity)
-	pool.SetTicks(params.ticks)
+	if params.feeGrowthGlobal0X128 != nil {
+		pool.SetFeeGrowthGlobal0X128(params.feeGrowthGlobal0X128)
+	}
+	if params.feeGrowthGlobal1X128 != nil {
+		pool.SetFeeGrowthGlobal1X128(params.feeGrowthGlobal1X128)
+	}
+	if params.liquidity != nil {
+		pool.SetLiquidity(params.liquidity)
+	}
+	if params.ticks != nil {
+		pool.SetTicks(params.ticks)
+	}
 	pool.SetTickBitmaps(params.tickBitmaps)
-	pool.SetPositions(params.positions)
-	pool.SetObservationState(params.observationState)
+	if params.positions != nil {
+		pool.SetPositions(params.positions)
+	}
+	if params.observationState != nil {
+		pool.SetObservationState(params.observationState)
+	}
 
 	return pool
 }

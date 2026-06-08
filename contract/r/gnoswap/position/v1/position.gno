@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
@@ -492,10 +493,10 @@ func calculatePositionBalances(position *pos.Position) (int64, int64) {
 		return 0, 0
 	}
 
-	token0Balance, token1Balance := pos.GetAmountsForLiquidity(
+	token0Balance, token1Balance := gnsmath.GetAmountsForLiquidity(
 		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
-		pos.TickMathGetSqrtRatioAtTick(position.TickLower()),
-		pos.TickMathGetSqrtRatioAtTick(position.TickUpper()),
+		gnsmath.TickMathGetSqrtRatioAtTick(position.TickLower()),
+		gnsmath.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
 	)
 

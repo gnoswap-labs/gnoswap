@@ -46,6 +46,14 @@ func (rm *RewardManager) SetRewards(rewards *bptree.BPTree) {
 	rm.rewards = rewards
 }
 
+func (rm *RewardManager) SetReward(depositID string, rewardState *RewardState) {
+	rm.rewards.Set(depositID, rewardState)
+}
+
+func (rm *RewardManager) RemoveReward(depositID string) {
+	rm.rewards.Remove(depositID)
+}
+
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
 	return rm.distributeAmountPerSecondX128

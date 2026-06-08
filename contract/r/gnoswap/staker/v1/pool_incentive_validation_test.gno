@@ -20,7 +20,7 @@ func TestStakeToken_WithEndedIncentives(cur realm, t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	pool := sr.NewPool(poolPath, 100)
-	getMockInstance().getPools().set(poolPath, pool)
+	getMockInstance().getPools().SetPool(poolPath, pool)
 
 	// Add an ended incentive
 	currentTime := time.Now().Unix()
@@ -474,7 +474,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 
 			testing.SetRealm(adminRealm)
 			pool := sr.NewPool(poolPath, currentTime)
-			getMockInstance().getPools().set(poolPath, pool)
+			getMockInstance().getPools().SetPool(poolPath, pool)
 
 			tt.setup(t, pool, currentTime)
 

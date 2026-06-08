@@ -792,7 +792,7 @@ func TestPositionFeeCollection_Scenarios(cur realm, t *testing.T) {
 				// Update position with simulated fees
 				position.SetTokensOwed0(safeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
 				position.SetTokensOwed1(safeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
-				pool.Positions().Set(posKey, position)
+				pool.SetPosition(posKey, position)
 			}
 
 			// Update position to trigger any additional calculations
@@ -882,7 +882,7 @@ func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
 				// Simulate fee accumulation for in-range positions
 				position.SetTokensOwed0(1000)
 				position.SetTokensOwed1(1000)
-				pool.Positions().Set(posKey, position)
+				pool.SetPosition(posKey, position)
 			}
 		}
 

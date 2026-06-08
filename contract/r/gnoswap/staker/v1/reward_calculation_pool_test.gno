@@ -46,7 +46,7 @@ func TestPoolsGetSet(cur realm, t *testing.T) {
 
 			if tt.shouldSet {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.set(tt.poolPath, pool)
+				pools.SetPool(tt.poolPath, pool)
 
 				retrieved, ok := pools.Get(tt.poolPath)
 				uassert.True(t, ok)
@@ -89,7 +89,7 @@ func TestGetPoolOrNil(cur realm, t *testing.T) {
 
 			if tt.shouldExist {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.set(tt.poolPath, pool)
+				pools.SetPool(tt.poolPath, pool)
 			}
 
 			result := pools.GetPoolOrNil(tt.poolPath)
@@ -135,7 +135,7 @@ func TestPoolsHas(cur realm, t *testing.T) {
 
 			if tt.shouldAdd {
 				pool := sr.NewPool(tt.poolPath, currentTime)
-				pools.set(tt.poolPath, pool)
+				pools.SetPool(tt.poolPath, pool)
 			}
 
 			result := pools.Has(tt.poolPath)
@@ -589,7 +589,7 @@ func TestProcessUnclaimableReward(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 			pools := NewPools()
-			pools.set(tt.poolPath, pool)
+			pools.SetPool(tt.poolPath, pool)
 
 			// Set up some unclaimable accumulation
 			poolResolver.Pool.SetUnclaimableAcc(500)
@@ -979,15 +979,15 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 				resolver := NewPoolResolver(pool)
 
 				// Keep reward constant in [start, end).
-				pool.RewardCache().Set(tt.startTime, tt.rewardPerSecond)
+				pool.SetRewardCacheAt(tt.startTime, tt.rewardPerSecond)
 
 				// Build deterministic global accumulation snapshots.
 				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
 				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
-				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc.ToString())
-				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc.ToString())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.startTime, startAcc.ToString())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.endTime, endAcc.ToString())
 				for _, h := range history {
-					pool.HistoricalTick().Set(h.at, h.tick)
+					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
 				// Ensure boundary ticks exist with zero outside accumulation.
@@ -1060,7 +1060,7 @@ func TestPoolsIterateAll(cur realm, t *testing.T) {
 			for i := 0; i < tt.numPools; i++ {
 				poolPath := "pool_" + string(rune('A'+i))
 				pool := sr.NewPool(poolPath, currentTime)
-				pools.set(poolPath, pool)
+				pools.SetPool(poolPath, pool)
 			}
 
 			count := 0

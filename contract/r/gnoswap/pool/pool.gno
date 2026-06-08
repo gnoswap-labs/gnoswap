@@ -128,6 +128,10 @@ func (p *Pool) SetPositions(positions *bptree.BPTree) {
 	p.positions = positions
 }
 
+func (p *Pool) SetPosition(posKey string, positionInfo PositionInfo) {
+	p.positions.Set(posKey, positionInfo)
+}
+
 func (p *Pool) SetObservationState(observationState *ObservationState) {
 	p.observationState = observationState
 }
