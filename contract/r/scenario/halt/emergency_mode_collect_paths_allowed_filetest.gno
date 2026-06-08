@@ -5,12 +5,11 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
-
-	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -295,10 +294,10 @@ func setupCollectScenario(cur realm) {
 
 func executeEmergencyCollectFeeSwaps(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "100000", collectMinPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "10000000", collectMinPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "100000", collectMaxPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "10000000", collectMaxPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
 }
@@ -643,11 +642,11 @@ func assertPositiveString(cur realm, value string, label string) {
 // [INFO] Withdraw halted: false
 //
 // [SCENARIO] 3. position.CollectFee remains allowed
-// [EXPECTED] position.CollectFee collected0: 104, collected1: 104, raw0: 105, raw1: 105
+// [EXPECTED] position.CollectFee collected0: 13273, collected1: 13252, raw0: 13407, raw1: 13385
 // [EXPECTED] position.CollectFee succeeded in emergency mode
 //
 // [SCENARIO] 4. position.DecreaseLiquidity remains allowed
-// [EXPECTED] position.DecreaseLiquidity liquidity: 1000000, fee0: 0, fee1: 0, amount0: 46863, amount1: 46863
+// [EXPECTED] position.DecreaseLiquidity liquidity: 1000000, fee0: 0, fee1: 0, amount0: 46850, amount1: 46877
 // [EXPECTED] position.DecreaseLiquidity succeeded in emergency mode
 //
 // [SCENARIO] 5. staker.CollectReward remains allowed
@@ -693,7 +692,7 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] pool.Burn succeeded in emergency mode
 //
 // [SCENARIO] 16. pool.Collect remains allowed
-// [EXPECTED] pool.Collect amount0: 5, amount1: 5
+// [EXPECTED] pool.Collect amount0: 17, amount1: 17
 // [EXPECTED] pool.Collect succeeded in emergency mode
 //
 // [SCENARIO] 17. pool.HandleWithdrawalFee remains allowed
@@ -701,7 +700,7 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode
 //
 // [SCENARIO] 18. pool.CollectProtocol remains allowed
-// [EXPECTED] pool.CollectProtocol amount0: 30, amount1: 30
+// [EXPECTED] pool.CollectProtocol amount0: 1000, amount1: 1000
 // [EXPECTED] pool.CollectProtocol succeeded in emergency mode
 //
 // [SCENARIO] 19. staker.EndExternalIncentive remains allowed
