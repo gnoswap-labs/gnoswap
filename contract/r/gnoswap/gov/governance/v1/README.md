@@ -16,7 +16,7 @@ The `governance.Config` type defines the core governance parameters. All values 
 | `VotingPeriod` | Duration for collecting votes | 7 days |
 | `VotingWeightSmoothingDuration` | Period for averaging voting weight (prevents flash loans) | 1 day |
 | `Quorum` | Percentage of active xGNS required for proposal passage | 50% |
-| `ProposalCreationThreshold` | Minimum GNS balance required to create a proposal | 1,000 GNS |
+| `ProposalCreationThreshold` | Minimum xGNS amount required to create a proposal | 1,000 xGNS |
 | `ExecutionDelay` | Waiting period after voting ends before execution | 1 day |
 | `ExecutionWindow` | Time window during which an approved proposal can be executed | 30 days |
 
@@ -43,7 +43,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 ### Creation
 
-- Requires 1,000 GNS balance
+- Requires 1,000 xGNS balance
 - One active proposal per address
 - Valid type and parameters required
 
