@@ -81,9 +81,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		// allowed-tokens slice. Storing sr.DefaultAllowedTokens directly would
 		// alias the shared (sr-owned) slice across every store, leaking
 		// mutations and tripping the readonly-taint gate on later writes.
-		defaultAllowedTokens := make([]string, len(sr.DefaultAllowedTokens))
-		copy(defaultAllowedTokens, sr.DefaultAllowedTokens)
-		err := stakerStore.SetAllowedTokens(0, rlm, defaultAllowedTokens)
+		err := stakerStore.SetAllowedTokens(0, rlm, sr.DefaultAllowedTokens())
 		if err != nil {
 			return err
 		}

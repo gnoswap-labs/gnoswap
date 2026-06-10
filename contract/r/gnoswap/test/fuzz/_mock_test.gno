@@ -466,6 +466,28 @@ func (s *MockStakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) er
 	return nil
 }
 
+func (s *MockStakerStore) AddAllowedToken(_ int, rlm realm, tokenPath string) error {
+	for _, token := range s.allowedTokens {
+		if token == tokenPath {
+			return nil
+		}
+	}
+
+	s.allowedTokens = append(s.allowedTokens, tokenPath)
+	return nil
+}
+
+func (s *MockStakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) error {
+	for i, token := range s.allowedTokens {
+		if token == tokenPath {
+			s.allowedTokens = append(s.allowedTokens[:i], s.allowedTokens[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
 // IncentiveCounter
 func (s *MockStakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.incentiveCounter != nil

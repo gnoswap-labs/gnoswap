@@ -451,6 +451,37 @@ func TestStoreSetAndGetAllowedTokens(cur realm, t *testing.T) {
 	}
 }
 
+func TestStoreAddAndRemoveAllowedToken(cur realm, t *testing.T) {
+	resetTestState(t)
+	ss := NewStakerStore(kvStore)
+
+	defaultTokens := DefaultAllowedTokens()
+	err := ss.SetAllowedTokens(0, cur, defaultTokens)
+	uassert.NoError(t, err)
+
+	customToken := "gno.land/r/demo/custom"
+	err = ss.AddAllowedToken(0, cur, customToken)
+	uassert.NoError(t, err)
+
+	tokens := ss.GetAllowedTokens()
+	uassert.Equal(t, 3, len(tokens))
+	uassert.Equal(t, customToken, tokens[2])
+
+	// Idempotent add must not duplicate.
+	err = ss.AddAllowedToken(0, cur, customToken)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 3, len(ss.GetAllowedTokens()))
+
+	err = ss.RemoveAllowedToken(0, cur, customToken)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 2, len(ss.GetAllowedTokens()))
+
+	// Removing a missing token is a no-op.
+	err = ss.RemoveAllowedToken(0, cur, customToken)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 2, len(ss.GetAllowedTokens()))
+}
+
 func TestStoreSetAndGetIncentiveCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
