@@ -33,10 +33,11 @@
 //  9. Read final data and show it updated.
 //
 // Mutating staker entry points covered post-upgrade through v2_valid:
-//   StakeToken, UnStakeToken, CollectReward, ChangePoolTier, RemovePoolTier,
-//   AddToken, RemoveToken, SetUnStakingFee, SetDepositGnsAmount,
-//   SetMinimumRewardAmount, SetWarmUp, CreateExternalIncentive,
-//   EndExternalIncentive, CollectExternalIncentivePenalty.
+//
+//	StakeToken, UnStakeToken, CollectReward, ChangePoolTier, RemovePoolTier,
+//	AddToken, RemoveToken, SetUnStakingFee, SetDepositGnsAmount,
+//	SetMinimumRewardAmount, SetWarmUp, CreateExternalIncentive,
+//	EndExternalIncentive, CollectExternalIncentivePenalty.
 //
 // Exercised but found taint-UNSAFE under v2_valid (skipped to keep the test
 // green): SetTokenMinimumRewardAmount — see the SKIP comment in scenario 7.
@@ -106,35 +107,39 @@ func main(cur realm) {
 	mintPosition(cur) // position 2
 	println()
 
-	println("[SCENARIO] 2. Create v1 data: set tier + stake position 1")
+	println("[SCENARIO] 2. Add token to allowed tokens list")
+	addToken(cur, barPath)
+	println()
+
+	println("[SCENARIO] 3. Create v1 data: set tier + stake position 1")
 	setPoolTier(cur)
 	stakePosition(cur, 1)
 	println()
 
-	println("[SCENARIO] 3. Accumulate rewards, then read v1 data")
+	println("[SCENARIO] 4. Accumulate rewards, then read v1 data")
 	waitBlocks(cur)
 	checkStakingInfo(cur, 1)
 	println()
 
-	println("[SCENARIO] 4. Upgrade staker to v2_valid")
+	println("[SCENARIO] 5. Upgrade staker to v2_valid")
 	upgradeToV2Valid(cur)
 	println()
 
-	println("[SCENARIO] 5. Mutate v1-created data through v2_valid (RMW paths)")
+	println("[SCENARIO] 6. Mutate v1-created data through v2_valid (RMW paths)")
 	collectReward(cur, 1)   // RMW v1 deposit + reward state maps/trees
 	stakePosition(cur, 2)   // insert into v1-created deposit map/tree
 	unStakePosition(cur, 1) // RMW + delete from v1-created structures
 	println()
 
-	println("[SCENARIO] 6. RMW v1-created pool-tier maps through v2_valid")
+	println("[SCENARIO] 7. RMW v1-created pool-tier maps through v2_valid")
 	changePoolTier(cur, barFoo500PoolPath, 2) // RMW pool-tier maps (1 -> 2)
 	changePoolTier(cur, barFoo500PoolPath, 1) // RMW pool-tier maps (2 -> 1)
 	println()
 
-	println("[SCENARIO] 7. Drive admin config setters through v2_valid")
-	addToken(cur, barPath)            // RMW allowed-tokens list
-	removeToken(cur, barPath)         // RMW allowed-tokens list
-	setUnStakingFee(cur, 100)         // scalar config
+	println("[SCENARIO] 8. Drive admin config setters through v2_valid")
+	addToken(cur, barPath)    // RMW allowed-tokens list
+	removeToken(cur, barPath) // RMW allowed-tokens list
+	setUnStakingFee(cur, 100) // scalar config
 	setDepositGnsAmount(cur, 2_000_000_000)
 	setMinimumRewardAmount(cur, 1_000_000_000)
 	// setTokenMinimumRewardAmount RMWs the token-specific minimum rewards map.
@@ -144,9 +149,10 @@ func main(cur realm) {
 	// rather than direct-index-writing the foreign map.
 	setTokenMinimumRewardAmount(cur, barPath, 12345) // RMW token-specific minimum rewards map
 	setWarmUp(cur, 70, 100)                          // RMW warmup template map
+	addToken(cur, barPath)                           // RMW allowed-tokens list
 	println()
 
-	println("[SCENARIO] 8. Exercise external-incentive BPTrees through v2_valid")
+	println("[SCENARIO] 9. Exercise external-incentive BPTrees through v2_valid")
 	createExternalIncentive(cur) // insert into v1-created incentive tree
 	skipPastIncentiveEnd(cur)
 	endExternalIncentive(cur)              // RMW incentive tree + refund
@@ -155,7 +161,7 @@ func main(cur realm) {
 	removePoolTier(cur, barFoo500PoolPath) // RMW pool-tier maps (1 -> 0)
 	println()
 
-	println("[SCENARIO] 9. Read final data through v2_valid")
+	println("[SCENARIO] 10. Read final data through v2_valid")
 	checkStakingInfo(cur, 1)
 	checkStakingInfo(cur, 2)
 	println("[EXPECTED] No readonly-taint panic: migration correct")
@@ -345,29 +351,32 @@ func upgradeToV2Valid(cur realm) {
 // [EXPECTED] Minted position ID: 1 liquidity: 1066918731
 // [EXPECTED] Minted position ID: 2 liquidity: 1066918731
 //
-// [SCENARIO] 2. Create v1 data: set tier + stake position 1
+// [SCENARIO] 2. Add token to allowed tokens list
+// [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
+//
+// [SCENARIO] 3. Create v1 data: set tier + stake position 1
 // [EXPECTED] Pool tier set for: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] Staked position ID: 1 lpToken: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 //
-// [SCENARIO] 3. Accumulate rewards, then read v1 data
+// [SCENARIO] 4. Accumulate rewards, then read v1 data
 // [EXPECTED] pos 1 isStaked: true
 // [EXPECTED] pos 1 targetPool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] pos 1 liquidity: 1066918731
 // [EXPECTED] pos 1 stakeTime: 1234567900
 //
-// [SCENARIO] 4. Upgrade staker to v2_valid
+// [SCENARIO] 5. Upgrade staker to v2_valid
 // [EXPECTED] Upgraded staker to: gno.land/r/gnoswap/staker/v2_valid
 //
-// [SCENARIO] 5. Mutate v1-created data through v2_valid (RMW paths)
+// [SCENARIO] 6. Mutate v1-created data through v2_valid (RMW paths)
 // [EXPECTED] CollectReward pos 1 total: 133374323
 // [EXPECTED] Staked position ID: 2 lpToken: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] UnStaked position ID: 1 isStaked now: false
 //
-// [SCENARIO] 6. RMW v1-created pool-tier maps through v2_valid
+// [SCENARIO] 7. RMW v1-created pool-tier maps through v2_valid
 // [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 2
 // [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 1
 //
-// [SCENARIO] 7. Drive admin config setters through v2_valid
+// [SCENARIO] 8. Drive admin config setters through v2_valid
 // [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
 // [EXPECTED] RemoveToken gno.land/r/onbloc/bar allowedCount: 2
 // [EXPECTED] SetUnStakingFee -> 100
@@ -375,8 +384,9 @@ func upgradeToV2Valid(cur realm) {
 // [EXPECTED] SetMinimumRewardAmount -> 1000000000
 // [EXPECTED] SetTokenMinimumRewardAmount -> 12345 found: true
 // [EXPECTED] SetWarmUp warmupTiers: 4
+// [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
 //
-// [SCENARIO] 8. Exercise external-incentive BPTrees through v2_valid
+// [SCENARIO] 9. Exercise external-incentive BPTrees through v2_valid
 // [EXPECTED] CreateExternalIncentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567950:1
 // [EXPECTED] incentive rewardToken: gno.land/r/gnoswap/gns
 // [EXPECTED] incentive totalReward: 1500000000
@@ -385,8 +395,7 @@ func upgradeToV2Valid(cur realm) {
 // [EXPECTED] UnStaked position ID: 2 isStaked now: false
 // [EXPECTED] RemovePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 0
 //
-// [SCENARIO] 9. Read final data through v2_valid
+// [SCENARIO] 10. Read final data through v2_valid
 // [EXPECTED] pos 1 isStaked: false
 // [EXPECTED] pos 2 isStaked: false
 // [EXPECTED] No readonly-taint panic: migration correct
-//

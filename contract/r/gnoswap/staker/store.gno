@@ -204,6 +204,39 @@ func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error 
 	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
 }
 
+// AddAllowedToken appends tokenPath to the allowed-tokens list when absent.
+// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+func (s *stakerStore) AddAllowedToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	tokens := s.GetAllowedTokens()
+	if !contains(tokens, tokenPath) {
+		tokens = append(tokens, tokenPath)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
+}
+
+// RemoveAllowedToken removes tokenPath from the allowed-tokens list when present.
+// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+func (s *stakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+
+	tokens := s.GetAllowedTokens()
+	for i, t := range tokens {
+		if t == tokenPath {
+			tokens = append(tokens[:i], tokens[i+1:]...)
+			break
+		}
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
+}
+
 // IncentiveCounter
 func (s *stakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyIncentiveCounter.String())
@@ -665,4 +698,14 @@ func uint64ToString(id uint64) string {
 
 func makeIncentiveID(creator address, timestamp int64, index int64) string {
 	return ufmt.Sprintf("%s:%d:%d", creator.String(), timestamp, index)
+}
+
+func contains(items []string, item string) bool {
+	for _, i := range items {
+		if i == item {
+			return true
+		}
+	}
+
+	return false
 }

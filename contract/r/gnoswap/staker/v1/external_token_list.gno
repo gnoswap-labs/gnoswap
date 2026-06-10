@@ -29,7 +29,11 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(0, rlm, s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
+	if err := checkCannotAddDefaultToken(tokenPath); err != nil {
+		panic(err.Error())
+	}
+
+	if err := s.store.AddAllowedToken(0, rlm, tokenPath); err != nil {
 		panic(err.Error())
 	}
 
@@ -62,7 +66,11 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(0, rlm, s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	if err := checkCannotRemoveDefaultToken(tokenPath); err != nil {
+		panic(err.Error())
+	}
+
+	if err := s.store.RemoveAllowedToken(0, rlm, tokenPath); err != nil {
 		panic(err.Error())
 	}
 
@@ -74,38 +82,7 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	)
 }
 
-// TokenValidator is a function type that validates a token
-type TokenValidator func(tokenPath string) error
-
-// TokenExecutor is a token manipulation function type
-type TokenExecutor func(tokenPath string, tokens []string) []string
-
-// modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(_ int, rlm realm, s *stakerV1, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
-	// validate token operation if validator is provided
-	if validator != nil {
-		if err := validator(tokenPath); err != nil {
-			return err
-		}
-	}
-
-	allowedTokens := s.store.GetAllowedTokens()
-	allowedTokens = executor(tokenPath, allowedTokens)
-	s.store.SetAllowedTokens(0, rlm, allowedTokens)
-	return nil
-}
-
-// addTokenExecutor executes token append operation
-func addTokenExecutor(tokenPath string, tokens []string) []string {
-	if contains(tokens, tokenPath) {
-		return tokens
-	}
-
-	return append(tokens, tokenPath)
-}
-
-// addTokenValidator validates token addition operation
-func addTokenValidator(tokenPath string) error {
+func checkCannotAddDefaultToken(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
 		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
 	}
@@ -113,21 +90,7 @@ func addTokenValidator(tokenPath string) error {
 	return nil
 }
 
-// removeTokenExecutor executes token removal operation
-func removeTokenExecutor(tokenPath string, tokens []string) []string {
-	// find and remove token
-	for i, t := range tokens {
-		if t == tokenPath {
-			return append(tokens[:i], tokens[i+1:]...)
-		}
-	}
-
-	// if token not found, return the original list
-	return tokens
-}
-
-// removeTokenValidator validates token removal operation
-func removeTokenValidator(tokenPath string) error {
+func checkCannotRemoveDefaultToken(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
 		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}

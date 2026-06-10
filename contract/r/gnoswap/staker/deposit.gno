@@ -337,4 +337,6 @@ const (
 	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 )
 
-var DefaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}
+func DefaultAllowedTokens() []string {
+	return []string{GNS_PATH, WUGNOT_PATH}
+}

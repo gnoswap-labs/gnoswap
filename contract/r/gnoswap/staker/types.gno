@@ -136,6 +136,8 @@ type IStakerStore interface {
 	HasAllowedTokensStoreKey() bool
 	GetAllowedTokens() []string
 	SetAllowedTokens(_ int, rlm realm, tokens []string) error
+	AddAllowedToken(_ int, rlm realm, tokenPath string) error
+	RemoveAllowedToken(_ int, rlm realm, tokenPath string) error
 
 	// IncentiveCounter
 	HasIncentiveCounterStoreKey() bool
