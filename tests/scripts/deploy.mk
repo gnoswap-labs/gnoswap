@@ -41,7 +41,7 @@ deploy-deps-tokens-grc721:
 
 deploy-gnsmath:
 	$(info ************ deploy gnsmath ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 50914ugnot -gas-wanted 50914000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 70914ugnot -gas-wanted 70914000 -memo "" gnoswap_admin
 	@echo
 
 deploy-int256:
