@@ -60,6 +60,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	gs "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
+	"gno.land/r/gnoswap/gov/xgns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -82,6 +83,8 @@ var (
 
 	bobAddr  = testutils.TestAddress("bob")
 	bobRealm = testing.NewUserRealm(bobAddr)
+
+	proposalCreationDelegateeAddr = testutils.TestAddress("prop-delegatee")
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -183,10 +186,25 @@ func initGovernancePoolAndTokens() {
 	testing.SetRealm(bobRealm)
 	gns.Approve(cross, govStakerAddr, INT64_MAX)
 	gs.Delegate(cross, bobAddr, delegatedAmount, "")
+	setupProposalCreationXGns()
 
 	ufmt.Printf("[INFO] Alice GNS balance: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Bob GNS balance: %d\n", gns.BalanceOf(bobAddr))
 	ufmt.Println("[INFO] Governance and tokens initialized")
+}
+
+func setupProposalCreationXGns() {
+	threshold := governance.GetLatestConfig().ProposalCreationThreshold
+	missingAmount := threshold - xgns.BalanceOf(aliceAddr)
+	if missingAmount <= 0 {
+		return
+	}
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, aliceAddr, missingAmount)
+
+	testing.SetRealm(aliceRealm)
+	gs.Delegate(cross, proposalCreationDelegateeAddr, missingAmount, "")
 }
 
 func createPoolAndPosition() {

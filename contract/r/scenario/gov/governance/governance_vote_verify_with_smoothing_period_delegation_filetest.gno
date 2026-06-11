@@ -133,10 +133,6 @@ func initialDelegation() {
 	initialAmount := int64(3_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Transfer(cross, user1Addr, initialAmount)
-	gns.Transfer(cross, user2Addr, initialAmount)
-	gns.Transfer(cross, user3Addr, initialAmount)
-
 	gns.Approve(cross, govStakerAddr, initialAmount)
 	gs.Delegate(cross, voter1Addr, initialAmount, "")
 
@@ -173,7 +169,20 @@ func checkCurrentXgnsBalance() {
 	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
+func prepareProposalCreator(proposerAddr address) {
+	amount := governance.GetLatestConfig().ProposalCreationThreshold
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, proposerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(proposerAddr))
+	gns.Approve(cross, govStakerAddr, amount)
+	gs.Delegate(cross, proposerAddr, amount, "")
+}
+
 func proposeText(proposerAddr address) int64 {
+	prepareProposalCreator(proposerAddr)
+
 	testing.SetRealm(testing.NewUserRealm(proposerAddr))
 	proposalId := governance.ProposeText(cross, "test_title", "test_description")
 	ufmt.Printf("[INFO] Created proposal ID: %d\n", proposalId)
@@ -286,7 +295,7 @@ func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 // [SCENARIO] 13. Verify voting weights - ProposalID: 1
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=1000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2000000000
+// [EXPECTED] Quorum amount: 2250000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 1000000000 (voter2)
 //
@@ -298,7 +307,7 @@ func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 // [SCENARIO] 15. Verify voting weights - ProposalID: 2
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2500000000
+// [EXPECTED] Quorum amount: 3000000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)
 //
@@ -310,6 +319,6 @@ func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 // [SCENARIO] 17. Verify voting weights - ProposalID: 3
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2500000000
+// [EXPECTED] Quorum amount: 3250000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)
