@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -22,7 +22,7 @@ import (
 //   - description: Full proposal content with rationale and context
 //
 // Requirements:
-//   - Caller must hold minimum 1,000 GNS tokens
+//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
 //   - No other active proposal from same address
 //   - Title and description must be non-empty
 //
@@ -49,7 +49,7 @@ func (gv *governanceV1) ProposeText(
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
-	gnsBalance := gns.BalanceOf(callerAddress)
+	xgnsBalance := xgns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
@@ -86,7 +86,7 @@ func (gv *governanceV1) ProposeText(
 		governance.NewProposalMetadata(title, description),
 		NewProposalTextData(),
 		callerAddress,
-		gnsBalance,
+		xgnsBalance,
 		createdAt,
 		createdHeight,
 	)
@@ -130,7 +130,7 @@ func (gv *governanceV1) ProposeText(
 //   - amount: Amount to transfer (in smallest unit)
 //
 // Requirements:
-//   - Caller must hold minimum 1,000 GNS tokens
+//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
 //   - Sufficient balance in community pool
 //   - Valid recipient address
 //   - Supported token type
@@ -162,7 +162,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 
 	prev := rlm.Previous()
 	callerAddress := prev.Address()
-	gnsBalance := gns.BalanceOf(callerAddress)
+	xgnsBalance := xgns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
@@ -199,7 +199,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		governance.NewProposalMetadata(title, description),
 		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
 		callerAddress,
-		gnsBalance,
+		xgnsBalance,
 		createdAt,
 		createdHeight,
 	)
@@ -251,6 +251,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 //	gno.land/r/gnoswap/gov/governance*EXE*SetExecutionDelay*EXE*86400
 //
 // Requirements:
+//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
 //   - Encoded execution messages must match numToExecute
 //   - Target handlers must exist in the parameter registry
 //   - Parameters must match registered function signatures
@@ -274,7 +275,7 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
-	gnsBalance := gns.BalanceOf(callerAddress)
+	xgnsBalance := xgns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
@@ -311,7 +312,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		governance.NewProposalMetadata(title, description),
 		NewProposalExecutionData(numToExecute, executions),
 		callerAddress,
-		gnsBalance,
+		xgnsBalance,
 		createdAt,
 		createdHeight,
 	)
@@ -353,7 +354,7 @@ func (gv *governanceV1) createProposal(
 	proposalMetadata *governance.ProposalMetadata,
 	proposalData *governance.ProposalData,
 	proposerAddress address,
-	proposerGnsBalance int64,
+	proposerXGnsBalance int64,
 	createdAt int64,
 	createdHeight int64,
 ) (*governance.Proposal, error) {
@@ -371,8 +372,8 @@ func (gv *governanceV1) createProposal(
 		return nil, err
 	}
 
-	// Check if proposer has enough GNS balance to create proposal
-	if proposerGnsBalance < config.ProposalCreationThreshold {
+	// Check if proposer has enough xGNS balance to create proposal
+	if proposerXGnsBalance < config.ProposalCreationThreshold {
 		return nil, errNotEnoughBalance
 	}
 

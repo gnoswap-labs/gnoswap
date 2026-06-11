@@ -16,9 +16,9 @@ type Config struct {
 	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
 	// for proposal creation and cancellation threshold calculations (in seconds)
 	VotingWeightSmoothingDuration int64
-	// Quorum is the percentage of total GNS supply required for proposal approval
+	// Quorum is the percentage of active xGNS supply required for proposal approval
 	Quorum int64
-	// ProposalCreationThreshold is the minimum average voting weight required to create a proposal
+	// ProposalCreationThreshold is the minimum xGNS amount required to create a proposal
 	ProposalCreationThreshold int64
 	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
 	ExecutionDelay int64
@@ -135,7 +135,7 @@ func NewDefaultConfig() Config {
 		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
 		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
 		Quorum:                        50,            // 50% of total xGNS supply required
-		ProposalCreationThreshold:     1_000_000_000, // 1 billion - minimum balance to create proposals
+		ProposalCreationThreshold:     1_000_000_000, // 1 billion xGNS - minimum amount to create proposals
 		ExecutionDelay:                86400,         // 1 day - waiting period before execution
 		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
 	}

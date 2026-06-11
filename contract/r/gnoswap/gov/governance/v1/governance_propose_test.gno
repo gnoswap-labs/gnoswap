@@ -9,6 +9,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 	_ "gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -22,7 +23,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 		description         string
 		callerAddress       address
 		setupConfig         *governance.Config
-		setupGnsBalance     int64
+		setupXGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*governance.VotingInfo
 		maxVotingWeight     int64
@@ -37,7 +38,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			description:         "This is a test text proposal for governance",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -47,12 +48,12 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:                "fail - insufficient GNS balance",
+			name:                "fail - insufficient xGNS balance",
 			title:               "Test Text Proposal",
 			description:         "This is a test text proposal for governance",
 			callerAddress:       testutils.TestAddress("poor_proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     500_000_000, // Less than threshold
+			setupXGnsBalance:     500_000_000, // Less than threshold
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("poor_proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -67,7 +68,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			description:         "This is a test text proposal for governance",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -82,7 +83,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			description:         "",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -97,7 +98,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			description:         "This is a test text proposal for governance",
 			callerAddress:       testutils.TestAddress("active_proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: true,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("active_proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -112,7 +113,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			description:         "This is a test text proposal for governance",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes:      map[string]*governance.VotingInfo{}, // Empty voting info
 			maxVotingWeight:     0,
@@ -127,7 +128,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupTestConfig(0, cur, t, gov, tt.setupConfig)
-			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestXGnsBalance(cross(cur), t, tt.callerAddress, tt.setupXGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
@@ -174,7 +175,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 		amount              int64
 		callerAddress       address
 		setupConfig         *governance.Config
-		setupGnsBalance     int64
+		setupXGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*governance.VotingInfo
 		maxVotingWeight     int64
@@ -192,7 +193,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			amount:              5_000_000_000,
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -210,7 +211,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			amount:              5_000_000_000,
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -228,7 +229,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			amount:              0,
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -246,7 +247,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			amount:              5_000_000_000,
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -264,7 +265,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			amount:              5_000_000_000,
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -281,7 +282,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupTestConfig(0, cur, t, gov, tt.setupConfig)
-			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestXGnsBalance(cross(cur), t, tt.callerAddress, tt.setupXGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
@@ -324,7 +325,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 		executions          string
 		callerAddress       address
 		setupConfig         *governance.Config
-		setupGnsBalance     int64
+		setupXGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*governance.VotingInfo
 		maxVotingWeight     int64
@@ -341,7 +342,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -358,7 +359,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -375,7 +376,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "invalid_format",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -392,7 +393,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -409,7 +410,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -426,7 +427,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -443,7 +444,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -460,7 +461,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "*EXE*SetPoolTier*EXE*pool1,1",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -477,7 +478,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			executions:          "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
 			callerAddress:       testutils.TestAddress("proposer"),
 			setupConfig:         governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000),
-			setupGnsBalance:     10_000_000_000,
+			setupXGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
 				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
@@ -494,7 +495,7 @@ func TestGovernancePropose_ProposeParameterChange(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupTestConfig(0, cur, t, gov, tt.setupConfig)
-			setupTestGnsBalance(cross(cur), t, tt.callerAddress, tt.setupGnsBalance)
+			setupTestXGnsBalance(cross(cur), t, tt.callerAddress, tt.setupXGnsBalance)
 			setupTestUserVotesWithDelegation(t, gov, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
@@ -594,7 +595,7 @@ func TestGovernancePropose_ProposeTextInputValidation(cur realm, t *testing.T) {
 			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
+			setupTestXGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -798,7 +799,7 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
+			setupTestXGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -903,7 +904,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T)
 			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
+			setupTestXGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1102,7 +1103,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
 
 			caller := testutils.TestAddress("proposer")
-			setupTestGnsBalance(cross(cur), t, caller, 10_000_000_000)
+			setupTestXGnsBalance(cross(cur), t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
@@ -1127,6 +1128,105 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 	}
 }
 
+func TestGovernancePropose_ProposalCreationThresholdUsesXGnsBalance(cur realm, t *testing.T) {
+	threshold := int64(1_000_000_000)
+	gnsPath := "gno.land/r/gnoswap/gns"
+	parameterExecution := "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0"
+
+	t.Run("text proposal fails with GNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("gns_text")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-003] not enough balance", func(cur realm) {
+			mockProposeText(cross(cur), gov, "Text Proposal", "Description")
+		})
+	})
+
+	t.Run("text proposal succeeds with xGNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("xgns_text")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestXGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		proposalId := mockProposeText(cross(cur), gov, "Text Proposal", "Description")
+		uassert.Equal(t, int64(1), proposalId)
+	})
+
+	t.Run("community pool spend fails with GNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("gns_cps")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-003] not enough balance", func(cur realm) {
+			mockProposeCommunityPoolSpend(cross(cur), gov, "Community Pool Spend", "Description", testutils.TestAddress("recipient"), gnsPath, 1_000_000_000)
+		})
+	})
+
+	t.Run("community pool spend succeeds with xGNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("xgns_cps")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestXGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		proposalId := mockProposeCommunityPoolSpend(cross(cur), gov, "Community Pool Spend", "Description", testutils.TestAddress("recipient"), gnsPath, 1_000_000_000)
+		uassert.Equal(t, int64(1), proposalId)
+	})
+
+	t.Run("parameter change fails with GNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("gns_param")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-003] not enough balance", func(cur realm) {
+			mockProposeParameterChange(cross(cur), gov, "Parameter Change", "Description", 1, parameterExecution)
+		})
+	})
+
+	t.Run("parameter change succeeds with xGNS only", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		caller := testutils.TestAddress("xgns_param")
+
+		setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, threshold, 86400, 2592000))
+		setupTestXGnsBalance(cross(cur), t, caller, threshold)
+		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+			caller.String(): governance.NewVotingInfo(5_000_000_000),
+		}, 5_000_000_000)
+
+		testing.SetRealm(testing.NewUserRealm(caller))
+		proposalId := mockProposeParameterChange(cross(cur), gov, "Parameter Change", "Description", 1, parameterExecution)
+		uassert.Equal(t, int64(1), proposalId)
+	})
+}
+
 // Test proposal ID generation and active proposal limits
 func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 	t.Run("sequential ID generation", func(cur realm, t *testing.T) {
@@ -1139,9 +1239,9 @@ func TestGovernancePropose_ProposalIDGeneration(cur realm, t *testing.T) {
 		caller2 := testutils.TestAddress("proposer2")
 		caller3 := testutils.TestAddress("proposer3")
 
-		setupTestGnsBalance(cross(cur), t, caller1, 10_000_000_000)
-		setupTestGnsBalance(cross(cur), t, caller2, 10_000_000_000)
-		setupTestGnsBalance(cross(cur), t, caller3, 10_000_000_000)
+		setupTestXGnsBalance(cross(cur), t, caller1, 10_000_000_000)
+		setupTestXGnsBalance(cross(cur), t, caller2, 10_000_000_000)
+		setupTestXGnsBalance(cross(cur), t, caller3, 10_000_000_000)
 		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
 			caller1.String(): governance.NewVotingInfo(5_000_000_000),
 			caller2.String(): governance.NewVotingInfo(5_000_000_000),
@@ -1179,9 +1279,14 @@ func setupTestConfig(_ int, rlm realm, t *testing.T, gov *governanceV1, config *
 	gov.setConfig(0, rlm, nextVersion, *config)
 }
 
+func setupTestXGnsBalance(cur realm, t *testing.T, address address, balance int64) {
+	// Mint xGNS from the governance staker realm for proposal eligibility.
+	testing.SetRealm(testing.NewUserRealm(govStakerAddr))
+
+	xgns.Mint(cross(cur), address, balance)
+}
+
 func setupTestGnsBalance(cur realm, t *testing.T, address address, balance int64) {
-	// Mock GNS balance setup
-	// In actual implementation, this would set up the GNS token balance
 	testing.SetRealm(adminRealm)
 
 	gns.Transfer(cross(cur), address, balance)
