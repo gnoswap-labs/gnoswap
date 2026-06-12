@@ -335,7 +335,7 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(2000)
-				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDiv(2000, 60, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(2000, 60, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -353,7 +353,7 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(500)
-				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDiv(500, 40, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(500, 40, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {

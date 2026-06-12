@@ -70,34 +70,6 @@ func SafeMulInt64(a, b int64) int64 {
 	return a * b
 }
 
-// SafeMulDiv returns (a * b) / c using native int64 arithmetic.
-// It panics on multiplication overflow/underflow or division by zero.
-//
-// Unlike SafeMulDivInt64 the intermediate product is kept in int64, so the
-// product a*b must itself fit in int64.
-func SafeMulDiv(a, b, c int64) int64 {
-	if c == 0 {
-		panic("division by zero in SafeMulDiv")
-	}
-
-	if a != 0 && b != 0 {
-		if a > 0 && b > 0 && a > math.MaxInt64/b {
-			panic("int64 multiplication overflow in SafeMulDiv")
-		}
-		if a > 0 && b < 0 && b < math.MinInt64/a {
-			panic("int64 multiplication underflow in SafeMulDiv")
-		}
-		if a < 0 && b > 0 && a < math.MinInt64/b {
-			panic("int64 multiplication underflow in SafeMulDiv")
-		}
-		if a < 0 && b < 0 && a < math.MaxInt64/b {
-			panic("int64 multiplication overflow in SafeMulDiv")
-		}
-	}
-
-	return (a * b) / c
-}
-
 // SafeMulDivInt64 returns (a * b) / c, computing the intermediate product in
 // 256-bit signed arithmetic so a*b need not fit in int64. The final quotient
 // must fit in int64, otherwise it panics. It panics on overflow.

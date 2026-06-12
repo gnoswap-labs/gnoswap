@@ -64,7 +64,7 @@ func TestProposalVoteStatus_VotingOperations(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			quorumAmount := gnsmath.SafeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -116,7 +116,7 @@ func TestNewProposalVoteStatus(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			quorumAmount := gnsmath.SafeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -316,7 +316,7 @@ func TestProposalVoteStatus_QuorumCalculation(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			quorumAmount := gnsmath.SafeMulDiv(tc.maxVotingWeight, tc.quorumPercentage, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorumPercentage, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 

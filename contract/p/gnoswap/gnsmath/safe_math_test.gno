@@ -63,20 +63,6 @@ func TestSafeMulInt64_Panics(cur realm, t *testing.T) {
 	})
 }
 
-func TestSafeMulDiv(t *testing.T) {
-	uassert.Equal(t, int64(6), SafeMulDiv(4, 3, 2))
-	uassert.Equal(t, int64(-6), SafeMulDiv(-4, 3, 2))
-}
-
-func TestSafeMulDiv_Panics(cur realm, t *testing.T) {
-	uassert.PanicsWithMessage(t, cur, "division by zero in SafeMulDiv", func() {
-		SafeMulDiv(1, 2, 0)
-	})
-	uassert.PanicsWithMessage(t, cur, "int64 multiplication overflow in SafeMulDiv", func() {
-		SafeMulDiv(math.MaxInt64, 2, 1)
-	})
-}
-
 func TestSafeMulDivInt64(t *testing.T) {
 	uassert.Equal(t, int64(0), SafeMulDivInt64(0, 5, 2))
 	uassert.Equal(t, int64(6), SafeMulDivInt64(4, 3, 2))

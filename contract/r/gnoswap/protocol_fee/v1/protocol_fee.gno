@@ -212,7 +212,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	pfs := pf.getProtocolFeeState()
 
-	toDevOpsAmount := gnsmath.SafeMulDiv(amount, pfs.DevOpsPct(), 10000)
+	toDevOpsAmount := gnsmath.SafeMulDivInt64(amount, pfs.DevOpsPct(), 10000)
 	toGovStakerAmount := gnsmath.SafeSubInt64(amount, toDevOpsAmount)
 
 	if err := pfs.addAccuToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {

@@ -236,7 +236,7 @@ func NewProposalStatus(
 	actionStatus := governance.NewProposalActionStatus(executable)
 
 	// Calculate the quorum amount based on the max voting weight and quorum percentage
-	quorumAmount := gnsmath.SafeMulDiv(maxVotingWeight, config.Quorum, 100)
+	quorumAmount := gnsmath.SafeMulDivInt64(maxVotingWeight, config.Quorum, 100)
 	voteStatus := governance.NewProposalVoteStatus(maxVotingWeight, quorumAmount)
 
 	return governance.NewProposalStatusBy(schedule, actionStatus, voteStatus)

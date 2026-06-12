@@ -203,7 +203,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	for _, duration := range projectTierDurations {
 		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
 		tierDurationTime := projectTierDurationTimes[duration]
-		tierDistributeAmount := gnsmath.SafeMulDiv(params.depositAmount, projectTierRatios[duration], 100)
+		tierDistributeAmount := gnsmath.SafeMulDivInt64(params.depositAmount, projectTierRatios[duration], 100)
 		accumulatedTierDistributeAmount = gnsmath.SafeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
 
 		// if the last tier, distribute the remaining amount
