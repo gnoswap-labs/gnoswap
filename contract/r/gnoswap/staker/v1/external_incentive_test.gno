@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -118,7 +119,7 @@ func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 		duration := endTimestamp - startTimestamp
 		rewardPerSecondX128 := u256.MulDiv(
 			u256.NewUintFromInt64(depositRewardAmount),
-			q128,
+			consts.Q128(),
 			u256.NewUintFromInt64(duration),
 		)
 
@@ -200,7 +201,7 @@ func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 				0,
 			)
 
-			t.Logf("refund amount: , legacy: %d, q128: %d",
+			t.Logf("refund amount: , legacy: %d, consts.Q128(): %d",
 				calculateLegacyRefundAmount(incentive.TotalRewardAmount(), incentive.StartTimestamp(), incentive.EndTimestamp()),
 				calculateRefundAmount(tt.depositRewardAmount, tt.startTimestamp, tt.endTimestamp),
 			)

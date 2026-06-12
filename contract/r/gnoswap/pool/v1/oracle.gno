@@ -4,11 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	pl "gno.land/r/gnoswap/pool"
 )
-
-var max160 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1
 
 // maxObservationCardinality defines the maximum number of observations to store
 const maxObservationCardinality uint16 = 65535
@@ -57,7 +56,7 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	}
 
 	// Calculate harmonic mean liquidity
-	secondsAgoX160 := u256.Zero().Mul(u256.NewUint(uint64(secondsAgo)), max160)
+	secondsAgoX160 := u256.Zero().Mul(u256.NewUint(uint64(secondsAgo)), consts.Max160())
 	denominator := u256.Zero().Lsh(secondsPerLiquidityDelta, 32)
 	harmonicMeanLiquidity := u256.Zero().Div(secondsAgoX160, denominator)
 
@@ -134,7 +133,7 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 	// secondsPerLiquidity += timeDelta * 2^128 / max(1, liquidity)
 	secondsPerLiquidityDelta := u256.MulDiv(
 		u256.NewUintFromInt64(timeDelta),
-		q128FromDecimal,
+		consts.Q128(),
 		liquidityForCalc,
 	)
 

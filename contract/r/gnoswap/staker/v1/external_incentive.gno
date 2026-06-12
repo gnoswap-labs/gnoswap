@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -269,7 +270,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	distributableU256 := u256.MulDiv(
 		incentiveResolver.RewardPerSecondX128(),
 		u256.NewUintFromInt64(duration),
-		q128,
+		consts.Q128(),
 	)
 
 	distributable := safeConvertToInt64(distributableU256)

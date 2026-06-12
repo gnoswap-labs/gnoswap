@@ -1,9 +1,5 @@
 package v1
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
 const (
 	projectTier30  = int64(30)
 	projectTier90  = int64(90)
@@ -43,5 +39,3 @@ var projectTierRewardCollectableDuration = map[int64]int64{
 	projectTier90:  dayTime * 1, // 1 days
 	projectTier180: dayTime * 1, // 1 days
 }
-
-var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")

@@ -6,6 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -1259,14 +1260,14 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 
 		state := SwapState{
 			amountSpecifiedRemaining: i256.MustFromDecimal("-1000"),
-			amountCalculated:         maxInt64,
+			amountCalculated:         consts.MaxInt64I256(),
 		}
 
 		// no change to amountCalculated
 		updatedState, err := updateAmounts(step, state, false)
 
 		uassert.NoError(t, err, "Should allow calculation at exactly MAX_INT64")
-		uassert.True(t, updatedState.amountCalculated.Eq(maxInt64),
+		uassert.True(t, updatedState.amountCalculated.Eq(consts.MaxInt64I256()),
 			"Should maintain MAX_INT64 value")
 	})
 

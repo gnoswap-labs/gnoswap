@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -84,7 +85,7 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 	rewardAmount := u256.MulDiv(
 		rewardDebtDeltaX128,
 		u256.NewUintFromInt64(stakedAmount),
-		q128,
+		consts.Q128(),
 	)
 	return safeConvertToInt64(rewardAmount), nil
 }

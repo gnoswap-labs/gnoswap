@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -466,7 +467,7 @@ func TestObservationState_Transform(cur realm, t *testing.T) {
 		uassert.NotNil(t, obs, "Should return observation")
 		// With zero liquidity, use max(1, liquidity) = 1
 		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
-		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
+		expected := u256.MulDiv(u256.NewUint(100), consts.Q128(), u256.One())
 		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128(), "Should handle zero liquidity correctly")
 	})
 }

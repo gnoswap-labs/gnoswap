@@ -3,6 +3,7 @@ package v1
 import (
 	"strconv"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -175,9 +176,9 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	feeGrowthInside1X128 = u256.Zero().Sub(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
 
 	diffGrowthInside0X128 := u256.Zero().Sub(feeGrowthInside0X128, feeGrowthInside0LastX128)
-	unclaimedFee0 := u256.MulDiv(diffGrowthInside0X128, liquidity, q128)
+	unclaimedFee0 := u256.MulDiv(diffGrowthInside0X128, liquidity, consts.Q128())
 
 	diffGrowthInside1X128 := u256.Zero().Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
-	unclaimedFee1 := u256.MulDiv(diffGrowthInside1X128, liquidity, q128)
+	unclaimedFee1 := u256.MulDiv(diffGrowthInside1X128, liquidity, consts.Q128())
 	return unclaimedFee0, unclaimedFee1
 }

@@ -133,14 +133,14 @@ func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 		// Edge cases - extreme prices
 		{
 			name:            "extreme_low_price_with_fee",
-			currentX96:      MIN_SQRT_RATIO,
-			targetX96:       new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1000)),
+			currentX96:      MIN_SQRT_RATIO(),
+			targetX96:       new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1000)),
 			liquidity:       u256.MustFromDecimal("1"),
 			amountRemaining: i256.MustFromDecimal("1000000"),
 			feePips:         1,
-			sqrtNextX96:     MIN_SQRT_RATIO,
+			sqrtNextX96:     MIN_SQRT_RATIO(),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Gte(MIN_SQRT_RATIO))
+				uassert.True(t, sqrtRatioNextX96.Gte(MIN_SQRT_RATIO()))
 			},
 			amountIn:  "1",
 			amountOut: "4294643428317",
@@ -269,8 +269,8 @@ func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 		},
 		{
 			name:            "sqrt_price_above_maximum",
-			currentX96:      MAX_SQRT_RATIO,
-			targetX96:       new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
+			currentX96:      MAX_SQRT_RATIO(),
+			targetX96:       new(u256.Uint).Add(MAX_SQRT_RATIO(), u256.One()),
 			liquidity:       u256.MustFromDecimal("1"),
 			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
 			feePips:         1,
@@ -521,8 +521,8 @@ func TestSwapMath_Boundaries(t *testing.T) {
 	}{
 		{
 			name:              "min_boundary_one_for_zero",
-			current_x96:       MIN_SQRT_RATIO,
-			target_x96:        new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(10000)),
+			current_x96:       MIN_SQRT_RATIO(),
+			target_x96:        new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(10000)),
 			liquidity:         u256.MustFromDecimal("1000000000000000000"),
 			amount_remaining:  i256.MustFromDecimal("1000000000000000"),
 			fee_pips:          3000,
@@ -531,8 +531,8 @@ func TestSwapMath_Boundaries(t *testing.T) {
 		},
 		{
 			name:              "max_boundary_zero_for_one",
-			current_x96:       MAX_SQRT_RATIO,
-			target_x96:        new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(10000)),
+			current_x96:       MAX_SQRT_RATIO(),
+			target_x96:        new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(10000)),
 			liquidity:         u256.MustFromDecimal("1000000000000000000"),
 			amount_remaining:  i256.MustFromDecimal("1000000000000000"),
 			fee_pips:          3000,
@@ -642,8 +642,8 @@ func TestSwapMath_HighPrecision(t *testing.T) {
 		},
 		{
 			name:      "precision_near_price_boundaries",
-			current:   new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1)),
-			target:    new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1000)),
+			current:   new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1)),
+			target:    new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1000)),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    i256.MustFromDecimal("1000000"),
 			fee_pips:  3000,
@@ -662,8 +662,8 @@ func TestSwapMath_HighPrecision(t *testing.T) {
 			amountOutNum := amountOut
 			feeAmountNum := feeAmount
 
-			uassert.True(t, sqrtNextNum.Gte(MIN_SQRT_RATIO), "sqrt price should be >= MIN_SQRT_RATIO")
-			uassert.True(t, sqrtNextNum.Lte(MAX_SQRT_RATIO), "sqrt price should be <= MAX_SQRT_RATIO")
+			uassert.True(t, sqrtNextNum.Gte(MIN_SQRT_RATIO()), "sqrt price should be >= MIN_SQRT_RATIO()")
+			uassert.True(t, sqrtNextNum.Lte(MAX_SQRT_RATIO()), "sqrt price should be <= MAX_SQRT_RATIO()")
 			uassert.True(t, amountInNum.Gte(u256.Zero()), "amountIn should be >= 0")
 			uassert.True(t, amountOutNum.Gte(u256.Zero()), "amountOut should be >= 0")
 			uassert.True(t, feeAmountNum.Gte(u256.Zero()), "feeAmount should be >= 0")
@@ -925,8 +925,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		{
 			name:                 "near_min_sqrt_ratio",
 			zeroForOne:           false,
-			currentX96:           MIN_SQRT_RATIO,
-			targetX96:            new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:           MIN_SQRT_RATIO(),
+			targetX96:            new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:            u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
@@ -936,8 +936,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		{
 			name:                 "near_max_sqrt_ratio",
 			zeroForOne:           true,
-			currentX96:           MAX_SQRT_RATIO,
-			targetX96:            new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:           MAX_SQRT_RATIO(),
+			targetX96:            new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:            u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
@@ -1039,8 +1039,8 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		{
 			name:               "near_min_sqrt_ratio",
 			zeroForOne:         false,
-			currentX96:         MIN_SQRT_RATIO,
-			targetX96:          new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:         MIN_SQRT_RATIO(),
+			targetX96:          new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:          u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
 			expectedSqrtNext:   u256.MustFromDecimal("4295128740"),
@@ -1049,11 +1049,11 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		{
 			name:               "near_max_sqrt_ratio",
 			zeroForOne:         true,
-			currentX96:         MAX_SQRT_RATIO,
-			targetX96:          new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:         MAX_SQRT_RATIO(),
+			targetX96:          new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:          u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
-			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			expectedAmountOut:  u256.Zero(),
 		},
 		{

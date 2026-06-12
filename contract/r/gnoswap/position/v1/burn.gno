@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -166,5 +167,5 @@ func calculateTokensOwed(
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
 	diff := u256.Zero().Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	return u256.MulDiv(diff, positionLiquidity, q128)
+	return u256.MulDiv(diff, positionLiquidity, consts.Q128())
 }

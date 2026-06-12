@@ -1,18 +1,19 @@
 package gnsmath
 
 import (
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var (
-	q96       = u256.Zero().Lsh(u256.One(), 96)                               // 2^96
-	max160    = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1
-	maxInt256 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 255), u256.One()) // 2^255 - 1
+// MIN_SQRT_RATIO returns the minimum valid sqrt price ratio (4295128739).
+// It is a constructor (not a package-level var) so each caller receives a fresh
+// instance rather than sharing a mutable singleton.
+func MIN_SQRT_RATIO() *u256.Uint { return consts.MinSqrtRatio() }
 
-	MIN_SQRT_RATIO = u256.MustFromDecimal("4295128739")
-	MAX_SQRT_RATIO = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
-)
+// MAX_SQRT_RATIO returns the maximum valid sqrt price ratio
+// (1461446703485210103287273052203988822378723970342). See MIN_SQRT_RATIO.
+func MAX_SQRT_RATIO() *u256.Uint { return consts.MaxSqrtRatio() }
 
 // getNextPriceAmount0Add calculates the next sqrt price when adding token0 liquidity,
 // rounding up to ensure conservative pricing for the protocol.
@@ -92,16 +93,16 @@ func getNextPriceAmount1Add(
 ) *u256.Uint {
 	var quotient *u256.Uint
 
-	if amount.Lte(max160) {
+	if amount.Lte(consts.Max160()) {
 		// Use local variables to avoid allocation conflicts
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
 		quotient = u256.Zero().Div(shifted, liquidity)
 	} else {
-		quotient = u256.MulDiv(amount, q96, liquidity)
+		quotient = u256.MulDiv(amount, consts.Q96(), liquidity)
 	}
 
 	result, overflow := u256.Zero().AddOverflow(sqrtPX96, quotient)
-	if overflow || result.Gt(max160) {
+	if overflow || result.Gt(consts.Max160()) {
 		panic(errSqrtPriceOverflow)
 	}
 
@@ -117,11 +118,11 @@ func getNextPriceAmount1Remove(
 ) *u256.Uint {
 	var quotient *u256.Uint
 
-	if amount.Lte(max160) {
+	if amount.Lte(consts.Max160()) {
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
 		quotient = u256.DivRoundingUp(shifted, liquidity)
 	} else {
-		quotient = u256.MulDivRoundingUp(amount, q96, liquidity)
+		quotient = u256.MulDivRoundingUp(amount, consts.Q96(), liquidity)
 	}
 
 	if !sqrtPX96.Gt(quotient) {
@@ -242,10 +243,10 @@ func getAmount1DeltaHelper(
 	difference := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if roundUp {
-		return u256.MulDivRoundingUp(liquidity, difference, q96)
+		return u256.MulDivRoundingUp(liquidity, difference, consts.Q96())
 	}
 
-	return u256.MulDiv(liquidity, difference, q96)
+	return u256.MulDiv(liquidity, difference, consts.Q96())
 }
 
 // GetAmount0Delta calculates the token0 amount difference within a price range, returning
@@ -270,7 +271,7 @@ func GetAmount0Delta(
 
 	if liquidity.IsNeg() {
 		u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
-		if u.Gt(maxInt256) {
+		if u.Gt(consts.MaxInt256()) {
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount0DeltaOverflow)
 		}
@@ -280,7 +281,7 @@ func GetAmount0Delta(
 	}
 
 	u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-	if u.Gt(maxInt256) {
+	if u.Gt(consts.MaxInt256()) {
 		// if u > (2**255 - 1), cannot cast to int256
 		panic(errAmount0DeltaOverflow)
 	}
@@ -310,7 +311,7 @@ func GetAmount1Delta(
 
 	if liquidity.IsNeg() {
 		u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
-		if u.Gt(maxInt256) {
+		if u.Gt(consts.MaxInt256()) {
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount1DeltaOverflow)
 		}
@@ -320,7 +321,7 @@ func GetAmount1Delta(
 	}
 
 	u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-	if u.Gt(maxInt256) {
+	if u.Gt(consts.MaxInt256()) {
 		// if u > (2**255 - 1), cannot cast to int256
 		panic(errAmount1DeltaOverflow)
 	}

@@ -9,6 +9,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/access"
@@ -934,12 +935,12 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 	t.Run("calculate claimable rewards with active deposits", func(cur realm, t *testing.T) {
 		// Create reward manager with accumulated rewards
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Add reward state for deposit with priceDebt = 0.5
 		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, // deposit amount
 			1000,    // start time
 			2000,    // end time
@@ -957,7 +958,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 
 	t.Run("no active deposits returns zero", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		// No reward states added
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
@@ -967,18 +968,18 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 
 	t.Run("multiple deposits with different claimable rewards", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
 		rewardState1 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit1", rewardState1)
 
 		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
 		rewardState2 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
+			u256.Zero().Div(consts.Q128(), u256.NewUint(4)), // priceDebt = 0.25
 			200_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit2", rewardState2)
@@ -1007,10 +1008,10 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 		// Setup reward manager with claimable rewards
 		projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit1", rewardState)
@@ -1134,11 +1135,11 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
 
 			// Set accumulated reward: Q128 / accumulatedRewardRatio
-			accumulatedReward := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
+			accumulatedReward := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
 			rm.SetAccumulatedRewardPerDepositX128(accumulatedReward)
 
 			// Set price debt: Q128 / priceDebtRatio
-			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
+			priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
 			rm.SetReward("deposit1", rewardState)
 
@@ -1253,10 +1254,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			// Setup reward manager with multiple deposits
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 accumulated
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 accumulated
 
 			for i, dep := range tt.deposits {
-				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
+				priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
 				rm.SetReward("deposit"+formatInt(int64(i)), rewardState)
 			}
@@ -1344,7 +1345,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			// Setup empty reward manager
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 			// No reward states added
 
 			projectTierRewardManagers.Set(tierID, rm)

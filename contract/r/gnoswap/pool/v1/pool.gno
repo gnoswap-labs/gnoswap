@@ -84,11 +84,11 @@ func (i *poolV1) Mint(
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	if amount0.Gt(zero) {
+	if amount0.Gt(u256.Zero()) {
 		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
 	}
 
-	if amount1.Gt(zero) {
+	if amount1.Gt(u256.Zero()) {
 		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
 	}
 
@@ -156,7 +156,7 @@ func (i *poolV1) Burn(
 		panic(err)
 	}
 
-	if amount0.Gt(zero) || amount1.Gt(zero) {
+	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
 

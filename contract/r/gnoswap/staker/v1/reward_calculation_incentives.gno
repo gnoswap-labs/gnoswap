@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 
@@ -154,7 +155,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	unclaimable := u256.MulDiv(
 		u256.NewUintFromInt64(timeDiff),
 		incentive.RewardPerSecondX128(),
-		q128,
+		consts.Q128(),
 	)
 	return safeConvertToInt64(unclaimable)
 }

@@ -7,12 +7,11 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	sr "gno.land/r/gnoswap/staker"
 )
-
-var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pools represents the global pool storage
 type Pools struct {
@@ -228,7 +227,7 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 	oldAcc := u256.MustFromDecimal(oldAccStr)
 	acc := u256.MulDiv(
 		u256.NewUintFromInt64(timeDiff),
-		q128,
+		consts.Q128(),
 		currentStakedLiquidity,
 	)
 	return u256.Zero().Add(oldAcc, acc)
@@ -423,7 +422,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 				panic(errOverflow)
 			}
 
-			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
+			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), consts.Q128())
 			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 			break
@@ -441,7 +440,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			panic(errOverflow)
 		}
 
-		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
+		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), consts.Q128())
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
@@ -483,7 +482,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 				panic(errOverflow)
 			}
 
-			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, consts.Q128())
 			rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
@@ -502,7 +501,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 			panic(errOverflow)
 		}
 
-		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, consts.Q128())
 		rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 

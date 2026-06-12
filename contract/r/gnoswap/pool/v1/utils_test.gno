@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -400,7 +401,7 @@ func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 	// 2. Verify MAX_SQRT_RATIO
 
 	uassert.Equal(t, MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
-	uassert.True(t, maxSqrtRatio.Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
+	uassert.True(t, consts.MaxSqrtRatio().Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
 
 	// 3. Verify masking logic
 	// mask = (1 << 128) - 1 = MAX_UINT128
@@ -409,11 +410,11 @@ func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 	uassert.Equal(t, mask.ToString(), maxUint128.ToString())
 
 	// 4. Verify actual masking
-	maskedMaxSqrt := new(u256.Uint).And(maxSqrtRatio, mask)
+	maskedMaxSqrt := new(u256.Uint).And(consts.MaxSqrtRatio(), mask)
 	uassert.Equal(t, "318775800626314356294205765087544249638", maskedMaxSqrt.ToString())
 
 	// 5. Verify toUint128 function result matches manual masking
-	toUint128Result := toUint128(maxSqrtRatio)
+	toUint128Result := toUint128(consts.MaxSqrtRatio())
 	uassert.Equal(t, maskedMaxSqrt.ToString(), toUint128Result.ToString())
 
 	// 6. Verify MAX_PRICE (MAX_SQRT_RATIO - 1)
@@ -421,7 +422,7 @@ func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 	uassert.Equal(t, MAX_PRICE, "1461446703485210103287273052203988822378723970341")
 
 	// Verify MAX_PRICE = MAX_SQRT_RATIO - 1
-	maxSqrtMinusOne := new(u256.Uint).Sub(maxSqrtRatio, u256.One())
+	maxSqrtMinusOne := new(u256.Uint).Sub(consts.MaxSqrtRatio(), u256.One())
 	uassert.True(t, maxPrice.Eq(maxSqrtMinusOne), "MAX_PRICE should equal MAX_SQRT_RATIO - 1")
 
 	// 7. Verify MAX_PRICE masking
@@ -445,7 +446,7 @@ func TestToUint128MaskedValuesRange(cur realm, t *testing.T) {
 	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
 
 	// toUint128 results
-	resultMaxSqrt := toUint128(maxSqrtRatio)
+	resultMaxSqrt := toUint128(consts.MaxSqrtRatio())
 	resultMaxPrice := toUint128(u256.MustFromDecimal(MAX_PRICE))
 
 	// Verify results are <= MAX_UINT128

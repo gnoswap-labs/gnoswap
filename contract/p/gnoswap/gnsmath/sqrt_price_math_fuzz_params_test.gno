@@ -45,24 +45,24 @@ func (p *getAmount0DeltaParams) ToString() string {
 func NewValidGetAmount0DeltaParams(t *fuzz.T) *getAmount0DeltaParams {
 	// Generate valid sqrt ratios within range
 	sqrtA := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioAX96").(*u256.Uint)
 
 	sqrtB := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioBX96").(*u256.Uint)
 
 	// Ensure sqrtA is not zero (division by zero)
 	if sqrtA.IsZero() {
 		sqrtA = u256.NewUint(1)
 	}
-	if sqrtA.Gte(MAX_SQRT_RATIO) {
-		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtA.Gte(MAX_SQRT_RATIO()) {
+		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
-	if sqrtB.Gte(MAX_SQRT_RATIO) {
-		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtB.Gte(MAX_SQRT_RATIO()) {
+		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	// Generate valid liquidity (both positive and negative)
@@ -143,21 +143,21 @@ func (p *getAmount1DeltaParams) ToString() string {
 func NewValidGetAmount1DeltaParams(t *fuzz.T) *getAmount1DeltaParams {
 	// Generate valid sqrt ratios within range
 	sqrtA := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioAX96").(*u256.Uint)
 
 	sqrtB := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioBX96").(*u256.Uint)
 
 	// Ensure within bounds
-	if sqrtA.Gte(MAX_SQRT_RATIO) {
-		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtA.Gte(MAX_SQRT_RATIO()) {
+		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
-	if sqrtB.Gte(MAX_SQRT_RATIO) {
-		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtB.Gte(MAX_SQRT_RATIO()) {
+		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	// Generate valid liquidity (both positive and negative)
@@ -223,12 +223,12 @@ func (p *nextPriceAmount0AddParams) ToString() string {
 
 func NewValidNextPriceAmount0AddParams(t *fuzz.T) *nextPriceAmount0AddParams {
 	currentSqrt := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "currentSqrtPriceX96").(*u256.Uint)
 
-	if currentSqrt.Gte(MAX_SQRT_RATIO) {
-		currentSqrt = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if currentSqrt.Gte(MAX_SQRT_RATIO()) {
+		currentSqrt = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(1, 1000000000000000000).Draw(t, "liquidity").(uint64)
@@ -303,12 +303,12 @@ func (p *nextPriceAmount0RemoveParams) ToString() string {
 
 func NewValidNextPriceAmount0RemoveParams(t *fuzz.T) *nextPriceAmount0RemoveParams {
 	currentSqrt := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "currentSqrtPriceX96").(*u256.Uint)
 
-	if currentSqrt.Gte(MAX_SQRT_RATIO) {
-		currentSqrt = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if currentSqrt.Gte(MAX_SQRT_RATIO()) {
+		currentSqrt = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(1000000, 1000000000000000000).Draw(t, "liquidity").(uint64)
@@ -383,12 +383,12 @@ func (p *nextPriceAmount1AddParams) ToString() string {
 
 func NewValidNextPriceAmount1AddParams(t *fuzz.T) *nextPriceAmount1AddParams {
 	sqrtP := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtPX96").(*u256.Uint)
 
-	if sqrtP.Gte(MAX_SQRT_RATIO) {
-		sqrtP = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtP.Gte(MAX_SQRT_RATIO()) {
+		sqrtP = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(1, 1000000000000000000).Draw(t, "liquidity").(uint64)
@@ -464,12 +464,12 @@ func (p *nextPriceAmount1RemoveParams) ToString() string {
 
 func NewValidNextPriceAmount1RemoveParams(t *fuzz.T) *nextPriceAmount1RemoveParams {
 	sqrtP := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtPX96").(*u256.Uint)
 
-	if sqrtP.Gte(MAX_SQRT_RATIO) {
-		sqrtP = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtP.Gte(MAX_SQRT_RATIO()) {
+		sqrtP = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(1000000, 1000000000000000000).Draw(t, "liquidity").(uint64)
@@ -536,13 +536,13 @@ func (p *amount0DeltaHelperParams) ToString() string {
 
 func NewValidAmount0DeltaHelperParams(t *fuzz.T) *amount0DeltaHelperParams {
 	sqrtA := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioAX96").(*u256.Uint)
 
 	sqrtB := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioBX96").(*u256.Uint)
 
 	if sqrtA.IsZero() {
@@ -551,11 +551,11 @@ func NewValidAmount0DeltaHelperParams(t *fuzz.T) *amount0DeltaHelperParams {
 	if sqrtB.IsZero() {
 		sqrtB = u256.NewUint(1)
 	}
-	if sqrtA.Gte(MAX_SQRT_RATIO) {
-		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtA.Gte(MAX_SQRT_RATIO()) {
+		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
-	if sqrtB.Gte(MAX_SQRT_RATIO) {
-		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtB.Gte(MAX_SQRT_RATIO()) {
+		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(0, 1000000000000000000).Draw(t, "liquidity").(uint64)
@@ -633,20 +633,20 @@ func (p *amount1DeltaHelperParams) ToString() string {
 
 func NewValidAmount1DeltaHelperParams(t *fuzz.T) *amount1DeltaHelperParams {
 	sqrtA := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioAX96").(*u256.Uint)
 
 	sqrtB := fuzz.Uint256Range(
-		MIN_SQRT_RATIO.ToString(),
-		MAX_SQRT_RATIO.ToString(),
+		MIN_SQRT_RATIO().ToString(),
+		MAX_SQRT_RATIO().ToString(),
 	).Draw(t, "sqrtRatioBX96").(*u256.Uint)
 
-	if sqrtA.Gte(MAX_SQRT_RATIO) {
-		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtA.Gte(MAX_SQRT_RATIO()) {
+		sqrtA = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
-	if sqrtB.Gte(MAX_SQRT_RATIO) {
-		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
+	if sqrtB.Gte(MAX_SQRT_RATIO()) {
+		sqrtB = u256.Zero().Sub(MAX_SQRT_RATIO(), u256.One())
 	}
 
 	liquidityVal := fuzz.Uint64Range(0, 1000000000000000000).Draw(t, "liquidity").(uint64)

@@ -54,10 +54,10 @@ func TestSqrtPriceMath_getNextPriceAmount0Add(t *testing.T) {
 		},
 		{
 			name:             "one_tick_no_move_when_amount_too_small",
-			currentSqrtPrice: new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(2)),
+			currentSqrtPrice: new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(2)),
 			liquidity:        u256.MustFromDecimal("1000000000000000000"),
 			amountToAdd:      u256.One(),
-			expected:         new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(2)),
+			expected:         new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(2)),
 		},
 	}
 
@@ -84,15 +84,15 @@ func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
 		},
 		{
 			name:             "quotient_check_fails_uses_fallback",
-			currentSqrtPrice: MAX_SQRT_RATIO,
+			currentSqrtPrice: MAX_SQRT_RATIO(),
 			liquidity:        u256.One(),
-			amountToAdd:      MAX_SQRT_RATIO,
+			amountToAdd:      MAX_SQRT_RATIO(),
 		},
 		{
 			name:             "denominator_overflow_fallback",
 			currentSqrtPrice: encodePriceSqrt("1", "1"),
 			liquidity:        u256.NewUint(2),
-			amountToAdd:      MAX_SQRT_RATIO,
+			amountToAdd:      MAX_SQRT_RATIO(),
 		},
 	}
 
@@ -142,7 +142,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 		},
 		{
 			name:           "remove_at_min_boundary",
-			current:        MIN_SQRT_RATIO,
+			current:        MIN_SQRT_RATIO(),
 			liquidity:      u256.MustFromDecimal("1000000000000000000"),
 			amountToRemove: tiny,
 			validate: func(t *testing.T, before, after *u256.Uint) {
@@ -160,7 +160,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 		},
 		{
 			name:           "remove_near_max_with_huge_liquidity",
-			current:        new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(1000000)),
+			current:        new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(1000000)),
 			liquidity:      u256.MustFromDecimal("100000000000000000000000000"),
 			amountToRemove: tiny,
 			validate: func(t *testing.T, before, after *u256.Uint) {
@@ -193,7 +193,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 		},
 		{
 			name:           "remove_at_max_boundary_insufficient_liquidity",
-			current:        new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.One()), // MAX - 1
+			current:        new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.One()), // MAX - 1
 			liquidity:      u256.MustFromDecimal("1000000000000000000000"),
 			amountToRemove: u256.MustFromDecimal("1000"),
 			shouldPanic:    true,
@@ -371,21 +371,21 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(cur realm, t *testing.T) {
 		},
 		{
 			name:      "add_at_max_boundary",
-			sqrtPX96:  MAX_SQRT_RATIO,
+			sqrtPX96:  MAX_SQRT_RATIO(),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("1000"),
 			expected:  u256.MustFromDecimal("1461446703485210103287273052203988901606886484606"),
 		},
 		{
 			name:      "add_near_max_increases_price",
-			sqrtPX96:  new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.MustFromDecimal("1000000000000")),
+			sqrtPX96:  new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.MustFromDecimal("1000000000000")),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    u256.MustFromDecimal("100000000000000000"),
 			expected:  u256.MustFromDecimal("1461446703485210103295195868455415255138078365375"),
 		},
 		{
 			name:      "add_at_min_increases_price",
-			sqrtPX96:  MIN_SQRT_RATIO,
+			sqrtPX96:  MIN_SQRT_RATIO(),
 			liquidity: u256.MustFromDecimal("1000000"),
 			amount:    u256.MustFromDecimal("100"),
 			expected:  u256.MustFromDecimal("7922816251426438054483134"),
@@ -545,7 +545,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(cur realm, t *testing.T) {
 		},
 		{
 			name:        "price_below_min_panic",
-			sqrtPX96:    MIN_SQRT_RATIO,
+			sqrtPX96:    MIN_SQRT_RATIO(),
 			liquidity:   u256.MustFromDecimal("1000000000000000000"),
 			amount:      u256.One(),
 			shouldPanic: true,
@@ -638,13 +638,13 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
 	}{
 		{
 			name:      "amount_exactly_MAX_UINT160",
-			sqrtPX96:  MAX_SQRT_RATIO,
+			sqrtPX96:  MAX_SQRT_RATIO(),
 			liquidity: MAX_UINT160,
 			amount:    MAX_UINT160,
 		},
 		{
 			name:      "amount_one_below_MAX_UINT160",
-			sqrtPX96:  MAX_SQRT_RATIO,
+			sqrtPX96:  MAX_SQRT_RATIO(),
 			liquidity: MAX_UINT160,
 			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
 		},
@@ -939,7 +939,7 @@ func TestSqrtPriceMath_getAmount0DeltaHelper(cur realm, t *testing.T) {
 		// Extreme values
 		{
 			name:          "min_price_range",
-			sqrtRatioAX96: MIN_SQRT_RATIO,
+			sqrtRatioAX96: MIN_SQRT_RATIO(),
 			sqrtRatioBX96: u256.MustFromDecimal("4295128740"),
 			liquidity:     u256.MustFromDecimal("1000000000000000000"),
 			roundUp:       true,
@@ -948,7 +948,7 @@ func TestSqrtPriceMath_getAmount0DeltaHelper(cur realm, t *testing.T) {
 		{
 			name:          "max_price_range",
 			sqrtRatioAX96: u256.MustFromDecimal("1461446703485210103287273052203988822378723970340"),
-			sqrtRatioBX96: MAX_SQRT_RATIO,
+			sqrtRatioBX96: MAX_SQRT_RATIO(),
 			liquidity:     u256.MustFromDecimal("1000000000000000000"),
 			roundUp:       true,
 			expected:      "1",
@@ -1025,7 +1025,7 @@ func TestSqrtPriceMath_getAmount1DeltaHelper(t *testing.T) {
 		// Extreme values
 		{
 			name:          "min_price_range",
-			sqrtRatioAX96: MIN_SQRT_RATIO,
+			sqrtRatioAX96: MIN_SQRT_RATIO(),
 			sqrtRatioBX96: u256.MustFromDecimal("4295128740"),
 			liquidity:     u256.MustFromDecimal("1000000000000000000"),
 			roundUp:       true,
@@ -1034,7 +1034,7 @@ func TestSqrtPriceMath_getAmount1DeltaHelper(t *testing.T) {
 		{
 			name:          "max_price_range",
 			sqrtRatioAX96: u256.MustFromDecimal("1461446703485210103287273052203988822378723970340"),
-			sqrtRatioBX96: MAX_SQRT_RATIO,
+			sqrtRatioBX96: MAX_SQRT_RATIO(),
 			liquidity:     u256.MustFromDecimal("1000000000000000000"),
 			roundUp:       false,
 			expected:      "0",
