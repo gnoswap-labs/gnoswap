@@ -6,6 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -71,7 +73,7 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 		"Execute",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
-		"proposalId", formatInt(proposalID),
+		"proposalId", utils.FormatInt(proposalID),
 	)
 
 	return proposal.ID()
@@ -180,7 +182,7 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 		"Cancel",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
-		"proposalId", formatInt(proposalID),
+		"proposalId", utils.FormatInt(proposalID),
 	)
 
 	return proposal.ID()

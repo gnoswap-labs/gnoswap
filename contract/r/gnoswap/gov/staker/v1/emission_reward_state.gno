@@ -2,6 +2,7 @@ package v1
 
 import (
 	"gno.land/p/gnoswap/consts"
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -44,12 +45,12 @@ func (self *EmissionRewardStateResolver) GetClaimableRewardAmount(
 		return 0, err
 	}
 
-	accumulatedUnclaimedReward := safeSubInt64(
+	accumulatedUnclaimedReward := gnsmath.SafeSubInt64(
 		self.GetAccumulatedRewardAmount(),
 		self.GetClaimedRewardAmount(),
 	)
 
-	return safeAddInt64(accumulatedUnclaimedReward, rewardAmount), nil
+	return gnsmath.SafeAddInt64(accumulatedUnclaimedReward, rewardAmount), nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards since the last update.
@@ -87,7 +88,7 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 		u256.NewUintFromInt64(stakedAmount),
 		consts.Q128(),
 	)
-	return safeConvertToInt64(rewardAmount), nil
+	return gnsmath.SafeConvertToInt64(rewardAmount), nil
 }
 
 // addStake increases the staked amount for this address.
@@ -114,7 +115,7 @@ func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
 		return
 	}
 	// clamp at zero on underflow
-	newAmt := safeAddInt64(self.GetStakedAmount(), delta)
+	newAmt := gnsmath.SafeAddInt64(self.GetStakedAmount(), delta)
 	if newAmt < 0 {
 		newAmt = 0
 	}
@@ -137,7 +138,7 @@ func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (i
 
 	accumulatedRewardAmount := self.GetAccumulatedRewardAmount()
 	previousClaimedAmount := self.GetClaimedRewardAmount()
-	claimableAmount := safeSubInt64(accumulatedRewardAmount, previousClaimedAmount)
+	claimableAmount := gnsmath.SafeSubInt64(accumulatedRewardAmount, previousClaimedAmount)
 
 	self.SetClaimedRewardAmount(accumulatedRewardAmount)
 	self.SetClaimedTimestamp(currentTimestamp)
@@ -162,7 +163,7 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 
 	// Accumulate newly earned rewards
 	if rewardAmount != 0 {
-		self.SetAccumulatedRewardAmount(safeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount))
+		self.SetAccumulatedRewardAmount(gnsmath.SafeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount))
 	}
 
 	// Deep copy to avoid aliasing with external state

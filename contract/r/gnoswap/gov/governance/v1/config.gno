@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -92,15 +94,15 @@ func (gv *governanceV1) Reconfigure(
 		"Reconfigure",
 		"prevAddr", caller.String(),
 		"prevRealm", prev.PkgPath(),
-		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
-		"votingPeriod", formatInt(newCfg.VotingPeriod),
-		"votingWeightSmoothingDuration", formatInt(newCfg.VotingWeightSmoothingDuration),
-		"quorum", formatInt(newCfg.Quorum),
-		"proposalCreationThreshold", formatInt(newCfg.ProposalCreationThreshold),
-		"executionDelay", formatInt(newCfg.ExecutionDelay),
-		"executionPeriod", formatInt(newCfg.ExecutionWindow),
-		"newConfigVersion", formatInt(nextVersion),
-		"prevConfigVersion", formatInt(previousVersion),
+		"votingStartDelay", utils.FormatInt(newCfg.VotingStartDelay),
+		"votingPeriod", utils.FormatInt(newCfg.VotingPeriod),
+		"votingWeightSmoothingDuration", utils.FormatInt(newCfg.VotingWeightSmoothingDuration),
+		"quorum", utils.FormatInt(newCfg.Quorum),
+		"proposalCreationThreshold", utils.FormatInt(newCfg.ProposalCreationThreshold),
+		"executionDelay", utils.FormatInt(newCfg.ExecutionDelay),
+		"executionPeriod", utils.FormatInt(newCfg.ExecutionWindow),
+		"newConfigVersion", utils.FormatInt(nextVersion),
+		"prevConfigVersion", utils.FormatInt(previousVersion),
 	)
 
 	return nextVersion

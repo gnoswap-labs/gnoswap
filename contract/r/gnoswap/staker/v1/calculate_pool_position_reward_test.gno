@@ -8,6 +8,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -782,7 +783,7 @@ func TestCalcPositionReward(cur realm, t *testing.T) {
 				// Initialize pool state with tick at 500 (out of range)
 				poolResolver := NewPoolResolver(pool)
 				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
-				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(500))  // Out of range
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(500))   // Out of range
 				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.Zero()) // No in-range liquidity
 				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
@@ -1859,11 +1860,11 @@ func TestCollectReward_LazySync_IterationBounds(cur realm, t *testing.T) {
 	}
 
 	// Verify iteration bounds are correct
-	expectedStart := formatAnyInt(lastUpdate)
-	expectedEnd := formatAnyInt(currentTime)
+	expectedStart := utils.FormatInt(lastUpdate)
+	expectedEnd := utils.FormatInt(currentTime)
 
 	// This simulates the Iterate call in calculatePositionReward
-	// Iterate(formatInt(lastUpdate), formatInt(currentTime), ...)
+	// Iterate(utils.FormatInt(lastUpdate), utils.FormatInt(currentTime), ...)
 	if expectedStart >= expectedEnd {
 		t.Errorf("Invalid iteration range: [%s, %s]", expectedStart, expectedEnd)
 	}

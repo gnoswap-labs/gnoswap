@@ -2,14 +2,10 @@ package v1
 
 import (
 	"errors"
-	"math"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // poolPathDivide splits a pool path into token addresses and fee tier.
@@ -38,140 +34,4 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
-}
-
-// formatUint formats an unsigned integer to string.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type for Unsigned: %T", v))
-	}
-}
-
-// formatAnyInt formats a signed integer to string.
-func formatAnyInt(v any) string {
-	switch v := v.(type) {
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case int:
-		return strconv.Itoa(v)
-	default:
-		panic(ufmt.Sprintf("invalid type for Signed: %T", v))
-	}
-}
-
-// formatBool formats a boolean to string.
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
-
-// safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
-//
-// This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
-// the maximum allowable range for int64 (`2^63 - 1`), it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - int64: The converted value if it falls within the int64 range.
-//
-// Panics:
-//   - If the `value` exceeds the range of int64, the function will panic with an error indicating
-//     the overflow and the original value.
-func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
-		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max: 9223372036854775807)",
-			value.ToString(),
-		))
-	}
-	return int64(res)
-}
-
-// safeMulInt64 performs safe multiplication of int64 values, panicking on overflow or underflow
-func safeMulInt64(a, b int64) int64 {
-	if a == 0 || b == 0 {
-		return 0
-	}
-	if a > 0 && b > 0 {
-		if a > math.MaxInt64/b {
-			panic("int64 multiplication overflow")
-		}
-	} else if a < 0 && b < 0 {
-		if a < math.MaxInt64/b {
-			panic("int64 multiplication overflow")
-		}
-	} else if a > 0 && b < 0 {
-		if b < math.MinInt64/a {
-			panic("int64 multiplication underflow")
-		}
-	} else { // a < 0 && b > 0
-		if a < math.MinInt64/b {
-			panic("int64 multiplication underflow")
-		}
-	}
-	return a * b
-}
-
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-	return a + b
-}
-
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-	return a - b
-}
-
-// safeUint64ToInt64 safely converts a uint64 value to int64, panicking on overflow.
-func safeUint64ToInt64(value uint64) int64 {
-	if value > uint64(math.MaxInt64) {
-		panic(ufmt.Sprintf(
-			"amount(%d) overflows int64 range (max: 9223372036854775807)",
-			value,
-		))
-	}
-	return int64(value)
-}
-
-func safeMulDivInt64(a, b, c int64) int64 {
-	if a == 0 || b == 0 {
-		return 0
-	}
-
-	// calculate amount to swap for this route
-	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
-	if overflow {
-		panic(errors.New(errOverflow))
-	}
-
-	result = i256.Zero().Div(result, i256.NewInt(c))
-	if !result.IsInt64() {
-		panic(errors.New(errOverflow))
-	}
-
-	return result.Int64()
 }

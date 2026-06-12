@@ -1,10 +1,6 @@
 package v1
 
 import (
-	"math"
-	"strconv"
-
-	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -28,37 +24,16 @@ const (
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
-// safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
-// This function attempts to convert the given *u256.Uint value to an int64.
-// If the value exceeds the maximum allowable range for int64 (2^63 - 1), it panics.
-func safeConvertToInt64(value *u256.Uint) int64 {
-	if value == nil {
-		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
-	}
-	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows int64 range (max %s)",
-			errOutOfRange,
-			value.ToString(),
-			MAX_INT64,
-		))
-	}
-	return int64(res)
-}
+var (
+	maxInt128FromDecimal  = i256.MustFromDecimal(MAX_INT128)
+	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
+	q128FromDecimal       = u256.MustFromDecimal(Q128)
+)
 
-// safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
-// This function converts an unsigned 256-bit integer to a signed 256-bit integer.
-// If the value exceeds the maximum allowable int128 range (2^127 - 1), it panics.
-func safeConvertToInt128(value *u256.Uint) *i256.Int {
-	liquidityDelta := i256.FromUint256(value)
-	if liquidityDelta.Gt(consts.MaxInt128I256()) {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows int128 range",
-			errOverflow, value.ToString()))
-	}
-	return liquidityDelta
-}
+var uint128Mask = func() *u256.Uint {
+	m := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
+	return m.Sub(m, u256.One())
+}()
 
 // toUint128 ensures a *u256.Uint value fits within the uint128 range.
 //
@@ -83,8 +58,8 @@ func toUint128(value *u256.Uint) *u256.Uint {
 		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
 	}
 
-	if value.Gt(consts.MaxUint128()) {
-		return u256.Zero().And(value, consts.MaxUint128())
+	if value.Gt(maxUint128FromDecimal) {
+		return u256.Zero().And(value, uint128Mask)
 	}
 	return value
 }
@@ -118,7 +93,7 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
-	if value.Gt(consts.MaxInt128I256()) {
+	if value.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverflow, value.ToString()))
@@ -133,70 +108,4 @@ func checkTickSpacing(tick, tickSpacing int32) {
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
 		))
 	}
-}
-
-// formatUint converts various unsigned integer types to string representation.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint16:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatInt converts various signed integer types to string representation.
-func formatInt(v any) string {
-	switch v := v.(type) {
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case int:
-		return strconv.Itoa(v)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatBool converts a boolean value to string representation.
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
-
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-	return a + b
-}
-
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-	return a - b
-}
-
-func safeParseInt64(value string) int64 {
-	amountInt64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt64
 }

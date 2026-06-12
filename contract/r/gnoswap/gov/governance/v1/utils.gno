@@ -1,31 +1,11 @@
 package v1
 
 import (
-	"math"
 	"strconv"
 	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
-
-// formatInt formats an integer to a string.
-func formatInt(v any) string {
-	switch v := v.(type) {
-	case int8:
-		return strconv.FormatInt(int64(v), 10)
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatBool formats a boolean to a string.
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
 
 // numberKind represents the type of number to parse.
 type numberKind int
@@ -129,56 +109,4 @@ func parseUint64(s string) uint64 {
 	}
 
 	return num
-}
-
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-	return a + b
-}
-
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-	return a - b
-}
-
-// safeMulDiv performs safe multiplication and division: (a * b) / c
-// Prevents overflow in multiplication step by checking bounds
-func safeMulDiv(a, b, c int64) int64 {
-	if c == 0 {
-		panic("division by zero in safeMulDiv")
-	}
-
-	// Check for multiplication overflow
-	// If a * b would overflow, we need to be careful
-	if a != 0 && b != 0 {
-		// Check if multiplication would overflow
-		if a > 0 && b > 0 && a > math.MaxInt64/b {
-			panic("int64 multiplication overflow in safeMulDiv")
-		}
-		if a > 0 && b < 0 && b < math.MinInt64/a {
-			panic("int64 multiplication underflow in safeMulDiv")
-		}
-		if a < 0 && b > 0 && a < math.MinInt64/b {
-			panic("int64 multiplication underflow in safeMulDiv")
-		}
-		if a < 0 && b < 0 && a < math.MaxInt64/b {
-			panic("int64 multiplication overflow in safeMulDiv")
-		}
-	}
-
-	result := (a * b) / c
-
-	return result
 }

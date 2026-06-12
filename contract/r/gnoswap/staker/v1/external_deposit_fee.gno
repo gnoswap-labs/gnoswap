@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -63,8 +64,8 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 		"SetDepositGnsAmount",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevAmount", formatAnyInt(prevDepositGnsAmount),
-		"newAmount", formatAnyInt(amount),
+		"prevAmount", utils.FormatInt(prevDepositGnsAmount),
+		"newAmount", utils.FormatInt(amount),
 	)
 }
 
@@ -90,8 +91,8 @@ func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 		"SetMinimumRewardAmount",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevAmount", formatAnyInt(prevMinimumRewardAmount),
-		"newAmount", formatAnyInt(amount),
+		"prevAmount", utils.FormatInt(prevMinimumRewardAmount),
+		"newAmount", utils.FormatInt(amount),
 	)
 }
 
@@ -143,9 +144,9 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", tokenPath,
-		"prevAmountFound", formatBool(found),
-		"prevAmount", formatAnyInt(prevAmount), // Will be 0 if !found
-		"newAmount", formatAnyInt(amount64),
+		"prevAmountFound", utils.FormatBool(found),
+		"prevAmount", utils.FormatInt(prevAmount), // Will be 0 if !found
+		"newAmount", utils.FormatInt(amount64),
 	)
 }
 

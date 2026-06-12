@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
+
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -336,7 +338,7 @@ func TestGetCurrentYear_AllYearBoundaries(cur realm, t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run("year_"+formatInt(year)+"_"+tt.name, func(cur realm, t *testing.T) {
+			t.Run("year_"+utils.FormatInt(year)+"_"+tt.name, func(cur realm, t *testing.T) {
 				got := es.getCurrentYear(tt.ts)
 				uassert.Equal(t, year, got)
 			})
@@ -438,7 +440,7 @@ func TestHalvingYearTimestampContinuity(cur realm, t *testing.T) {
 
 	// Verify that year boundaries are continuous
 	for year := int64(1); year < HALVING_END_YEAR; year++ {
-		t.Run("year_"+formatInt(year)+"_to_"+formatInt(year+1), func(cur realm, t *testing.T) {
+		t.Run("year_"+utils.FormatInt(year)+"_to_"+utils.FormatInt(year+1), func(cur realm, t *testing.T) {
 			endTs := es.getHalvingYearEndTimestamp(year)
 			nextStartTs := es.getHalvingYearStartTimestamp(year + 1)
 
@@ -793,7 +795,7 @@ func TestEmissionStateYearBoundaryPrecision(cur realm, t *testing.T) {
 
 	// Test exact second transitions
 	for year := int64(1); year < HALVING_END_YEAR; year++ {
-		t.Run("year_"+formatInt(year)+"_to_"+formatInt(year+1), func(cur realm, t *testing.T) {
+		t.Run("year_"+utils.FormatInt(year)+"_to_"+utils.FormatInt(year+1), func(cur realm, t *testing.T) {
 			lastSecondOfYear := es.getHalvingYearEndTimestamp(year)
 			firstSecondOfNextYear := es.getHalvingYearStartTimestamp(year + 1)
 
@@ -831,7 +833,7 @@ func TestEmissionStateHalvingDataIntegrity(cur realm, t *testing.T) {
 
 	// Verify halving data matches emission state getters for all years
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		t.Run("year_"+formatInt(year), func(cur realm, t *testing.T) {
+		t.Run("year_"+utils.FormatInt(year), func(cur realm, t *testing.T) {
 			uassert.Equal(t, halvingData.getStartTimestamp(year), es.getHalvingYearStartTimestamp(year))
 			uassert.Equal(t, halvingData.getEndTimestamp(year), es.getHalvingYearEndTimestamp(year))
 			uassert.Equal(t, halvingData.getAmountPerSecond(year), es.getHalvingYearAmountPerSecond(year))
@@ -910,7 +912,7 @@ func TestEmissionStateAllYearsIndependent(cur realm, t *testing.T) {
 
 	// Verify each year was modified independently
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		t.Run("year_"+formatInt(year), func(cur realm, t *testing.T) {
+		t.Run("year_"+utils.FormatInt(year), func(cur realm, t *testing.T) {
 			expected := year * 1000
 			got := es.getHalvingYearAccumulatedAmount(year)
 			uassert.Equal(t, expected, got)

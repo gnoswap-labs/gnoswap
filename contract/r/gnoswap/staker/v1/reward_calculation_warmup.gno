@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	sr "gno.land/r/gnoswap/staker"
@@ -82,7 +83,7 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 		panic(errors.New(errOverflow))
 	}
 	totalPenalty = u256.Zero().Div(totalPenalty, divisor)
-	return safeConvertToInt64(totalReward), safeConvertToInt64(totalPenalty)
+	return gnsmath.SafeConvertToInt64(totalReward), gnsmath.SafeConvertToInt64(totalPenalty)
 }
 
 // safeAddTime performs safe addition with overflow protection
@@ -96,5 +97,5 @@ func safeAddTime(currentTime, duration int64) int64 {
 		return math.MaxInt64
 	}
 
-	return safeAddInt64(currentTime, duration)
+	return gnsmath.SafeAddInt64(currentTime, duration)
 }

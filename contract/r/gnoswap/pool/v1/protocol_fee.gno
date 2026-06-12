@@ -4,8 +4,10 @@ import (
 	"chain"
 	"errors"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -62,14 +64,14 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
 	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
 
-	fee0Int64 := safeConvertToInt64(fee0)
-	fee1Int64 := safeConvertToInt64(fee1)
+	fee0Int64 := gnsmath.SafeConvertToInt64(fee0)
+	fee1Int64 := gnsmath.SafeConvertToInt64(fee1)
 
 	i.addPendingProtocolFee(0, rlm, token0Path, fee0Int64)
 	i.addPendingProtocolFee(0, rlm, token1Path, fee1Int64)
 	i.addToProtocolFee(0, rlm)
-	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
-	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
+	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
+	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
@@ -84,7 +86,7 @@ func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amoun
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := i.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
@@ -146,8 +148,8 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 		"SetPoolCreationFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatInt(prevPoolCreationFee),
-		"newFee", formatInt(fee),
+		"prevFee", utils.FormatInt(prevPoolCreationFee),
+		"newFee", utils.FormatInt(fee),
 	)
 }
 
@@ -179,8 +181,8 @@ func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 		"SetWithdrawalFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevWithdrawalFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevWithdrawalFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 

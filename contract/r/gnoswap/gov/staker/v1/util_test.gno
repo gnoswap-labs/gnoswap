@@ -3,91 +3,12 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/p/onbloc/json"
 )
-
-// TestFormatUint tests uint64 formatting
-func TestFormatUint(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		input    uint64
-		expected string
-	}{
-		{
-			name:     "Format zero",
-			input:    0,
-			expected: "0",
-		},
-		{
-			name:     "Format positive number",
-			input:    12345,
-			expected: "12345",
-		},
-		{
-			name:     "Format large number",
-			input:    18446744073709551615, // max uint64
-			expected: "18446744073709551615",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// when
-			result := formatUint(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
-// TestFormatInt tests int64 formatting
-func TestFormatInt(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		input    int64
-		expected string
-	}{
-		{
-			name:     "Format zero",
-			input:    0,
-			expected: "0",
-		},
-		{
-			name:     "Format positive number",
-			input:    12345,
-			expected: "12345",
-		},
-		{
-			name:     "Format negative number",
-			input:    -12345,
-			expected: "-12345",
-		},
-		{
-			name:     "Format max int64",
-			input:    9223372036854775807,
-			expected: "9223372036854775807",
-		},
-		{
-			name:     "Format min int64",
-			input:    -9223372036854775808,
-			expected: "-9223372036854775808",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// when
-			result := formatInt(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
 
 // TestUtil_marshal tests JSON marshalling
 func TestUtil_marshal(cur realm, t *testing.T) {
@@ -381,20 +302,19 @@ func TestUtil_safeConvertToInt64(cur realm, t *testing.T) {
 			name:                 "panics on overflow - int64 max + 1",
 			input:                u256.NewUint(9223372036854775808), // int64 max + 1
 			expectedHasPanic:     true,
-			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
-
 			// when/then
 			if tc.expectedHasPanic {
 				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
-					safeConvertToInt64(tc.input)
+					gnsmath.SafeConvertToInt64(tc.input)
 				})
 			} else {
-				result := safeConvertToInt64(tc.input)
+				result := gnsmath.SafeConvertToInt64(tc.input)
 				uassert.Equal(t, result, tc.expected)
 			}
 		})

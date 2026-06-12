@@ -2,9 +2,8 @@ package staker
 
 import (
 	"errors"
-	"strconv"
-
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -139,14 +138,14 @@ func (s *govStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BP
 
 func (s *govStakerStore) HasDelegation(id int64) bool {
 	delegations := s.GetAllDelegations()
-	_, exists := delegations.Get(int64ToString(id))
+	_, exists := delegations.Get(utils.Int64ToString(id))
 	return exists
 }
 
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	delegations := s.GetAllDelegations()
 
-	result, exists := delegations.Get(int64ToString(id))
+	result, exists := delegations.Get(utils.Int64ToString(id))
 	if !exists {
 		return nil, false
 	}
@@ -166,7 +165,7 @@ func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *D
 
 	delegations := s.GetAllDelegations()
 
-	delegations.Set(int64ToString(id), delegation)
+	delegations.Set(utils.Int64ToString(id), delegation)
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 
@@ -177,7 +176,7 @@ func (s *govStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
 
 	delegations := s.GetAllDelegations()
 
-	delegations.Remove(int64ToString(id))
+	delegations.Remove(utils.Int64ToString(id))
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 
@@ -377,9 +376,4 @@ func (s *govStakerStore) SetLaunchpadProjectDeposits(_ int, rlm realm, deposits 
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyLaunchpadProjectDeposits, deposits)
-}
-
-// Helper functions
-func int64ToString(n int64) string {
-	return strconv.FormatInt(n, 10)
 }

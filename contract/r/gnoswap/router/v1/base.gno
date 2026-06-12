@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -75,7 +76,7 @@ func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapTy
 			}
 
 			// update the remaining amount
-			remainRequestAmount = safeSubInt64(remainRequestAmount, swapAmount)
+			remainRequestAmount = gnsmath.SafeSubInt64(remainRequestAmount, swapAmount)
 			toSwapAmount = swapAmount
 		} else {
 			toSwapAmount = remainRequestAmount
@@ -86,8 +87,8 @@ func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapTy
 			return 0, 0, err
 		}
 
-		resultAmountIn = safeAddInt64(resultAmountIn, amountIn)
-		resultAmountOut = safeAddInt64(resultAmountOut, amountOut)
+		resultAmountIn = gnsmath.SafeAddInt64(resultAmountIn, amountIn)
+		resultAmountOut = gnsmath.SafeAddInt64(resultAmountOut, amountOut)
 	}
 
 	return resultAmountIn, resultAmountOut, nil

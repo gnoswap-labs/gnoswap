@@ -4,6 +4,7 @@ import (
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -921,7 +922,7 @@ func TestGetProjectTierRewardManager(cur realm, t *testing.T) {
 					tier180Pct:      25,
 					recipientSuffix: "recipient",
 				})
-				projectTierID = projectID + ":" + formatInt(projectTier30)
+				projectTierID = projectID + ":" + utils.FormatInt(projectTier30)
 			} else {
 				projectTierID = "nonexistent-project-tier-id"
 			}
@@ -959,7 +960,7 @@ func TestGetProjectTierRewardTotalDistributeAmount(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		totalDistribute, err := lp.GetProjectTierRewardTotalDistributeAmount(projectTierID)
@@ -987,7 +988,7 @@ func TestGetProjectTierRewardDistributeStartTime(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		startTime, err := lp.GetProjectTierRewardDistributeStartTime(projectTierID)
@@ -1015,7 +1016,7 @@ func TestGetProjectTierRewardDistributeEndTime(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		endTime, err := lp.GetProjectTierRewardDistributeEndTime(projectTierID)
@@ -1071,7 +1072,7 @@ func TestGetRewardState(cur realm, t *testing.T) {
 					tier:          30,
 				})
 
-				projectTierID = projectID + ":" + formatInt(30)
+				projectTierID = projectID + ":" + utils.FormatInt(30)
 			} else {
 				projectTierID = "nonexistent-project-tier-id"
 				depositID = "nonexistent-deposit-id"
@@ -1150,7 +1151,7 @@ func TestGetDepositProjectTierID(cur realm, t *testing.T) {
 
 		// Verify
 		uassert.NoError(t, err)
-		uassert.Equal(t, projectID+":"+formatInt(30), projectTierID)
+		uassert.Equal(t, projectID+":"+utils.FormatInt(30), projectTierID)
 	})
 }
 
@@ -1499,7 +1500,7 @@ func TestGetProjectTierRewardDistributeAmountPerSecondX128(cur realm, t *testing
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardDistributeAmountPerSecondX128(projectTierID)
@@ -1526,7 +1527,7 @@ func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(cur realm, t *testi
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierID)
@@ -1553,7 +1554,7 @@ func TestGetProjectTierRewardTotalClaimedAmount(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardTotalClaimedAmount(projectTierID)
@@ -1580,7 +1581,7 @@ func TestGetProjectTierRewardAccumulatedDistributeAmount(cur realm, t *testing.T
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardAccumulatedDistributeAmount(projectTierID)
@@ -1607,7 +1608,7 @@ func TestGetProjectTierRewardAccumulatedTime(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		time, err := lp.GetProjectTierRewardAccumulatedTime(projectTierID)
@@ -1634,7 +1635,7 @@ func TestGetProjectTierRewardClaimableDuration(cur realm, t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		duration, err := lp.GetProjectTierRewardClaimableDuration(projectTierID)

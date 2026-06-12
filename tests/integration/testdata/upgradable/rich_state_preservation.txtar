@@ -17,6 +17,7 @@ loadpkg gno.land/p/gnoswap/consts
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/utils
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/r/gnoswap/rbac

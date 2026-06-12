@@ -3,7 +3,6 @@ package v1
 import (
 	"time"
 
-	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -75,12 +74,12 @@ func positionUpdate(
 
 	tokensOwed0 := u256.Zero()
 	if !diff0.IsZero() {
-		tokensOwed0 = u256.MulDiv(diff0, posLiquidity, consts.Q128())
+		tokensOwed0 = u256.MulDiv(diff0, posLiquidity, q128FromDecimal)
 	}
 
 	tokensOwed1 := u256.Zero()
 	if !diff1.IsZero() {
-		tokensOwed1 = u256.MulDiv(diff1, posLiquidity, consts.Q128())
+		tokensOwed1 = u256.MulDiv(diff1, posLiquidity, q128FromDecimal)
 	}
 
 	if !isZeroLiquidityDelta {
@@ -90,9 +89,9 @@ func positionUpdate(
 	position.SetFeeGrowthInside0LastX128(feeGrowthInside0X128.ToString())
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128.ToString())
 
-	if tokensOwed0.Gt(u256.Zero()) || tokensOwed1.Gt(u256.Zero()) {
-		owed0 := safeAddInt64(position.TokensOwed0(), safeConvertToInt64(tokensOwed0))
-		owed1 := safeAddInt64(position.TokensOwed1(), safeConvertToInt64(tokensOwed1))
+	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
+		owed0 := gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(tokensOwed0))
+		owed1 := gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(tokensOwed1))
 
 		position.SetTokensOwed0(owed0)
 		position.SetTokensOwed1(owed1)
@@ -210,7 +209,7 @@ func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
 //   - *u256.Uint: amount of token1 needed/returned
 func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
-		return pl.NewDefaultPositionInfo(), u256.Zero(), u256.Zero(), err
+		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
 
 	// get current state and price bounds
@@ -218,12 +217,12 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 	// update position state
 	position, err := updatePosition(p, params, tick)
 	if err != nil {
-		return pl.NewDefaultPositionInfo(), u256.Zero(), u256.Zero(), err
+		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
 
 	liqDelta := params.liquidityDelta
 	if liqDelta.IsZero() {
-		return position, u256.Zero(), u256.Zero(), nil
+		return position, zero, zero, nil
 	}
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
@@ -251,7 +250,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// Update oracle BEFORE liquidity changes
 		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
 		if err != nil {
-			return pl.NewDefaultPositionInfo(), u256.Zero(), u256.Zero(), err
+			return pl.NewDefaultPositionInfo(), zero, zero, err
 		}
 
 		// token0 used from current price to upper tick

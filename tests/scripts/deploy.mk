@@ -23,7 +23,7 @@ TEST_TOKEN_NAMES := atom atone btc dai eth photon sol trx usdc usdt
 deploy-test-tokens: $(addprefix deploy-,$(TEST_TOKEN_NAMES))
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-uint256 deploy-int256 deploy-consts deploy-rbac deploy-gnsmath deploy-store deploy-version_manager
+deploy-libraries: deploy-uint256 deploy-int256 deploy-consts deploy-rbac deploy-gnsmath deploy-store deploy-version_manager deploy-utils
 
 .PHONY: deploy-base-contracts
 deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission deploy-common deploy-community_pool deploy-gnft deploy-xgns
@@ -67,6 +67,11 @@ deploy-store:
 deploy-version_manager:
 	$(info ************ deploy version_manager ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 16766ugnot -gas-wanted 16766000 -memo "" gnoswap_admin
+	@echo
+
+deploy-utils:
+	$(info ************ deploy utils ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/utils -pkgpath gno.land/p/gnoswap/utils -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20000ugnot -gas-wanted 20000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-rbac-realm:

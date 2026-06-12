@@ -16,7 +16,6 @@ const (
 	errUnAuthorizedCaller     = "[GNOSWAP-ROUTER-009] unauthorized caller"
 	errHopsOutOfRange         = "[GNOSWAP-ROUTER-010] number of hops must be 1~3"
 	errSameTokenSwap          = "[GNOSWAP-ROUTER-011] cannot swap same token"
-	errOverflow               = "[GNOSWAP-ROUTER-012] overflow"
 	errInvalidRoutePath       = "[GNOSWAP-ROUTER-013] invalid route path"
 	errInvalidRouteFirstToken = "[GNOSWAP-ROUTER-014] invalid route first token"
 	errInvalidRouteLastToken  = "[GNOSWAP-ROUTER-015] invalid route last token"

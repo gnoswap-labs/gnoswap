@@ -7,6 +7,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -257,7 +258,7 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", batch.PoolPath(),
-		"blockTimestamp", formatAnyInt(timestamp),
+		"blockTimestamp", utils.FormatInt(timestamp),
 		"stakedLiquidity", stakedLiquidity.ToString(),
 		"globalRewardRatioAccX128", newAcc.ToString(),
 	)

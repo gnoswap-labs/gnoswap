@@ -14,8 +14,22 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	pl "gno.land/r/gnoswap/pool"
+)
+
+// Hook functions allow external contracts to be notified of swap events.
+var (
+	// MUST BE IMMUTABLE.
+	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
+	zero           = u256.Zero()
+	zeroI256       = i256.Zero() /* readonly */
+	fixedPointQ128 = u256.MustFromDecimal(Q128)
+
+	maxInt256 = u256.MustFromDecimal(MAX_INT256)
+	maxInt64  = i256.Zero().SetInt64(INT64_MAX)
+	minInt64  = i256.Zero().SetInt64(INT64_MIN)
 )
 
 // SetTickCrossHook sets the hook function called when a tick is crossed during swaps.
@@ -219,7 +233,7 @@ func (i *poolV1) Swap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -281,27 +295,27 @@ func (i *poolV1) Swap(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
-		"zeroForOne", formatBool(zeroForOne),
+		"zeroForOne", utils.FormatBool(zeroForOne),
 		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,
-		"protocolFee0", formatInt(pool.ProtocolFeesToken0()),
-		"protocolFee1", formatInt(pool.ProtocolFeesToken1()),
+		"protocolFee0", utils.FormatInt(pool.ProtocolFeesToken0()),
+		"protocolFee1", utils.FormatInt(pool.ProtocolFeesToken1()),
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"exactIn", strconv.FormatBool(comp.ExactInput),
 		"currentTick", strconv.FormatInt(int64(pool.Slot0Tick()), 10),
 		"liquidity", pool.Liquidity().ToString(),
 		"feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128().ToString(),
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
-		"balanceToken0", formatInt(pool.BalanceToken0()),
-		"balanceToken1", formatInt(pool.BalanceToken1()),
-		"tickCumulative", formatInt(lastObservation.TickCumulative()),
+		"balanceToken0", utils.FormatInt(pool.BalanceToken0()),
+		"balanceToken1", utils.FormatInt(pool.BalanceToken1()),
+		"tickCumulative", utils.FormatInt(lastObservation.TickCumulative()),
 		"liquidityCumulative", lastObservation.LiquidityCumulative(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
-		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
+		"observationTimestamp", utils.FormatInt(lastObservation.BlockTimestamp()),
 	)
 
 	return token0Amount, token1Amount
@@ -344,7 +358,7 @@ func (i *poolV1) DrySwap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -355,11 +369,11 @@ func (i *poolV1) DrySwap(
 	}
 
 	if zeroForOne {
-		if poolSnapshot.BalanceToken1() < safeConvertToInt64(result.Amount1.Abs()) {
+		if poolSnapshot.BalanceToken1() < gnsmath.SafeConvertToInt64(result.Amount1.Abs()) {
 			return "0", "0", false
 		}
 	} else {
-		if poolSnapshot.BalanceToken0() < safeConvertToInt64(result.Amount0.Abs()) {
+		if poolSnapshot.BalanceToken0() < gnsmath.SafeConvertToInt64(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
 	}
@@ -417,13 +431,13 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross ti
 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
-		if state.protocolFee.Gt(u256.Zero()) {
-			result.NewProtocolFeeToken0 = safeAddInt64(result.NewProtocolFeeToken0, safeConvertToInt64(state.protocolFee))
+		if state.protocolFee.Gt(zero) {
+			result.NewProtocolFeeToken0 = gnsmath.SafeAddInt64(result.NewProtocolFeeToken0, gnsmath.SafeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
-		if state.protocolFee.Gt(u256.Zero()) {
-			result.NewProtocolFeeToken1 = safeAddInt64(result.NewProtocolFeeToken1, safeConvertToInt64(state.protocolFee))
+		if state.protocolFee.Gt(zero) {
+			result.NewProtocolFeeToken1 = gnsmath.SafeAddInt64(result.NewProtocolFeeToken1, gnsmath.SafeConvertToInt64(state.protocolFee))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -547,7 +561,7 @@ func (i *poolV1) computeSwapStep(
 
 	// update global fee tracker
 	if newState.liquidity.Gt(u256.Zero()) {
-		update := u256.MulDiv(step.feeAmount, consts.Q128(), newState.liquidity)
+		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
 		feeGrowthGlobalX128 := u256.Zero().Add(newState.feeGrowthGlobalX128, update)
 		newState.setFeeGrowthGlobalX128(feeGrowthGlobalX128)
 	}
@@ -648,12 +662,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Poo
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
-	if amountInWithFeeU256.Gt(consts.MaxInt256()) {
+	if amountInWithFeeU256.Gt(maxInt256) {
 		return state, errors.New(errOverflow)
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
-	if step.amountOut.Gt(consts.MaxInt256()) {
+	if step.amountOut.Gt(maxInt256) {
 		return state, errors.New(errOverflow)
 	}
 
@@ -684,12 +698,12 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
-	if amountCalculated.Gt(consts.MaxInt64I256()) || amountSpecifiedRemaining.Gt(consts.MaxInt64I256()) {
+	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
 		return state, errors.New(errOverflow)
 	}
 
 	// If an underflowed value is stored in state, it may cause problems in the next step
-	if amountCalculated.Lt(consts.MinInt64I256()) || amountSpecifiedRemaining.Lt(consts.MinInt64I256()) {
+	if amountCalculated.Lt(minInt64) || amountSpecifiedRemaining.Lt(minInt64) {
 		return state, errors.New(errUnderflow)
 	}
 

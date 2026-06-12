@@ -4,6 +4,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -121,7 +122,7 @@ func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath stri
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetAccuToGovStakerItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string,
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetAccuToDevOpsItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -143,7 +144,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string,
 // addActualDistributedToGovStaker adds the amount to the actual distributed amount to gov/staker by token path.
 func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath)
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetDistributedToGovStakerHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -153,7 +154,7 @@ func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, t
 // addActualDistributedToDevOps adds the amount to the actual distributed amount to devOps by token path.
 func (pfs *protocolFeeState) addActualDistributedToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath)
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetDistributedToDevOpsHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}

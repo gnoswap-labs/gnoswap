@@ -2,8 +2,6 @@ package staker
 
 import (
 	"errors"
-	"strconv"
-
 	"gno.land/p/gnoswap/store"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -691,10 +689,6 @@ func NewStakerStore(kvStore store.KVStore) IStakerStore {
 	return &stakerStore{
 		kvStore: kvStore,
 	}
-}
-
-func uint64ToString(id uint64) string {
-	return strconv.FormatUint(id, 10)
 }
 
 func makeIncentiveID(creator address, timestamp int64, index int64) string {
