@@ -13,6 +13,7 @@ loadpkg gno.land/r/demo/defi/grc20reg
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/consts
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
