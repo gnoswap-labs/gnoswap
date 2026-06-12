@@ -99,6 +99,12 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manage
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
+## deploy utils
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/utils -pkgpath gno.land/p/gnoswap/utils -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+# stdout 'GAS USED:   [0-9]+'
+# stdout 'STORAGE DELTA:  [0-9]+ bytes'
+# stdout 'STORAGE FEE:    [0-9]+ugnot'
+
 ## deploy realm
 
 ### deploy acccess (expected gas fee: 11302ugnot, gas wanted: 11302000)
