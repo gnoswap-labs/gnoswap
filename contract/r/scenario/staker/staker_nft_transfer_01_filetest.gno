@@ -9,6 +9,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -18,7 +19,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -64,64 +64,64 @@ var (
 	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and emission")
-	initAccountAndEmission()
+	initAccountAndEmission(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:qux:500 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position 01")
-	mintPosition01()
+	mintPosition01(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake position 01")
-	stakePosition01()
+	stakePosition01(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect reward")
-	collectReward()
+	collectReward(cur)
 }
 
-func initAccountAndEmission() {
+func initAccountAndEmission(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:qux:500 pool")
-	pl.CreatePool(cross, barPath, quxPath, 500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
+	pl.CreatePool(cross(cur), barPath, quxPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintPosition01() {
+func mintPosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: 9000 ~ 11000)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee500,
@@ -140,24 +140,24 @@ func mintPosition01() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
 }
 
-func stakePosition01() {
+func stakePosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT to staker")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 	testing.SkipHeights(1)
 
 	println("[INFO] stake position 01")
-	sr.StakeToken(cross, 1, "")
+	sr.StakeToken(cross(cur), 1, "")
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(1))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] NFT owner after staking: %s\n", owner)
 
 	if owner != stakerAddr {
@@ -165,14 +165,14 @@ func stakePosition01() {
 	}
 }
 
-func collectReward() {
+func collectReward(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect reward for position 01")
 	beforeGns := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(5) // Skip some blocks to accumulate rewards
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAmount := afterGns - beforeGns
@@ -184,7 +184,7 @@ func collectReward() {
 	}
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

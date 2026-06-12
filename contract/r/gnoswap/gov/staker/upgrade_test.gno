@@ -7,11 +7,11 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestRegisterInitializer(t *testing.T) {
+func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
-		initializer          func(s IGovStakerStore) IGovStaker
+		setup                func(cur realm, t *testing.T)
+		initializer          func(_ int, rlm realm, s IGovStakerStore) IGovStaker
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -25,9 +25,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register multiple different initializers",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/new_version"),
 			initializer:     makeMockInitializer("new_version"),
@@ -35,9 +35,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"),
 			initializer:          makeMockInitializer("v1"),
@@ -54,21 +54,21 @@ func TestRegisterInitializer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			if tt.setup != nil {
-				tt.setup(t)
+				tt.setup(cur, t)
 			}
 
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-					RegisterInitializer(cross, tt.initializer)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+					RegisterInitializer(cross(cur), tt.initializer)
 				})
 			} else {
-				RegisterInitializer(cross, tt.initializer)
+				RegisterInitializer(cross(cur), tt.initializer)
 
 				impl := implementation.(*MockGovStaker)
 				uassert.Equal(t, impl.Version, tt.expectedVersion)
@@ -78,7 +78,7 @@ func TestRegisterInitializer(t *testing.T) {
 }
 
 // TestDelegate tests the Delegate proxy function
-func TestDelegate(t *testing.T) {
+func TestDelegate(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		to       address
@@ -94,15 +94,15 @@ func TestDelegate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			Delegate(cross, tt.to, tt.amount, tt.referrer)
+			Delegate(cross(cur), tt.to, tt.amount, tt.referrer)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -114,7 +114,7 @@ func TestDelegate(t *testing.T) {
 }
 
 // TestUndelegate tests the Undelegate proxy function
-func TestUndelegate(t *testing.T) {
+func TestUndelegate(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		from   address
@@ -128,15 +128,15 @@ func TestUndelegate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			Undelegate(cross, tt.from, tt.amount)
+			Undelegate(cross(cur), tt.from, tt.amount)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -148,7 +148,7 @@ func TestUndelegate(t *testing.T) {
 }
 
 // TestRedelegate tests the Redelegate proxy function
-func TestRedelegate(t *testing.T) {
+func TestRedelegate(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		delegatee    address
@@ -164,15 +164,15 @@ func TestRedelegate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			Redelegate(cross, tt.delegatee, tt.newDelegatee, tt.amount)
+			Redelegate(cross(cur), tt.delegatee, tt.newDelegatee, tt.amount)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -184,7 +184,7 @@ func TestRedelegate(t *testing.T) {
 }
 
 // TestCollectUndelegatedGns tests the CollectUndelegatedGns proxy function
-func TestCollectUndelegatedGns(t *testing.T) {
+func TestCollectUndelegatedGns(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -194,15 +194,15 @@ func TestCollectUndelegatedGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			CollectUndelegatedGns(cross)
+			CollectUndelegatedGns(cross(cur))
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -214,7 +214,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 }
 
 // TestCollectReward tests the CollectReward proxy function
-func TestCollectReward(t *testing.T) {
+func TestCollectReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -224,15 +224,15 @@ func TestCollectReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			CollectReward(cross)
+			CollectReward(cross(cur))
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -244,7 +244,7 @@ func TestCollectReward(t *testing.T) {
 }
 
 // TestCollectRewardFromLaunchPad tests the CollectRewardFromLaunchPad proxy function
-func TestCollectRewardFromLaunchPad(t *testing.T) {
+func TestCollectRewardFromLaunchPad(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		to   address
@@ -256,15 +256,15 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			CollectRewardFromLaunchPad(cross, tt.to)
+			CollectRewardFromLaunchPad(cross(cur), tt.to)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -276,7 +276,7 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 }
 
 // TestSetAmountByProjectWallet tests the SetAmountByProjectWallet proxy function
-func TestSetAmountByProjectWallet(t *testing.T) {
+func TestSetAmountByProjectWallet(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		addr   address
@@ -292,15 +292,15 @@ func TestSetAmountByProjectWallet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			SetAmountByProjectWallet(cross, tt.addr, tt.amount, tt.add)
+			SetAmountByProjectWallet(cross(cur), tt.addr, tt.amount, tt.add)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -312,7 +312,7 @@ func TestSetAmountByProjectWallet(t *testing.T) {
 }
 
 // TestCleanStakerDelegationSnapshotByAdmin tests the CleanStakerDelegationSnapshotByAdmin proxy function
-func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
+func TestCleanStakerDelegationSnapshotByAdmin(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		threshold int64
@@ -324,15 +324,15 @@ func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold, address("g1user0000000000000000000000000000000001"))
+			CleanStakerDelegationSnapshotByAdmin(cross(cur), tt.threshold, address("g1user0000000000000000000000000000000001"))
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -344,7 +344,7 @@ func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 }
 
 // TestSetUnDelegationLockupPeriodByAdmin tests the SetUnDelegationLockupPeriodByAdmin proxy function
-func TestSetUnDelegationLockupPeriodByAdmin(t *testing.T) {
+func TestSetUnDelegationLockupPeriodByAdmin(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		period int64
@@ -356,15 +356,15 @@ func TestSetUnDelegationLockupPeriodByAdmin(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			SetUnDelegationLockupPeriodByAdmin(cross, tt.period)
+			SetUnDelegationLockupPeriodByAdmin(cross(cur), tt.period)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
@@ -376,7 +376,7 @@ func TestSetUnDelegationLockupPeriodByAdmin(t *testing.T) {
 }
 
 // TestGetTotalxGnsSupply tests the GetTotalxGnsSupply getter function
-func TestGetTotalxGnsSupply(t *testing.T) {
+func TestGetTotalxGnsSupply(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -386,10 +386,10 @@ func TestGetTotalxGnsSupply(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetTotalxGnsSupply()
@@ -404,7 +404,7 @@ func TestGetTotalxGnsSupply(t *testing.T) {
 }
 
 // TestGetTotalDelegated tests the GetTotalDelegated getter function
-func TestGetTotalDelegated(t *testing.T) {
+func TestGetTotalDelegated(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -414,10 +414,10 @@ func TestGetTotalDelegated(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetTotalDelegated()
@@ -432,7 +432,7 @@ func TestGetTotalDelegated(t *testing.T) {
 }
 
 // TestGetTotalLockedAmount tests the GetTotalLockedAmount getter function
-func TestGetTotalLockedAmount(t *testing.T) {
+func TestGetTotalLockedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -442,10 +442,10 @@ func TestGetTotalLockedAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetTotalLockedAmount()
@@ -460,7 +460,7 @@ func TestGetTotalLockedAmount(t *testing.T) {
 }
 
 // TestGetTotalDelegationAmountAtSnapshot tests the GetTotalDelegationAmountAtSnapshot getter function
-func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
+func TestGetTotalDelegationAmountAtSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		snapshotTime int64
@@ -472,10 +472,10 @@ func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetTotalDelegationAmountAtSnapshot(tt.snapshotTime)
@@ -490,7 +490,7 @@ func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 }
 
 // TestGetUserDelegationAmountAtSnapshot tests the GetUserDelegationAmountAtSnapshot getter function
-func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
+func TestGetUserDelegationAmountAtSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		snapshotTime int64
@@ -504,10 +504,10 @@ func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetUserDelegationAmountAtSnapshot(tt.user, tt.snapshotTime)
@@ -522,7 +522,7 @@ func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
 }
 
 // TestGetClaimableRewardByAddress tests the GetClaimableRewardByAddress getter function
-func TestGetClaimableRewardByAddress(t *testing.T) {
+func TestGetClaimableRewardByAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		addr address
@@ -534,10 +534,10 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetClaimableRewardByAddress(tt.addr)
@@ -552,7 +552,7 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 }
 
 // TestGetClaimableRewardByLaunchpad tests the GetClaimableRewardByLaunchpad getter function
-func TestGetClaimableRewardByLaunchpad(t *testing.T) {
+func TestGetClaimableRewardByLaunchpad(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		addr address
@@ -564,10 +564,10 @@ func TestGetClaimableRewardByLaunchpad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetClaimableRewardByLaunchpad(tt.addr)
@@ -582,7 +582,7 @@ func TestGetClaimableRewardByLaunchpad(t *testing.T) {
 }
 
 // TestGetClaimableRewardByRewardID tests the GetClaimableRewardByRewardID getter function
-func TestGetClaimableRewardByRewardID(t *testing.T) {
+func TestGetClaimableRewardByRewardID(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		rewardID string
@@ -594,10 +594,10 @@ func TestGetClaimableRewardByRewardID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			// Action
 			GetClaimableRewardByRewardID(tt.rewardID)
@@ -612,45 +612,45 @@ func TestGetClaimableRewardByRewardID(t *testing.T) {
 }
 
 // TestGetImplementationPackagePath tests the GetImplementationPackagePath getter
-func TestGetImplementationPackagePath(t *testing.T) {
+func TestGetImplementationPackagePath(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setup        func(t *testing.T)
+		setup        func(cur realm, t *testing.T)
 		expectedPath string
 	}{
 		{
 			name: "get initial v1 package path",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			expectedPath: "gno.land/r/gnoswap/gov/staker/v1",
 		},
 		{
 			name: "get package path after upgrade to v2",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				// Register v1
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				// Register v2
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v2"))
-				RegisterInitializer(cross, makeMockInitializer("v2"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v2"))
 
 				// Upgrade to v2
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/gov/staker/v2")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/gov/staker/v2")
 			},
 			expectedPath: "gno.land/r/gnoswap/gov/staker/v2",
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resetTestState(t)
 			if tc.setup != nil {
-				tc.setup(t)
+				tc.setup(cur, t)
 			}
 
 			// when

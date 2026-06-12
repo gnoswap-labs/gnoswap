@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -56,76 +56,76 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint and stake position")
-	mintAndStakePosition()
+	mintAndStakePosition(cur)
 	println()
 
 	println("[SCENARIO] 4. First reward collection period")
-	firstRewardCollection()
+	firstRewardCollection(cur)
 	println()
 
 	println("[SCENARIO] 5. Second reward collection period")
-	secondRewardCollection()
+	secondRewardCollection(cur)
 	println()
 
 	println("[SCENARIO] 6. Third reward collection with longer interval")
-	thirdRewardCollectionLonger()
+	thirdRewardCollectionLonger(cur)
 	println()
 
 	println("[SCENARIO] 7. Compare reward accumulation patterns")
-	compareRewardPatterns()
+	compareRewardPatterns(cur)
 	println()
 
 	println("[SCENARIO] 8. Final verification with multiple collections")
-	finalVerificationMultipleCollections()
+	finalVerificationMultipleCollections(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintAndStakePosition() {
+func mintAndStakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -144,14 +144,14 @@ func mintAndStakePosition() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 
 	println("[INFO] approve NFT to staker and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 	testing.SkipHeights(1)
 }
 
-func firstRewardCollection() {
+func firstRewardCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 5 blocks for first reward accumulation")
@@ -159,7 +159,7 @@ func firstRewardCollection() {
 
 	println("[INFO] collect first reward")
 	beforeGns1 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns1 := gns.BalanceOf(adminUser)
 	firstReward := afterGns1 - beforeGns1
 
@@ -172,7 +172,7 @@ func firstRewardCollection() {
 	println("[INFO] first reward collection completed")
 }
 
-func secondRewardCollection() {
+func secondRewardCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 5 blocks for second reward accumulation")
@@ -180,7 +180,7 @@ func secondRewardCollection() {
 
 	println("[INFO] collect second reward")
 	beforeGns2 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns2 := gns.BalanceOf(adminUser)
 	secondReward := afterGns2 - beforeGns2
 
@@ -193,7 +193,7 @@ func secondRewardCollection() {
 	println("[INFO] second reward collection completed")
 }
 
-func thirdRewardCollectionLonger() {
+func thirdRewardCollectionLonger(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10 blocks for third reward accumulation (longer period)")
@@ -201,7 +201,7 @@ func thirdRewardCollectionLonger() {
 
 	println("[INFO] collect third reward")
 	beforeGns3 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns3 := gns.BalanceOf(adminUser)
 	thirdReward := afterGns3 - beforeGns3
 
@@ -214,7 +214,7 @@ func thirdRewardCollectionLonger() {
 	println("[INFO] third reward collection completed")
 }
 
-func compareRewardPatterns() {
+func compareRewardPatterns(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] analyze reward accumulation patterns")
@@ -227,7 +227,7 @@ func compareRewardPatterns() {
 	for i := 0; i < 5; i++ {
 		testing.SkipHeights(2)
 		beforeGns := gns.BalanceOf(adminUser)
-		sr.CollectReward(cross, 1)
+		sr.CollectReward(cross(cur), 1)
 		afterGns := gns.BalanceOf(adminUser)
 		rewardFromSmallCollection := afterGns - beforeGns
 		totalFromFrequentCollections += rewardFromSmallCollection
@@ -240,7 +240,7 @@ func compareRewardPatterns() {
 	println("[INFO] test pattern: single large collection")
 	testing.SkipHeights(10)
 	beforeGnsLarge := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGnsLarge := gns.BalanceOf(adminUser)
 	rewardFromLargeCollection := afterGnsLarge - beforeGnsLarge
 
@@ -257,7 +257,7 @@ func compareRewardPatterns() {
 	}
 }
 
-func finalVerificationMultipleCollections() {
+func finalVerificationMultipleCollections(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] final verification with multiple rapid collections")
@@ -273,19 +273,19 @@ func finalVerificationMultipleCollections() {
 	println("[INFO] perform 3 consecutive collections")
 
 	collection1Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection1After := gns.BalanceOf(adminUser)
 	reward1 := collection1After - collection1Before
 	ufmt.Printf("[EXPECTED] consecutive collection 1: %d\n", reward1)
 
 	collection2Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection2After := gns.BalanceOf(adminUser)
 	reward2 := collection2After - collection2Before
 	ufmt.Printf("[EXPECTED] consecutive collection 2: %d\n", reward2)
 
 	collection3Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	collection3After := gns.BalanceOf(adminUser)
 	reward3 := collection3After - collection3Before
 	ufmt.Printf("[EXPECTED] consecutive collection 3: %d\n", reward3)
@@ -311,7 +311,7 @@ func finalVerificationMultipleCollections() {
 	println("[INFO] confirmed: rewards accumulate over time and are collected when requested")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario: Safe Mode blocks withdraw operations
 //
 // This test verifies that when Safe Mode is activated, withdraw operations
@@ -17,6 +19,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
@@ -35,7 +38,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	_ "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
@@ -67,78 +69,78 @@ var (
 	positionId uint64
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] Safe Mode blocks withdraw operations")
 	println()
 
 	ufmt.Println("[STEP 1] Initialize pool and tokens")
-	initPoolAndTokens()
+	initPoolAndTokens(cur)
 	println()
 
 	ufmt.Println("[STEP 2] Mint position (before Safe Mode)")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	ufmt.Println("[STEP 3] Set halt level to Safe Mode")
-	setSafeMode()
+	setSafeMode(cur)
 	println()
 
 	ufmt.Println("[STEP 4] Test: Position Mint works in Safe Mode")
-	testMintInSafeMode()
+	testMintInSafeMode(cur)
 	println()
 
 	ufmt.Println("[STEP 5] Test: DecreaseLiquidity is BLOCKED in Safe Mode")
-	testDecreaseLiquidityBlocked()
+	testDecreaseLiquidityBlocked(cur)
 	println()
 
 	ufmt.Println("[STEP 6] Test: CollectFee is BLOCKED in Safe Mode")
-	testCollectFeeBlocked()
+	testCollectFeeBlocked(cur)
 	println()
 
 	ufmt.Println("[STEP 7] Test: Router swap works in Safe Mode")
-	testRouterSwapInSafeMode()
+	testRouterSwapInSafeMode(cur)
 	println()
 
 	ufmt.Println("[STEP 8] Disable Safe Mode and verify withdraw works")
-	disableSafeModeAndVerify()
+	disableSafeModeAndVerify(cur)
 	println()
 }
 
-func initPoolAndTokens() {
+func initPoolAndTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Initialize emission
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
 	// Distribute tokens to alice
 	defaultTokenAmount := int64(100000000)
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Printf("[INFO] Alice BAR balance: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Alice FOO balance: %d\n", foo.BalanceOf(aliceAddr))
 
 	// Create pool
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetOriginSend(chain.Coins{})
 	id, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -158,10 +160,10 @@ func mintPosition() {
 	ufmt.Printf("[INFO] Liquidity: %s, Amount0: %s, Amount1: %s\n", liquidity, amount0, amount1)
 }
 
-func setSafeMode() {
+func setSafeMode(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 
 	isWithdrawHalted := halt.IsHaltedWithdraw()
 	isPositionHalted := halt.IsHaltedPosition()
@@ -175,14 +177,14 @@ func setSafeMode() {
 	ufmt.Printf("[EXPECTED] Router halted: %t (should be false)\n", isRouterHalted)
 }
 
-func testMintInSafeMode() {
+func testMintInSafeMode(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Attempting to mint position in Safe Mode...")
 
 	testing.SetOriginSend(chain.Coins{})
 	id, liquidity, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -200,14 +202,14 @@ func testMintInSafeMode() {
 	ufmt.Printf("[SUCCESS] Position minted in Safe Mode! ID: %d, Liquidity: %s\n", id, liquidity)
 }
 
-func testDecreaseLiquidityBlocked() {
+func testDecreaseLiquidityBlocked(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Attempting DecreaseLiquidity in Safe Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
 		position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			positionId,
 			"1000000",
 			"0",
@@ -219,28 +221,28 @@ func testDecreaseLiquidityBlocked() {
 	ufmt.Println("[SUCCESS] DecreaseLiquidity correctly blocked with 'halted: withdraw'")
 }
 
-func testCollectFeeBlocked() {
+func testCollectFeeBlocked(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Attempting CollectFee in Safe Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		position.CollectFee(cross, positionId)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		position.CollectFee(cross(cur), positionId)
 	})
 
 	ufmt.Println("[SUCCESS] CollectFee correctly blocked with 'halted: withdraw'")
 }
 
-func testRouterSwapInSafeMode() {
+func testRouterSwapInSafeMode(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	foo.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Attempting router swap in Safe Mode...")
 
 	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		"100000",
@@ -254,10 +256,10 @@ func testRouterSwapInSafeMode() {
 	ufmt.Printf("[SUCCESS] Router swap works in Safe Mode! AmountIn: %s, AmountOut: %s\n", amountIn, amountOut)
 }
 
-func disableSafeModeAndVerify() {
+func disableSafeModeAndVerify(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 
 	isWithdrawHalted := halt.IsHaltedWithdraw()
 	ufmt.Printf("[INFO] Safe Mode disabled. Withdraw halted: %t (should be false)\n", isWithdrawHalted)
@@ -268,7 +270,7 @@ func disableSafeModeAndVerify() {
 	ufmt.Println("[INFO] Attempting DecreaseLiquidity after Safe Mode disabled...")
 
 	_, liquidity, _, _, _, _, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		"1000000",
 		"0",

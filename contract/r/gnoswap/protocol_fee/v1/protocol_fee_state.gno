@@ -4,6 +4,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -52,32 +53,32 @@ func (pfs *protocolFeeState) ReservedTokens() []string {
 
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
-func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
+func (pfs *protocolFeeState) distributeToDevOps(_ int, rlm realm, token string, amount int64) error {
 	devOpsAddr := access.MustGetAddress(prabc.ROLE_DEVOPS.String())
 
-	if err := pfs.addActualDistributedToDevOps(token, amount); err != nil {
+	if err := pfs.addActualDistributedToDevOps(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
+	common.SafeGRC20Transfer(cross(rlm), token, devOpsAddr, amount)
 
 	return nil
 }
 
 // distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
-func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
+func (pfs *protocolFeeState) distributeToGovStaker(_ int, rlm realm, token string, amount int64) error {
 	govStakerAddr := access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
 
-	if err := pfs.addActualDistributedToGovStaker(token, amount); err != nil {
+	if err := pfs.addActualDistributedToGovStaker(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
+	common.SafeGRC20Transfer(cross(rlm), token, govStakerAddr, amount)
 
 	return nil
 }
 
 // setDevOpsPct sets the devOpsPct.
-func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
+func (pfs *protocolFeeState) setDevOpsPct(_ int, rlm realm, pct int64) (int64, error) {
 	if pct < 0 {
 		return 0, makeErrorWithDetail(
 			errInvalidPct,
@@ -91,7 +92,7 @@ func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 		)
 	}
 
-	if err := pfs.store.SetDevOpsPct(pct); err != nil {
+	if err := pfs.store.SetDevOpsPct(0, rlm, pct); err != nil {
 		return 0, err
 	}
 
@@ -99,7 +100,7 @@ func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 }
 
 // setGovStakerPct sets the govStakerPct by calculating devOpsPct.
-func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
+func (pfs *protocolFeeState) setGovStakerPct(_ int, rlm realm, pct int64) (int64, error) {
 	if pct < 0 {
 		return 0, makeErrorWithDetail(
 			errInvalidPct,
@@ -109,7 +110,7 @@ func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 
 	devOpsPct := 10000 - pct
 
-	if _, err := pfs.setDevOpsPct(devOpsPct); err != nil {
+	if _, err := pfs.setDevOpsPct(0, rlm, devOpsPct); err != nil {
 		return 0, err
 	}
 
@@ -117,44 +118,44 @@ func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 }
 
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
-func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) error {
+func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
-	if err := pfs.store.SetAccuToGovStakerItem(tokenPath, after); err != nil {
+	after := gnsmath.SafeAddInt64(before, amount)
+	if err := pfs.store.SetAccuToGovStakerItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
 	return nil
 }
 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
-func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) error {
+func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
-	if err := pfs.store.SetAccuToDevOpsItem(tokenPath, after); err != nil {
+	after := gnsmath.SafeAddInt64(before, amount)
+	if err := pfs.store.SetAccuToDevOpsItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
 	return nil
 }
 
 // addActualDistributedToGovStaker adds the amount to the actual distributed amount to gov/staker by token path.
-func (pfs *protocolFeeState) addActualDistributedToGovStaker(tokenPath string, amount int64) error {
+func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath)
-	after := safeAddInt64(before, amount)
-	if err := pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, after); err != nil {
+	after := gnsmath.SafeAddInt64(before, amount)
+	if err := pfs.store.SetDistributedToGovStakerHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
 	return nil
 }
 
 // addActualDistributedToDevOps adds the amount to the actual distributed amount to devOps by token path.
-func (pfs *protocolFeeState) addActualDistributedToDevOps(tokenPath string, amount int64) error {
+func (pfs *protocolFeeState) addActualDistributedToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath)
-	after := safeAddInt64(before, amount)
-	if err := pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, after); err != nil {
+	after := gnsmath.SafeAddInt64(before, amount)
+	if err := pfs.store.SetDistributedToDevOpsHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
 	return nil
@@ -181,8 +182,8 @@ func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath s
 }
 
 // clearReservedTokens clears the reserved token index after distribution.
-func (pfs *protocolFeeState) clearReservedTokens() error {
-	if err := pfs.store.SetReservedTokens([]string{}); err != nil {
+func (pfs *protocolFeeState) clearReservedTokens(_ int, rlm realm) error {
+	if err := pfs.store.SetReservedTokens(0, rlm, []string{}); err != nil {
 		return err
 	}
 	return nil

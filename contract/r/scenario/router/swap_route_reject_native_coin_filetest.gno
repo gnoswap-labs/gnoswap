@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -41,36 +42,36 @@ var (
 	maxInt64 int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	// 1. Setup
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	// Deposit wugnot for pool creation
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
 	// Approve tokens
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
-	wugnot.Approve(cross, routerAddr, maxInt64)
-	qux.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), routerAddr, maxInt64)
+	qux.Approve(cross(cur), routerAddr, maxInt64)
 
 	// 2. Create wugnot/qux pool and mint position
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		quxPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		quxPath,
 		3000,
@@ -89,17 +90,17 @@ func main() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 12345}})
 
 	router.ExactOutSwapRoute(
-		cross,
-		"ugnot",    // inputToken (native coin)
-		quxPath,    // outputToken
-		"3",        // amountSpecified
+		cross(cur),
+		"ugnot", // inputToken (native coin)
+		quxPath, // outputToken
+		"3",     // amountSpecified
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
-		"100",      // quoteArr
-		"12345",    // tokenAmountLimit
+		"100",   // quoteArr
+		"12345", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
-		"",         // referrer
+		"", // referrer
 	)
 }
 
 // Error:
-// [GNOSWAP-COMMON-006] handle native coin is not allowed
+// [GNOSWAP-COMMON-002] handle native coin is not allowed

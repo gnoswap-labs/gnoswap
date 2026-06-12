@@ -1,6 +1,8 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -21,7 +23,7 @@ func NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits *staker.Launch
 //   - int64: deposit amount
 //   - bool: true if project exists, false otherwise
 func (lpdr *LaunchpadProjectDepositsResolver) getLaunchpadProjectDeposit(ownerAddress string) (int64, bool) {
-	return lpdr.GetDeposit(ownerAddress)
+	return lpdr.LaunchpadProjectDeposits.GetDeposit(ownerAddress)
 }
 
 // setLaunchpadProjectDeposit sets the deposit amount for a launchpad project.
@@ -33,7 +35,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) getLaunchpadProjectDeposit(ownerAd
 // Returns:
 //   - bool: true if successfully set
 func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
-	lpdr.SetDeposit(ownerAddress, deposit)
+	lpdr.LaunchpadProjectDeposits.SetDeposit(ownerAddress, deposit)
 	return true
 }
 
@@ -44,12 +46,12 @@ func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAd
 //   - ownerAddress: project owner's address identifier
 //   - amount: amount to add to the deposit
 func (lpdr *LaunchpadProjectDepositsResolver) addDeposit(ownerAddress string, amount int64) {
-	currentDeposit, _ := lpdr.GetDeposit(ownerAddress)
-	newDeposit := safeAddInt64(currentDeposit, amount)
+	currentDeposit, _ := lpdr.LaunchpadProjectDeposits.GetDeposit(ownerAddress)
+	newDeposit := gnsmath.SafeAddInt64(currentDeposit, amount)
 	if newDeposit < 0 {
 		newDeposit = 0
 	}
-	lpdr.SetDeposit(ownerAddress, newDeposit)
+	lpdr.LaunchpadProjectDeposits.SetDeposit(ownerAddress, newDeposit)
 }
 
 // removeDeposit removes from the deposit amount for a launchpad project.
@@ -59,39 +61,13 @@ func (lpdr *LaunchpadProjectDepositsResolver) addDeposit(ownerAddress string, am
 //   - ownerAddress: project owner's address identifier
 //   - amount: amount to remove from the deposit
 func (lpdr *LaunchpadProjectDepositsResolver) removeDeposit(ownerAddress string, amount int64) {
-	currentDeposit, exists := lpdr.GetDeposit(ownerAddress)
+	currentDeposit, exists := lpdr.LaunchpadProjectDeposits.GetDeposit(ownerAddress)
 	if !exists {
 		return
 	}
-	newDeposit := safeSubInt64(currentDeposit, amount)
+	newDeposit := gnsmath.SafeSubInt64(currentDeposit, amount)
 	if newDeposit < 0 {
 		newDeposit = 0
 	}
-	lpdr.SetDeposit(ownerAddress, newDeposit)
-}
-
-// GetDeposit retrieves the deposit amount for a specific owner.
-func (lpdr *LaunchpadProjectDepositsResolver) GetDeposit(ownerAddress string) (int64, bool) {
-	deposit, exists := lpdr.GetDeposits().Get(ownerAddress)
-	if !exists {
-		return 0, false
-	}
-
-	amount, ok := deposit.(int64)
-	if !ok {
-		return 0, false
-	}
-
-	return amount, true
-}
-
-// SetDeposit sets the deposit amount for a specific owner.
-func (lpdr *LaunchpadProjectDepositsResolver) SetDeposit(ownerAddress string, amount int64) {
-	lpdr.GetDeposits().Set(ownerAddress, amount)
-}
-
-// RemoveDeposit removes the deposit for a specific owner.
-func (lpdr *LaunchpadProjectDepositsResolver) RemoveDeposit(ownerAddress string) bool {
-	_, ok := lpdr.GetDeposits().Remove(ownerAddress)
-	return ok
+	lpdr.LaunchpadProjectDeposits.SetDeposit(ownerAddress, newDeposit)
 }

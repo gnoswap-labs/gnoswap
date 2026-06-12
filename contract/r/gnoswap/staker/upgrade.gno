@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"chain/runtime"
+	"errors"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -15,17 +15,21 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
-	initializerFunc := func(domainStore any) any {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
+		if !rlm.IsCurrent() {
+			panic(errors.New(ErrSpoofedRealm))
+		}
+
 		currentStakerStore, ok := domainStore.(IStakerStore)
 		if !ok {
 			panic("domainStore is not an IStakerStore")
 		}
 
-		return initializer(currentStakerStore, newPoolAccessor(), newEmissionAccessor(), newNFTAccessor())
+		return initializer(0, rlm, currentStakerStore, newPoolAccessor(), newEmissionAccessor(), newNFTAccessor())
 	}
 
-	err := versionManager.RegisterInitializer(initializerFunc)
+	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
 	if err != nil {
 		panic(err)
 	}
@@ -44,10 +48,10 @@ func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, p
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := versionManager.ChangeImplementation(packagePath)
+	err := versionManager.ChangeImplementation(0, cur, packagePath)
 	if err != nil {
 		panic(err)
 	}

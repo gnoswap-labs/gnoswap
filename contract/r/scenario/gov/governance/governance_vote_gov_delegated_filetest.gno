@@ -35,12 +35,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin and dummy")
-	delegateGnsToAdminAndDummy()
+	delegateGnsToAdminAndDummy(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
@@ -49,7 +49,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose Text")
-	proposalId := proposeText()
+	proposalId := proposeText(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
@@ -58,34 +58,34 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal with dummy")
-	voteProposalWithDummy(proposalId)
+	voteProposalWithDummy(cur, proposalId)
 	println()
 }
 
-func delegateGnsToAdminAndDummy() {
+func delegateGnsToAdminAndDummy(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	// admin
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to admin %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 	// dummy
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 }
 
-func proposeText() int64 {
+func proposeText(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposalWithDummy(proposalId int64) {
+func voteProposalWithDummy(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }

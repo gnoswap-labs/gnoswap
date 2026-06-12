@@ -1,7 +1,7 @@
 package position
 
 import (
-	"chain/runtime"
+	"errors"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -13,21 +13,23 @@ import (
 // The initializer function creates a new instance of the implementation
 // using the provided positionStore interface.
 //
-// The stateInitializer function creates the initial state for this version.
-//
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(positionStore IPositionStore) IPosition) {
-	initializerFunc := func(domainStore any) any {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, positionStore IPositionStore) IPosition) {
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
+		if !rlm.IsCurrent() {
+			panic(errors.New(ErrSpoofedRealm))
+		}
+
 		currentPositionStore, ok := domainStore.(IPositionStore)
 		if !ok {
 			panic("domainStore is not an IPositionStore")
 		}
 
-		return initializer(currentPositionStore)
+		return initializer(0, rlm, currentPositionStore)
 	}
 
-	err := versionManager.RegisterInitializer(initializerFunc)
+	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
 	if err != nil {
 		panic(err)
 	}
@@ -46,10 +48,10 @@ func RegisterInitializer(cur realm, initializer func(positionStore IPositionStor
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := versionManager.ChangeImplementation(packagePath)
+	err := versionManager.ChangeImplementation(0, cur, packagePath)
 	if err != nil {
 		panic(err)
 	}

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"errors"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -11,7 +10,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestAddToken(t *testing.T) {
+func TestAddToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		caller                address
@@ -52,25 +51,25 @@ func TestAddToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(defaultAllowed)
+			getMockInstance().store.SetAllowedTokens(0, cur, _defaultAllowedTokens)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// when
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					mockInstanceAddToken(tt.inputTokenPath)
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					mockInstanceAddToken(tt.inputTokenPath)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceAddToken(tt.inputTokenPath)
+				mockInstanceAddToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then
@@ -88,11 +87,11 @@ func TestAddToken(t *testing.T) {
 	}
 }
 
-func TestRemoveToken(t *testing.T) {
+func TestRemoveToken(cur realm, t *testing.T) {
 	customTokenPath := "gno.land/r/gnoswap/v1/custom"
 
 	currentDefaultTokens := make([]string, 0)
-	currentDefaultTokens = append(currentDefaultTokens, defaultAllowed...)
+	currentDefaultTokens = append(currentDefaultTokens, _defaultAllowedTokens...)
 	currentDefaultTokens = append(currentDefaultTokens, customTokenPath)
 
 	tests := []struct {
@@ -147,102 +146,25 @@ func TestRemoveToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(currentDefaultTokens)
+			getMockInstance().store.SetAllowedTokens(0, cur, currentDefaultTokens)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// when
 			if tt.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					mockInstanceRemoveToken(tt.inputTokenPath)
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					mockInstanceRemoveToken(tt.inputTokenPath)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
+					mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 				})
 			} else {
-				mockInstanceRemoveToken(tt.inputTokenPath)
-			}
-
-			// then
-			uassert.Equal(t, len(tt.expectedAllowedTokens), len(getMockInstance().store.GetAllowedTokens()))
-
-			allowedTokenMap := make(map[string]bool)
-			for _, token := range tt.expectedAllowedTokens {
-				allowedTokenMap[token] = true
-			}
-
-			for _, token := range getMockInstance().store.GetAllowedTokens() {
-				uassert.True(t, allowedTokenMap[token])
-			}
-		})
-	}
-}
-
-func TestModifyTokenList(t *testing.T) {
-	tests := []struct {
-		name                  string
-		caller                address
-		inputTokenPath        string
-		inputValidator        TokenValidator
-		inputExecutor         TokenExecutor
-		expectedAllowedTokens []string
-		expectedHasError      bool
-		expectedErrorMsg      string
-	}{
-		{
-			name:                  "modify token list success with valid token addition",
-			caller:                getAdminAddress(t),
-			inputTokenPath:        "gno.land/r/gnoswap/v1/token1",
-			inputValidator:        nil,
-			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH, "gno.land/r/gnoswap/v1/token1"},
-			expectedHasError:      false,
-			expectedErrorMsg:      "",
-		},
-		{
-			name:           "modify token list success with validation failure",
-			caller:         getAdminAddress(t),
-			inputTokenPath: GNS_PATH,
-			inputValidator: func(tokenPath string) error {
-				return errors.New("validation failure")
-			},
-			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH},
-			expectedHasError:      true,
-			expectedErrorMsg:      "validation failure",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
-
-			// given
-			getMockInstance().store.SetAllowedTokens(defaultAllowed)
-
-			testing.SetOriginCaller(tt.caller)
-
-			// when
-			modifyTokenListFn := func() error {
-				testing.SetRealm(adminRealm)
-
-				return func(cur realm) error {
-					testing.SetRealm(stakerRealm)
-					return modifyTokenList(getMockInstance(), tt.inputTokenPath, tt.inputValidator, tt.inputExecutor)
-				}(cross)
-			}
-
-			err := modifyTokenListFn()
-			if tt.expectedHasError {
-				uassert.Error(t, err)
-				uassert.Equal(t, tt.expectedErrorMsg, err.Error())
-			} else {
-				uassert.NoError(t, err)
+				mockInstanceRemoveToken(cross(cur), tt.inputTokenPath)
 			}
 
 			// then
@@ -288,206 +210,8 @@ func setupExternalDepositFeePermission(t *testing.T, caller address, permissionN
 	testing.SetRealm(testing.NewUserRealm(caller))
 }
 
-// Test addTokenExecutor edge cases
-func TestAddTokenExecutor(t *testing.T) {
-	tests := []struct {
-		name           string
-		tokenPath      string
-		initialTokens  []string
-		expectedTokens []string
-		expectedLength int
-	}{
-		{
-			name:           "add new token to empty list",
-			tokenPath:      "gno.land/r/onbloc/foo",
-			initialTokens:  []string{},
-			expectedTokens: []string{"gno.land/r/onbloc/foo"},
-			expectedLength: 1,
-		},
-		{
-			name:           "add new token to existing list",
-			tokenPath:      "gno.land/r/onbloc/baz",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz"},
-			expectedLength: 3,
-		},
-		{
-			name:           "add existing token - no duplicate",
-			tokenPath:      "gno.land/r/onbloc/foo",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedLength: 2,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := addTokenExecutor(tt.tokenPath, tt.initialTokens)
-			uassert.Equal(t, tt.expectedLength, len(result))
-
-			for i, expected := range tt.expectedTokens {
-				uassert.Equal(t, expected, result[i])
-			}
-		})
-	}
-}
-
-// Test removeTokenExecutor edge cases
-func TestRemoveTokenExecutor(t *testing.T) {
-	tests := []struct {
-		name           string
-		tokenPath      string
-		initialTokens  []string
-		expectedTokens []string
-		expectedLength int
-	}{
-		{
-			name:           "remove existing token from middle",
-			tokenPath:      "gno.land/r/onbloc/bar",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz"},
-			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/baz"},
-			expectedLength: 2,
-		},
-		{
-			name:           "remove first token",
-			tokenPath:      "gno.land/r/onbloc/foo",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedTokens: []string{"gno.land/r/onbloc/bar"},
-			expectedLength: 1,
-		},
-		{
-			name:           "remove last token",
-			tokenPath:      "gno.land/r/onbloc/bar",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedTokens: []string{"gno.land/r/onbloc/foo"},
-			expectedLength: 1,
-		},
-		{
-			name:           "remove non-existent token - no change",
-			tokenPath:      "gno.land/r/onbloc/nonexistent",
-			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
-			expectedLength: 2,
-		},
-		{
-			name:           "remove from empty list",
-			tokenPath:      "gno.land/r/onbloc/foo",
-			initialTokens:  []string{},
-			expectedTokens: []string{},
-			expectedLength: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := removeTokenExecutor(tt.tokenPath, tt.initialTokens)
-			uassert.Equal(t, tt.expectedLength, len(result))
-
-			for i, expected := range tt.expectedTokens {
-				uassert.Equal(t, expected, result[i])
-			}
-		})
-	}
-}
-
-// Test addTokenValidator
-func TestAddTokenValidator(t *testing.T) {
-	tests := []struct {
-		name          string
-		tokenPath     string
-		expectError   bool
-		expectedError string
-	}{
-		{
-			name:          "valid new token",
-			tokenPath:     "gno.land/r/onbloc/foo",
-			expectError:   false,
-			expectedError: "",
-		},
-		{
-			name:          "invalid - WUGNOT is default",
-			tokenPath:     WUGNOT_PATH,
-			expectError:   true,
-			expectedError: "cannot add existing token",
-		},
-		{
-			name:          "invalid - GNS_PATH is default",
-			tokenPath:     GNS_PATH,
-			expectError:   true,
-			expectedError: "cannot add existing token",
-		},
-		{
-			name:          "valid - custom token path",
-			tokenPath:     "gno.land/r/onbloc/custom",
-			expectError:   false,
-			expectedError: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := addTokenValidator(tt.tokenPath)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-				uassert.ErrorContains(t, err, tt.expectedError)
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
-
-// Test removeTokenValidator
-func TestRemoveTokenValidator(t *testing.T) {
-	tests := []struct {
-		name          string
-		tokenPath     string
-		expectError   bool
-		expectedError string
-	}{
-		{
-			name:          "valid removal - custom token",
-			tokenPath:     "gno.land/r/onbloc/foo",
-			expectError:   false,
-			expectedError: "",
-		},
-		{
-			name:          "invalid - cannot remove WUGNOT",
-			tokenPath:     WUGNOT_PATH,
-			expectError:   true,
-			expectedError: "cannot remove default token",
-		},
-		{
-			name:          "invalid - cannot remove GNS_PATH",
-			tokenPath:     GNS_PATH,
-			expectError:   true,
-			expectedError: "cannot remove default token",
-		},
-		{
-			name:          "valid - non-default token",
-			tokenPath:     "gno.land/r/onbloc/custom",
-			expectError:   false,
-			expectedError: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := removeTokenValidator(tt.tokenPath)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-				uassert.ErrorContains(t, err, tt.expectedError)
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
-
 // Test contains helper function
-func TestContainsHelperFunction(t *testing.T) {
+func TestContainsHelperFunction(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		slice    []string
@@ -527,7 +251,7 @@ func TestContainsHelperFunction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := contains(tt.slice, tt.item)
 			uassert.Equal(t, tt.expected, result)
 		})

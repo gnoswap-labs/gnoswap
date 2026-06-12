@@ -1,0 +1,1 @@
+../../../../../gnoswap/staker/v1/external_deposit_fee.gno

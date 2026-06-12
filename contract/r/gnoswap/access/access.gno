@@ -1,8 +1,7 @@
 package access
 
 import (
-    "chain"
-	"chain/runtime"
+	"chain"
 	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -18,14 +17,14 @@ func init() {
 // Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
-//   - cur: current realm (required by interrealm spec; not used directly)
+//   - cur: current realm
 //   - roleName: name of the role
 //   - roleAddress: address for the role
 //
 // Only callable by RBAC contract.
 func SetRoleAddress(cur realm, roleName string, roleAddress address) {
-	caller := runtime.PreviousRealm().Address()
-	assertIsRBAC(caller)
+	prev := cur.Previous()
+	assertIsRBAC(prev.Address())
 
 	// capture old value for event
 	oldAddr, _ := roleAddresses[strings.TrimSpace(roleName)]
@@ -35,8 +34,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	}
 
 	chain.Emit(
-	    "SetRoleAddress",
-		"prevAddr", caller.String(),
+		"SetRoleAddress",
+		"prevAddr", prev.Address().String(),
 		"role", roleName,
 		"prevRoleAddr", oldAddr.String(),
 		"roleAddress", roleAddress.String(),
@@ -46,8 +45,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 // setRoleAddress is the internal implementation of SetRoleAddress.
 // Separated for testability.
 func setRoleAddress(roleName string, roleAddress address) error {
-    roleName = strings.TrimSpace(roleName)
-    if roleName == "" {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
 		panic("role name cannot be empty")
 	}
 
@@ -67,8 +66,8 @@ func setRoleAddress(roleName string, roleAddress address) error {
 //
 // Only callable by RBAC contract.
 func RemoveRole(cur realm, roleName string) {
-	caller := runtime.PreviousRealm().Address()
-	assertIsRBAC(caller)
+	prev := cur.Previous()
+	assertIsRBAC(prev.Address())
 
 	// Validate role name
 	roleName = strings.TrimSpace(roleName)
@@ -84,7 +83,7 @@ func RemoveRole(cur realm, roleName string) {
 
 	chain.Emit(
 		"RemoveRole",
-		"prevAddr", caller.String(),
+		"prevAddr", prev.Address().String(),
 		"role", roleName,
 	)
 }
@@ -107,7 +106,7 @@ func IsAuthorized(role string, caller address) bool {
 
 // GetAddress returns the address for a role and whether it exists.
 func GetAddress(role string) (address, bool) {
-    role = strings.TrimSpace(role)
+	role = strings.TrimSpace(role)
 	addr, ok := roleAddresses[role]
 	return addr, ok
 }
@@ -126,7 +125,7 @@ func GetRoleAddresses() map[string]address {
 // MustGetAddress returns the address for a role or panics if it doesn't exist.
 // Use this when the role is expected to exist and failure is critical.
 func MustGetAddress(role string) address {
-    role = strings.TrimSpace(role)
+	role = strings.TrimSpace(role)
 	addr, ok := GetAddress(role)
 	if !ok {
 		panic(ufmt.Errorf(errRoleNotFound, role))

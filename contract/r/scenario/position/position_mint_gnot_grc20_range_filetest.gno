@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -49,54 +50,54 @@ var (
 	fee        = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with GNOT/GNS pair")
-	initPool()
+	initPool(cur)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 300000000}})
 
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
-	initPoolPostDeposit()
+	initPoolPostDeposit(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint in-range position")
-	mintInRangePosition()
+	mintInRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Check in-range position state")
-	checkInRangePosition()
+	checkInRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Mint out-range position")
-	mintOutRangePosition()
+	mintOutRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Check out-range position state")
-	checkOutRangePosition()
+	checkOutRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Execute swap to test ranges")
-	executeSwap()
+	executeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Verify final positions")
-	verifyFinalPositions()
+	verifyFinalPositions(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(100000000)
 
 	ufmt.Println("[INFO] Distributing GNS tokens")
-	gns.Transfer(cross, aliceAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
@@ -104,47 +105,47 @@ func initPool() {
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 }
 
-func initPoolPostDeposit() {
+func initPoolPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(100000000)
 	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
-	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
+	wugnot.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial GNS balance of Alice: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial WUGNOT balance of Alice: %d\n", wugnot.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating GNOT/GNS pool at tick 0")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 }
 
-func mintInRangePosition() {
+func mintInRangePosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting in-range position")
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -165,7 +166,7 @@ func mintInRangePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkInRangePosition() {
+func checkInRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
@@ -175,14 +176,14 @@ func checkInRangePosition() {
 	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 }
 
-func mintOutRangePosition() {
+func mintOutRangePosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting out-range position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -203,7 +204,7 @@ func mintOutRangePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkOutRangePosition() {
+func checkOutRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(2)
 
@@ -213,16 +214,16 @@ func checkOutRangePosition() {
 	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", position.GetPositionToken1Balance(2))
 }
 
-func executeSwap() {
+func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to test ranges")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -232,7 +233,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, token0Path, token1Path, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -240,7 +241,7 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func verifyFinalPositions() {
+func verifyFinalPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pos1fee0, pos1fee1 := position.GetUnclaimedFee(1)
@@ -255,13 +256,13 @@ func verifyFinalPositions() {
 	ufmt.Printf("[EXPECTED] Position 2 should have no fee1: %s\n", pos2fee1)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

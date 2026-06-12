@@ -11,7 +11,7 @@ import (
 )
 
 // TestGetter_GetTotalDelegated tests GetTotalDelegated
-func TestGetter_GetTotalDelegated(t *testing.T) {
+func TestGetter_GetTotalDelegated(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		amount   int64
@@ -35,10 +35,10 @@ func TestGetter_GetTotalDelegated(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with total delegated amount
 			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.SetTotalDelegatedAmount(tt.amount)
+			store.SetTotalDelegatedAmount(0, cur, tt.amount)
 
 			gs := &govStakerV1{store: store}
 
@@ -52,7 +52,7 @@ func TestGetter_GetTotalDelegated(t *testing.T) {
 }
 
 // TestGetter_GetTotalLockedAmount tests GetTotalLockedAmount
-func TestGetter_GetTotalLockedAmount(t *testing.T) {
+func TestGetter_GetTotalLockedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		amount   int64
@@ -76,10 +76,10 @@ func TestGetter_GetTotalLockedAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with total locked amount
 			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.SetTotalLockedAmount(tt.amount)
+			store.SetTotalLockedAmount(0, cur, tt.amount)
 
 			gs := &govStakerV1{store: store}
 
@@ -93,7 +93,7 @@ func TestGetter_GetTotalLockedAmount(t *testing.T) {
 }
 
 // TestGetter_GetUnDelegationLockupPeriod tests GetUnDelegationLockupPeriod
-func TestGetter_GetUnDelegationLockupPeriod(t *testing.T) {
+func TestGetter_GetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		period   int64
@@ -117,10 +117,10 @@ func TestGetter_GetUnDelegationLockupPeriod(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with lockup period
 			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.SetUnDelegationLockupPeriod(tt.period)
+			store.SetUnDelegationLockupPeriod(0, cur, tt.period)
 
 			gs := &govStakerV1{store: store}
 
@@ -134,7 +134,7 @@ func TestGetter_GetUnDelegationLockupPeriod(t *testing.T) {
 }
 
 // TestGetter_GetDelegationCount tests GetDelegationCount
-func TestGetter_GetDelegationCount(t *testing.T) {
+func TestGetter_GetDelegationCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		delegationCount   int
@@ -163,7 +163,7 @@ func TestGetter_GetDelegationCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with delegations
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 
@@ -176,7 +176,7 @@ func TestGetter_GetDelegationCount(t *testing.T) {
 					100,
 					100,
 				)
-				store.SetDelegation(int64(i+1), delegation)
+				store.SetDelegation(0, cur, int64(i+1), delegation)
 			}
 
 			gs := &govStakerV1{store: store}
@@ -191,7 +191,7 @@ func TestGetter_GetDelegationCount(t *testing.T) {
 }
 
 // TestGetter_GetDelegationIDs tests GetDelegationIDs pagination
-func TestGetter_GetDelegationIDs(t *testing.T) {
+func TestGetter_GetDelegationIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		totalDelegations  int
@@ -244,7 +244,7 @@ func TestGetter_GetDelegationIDs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with delegations
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 
@@ -257,7 +257,7 @@ func TestGetter_GetDelegationIDs(t *testing.T) {
 					100,
 					100,
 				)
-				store.SetDelegation(int64(i+1), delegation)
+				store.SetDelegation(0, cur, int64(i+1), delegation)
 			}
 
 			gs := &govStakerV1{store: store}
@@ -278,7 +278,7 @@ func TestGetter_GetDelegationIDs(t *testing.T) {
 }
 
 // TestGetter_ExistsDelegation tests ExistsDelegation
-func TestGetter_ExistsDelegation(t *testing.T) {
+func TestGetter_ExistsDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		delegationID  int64
@@ -298,7 +298,7 @@ func TestGetter_ExistsDelegation(t *testing.T) {
 					100,
 					100,
 				)
-				store.SetDelegation(id, delegation)
+				store.SetDelegation(0, cur, id, delegation)
 			},
 		},
 		{
@@ -312,7 +312,7 @@ func TestGetter_ExistsDelegation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			tt.setupStore(store, tt.delegationID)
@@ -329,7 +329,7 @@ func TestGetter_ExistsDelegation(t *testing.T) {
 }
 
 // TestGetter_GetDelegation tests GetDelegation
-func TestGetter_GetDelegation(t *testing.T) {
+func TestGetter_GetDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		delegationID   int64
@@ -351,7 +351,7 @@ func TestGetter_GetDelegation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 
@@ -364,7 +364,7 @@ func TestGetter_GetDelegation(t *testing.T) {
 					100,
 					100,
 				)
-				store.SetDelegation(tt.delegationID, delegation)
+				store.SetDelegation(0, cur, tt.delegationID, delegation)
 			}
 
 			gs := &govStakerV1{store: store}
@@ -385,7 +385,7 @@ func TestGetter_GetDelegation(t *testing.T) {
 }
 
 // TestGetter_GetDelegationWithdrawCount tests GetDelegationWithdrawCount
-func TestGetter_GetDelegationWithdrawCount(t *testing.T) {
+func TestGetter_GetDelegationWithdrawCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		setupDelegation    func() *staker.Delegation
@@ -443,11 +443,11 @@ func TestGetter_GetDelegationWithdrawCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with delegation
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			delegation := tt.setupDelegation()
-			store.SetDelegation(1, delegation)
+			store.SetDelegation(0, cur, 1, delegation)
 
 			gs := &govStakerV1{store: store}
 
@@ -461,7 +461,7 @@ func TestGetter_GetDelegationWithdrawCount(t *testing.T) {
 }
 
 // TestGetter_GetDelegationWithdraws tests GetDelegationWithdraws pagination
-func TestGetter_GetDelegationWithdraws(t *testing.T) {
+func TestGetter_GetDelegationWithdraws(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		setupDelegation         func() *staker.Delegation
@@ -537,11 +537,11 @@ func TestGetter_GetDelegationWithdraws(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with delegation
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			delegation := tt.setupDelegation()
-			store.SetDelegation(1, delegation)
+			store.SetDelegation(0, cur, 1, delegation)
 
 			gs := &govStakerV1{store: store}
 
@@ -559,7 +559,7 @@ func TestGetter_GetDelegationWithdraws(t *testing.T) {
 }
 
 // TestGetter_GetCollectableWithdrawAmount tests GetCollectableWithdrawAmount
-func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
+func TestGetter_GetCollectableWithdrawAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		setupDelegation    func() *staker.Delegation
@@ -641,11 +641,11 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store with delegation
 			store := newMockGovStakerStore().(*mockGovStakerStore)
 			delegation := tt.setupDelegation()
-			store.SetDelegation(1, delegation)
+			store.SetDelegation(0, cur, 1, delegation)
 
 			gs := &govStakerV1{store: store}
 
@@ -659,7 +659,7 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 }
 
 // TestGetter_HasDelegationSnapshotsKey tests HasDelegationSnapshotsKey
-func TestGetter_HasDelegationSnapshotsKey(t *testing.T) {
+func TestGetter_HasDelegationSnapshotsKey(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		hasTotalDelegationKey   bool
@@ -678,7 +678,7 @@ func TestGetter_HasDelegationSnapshotsKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Setup store
 			mockStore := newMockGovStakerStore().(*mockGovStakerStore)
 			mockStore.hasTotalDelegationHistoryKey = tt.hasTotalDelegationKey

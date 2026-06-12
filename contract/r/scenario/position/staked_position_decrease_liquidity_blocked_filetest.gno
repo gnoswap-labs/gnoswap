@@ -8,6 +8,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -24,7 +25,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/pool"
@@ -55,64 +55,64 @@ var (
 	positionId  uint64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize pool and create position")
-	initPoolAndCreatePosition()
+	initPoolAndCreatePosition(cur)
 	println()
 
 	println("[SCENARIO] 2. Stake position")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify position is staked (owner is staker contract)")
-	verifyPositionIsStaked()
+	verifyPositionIsStaked(cur)
 	println()
 
 	println("[SCENARIO] 4. Attempt to decrease liquidity on staked position (should fail)")
-	testDecreaseLiquidityOnStakedPosition()
+	testDecreaseLiquidityOnStakedPosition(cur)
 	println()
 
 	println("[SCENARIO] 5. Attempt to collect fee on staked position (should succeed via operator)")
-	testCollectFeeOnStakedPosition()
+	testCollectFeeOnStakedPosition(cur)
 	println()
 }
 
-func initPoolAndCreatePosition() {
+func initPoolAndCreatePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	pool.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	defaultTokenAmount := int64(100000000)
 
 	println("[INFO] Distributing Bar tokens to alice")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	println("[INFO] Distributing Foo tokens to alice")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] Creating pool")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Setup pool tier for staking
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	testing.SetRealm(adminRealm)
-	staker.SetPoolTier(cross, poolPath, 1)
+	staker.SetPoolTier(cross(cur), poolPath, 1)
 	println("[INFO] Pool tier set for staking")
 
 	testing.SetRealm(aliceRealm)
 	println("[INFO] Minting position for alice")
 	id, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -133,31 +133,31 @@ func initPoolAndCreatePosition() {
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(positionId))
+	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
 	println("[EXPECTED] Position owner before staking:", owner.String())
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Approving GNFT for staker contract")
-	gnft.Approve(cross, stakerAddr, positionIdToTokenId(positionId))
+	gnft.Approve(cross(cur), stakerAddr, positionIdToTokenId(cur, positionId))
 
 	println("[INFO] Staking position")
-	staker.StakeToken(cross, positionId, "")
+	staker.StakeToken(cross(cur), positionId, "")
 
 	println("[EXPECTED] Position staked successfully")
 }
 
-func verifyPositionIsStaked() {
-	owner := gnft.MustOwnerOf(positionIdToTokenId(positionId))
+func verifyPositionIsStaked(cur realm) {
+	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
 
 	println("[EXPECTED] Position owner after staking:", owner.String())
 	println("[EXPECTED] Staker contract address:", stakerAddr.String())
 	println("[EXPECTED] Position is owned by staker contract:", owner == stakerAddr)
 }
 
-func testDecreaseLiquidityOnStakedPosition() {
+func testDecreaseLiquidityOnStakedPosition(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Alice attempting to decrease liquidity on staked position")
@@ -165,10 +165,11 @@ func testDecreaseLiquidityOnStakedPosition() {
 
 	uassert.AbortsContains(
 		t,
+		cur,
 		"caller has no permission",
 		func() {
 			position.DecreaseLiquidity(
-				cross,
+				cross(cur),
 				positionId,
 				"1000000",
 				"0",
@@ -182,13 +183,13 @@ func testDecreaseLiquidityOnStakedPosition() {
 	println("[EXPECTED] Error: caller has no permission (caller is not owner of positionId)")
 }
 
-func testCollectFeeOnStakedPosition() {
+func testCollectFeeOnStakedPosition(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	println("[INFO] Alice attempting to collect fee on staked position")
 	println("[INFO] This should succeed because alice is set as operator when staking")
 
-	_, fee0, fee1, poolPath, _, _ := position.CollectFee(cross, positionId)
+	_, fee0, fee1, poolPath, _, _ := position.CollectFee(cross(cur), positionId)
 
 	println("[EXPECTED] CollectFee succeeded for staked position via operator")
 	println("[EXPECTED] Fee0 collected:", fee0)
@@ -196,7 +197,7 @@ func testCollectFeeOnStakedPosition() {
 	println("[EXPECTED] Pool path:", poolPath)
 }
 
-func positionIdToTokenId(id uint64) grc721.TokenID {
+func positionIdToTokenId(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(id)))
 }
 

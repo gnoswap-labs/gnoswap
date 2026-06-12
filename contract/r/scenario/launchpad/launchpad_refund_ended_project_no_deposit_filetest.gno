@@ -37,9 +37,9 @@ var (
 	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	println()
 
 	// [SCENARIO] 2. Skip blocks to end project
@@ -50,12 +50,12 @@ func main() {
 
 	// [SCENARIO] 3. Refund ended project without deposit
 	println("[SCENARIO] 3. Refund ended project without deposit")
-	refundEndedProjectWithoutDeposit()
+	refundEndedProjectWithoutDeposit(cur)
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -71,9 +71,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -114,7 +114,7 @@ func createOBLProject() {
 }
 
 // Refund ended project without deposit
-func refundEndedProjectWithoutDeposit() {
+func refundEndedProjectWithoutDeposit(cur realm) {
 	projectId := "gno.land/r/onbloc/obl:123"
 
 	testing.SetRealm(launchpadRealm)
@@ -132,7 +132,7 @@ func refundEndedProjectWithoutDeposit() {
 	println("[INFO] Project OBL balance before refund:", oblBalanceBefore)
 
 	println("[INFO] Project recipient attempting refund")
-	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
+	launchpad.TransferLeftFromProjectByAdmin(cross(cur), projectId, projectAddr)
 
 	println("[INFO] Checking OBL balance after refund")
 	oblBalanceAfter := obl.BalanceOf(projectAddr)

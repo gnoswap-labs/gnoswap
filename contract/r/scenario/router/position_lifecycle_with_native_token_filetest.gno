@@ -6,13 +6,13 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -54,49 +54,49 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Position Lifecycle with Native Token")
 	println("[INFO] Purpose: Validate position operations with GNOT wrap/unwrap")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	setupInitialEnvironment()
+	setupInitialEnvironment(cur)
 	println()
 
 	println("[SCENARIO] 2. Mint Position with GNOT")
 	testing.SetRealm(userRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	testMintPositionWithGnot()
+	testMintPositionWithGnot(cur)
 	println()
 
 	println("[SCENARIO] 3. Execute Swaps (Generate Fees)")
-	testExecuteSwapsForFees()
+	testExecuteSwapsForFees(cur)
 	println()
 
 	println("[SCENARIO] 4. Burn Position with Unwrap")
-	testBurnPositionWithUnwrap("170132354") // 170132354 is 50% of 340264708
+	testBurnPositionWithUnwrap(cur, "170132354") // 170132354 is 50% of 340264708
 }
 
-func setupInitialEnvironment() {
+func setupInitialEnvironment(cur realm) {
 	println("[INFO] Setting up initial environment")
 	testing.SetRealm(adminRealm)
 
 	// Set pool creation fee to 0 for testing
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	// Issue tokens to user
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 1000000000}})
 
 	// Mint GNS to user
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, userAddr, 1000000000)
+	gns.Transfer(cross(cur), userAddr, 1000000000)
 
 	// Create WUGNOT:GNS pool (fee 0.05%)
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
+	pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Verify initial balances
 	testing.SetRealm(userRealm)
@@ -110,7 +110,7 @@ func setupInitialEnvironment() {
 	println("[EXPECTED] WUGNOT: 0, GNS: 1000000000")
 }
 
-func testMintPositionWithGnot() {
+func testMintPositionWithGnot(cur realm) {
 	println("[INFO] Minting position with 100,000,000 GNOT + 100,000,000 GNS")
 	testing.SetRealm(userRealm)
 
@@ -118,12 +118,12 @@ func testMintPositionWithGnot() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for position
-	gns.Approve(cross, poolAddr, 100000000)
-	wugnot.Approve(cross, poolAddr, 100000000)
+	gns.Approve(cross(cur), poolAddr, 100000000)
+	wugnot.Approve(cross(cur), poolAddr, 100000000)
 
 	// Mint position with GNOT (auto-wrap should occur)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,      // token0Path
 		fee500,       // fee
@@ -159,17 +159,17 @@ func testMintPositionWithGnot() {
 	println("[EXPECTED] User WUGNOT balance remains 0")
 }
 
-func testExecuteSwapsForFees() {
+func testExecuteSwapsForFees(cur realm) {
 	println("[INFO] Executing swaps to generate fees")
 	testing.SetRealm(userRealm)
 
 	// Execute 10 swaps of 10,000,000 GNS → WUGNOT
 	for i := 0; i < 10; i++ {
-		gns.Approve(cross, poolAddr, 10000000)
-		gns.Approve(cross, routerAddr, max_approve) // For router fee
+		gns.Approve(cross(cur), poolAddr, 10000000)
+		gns.Approve(cross(cur), routerAddr, max_approve) // For router fee
 
 		amountIn, amountOut := router.ExactInSwapRoute(
-			cross,
+			cross(cur),
 			gnsPath,
 			wugnotPath,
 			"10000000",
@@ -195,7 +195,7 @@ func testExecuteSwapsForFees() {
 	println("[EXPECTED] Router fee (0.15%) accumulated correctly")
 }
 
-func testBurnPositionWithUnwrap(removedLiquidity string) {
+func testBurnPositionWithUnwrap(cur realm, removedLiquidity string) {
 	println("[INFO] Burning 50% of position liquidity with unwrap=true")
 	testing.SetRealm(userRealm)
 
@@ -206,7 +206,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 
 	// Burn 50% liquidity with unwrap
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		removedLiquidity,
 		"0", // amount0Min

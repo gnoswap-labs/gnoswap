@@ -50,18 +50,12 @@ patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
-adduser gnoswap_pool
-patchpkg "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v" $gnoswap_pool_user_addr
-
-adduser gnoswap_router
-patchpkg "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" $gnoswap_router_user_addr
-
 ## start a new node
 gnoland start
 
 gnokey query auth/accounts/$test1_user_addr
 
-gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/swap_wrapper -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/swap_wrapper -gas-fee 100000ugnot -gas-wanted 80000000 -broadcast -chainid=tendermint_test test1
 # stdout 'OK!'
 
 ### Send wugnot to neccessary accounts
@@ -211,7 +205,7 @@ func WrappedSwap(
 	// error. We forward the callback into handleSwapCallback so this test
 	// harness can transfer the requested token back to the pool.
 	return pool.Swap(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -222,6 +216,7 @@ func WrappedSwap(
 		payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return handleSwapCallback(
+				cur,
 				token0Path,
 				token1Path,
 				payer,
@@ -233,6 +228,7 @@ func WrappedSwap(
 }
 
 func handleSwapCallback(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	payer address,
@@ -241,19 +237,19 @@ func handleSwapCallback(
 ) error {
 	switch {
 	case amount0Delta > 0:
-		transferToPool(token0Path, amount0Delta, payer)
+		transferToPool(cur, token0Path, amount0Delta, payer)
 	case amount1Delta > 0:
-		transferToPool(token1Path, amount1Delta, payer)
+		transferToPool(cur, token1Path, amount1Delta, payer)
 	}
 
 	return nil
 }
 
-func transferToPool(tokenPath string, amount int64, payer address) {
+func transferToPool(cur realm, tokenPath string, amount int64, payer address) {
 	if payer == wrapperAddr {
-		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, amount)
+		common.SafeGRC20Transfer(cross(cur), tokenPath, poolAddr, amount)
 		return
 	}
 
-	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, amount)
+	common.SafeGRC20TransferFrom(cross(cur), tokenPath, payer, poolAddr, amount)
 }

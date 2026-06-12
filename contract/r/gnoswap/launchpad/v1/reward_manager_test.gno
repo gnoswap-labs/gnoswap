@@ -6,13 +6,12 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestRewardManager_IsInitialized(t *testing.T) {
+func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		rewardStates     map[string]*launchpad.RewardState
@@ -37,9 +36,9 @@ func TestRewardManager_IsInitialized(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			tree := bptree.NewBPTreeN(16)
+			tree := launchpad.NewBPTreeN(16)
 			for k, v := range tt.rewardStates {
 				tree.Set(k, v)
 			}
@@ -55,7 +54,7 @@ func TestRewardManager_IsInitialized(t *testing.T) {
 	}
 }
 
-func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
+func TestRewardManager_UpdateRewardPerDepositX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                                string
 		totalDistributeAmount               int64
@@ -90,7 +89,7 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			// Use current time as base and simulate 1 second per block
 			now := time.Now().Unix()
@@ -118,7 +117,7 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 	}
 }
 
-func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
+func TestRewardManager_AddRewardStateByDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		deposit               *launchpad.Deposit
@@ -188,7 +187,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			// Use current time as base and simulate timing
 			manager := newRewardManager(
@@ -226,7 +225,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 	}
 }
 
-func TestRewardManager_CollectReward(t *testing.T) {
+func TestRewardManager_CollectReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
@@ -285,7 +284,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			// Use current time as base and simulate timing
 			manager := newRewardManager(
@@ -321,7 +320,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 	}
 }
 
-func TestnewRewardManager(t *testing.T) {
+func TestnewRewardManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		totalDistributeAmount         int64
@@ -344,7 +343,7 @@ func TestnewRewardManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute
 			// Use current time as base and simulate timing
 			now := time.Now().Unix()
@@ -363,7 +362,7 @@ func TestnewRewardManager(t *testing.T) {
 	}
 }
 
-func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
+func TestTimestampBasedRewardCalculation_ConstantTime(cur realm, t *testing.T) {
 	// Test that rewards are calculated based on time duration, not block count
 	// Scenario: 100 seconds duration should distribute rewards evenly per second
 
@@ -443,7 +442,7 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 	uassert.Equal(t, true, totalDistributed >= 745 && totalDistributed <= 755)
 }
 
-func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
+func TestTimestampBasedRewardCalculation_VariableBlockTime(cur realm, t *testing.T) {
 	// Test that rewards work correctly even with variable block times
 	// Scenario: Blocks come at irregular intervals, but rewards should still be time-based
 
@@ -526,7 +525,7 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 }
 
 // TestRewardManager_VaryingBlockTime_FastBlocks tests reward distribution with very fast block times
-func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
+func TestRewardManager_VaryingBlockTime_FastBlocks(cur realm, t *testing.T) {
 	// Scenario: Blocks coming every 1 second instead of 5 seconds
 	// This should NOT affect time-based rewards
 
@@ -572,7 +571,7 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 }
 
 // TestRewardManager_VaryingBlockTime_SlowBlocks tests reward distribution with very slow block times
-func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
+func TestRewardManager_VaryingBlockTime_SlowBlocks(cur realm, t *testing.T) {
 	// Scenario: Blocks coming every 20 seconds instead of 5 seconds
 	// This should NOT affect time-based rewards
 
@@ -618,7 +617,7 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 }
 
 // TestRewardManager_VaryingBlockTime_IrregularBlocks tests reward distribution with irregular block times
-func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
+func TestRewardManager_VaryingBlockTime_IrregularBlocks(cur realm, t *testing.T) {
 	// Scenario: Blocks come at irregular intervals
 	// Block pattern: 1s, 1s, 1s, 30s, 1s, 1s, 30s, 1s, 1s, 1s (total 70s for 10 blocks)
 
@@ -664,7 +663,7 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 }
 
 // TestRewardManager_EdgeCase_ZeroDuration tests edge case with zero duration
-func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
+func TestRewardManager_EdgeCase_ZeroDuration(cur realm, t *testing.T) {
 	totalDistributeAmount := int64(1000)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(1000) // Same as start (zero duration)
@@ -682,7 +681,7 @@ func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
 }
 
 // TestRewardManager_EdgeCase_TimeGoesBackward tests that time cannot go backward
-func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
+func TestRewardManager_EdgeCase_TimeGoesBackward(cur realm, t *testing.T) {
 	totalDistributeAmount := int64(1000)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000)
@@ -721,7 +720,7 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 }
 
 // TestRewardManager_EdgeCase_RewardAfterEnd tests reward collection after distribution end
-func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
+func TestRewardManager_EdgeCase_RewardAfterEnd(cur realm, t *testing.T) {
 	totalDistributeAmount := int64(1000)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000)
@@ -761,7 +760,7 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 }
 
 // TestRewardManager_MultipleDeposits_DifferentTimings tests multiple deposits joining at different times
-func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
+func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T) {
 	totalDistributeAmount := int64(1000)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000) // 1000 seconds duration
@@ -851,7 +850,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 
 // TestRewardManager_ClaimableTimeOverflow tests potential overflow in claimableTime calculation (line 120)
 // Tests: claimableTime := deposit.CreatedAt() + r.rewardClaimableDuration
-func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
+func TestRewardManager_ClaimableTimeOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		createdAt         int64
@@ -887,7 +886,7 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			now := time.Now().Unix()
 			manager := newRewardManager(
@@ -922,7 +921,7 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 
 // TestRewardManager_ClaimedAmountOverflow tests potential overflow in claimedAmount update (line 268)
 // Tests: rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
-func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
+func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		initialClaimed  int64
@@ -949,7 +948,7 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			currentTime := time.Now().Unix()
 			distributeStart := currentTime - 1000
@@ -978,7 +977,7 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 
 			// Setup: Set initial claimed amount
 			rewardState.SetClaimedAmount(tt.initialClaimed)
-			manager.Rewards().Set(deposit.ID(), rewardState)
+			manager.SetReward(deposit.ID(), rewardState)
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			// Using priceDebtX128 for precise calculation
@@ -1012,7 +1011,7 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 
 // TestRewardManager_TotalClaimedAmountOverflow tests potential overflow in totalClaimedAmount (line 270)
 // Tests: r.totalClaimedAmount += claimableReward
-func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
+func TestRewardManager_TotalClaimedAmountOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		initialTotal    int64
@@ -1039,7 +1038,7 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			currentTime := time.Now().Unix()
 			distributeStart := currentTime - 1000
@@ -1094,7 +1093,7 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 
 // TestRewardManager_calculateRewardPerDepositX128 tests the private function calculateRewardPerDepositX128
 // This function calculates reward per deposit based on time duration and staking amount
-func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
+func TestRewardManager_calculateRewardPerDepositX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		setupManager          func() *launchpad.RewardManager
@@ -1440,7 +1439,7 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			manager := tt.setupManager()
 
@@ -1473,7 +1472,7 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 
 // TestRewardManager_updateDistributeAmountPerSecondX128 tests the private function updateDistributeAmountPerSecondX128
 // This function calculates and sets the distribute amount per second in X128 format
-func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
+func TestRewardManager_updateDistributeAmountPerSecondX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		totalDistributeAmount   int64
@@ -1639,7 +1638,7 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			manager := newRewardManager(
 				tt.totalDistributeAmount,
@@ -1679,7 +1678,7 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 
 // TestRewardManager_addRewardPerDepositX128 tests the private function addRewardPerDepositX128
 // This function accumulates reward per deposit and updates manager state
-func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
+func TestRewardManager_addRewardPerDepositX128(cur realm, t *testing.T) {
 	// Define the manager values type for test cases
 	type managerTestValues struct {
 		accumulatedRewardPerDepositX128 *u256.Uint
@@ -1866,7 +1865,7 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			manager := launchpad.NewRewardManager(0, 0, 0, 0)
 			manager.SetAccumulatedRewardPerDepositX128(tt.managerValues.accumulatedRewardPerDepositX128)
@@ -1903,7 +1902,7 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 
 // TestRewardManager_addRewardState tests the private function addRewardState
 // This function sets reward state for a deposit and returns it
-func TestRewardManager_addRewardState(t *testing.T) {
+func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		depositId    string
@@ -1927,7 +1926,7 @@ func TestRewardManager_addRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			manager := newRewardManager(
 				1000,

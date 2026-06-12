@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
+const errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
 
 // EmissionRewardManager manages the distribution of emission rewards to stakers.
 type EmissionRewardManager struct {
@@ -76,7 +76,7 @@ func (e *EmissionRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 }
 
 func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
-	e.accumulatedRewardX128PerStake = accumulatedRewardX128PerStake
+	e.accumulatedRewardX128PerStake = u256.Zero().Set(accumulatedRewardX128PerStake)
 }
 
 func (e *EmissionRewardManager) SetDistributedAmount(distributedAmount int64) {

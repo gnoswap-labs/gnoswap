@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"chain/runtime"
 	"errors"
 
 	"gno.land/p/gnoswap/store"
@@ -11,9 +10,12 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
+
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	domainPath string
+
+	currentAddress address
 
 	// kvStore is the core storage instance for the pool domain.
 	// All pool implementations share this single storage instance,
@@ -32,7 +34,10 @@ var (
 
 // init initializes the pool domain state.
 // This function is called when the pool domain contract is first deployed.
-func init() {
+func init(cur realm) {
+	domainPath = cur.PkgPath()
+	currentAddress = cur.Address()
+
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
 
@@ -46,7 +51,7 @@ func init() {
 	implementation = nil
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewPoolStore(kvStore)
 }
 

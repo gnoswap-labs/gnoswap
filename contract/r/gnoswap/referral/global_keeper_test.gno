@@ -18,7 +18,7 @@ var (
 	userRealm   = testing.NewCodeRealm("gno.land/r/demo/users")
 )
 
-func TestGlobalKeeper_TryRegister(t *testing.T) {
+func TestGlobalKeeper_TryRegister(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		callerRealm          runtime.Realm
@@ -76,20 +76,20 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			expectedPanicMessage: "unauthorized caller",
 		},
 		{
-			name:           "Fail register with invalid referral - invalid format",
-			callerRealm:    routerRealm,
-			addr:           testutils.TestAddress("test6"),
-			referral:       "invalid_ref",
+			name:             "Fail register with invalid referral - invalid format",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("test6"),
+			referral:         "invalid_ref",
 			expectedReferrer: "",
-			expectedPanics: false,
+			expectedPanics:   false,
 		},
 		{
-			name:           "Fail register with invalid user address",
-			callerRealm:    routerRealm,
-			addr:           zeroAddress,
-			referral:       testutils.TestAddress("referrer4").String(),
+			name:             "Fail register with invalid user address",
+			callerRealm:      routerRealm,
+			addr:             zeroAddress,
+			referral:         testutils.TestAddress("referrer4").String(),
 			expectedReferrer: "",
-			expectedPanics: false,
+			expectedPanics:   false,
 		},
 		{
 			name:             "Empty referral returns existing referral without registration",
@@ -102,29 +102,29 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
 
 			if tc.existingReferral != "" {
-				setupExistingReferral(t, tc.addr, address(tc.existingReferral))
+				setupExistingReferral(0, cur, t, tc.addr, address(tc.existingReferral))
 			}
 
 			if tc.expectedPanics {
-				uassert.AbortsContains(t, tc.expectedPanicMessage, func() {
-					TryRegister(cross, tc.addr, tc.referral)
+				uassert.AbortsContains(t, cur, tc.expectedPanicMessage, func() {
+					TryRegister(cross(cur), tc.addr, tc.referral)
 				})
 			} else {
-				result := TryRegister(cross, tc.addr, tc.referral)
+				result := TryRegister(cross(cur), tc.addr, tc.referral)
 				uassert.Equal(t, tc.expectedReferrer, result)
 			}
 		})
 	}
 }
 
-func TestGlobalKeeper_GetReferral(t *testing.T) {
+func TestGlobalKeeper_GetReferral(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		addr             string
@@ -164,14 +164,14 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -183,7 +183,7 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_HasReferral(t *testing.T) {
+func TestGlobalKeeper_HasReferral(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		addr          string
@@ -223,14 +223,14 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -242,7 +242,7 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_IsEmpty(t *testing.T) {
+func TestGlobalKeeper_IsEmpty(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		setupReferrals  map[string]string
@@ -271,14 +271,14 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			for addr, referral := range tc.setupReferrals {
-				setupExistingReferral(t, address(addr), address(referral))
+				setupExistingReferral(0, cur, t, address(addr), address(referral))
 			}
 
 			// when
@@ -290,41 +290,41 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
+func TestGlobalKeeper_GetLastOpTimestamp(cur realm, t *testing.T) {
 	tests := []struct {
-		name           string
-		addr           string
-		setupReferral  bool
-		expectedErr    error
+		name          string
+		addr          string
+		setupReferral bool
+		expectedErr   string
 	}{
 		{
-			name:           "Success get last op timestamp",
-			addr:           testutils.TestAddress("user1").String(),
-			setupReferral:  true,
-			expectedErr:    nil,
+			name:          "Success get last op timestamp",
+			addr:          testutils.TestAddress("user1").String(),
+			setupReferral: true,
+			expectedErr:   "",
 		},
 		{
-			name:           "ErrNotFound for non-existing",
-			addr:           testutils.TestAddress("user2").String(),
-			setupReferral:  false,
-			expectedErr:    ErrNotFound,
+			name:          "ErrNotFound for non-existing",
+			addr:          testutils.TestAddress("user2").String(),
+			setupReferral: false,
+			expectedErr:   ErrNotFound,
 		},
 		{
-			name:           "ErrInvalidAddress for empty string",
-			addr:           "",
-			setupReferral:  false,
-			expectedErr:    ErrInvalidAddress,
+			name:          "ErrInvalidAddress for empty string",
+			addr:          "",
+			setupReferral: false,
+			expectedErr:   ErrInvalidAddress,
 		},
 		{
-			name:           "ErrInvalidAddress for invalid format",
-			addr:           "invalid",
-			setupReferral:  false,
-			expectedErr:    ErrInvalidAddress,
+			name:          "ErrInvalidAddress for invalid format",
+			addr:          "invalid",
+			setupReferral: false,
+			expectedErr:   ErrInvalidAddress,
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			testing.SetRealm(routerRealm)
@@ -334,30 +334,30 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 				userAddr := address(tc.addr)
 				refAddr := testutils.TestAddress("referrer1")
 				before = time.Now().Unix()
-				uassert.Equal(t, refAddr.String(), TryRegister(cross, userAddr, refAddr.String()))
+				uassert.Equal(t, refAddr.String(), TryRegister(cross(cur), userAddr, refAddr.String()))
 				after = time.Now().Unix()
 			}
 
 			got, err := GetLastOpTimestamp(tc.addr)
 
-			if tc.expectedErr == nil {
+			if tc.expectedErr == "" {
 				uassert.NoError(t, err)
 				uassert.True(t, got >= before && got <= after)
 			} else {
-				uassert.ErrorIs(t, err, tc.expectedErr)
+				uassert.ErrorContains(t, err, tc.expectedErr)
 			}
 		})
 	}
 }
 
-func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
+func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		caller           address
 		referrer         string
 		setupReferral    string
 		expectedReferrer string
-		expectedHas       bool
+		expectedHas      bool
 	}{
 		{
 			name:             "Empty referrer falls back to stored referral",
@@ -365,7 +365,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 			referrer:         "",
 			setupReferral:    testutils.TestAddress("stored1").String(),
 			expectedReferrer: testutils.TestAddress("stored1").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 		{
 			name:             "Valid referrer registers successfully",
@@ -373,7 +373,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 			referrer:         testutils.TestAddress("referrer2").String(),
 			setupReferral:    "",
 			expectedReferrer: testutils.TestAddress("referrer2").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 		{
 			name:             "Invalid referrer falls back to stored referral",
@@ -381,20 +381,20 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 			referrer:         "invalid_referrer",
 			setupReferral:    testutils.TestAddress("stored3").String(),
 			expectedReferrer: testutils.TestAddress("stored3").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 			testing.SetRealm(routerRealm)
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(t, tc.caller, address(tc.setupReferral))
+				setupExistingReferral(0, cur, t, tc.caller, address(tc.setupReferral))
 			}
 
-			result := TryRegister(cross, tc.caller, tc.referrer)
+			result := TryRegister(cross(cur), tc.caller, tc.referrer)
 
 			uassert.Equal(t, tc.expectedReferrer, result)
 			uassert.Equal(t, tc.expectedHas, HasReferral(tc.caller.String()))
@@ -402,7 +402,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_getKeeper(t *testing.T) {
+func TestGlobalKeeper_getKeeper(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		expectedNotNil bool
@@ -414,7 +414,7 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup(t)
 
 			// when
@@ -437,7 +437,7 @@ func cleanup(t *testing.T) {
 	gReferralKeeper = NewKeeper()
 }
 
-func setupExistingReferral(t *testing.T, addr, referralAddr address) {
+func setupExistingReferral(_ int, rlm realm, t *testing.T, addr, referralAddr address) {
 	t.Helper()
-	TryRegister(cross, addr, referralAddr.String())
+	TryRegister(cross(rlm), addr, referralAddr.String())
 }

@@ -24,6 +24,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -33,7 +34,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -91,92 +91,92 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing zero-reward skip with multiple external incentives (independent per incentive)")
 	println()
 
 	println("[SCENARIO] 1. Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool (no internal tier, external-only)")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Create two external incentives: bar (~128/sec) and qux (~1,286/sec)")
-	createTwoExternalIncentives()
+	createTwoExternalIncentives(cur)
 	println()
 
 	println("[SCENARIO] 4. provider mints 100,255,208 liquidity position and stakes")
-	providerMintThenStake()
+	providerMintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 5. User mints 200,510 liquidity position and stakes (0.001996% share)")
-	userMintThenStake()
+	userMintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect at 5 sec → expect bar=0 (skip), qux>0 (collect)")
-	collectAt5Sec()
+	collectAt5Sec(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect at 25 sec → expect bar=1 and qux=15 (both collect)")
-	collectAt25Sec()
+	collectAt25Sec(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect after 86,400 sec (1 day) → expect bar=6,622, qux=66,532")
-	collectAfterOneDay()
+	collectAfterOneDay(cur)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	sr.SetUnStakingFee(cross, 0)
-	pl.SetPoolCreationFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 	testing.SkipHeights(1)
 
-	bar.Transfer(cross, providerUser, 5000000)
-	qux.Transfer(cross, providerUser, 5000000)
+	bar.Transfer(cross(cur), providerUser, 5000000)
+	qux.Transfer(cross(cur), providerUser, 5000000)
 
-	bar.Transfer(cross, user1User, 5000000)
-	qux.Transfer(cross, user1User, 5000000)
+	bar.Transfer(cross(cur), user1User, 5000000)
+	qux.Transfer(cross(cur), user1User, 5000000)
 
 	// External creator gets tokens for both incentives + GNS deposit
-	bar.Transfer(cross, externalCreatorUser, BAR_REWARD_AMOUNT)
-	qux.Transfer(cross, externalCreatorUser, QUX_REWARD_AMOUNT)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	bar.Transfer(cross(cur), externalCreatorUser, BAR_REWARD_AMOUNT)
+	qux.Transfer(cross(cur), externalCreatorUser, QUX_REWARD_AMOUNT)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] initialized accounts")
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	println("[INFO] created pool (external-only, no internal tier)")
 }
 
-func createTwoExternalIncentives() {
+func createTwoExternalIncentives(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
-	bar.Approve(cross, stakerAddr, maxInt64)
-	qux.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, maxInt64)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	qux.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	startTime := int64(1234569600) // +1 day midnight
 	endTime := startTime + INCENTIVE_DURATION
 
 	// Incentive A: bar token (~128 bar/sec) — small reward rate
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		BAR_REWARD_AMOUNT,
@@ -186,7 +186,7 @@ func createTwoExternalIncentives() {
 
 	// Incentive B: qux token (~1,286 qux/sec) — 10x of bar
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		quxPath,
 		QUX_REWARD_AMOUNT,
@@ -205,15 +205,15 @@ func createTwoExternalIncentives() {
 		QUX_REWARD_AMOUNT/INCENTIVE_DURATION)
 }
 
-func providerMintThenStake() {
+func providerMintThenStake(cur realm) {
 	testing.SetRealm(providerRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -228,22 +228,22 @@ func providerMintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] provider staked position %d (liquidity: %s)\n", lpTokenId, liquidity)
 }
 
-func userMintThenStake() {
+func userMintThenStake(cur realm) {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	// Mint position with 1,000 bar + 1,000 qux → liquidity 200,510 (share ≈ 0.001996%)
 	lpTokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -258,13 +258,13 @@ func userMintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user staked position %d (liquidity: %s, share ≈ 0.001996%%)\n", lpTokenId, liquidity)
 }
 
-func collectAt5Sec() {
+func collectAt5Sec(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	// Skip 1 block = 5 sec
@@ -274,7 +274,7 @@ func collectAt5Sec() {
 
 	barBefore := bar.BalanceOf(user1User)
 	quxBefore := qux.BalanceOf(user1User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	barAfter := bar.BalanceOf(user1User)
 	quxAfter := qux.BalanceOf(user1User)
 
@@ -291,7 +291,7 @@ func collectAt5Sec() {
 	}
 }
 
-func collectAt25Sec() {
+func collectAt25Sec(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	// Skip 4 more blocks = 20 sec → cumulative 25 sec
@@ -303,7 +303,7 @@ func collectAt25Sec() {
 
 	barBefore := bar.BalanceOf(user1User)
 	quxBefore := qux.BalanceOf(user1User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	barAfter := bar.BalanceOf(user1User)
 	quxAfter := qux.BalanceOf(user1User)
 
@@ -318,7 +318,7 @@ func collectAt25Sec() {
 	}
 }
 
-func collectAfterOneDay() {
+func collectAfterOneDay(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	// Skip 17,280 blocks = 86,400 sec (1 day)
@@ -328,7 +328,7 @@ func collectAfterOneDay() {
 
 	barBefore := bar.BalanceOf(user1User)
 	quxBefore := qux.BalanceOf(user1User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	barAfter := bar.BalanceOf(user1User)
 	quxAfter := qux.BalanceOf(user1User)
 
@@ -343,7 +343,7 @@ func collectAfterOneDay() {
 	}
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

@@ -1,6 +1,9 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -9,7 +12,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -49,76 +51,76 @@ var (
 	fee10000 = uint32(10000) // 1.00%
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] Fee Calculation Accuracy Test - Validating Uniswap V3 Fee Mathematics")
-	initPoolsWithDifferentFees()
+	initPoolsWithDifferentFees(cur)
 	println()
 
 	testing.SkipHeights(1)
 
 	ufmt.Println("[SCENARIO] 1. Fee Calculation for Different Tiers")
-	testFeeCalculation100()
-	testFeeCalculation500()
-	testFeeCalculation3000()
-	testFeeCalculation10000()
+	testFeeCalculation100(cur)
+	testFeeCalculation500(cur)
+	testFeeCalculation3000(cur)
+	testFeeCalculation10000(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Fee Accumulation Over Multiple Swaps")
-	testFeeAccumulation()
+	testFeeAccumulation(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Fee Precision for Small Amounts")
-	testSmallAmountFeePrecision()
+	testSmallAmountFeePrecision(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Fee Calculation in Exact Out Swaps")
-	testExactOutFeeCalculation()
+	testExactOutFeeCalculation(cur)
 	println()
 }
 
-func initPoolsWithDifferentFees() {
+func initPoolsWithDifferentFees(cur realm) {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	defaultTokenAmount := int64(100_000_000_000_000)
 
 	ufmt.Println("[INFO] Distributing tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Creating pools with different fee tiers")
-	pl.CreatePool(cross, barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pl.CreatePool(cross, barPath, fooPath, fee10000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee10000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Add liquidity to all pools
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// Add same liquidity to all pools for fair comparison
 	liquidityAmount := "100000000000"
-	pn.Mint(cross, barPath, fooPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross(cur), barPath, fooPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross(cur), barPath, fooPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross(cur), barPath, fooPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
+	pn.Mint(cross(cur), barPath, fooPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 }
 
-func testFeeCalculation100() {
+func testFeeCalculation100(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing 0.01% fee tier")
 	amount := "1000000000" // 1 billion units
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	bar.Approve(cross(cur), routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -130,17 +132,17 @@ func testFeeCalculation100() {
 	ufmt.Println("[EXPECTED] Fee should be ~100,000 units (0.01% of input)")
 }
 
-func testFeeCalculation500() {
+func testFeeCalculation500(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing 0.05% fee tier")
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	bar.Approve(cross(cur), routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -151,17 +153,17 @@ func testFeeCalculation500() {
 	ufmt.Println("[EXPECTED] Fee should be ~500,000 units (0.05% of input)")
 }
 
-func testFeeCalculation3000() {
+func testFeeCalculation3000(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing 0.30% fee tier")
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	bar.Approve(cross(cur), routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -172,17 +174,17 @@ func testFeeCalculation3000() {
 	ufmt.Println("[EXPECTED] Fee should be ~3,000,000 units (0.30% of input)")
 }
 
-func testFeeCalculation10000() {
+func testFeeCalculation10000(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing 1.00% fee tier")
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:10000"
 
-	bar.Approve(cross, routerAddr, 1000000000)
+	bar.Approve(cross(cur), routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, amount, route, "100", "1",
+		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -193,7 +195,7 @@ func testFeeCalculation10000() {
 	ufmt.Println("[EXPECTED] Fee should be ~10,000,000 units (1.00% of input)")
 }
 
-func testFeeAccumulation() {
+func testFeeAccumulation(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing fee accumulation over multiple swaps")
@@ -203,9 +205,9 @@ func testFeeAccumulation() {
 
 	// Execute multiple swaps
 	for i := 0; i < 3; i++ {
-		bar.Approve(cross, routerAddr, 100000000)
+		bar.Approve(cross(cur), routerAddr, 100000000)
 		amountIn, amountOut := router.ExactInSwapRoute(
-			cross, barPath, fooPath, amount, route, "100", "1",
+			cross(cur), barPath, fooPath, amount, route, "100", "1",
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[INFO] SWAP %d - In: %s, Out: %s\n", i+1, amountIn, amountOut)
@@ -214,7 +216,7 @@ func testFeeAccumulation() {
 	ufmt.Println("[EXPECTED] Each swap should deduct 0.05% fee consistently")
 }
 
-func testSmallAmountFeePrecision() {
+func testSmallAmountFeePrecision(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing fee precision for small amounts")
@@ -223,10 +225,10 @@ func testSmallAmountFeePrecision() {
 	smallAmount := "1337" // Prime number for edge case
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
-	bar.Approve(cross, routerAddr, 1337)
+	bar.Approve(cross(cur), routerAddr, 1337)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross, barPath, fooPath, smallAmount, route, "100", "1",
+		cross(cur), barPath, fooPath, smallAmount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -237,7 +239,7 @@ func testSmallAmountFeePrecision() {
 	ufmt.Println("[EXPECTED] Fee calculation should handle rounding correctly")
 }
 
-func testExactOutFeeCalculation() {
+func testExactOutFeeCalculation(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Testing fee calculation in exact out swaps")
@@ -245,11 +247,11 @@ func testExactOutFeeCalculation() {
 	desiredOutput := "1000000000"
 	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
 
-	foo.Approve(cross, routerAddr, 1000000000)
+	foo.Approve(cross(cur), routerAddr, 1000000000)
 
 	// For exact out, fee is calculated on the input amount
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, fooPath, barPath, desiredOutput, route, "100", "999999999999",
+		cross(cur), fooPath, barPath, desiredOutput, route, "100", "999999999999",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 

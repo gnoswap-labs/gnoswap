@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -11,7 +12,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -57,48 +57,48 @@ var (
 	poolPath2 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("Initial Tier Assignment Unclaimable Period Tracking")
 	println()
 
 	println("[SCENARIO] 1. Initialize system")
-	initSystem()
+	initSystem(cur)
 
 	println()
 	println("[SCENARIO] 2. Test Internal Rewards (GNS emission)")
-	testInitialTierInternalRewards()
+	testInitialTierInternalRewards(cur)
 
 	println()
 	println("[SCENARIO] 3. Test External Rewards")
-	testInitialTierExternalRewards()
+	testInitialTierExternalRewards(cur)
 }
 
-func initSystem() {
+func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set distribution start time")
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SkipHeights(2)
 }
 
 // Test for internal rewards (GNS emission) unclaimable period tracking
-func testInitialTierInternalRewards() {
+func testInitialTierInternalRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1 (rewards start here)")
 	tierAssignmentTime := time.Now().Unix()
-	sr.SetPoolTier(cross, poolPath1, 1)
+	sr.SetPoolTier(cross(cur), poolPath1, 1)
 	testing.SkipHeights(1)
 
 	// Verify tier assignment
@@ -119,14 +119,14 @@ func testInitialTierInternalRewards() {
 	// Expected unclaimable reward calculation
 	// Assuming emission rate, we can calculate expected unclaimable rewards
 	println("[INFO] prepare to stake first position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake first position (liquidity becomes positive)")
 	stakeTime := time.Now().Unix()
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -141,8 +141,8 @@ func testInitialTierInternalRewards() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 	testing.SkipHeights(2)
 
 	// Verify pool now has positive liquidity
@@ -155,7 +155,7 @@ func testInitialTierInternalRewards() {
 
 	println("[INFO] collect reward immediately after first stake")
 	communityBalanceBefore := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter := gns.BalanceOf(communityPoolAddr)
 	unclaimableRewardsSent := communityBalanceAfter - communityBalanceBefore
 
@@ -173,21 +173,21 @@ func testInitialTierInternalRewards() {
 	}
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 	testing.SkipHeights(5)
 }
 
 // Test for external rewards unclaimable period tracking
-func testInitialTierExternalRewards() {
+func testInitialTierExternalRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), fooPath, quxPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for external incentive")
-	gns.Approve(cross, stakerAddr, 100_000_000_000) // deposit 100 GNS
-	foo.Approve(cross, stakerAddr, maxInt64)        // reward token
+	gns.Approve(cross(cur), stakerAddr, 100_000_000_000) // deposit 100 GNS
+	foo.Approve(cross(cur), stakerAddr, maxInt64)        // reward token
 	testing.SkipHeights(1)
 
 	println("[INFO] create external incentive (starts next day midnight)")
@@ -204,7 +204,7 @@ func testInitialTierExternalRewards() {
 
 	incentiveRewardAmount := int64(1_000_000_000)
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath2,
 		fooPath,
 		incentiveRewardAmount, // rewardAmount
@@ -233,14 +233,14 @@ func testInitialTierExternalRewards() {
 	}
 
 	println("[INFO] prepare to stake first position")
-	foo.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake first position (liquidity becomes positive)")
 	stakeTime := time.Now().Unix()
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		quxPath,
 		fee100,
@@ -255,8 +255,8 @@ func testInitialTierExternalRewards() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 	testing.SkipHeights(2)
 
 	// Verify pool now has positive liquidity
@@ -270,7 +270,7 @@ func testInitialTierExternalRewards() {
 
 	println("[INFO] wait and unstake to end the incentive period")
 	testing.SkipHeights(5)
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 
 	println("[RESULT] External incentive unclaimable period should be tracked")
 	println("[NOTE] External uses different tracking mechanism (unclaimablePeriods tree)")

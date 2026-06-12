@@ -14,6 +14,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -24,7 +25,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -75,81 +75,81 @@ var (
 	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and settings")
-	initAccountAndSettings()
+	initAccountAndSettings(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint bar qux position")
-	mintBarQuxPosition()
+	mintBarQuxPosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Create external incentive GNS")
-	createExternalIncentiveGns()
+	createExternalIncentiveGns(cur)
 	println()
 
 	println("[SCENARIO] 5. Start external incentive")
-	startExternalIncentive()
+	startExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 6. Stake position")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 7. End external incentive")
-	endExternalGnsIncentive()
+	endExternalGnsIncentive(cur)
 	println()
 
 	println("[SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times")
-	demonstrateVulnerability()
+	demonstrateVulnerability(cur)
 	println()
 
 	println("[SCENARIO] 9. Final verification")
-	checkFinalState()
+	checkFinalState(cur)
 }
 
-func initAccountAndSettings() {
+func initAccountAndSettings(cur realm) {
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	// Transfer extra GNS to staker for testing drain
 	println("[INFO] transfer extra GNS to staker contract for drain test")
-	gns.Transfer(cross, stakerAddr, 10_000_000_000) // 10,000 GNS
+	gns.Transfer(cross(cur), stakerAddr, 10_000_000_000) // 10,000 GNS
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 }
 
-func mintBarQuxPosition() {
+func mintBarQuxPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -165,15 +165,15 @@ func mintBarQuxPosition() {
 	)
 }
 
-func createExternalIncentiveGns() {
+func createExternalIncentiveGns(cur realm) {
 	println("[INFO] transfer GNS to external creator")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, externalCreatorUser, 9000000000)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	gns.Transfer(cross(cur), externalCreatorUser, 9000000000)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve GNS for external incentive creation")
 	testing.SetRealm(externalCreatorRealm)
-	gns.Approve(cross, stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
@@ -184,7 +184,7 @@ func createExternalIncentiveGns() {
 	println("[INFO] create external incentive with incentiveID: ", actualIncentiveID)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
 		9000000000,
@@ -193,7 +193,7 @@ func createExternalIncentiveGns() {
 	)
 }
 
-func startExternalIncentive() {
+func startExternalIncentive(cur realm) {
 	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
@@ -205,16 +205,16 @@ func startExternalIncentive() {
 	ufmt.Printf("[INFO] external incentive started at timestamp: %d\n", externalStartTime)
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position")
 	testing.SkipHeights(1)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 }
 
-func endExternalGnsIncentive() {
+func endExternalGnsIncentive(cur realm) {
 	externalEndTime := (1234569600 + TIMESTAMP_90DAYS)
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
@@ -232,7 +232,7 @@ func endExternalGnsIncentive() {
 
 	// Use the actual incentive ID that was created
 	sr.EndExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		actualIncentiveID,
 		externalCreatorUser,
@@ -248,15 +248,15 @@ func endExternalGnsIncentive() {
 	ufmt.Printf("[INFO] FIRST END - Creator received: %d GNS\n", creatorGnsAfterFirstEnd-creatorGnsBeforeFirstEnd)
 }
 
-func demonstrateVulnerability() {
+func demonstrateVulnerability(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
 	println("[FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times")
 	println("[EXPECTED] Second call should fail with 'cannot end non existent incentive' error")
 
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-008]", func() {
+	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-008]", func() {
 		sr.EndExternalIncentive(
-			cross,
+			cross(cur),
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 			actualIncentiveID,
 			externalCreatorUser,
@@ -264,7 +264,7 @@ func demonstrateVulnerability() {
 	})
 }
 
-func checkFinalState() {
+func checkFinalState(cur realm) {
 	stakerFinalBalance := gns.BalanceOf(stakerAddr)
 	creatorFinalBalance := gns.BalanceOf(externalCreatorUser)
 
@@ -276,7 +276,7 @@ func checkFinalState() {
 	println("[VERIFIED] The vulnerability has been successfully fixed")
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

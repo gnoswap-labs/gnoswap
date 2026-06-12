@@ -1,12 +1,15 @@
 package v1
 
 import (
+	"errors"
 	"chain"
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -28,17 +31,23 @@ import (
 //
 // Only callable by users.
 func (s *stakerV1) CreateExternalIncentive(
+	_ int,
+	rlm realm,
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	prevRealm := runtime.PreviousRealm()
+	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
-	access.AssertIsUser(prevRealm)
+	access.AssertIsUser(0, prevRealm)
 
 	assertIsPoolExists(s, targetPoolPath)
 
@@ -46,21 +55,21 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
-	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
+	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
 
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(rlm))
 
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 	// transfer reward token from user to staker
-	common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
+	common.SafeGRC20TransferFrom(cross(rlm), rewardToken, caller, stakerAddr, rewardAmount)
 
 	depositGnsAmount := s.store.GetDepositGnsAmount()
 
 	// deposit gns amount
-	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
+	gns.TransferFrom(cross(rlm), caller, stakerAddr, depositGnsAmount)
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
@@ -98,7 +107,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver.IncentivesResolver().create(incentive)
 
 	// add incentive to time-based index for lazy discovery during CollectReward
-	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
+	s.addIncentiveIdByCreationTime(0, rlm, targetPoolPath, incentiveId, currentTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -107,12 +116,12 @@ func (s *stakerV1) CreateExternalIncentive(
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
-		"rewardAmount", formatAnyInt(rewardAmount),
-		"startTimestamp", formatAnyInt(startTimestamp),
-		"endTimestamp", formatAnyInt(endTimestamp),
-		"depositGnsAmount", formatAnyInt(depositGnsAmount),
-		"currentHeight", formatAnyInt(currentHeight),
-		"currentTime", formatAnyInt(currentTime),
+		"rewardAmount", utils.FormatInt(rewardAmount),
+		"startTimestamp", utils.FormatInt(startTimestamp),
+		"endTimestamp", utils.FormatInt(endTimestamp),
+		"depositGnsAmount", utils.FormatInt(depositGnsAmount),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"currentTime", utils.FormatInt(currentTime),
 	)
 }
 
@@ -134,7 +143,11 @@ func (s *stakerV1) CreateExternalIncentive(
 //  5. Removes incentive from active list
 //
 // Only callable by Creator or Admin.
-func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
 	// checks pool registry
@@ -170,7 +183,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 		))
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 
 	// Process ending
 	incentive, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, caller, time.Now().Unix())
@@ -181,7 +194,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
-		previousRealm := runtime.PreviousRealm()
+		previousRealm := rlm.Previous()
 		chain.Emit(
 			"EndExternalIncentiveShortfall",
 			"prevAddr", previousRealm.Address().String(),
@@ -190,8 +203,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 			"targetPoolPath", targetPoolPath,
 			"refundee", refundAddress.String(),
 			"refundToken", incentiveResolver.RewardToken(),
-			"expectedRefundAmount", formatAnyInt(refund),
-			"actualRefundAmount", formatAnyInt(poolLeftExternalRewardAmount),
+			"expectedRefundAmount", utils.FormatInt(refund),
+			"actualRefundAmount", utils.FormatInt(poolLeftExternalRewardAmount),
 			"creator", incentiveResolver.Creator().String(),
 		)
 		refund = poolLeftExternalRewardAmount
@@ -205,12 +218,12 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	incentivesResolver.update(incentive)
 
 	// refund reward token to refundee
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, refund)
+	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, refund)
 
 	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross, refundAddress, incentiveResolver.DepositGnsAmount())
+	gns.Transfer(cross(rlm), refundAddress, incentiveResolver.DepositGnsAmount())
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"EndExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
@@ -219,8 +232,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 		"targetPoolPath", targetPoolPath,
 		"refundee", refundAddress.String(),
 		"refundToken", incentiveResolver.RewardToken(),
-		"refundAmount", formatAnyInt(refund),
-		"refundGnsAmount", formatAnyInt(incentiveResolver.DepositGnsAmount()),
+		"refundAmount", utils.FormatInt(refund),
+		"refundGnsAmount", utils.FormatInt(incentiveResolver.DepositGnsAmount()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 		"creator", incentiveResolver.Creator().String(),
 	)
@@ -251,7 +264,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
-	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
+	duration := gnsmath.SafeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
 	// distributable = floor((rewardPerSecondX128 * duration) / 2^128).
 	// With Q128 scaling the truncation per second collapses to at most 1 wei
 	// across the entire duration, so `remainder` is effectively zero and the
@@ -262,12 +275,12 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		q128,
 	)
 
-	distributable := safeConvertToInt64(distributableU256)
-	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
+	distributable := gnsmath.SafeConvertToInt64(distributableU256)
+	remainder := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
-	refund := safeAddInt64(unclaimableReward, remainder)
+	refund := gnsmath.SafeAddInt64(unclaimableReward, remainder)
 
-	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
+	maxRefund := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
 	if refund > maxRefund {
 		refund = maxRefund
 	}
@@ -290,10 +303,16 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 //
 // Only callable by the incentive creator or admin.
 func (s *stakerV1) CollectExternalIncentivePenalty(
+	_ int,
+	rlm realm,
 	targetPoolPath string,
 	incentiveId string,
 	refundAddress address,
 ) int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsPoolExists(s, targetPoolPath)
@@ -325,7 +344,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 		))
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	caller := rlm.Previous().Address()
 	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Creator() {
 		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		panic(makeErrorWithDetails(
@@ -343,7 +362,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	balance := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if balance < penaltyAmount {
-		previousRealm := runtime.PreviousRealm()
+		previousRealm := rlm.Previous()
 		chain.Emit(
 			"CollectExternalIncentivePenaltyShortfall",
 			"prevAddr", previousRealm.Address().String(),
@@ -352,21 +371,21 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 			"incentiveId", incentiveId,
 			"refundAddress", refundAddress.String(),
 			"refundToken", incentiveResolver.RewardToken(),
-			"expectedPenaltyAmount", formatAnyInt(penaltyAmount),
-			"actualPenaltyAmount", formatAnyInt(balance),
+			"expectedPenaltyAmount", utils.FormatInt(penaltyAmount),
+			"actualPenaltyAmount", utils.FormatInt(balance),
 			"creator", incentiveResolver.Creator().String(),
 		)
 		penaltyAmount = balance
 	}
 
 	// Reset accumulated penalty
-	incentiveResolver.SetAccumulatedPenaltyAmount(safeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
+	incentiveResolver.SetAccumulatedPenaltyAmount(gnsmath.SafeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
 	incentivesResolver.update(incentiveResolver.ExternalIncentive)
 
 	// Transfer penalty to refund address
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
+	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CollectExternalIncentivePenalty",
 		"prevAddr", previousRealm.Address().String(),
@@ -374,7 +393,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 		"targetPoolPath", targetPoolPath,
 		"incentiveId", incentiveId,
 		"refundAddress", refundAddress.String(),
-		"penaltyAmount", formatAnyInt(penaltyAmount),
+		"penaltyAmount", utils.FormatInt(penaltyAmount),
 	)
 
 	return penaltyAmount
@@ -384,32 +403,48 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 //
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveIds
-func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+func (s *stakerV1) addIncentiveIdByCreationTime(_ int, rlm realm, poolPath, incentiveId string, creationTime int64) {
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
-	if !exists {
-		currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
+	// Rebuild the nested poolPath -> []incentiveId tree into a freshly allocated
+	// bptree on every call instead of mutating the one fetched out of the
+	// persisted UintTree. A persisted nested tree is owned by /r/gnoswap/staker
+	// and a direct bptree.Set on it from a different calling realm trips the
+	// readonly-taint gate (the bptree Set runs in the caller's realm, not the
+	// tree's owning realm). Allocating a fresh tree here makes it owned by the
+	// executing realm, so its leaf writes are always permitted; re-Setting all
+	// existing entries preserves the stored shape.
+	freshPoolIncentiveIds := sr.NewBPTreeN(16)
+	found := false
+
+	if currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime); exists {
+		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
+		if !ok {
+			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
+		}
+
+		currentPoolIncentiveIds.Iterate("", "", func(key string, value any) bool {
+			incentiveIds, ok := value.([]string)
+			if !ok {
+				panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", value))
+			}
+
+			copied := make([]string, len(incentiveIds))
+			copy(copied, incentiveIds)
+			if key == poolPath {
+				copied = append(copied, incentiveId)
+				found = true
+			}
+			freshPoolIncentiveIds.Set(key, copied)
+			return false
+		})
 	}
 
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
-	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
+	if !found {
+		freshPoolIncentiveIds.Set(poolPath, []string{incentiveId})
 	}
 
-	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
-	if !exists {
-		incentiveIdsValue = []string{}
-	}
+	incentivesByTime.Set(creationTime, freshPoolIncentiveIds)
 
-	incentiveIds, ok := incentiveIdsValue.([]string)
-	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
-	}
-
-	incentiveIds = append(incentiveIds, incentiveId)
-	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
-	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
-
-	s.updateExternalIncentivesByCreationTime(incentivesByTime)
+	s.updateExternalIncentivesByCreationTime(0, rlm, incentivesByTime)
 }

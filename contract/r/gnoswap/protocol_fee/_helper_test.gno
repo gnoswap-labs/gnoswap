@@ -1,7 +1,6 @@
 package protocol_fee
 
 import (
-	"chain/runtime"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -14,14 +13,14 @@ import (
 var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 
 // Helper functions for testing
-func resetTestState(t *testing.T) {
+func resetTestState(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
 
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(cur.Address())
 	versionManager = version_manager.NewVersionManager(
 		"gno.land/r/gnoswap/protocol_fee",
 		kvStore,
-		func(_ store.KVStore) any {
+		func(_ int, rlm realm, _ store.KVStore) any {
 			return NewProtocolFeeStore(kvStore)
 		},
 	)
@@ -29,8 +28,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IProtocolFeeStore) IProtocolFee {
-	return func(_ IProtocolFeeStore) IProtocolFee {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IProtocolFeeStore) IProtocolFee {
+	return func(_ int, rlm realm, _ IProtocolFeeStore) IProtocolFee {
 		return newMockProtocolFee(version)
 	}
 }

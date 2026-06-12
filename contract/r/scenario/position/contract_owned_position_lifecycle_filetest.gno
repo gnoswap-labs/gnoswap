@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
@@ -32,15 +33,15 @@ import (
 )
 
 const (
-	INT64_MAX int64 = 9223372036854775807
+	INT64_MAX int64  = 9223372036854775807
 	MIN_PRICE string = "4295128740"
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 
 	originAddr  = testutils.TestAddress("vault-origin")
@@ -57,73 +58,73 @@ var (
 	positionID uint64
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Setup pool and fund vault contract")
-	setupPoolAndFundVault()
+	setupPoolAndFundVault(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Vault contract mints a position")
-	vaultMintPosition()
+	vaultMintPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Verify vault contract owns the position")
-	verifyVaultOwnership()
+	verifyVaultOwnership(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Generate fees through swaps")
-	generateFees()
+	generateFees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Vault contract collects fees")
-	vaultCollectFees()
+	vaultCollectFees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Vault contract increases liquidity")
-	vaultIncreaseLiquidity()
+	vaultIncreaseLiquidity(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Vault contract decreases all liquidity")
-	vaultDecreaseAllLiquidity()
+	vaultDecreaseAllLiquidity(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 8. Vault contract repositions the cleared position")
-	vaultReposition()
+	vaultReposition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 9. Vault contract stakes the position")
-	vaultStakePosition()
+	vaultStakePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 10. Vault contract collects fees while staked")
-	vaultCollectFeesWhileStaked()
+	vaultCollectFeesWhileStaked(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 11. Vault contract collects staking rewards")
-	vaultCollectStakingReward()
+	vaultCollectStakingReward(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 12. Vault contract unstakes the position")
-	vaultUnstakePosition()
+	vaultUnstakePosition(cur)
 	println()
 }
 
-func setupPoolAndFundVault() {
+func setupPoolAndFundVault(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	staker.SetPoolTier(cross, poolPath, 1)
+	staker.SetPoolTier(cross(cur), poolPath, 1)
 
-	bar.Transfer(cross, vaultAddr, 150000000)
-	foo.Transfer(cross, vaultAddr, 150000000)
+	bar.Transfer(cross(cur), vaultAddr, 150000000)
+	foo.Transfer(cross(cur), vaultAddr, 150000000)
 
 	ufmt.Printf("[EXPECTED] pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] pool tier after setup: %d\n", staker.GetPoolTier(poolPath))
@@ -131,10 +132,10 @@ func setupPoolAndFundVault() {
 	ufmt.Printf("[EXPECTED] vault foo balance after funding: %d\n", foo.BalanceOf(vaultAddr))
 }
 
-func vaultMintPosition() {
+func vaultMintPosition(cur realm) {
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -143,7 +144,7 @@ func vaultMintPosition() {
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
 		positionID, liquidity, _, _ = position.Mint(
-			cross,
+			cross(cur),
 			barPath,
 			fooPath,
 			fee,
@@ -157,7 +158,7 @@ func vaultMintPosition() {
 			vaultAddr,
 			"",
 		)
-	}(cross)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] position ID: %d\n", positionID)
 	ufmt.Printf("[EXPECTED] minted liquidity: %s\n", liquidity)
@@ -165,7 +166,7 @@ func vaultMintPosition() {
 	ufmt.Printf("[EXPECTED] vault foo balance after mint: %d\n", foo.BalanceOf(vaultAddr))
 }
 
-func verifyVaultOwnership() {
+func verifyVaultOwnership(cur realm) {
 	owner := position.GetPositionOwner(positionID)
 
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner.String())
@@ -173,11 +174,11 @@ func verifyVaultOwnership() {
 	ufmt.Printf("[EXPECTED] origin user address: %s\n", originAddr.String())
 }
 
-func generateFees() {
+func generateFees(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 	pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -187,12 +188,12 @@ func generateFees() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -202,7 +203,7 @@ func generateFees() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -212,7 +213,7 @@ func generateFees() {
 	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", pool.GetBalanceToken1(poolPath))
 }
 
-func vaultCollectFees() {
+func vaultCollectFees(cur realm) {
 	barBefore := bar.BalanceOf(vaultAddr)
 	fooBefore := foo.BalanceOf(vaultAddr)
 
@@ -223,8 +224,8 @@ func vaultCollectFees() {
 	var fee1 string
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
-		_, fee0, fee1, _, _, _ = position.CollectFee(cross, positionID)
-	}(cross)
+		_, fee0, fee1, _, _, _ = position.CollectFee(cross(cur), positionID)
+	}(cross(cur))
 
 	barAfter := bar.BalanceOf(vaultAddr)
 	fooAfter := foo.BalanceOf(vaultAddr)
@@ -237,12 +238,12 @@ func vaultCollectFees() {
 	ufmt.Printf("[EXPECTED] vault foo balance after collect: %d\n", fooAfter)
 }
 
-func vaultIncreaseLiquidity() {
+func vaultIncreaseLiquidity(cur realm) {
 	liquidityBefore := position.GetPositionLiquidity(positionID)
 
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -250,7 +251,7 @@ func vaultIncreaseLiquidity() {
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
 		position.IncreaseLiquidity(
-			cross,
+			cross(cur),
 			positionID,
 			"10000000",
 			"10000000",
@@ -258,7 +259,7 @@ func vaultIncreaseLiquidity() {
 			"0",
 			9999999999,
 		)
-	}(cross)
+	}(cross(cur))
 
 	liquidityAfter := position.GetPositionLiquidity(positionID)
 
@@ -267,7 +268,7 @@ func vaultIncreaseLiquidity() {
 	ufmt.Printf("[EXPECTED] owner after increase: %s\n", position.GetPositionOwner(positionID).String())
 }
 
-func vaultDecreaseAllLiquidity() {
+func vaultDecreaseAllLiquidity(cur realm) {
 	liquidityBefore := position.GetPositionLiquidity(positionID)
 
 	testing.SetRealm(originRealm)
@@ -277,14 +278,14 @@ func vaultDecreaseAllLiquidity() {
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
 		_, removedLiquidity, _, _, _, _, _ = position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			positionID,
 			liquidityBefore,
 			"0",
 			"0",
 			9999999999,
 		)
-	}(cross)
+	}(cross(cur))
 
 	liquidityAfter := position.GetPositionLiquidity(positionID)
 
@@ -294,10 +295,10 @@ func vaultDecreaseAllLiquidity() {
 	ufmt.Printf("[EXPECTED] owner after decrease: %s\n", position.GetPositionOwner(positionID).String())
 }
 
-func vaultReposition() {
+func vaultReposition(cur realm) {
 	testing.SetRealm(vaultRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -308,7 +309,7 @@ func vaultReposition() {
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
 		_, liquidity, tickLower, tickUpper, _, _ = position.Reposition(
-			cross,
+			cross(cur),
 			positionID,
 			-600,
 			600,
@@ -318,25 +319,25 @@ func vaultReposition() {
 			"0",
 			9999999999,
 		)
-	}(cross)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] repositioned liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] repositioned tick range: [%d, %d]\n", tickLower, tickUpper)
 	ufmt.Printf("[EXPECTED] owner after reposition: %s\n", position.GetPositionOwner(positionID).String())
 }
 
-func vaultStakePosition() {
+func vaultStakePosition(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
-		gnft.Approve(cross, stakerAddr, positionIdToTokenId(positionID))
-		poolPath = staker.StakeToken(cross, positionID, "")
-	}(cross)
+		gnft.Approve(cross(cur), stakerAddr, positionIdToTokenId(cur, positionID))
+		poolPath = staker.StakeToken(cross(cur), positionID, "")
+	}(cross(cur))
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(positionID))
+	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionID))
 
 	ufmt.Printf("[EXPECTED] staked pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] position owner after stake: %s\n", owner.String())
@@ -344,20 +345,20 @@ func vaultStakePosition() {
 	ufmt.Printf("[EXPECTED] deposit owner after stake: %s\n", staker.GetDepositOwner(positionID).String())
 }
 
-func vaultCollectFeesWhileStaked() {
+func vaultCollectFeesWhileStaked(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
-		_, _, _, poolPath, _, _ = position.CollectFee(cross, positionID)
-	}(cross)
+		_, _, _, poolPath, _, _ = position.CollectFee(cross(cur), positionID)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] staked collect fee pool path: %s\n", poolPath)
 }
 
-func vaultCollectStakingReward() {
+func vaultCollectStakingReward(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
@@ -367,8 +368,8 @@ func vaultCollectStakingReward() {
 	var externalPenalties map[string]int64
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
-		rewardToUser, gnsReward, externalRewards, externalPenalties = staker.CollectReward(cross, positionID)
-	}(cross)
+		rewardToUser, gnsReward, externalRewards, externalPenalties = staker.CollectReward(cross(cur), positionID)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] staking reward to user: %s\n", rewardToUser)
 	ufmt.Printf("[EXPECTED] staking reward penalty: %s\n", gnsReward)
@@ -376,35 +377,35 @@ func vaultCollectStakingReward() {
 	ufmt.Printf("[EXPECTED] staking external penalty entries: %d\n", len(externalPenalties))
 }
 
-func vaultUnstakePosition() {
+func vaultUnstakePosition(cur realm) {
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
 
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(vaultRealm)
-		poolPath = staker.UnStakeToken(cross, positionID)
-	}(cross)
+		poolPath = staker.UnStakeToken(cross(cur), positionID)
+	}(cross(cur))
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(positionID))
+	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionID))
 
 	ufmt.Printf("[EXPECTED] unstaked pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", owner.String())
 }
 
-func positionIdToTokenId(id uint64) grc721.TokenID {
+func positionIdToTokenId(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(id)))
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

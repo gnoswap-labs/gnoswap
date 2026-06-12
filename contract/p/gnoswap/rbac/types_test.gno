@@ -217,7 +217,7 @@ func TestSystemRole_AllRolesHaveValidString(t *testing.T) {
 func TestSystemRoleNames_MapCompleteness(t *testing.T) {
 	// Verify that systemRoleNames map has exactly 13 entries
 	expectedCount := 13
-	actualCount := len(systemRoleNames)
+	actualCount := len(_systemRoleNames)
 	uassert.Equal(t, actualCount, expectedCount)
 
 	// Verify all expected roles are in the map
@@ -238,7 +238,7 @@ func TestSystemRoleNames_MapCompleteness(t *testing.T) {
 	}
 
 	for _, roleName := range expectedRoles {
-		_, exists := systemRoleNames[roleName]
+		_, exists := _systemRoleNames[roleName]
 		uassert.True(t, exists)
 	}
 }

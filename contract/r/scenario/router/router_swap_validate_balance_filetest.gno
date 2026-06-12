@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -14,7 +15,6 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -71,7 +71,7 @@ type BalanceSnapshot struct {
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Router Swap with Validate Balance")
 	println("[INFO] Purpose: End-to-end validation of complete user journey")
 	println()
@@ -81,55 +81,55 @@ func main() {
 	println("[SCENARIO] 1. Initial Setup")
 	testing.SetRealm(userRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initialBalance := setupInitialEnvironment()
-	printBalanceSnapshot("Initial State", initialBalance)
+	initialBalance := setupInitialEnvironment(cur)
+	printBalanceSnapshot(cur, "Initial State", initialBalance)
 	println()
 
 	println("[SCENARIO] 2. Create Pool with WGNOT")
-	afterPoolCreation := createPoolWithGnot()
-	printBalanceSnapshot("After Pool Creation", afterPoolCreation)
+	afterPoolCreation := createPoolWithGnot(cur)
+	printBalanceSnapshot(cur, "After Pool Creation", afterPoolCreation)
 	println()
 
 	println("[SCENARIO] 3. Mint Position with WGNOT")
-	// Deposit must be called from main() due to AssertOriginCall frame limit
-	afterMint := mintPositionWithGnot()
-	printBalanceSnapshot("After Position Mint", afterMint)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
+	afterMint := mintPositionWithGnot(cur)
+	printBalanceSnapshot(cur, "After Position Mint", afterMint)
 	println()
 
 	println("[SCENARIO] 4. Perform Swaps (Both Directions)")
-	// Deposit must be called from main() due to AssertOriginCall frame limit
-	afterSwaps := performSwaps()
-	printBalanceSnapshot("After Swaps", afterSwaps)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
+	afterSwaps := performSwaps(cur)
+	printBalanceSnapshot(cur, "After Swaps", afterSwaps)
 	println()
 
 	println("[SCENARIO] 5. Add Liquidity with WGNOT")
-	// Deposit must be called from main() due to AssertOriginCall frame limit
-	afterAddLiquidity := addLiquidityWithGnot()
-	printBalanceSnapshot("After Add Liquidity", afterAddLiquidity)
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
+	afterAddLiquidity := addLiquidityWithGnot(cur)
+	printBalanceSnapshot(cur, "After Add Liquidity", afterAddLiquidity)
 	println()
 
 	println("[SCENARIO] 6. Remove Liquidity to GNOT")
-	afterRemoveLiquidity := removeLiquidityToGnot()
-	printBalanceSnapshot("After Remove Liquidity", afterRemoveLiquidity)
+	afterRemoveLiquidity := removeLiquidityToGnot(cur)
+	printBalanceSnapshot(cur, "After Remove Liquidity", afterRemoveLiquidity)
 	println()
 
 	println("[SCENARIO] 7. Collect All Fees as GNOT")
-	afterCollectFees := collectAllFeesAsGnot()
-	printBalanceSnapshot("After Collect Fees", afterCollectFees)
+	afterCollectFees := collectAllFeesAsGnot(cur)
+	printBalanceSnapshot(cur, "After Collect Fees", afterCollectFees)
 	println()
 
 	println("[SCENARIO] 8. Close Position Receiving GNOT")
-	finalBalance := closePositionToGnot()
-	printBalanceSnapshot("Final State", finalBalance)
+	finalBalance := closePositionToGnot(cur)
+	printBalanceSnapshot(cur, "Final State", finalBalance)
 	println()
 
 	println("[SCENARIO] 9. Final Reconciliation")
-	validateFinalReconciliation(initialBalance, finalBalance)
+	validateFinalReconciliation(cur, initialBalance, finalBalance)
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
 		userWugnot:        wugnot.BalanceOf(userAddr),
 		userGns:           gns.BalanceOf(userAddr),
@@ -149,7 +149,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	return snapshot
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[BALANCE]", step)
 	println("  User - WGNOT:", snapshot.userWugnot, "GNS:", snapshot.userGns)
 	println("  Position - WUGNOT:", snapshot.positionWugnot, "GNS:", snapshot.positionGns)
@@ -160,49 +160,49 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("  System Total - WUGNOT:", snapshot.totalSystemWugnot)
 }
 
-func setupInitialEnvironment() BalanceSnapshot {
+func setupInitialEnvironment(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	// Set pool creation fee to 0 for testing
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	// Issue initial GNOT to user
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", initialGnot}})
 
 	// Admin provides GNS to user
-	gns.Transfer(cross, userAddr, initialGnot)
+	gns.Transfer(cross(cur), userAddr, initialGnot)
 
 	testing.SetRealm(userRealm)
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func createPoolWithGnot() BalanceSnapshot {
+func createPoolWithGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Create pool with WGNOT (auto-wrap)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func mintPositionWithGnot() BalanceSnapshot {
+func mintPositionWithGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
 	// Approve GNS for position
-	gns.Approve(cross, poolAddr, 50000000)
-	wugnot.Approve(cross, poolAddr, 50000000)
+	gns.Approve(cross(cur), poolAddr, 50000000)
+	wugnot.Approve(cross(cur), poolAddr, 50000000)
 
 	// Mint position with WGNOT
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,      // token0Path
 		fee500,       // fee
@@ -222,22 +222,22 @@ func mintPositionWithGnot() BalanceSnapshot {
 	println("[INFO] Amount0 (GNS):", amount0)
 	println("[INFO] Amount1 (WUGNOT):", amount1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func performSwaps() BalanceSnapshot {
+func performSwaps(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
-	wugnot.Approve(cross, routerAddr, 10000000)
-	gns.Approve(cross, routerAddr, max_approve)
+	wugnot.Approve(cross(cur), routerAddr, 10000000)
+	gns.Approve(cross(cur), routerAddr, max_approve)
 
 	amountIn1, amountOut1 := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		"10000000",
@@ -251,11 +251,11 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 2: GNS → GNOT (ExactOut)
 	println("[INFO] Swap 2: GNS → 5,000,000 GNOT")
-	gns.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
 
 	amountIn2, amountOut2 := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		gnsPath,
 		wugnotPath,
 		"5000000",
@@ -267,20 +267,20 @@ func performSwaps() BalanceSnapshot {
 	)
 	println("[INFO] Swap 2 - In:", amountIn2, "Out:", amountOut2)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func addLiquidityWithGnot() BalanceSnapshot {
+func addLiquidityWithGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
 	// Add liquidity with WUGNOT
-	gns.Approve(cross, poolAddr, 20000000)
-	wugnot.Approve(cross, poolAddr, 20000000)
+	gns.Approve(cross(cur), poolAddr, 20000000)
+	wugnot.Approve(cross(cur), poolAddr, 20000000)
 
 	_, liquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"20000000", // amount0Desired (GNS)
 		"20000000", // amount1Desired (WGNOT)
@@ -293,10 +293,10 @@ func addLiquidityWithGnot() BalanceSnapshot {
 	println("[INFO] GNS added:", amount0)
 	println("[INFO] WGNOT added:", amount1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func removeLiquidityToGnot() BalanceSnapshot {
+func removeLiquidityToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
@@ -307,7 +307,7 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	removeLiquidity := liquidityInt * 30 / 100
 
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		strconv.FormatInt(removeLiquidity, 10),
 		"0",
@@ -321,25 +321,25 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	println("[INFO] GNS fees:", fee0)
 	println("[INFO] WGNOT fees:", fee1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func collectAllFeesAsGnot() BalanceSnapshot {
+func collectAllFeesAsGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Collect all accumulated fees as GNOT
 	_, token0Collected, token1Collected, _, _, _ := pn.CollectFee(
-		cross,
+		cross(cur),
 		1,
 	)
 
 	println("[INFO] GNS fees collected:", token0Collected)
 	println("[INFO] WUGNOT fees collected (unwrapped to GNOT):", token1Collected)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func closePositionToGnot() BalanceSnapshot {
+func closePositionToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
@@ -350,7 +350,7 @@ func closePositionToGnot() BalanceSnapshot {
 	removeLiquidity := liquidityInt
 
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		strconv.FormatInt(removeLiquidity, 10),
 		"0",
@@ -366,10 +366,10 @@ func closePositionToGnot() BalanceSnapshot {
 	println("[INFO] Final GNS fees:", fee0)
 	println("[INFO] Final WGNOT fees:", fee1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func validateFinalReconciliation(initial, final BalanceSnapshot) {
+func validateFinalReconciliation(cur realm, initial, final BalanceSnapshot) {
 	// Verify complete fund recovery
 	println("[VALIDATION] User final WGNOT balance accounts for:")
 	println("  - Initial WGNOT minus all pool fees (0.05% per swap)")

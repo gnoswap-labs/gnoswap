@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"chain/runtime"
 	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -13,24 +12,23 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
 
+var (
 	kvStore store.KVStore
 
 	versionManager version_manager.VersionManager
 	implementation IStaker
 )
 
-func init() {
+func init(cur realm) {
 	// Create a new KV store instance for this domain
-	kvStore = store.NewKVStore(currentAddress)
-	initRegisterWritableContract()
+	kvStore = store.NewKVStore(cur.Address())
+	initRegisterWritableContract(cur)
 
 	// Initialize the initializers map to store implementation registration functions
 	versionManager = version_manager.NewVersionManager(
-		domainPath,
+		cur.PkgPath(),
 		kvStore,
 		initializeDomainStore,
 	)
@@ -38,15 +36,15 @@ func init() {
 	implementation = nil
 }
 
-func initRegisterWritableContract() {
+func initRegisterWritableContract(cur realm) {
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 
-	if err := kvStore.AddAuthorizedCaller(poolAddr, store.Write); err != nil {
+	if err := kvStore.AddAuthorizedCaller(0, cur, poolAddr, store.Write); err != nil {
 		panic(err)
 	}
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewStakerStore(kvStore)
 }
 

@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestUtils_assertValidCaller_AllAuthorizedRoles(t *testing.T) {
+func TestUtils_assertValidCaller_AllAuthorizedRoles(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		roleName string
@@ -43,7 +43,7 @@ func TestUtils_assertValidCaller_AllAuthorizedRoles(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			roleAddr, ok := access.GetAddress(tc.roleName)
 			if !ok {
@@ -59,7 +59,7 @@ func TestUtils_assertValidCaller_AllAuthorizedRoles(t *testing.T) {
 	}
 }
 
-func TestUtils_assertValidCaller_UnauthorizedCallers(t *testing.T) {
+func TestUtils_assertValidCaller_UnauthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -79,16 +79,16 @@ func TestUtils_assertValidCaller_UnauthorizedCallers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			uassert.PanicsContains(t, "unauthorized", func() {
+			uassert.PanicsContains(t, cur, "unauthorized", func() {
 				assertValidCaller(tc.caller)
 			})
 		})
 	}
 }
 
-func TestUtils_assertValidCaller_EdgeCases(t *testing.T) {
+func TestUtils_assertValidCaller_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -104,18 +104,18 @@ func TestUtils_assertValidCaller_EdgeCases(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			uassert.PanicsContains(t, "unauthorized", func() {
+			uassert.PanicsContains(t, cur, "unauthorized", func() {
 				assertValidCaller(tc.caller)
 			})
 		})
 	}
 }
 
-func TestUtils_assertValidCaller_MultipleRolesConsistency(t *testing.T) {
+func TestUtils_assertValidCaller_MultipleRolesConsistency(cur realm, t *testing.T) {
 	// Test that multiple calls with the same authorized role return consistent results
-	t.Run("consistent authorization for same role", func(t *testing.T) {
+	t.Run("consistent authorization for same role", func(cur realm, t *testing.T) {
 		// given
 		routerAddr, ok := access.GetAddress(prabc.ROLE_ROUTER.String())
 		if !ok {
@@ -128,22 +128,22 @@ func TestUtils_assertValidCaller_MultipleRolesConsistency(t *testing.T) {
 		}
 	})
 
-	t.Run("consistent rejection for unauthorized caller", func(t *testing.T) {
+	t.Run("consistent rejection for unauthorized caller", func(cur realm, t *testing.T) {
 		// given
 		unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 		// when & then - call multiple times
 		for i := 0; i < 5; i++ {
-			uassert.PanicsContains(t, "unauthorized", func() {
+			uassert.PanicsContains(t, cur, "unauthorized", func() {
 				assertValidCaller(unauthorizedAddr)
 			})
 		}
 	})
 }
 
-func TestUtils_assertValidCaller_RoleIsolation(t *testing.T) {
+func TestUtils_assertValidCaller_RoleIsolation(cur realm, t *testing.T) {
 	// Test that authorization is properly isolated by role
-	t.Run("different authorized roles all work", func(t *testing.T) {
+	t.Run("different authorized roles all work", func(cur realm, t *testing.T) {
 		roles := []string{
 			prabc.ROLE_GOVERNANCE.String(),
 			prabc.ROLE_ROUTER.String(),
@@ -160,7 +160,7 @@ func TestUtils_assertValidCaller_RoleIsolation(t *testing.T) {
 		}
 	})
 
-	t.Run("unauthorized address between authorized roles", func(t *testing.T) {
+	t.Run("unauthorized address between authorized roles", func(cur realm, t *testing.T) {
 		// given
 		routerAddr, ok1 := access.GetAddress(prabc.ROLE_ROUTER.String())
 		positionAddr, ok2 := access.GetAddress(prabc.ROLE_POSITION.String())
@@ -176,7 +176,7 @@ func TestUtils_assertValidCaller_RoleIsolation(t *testing.T) {
 		assertValidCaller(routerAddr)
 
 		// panic
-		uassert.PanicsContains(t, "unauthorized", func() {
+		uassert.PanicsContains(t, cur, "unauthorized", func() {
 			assertValidCaller(unauthorizedAddr)
 		})
 

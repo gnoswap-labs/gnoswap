@@ -6,16 +6,16 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(t *testing.T) {
+func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(cur realm, t *testing.T) {
 	firstStore := &MockStakerStore{}
-	err := initStoreData(firstStore, newMockEmissionAccessor())
+	err := initStoreData(0, cur, firstStore, newMockEmissionAccessor())
 	uassert.Nil(t, err)
 
-	firstStoreAllowedTokens := firstStore.GetAllowedTokens()
-	firstStoreAllowedTokens[0] = "gno.land/r/gnoswap/custom"
+	firstStore.SetAllowedTokens(0, cur, []string{})
+	firstStore.AddAllowedToken(0, cur, "gno.land/r/gnoswap/custom")
 
 	secondStore := &MockStakerStore{}
-	err = initStoreData(secondStore, newMockEmissionAccessor())
+	err = initStoreData(0, cur, secondStore, newMockEmissionAccessor())
 	uassert.Nil(t, err)
 
 	secondStoreAllowedTokens := secondStore.GetAllowedTokens()

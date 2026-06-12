@@ -32,7 +32,7 @@ func countDelegationIDs(tree *bptree.BPTree) int {
 }
 
 // Test lockup period management
-func TestUnDelegationLockupPeriod(t *testing.T) {
+func TestUnDelegationLockupPeriod(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		setPeriod      int64
@@ -56,10 +56,10 @@ func TestUnDelegationLockupPeriod(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Set lockup period
 			gs := createTestGovStaker()
-			gs.setUnDelegationLockupPeriod(tt.setPeriod)
+			gs.setUnDelegationLockupPeriod(0, cur, tt.setPeriod)
 
 			// Then: Should return expected period
 			result := gs.store.GetUnDelegationLockupPeriod()
@@ -70,7 +70,7 @@ func TestUnDelegationLockupPeriod(t *testing.T) {
 }
 
 // Test delegation management
-func TestDelegationManagement(t *testing.T) {
+func TestDelegationManagement(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		delegateFrom   address
@@ -95,7 +95,7 @@ func TestDelegationManagement(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
@@ -111,7 +111,7 @@ func TestDelegationManagement(t *testing.T) {
 			)
 
 			// When: Add delegation
-			result := gs.addDelegation(delegationID, delegation)
+			result := gs.addDelegation(0, cur, delegationID, delegation)
 
 			// Then: Should succeed
 			if tt.expectSuccess {
@@ -131,7 +131,7 @@ func TestDelegationManagement(t *testing.T) {
 }
 
 // Test user delegation retrieval
-func TestGetUserDelegations(t *testing.T) {
+func TestGetUserDelegations(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupState    func(gs *govStakerV1) (address, []int64)
@@ -154,7 +154,7 @@ func TestGetUserDelegations(t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(delegationID, delegation)
+					gs.addDelegation(0, cur, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegationIDs
@@ -172,7 +172,7 @@ func TestGetUserDelegations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
@@ -208,7 +208,7 @@ func TestGetUserDelegations(t *testing.T) {
 }
 
 // Test delegation removal
-func TestRemoveDelegation(t *testing.T) {
+func TestRemoveDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupState    func(gs *govStakerV1) int64
@@ -226,7 +226,7 @@ func TestRemoveDelegation(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID, delegation)
+				gs.addDelegation(0, cur, delegationID, delegation)
 				return delegationID
 			},
 			expectSuccess: true,
@@ -241,7 +241,7 @@ func TestRemoveDelegation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
@@ -249,7 +249,7 @@ func TestRemoveDelegation(t *testing.T) {
 			delegationID := tt.setupState(gs)
 
 			// When: Remove delegation
-			result := gs.removeDelegation(delegationID)
+			result := gs.removeDelegation(0, cur, delegationID)
 
 			// Then: Should return expected result
 			uassert.Equal(t, result, tt.expectSuccess)
@@ -264,7 +264,7 @@ func TestRemoveDelegation(t *testing.T) {
 }
 
 // Test delegation history management with new structure
-func TestAddDelegationRecord(t *testing.T) {
+func TestAddDelegationRecord(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -274,14 +274,14 @@ func TestAddDelegationRecord(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 			delegatee := address("g1validator1234567890abcdefghijklmno")
 			timestamp := int64(100)
 
 			// When: Record delegation
-			gs.addDelegationRecord(delegatee, 1000, timestamp)
+			gs.addDelegationRecord(0, cur, delegatee, 1000, timestamp)
 
 			// Then: Should update total delegation history
 			totalHistory := gs.store.GetTotalDelegationHistory()
@@ -312,7 +312,7 @@ func TestAddDelegationRecord(t *testing.T) {
 }
 
 // Test GetTotalDelegationAmountAtSnapshot with new structure
-func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
+func TestGetTotalDelegationAmountAtSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -322,15 +322,15 @@ func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 			delegatee := address("g1validator1234567890abcdefghijklmno")
 
 			// Record delegations at different times
-			gs.addDelegationRecord(delegatee, 1000, 100) // total: 1000
-			gs.addDelegationRecord(delegatee, 500, 200)  // total: 1500
-			gs.addDelegationRecord(delegatee, -300, 300) // total: 1200
+			gs.addDelegationRecord(0, cur, delegatee, 1000, 100) // total: 1000
+			gs.addDelegationRecord(0, cur, delegatee, 500, 200)  // total: 1500
+			gs.addDelegationRecord(0, cur, delegatee, -300, 300) // total: 1200
 
 			// When: Get snapshot at time 150
 			amount, found := gs.GetTotalDelegationAmountAtSnapshot(150)
@@ -350,7 +350,7 @@ func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 }
 
 // Test GetUserDelegationAmountAtSnapshot with new structure
-func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
+func TestGetUserDelegationAmountAtSnapshot(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -360,14 +360,14 @@ func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 			delegatee := address("g1validator1234567890abcdefghijklmno")
 
 			// Record delegations at different times
-			gs.addDelegationRecord(delegatee, 1000, 100)
-			gs.addDelegationRecord(delegatee, 500, 200)
+			gs.addDelegationRecord(0, cur, delegatee, 1000, 100)
+			gs.addDelegationRecord(0, cur, delegatee, 500, 200)
 
 			// When: Get user snapshot at time 150
 			amount, found := gs.GetUserDelegationAmountAtSnapshot(delegatee, 150)
@@ -387,7 +387,7 @@ func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
 }
 
 // Test launchpad project deposits
-func TestLaunchpadProjectDeposits(t *testing.T) {
+func TestLaunchpadProjectDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		ownerAddress  string
@@ -409,12 +409,12 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
 			// When: Set launchpad project deposit
-			result := gs.setLaunchpadProjectDeposit(tt.ownerAddress, tt.depositAmount)
+			result := gs.setLaunchpadProjectDeposit(0, cur, tt.ownerAddress, tt.depositAmount)
 
 			// Then: Should succeed
 			uassert.Equal(t, result, tt.expectSuccess)
@@ -430,7 +430,7 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 }
 
 // Test makeLaunchpadRewardID
-func TestMakeLaunchpadRewardID(t *testing.T) {
+func TestMakeLaunchpadRewardID(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		address  string
@@ -449,7 +449,7 @@ func TestMakeLaunchpadRewardID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
@@ -463,7 +463,7 @@ func TestMakeLaunchpadRewardID(t *testing.T) {
 }
 
 // Test launchpad stake operations
-func TestLaunchpadStakeOperations(t *testing.T) {
+func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		address       string
@@ -479,52 +479,56 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
-			// When: Add stake from launchpad
+			// When: Record launchpad deposit (avoids protocol-fee cross-realm auth in mock frame)
+			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				gs.addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
-			}(cross)
+				gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, tt.amount)
+			}(cross(cur))
 
 			// Then: Should create deposit record
-			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.amount)
 
-			// When: Remove stake from launchpad
-			gs.removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			// When: Clear deposit via production launchpad path
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+			staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
 
 			// Then:
-			launchpadDepositAmount, _ := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+			launchpadDepositAmount, _ := staker.GetLaunchpadProjectDeposit(tt.address)
 			uassert.Equal(t, launchpadDepositAmount, int64(0))
 		})
 	}
 }
 
 // Test launchpad deposit removal
-func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
+func TestRemoveLaunchpadProjectDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func(gs *govStakerV1) string
+		setupState    func(cur realm, gs *govStakerV1) string
 		expectSuccess bool
 	}{
 		{
 			name: "Remove existing deposit",
-			setupState: func(gs *govStakerV1) string {
+			setupState: func(cur realm, gs *govStakerV1) string {
 				ownerAddress := "g1projectowner9876543210abcdefghijklm"
-				gs.setLaunchpadProjectDeposit(ownerAddress, 3000)
+				testing.SetRealm(adminRealm)
+				func(cur realm) {
+					gs.setLaunchpadProjectDeposit(0, cur, ownerAddress, 3000)
+				}(cross(cur))
 				return ownerAddress
 			},
 			expectSuccess: true,
 		},
 		{
 			name: "Remove non-existent deposit",
-			setupState: func(_ *govStakerV1) string {
+			setupState: func(_ realm, _ *govStakerV1) string {
 				return "g1nonexistentowner1234567890abcdefgh"
 			},
 			expectSuccess: false,
@@ -532,10 +536,10 @@ func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 			// Given: Setup state
-			ownerAddress := tt.setupState(gs)
+			ownerAddress := tt.setupState(cur, gs)
 
 			// When: Remove launchpad project deposit
 			result := gs.removeLaunchpadProjectDeposit(ownerAddress)
@@ -553,7 +557,7 @@ func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
 }
 
 // Test partial launchpad stake removal
-func TestPartialLaunchpadStakeRemoval(t *testing.T) {
+func TestPartialLaunchpadStakeRemoval(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		address           string
@@ -573,30 +577,23 @@ func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			projectAddr := address(tt.address)
 
-			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				// Given: Initial stake
-				gs.addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+			staker.SetAmountByProjectWallet(cross(cur), projectAddr, tt.initialAmount, true)
+			staker.SetAmountByProjectWallet(cross(cur), projectAddr, tt.removeAmount, false)
 
-				// When: Remove partial stake
-				gs.removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
-
-				// Then: Should have remaining deposit
-				launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
-				deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
-				uassert.True(t, exists)
-				uassert.Equal(t, deposit, tt.expectedRemaining)
-			}(cross)
+			deposit, exists := staker.GetLaunchpadProjectDeposit(tt.address)
+			uassert.True(t, exists)
+			uassert.Equal(t, deposit, tt.expectedRemaining)
 		})
 	}
 }
 
 // Test getUserDelegationIDsWithDelegatee with comprehensive scenarios
-func TestGetUserDelegationsWithDelegatee(t *testing.T) {
+func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupState    func(gs *govStakerV1) (address, address, []int64)
@@ -620,7 +617,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(delegationID, delegation)
+					gs.addDelegation(0, cur, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -647,7 +644,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(delegationID, delegation)
+					gs.addDelegation(0, cur, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 
@@ -662,7 +659,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(delegationID, delegation)
+					gs.addDelegation(0, cur, delegationID, delegation)
 				}
 
 				delegationID := gs.nextDelegationID()
@@ -674,7 +671,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID, delegation)
+				gs.addDelegation(0, cur, delegationID, delegation)
 
 				return user, targetDelegatee, delegationIDs
 			},
@@ -697,7 +694,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID, delegation)
+				gs.addDelegation(0, cur, delegationID, delegation)
 
 				return user, targetDelegatee, []int64{}
 			},
@@ -730,7 +727,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(delegationID, delegation)
+					gs.addDelegation(0, cur, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -754,7 +751,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID1, delegation1)
+				gs.addDelegation(0, cur, delegationID1, delegation1)
 				delegationIDs = append(delegationIDs, delegationID1)
 
 				// Add delegation with small amount
@@ -767,7 +764,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID2, delegation2)
+				gs.addDelegation(0, cur, delegationID2, delegation2)
 				delegationIDs = append(delegationIDs, delegationID2)
 
 				// Add delegation with large amount
@@ -780,7 +777,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(delegationID3, delegation3)
+				gs.addDelegation(0, cur, delegationID3, delegation3)
 				delegationIDs = append(delegationIDs, delegationID3)
 
 				return user, delegatee, delegationIDs
@@ -790,7 +787,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 

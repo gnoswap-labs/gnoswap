@@ -32,7 +32,7 @@ func editorChecker(caller address) error {
 }
 
 func TestRbac_New(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	uassert.NotNil(t, manager)
 	uassert.NotNil(t, manager.ownable)
@@ -101,27 +101,27 @@ func TestRbac_RegisterRole(t *testing.T) {
 			roleName:    "",
 			addr:        adminAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 		{
 			name:        "Register role with whitespace-only name fails",
 			roleName:    "   ",
 			addr:        adminAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 		{
 			name:        "Register role with tab and space fails",
 			roleName:    " \t ",
 			addr:        adminAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			manager := New()
+			manager := NewRBACWithAddress(adminAddr)
 
 			err := manager.RegisterRole(tt.roleName, tt.addr)
 
@@ -144,7 +144,7 @@ func TestRbac_RegisterRole(t *testing.T) {
 }
 
 func TestRbac_RegisterRoleDuplicate(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	err := manager.RegisterRole(adminRole, adminAddr)
 	uassert.NoError(t, err)
@@ -152,11 +152,11 @@ func TestRbac_RegisterRoleDuplicate(t *testing.T) {
 	// Try to register same role again
 	err = manager.RegisterRole(adminRole, adminAddr)
 	uassert.Error(t, err)
-	uassert.ErrorContains(t, err, ErrRoleAlreadyExists.Error())
+	uassert.ErrorContains(t, err, ErrRoleAlreadyExists)
 }
 
 func TestRbac_IsAuthorized(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	// Register admin role
 	err := manager.RegisterRole(adminRole, adminAddr)
@@ -226,7 +226,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    "non_existent",
 			newAddr:     userAddr,
 			shouldError: true,
-			errorMsg:    ErrRoleDoesNotExist.Error(),
+			errorMsg:    ErrRoleDoesNotExist,
 		},
 		{
 			name: "Update with empty address fails",
@@ -236,7 +236,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    adminRole,
 			newAddr:     address(""),
 			shouldError: true,
-			errorMsg:    ErrInvalidAddress.Error(),
+			errorMsg:    ErrInvalidAddress,
 		},
 		{
 			name: "Update with invalid address fails",
@@ -246,7 +246,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    adminRole,
 			newAddr:     address("invalid"),
 			shouldError: true,
-			errorMsg:    ErrInvalidAddress.Error(),
+			errorMsg:    ErrInvalidAddress,
 		},
 		{
 			name:        "Update with empty role name fails",
@@ -254,7 +254,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    "",
 			newAddr:     userAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 		{
 			name:        "Update with whitespace-only role name fails",
@@ -262,7 +262,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    "   ",
 			newAddr:     userAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 		{
 			name:        "Update with tab and space role name fails",
@@ -270,7 +270,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    " \t ",
 			newAddr:     userAddr,
 			shouldError: true,
-			errorMsg:    ErrInvalidRoleName.Error(),
+			errorMsg:    ErrInvalidRoleName,
 		},
 		{
 			name: "Update with same address succeeds (idempotent)",
@@ -285,7 +285,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			manager := New()
+			manager := NewRBACWithAddress(adminAddr)
 			tt.setup(manager)
 
 			err := manager.UpdateRoleAddress(tt.roleName, tt.newAddr)
@@ -309,7 +309,7 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 
 func TestRbac_RemoveRole(t *testing.T) {
 	t.Run("success remove non-system role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// First register role
 		err := manager.RegisterRole(editorRole, editorAddr)
 		uassert.NoError(t, err)
@@ -324,14 +324,14 @@ func TestRbac_RemoveRole(t *testing.T) {
 	})
 
 	t.Run("fail to remove non-existent role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("non_existent_role")
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
+		uassert.ErrorContains(t, err, ErrRoleDoesNotExist)
 	})
 
 	t.Run("fail to remove system role", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// Register system role
 		err := manager.RegisterRole(adminRole, adminAddr)
 		uassert.NoError(t, err)
@@ -339,11 +339,11 @@ func TestRbac_RemoveRole(t *testing.T) {
 		// Try to remove system role
 		err = manager.RemoveRole(adminRole)
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrCannotRemoveSystemRole.Error())
+		uassert.ErrorContains(t, err, ErrCannotRemoveSystemRole)
 	})
 
 	t.Run("remove role twice fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		// Register and remove once
 		err := manager.RegisterRole(editorRole, editorAddr)
 		uassert.NoError(t, err)
@@ -353,33 +353,33 @@ func TestRbac_RemoveRole(t *testing.T) {
 		// Try to remove again
 		err = manager.RemoveRole(editorRole)
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
+		uassert.ErrorContains(t, err, ErrRoleDoesNotExist)
 	})
 
 	t.Run("remove role with empty name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("")
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
+		uassert.ErrorContains(t, err, ErrInvalidRoleName)
 	})
 
 	t.Run("remove role with whitespace-only name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole("   ")
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
+		uassert.ErrorContains(t, err, ErrInvalidRoleName)
 	})
 
 	t.Run("remove role with tab and space name fails", func(t *testing.T) {
-		manager := New()
+		manager := NewRBACWithAddress(adminAddr)
 		err := manager.RemoveRole(" \t ")
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
+		uassert.ErrorContains(t, err, ErrInvalidRoleName)
 	})
 }
 
 func TestRbac_GetAllRoleAddresses(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	t.Run("empty roles returns empty map", func(t *testing.T) {
 		addresses := manager.GetAllRoleAddresses()
@@ -402,7 +402,7 @@ func TestRbac_GetAllRoleAddresses(t *testing.T) {
 }
 
 func TestRbac_GetRoleAddress(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 	err := manager.RegisterRole(adminRole, adminAddr)
 	uassert.NoError(t, err)
 
@@ -436,7 +436,7 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 
 			if tt.shouldError {
 				uassert.Error(t, err)
-				uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
+				uassert.ErrorContains(t, err, ErrRoleDoesNotExist)
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, addr, tt.expectedAddr)
@@ -493,7 +493,7 @@ func TestRbac_DropOwnership(t *testing.T) {
 }
 
 func TestRbac_existsRole(t *testing.T) {
-	manager := New()
+	manager := NewRBACWithAddress(adminAddr)
 
 	// Initially role doesn't exist
 	exists := manager.existsRole(adminRole)

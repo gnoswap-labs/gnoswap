@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"errors"
 	"math"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	sr "gno.land/r/gnoswap/staker"
@@ -45,11 +47,7 @@ func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmu
 	for i, warmup := range warmupTemplate {
 		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
-		warmups = append(warmups, sr.Warmup{
-			TimeDuration:   warmup.TimeDuration,
-			NextWarmupTime: nextWarmupTime,
-			WarmupRatio:    warmup.WarmupRatio,
-		})
+		warmups = append(warmups, sr.NewWarmup(warmup.TimeDuration, nextWarmupTime, warmup.WarmupRatio))
 
 		// Only update currentTime if not the last tier
 		if i < len(warmupTemplate)-1 {
@@ -68,7 +66,7 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
 	perPositionReward, overflow := u256.Zero().MulOverflow(poolRewardUint, positionLiquidity)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
 
@@ -76,16 +74,16 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 	rewardRatio := u256.NewUint(warmup.WarmupRatio)
 	totalReward, overflow := u256.Zero().MulOverflow(perPositionReward, rewardRatio)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	totalReward = u256.Zero().Div(totalReward, divisor)
 
 	totalPenalty, overflow := u256.Zero().MulOverflow(perPositionReward, penaltyRatio)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	totalPenalty = u256.Zero().Div(totalPenalty, divisor)
-	return safeConvertToInt64(totalReward), safeConvertToInt64(totalPenalty)
+	return gnsmath.SafeConvertToInt64(totalReward), gnsmath.SafeConvertToInt64(totalPenalty)
 }
 
 // safeAddTime performs safe addition with overflow protection
@@ -99,5 +97,5 @@ func safeAddTime(currentTime, duration int64) int64 {
 		return math.MaxInt64
 	}
 
-	return safeAddInt64(currentTime, duration)
+	return gnsmath.SafeAddInt64(currentTime, duration)
 }

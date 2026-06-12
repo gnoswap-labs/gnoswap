@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Gov/Staker contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	govStakerTestPath = "gno.land/r/gnoswap/gov/staker/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Gov/Staker Contract Rollback Test")
-	testGovStakerRollback()
+	testGovStakerRollback(cur)
 	println()
 }
 
-func testGovStakerRollback() {
+func testGovStakerRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	govStaker.UpgradeImpl(cross, govStakerTestPath)
+	govStaker.UpgradeImpl(cross(cur), govStakerTestPath)
 
 	currentVersion := govStaker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testGovStakerRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back gov/staker contract to v1")
 	testing.SetRealm(adminRealm)
-	govStaker.UpgradeImpl(cross, govStakerV1Path)
+	govStaker.UpgradeImpl(cross(cur), govStakerV1Path)
 
 	currentVersion = govStaker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Gov/Staker rolled back to: %s\n", currentVersion)

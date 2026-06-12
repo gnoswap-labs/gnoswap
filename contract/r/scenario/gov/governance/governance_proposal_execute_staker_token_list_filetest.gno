@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance proposal execute - staker AddToken/RemoveToken via governance
 
 package main
@@ -35,12 +37,12 @@ var (
 
 const testTokenPath = "gno.land/r/onbloc/obl"
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
@@ -49,36 +51,36 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose AddToken")
-	addTokenProposalID := proposeAddToken()
+	addTokenProposalID := proposeAddToken(cur)
 	println()
 
 	println("[SCENARIO] 4. Vote and execute AddToken proposal")
-	voteAndExecute(addTokenProposalID, config)
+	voteAndExecute(cur, addTokenProposalID, config)
 	println()
 
 	println("[SCENARIO] 5. Propose RemoveToken")
-	removeTokenProposalID := proposeRemoveToken()
+	removeTokenProposalID := proposeRemoveToken(cur)
 	println()
 
 	println("[SCENARIO] 6. Vote and execute RemoveToken proposal")
-	voteAndExecute(removeTokenProposalID, config)
+	voteAndExecute(cur, removeTokenProposalID, config)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	govStaker.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeAddToken() int64 {
+func proposeAddToken(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"staker",
 		"Add OBL token to allowed list",
 		1,
@@ -89,10 +91,10 @@ func proposeAddToken() int64 {
 	return proposalID
 }
 
-func proposeRemoveToken() int64 {
+func proposeRemoveToken(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"staker",
 		"Remove OBL token from allowed list",
 		1,
@@ -103,7 +105,7 @@ func proposeRemoveToken() int64 {
 	return proposalID
 }
 
-func voteAndExecute(proposalID int64, config governance.Config) {
+func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Skip to voting start
@@ -111,7 +113,7 @@ func voteAndExecute(proposalID int64, config governance.Config) {
 	ufmt.Printf("[INFO] current height after voting start delay: %d\n", runtime.ChainHeight())
 
 	// Vote
-	governance.Vote(cross, proposalID, true)
+	governance.Vote(cross(cur), proposalID, true)
 	ufmt.Printf("[INFO] Voted YES for proposal %d\n", proposalID)
 
 	// Skip to execution
@@ -119,7 +121,7 @@ func voteAndExecute(proposalID int64, config governance.Config) {
 	ufmt.Printf("[INFO] current height after voting period: %d\n", runtime.ChainHeight())
 
 	// Execute
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 	ufmt.Printf("[EXPECTED] Proposal %d executed successfully\n", proposalID)
 }
 

@@ -1,16 +1,17 @@
 package router
 
 import (
-	"chain/runtime"
+	"chain"
 	"errors"
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
 )
 
+const domainPath = "gno.land/r/gnoswap/router"
+
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	currentAddress = chain.PackageAddress(domainPath)
 
 	kvStore store.KVStore
 
@@ -32,7 +33,7 @@ func init() {
 	implementation = nil
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewRouterStore(kvStore)
 }
 

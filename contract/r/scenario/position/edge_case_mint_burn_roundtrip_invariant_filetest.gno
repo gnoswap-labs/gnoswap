@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -20,7 +21,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -44,42 +44,42 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Round-Trip in Ultra-Tight Range")
-	testRoundTripUltraTight()
+	testRoundTripUltraTight(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Round-Trip with Various Amounts")
-	testRoundTripVariousAmounts()
+	testRoundTripVariousAmounts(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Round-Trip at Price Boundaries")
-	testRoundTripPriceBoundaries()
+	testRoundTripPriceBoundaries(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Multiple Round-Trips (Compound Effect)")
-	testMultipleRoundTrips()
+	testMultipleRoundTrips(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
+	bar.Transfer(cross(cur), aliceAddr, testAmount)
+	baz.Transfer(cross(cur), aliceAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
 
 	// Track initial balances
 	initialBarBalance := bar.BalanceOf(aliceAddr)
@@ -89,16 +89,16 @@ func initializeSetup() {
 	ufmt.Printf("[INFO] Initial Baz balance: %d\n", initialBazBalance)
 }
 
-func testRoundTripUltraTight() {
+func testRoundTripUltraTight(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with tick spacing 1 (most sensitive)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -110,7 +110,7 @@ func testRoundTripUltraTight() {
 	// Mint position with ultra-tight range (1 tick)
 	println("[TEST] Mint position with 1-tick range")
 	positionId, liquidity, amount0Used, amount1Used := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 100,
 		0, 1, // 1-tick range
 		"1000000000", "1000000000",
@@ -128,7 +128,7 @@ func testRoundTripUltraTight() {
 	// Immediately burn the entire position
 	println("[TEST] Burn entire position")
 	_, burnedLiquidity, _, _, amount0Back, amount1Back, _ := pn.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		positionId,
 		liquidity, // burn all liquidity
 		"0", "0",
@@ -186,16 +186,16 @@ func testRoundTripUltraTight() {
 	}
 }
 
-func testRoundTripVariousAmounts() {
+func testRoundTripVariousAmounts(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create new pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -213,7 +213,7 @@ func testRoundTripVariousAmounts() {
 
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			-100, 100,
 			amount, amount,
@@ -225,7 +225,7 @@ func testRoundTripVariousAmounts() {
 
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			posId,
 			liq,
 			"0", "0",
@@ -248,16 +248,16 @@ func testRoundTripVariousAmounts() {
 	}
 }
 
-func testRoundTripPriceBoundaries() {
+func testRoundTripPriceBoundaries(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -279,7 +279,7 @@ func testRoundTripPriceBoundaries() {
 
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 3000,
 			tr.tickLower, tr.tickUpper,
 			"1000000", "1000000",
@@ -291,7 +291,7 @@ func testRoundTripPriceBoundaries() {
 
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			posId,
 			liq,
 			"0", "0",
@@ -303,16 +303,16 @@ func testRoundTripPriceBoundaries() {
 	}
 }
 
-func testMultipleRoundTrips() {
+func testMultipleRoundTrips(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -326,7 +326,7 @@ func testMultipleRoundTrips() {
 	for i := 1; i <= 5; i++ {
 		// Mint
 		posId, liq, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 10000,
 			-200, 200,
 			"1000000", "1000000",
@@ -338,7 +338,7 @@ func testMultipleRoundTrips() {
 
 		// Burn
 		pn.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			posId,
 			liq,
 			"0", "0",

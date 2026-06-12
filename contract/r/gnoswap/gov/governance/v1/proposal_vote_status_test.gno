@@ -3,13 +3,14 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalVoteStatus_VotingOperations tests voting operations and status
-func TestProposalVoteStatus_VotingOperations(t *testing.T) {
+func TestProposalVoteStatus_VotingOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		maxVotingWeight int64
@@ -61,9 +62,9 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -85,7 +86,7 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 }
 
 // TestNewProposalVoteStatus tests creation of new vote status
-func TestNewProposalVoteStatus(t *testing.T) {
+func TestNewProposalVoteStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		maxVotingWeight int64
@@ -113,9 +114,9 @@ func TestNewProposalVoteStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -130,7 +131,7 @@ func TestNewProposalVoteStatus(t *testing.T) {
 }
 
 // TestProposalVoteStatus_SafeMathOperations tests safe math operations in vote status
-func TestProposalVoteStatus_SafeMathOperations(t *testing.T) {
+func TestProposalVoteStatus_SafeMathOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		description         string
@@ -211,7 +212,7 @@ func TestProposalVoteStatus_SafeMathOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, tc.quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
@@ -237,7 +238,7 @@ func TestProposalVoteStatus_SafeMathOperations(t *testing.T) {
 }
 
 // TestProposalVoteStatus_QuorumCalculation tests quorum-related calculations
-func TestProposalVoteStatus_QuorumCalculation(t *testing.T) {
+func TestProposalVoteStatus_QuorumCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -313,9 +314,9 @@ func TestProposalVoteStatus_QuorumCalculation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorumPercentage, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorumPercentage, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 

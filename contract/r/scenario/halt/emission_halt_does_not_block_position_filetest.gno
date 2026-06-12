@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario: Emission halt does not block other contract operations
 //
 // This test verifies that when emission is halted, other contracts like position
@@ -17,6 +19,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
@@ -33,7 +36,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	_ "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
@@ -60,65 +62,65 @@ var (
 	fee     = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool and tokens")
-	initPoolAndTokens()
+	initPoolAndTokens(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position with emission enabled (normal case)")
-	mintPositionWithEmissionEnabled()
+	mintPositionWithEmissionEnabled(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Set halt level to Emergency (emission becomes halted)")
-	setEmissionHalt()
+	setEmissionHalt(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Mint position with emission halted (graceful degradation)")
-	mintPositionWithEmissionHalted()
+	mintPositionWithEmissionHalted(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Resume emission and verify it works again")
-	resumeEmissionAndVerify()
+	resumeEmissionAndVerify(cur)
 	println()
 }
 
-func initPoolAndTokens() {
+func initPoolAndTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Initialize emission
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
 	// Distribute tokens to alice
 	defaultTokenAmount := int64(100000000)
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Printf("[INFO] Alice BAR balance: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Alice FOO balance: %d\n", foo.BalanceOf(aliceAddr))
 
 	// Create pool
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
-func mintPositionWithEmissionEnabled() {
+func mintPositionWithEmissionEnabled(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Emission is ENABLED - minting position...")
 
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -138,12 +140,12 @@ func mintPositionWithEmissionEnabled() {
 	ufmt.Printf("[EXPECTED] Amount0: %s, Amount1: %s\n", amount0, amount1)
 }
 
-func setEmissionHalt() {
+func setEmissionHalt(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Instead of using Emergency level (which halts many things),
 	// we selectively halt only emission to demonstrate graceful degradation
-	halt.SetOperationStatus(cross, halt.OpTypeEmission, true)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
 
 	isEmissionHalted := halt.IsHaltedEmission()
 	isPositionHalted := halt.IsHaltedPosition()
@@ -155,7 +157,7 @@ func setEmissionHalt() {
 	ufmt.Printf("[EXPECTED] Pool halted: %t (should be false)\n", isPoolHalted)
 }
 
-func mintPositionWithEmissionHalted() {
+func mintPositionWithEmissionHalted(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Emission is HALTED - attempting to mint position...")
@@ -163,7 +165,7 @@ func mintPositionWithEmissionHalted() {
 
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -184,11 +186,11 @@ func mintPositionWithEmissionHalted() {
 	ufmt.Println("[SUCCESS] Graceful degradation working - emission halt did not block position")
 }
 
-func resumeEmissionAndVerify() {
+func resumeEmissionAndVerify(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Resume all operations
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 
 	isEmissionHalted := halt.IsHaltedEmission()
 	println("[INFO] Halt level reset to NONE")
@@ -198,7 +200,7 @@ func resumeEmissionAndVerify() {
 	testing.SkipHeights(10)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
-	distributed, ok := emission.MintAndDistributeGns(cross)
+	distributed, ok := emission.MintAndDistributeGns(cross(cur))
 	ufmt.Printf("[INFO] Distributed amount: %d\n", distributed)
 	ufmt.Printf("[INFO] Success: %t\n", ok)
 

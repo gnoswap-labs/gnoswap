@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -13,7 +14,7 @@ import (
 )
 
 // Test NewPools constructor
-func TestNewPools(t *testing.T) {
+func TestNewPools(cur realm, t *testing.T) {
 	pools := NewPools()
 
 	uassert.NotNil(t, pools)
@@ -21,7 +22,7 @@ func TestNewPools(t *testing.T) {
 }
 
 // Test Pools Get and set operations
-func TestPoolsGetSet(t *testing.T) {
+func TestPoolsGetSet(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		poolPath  string
@@ -40,7 +41,7 @@ func TestPoolsGetSet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pools := NewPools()
 			currentTime := time.Now().Unix()
 
@@ -61,7 +62,7 @@ func TestPoolsGetSet(t *testing.T) {
 }
 
 // Test GetPoolOrNil
-func TestGetPoolOrNil(t *testing.T) {
+func TestGetPoolOrNil(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -80,7 +81,7 @@ func TestGetPoolOrNil(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pools := NewPools()
 			currentTime := time.Now().Unix()
 
@@ -107,7 +108,7 @@ func TestGetPoolOrNil(t *testing.T) {
 }
 
 // Test Pools Has operation
-func TestPoolsHas(t *testing.T) {
+func TestPoolsHas(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		poolPath  string
@@ -129,7 +130,7 @@ func TestPoolsHas(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pools := NewPools()
 			currentTime := time.Now().Unix()
 
@@ -145,7 +146,7 @@ func TestPoolsHas(t *testing.T) {
 }
 
 // Test NewPoolResolver
-func TestNewPoolResolver(t *testing.T) {
+func TestNewPoolResolver(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
@@ -157,7 +158,7 @@ func TestNewPoolResolver(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			resolver := NewPoolResolver(pool)
@@ -169,7 +170,7 @@ func TestNewPoolResolver(t *testing.T) {
 }
 
 // Test IncentivesResolver
-func TestIncentivesResolverFromPool(t *testing.T) {
+func TestIncentivesResolverFromPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
@@ -181,7 +182,7 @@ func TestIncentivesResolverFromPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
@@ -193,7 +194,7 @@ func TestIncentivesResolverFromPool(t *testing.T) {
 }
 
 // Test CurrentGlobalRewardRatioAccumulation
-func TestCurrentGlobalRewardRatioAccumulation(t *testing.T) {
+func TestCurrentGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -207,7 +208,7 @@ func TestCurrentGlobalRewardRatioAccumulation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -220,15 +221,15 @@ func TestCurrentGlobalRewardRatioAccumulation(t *testing.T) {
 }
 
 // Test CurrentTick
-func TestCurrentTick(t *testing.T) {
+func TestCurrentTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		poolPath             string
 		setupHistoricalTicks func(poolResolver *PoolResolver)
 		currentTime          int64
 		expectedTick         int32
-		expectedPanic        bool
-		expectedPanicMessage string
+		expectedAbort        bool
+		expectedAbortMessage string
 	}{
 		{
 			name:     "get current tick by valid historical ticks",
@@ -241,10 +242,8 @@ func TestCurrentTick(t *testing.T) {
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
-			currentTime:          1000,
-			expectedTick:         3,
-			expectedPanic:        false,
-			expectedPanicMessage: "",
+			currentTime:  1000,
+			expectedTick: 3,
 		},
 		{
 			name:     "get current tick by valid historical ticks",
@@ -258,10 +257,8 @@ func TestCurrentTick(t *testing.T) {
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
-			currentTime:          1000,
-			expectedTick:         3,
-			expectedPanic:        false,
-			expectedPanicMessage: "",
+			currentTime:  1000,
+			expectedTick: 3,
 		},
 		{
 			name:     "get current tick by invalid historical ticks (int64 type)",
@@ -275,8 +272,8 @@ func TestCurrentTick(t *testing.T) {
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
 			currentTime:          1000,
-			expectedPanic:        true,
-			expectedPanicMessage: "failed to cast value to int32: int64",
+			expectedAbort:        true,
+			expectedAbortMessage: "failed to cast value to int32: int64",
 		},
 		{
 			name:     "get current tick by invalid historical ticks (string type)",
@@ -291,13 +288,13 @@ func TestCurrentTick(t *testing.T) {
 			},
 			currentTime:          1000,
 			expectedTick:         3,
-			expectedPanic:        true,
-			expectedPanicMessage: "failed to cast value to int32: string",
+			expectedAbort:        true,
+			expectedAbortMessage: "failed to cast value to int32: string",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -305,8 +302,8 @@ func TestCurrentTick(t *testing.T) {
 				tt.setupHistoricalTicks(poolResolver)
 			}
 
-			if tt.expectedPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+			if tt.expectedAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
 					poolResolver.CurrentTick(tt.currentTime)
 				})
 			} else {
@@ -318,7 +315,7 @@ func TestCurrentTick(t *testing.T) {
 }
 
 // Test CurrentStakedLiquidity
-func TestCurrentStakedLiquidity(t *testing.T) {
+func TestCurrentStakedLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -332,7 +329,7 @@ func TestCurrentStakedLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -345,7 +342,7 @@ func TestCurrentStakedLiquidity(t *testing.T) {
 }
 
 // Test CurrentReward
-func TestCurrentRewardPool(t *testing.T) {
+func TestCurrentRewardPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -359,7 +356,7 @@ func TestCurrentRewardPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -370,7 +367,7 @@ func TestCurrentRewardPool(t *testing.T) {
 }
 
 // Test cacheReward
-func TestCacheRewardPool(t *testing.T) {
+func TestCacheRewardPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		poolPath          string
@@ -392,7 +389,7 @@ func TestCacheRewardPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -405,7 +402,7 @@ func TestCacheRewardPool(t *testing.T) {
 }
 
 // Test cacheInternalReward
-func TestCacheInternalReward(t *testing.T) {
+func TestCacheInternalReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		poolPath        string
@@ -421,7 +418,7 @@ func TestCacheInternalReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -434,7 +431,7 @@ func TestCacheInternalReward(t *testing.T) {
 }
 
 // Test calculateGlobalRewardRatioAccumulation
-func TestCalculateGlobalRewardRatioAccumulation(t *testing.T) {
+func TestCalculateGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		poolPath               string
@@ -456,7 +453,7 @@ func TestCalculateGlobalRewardRatioAccumulation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -468,7 +465,7 @@ func TestCalculateGlobalRewardRatioAccumulation(t *testing.T) {
 }
 
 // Test updateGlobalRewardRatioAccumulation
-func TestUpdateGlobalRewardRatioAccumulation(t *testing.T) {
+func TestUpdateGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		poolPath               string
@@ -484,7 +481,7 @@ func TestUpdateGlobalRewardRatioAccumulation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -496,7 +493,7 @@ func TestUpdateGlobalRewardRatioAccumulation(t *testing.T) {
 }
 
 // Test RewardStateOf
-func TestRewardStateOf(t *testing.T) {
+func TestRewardStateOf(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		poolPath   string
@@ -515,17 +512,14 @@ func TestRewardStateOf(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
 
 			warmups := make([]sr.Warmup, tt.numWarmups)
 			for i := 0; i < tt.numWarmups; i++ {
-				warmups[i] = sr.Warmup{
-					WarmupRatio:    30 + uint64(i*20),
-					NextWarmupTime: currentTime + int64(i*86400),
-				}
+				warmups[i] = sr.NewWarmup(0, currentTime+int64(i*86400), 30+uint64(i*20))
 			}
 
 			deposit := sr.NewDeposit(
@@ -548,7 +542,7 @@ func TestRewardStateOf(t *testing.T) {
 }
 
 // Test startUnclaimablePeriod and endUnclaimablePeriod
-func TestUnclaimablePeriod(t *testing.T) {
+func TestUnclaimablePeriod(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -562,7 +556,7 @@ func TestUnclaimablePeriod(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
@@ -578,7 +572,7 @@ func TestUnclaimablePeriod(t *testing.T) {
 }
 
 // Test processUnclaimableReward
-func TestProcessUnclaimableReward(t *testing.T) {
+func TestProcessUnclaimableReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -592,7 +586,7 @@ func TestProcessUnclaimableReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 			pools := NewPools()
@@ -610,7 +604,7 @@ func TestProcessUnclaimableReward(t *testing.T) {
 }
 
 // Test IsExternallyIncentivizedPool
-func TestIsExternallyIncentivizedPool(t *testing.T) {
+func TestIsExternallyIncentivizedPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
@@ -622,7 +616,7 @@ func TestIsExternallyIncentivizedPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
@@ -635,7 +629,7 @@ func TestIsExternallyIncentivizedPool(t *testing.T) {
 }
 
 // Test TickResolver
-func TestTickResolver(t *testing.T) {
+func TestTickResolver(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
@@ -649,7 +643,7 @@ func TestTickResolver(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
@@ -661,7 +655,7 @@ func TestTickResolver(t *testing.T) {
 }
 
 // Test RewardState applyWarmup
-func TestRewardStateApplyWarmup(t *testing.T) {
+func TestRewardStateApplyWarmup(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		rewards           []int64
@@ -693,17 +687,14 @@ func TestRewardStateApplyWarmup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool("test_pool", currentTime)
 			poolResolver := NewPoolResolver(pool)
 
 			warmups := make([]sr.Warmup, len(tt.warmupRatios))
 			for i, ratio := range tt.warmupRatios {
-				warmups[i] = sr.Warmup{
-					WarmupRatio:    ratio,
-					NextWarmupTime: currentTime + int64(i*86400),
-				}
+				warmups[i] = sr.NewWarmup(0, currentTime+int64(i*86400), ratio)
 			}
 
 			deposit := sr.NewDeposit(
@@ -730,15 +721,15 @@ func TestRewardStateApplyWarmup(t *testing.T) {
 }
 
 // Test RewardState reset
-func TestRewardStateReset(t *testing.T) {
+func TestRewardStateReset(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
 	poolResolver := NewPoolResolver(pool)
 
 	warmups := []sr.Warmup{
-		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},
-		{WarmupRatio: 50, NextWarmupTime: currentTime + 172800},
-		{WarmupRatio: 70, NextWarmupTime: currentTime + 259200},
+		sr.NewWarmup(0, currentTime+86400, 30),
+		sr.NewWarmup(0, currentTime+172800, 50),
+		sr.NewWarmup(0, currentTime+259200, 70),
 	}
 
 	deposit := sr.NewDeposit(
@@ -771,13 +762,13 @@ func TestRewardStateReset(t *testing.T) {
 	}
 }
 
-func TestRewardStateReset_MultipleResets(t *testing.T) {
+func TestRewardStateReset_MultipleResets(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
 	poolResolver := NewPoolResolver(pool)
 
 	warmups := []sr.Warmup{
-		{WarmupRatio: 50, NextWarmupTime: currentTime + 86400},
+		sr.NewWarmup(0, currentTime+86400, 50),
 	}
 
 	deposit := sr.NewDeposit(
@@ -809,16 +800,16 @@ func TestRewardStateReset_MultipleResets(t *testing.T) {
 	uassert.Equal(t, int64(0), rewardState.penalties[0])
 }
 
-func TestRewardStateReset_PreservesSliceLength(t *testing.T) {
+func TestRewardStateReset_PreservesSliceLength(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
 	poolResolver := NewPoolResolver(pool)
 
 	warmups := []sr.Warmup{
-		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},
-		{WarmupRatio: 50, NextWarmupTime: currentTime + 172800},
-		{WarmupRatio: 70, NextWarmupTime: currentTime + 259200},
-		{WarmupRatio: 100, NextWarmupTime: currentTime + 345600},
+		sr.NewWarmup(0, currentTime+86400, 30),
+		sr.NewWarmup(0, currentTime+172800, 50),
+		sr.NewWarmup(0, currentTime+259200, 70),
+		sr.NewWarmup(0, currentTime+345600, 100),
 	}
 
 	deposit := sr.NewDeposit(
@@ -841,7 +832,7 @@ func TestRewardStateReset_PreservesSliceLength(t *testing.T) {
 	uassert.Equal(t, originalLen, len(rewardState.penalties))
 }
 
-func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(t *testing.T) {
+func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		ops  []struct {
@@ -908,7 +899,7 @@ func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := int64(1000)
 			pool := sr.NewPool("test_pool", currentTime)
 			poolResolver := NewPoolResolver(pool)
@@ -926,7 +917,7 @@ func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(t *testing.T) {
 	}
 }
 
-func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
+func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		startTime       int64
@@ -980,7 +971,7 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
@@ -989,15 +980,15 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 				resolver := NewPoolResolver(pool)
 
 				// Keep reward constant in [start, end).
-				pool.RewardCache().Set(tt.startTime, tt.rewardPerSecond)
+				pool.SetRewardCacheAt(tt.startTime, tt.rewardPerSecond)
 
 				// Build deterministic global accumulation snapshots.
-				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
-				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
-				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc.ToString())
-				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc.ToString())
+				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), consts.Q128())
+				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), consts.Q128())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.startTime, startAcc.ToString())
+				pool.SetGlobalRewardRatioAccumulationAt(tt.endTime, endAcc.ToString())
 				for _, h := range history {
-					pool.HistoricalTick().Set(h.at, h.tick)
+					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
 				// Ensure boundary ticks exist with zero outside accumulation.
@@ -1022,10 +1013,7 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 				int32(-10),
 				int32(10),
 				[]sr.Warmup{
-					{
-						WarmupRatio:    100,
-						NextWarmupTime: tt.endTime + 1000,
-					},
+					sr.NewWarmup(0, tt.endTime+1000, 100),
 				},
 			)
 
@@ -1046,7 +1034,7 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 }
 
 // Test Pools IterateAll
-func TestPoolsIterateAll(t *testing.T) {
+func TestPoolsIterateAll(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		numPools int
@@ -1066,7 +1054,7 @@ func TestPoolsIterateAll(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pools := NewPools()
 			currentTime := time.Now().Unix()
 

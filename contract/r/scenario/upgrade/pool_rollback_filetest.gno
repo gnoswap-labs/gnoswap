@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Pool contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	poolTestPath = "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Pool Contract Rollback Test")
-	testPoolRollback()
+	testPoolRollback(cur)
 	println()
 }
 
-func testPoolRollback() {
+func testPoolRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolTestPath)
+	pool.UpgradeImpl(cross(cur), poolTestPath)
 
 	currentVersion := pool.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testPoolRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back pool contract to v1")
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolV1Path)
+	pool.UpgradeImpl(cross(cur), poolV1Path)
 
 	currentVersion = pool.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Pool rolled back to: %s\n", currentVersion)

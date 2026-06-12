@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -12,12 +13,6 @@ import (
 )
 
 const AllTierCount = 4 // 0, 1, 2, 3
-
-// q128 is 2^128, used to scale rewardPerSecond so that sub-integer rates
-// (e.g. 10_000_000 / 3600 = 2777.77...) do not lose precision over the
-// lifetime of an incentive. Mirrors the q128 constant used by the v1 reward
-// calculator; kept package-local here because staker depends on neither.
-var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pool is a struct for storing an incentivized pool information
 // Each pool stores Incentives and Ticks associated with it.
@@ -100,6 +95,10 @@ func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
 	p.stakedLiquidity = stakedLiquidity
 }
 
+func (p *Pool) SetStakedLiquidityAt(currentTime int64, delta *u256.Uint) {
+	p.StakedLiquidity().Set(currentTime, u256.Zero().Set(delta))
+}
+
 // LastUnclaimableTime returns the last unclaimable time
 func (p *Pool) LastUnclaimableTime() int64 {
 	return p.lastUnclaimableTime
@@ -128,6 +127,10 @@ func (p *Pool) RewardCache() *UintTree {
 // SetRewardCache sets the reward cache tree
 func (p *Pool) SetRewardCache(rewardCache *UintTree) {
 	p.rewardCache = rewardCache
+}
+
+func (p *Pool) SetRewardCacheAt(currentTime int64, reward int64) {
+	p.RewardCache().Set(currentTime, reward)
 }
 
 // Incentives returns the incentives
@@ -160,6 +163,10 @@ func (p *Pool) SetGlobalRewardRatioAccumulation(globalRewardRatioAccumulation *U
 	p.globalRewardRatioAccumulation = globalRewardRatioAccumulation
 }
 
+func (p *Pool) SetGlobalRewardRatioAccumulationAt(currentTime int64, acc string) {
+	p.GlobalRewardRatioAccumulation().Set(currentTime, acc)
+}
+
 // HistoricalTick returns the historical tick tree
 func (p *Pool) HistoricalTick() *UintTree {
 	return p.historicalTick
@@ -168,6 +175,10 @@ func (p *Pool) HistoricalTick() *UintTree {
 // SetHistoricalTick sets the historical tick tree
 func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
 	p.historicalTick = historicalTick
+}
+
+func (p *Pool) SetHistoricalTickAt(currentTime int64, tick int32) {
+	p.HistoricalTick().Set(currentTime, tick)
 }
 
 // Clone returns a deep copy of the pool.
@@ -207,11 +218,11 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		historicalTick:                NewUintTreeN(64),
 	}
 
-	pool.GlobalRewardRatioAccumulation().Set(currentTime, "0")
+	pool.SetGlobalRewardRatioAccumulationAt(currentTime, "0")
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
-	pool.RewardCache().Set(currentTime, int64(0))
-	pool.StakedLiquidity().Set(currentTime, u256.Zero())
+	pool.SetRewardCacheAt(currentTime, int64(0))
+	pool.SetStakedLiquidityAt(currentTime, u256.Zero())
 
 	return pool
 }
@@ -285,6 +296,14 @@ func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncenti
 	i.incentives.Set(incentiveId, incentive)
 }
 
+func (i *Incentives) SetUnclaimablePeriod(startTimestamp int64, endTimestamp int64) {
+	i.unclaimablePeriods.Set(startTimestamp, endTimestamp)
+}
+
+func (i *Incentives) RemoveUnclaimablePeriod(startTimestamp int64) {
+	i.unclaimablePeriods.Remove(startTimestamp)
+}
+
 // IterateIncentives iterates over all incentives
 func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *ExternalIncentive) bool) {
 	i.incentives.Iterate("", "", func(key string, value interface{}) bool {
@@ -304,7 +323,7 @@ func NewIncentives(targetPoolPath string) *Incentives {
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
 	currentTimestamp := time.Now().Unix()
-	result.unclaimablePeriods.Set(currentTimestamp, int64(0))
+	result.SetUnclaimablePeriod(currentTimestamp, int64(0))
 	return result
 }
 
@@ -437,7 +456,7 @@ func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
 
 // SetRewardPerSecondX128 sets the Q128-scaled reward per second.
 func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
-	e.rewardPerSecondX128 = rewardPerSecondX128
+	e.rewardPerSecondX128 = u256.Zero().Set(rewardPerSecondX128)
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -526,7 +545,7 @@ func NewExternalIncentive(
 	// Consumers must divide by 2^128 when materializing back to a plain integer.
 	rewardPerSecondX128 := u256.MulDiv(
 		u256.NewUintFromInt64(rewardAmount),
-		q128,
+		consts.Q128(),
 		u256.NewUintFromInt64(incentiveDuration),
 	)
 
@@ -678,7 +697,7 @@ func (t *Tick) StakedLiquidityGross() *u256.Uint {
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = u256.Zero().Set(stakedLiquidityGross)
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
@@ -688,7 +707,7 @@ func (t *Tick) StakedLiquidityDelta() *i256.Int {
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = i256.Zero().Set(stakedLiquidityDelta)
 }
 
 // OutsideAccumulation returns the outside accumulation tree
@@ -699,6 +718,11 @@ func (t *Tick) OutsideAccumulation() *UintTree {
 // SetOutsideAccumulation sets the outside accumulation tree
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
+}
+
+// SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
+func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
+	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
 }
 
 // Clone returns a deep copy of the tick.
@@ -732,6 +756,14 @@ type TierRatio struct {
 	Tier1 uint64
 	Tier2 uint64
 	Tier3 uint64
+}
+
+func NewTierRatio(tier1, tier2, tier3 uint64) TierRatio {
+	return TierRatio{
+		Tier1: tier1,
+		Tier2: tier2,
+		Tier3: tier3,
+	}
 }
 
 // Get returns the ratio(scaled up by 100) for the given tier.

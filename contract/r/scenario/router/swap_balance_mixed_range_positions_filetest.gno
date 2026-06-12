@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -62,52 +62,52 @@ type BalanceSnapshot struct {
 	protocolFeeFoo   int64
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Swap Balance Validation - Mixed Range Positions")
 	println("[INFO] Purpose: Validate swaps with both in-range and out-of-range positions")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	initial := setupEnvironment()
-	printBalanceSnapshot("Initial State", initial)
+	initial := setupEnvironment(cur)
+	printBalanceSnapshot(cur, "Initial State", initial)
 	println()
 
 	println("[SCENARIO] 2. Create Pool")
-	afterPool := createPool()
-	printBalanceSnapshot("After Pool Creation", afterPool)
+	afterPool := createPool(cur)
+	printBalanceSnapshot(cur, "After Pool Creation", afterPool)
 	println()
 
 	println("[SCENARIO] 3. Mint In-Range Position")
-	afterInRange := mintInRangePosition()
-	printBalanceSnapshot("After In-Range Position", afterInRange)
+	afterInRange := mintInRangePosition(cur)
+	printBalanceSnapshot(cur, "After In-Range Position", afterInRange)
 	println()
 
 	println("[SCENARIO] 4. Mint Out-of-Range Position (Above Current Price)")
-	afterOutRange := mintOutOfRangePosition()
-	printBalanceSnapshot("After Out-of-Range Position", afterOutRange)
-	validateOutOfRange(afterOutRange)
+	afterOutRange := mintOutOfRangePosition(cur)
+	printBalanceSnapshot(cur, "After Out-of-Range Position", afterOutRange)
+	validateOutOfRange(cur, afterOutRange)
 	println()
 
 	println("[SCENARIO] 5. Exact In Swap (FOO -> BAR) - Uses only in-range liquidity")
-	afterExactIn := performExactInSwap()
-	printBalanceSnapshot("After Exact In Swap", afterExactIn)
-	validateBalanceChange(afterOutRange, afterExactIn, "ExactIn")
+	afterExactIn := performExactInSwap(cur)
+	printBalanceSnapshot(cur, "After Exact In Swap", afterExactIn)
+	validateBalanceChange(cur, afterOutRange, afterExactIn, "ExactIn")
 	println()
 
 	println("[SCENARIO] 6. Exact Out Swap (BAR -> FOO) - Uses only in-range liquidity")
-	afterExactOut := performExactOutSwap()
-	printBalanceSnapshot("After Exact Out Swap", afterExactOut)
-	validateBalanceChange(afterExactIn, afterExactOut, "ExactOut")
+	afterExactOut := performExactOutSwap(cur)
+	printBalanceSnapshot(cur, "After Exact Out Swap", afterExactOut)
+	validateBalanceChange(cur, afterExactIn, afterExactOut, "ExactOut")
 	println()
 
 	println("[SCENARIO] 7. System Balance Conservation Check")
-	validateSystemBalance(initial, afterExactOut)
+	validateSystemBalance(cur, initial, afterExactOut)
 	println()
 
 	println("[SCENARIO] Complete - Validated that out-of-range position doesn't affect swaps")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
 		userBar:          bar.BalanceOf(userAddr),
 		userFoo:          foo.BalanceOf(userAddr),
@@ -122,7 +122,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	return snapshot
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User BAR balance:", snapshot.userBar)
 	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
@@ -134,41 +134,41 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
 }
 
-func setupEnvironment() BalanceSnapshot {
+func setupEnvironment(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
+	bar.Transfer(cross(cur), userAddr, initialBalance)
+	foo.Transfer(cross(cur), userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func createPool() BalanceSnapshot {
+func createPool(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func mintInRangePosition() BalanceSnapshot {
+func mintInRangePosition(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	// Mint position covering current price (tick 0)
 	// Range: -5000 to 5000
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -189,20 +189,20 @@ func mintInRangePosition() BalanceSnapshot {
 	println("[INFO] Amount1 (FOO):", amount1)
 	println("[INFO] Range: tick -5000 to 5000 (covers current price)")
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func mintOutOfRangePosition() BalanceSnapshot {
+func mintOutOfRangePosition(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	// Mint position above current price
 	// Range: 10000 to 20000 (well above current tick 0)
 	// This position should hold only BAR tokens
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -223,20 +223,20 @@ func mintOutOfRangePosition() BalanceSnapshot {
 	println("[INFO] Amount1 (FOO):", amount1)
 	println("[INFO] Range: tick 10000 to 20000 (above current price)")
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func performExactInSwap() BalanceSnapshot {
+func performExactInSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(10_000_000_000)
 	println("[INFO] Swapping", swapAmount, "FOO -> BAR")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -249,22 +249,22 @@ func performExactInSwap() BalanceSnapshot {
 
 	println("[INFO] Exact In - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performExactOutSwap() BalanceSnapshot {
+func performExactOutSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(5_000_000_000)
 	println("[INFO] Swapping BAR ->", swapAmount, "FOO")
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -277,12 +277,12 @@ func performExactOutSwap() BalanceSnapshot {
 
 	println("[INFO] Exact Out - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func validateOutOfRange(snapshot BalanceSnapshot) {
+func validateOutOfRange(cur realm, snapshot BalanceSnapshot) {
 	// Out-of-range position should not contribute to active liquidity
 	// But pool should hold the tokens from that position
 	println("[INFO] Validating out-of-range position behavior")
@@ -290,7 +290,7 @@ func validateOutOfRange(snapshot BalanceSnapshot) {
 	println("[EXPECTED] FOO amount should be 0 for position above current price")
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
 	userBarDiff := after.userBar - before.userBar
@@ -308,7 +308,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
 
 	// Router should have zero balance
-	assertRouterIsEmpty(after)
+	assertRouterIsEmpty(cur, after)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
 	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
@@ -324,7 +324,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
-func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+func assertRouterIsEmpty(cur realm, snapshot BalanceSnapshot) {
 	if snapshot.routerBar != 0 {
 		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
 	}
@@ -333,7 +333,7 @@ func assertRouterIsEmpty(snapshot BalanceSnapshot) {
 	}
 }
 
-func validateSystemBalance(initial, final BalanceSnapshot) {
+func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 	println("[INFO] Validating system-wide balance conservation")
 
 	// Total supply in system should be conserved

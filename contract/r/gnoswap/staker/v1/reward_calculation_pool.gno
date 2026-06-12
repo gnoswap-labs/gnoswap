@@ -1,15 +1,15 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/common"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -22,7 +22,7 @@ type Pools struct {
 
 func NewPools() *Pools {
 	return &Pools{
-		tree: bptree.NewBPTreeN(16),
+		tree: sr.NewBPTreeN(16),
 	}
 }
 
@@ -48,7 +48,7 @@ func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	return pool
 }
 
-// set sets the pool for the given poolPath
+// set sets the pool for the given poolPath.
 func (self *Pools) set(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
@@ -195,7 +195,7 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
-	self.RewardCache().Set(currentTime, currentTierReward)
+	self.Pool.SetRewardCacheAt(currentTime, currentTierReward)
 
 	if isInUnclaimable {
 		// Start/restart unclaimable period tracking
@@ -214,7 +214,7 @@ func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
-	timeDiff := safeSubInt64(currentTime, oldAccTime)
+	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
 	if timeDiff == 0 {
 		return u256.MustFromDecimal(oldAccStr)
 	}
@@ -240,7 +240,7 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
 	// Persist as string to reduce stored object complexity.
-	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc.ToString())
+	self.Pool.SetGlobalRewardRatioAccumulationAt(currentTime, newAcc.ToString())
 	return newAcc
 }
 
@@ -364,7 +364,7 @@ func (self *RewardState) calculateCollectableExternalReward(startTime, endTime i
 		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
 	}
 
-	return safeConvertToInt64(currentReward)
+	return gnsmath.SafeConvertToInt64(currentReward)
 }
 
 // calculateExternalReward calculates the external reward for the deposit.
@@ -387,10 +387,10 @@ func (self *RewardState) applyWarmup() {
 		warmupReward := self.rewards[i]
 
 		// calculate warmup reward applying warmup ratio
-		self.rewards[i] = safeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+		self.rewards[i] = gnsmath.SafeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
 
 		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
-		self.penalties[i] = safeSubInt64(warmupReward, self.rewards[i])
+		self.penalties[i] = gnsmath.SafeSubInt64(warmupReward, self.rewards[i])
 	}
 }
 
@@ -416,16 +416,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
 			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+			self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 			break
 		}
@@ -434,16 +434,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
 		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
 		startTick = endTick
@@ -476,17 +476,17 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
 			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
 			rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
-			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+			self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 			break
 		}
@@ -495,17 +495,17 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
 		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
 		rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
-		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
 		startTick = endTick
@@ -520,13 +520,13 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := gnsmath.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
 	// because TickCrossHook is assured to be called for the staked-initialized ticks
 	if self.isChangedTick(currentTime, nextTick) {
-		self.HistoricalTick().Set(currentTime, nextTick)
+		self.Pool.SetHistoricalTickAt(currentTime, nextTick)
 	}
 
 	switch deltaApplied.Sign() {
@@ -546,7 +546,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
+	self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
 
 	return result
 }
@@ -580,9 +580,9 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 		return
 	}
 
-	unclaimableDuration := safeSubInt64(currentTime, self.LastUnclaimableTime())
-	currentUnclaimableReward := safeMulInt64(unclaimableDuration, self.CurrentReward(self.LastUnclaimableTime()))
-	self.SetUnclaimableAcc(safeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
+	unclaimableDuration := gnsmath.SafeSubInt64(currentTime, self.LastUnclaimableTime())
+	currentUnclaimableReward := gnsmath.SafeMulInt64(unclaimableDuration, self.CurrentReward(self.LastUnclaimableTime()))
+	self.SetUnclaimableAcc(gnsmath.SafeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.

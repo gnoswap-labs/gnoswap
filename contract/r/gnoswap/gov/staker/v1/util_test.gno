@@ -3,94 +3,15 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/p/onbloc/json"
 )
 
-// TestFormatUint tests uint64 formatting
-func TestFormatUint(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    uint64
-		expected string
-	}{
-		{
-			name:     "Format zero",
-			input:    0,
-			expected: "0",
-		},
-		{
-			name:     "Format positive number",
-			input:    12345,
-			expected: "12345",
-		},
-		{
-			name:     "Format large number",
-			input:    18446744073709551615, // max uint64
-			expected: "18446744073709551615",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := formatUint(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
-// TestFormatInt tests int64 formatting
-func TestFormatInt(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    int64
-		expected string
-	}{
-		{
-			name:     "Format zero",
-			input:    0,
-			expected: "0",
-		},
-		{
-			name:     "Format positive number",
-			input:    12345,
-			expected: "12345",
-		},
-		{
-			name:     "Format negative number",
-			input:    -12345,
-			expected: "-12345",
-		},
-		{
-			name:     "Format max int64",
-			input:    9223372036854775807,
-			expected: "9223372036854775807",
-		},
-		{
-			name:     "Format min int64",
-			input:    -9223372036854775808,
-			expected: "-9223372036854775808",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := formatInt(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
 // TestUtil_marshal tests JSON marshalling
-func TestUtil_marshal(t *testing.T) {
+func TestUtil_marshal(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func() *json.Node
@@ -126,7 +47,7 @@ func TestUtil_marshal(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			data := tc.setup()
 
@@ -140,7 +61,7 @@ func TestUtil_marshal(t *testing.T) {
 }
 
 // TestUtil_getUint64FromTree tests retrieving uint64 from BPTree
-func TestUtil_getUint64FromTree(t *testing.T) {
+func TestUtil_getUint64FromTree(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func() (*bptree.BPTree, string)
@@ -187,13 +108,13 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			tree, key := tc.setup()
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					getUint64FromTree(tree, key)
 				})
 			} else {
@@ -205,7 +126,7 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 }
 
 // TestUtil_updateUint64InTree tests updating uint64 in BPTree
-func TestUtil_updateUint64InTree(t *testing.T) {
+func TestUtil_updateUint64InTree(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func() (*bptree.BPTree, string, uint64, bool)
@@ -281,13 +202,13 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			tree, key, delta, add := tc.setup()
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					updateUint64InTree(tree, key, delta, add)
 				})
 			} else {
@@ -298,71 +219,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 	}
 }
 
-// TestUtil_getOrCreateInnerTree tests getting or creating inner BPTree
-func TestUtil_getOrCreateInnerTree(t *testing.T) {
-	tests := []struct {
-		name                 string
-		setup                func() (*bptree.BPTree, string)
-		expectedHasPanic     bool
-		expectedPanicMessage string
-	}{
-		{
-			name: "create new inner tree",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				return tree, "key1"
-			},
-		},
-		{
-			name: "get existing inner tree",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				innerTree := bptree.NewBPTreeN(16)
-				innerTree.Set("innerKey", "innerValue")
-				tree.Set("key1", innerTree)
-				return tree, "key1"
-			},
-		},
-		{
-			name: "panics on wrong type",
-			setup: func() (*bptree.BPTree, string) {
-				tree := bptree.NewBPTreeN(16)
-				tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *bptree.BPTree)
-				return tree, "key1"
-			},
-			expectedHasPanic:     true,
-			expectedPanicMessage: "failed to cast value to *bptree.BPTree: uint64",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			tree, key := tc.setup()
-
-			// when/then
-			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, "failed to cast value to *bptree.BPTree: uint64", func() {
-					getOrCreateInnerTree(tree, "key1")
-				})
-			} else {
-				innerTree := getOrCreateInnerTree(tree, key)
-
-				if innerTree == nil {
-					t.Errorf("innerTree should not be nil")
-				}
-
-				retrieved := getOrCreateInnerTree(tree, key)
-				if retrieved != innerTree {
-					t.Errorf("retrieved tree should be the same instance as innerTree")
-				}
-			}
-		})
-	}
-}
-
 // TestUtil_milliToSec tests milliseconds to seconds conversion
-func TestUtil_milliToSec(t *testing.T) {
+func TestUtil_milliToSec(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int64
@@ -401,7 +259,7 @@ func TestUtil_milliToSec(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := milliToSec(tc.input)
 
@@ -412,7 +270,7 @@ func TestUtil_milliToSec(t *testing.T) {
 }
 
 // TestUtil_safeConvertToInt64 tests safe conversion from uint256 to int64
-func TestUtil_safeConvertToInt64(t *testing.T) {
+func TestUtil_safeConvertToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                *u256.Uint
@@ -444,20 +302,19 @@ func TestUtil_safeConvertToInt64(t *testing.T) {
 			name:                 "panics on overflow - int64 max + 1",
 			input:                u256.NewUint(9223372036854775808), // int64 max + 1
 			expectedHasPanic:     true,
-			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
-					safeConvertToInt64(tc.input)
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
+					gnsmath.SafeConvertToInt64(tc.input)
 				})
 			} else {
-				result := safeConvertToInt64(tc.input)
+				result := gnsmath.SafeConvertToInt64(tc.input)
 				uassert.Equal(t, result, tc.expected)
 			}
 		})

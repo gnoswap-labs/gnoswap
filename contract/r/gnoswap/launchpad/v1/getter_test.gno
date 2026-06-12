@@ -4,12 +4,13 @@ import (
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetProjectCount(t *testing.T) {
-	t.Run("empty store returns zero count", func(t *testing.T) {
+func TestGetProjectCount(cur realm, t *testing.T) {
+	t.Run("empty store returns zero count", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
 		initTestStore()
@@ -22,14 +23,14 @@ func TestGetProjectCount(t *testing.T) {
 		uassert.Equal(t, 0, count)
 	})
 
-	t.Run("count increases with created projects", func(t *testing.T) {
+	t.Run("count increases with created projects", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Project 1",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -41,7 +42,7 @@ func TestGetProjectCount(t *testing.T) {
 		count1 := lp.GetProjectCount()
 		uassert.Equal(t, 1, count1)
 
-		createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Project 2",
 			rewardAmount:    2000000,
 			tier30Pct:       25,
@@ -58,7 +59,7 @@ func TestGetProjectCount(t *testing.T) {
 	})
 }
 
-func TestGetProjectIDs(t *testing.T) {
+func TestGetProjectIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		offset        int
@@ -92,7 +93,7 @@ func TestGetProjectIDs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			resetTestStore()
 			initTestStore()
@@ -110,7 +111,7 @@ func TestGetProjectIDs(t *testing.T) {
 	}
 }
 
-func TestGetProject(t *testing.T) {
+func TestGetProject(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		projectID        string
@@ -136,16 +137,16 @@ func TestGetProject(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			projectID := tt.projectID
 			if tt.createProject {
-				projectID = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID = createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					rewardAmount:    1000000,
 					tier30Pct:       25,
@@ -174,7 +175,7 @@ func TestGetProject(t *testing.T) {
 	}
 }
 
-func TestGetProjectName(t *testing.T) {
+func TestGetProjectName(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		projectName      string
@@ -198,16 +199,16 @@ func TestGetProjectName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var projectID string
 			if tt.getExisting {
-				projectID = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID = createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            tt.projectName,
 					rewardAmount:    1000000,
 					tier30Pct:       25,
@@ -234,7 +235,7 @@ func TestGetProjectName(t *testing.T) {
 	}
 }
 
-func TestGetProjectTokenPath(t *testing.T) {
+func TestGetProjectTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -256,16 +257,16 @@ func TestGetProjectTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var projectID string
 			if tt.getExisting {
-				projectID = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID = createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					tokenPath:       tt.tokenPath,
 					rewardAmount:    1000000,
@@ -292,7 +293,7 @@ func TestGetProjectTokenPath(t *testing.T) {
 	}
 }
 
-func TestGetProjectDepositAmount(t *testing.T) {
+func TestGetProjectDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		rewardAmount     int64
@@ -314,16 +315,16 @@ func TestGetProjectDepositAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var projectID string
 			if tt.getExisting {
-				projectID = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID = createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					rewardAmount:    tt.rewardAmount,
 					tier30Pct:       25,
@@ -349,16 +350,16 @@ func TestGetProjectDepositAmount(t *testing.T) {
 	}
 }
 
-func TestGetProjectRecipient(t *testing.T) {
-	t.Run("get existing project recipient", func(t *testing.T) {
+func TestGetProjectRecipient(cur realm, t *testing.T) {
+	t.Run("get existing project recipient", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 		recipientAddr := testutils.TestAddress("test-recipient")
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -375,7 +376,7 @@ func TestGetProjectRecipient(t *testing.T) {
 		uassert.Equal(t, recipientAddr, recipient)
 	})
 
-	t.Run("get non-existent project recipient", func(t *testing.T) {
+	t.Run("get non-existent project recipient", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
 		initTestStore()
@@ -390,16 +391,16 @@ func TestGetProjectRecipient(t *testing.T) {
 	})
 }
 
-func TestGetProjectCreatedHeight(t *testing.T) {
-	t.Run("get existing project created height", func(t *testing.T) {
+func TestGetProjectCreatedHeight(cur realm, t *testing.T) {
+	t.Run("get existing project created height", func(cur realm, t *testing.T) {
 		// Setup
 		cfg := testEnvConfig{height: 100}
-		setupTestEnvironment(t, cfg)
+		setupTestEnvironment(cur, t, cfg)
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, cfg)
+		_, adminRealm := setupTestEnvironment(cur, t, cfg)
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -417,15 +418,15 @@ func TestGetProjectCreatedHeight(t *testing.T) {
 	})
 }
 
-func TestGetProjectCreatedAt(t *testing.T) {
-	t.Run("get existing project created at", func(t *testing.T) {
+func TestGetProjectCreatedAt(cur realm, t *testing.T) {
+	t.Run("get existing project created at", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -443,19 +444,19 @@ func TestGetProjectCreatedAt(t *testing.T) {
 	})
 }
 
-func TestGetProjectTiersRatios(t *testing.T) {
-	t.Run("get existing project tiers ratios", func(t *testing.T) {
+func TestGetProjectTiersRatios(cur realm, t *testing.T) {
+	t.Run("get existing project tiers ratios", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 		tier30Pct := int64(25)
 		tier90Pct := int64(50)
 		tier180Pct := int64(25)
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       tier30Pct,
@@ -476,7 +477,7 @@ func TestGetProjectTiersRatios(t *testing.T) {
 	})
 }
 
-func TestGetProjectTier(t *testing.T) {
+func TestGetProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tier             int64
@@ -504,14 +505,14 @@ func TestGetProjectTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-			projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+			projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 				name:            "Test Project",
 				rewardAmount:    1000000,
 				tier30Pct:       25,
@@ -536,15 +537,15 @@ func TestGetProjectTier(t *testing.T) {
 	}
 }
 
-func TestGetProjectTierTotalDistributeAmount(t *testing.T) {
-	t.Run("get project tier total distribute amount", func(t *testing.T) {
+func TestGetProjectTierTotalDistributeAmount(cur realm, t *testing.T) {
+	t.Run("get project tier total distribute amount", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -562,15 +563,15 @@ func TestGetProjectTierTotalDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierStartTime(t *testing.T) {
-	t.Run("get project tier start time", func(t *testing.T) {
+func TestGetProjectTierStartTime(cur realm, t *testing.T) {
+	t.Run("get project tier start time", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -588,15 +589,15 @@ func TestGetProjectTierStartTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierEndTime(t *testing.T) {
-	t.Run("get project tier end time", func(t *testing.T) {
+func TestGetProjectTierEndTime(cur realm, t *testing.T) {
+	t.Run("get project tier end time", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -614,15 +615,15 @@ func TestGetProjectTierEndTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectActiveStatus(t *testing.T) {
-	t.Run("get project active status", func(t *testing.T) {
+func TestGetProjectActiveStatus(cur realm, t *testing.T) {
+	t.Run("get project active status", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -640,8 +641,8 @@ func TestGetProjectActiveStatus(t *testing.T) {
 	})
 }
 
-func TestGetDepositCount(t *testing.T) {
-	t.Run("empty store returns zero deposit count", func(t *testing.T) {
+func TestGetDepositCount(cur realm, t *testing.T) {
+	t.Run("empty store returns zero deposit count", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
 		initTestStore()
@@ -654,14 +655,14 @@ func TestGetDepositCount(t *testing.T) {
 		uassert.Equal(t, 0, count)
 	})
 
-	t.Run("deposit count increases with new deposits", func(t *testing.T) {
+	t.Run("deposit count increases with new deposits", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -670,7 +671,7 @@ func TestGetDepositCount(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -684,8 +685,8 @@ func TestGetDepositCount(t *testing.T) {
 	})
 }
 
-func TestGetCurrentDepositId(t *testing.T) {
-	t.Run("initial deposit counter is zero", func(t *testing.T) {
+func TestGetCurrentDepositId(cur realm, t *testing.T) {
+	t.Run("initial deposit counter is zero", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
 		initTestStore()
@@ -699,7 +700,7 @@ func TestGetCurrentDepositId(t *testing.T) {
 	})
 }
 
-func TestGetDeposit(t *testing.T) {
+func TestGetDeposit(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		createDeposit    bool
@@ -720,16 +721,16 @@ func TestGetDeposit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var depositID string
 			if tt.createDeposit {
-				projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					rewardAmount:    1000000,
 					tier30Pct:       25,
@@ -738,7 +739,7 @@ func TestGetDeposit(t *testing.T) {
 					recipientSuffix: "recipient",
 				})
 
-				_, depositID = createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+				_, depositID = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 					userSuffix:    "user1",
 					depositAmount: 1000000,
 					tier:          30,
@@ -763,15 +764,15 @@ func TestGetDeposit(t *testing.T) {
 	}
 }
 
-func TestGetDepositProjectID(t *testing.T) {
-	t.Run("get deposit project id", func(t *testing.T) {
+func TestGetDepositProjectID(cur realm, t *testing.T) {
+	t.Run("get deposit project id", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -780,7 +781,7 @@ func TestGetDepositProjectID(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -795,7 +796,7 @@ func TestGetDepositProjectID(t *testing.T) {
 	})
 }
 
-func TestGetDepositTier(t *testing.T) {
+func TestGetDepositTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tier             int64
@@ -814,14 +815,14 @@ func TestGetDepositTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-			projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+			projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 				name:            "Test Project",
 				rewardAmount:    1000000,
 				tier30Pct:       25,
@@ -830,7 +831,7 @@ func TestGetDepositTier(t *testing.T) {
 				recipientSuffix: "recipient",
 			})
 
-			_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+			_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 				userSuffix:    "user1",
 				depositAmount: 1000000,
 				tier:          tt.tier,
@@ -850,15 +851,15 @@ func TestGetDepositTier(t *testing.T) {
 	}
 }
 
-func TestGetDepositAmount(t *testing.T) {
-	t.Run("get deposit amount", func(t *testing.T) {
+func TestGetDepositAmount(cur realm, t *testing.T) {
+	t.Run("get deposit amount", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -868,7 +869,7 @@ func TestGetDepositAmount(t *testing.T) {
 		})
 
 		depositAmount := int64(1000000)
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: depositAmount,
 			tier:          30,
@@ -883,7 +884,7 @@ func TestGetDepositAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardManager(t *testing.T) {
+func TestGetProjectTierRewardManager(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		createProject    bool
@@ -904,16 +905,16 @@ func TestGetProjectTierRewardManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var projectTierID string
 			if tt.createProject {
-				projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					rewardAmount:    1000000,
 					tier30Pct:       25,
@@ -921,7 +922,7 @@ func TestGetProjectTierRewardManager(t *testing.T) {
 					tier180Pct:      25,
 					recipientSuffix: "recipient",
 				})
-				projectTierID = projectID + ":" + formatInt(projectTier30)
+				projectTierID = projectID + ":" + utils.FormatInt(projectTier30)
 			} else {
 				projectTierID = "nonexistent-project-tier-id"
 			}
@@ -942,15 +943,15 @@ func TestGetProjectTierRewardManager(t *testing.T) {
 	}
 }
 
-func TestGetProjectTierRewardTotalDistributeAmount(t *testing.T) {
-	t.Run("get reward manager total distribute amount", func(t *testing.T) {
+func TestGetProjectTierRewardTotalDistributeAmount(cur realm, t *testing.T) {
+	t.Run("get reward manager total distribute amount", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -959,7 +960,7 @@ func TestGetProjectTierRewardTotalDistributeAmount(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		totalDistribute, err := lp.GetProjectTierRewardTotalDistributeAmount(projectTierID)
@@ -970,15 +971,15 @@ func TestGetProjectTierRewardTotalDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardDistributeStartTime(t *testing.T) {
-	t.Run("get reward manager distribute start time", func(t *testing.T) {
+func TestGetProjectTierRewardDistributeStartTime(cur realm, t *testing.T) {
+	t.Run("get reward manager distribute start time", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -987,7 +988,7 @@ func TestGetProjectTierRewardDistributeStartTime(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		startTime, err := lp.GetProjectTierRewardDistributeStartTime(projectTierID)
@@ -998,15 +999,15 @@ func TestGetProjectTierRewardDistributeStartTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardDistributeEndTime(t *testing.T) {
-	t.Run("get reward manager distribute end time", func(t *testing.T) {
+func TestGetProjectTierRewardDistributeEndTime(cur realm, t *testing.T) {
+	t.Run("get reward manager distribute end time", func(cur realm, t *testing.T) {
 		// Setup
-		setupTestEnvironment(t, testEnvConfig{})
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1015,7 +1016,7 @@ func TestGetProjectTierRewardDistributeEndTime(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		endTime, err := lp.GetProjectTierRewardDistributeEndTime(projectTierID)
@@ -1026,7 +1027,7 @@ func TestGetProjectTierRewardDistributeEndTime(t *testing.T) {
 	})
 }
 
-func TestGetRewardState(t *testing.T) {
+func TestGetRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		createDeposit    bool
@@ -1047,16 +1048,16 @@ func TestGetRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			setupTestEnvironment(t, testEnvConfig{})
+			setupTestEnvironment(cur, t, testEnvConfig{})
 			lp := getTestImplementation()
 			launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-			_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+			_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
 			var projectTierID, depositID string
 			if tt.createDeposit {
-				projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+				projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 					name:            "Test Project",
 					rewardAmount:    1000000,
 					tier30Pct:       25,
@@ -1065,13 +1066,13 @@ func TestGetRewardState(t *testing.T) {
 					recipientSuffix: "recipient",
 				})
 
-				_, depositID = createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+				_, depositID = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 					userSuffix:    "user1",
 					depositAmount: 1000000,
 					tier:          30,
 				})
 
-				projectTierID = projectID + ":" + formatInt(30)
+				projectTierID = projectID + ":" + utils.FormatInt(30)
 			} else {
 				projectTierID = "nonexistent-project-tier-id"
 				depositID = "nonexistent-deposit-id"
@@ -1093,14 +1094,14 @@ func TestGetRewardState(t *testing.T) {
 	}
 }
 
-func TestGetProjectTierDepositIDs(t *testing.T) {
-	t.Run("get project tier deposit ids pagination", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
+	t.Run("get project tier deposit ids pagination", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1109,7 +1110,7 @@ func TestGetProjectTierDepositIDs(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1123,14 +1124,14 @@ func TestGetProjectTierDepositIDs(t *testing.T) {
 	})
 }
 
-func TestGetDepositProjectTierID(t *testing.T) {
-	t.Run("get deposit project tier id", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositProjectTierID(cur realm, t *testing.T) {
+	t.Run("get deposit project tier id", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1139,7 +1140,7 @@ func TestGetDepositProjectTierID(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1150,18 +1151,18 @@ func TestGetDepositProjectTierID(t *testing.T) {
 
 		// Verify
 		uassert.NoError(t, err)
-		uassert.Equal(t, projectID+":"+formatInt(30), projectTierID)
+		uassert.Equal(t, projectID+":"+utils.FormatInt(30), projectTierID)
 	})
 }
 
-func TestGetDepositCreatedHeight(t *testing.T) {
-	t.Run("get deposit created height", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositCreatedHeight(cur realm, t *testing.T) {
+	t.Run("get deposit created height", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1170,7 +1171,7 @@ func TestGetDepositCreatedHeight(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1185,14 +1186,14 @@ func TestGetDepositCreatedHeight(t *testing.T) {
 	})
 }
 
-func TestGetDepositCreatedAt(t *testing.T) {
-	t.Run("get deposit created at", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositCreatedAt(cur realm, t *testing.T) {
+	t.Run("get deposit created at", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1201,7 +1202,7 @@ func TestGetDepositCreatedAt(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1216,14 +1217,14 @@ func TestGetDepositCreatedAt(t *testing.T) {
 	})
 }
 
-func TestGetDepositEndTime(t *testing.T) {
-	t.Run("get deposit end time", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositEndTime(cur realm, t *testing.T) {
+	t.Run("get deposit end time", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1232,7 +1233,7 @@ func TestGetDepositEndTime(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1247,14 +1248,14 @@ func TestGetDepositEndTime(t *testing.T) {
 	})
 }
 
-func TestGetDepositWithdrawnHeight(t *testing.T) {
-	t.Run("get deposit withdrawn height", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositWithdrawnHeight(cur realm, t *testing.T) {
+	t.Run("get deposit withdrawn height", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1263,7 +1264,7 @@ func TestGetDepositWithdrawnHeight(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1278,14 +1279,14 @@ func TestGetDepositWithdrawnHeight(t *testing.T) {
 	})
 }
 
-func TestGetDepositWithdrawnTime(t *testing.T) {
-	t.Run("get deposit withdrawn time", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetDepositWithdrawnTime(cur realm, t *testing.T) {
+	t.Run("get deposit withdrawn time", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1294,7 +1295,7 @@ func TestGetDepositWithdrawnTime(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		_, depositID := createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
 			userSuffix:    "user1",
 			depositAmount: 1000000,
 			tier:          30,
@@ -1309,14 +1310,14 @@ func TestGetDepositWithdrawnTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierDistributeAmountPerSecondX128(t *testing.T) {
-	t.Run("get project tier distribute amount per second x128", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierDistributeAmountPerSecondX128(cur realm, t *testing.T) {
+	t.Run("get project tier distribute amount per second x128", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1334,14 +1335,14 @@ func TestGetProjectTierDistributeAmountPerSecondX128(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierTotalDepositAmount(t *testing.T) {
-	t.Run("get project tier total deposit amount", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierTotalDepositAmount(cur realm, t *testing.T) {
+	t.Run("get project tier total deposit amount", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1359,14 +1360,14 @@ func TestGetProjectTierTotalDepositAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierTotalWithdrawAmount(t *testing.T) {
-	t.Run("get project tier total withdraw amount", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierTotalWithdrawAmount(cur realm, t *testing.T) {
+	t.Run("get project tier total withdraw amount", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1384,14 +1385,14 @@ func TestGetProjectTierTotalWithdrawAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierTotalDepositCount(t *testing.T) {
-	t.Run("get project tier total deposit count", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierTotalDepositCount(cur realm, t *testing.T) {
+	t.Run("get project tier total deposit count", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1409,14 +1410,14 @@ func TestGetProjectTierTotalDepositCount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierTotalWithdrawCount(t *testing.T) {
-	t.Run("get project tier total withdraw count", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierTotalWithdrawCount(cur realm, t *testing.T) {
+	t.Run("get project tier total withdraw count", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1434,14 +1435,14 @@ func TestGetProjectTierTotalWithdrawCount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierTotalCollectedAmount(t *testing.T) {
-	t.Run("get project tier total collected amount", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierTotalCollectedAmount(cur realm, t *testing.T) {
+	t.Run("get project tier total collected amount", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1459,14 +1460,14 @@ func TestGetProjectTierTotalCollectedAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardManagerCount(t *testing.T) {
-	t.Run("get project tier reward manager count", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardManagerCount(cur realm, t *testing.T) {
+	t.Run("get project tier reward manager count", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		_ = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		_ = createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1483,14 +1484,14 @@ func TestGetProjectTierRewardManagerCount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardDistributeAmountPerSecondX128(t *testing.T) {
-	t.Run("get reward manager distribute amount per second x128", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardDistributeAmountPerSecondX128(cur realm, t *testing.T) {
+	t.Run("get reward manager distribute amount per second x128", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1499,7 +1500,7 @@ func TestGetProjectTierRewardDistributeAmountPerSecondX128(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardDistributeAmountPerSecondX128(projectTierID)
@@ -1510,14 +1511,14 @@ func TestGetProjectTierRewardDistributeAmountPerSecondX128(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(t *testing.T) {
-	t.Run("get reward manager accumulated reward per deposit x128", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(cur realm, t *testing.T) {
+	t.Run("get reward manager accumulated reward per deposit x128", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1526,7 +1527,7 @@ func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierID)
@@ -1537,14 +1538,14 @@ func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardTotalClaimedAmount(t *testing.T) {
-	t.Run("get reward manager total claimed amount", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardTotalClaimedAmount(cur realm, t *testing.T) {
+	t.Run("get reward manager total claimed amount", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1553,7 +1554,7 @@ func TestGetProjectTierRewardTotalClaimedAmount(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardTotalClaimedAmount(projectTierID)
@@ -1564,14 +1565,14 @@ func TestGetProjectTierRewardTotalClaimedAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardAccumulatedDistributeAmount(t *testing.T) {
-	t.Run("get reward manager accumulated distribute amount", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardAccumulatedDistributeAmount(cur realm, t *testing.T) {
+	t.Run("get reward manager accumulated distribute amount", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1580,7 +1581,7 @@ func TestGetProjectTierRewardAccumulatedDistributeAmount(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		amount, err := lp.GetProjectTierRewardAccumulatedDistributeAmount(projectTierID)
@@ -1591,14 +1592,14 @@ func TestGetProjectTierRewardAccumulatedDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
-	t.Run("get reward manager accumulated time", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardAccumulatedTime(cur realm, t *testing.T) {
+	t.Run("get reward manager accumulated time", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1607,7 +1608,7 @@ func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		time, err := lp.GetProjectTierRewardAccumulatedTime(projectTierID)
@@ -1618,14 +1619,14 @@ func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardClaimableDuration(t *testing.T) {
-	t.Run("get reward manager reward claimable duration", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
+func TestGetProjectTierRewardClaimableDuration(cur realm, t *testing.T) {
+	t.Run("get reward manager reward claimable duration", func(cur realm, t *testing.T) {
+		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+		_, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		projectID := createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Test Project",
 			rewardAmount:    1000000,
 			tier30Pct:       25,
@@ -1634,7 +1635,7 @@ func TestGetProjectTierRewardClaimableDuration(t *testing.T) {
 			recipientSuffix: "recipient",
 		})
 
-		projectTierID := projectID + ":" + formatInt(projectTier30)
+		projectTierID := projectID + ":" + utils.FormatInt(projectTier30)
 
 		// Execute
 		duration, err := lp.GetProjectTierRewardClaimableDuration(projectTierID)

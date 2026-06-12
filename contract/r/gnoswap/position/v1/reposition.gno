@@ -2,9 +2,10 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -24,6 +25,8 @@ import (
 //
 // Returns positionId, liquidity, tickLower, tickUpper, amount0, amount1.
 func (p *positionV1) Reposition(
+	_ int,
+	rlm realm,
 	positionId uint64,
 	tickLower int32,
 	tickUpper int32,
@@ -33,13 +36,18 @@ func (p *positionV1) Reposition(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
 	assertIsOwnerForToken(p, positionId, caller)
 	assertIsNotExpired(deadline)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// position should be burned to reposition
 	position := p.mustGetPosition(positionId)
@@ -64,12 +72,14 @@ func (p *positionV1) Reposition(
 	}
 
 	if err := validateTokenPath(token0, token1); err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+		panic(newErrorWithDetail(err.Error(), ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
 	poolKey := position.PoolKey()
 
 	liquidity, amount0, amount1 := p.addLiquidity(
+		0,
+		rlm,
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      tickLower,
@@ -89,7 +99,7 @@ func (p *positionV1) Reposition(
 
 	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
 	if err != nil {
-		panic(newErrorWithDetail(err, "failed to get current fee growth"))
+		panic(newErrorWithDetail(err.Error(), "failed to get current fee growth"))
 	}
 	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
@@ -102,7 +112,7 @@ func (p *positionV1) Reposition(
 	position.SetTokensOwed0(0)
 	position.SetTokensOwed1(0)
 	position.SetBurned(false)
-	p.mustUpdatePosition(positionId, *position)
+	p.mustUpdatePosition(0, rlm, positionId, *position)
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
 	poolToken0Balance := pl.GetBalanceToken0(poolKey)
@@ -110,29 +120,28 @@ func (p *positionV1) Reposition(
 
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolKey, 0)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Reposition",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpPositionId", formatUint(positionId),
-		"tickLower", formatInt(tickLower),
-		"tickUpper", formatInt(tickUpper),
+		"lpPositionId", utils.FormatUint(positionId),
+		"tickLower", utils.FormatInt(tickLower),
+		"tickUpper", utils.FormatInt(tickUpper),
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"prevTickLower", formatInt(oldTickLower),
-		"prevTickUpper", formatInt(oldTickUpper),
+		"prevTickLower", utils.FormatInt(oldTickLower),
+		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolKey),
-		"token0Balance", formatInt(poolToken0Balance),
-		"token1Balance", formatInt(poolToken1Balance),
-		"tickCumulative", formatInt(tickCumulative),
+		"token0Balance", utils.FormatInt(poolToken0Balance),
+		"token1Balance", utils.FormatInt(poolToken1Balance),
+		"tickCumulative", utils.FormatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
-		"observationTimestamp", formatInt(observationTimestamp),
+		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()

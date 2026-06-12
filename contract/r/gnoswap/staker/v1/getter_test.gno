@@ -27,9 +27,9 @@ type testState struct {
 
 // setupBasicTestState creates a minimal test state for getter tests.
 // Uses manager methods where possible, direct store access for complex items.
-func setupBasicTestState(t *testing.T) *testState {
+func setupBasicTestState(cur realm, t *testing.T) *testState {
 	t.Helper()
-	initStakerTest(t)
+	initStakerTest(cur, t)
 
 	state := &testState{
 		instance:         getMockInstance(),
@@ -41,23 +41,25 @@ func setupBasicTestState(t *testing.T) *testState {
 		fixedBlockHeight: int64(100),
 	}
 
-	// Setup allowed tokens via manager method
-	state.instance.AddToken(barPath)
-	state.instance.AddToken(bazPath)
+	// Setup allowed tokens and config via the admin-gated manager methods.
+	// These run through the mock instance helpers under an admin caller so the
+	// access checks (rlm.Previous() == admin) pass.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), barPath)
+	mockInstanceAddToken(cross(cur), bazPath)
 
-	// Setup config values via manager methods
-	state.instance.SetDepositGnsAmount(1_000_000_000)
-	state.instance.SetMinimumRewardAmount(500_000)
-	state.instance.SetUnStakingFee(100) // 1%
+	mockInstanceSetDepositGnsAmount(cross(cur), 1_000_000_000)
+	mockInstanceSetMinimumRewardAmount(cross(cur), 500_000)
+	mockInstanceSetUnstakingFee(cross(cur), 100) // 1%
 
-	// Setup warmup template via manager method
-	state.instance.SetWarmUp(30, 86400*5) // 30%, 5 days
+	// Setup warmup template via manager method (30%, 5 days)
+	mockInstanceSetWarmupPeriod(cross(cur), state.poolPath, 86400*5)
 
-	// Direct store access for complex state: Pool
+	// Setup pool through the domain collection setter
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)
-	state.instance.store.GetPools().Set(state.poolPath, state.pool)
+	state.instance.getPools().set(state.poolPath, state.pool)
 
-	// Direct store access for complex state: ExternalIncentive
+	// Setup external incentive through domain setters
 	state.incentive = sr.NewExternalIncentive(
 		state.incentiveId,
 		state.poolPath,
@@ -71,13 +73,13 @@ func setupBasicTestState(t *testing.T) *testState {
 		state.fixedTimestamp,      // currentTime
 	)
 	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
-	state.instance.store.GetExternalIncentives().Set(state.incentiveId, state.incentive)
+	state.instance.getExternalIncentives().set(state.incentiveId, state.incentive)
 
-	// Direct store access for complex state: Deposit
+	// Setup deposit through the domain collection setter
 	warmups := []sr.Warmup{
-		{TimeDuration: 86400 * 5, NextWarmupTime: state.fixedTimestamp + 86400*5, WarmupRatio: 30},
-		{TimeDuration: 86400 * 10, NextWarmupTime: state.fixedTimestamp + 86400*10, WarmupRatio: 50},
-		{TimeDuration: 86400 * 30, NextWarmupTime: state.fixedTimestamp + 86400*30, WarmupRatio: 70},
+		sr.NewWarmup(86400*5, state.fixedTimestamp+86400*5, 30),
+		sr.NewWarmup(86400*10, state.fixedTimestamp+86400*10, 50),
+		sr.NewWarmup(86400*30, state.fixedTimestamp+86400*30, 70),
 	}
 	state.deposit = sr.NewDeposit(
 		state.owner,
@@ -92,23 +94,23 @@ func setupBasicTestState(t *testing.T) *testState {
 	state.deposit.SetCollectedExternalReward(state.incentiveId, 2500)
 	state.deposit.SetExternalRewardLastCollectTime(state.incentiveId, state.fixedTimestamp+100)
 	state.deposit.AddExternalIncentiveId(state.incentiveId)
-	state.instance.store.GetDeposits().Set(sr.EncodeUint(state.positionId), state.deposit)
+	state.instance.getDeposits().set(state.positionId, state.deposit)
 
 	// Setup pool tier
-	state.instance.store.GetPoolTierMemberships().Set(state.poolPath, uint64(1))
+	state.instance.setPoolTier(0, cur, state.poolPath, 1, state.fixedTimestamp)
 	counts := state.instance.store.GetPoolTierCounts()
 	counts[1] = 1
-	state.instance.store.SetPoolTierCounts(counts)
-	state.instance.store.SetPoolTierRatio(sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20})
+	state.instance.store.SetPoolTierCounts(0, cur, counts)
+	state.instance.store.SetPoolTierRatio(0, cur, sr.NewTierRatio(50, 30, 20))
 
 	// Setup total emission sent
-	state.instance.store.SetTotalEmissionSent(100000)
+	state.instance.store.SetTotalEmissionSent(0, cur, 100000)
 
 	return state
 }
 
-func TestGetterIncentiveBasicProperties(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterIncentiveBasicProperties(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	tests := []struct {
 		name     string
@@ -163,7 +165,7 @@ func TestGetterIncentiveBasicProperties(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.getter()
 			uassert.Equal(t, tt.expected, result)
 		})
@@ -172,8 +174,8 @@ func TestGetterIncentiveBasicProperties(t *testing.T) {
 
 // TestGetterIncentiveRewardAmounts tests derived reward values together.
 // remaining = total - distributed
-func TestGetterIncentiveRewardAmounts(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterIncentiveRewardAmounts(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Set distributed amount to create derived relationship
 	state.incentive.SetDistributedRewardAmount(3_000_000)
@@ -207,8 +209,8 @@ func TestGetterIncentiveRewardAmounts(t *testing.T) {
 	uassert.Equal(t, "10000000", rewardAmountStr)
 }
 
-func TestGetterPoolIncentiveDepositObjects(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	pool := state.instance.GetPool(state.poolPath)
 	uassert.Equal(t, state.poolPath, pool.PoolPath())
@@ -222,8 +224,8 @@ func TestGetterPoolIncentiveDepositObjects(t *testing.T) {
 	uassert.Equal(t, state.poolPath, deposit.TargetPoolPath())
 }
 
-func TestGetterCollectableRewards(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterCollectableRewards(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	internal := state.instance.CollectableEmissionReward(state.positionId)
 	uassert.Equal(t, int64(0), internal)
@@ -232,8 +234,8 @@ func TestGetterCollectableRewards(t *testing.T) {
 	uassert.Equal(t, int64(0), external)
 }
 
-func TestGetterPoolIncentiveIdList(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolIncentiveIdList(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add another incentive
 	incentive2 := sr.NewExternalIncentive(
@@ -255,8 +257,8 @@ func TestGetterPoolIncentiveIdList(t *testing.T) {
 	uassert.Equal(t, 2, len(ids))
 }
 
-func TestGetterExternalIncentiveByPoolPath(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterExternalIncentiveByPoolPath(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	incentives := state.instance.GetExternalIncentiveByPoolPath(state.poolPath)
 
@@ -264,8 +266,8 @@ func TestGetterExternalIncentiveByPoolPath(t *testing.T) {
 	uassert.Equal(t, state.incentiveId, incentives[0].IncentiveId())
 }
 
-func TestGetterDepositBasicProperties(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterDepositBasicProperties(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	tests := []struct {
 		name     string
@@ -310,15 +312,15 @@ func TestGetterDepositBasicProperties(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.getter()
 			uassert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestGetterDepositLiquidity(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterDepositLiquidity(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	liquidity := state.instance.GetDepositLiquidity(state.positionId)
 	liquidityStr := state.instance.GetDepositLiquidityAsString(state.positionId)
@@ -327,8 +329,8 @@ func TestGetterDepositLiquidity(t *testing.T) {
 	uassert.Equal(t, "1000000", liquidityStr)
 }
 
-func TestGetterDepositExternalRewards(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterDepositExternalRewards(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Test collected external reward
 	collectedReward := state.instance.GetDepositCollectedExternalReward(state.positionId, state.incentiveId)
@@ -344,8 +346,8 @@ func TestGetterDepositExternalRewards(t *testing.T) {
 	uassert.Equal(t, state.incentiveId, incentiveIds[0])
 }
 
-func TestGetterDepositWarmUp(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterDepositWarmUp(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	warmups := state.instance.GetDepositWarmUp(state.positionId)
 
@@ -355,8 +357,8 @@ func TestGetterDepositWarmUp(t *testing.T) {
 	uassert.Equal(t, uint64(70), warmups[2].WarmupRatio)
 }
 
-func TestGetterIsStaked(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterIsStaked(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	tests := []struct {
 		name       string
@@ -376,15 +378,15 @@ func TestGetterIsStaked(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := state.instance.IsStaked(tt.positionId)
 			uassert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestGetterPoolTierProperties(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolTierProperties(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Test pool tier
 	tier := state.instance.GetPoolTier(state.poolPath)
@@ -403,12 +405,12 @@ func TestGetterPoolTierProperties(t *testing.T) {
 	uassert.Equal(t, uint64(0), countTier0)
 }
 
-func TestGetterPoolsByTier(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolsByTier(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add another pool to tier 1
 	pool2Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
-	state.instance.store.GetPoolTierMemberships().Set(pool2Path, uint64(1))
+	state.instance.setPoolTier(0, cur, pool2Path, 1, state.fixedTimestamp)
 
 	pools := state.instance.GetPoolsByTier(1)
 	uassert.Equal(t, 2, len(pools))
@@ -422,8 +424,8 @@ func TestGetterPoolsByTier(t *testing.T) {
 	uassert.Equal(t, 0, len(poolsTier99))
 }
 
-func TestGetterGlobalConfigValues(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterGlobalConfigValues(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	tests := []struct {
 		name     string
@@ -453,15 +455,15 @@ func TestGetterGlobalConfigValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.getter()
 			uassert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestGetterAllowedTokens(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterAllowedTokens(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	tokens := state.instance.GetAllowedTokens()
 
@@ -475,8 +477,8 @@ func TestGetterAllowedTokens(t *testing.T) {
 	uassert.Equal(t, originalLen, len(newTokens))
 }
 
-func TestGetterWarmupTemplate(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterWarmupTemplate(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	warmups := state.instance.GetWarmupTemplate()
 
@@ -485,50 +487,50 @@ func TestGetterWarmupTemplate(t *testing.T) {
 
 	// Verify returned slice is a copy
 	originalLen := len(warmups)
-	warmups = append(warmups, sr.Warmup{})
+	warmups = append(warmups, sr.NewWarmup(0, 0, 0))
 	newWarmups := state.instance.GetWarmupTemplate()
 	uassert.Equal(t, originalLen, len(newWarmups))
 }
 
-func TestGetterNonExistentIncentive(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterNonExistentIncentive(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, "incentive does not exist", func() {
+	uassert.PanicsContains(t, cur, "incentive does not exist", func() {
 		state.instance.GetIncentiveStartTimestamp(state.poolPath, "non-existent-incentive")
 	})
 }
 
-func TestGetterNonExistentDeposit(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterNonExistentDeposit(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, "not found", func() {
+	uassert.PanicsContains(t, cur, "not found", func() {
 		state.instance.GetDepositOwner(uint64(999))
 	})
 }
 
-func TestGetterNonExistentPool(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterNonExistentPool(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, "does not exist", func() {
+	uassert.PanicsContains(t, cur, "does not exist", func() {
 		state.instance.GetPoolIncentiveIdList("non-existent-pool")
 	})
 }
 
-func TestGetterPoolTierForUntieredPool(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolTierForUntieredPool(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Create a new pool without tier
 	untieredPoolPath := "gno.land/r/test:gno.land/r/test2:500"
 	untieredPool := sr.NewPool(untieredPoolPath, state.fixedTimestamp)
-	state.instance.store.GetPools().Set(untieredPoolPath, untieredPool)
+	state.instance.getPools().set(untieredPoolPath, untieredPool)
 
 	// Should return 0 for untiered pool
 	tier := state.instance.GetPoolTier(untieredPoolPath)
 	uassert.Equal(t, uint64(0), tier)
 }
 
-func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterMultipleDepositsForSameOwner(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add second deposit for same owner
 	deposit2 := sr.NewDeposit(
@@ -541,7 +543,7 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 		[]sr.Warmup{},
 	)
 	positionId2 := uint64(2)
-	state.instance.store.GetDeposits().Set(sr.EncodeUint(positionId2), deposit2)
+	state.instance.getDeposits().set(positionId2, deposit2)
 
 	owner1 := state.instance.GetDepositOwner(state.positionId)
 	owner2 := state.instance.GetDepositOwner(positionId2)
@@ -549,8 +551,8 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 	uassert.Equal(t, state.owner, owner2)
 }
 
-func TestGetterIncentiveActiveStatus(t *testing.T) {
-	initStakerTest(t)
+func TestGetterIncentiveActiveStatus(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	instance := getMockInstance()
 
 	poolPath := "gno.land/r/test/pool:3000"
@@ -558,7 +560,7 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 
 	// Create pool
 	pool := sr.NewPool(poolPath, fixedTime)
-	instance.store.GetPools().Set(poolPath, pool)
+	instance.getPools().set(poolPath, pool)
 
 	tests := []struct {
 		name           string
@@ -591,7 +593,7 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				tt.incentiveId,
 				poolPath,
@@ -615,13 +617,13 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 	}
 }
 
-func TestGetterPoolRewardCache(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolRewardCache(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add some reward cache entries
-	state.pool.RewardCache().Set(state.fixedTimestamp, int64(1000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp, int64(1000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp+100, int64(2000))
+	state.pool.SetRewardCacheAt(state.fixedTimestamp+200, int64(3000))
 
 	// Test count
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
@@ -643,8 +645,8 @@ func TestGetterPoolRewardCache(t *testing.T) {
 	uassert.Equal(t, int64(0), nonExistent)
 }
 
-func TestGetterPoolIncentive(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolIncentive(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add more incentives
 	incentive2 := sr.NewExternalIncentive(
@@ -679,17 +681,17 @@ func TestGetterPoolIncentive(t *testing.T) {
 	uassert.Equal(t, 1, len(idsPage2))
 }
 
-func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add some accumulation entries (avoiding fixedTimestamp as NewPool initializes with it)
 	acc1 := "1000000000000000000"
 	acc2 := "2000000000000000000"
 	acc3 := "3000000000000000000"
 
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+100, acc1)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+200, acc2)
+	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+300, acc3)
 
 	// Test count
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
@@ -711,13 +713,13 @@ func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 	uassert.Equal(t, "0", nonExistent)
 }
 
-func TestGetterPoolHistoricalTick(t *testing.T) {
-	state := setupBasicTestState(t)
+func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
 
 	// Add some historical tick entries
-	state.pool.HistoricalTick().Set(state.fixedTimestamp, int32(-100))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+100, int32(50))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+200, int32(200))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp, int32(-100))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp+100, int32(50))
+	state.pool.SetHistoricalTickAt(state.fixedTimestamp+200, int32(200))
 
 	// Test count
 	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)

@@ -11,16 +11,17 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/rbac"
 )
 
-func TestChangeDistributionPct(t *testing.T) {
+func TestChangeDistributionPct(cur realm, t *testing.T) {
 	resetObject(t)
 
 	tests := []struct {
 		name               string
 		shouldPanic        bool
 		panicMsg           string
-		setup              func()
+		setup              func(cur realm)
 		callerRealm        runtime.Realm
 		liquidityStakerPct int64
 		devOpsPct          int64
@@ -65,9 +66,9 @@ func TestChangeDistributionPct(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 
 			if tt.callerRealm != (runtime.Realm{}) {
@@ -75,9 +76,9 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func() {
 					ChangeDistributionPct(
-						cross,
+						cross(cur),
 						tt.liquidityStakerPct,
 						tt.devOpsPct,
 						tt.communityPoolPct,
@@ -85,9 +86,9 @@ func TestChangeDistributionPct(t *testing.T) {
 					)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					ChangeDistributionPct(
-						cross,
+						cross(cur),
 						tt.liquidityStakerPct,
 						tt.devOpsPct,
 						tt.communityPoolPct,
@@ -100,7 +101,7 @@ func TestChangeDistributionPct(t *testing.T) {
 	}
 }
 
-func TestChangeDistributionPcts(t *testing.T) {
+func TestChangeDistributionPcts(cur realm, t *testing.T) {
 	resetObject(t)
 
 	changeDistributionPcts(1000, 2000, 3000, 4000)
@@ -110,7 +111,7 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
 }
 
-func TestCalculateAmount(t *testing.T) {
+func TestCalculateAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		pct      int64
@@ -123,15 +124,14 @@ func TestCalculateAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expected, calculateAmount(int64(1000), tt.pct))
 		})
 	}
 }
 
-func TestTransferToTarget(t *testing.T) {
+func TestTransferToTarget(cur realm, t *testing.T) {
 	resetObject(t)
-	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 
 	tests := []struct {
 		name         string
@@ -139,7 +139,7 @@ func TestTransferToTarget(t *testing.T) {
 		shouldError  bool
 		abortMessage string
 		errorMsg     string
-		setup        func()
+		setup        func(cur realm)
 		target       int
 		amount       int64
 		verify       func()
@@ -163,10 +163,10 @@ func TestTransferToTarget(t *testing.T) {
 		{
 			name:   "transfer to LIQUIDITY_STAKER",
 			target: LIQUIDITY_STAKER,
-			setup: func() {
+			setup: func(cur realm) {
 				resetObject(t)
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, emissionAddr, 100000) // give enough balance for emission
+				gns.Transfer(cross(cur), emissionAddr, 100000) // give enough balance for emission
 			},
 			amount: 100,
 			verify: func() {
@@ -204,18 +204,20 @@ func TestTransferToTarget(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 
 			targets := map[int]int64{tt.target: tt.amount}
 			if tt.shouldAbort {
-				uassert.AbortsWithMessage(t, tt.abortMessage, func() {
-					amountByAddress, err := applyDistribution(targets)
-					uassert.NoError(t, err)
-					transferToTarget(amountByAddress)
-				})
+				uassert.AbortsWithMessage(
+					t, cur, tt.abortMessage, func() {
+						amountByAddress, err := applyDistribution(targets)
+						uassert.NoError(t, err)
+						testing.SetRealm(emissionRealm)
+						transferToTarget(0, cur, amountByAddress)
+					})
 
 				return
 			}
@@ -225,7 +227,8 @@ func TestTransferToTarget(t *testing.T) {
 				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
 				uassert.NoError(t, err)
-				err = transferToTarget(amountByAddress)
+				testing.SetRealm(emissionRealm)
+				err = transferToTarget(0, cur, amountByAddress)
 				uassert.NoError(t, err)
 				tt.verify()
 			}
@@ -233,7 +236,7 @@ func TestTransferToTarget(t *testing.T) {
 	}
 }
 
-func TestClearDistributedToStaker(t *testing.T) {
+func TestClearDistributedToStaker(cur realm, t *testing.T) {
 	distributedToStaker = 100
 
 	tests := []struct {
@@ -256,17 +259,18 @@ func TestClearDistributedToStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.callerRealm != (runtime.Realm{}) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					ClearDistributedToStaker(cross)
-				})
+				uassert.AbortsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						ClearDistributedToStaker(cross(cur))
+					})
 			} else {
-				ClearDistributedToStaker(cross)
+				ClearDistributedToStaker(cross(cur))
 				if distributedToStaker != 0 {
 					t.Errorf("distributedToStaker is not 0, got %d", distributedToStaker)
 				}
@@ -275,7 +279,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 	}
 }
 
-func TestClearClearDistributedToGovStaker(t *testing.T) {
+func TestClearClearDistributedToGovStaker(cur realm, t *testing.T) {
 	distributedToGovStaker = 100
 
 	tests := []struct {
@@ -298,17 +302,18 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.callerRealm != (runtime.Realm{}) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
 			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					ClearDistributedToGovStaker(cross)
-				})
+				uassert.AbortsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						ClearDistributedToGovStaker(cross(cur))
+					})
 			} else {
-				ClearDistributedToGovStaker(cross)
+				ClearDistributedToGovStaker(cross(cur))
 				if distributedToGovStaker != 0 {
 					t.Errorf("distributedToGovStaker is not 0, got %d", distributedToGovStaker)
 				}
@@ -317,7 +322,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 	}
 }
 
-func setupTestEnv(t *testing.T) {
+func setupTestEnv(cur realm, t *testing.T) {
 	distributionBpsPct = make(map[int]int64)
 
 	distributionBpsPct[LIQUIDITY_STAKER] = 7500
@@ -331,23 +336,21 @@ func setupTestEnv(t *testing.T) {
 	distributedToGovStaker = 0
 
 	testing.SetRealm(adminRealm)
-	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
-	gns.Transfer(cross, emissionAddr, 1000000)
+	gns.Transfer(cross(cur), emissionAddr, 1000000)
 }
 
-func TestCalculateAmount_Panic(t *testing.T) {
+func TestCalculateAmount_Panic(cur realm, t *testing.T) {
 	resetObject(t)
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, emissionAddr, 10000000) // 10M GNS tokens
-
-	testing.SetRealm(govRealm)
+	gns.Transfer(cross(cur), emissionAddr, 10000000) // 10M GNS tokens
 
 	// attempts to set 40000 basis points = 400%
-	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(t *testing.T) {
-		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
+	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(cur realm, t *testing.T) {
+		testing.SetRealm(govRealm)
+		uassert.AbortsWithMessage(t, cur, "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
 			ChangeDistributionPct(
-				cross,
+				cross(cur),
 				10000, // 100% to liquidityStaker
 				10000, // 100% to devOps
 				10000, // 100% to communityPool
@@ -356,7 +359,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		})
 	})
 
-	t.Run("Direct calculateAmount", func(t *testing.T) {
+	t.Run("Direct calculateAmount", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name        string
 			amount      int64
@@ -394,7 +397,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				if tt.shouldPanic {
 					defer func() {
 						if r := recover(); r != nil {
@@ -410,7 +413,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		}
 	})
 
-	t.Run("Overflow protection boundary test", func(t *testing.T) {
+	t.Run("Overflow protection boundary test", func(cur realm, t *testing.T) {
 		maxSafeAmount := int64(9223372036854775807 / 10000)
 
 		// under the limit
@@ -418,28 +421,30 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		uassert.Equal(t, maxSafeAmount, result)
 
 		// over the limit
-		uassert.PanicsWithMessage(t, "amount too large, would cause overflow", func() {
-			calculateAmount(maxSafeAmount+1, 10000)
-		})
+		uassert.PanicsWithMessage(
+			t, cur, "amount too large, would cause overflow", func() {
+				calculateAmount(maxSafeAmount+1, 10000)
+			})
 
 		// over the limit
 		unsafeAmount := maxSafeAmount / 10 // 10x smaller than max
 		hugebptPct := int64(100001)        // Just over 1000%
 
-		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
-			calculateAmount(unsafeAmount, hugebptPct)
-		})
+		uassert.PanicsWithMessage(
+			t, cur, "invalid amount or bptPct", func() {
+				calculateAmount(unsafeAmount, hugebptPct)
+			})
 	})
 }
 
-func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
+func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T) {
 	currentEmissionAmount := int64(0)
 
 	tests := []struct {
 		name                   string
-		setup                  func()
+		setup                  func(cur realm)
 		caller                 address
-		callback               func(int64)
+		callback               func(cur realm, emissionAmountPerSecond int64)
 		emissionAmount         int64
 		expectedEmissionAmount int64
 		wantErr                bool
@@ -448,7 +453,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 		{
 			name:   "success - staker can set callback",
 			caller: stakerAddr,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -458,7 +463,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 		{
 			name:   "panic - non-staker cannot set callback",
 			caller: adminAddr,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -469,7 +474,7 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 		{
 			name:   "panic - regular user cannot set callback",
 			caller: alice,
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -488,14 +493,14 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 		{
 			name:   "success - existing callback is called with 0 when replaced",
 			caller: stakerAddr,
-			setup: func() {
+			setup: func(cur realm) {
 				// Set initial callback
 				testing.SetRealm(stakerRealm)
-				SetOnDistributionPctChangeCallback(cross, func(amount int64) {
+				SetOnDistributionPctChangeCallback(cross(cur), func(cur realm, amount int64) {
 					currentEmissionAmount = amount
 				})
 			},
-			callback: func(amount int64) {
+			callback: func(cur realm, amount int64) {
 				currentEmissionAmount = amount
 			},
 			emissionAmount:         100,
@@ -505,32 +510,34 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentEmissionAmount = 0
 
 			// Given
 			resetObject(t)
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When - Then
 			if tt.wantErr {
-				uassert.AbortsWithMessage(t, tt.errMsg, func() {
-					SetOnDistributionPctChangeCallback(cross, tt.callback)
-				})
+				uassert.AbortsWithMessage(
+					t, cur, tt.errMsg, func() {
+						SetOnDistributionPctChangeCallback(cross(cur), tt.callback)
+					})
 				return
 			}
 
 			// When
-			uassert.NotPanics(t, func() {
-				SetOnDistributionPctChangeCallback(cross, tt.callback)
-			})
+			uassert.NotPanics(
+				t, cur, func() {
+					SetOnDistributionPctChangeCallback(cross(cur), tt.callback)
+				})
 
 			// Then - callback is called with 100
 			if onDistributionPctChangeCallback != nil {
-				onDistributionPctChangeCallback(tt.emissionAmount)
+				onDistributionPctChangeCallback(cross(cur), tt.emissionAmount)
 			}
 
 			// Then
@@ -541,10 +548,10 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 	}
 }
 
-func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
+func TestDistribution_GetDistributionBpsPct_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
-		setup   func()
+		setup   func(cur realm)
 		target  int
 		want    int64
 		wantErr bool
@@ -572,27 +579,27 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "success - get modified percentage",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(cross, 5000, 3000, 1000, 1000)
+				ChangeDistributionPct(cross(cur), 5000, 3000, 1000, 1000)
 			},
 			target: LIQUIDITY_STAKER,
 			want:   5000,
 		},
 		{
 			name: "success - get 100% allocation",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(cross, 10000, 0, 0, 0)
+				ChangeDistributionPct(cross(cur), 10000, 0, 0, 0)
 			},
 			target: LIQUIDITY_STAKER,
 			want:   10000,
 		},
 		{
 			name: "success - get 0% allocation",
-			setup: func() {
+			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(cross, 10000, 0, 0, 0)
+				ChangeDistributionPct(cross(cur), 10000, 0, 0, 0)
 			},
 			target: DEVOPS,
 			want:   0,
@@ -636,18 +643,19 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given
 			resetObject(t)
 			if tt.setup != nil {
-				tt.setup()
+				tt.setup(cur)
 			}
 
 			// When - Then
 			if tt.wantErr {
-				uassert.PanicsWithMessage(t, tt.errMsg, func() {
-					GetDistributionBpsPct(tt.target)
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.errMsg, func() {
+						GetDistributionBpsPct(tt.target)
+					})
 				return
 			}
 
@@ -660,50 +668,52 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
-	t.Run("GetDistributedToStaker", func(t *testing.T) {
+func TestDistribution_GetterFunctions_EdgeCases(cur realm, t *testing.T) {
+	t.Run("GetDistributedToStaker", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name  string
-			setup func()
+			setup func(cur realm)
 			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
-				setup: func() { resetObject(t) },
+				setup: func(cur realm) { resetObject(t) },
 				want:  0,
 			},
 			{
 				name: "success - after distribution",
-				setup: func() {
+				setup: func(cur realm) {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 					distributable, _ := calculateDistributableAmounts(10000)
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					uassert.NoError(t, transferToTarget(amountByAddress))
+					testing.SetRealm(emissionRealm)
+					uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 				},
 				want: 7500,
 			},
 			{
 				name: "success - after clearing",
-				setup: func() {
+				setup: func(cur realm) {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 					distributable, _ := calculateDistributableAmounts(10000)
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					uassert.NoError(t, transferToTarget(amountByAddress))
+					testing.SetRealm(emissionRealm)
+					uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 					testing.SetRealm(stakerRealm)
-					ClearDistributedToStaker(cross)
+					ClearDistributedToStaker(cross(cur))
 				},
 				want: 0,
 			},
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				// Given
-				tt.setup()
+				tt.setup(cur)
 
 				// When
 				got := GetDistributedToStaker()
@@ -714,35 +724,36 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("GetDistributedToDevOps", func(t *testing.T) {
+	t.Run("GetDistributedToDevOps", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name  string
-			setup func()
+			setup func(cur realm)
 			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
-				setup: func() { resetObject(t) },
+				setup: func(cur realm) { resetObject(t) },
 				want:  0,
 			},
 			{
 				name: "success - after distribution",
-				setup: func() {
+				setup: func(cur realm) {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 					distributable, _ := calculateDistributableAmounts(10000)
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					uassert.NoError(t, transferToTarget(amountByAddress))
+					testing.SetRealm(emissionRealm)
+					uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 				},
 				want: 2000,
 			},
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				// Given
-				tt.setup()
+				tt.setup(cur)
 
 				// When
 				got := GetDistributedToDevOps()
@@ -753,35 +764,36 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("GetDistributedToCommunityPool", func(t *testing.T) {
+	t.Run("GetDistributedToCommunityPool", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name  string
-			setup func()
+			setup func(cur realm)
 			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
-				setup: func() { resetObject(t) },
+				setup: func(cur realm) { resetObject(t) },
 				want:  0,
 			},
 			{
 				name: "success - after distribution",
-				setup: func() {
+				setup: func(cur realm) {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 					distributable, _ := calculateDistributableAmounts(10000)
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					uassert.NoError(t, transferToTarget(amountByAddress))
+					testing.SetRealm(emissionRealm)
+					uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 				},
 				want: 500,
 			},
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				// Given
-				tt.setup()
+				tt.setup(cur)
 
 				// When
 				got := GetDistributedToCommunityPool()
@@ -792,39 +804,40 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("GetDistributedToGovStaker", func(t *testing.T) {
+	t.Run("GetDistributedToGovStaker", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name  string
-			setup func()
+			setup func(cur realm)
 			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
-				setup: func() { resetObject(t) },
+				setup: func(cur realm) { resetObject(t) },
 				want:  0,
 			},
 			{
 				name: "success - after clearing",
-				setup: func() {
+				setup: func(cur realm) {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 					testing.SetRealm(adminRealm)
-					ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
+					ChangeDistributionPct(cross(cur), 5000, 2000, 1000, 2000)
 					distributable, _ := calculateDistributableAmounts(10000)
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					uassert.NoError(t, transferToTarget(amountByAddress))
+					testing.SetRealm(emissionRealm)
+					uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 					testing.SetRealm(govStakerRealm)
-					ClearDistributedToGovStaker(cross)
+					ClearDistributedToGovStaker(cross(cur))
 				},
 				want: 0,
 			},
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				// Given
-				tt.setup()
+				tt.setup(cur)
 
 				// When
 				got := GetDistributedToGovStaker()
@@ -835,15 +848,16 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("GetAccuDistributedTo functions", func(t *testing.T) {
+	t.Run("GetAccuDistributedTo functions", func(cur realm, t *testing.T) {
 		resetObject(t)
-		setupTestEnv(t)
+		setupTestEnv(cur, t)
 
 		// First distribution
 		distributable, _ := calculateDistributableAmounts(10000)
 		amountByAddress, err := applyDistribution(distributable)
 		uassert.NoError(t, err)
-		uassert.NoError(t, transferToTarget(amountByAddress))
+		testing.SetRealm(emissionRealm)
+		uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 
 		// Verify accumulated amounts
 		uassert.Equal(t, int64(7500), GetAccuDistributedToStaker())
@@ -853,15 +867,16 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 
 		// Clear current amounts
 		testing.SetRealm(stakerRealm)
-		ClearDistributedToStaker(cross)
+		ClearDistributedToStaker(cross(cur))
 
 		// Second distribution
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, emissionAddr, 1000000)
+		gns.Transfer(cross(cur), emissionAddr, 1000000)
 		distributable2, _ := calculateDistributableAmounts(10000)
 		amountByAddress, err = applyDistribution(distributable2)
 		uassert.NoError(t, err)
-		uassert.NoError(t, transferToTarget(amountByAddress))
+		testing.SetRealm(emissionRealm)
+		uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 
 		// Verify accumulated amounts increased
 		uassert.Equal(t, int64(15000), GetAccuDistributedToStaker())
@@ -872,8 +887,8 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 }
 
 // TestMapBasedDistribution_EdgeCases tests edge cases specific to map-based distribution
-func TestMapBasedDistribution_EdgeCases(t *testing.T) {
-	t.Run("distribution scenarios", func(t *testing.T) {
+func TestMapBasedDistribution_EdgeCases(cur realm, t *testing.T) {
+	t.Run("distribution scenarios", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name                      string
 			description               string
@@ -1007,9 +1022,9 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				resetObject(t)
-				setupTestEnv(t)
+				setupTestEnv(cur, t)
 
 				if tt.useEmptyMap {
 					distributionBpsPct = make(map[int]int64)
@@ -1027,7 +1042,8 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 				totalSent := tt.amountToDistribute - leftAmt
 				amountByAddress, err := applyDistribution(distributable)
 				uassert.NoError(t, err)
-				err = transferToTarget(amountByAddress)
+				testing.SetRealm(emissionRealm)
+				err = transferToTarget(0, cur, amountByAddress)
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedTotalSent, totalSent)
 				uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)
@@ -1038,7 +1054,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("map state management", func(t *testing.T) {
+	t.Run("map state management", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name        string
 			description string
@@ -1055,9 +1071,10 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 					return saved
 				},
 				testFunc: func(t *testing.T) {
-					uassert.PanicsWithMessage(t, "distributionBpsPct is nil", func() {
-						GetDistributionBpsPct(LIQUIDITY_STAKER)
-					})
+					uassert.PanicsWithMessage(
+						t, cur, "distributionBpsPct is nil", func() {
+							GetDistributionBpsPct(LIQUIDITY_STAKER)
+						})
 				},
 				cleanupFunc: func(saved map[int]int64) {
 					distributionBpsPct = saved
@@ -1090,9 +1107,10 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 					return saved
 				},
 				testFunc: func(t *testing.T) {
-					uassert.PanicsWithMessage(t, "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2)", func() {
-						GetDistributionBpsPct(DEVOPS)
-					})
+					uassert.PanicsWithMessage(
+						t, cur, "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2)", func() {
+							GetDistributionBpsPct(DEVOPS)
+						})
 				},
 				cleanupFunc: func(saved map[int]int64) {
 					distributionBpsPct = saved
@@ -1101,7 +1119,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				saved := tt.setupFunc()
 				defer tt.cleanupFunc(saved)
 				tt.testFunc(t)
@@ -1109,7 +1127,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("map operations", func(t *testing.T) {
+	t.Run("map operations", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name        string
 			description string
@@ -1152,7 +1170,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				resetObject(t)
 
 				for _, op := range tt.operations {
@@ -1173,7 +1191,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("map iteration order independence", func(t *testing.T) {
+	t.Run("map iteration order independence", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name                      string
 			description               string
@@ -1199,16 +1217,17 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				for i := 0; i < tt.iterations; i++ {
 					resetObject(t)
-					setupTestEnv(t)
+					setupTestEnv(cur, t)
 
 					distributable, leftAmt := calculateDistributableAmounts(tt.amountToDistribute)
 					totalSent := tt.amountToDistribute - leftAmt
 					amountByAddress, err := applyDistribution(distributable)
 					uassert.NoError(t, err)
-					err = transferToTarget(amountByAddress)
+					testing.SetRealm(emissionRealm)
+					err = transferToTarget(0, cur, amountByAddress)
 					uassert.NoError(t, err)
 					uassert.Equal(t, tt.expectedTotalSent, totalSent)
 					uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)
@@ -1220,7 +1239,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("read-write access pattern", func(t *testing.T) {
+	t.Run("read-write access pattern", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name         string
 			description  string
@@ -1240,7 +1259,7 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				resetObject(t)
 
 				// Multiple reads
@@ -1260,20 +1279,13 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("duplicate target addresses are accumulated before transfer", func(t *testing.T) {
+	t.Run("duplicate target addresses are accumulated before transfer", func(cur realm, t *testing.T) {
 		resetObject(t)
-		emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 		originalDevOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
 
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, emissionAddr, 100000)
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-		access.SetRoleAddress(cross, prbac.ROLE_DEVOPS.String(), stakerAddr)
-		testing.SetRealm(adminRealm)
-		defer func() {
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-			access.SetRoleAddress(cross, prbac.ROLE_DEVOPS.String(), originalDevOpsAddr)
-		}()
+		gns.Transfer(cross(cur), emissionAddr, 100000)
+		rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_DEVOPS.String(), stakerAddr)
 
 		targets := map[int]int64{
 			LIQUIDITY_STAKER: 700,
@@ -1283,10 +1295,13 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 		stakerBalanceBefore := gns.BalanceOf(stakerAddr)
 
 		amountByAddress, err := applyDistribution(targets)
+		testing.SetRealm(adminRealm)
+		rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_DEVOPS.String(), originalDevOpsAddr)
 		uassert.NoError(t, err)
 		uassert.Equal(t, 1, len(amountByAddress))
 		uassert.Equal(t, int64(1000), amountByAddress[stakerAddr])
-		uassert.NoError(t, transferToTarget(amountByAddress))
+		testing.SetRealm(emissionRealm)
+		uassert.NoError(t, transferToTarget(0, cur, amountByAddress))
 
 		uassert.Equal(t, stakerBalanceBefore+1000, gns.BalanceOf(stakerAddr))
 		uassert.Equal(t, int64(700), distributedToStaker)

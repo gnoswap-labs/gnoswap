@@ -1,5 +1,7 @@
 package staker
 
+import bptree "gno.land/p/nt/bptree/v0"
+
 // DelegationType represents the type of delegation operation
 type DelegationType string
 
@@ -71,6 +73,10 @@ func (d *Delegation) AddWithdraw(withdraw DelegationWithdraw) {
 	d.withdraws = append(d.withdraws, withdraw)
 }
 
+func (d *Delegation) SetWithdraw(index int, withdraw DelegationWithdraw) {
+	d.withdraws[index] = withdraw
+}
+
 func (d *Delegation) SetWithdraws(withdraws []DelegationWithdraw) {
 	d.withdraws = withdraws
 }
@@ -95,4 +101,12 @@ func (d *Delegation) Clone() *Delegation {
 		createdAt:        d.createdAt,
 		withdraws:        clonedWithdraws,
 	}
+}
+
+func NewDelegationTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+func NewUserDelegationTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
 }

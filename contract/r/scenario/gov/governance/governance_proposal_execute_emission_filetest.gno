@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance proposal execute - emission distribution change
 
 package main
@@ -31,12 +33,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
@@ -45,7 +47,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose Change Emission Distribution Percentages")
-	proposalID := proposeChangeEmissionDistributionPct()
+	proposalID := proposeChangeEmissionDistributionPct(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
@@ -54,7 +56,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
-	vote(proposalID, true)
+	vote(cur, proposalID, true)
 	println()
 
 	println("[SCENARIO] 6. Skip voting period for ready to execute")
@@ -63,35 +65,35 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Execute the change emission distribution pct proposal")
-	executeChangeEmissionDistributionPct(proposalID)
+	executeChangeEmissionDistributionPct(cur, proposalID)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	govStaker.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeChangeEmissionDistributionPct() int64 {
+func proposeChangeEmissionDistributionPct(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*7000,1500,1000,500")
+	proposalID := governance.ProposeParameterChange(cross(cur), "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*7000,1500,1000,500")
 
 	ufmt.Printf("[INFO] Change Emission Distribution Percentages Proposal ID: %d\n", proposalID)
 	return proposalID
 }
 
-func vote(proposalID int64, yea bool) {
+func vote(cur realm, proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
-	governance.Vote(cross, proposalID, yea)
+	governance.Vote(cross(cur), proposalID, yea)
 
 	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
@@ -99,7 +101,7 @@ func vote(proposalID int64, yea bool) {
 	ufmt.Printf("[EXPECTED] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeChangeEmissionDistributionPct(proposalID int64) {
+func executeChangeEmissionDistributionPct(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevEmissionDistributionPct1 := emission.GetDistributionBpsPct(1)
@@ -107,7 +109,7 @@ func executeChangeEmissionDistributionPct(proposalID int64) {
 	prevEmissionDistributionPct3 := emission.GetDistributionBpsPct(3)
 	prevEmissionDistributionPct4 := emission.GetDistributionBpsPct(4)
 
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 
 	afterEmissionDistributionPct1 := emission.GetDistributionBpsPct(1)
 	afterEmissionDistributionPct2 := emission.GetDistributionBpsPct(2)

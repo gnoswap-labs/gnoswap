@@ -2,8 +2,9 @@ package gns
 
 import (
 	"chain"
-	"chain/runtime"
 	"time"
+
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -12,7 +13,7 @@ import (
 // Only callable by emission contract. Sets up 12-year emission schedule
 // with halving every 2 years. Panics if caller is not emission contract.
 func InitEmissionState(cur realm, createdHeight int64, startTimestamp int64) {
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
@@ -22,9 +23,9 @@ func InitEmissionState(cur realm, createdHeight int64, startTimestamp int64) {
 		"InitEmissionState",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"height", formatInt(createdHeight),
-		"timestamp", formatInt(time.Now().Unix()),
-		"startTimestamp", formatInt(emissionState.getStartTimestamp()),
-		"endTimestamp", formatInt(emissionState.getEndTimestamp()),
+		"height", utils.FormatInt(createdHeight),
+		"timestamp", utils.FormatInt(time.Now().Unix()),
+		"startTimestamp", utils.FormatInt(emissionState.getStartTimestamp()),
+		"endTimestamp", utils.FormatInt(emissionState.getEndTimestamp()),
 	)
 }

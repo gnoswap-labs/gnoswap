@@ -4,10 +4,9 @@ import (
 	"math"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -31,7 +30,8 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	if _, err := position.GetPosition(p.positionId); err != nil {
+	_, err := position.GetPosition(p.positionId)
+	if err != nil {
 		return false
 	}
 
@@ -110,10 +110,10 @@ func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
 		return false
 	}
 	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(p.poolPath))
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(p.tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(p.tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

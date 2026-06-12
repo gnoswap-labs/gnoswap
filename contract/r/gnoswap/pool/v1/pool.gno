@@ -2,14 +2,16 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -41,6 +43,8 @@ import (
 //
 // Only callable by position contract.
 func (i *poolV1) Mint(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -49,17 +53,23 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	liquidity := u256.MustFromDecimal(liquidityAmount)
 	if liquidity.IsZero() {
-		panic(errZeroLiquidity)
+		panic(errors.New(errZeroLiquidity))
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -68,7 +78,7 @@ func (i *poolV1) Mint(
 	checkTickSpacing(tickLower, tickSpacing)
 	checkTickSpacing(tickUpper, tickSpacing)
 
-	liquidityDelta := safeConvertToInt128(liquidity)
+	liquidityDelta := gnsmath.SafeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1, err := modifyPosition(pool, positionParam)
 	if err != nil {
@@ -77,16 +87,16 @@ func (i *poolV1) Mint(
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	if amount0.Gt(zero) {
-		i.safeTransferFrom(pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
+	if amount0.Gt(u256.Zero()) {
+		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
 	}
 
-	if amount1.Gt(zero) {
-		i.safeTransferFrom(pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
+	if amount1.Gt(u256.Zero()) {
+		i.safeTransferFrom(0, rlm, pool, positionCaller, poolAddr, pool.Token1Path(), amount1, false)
 	}
 
 	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -114,6 +124,8 @@ func (i *poolV1) Mint(
 // Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
 func (i *poolV1) Burn(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -122,16 +134,22 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
-	liqAmountInt256 := safeConvertToInt128(liqAmount)
+	liqAmountInt256 := gnsmath.SafeConvertToInt128(liqAmount)
 	liqDelta := i256.Zero().Neg(liqAmountInt256)
 
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
@@ -141,20 +159,19 @@ func (i *poolV1) Burn(
 		panic(err)
 	}
 
-	if amount0.Gt(zero) || amount1.Gt(zero) {
+	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
 
-		position.SetTokensOwed0(safeAddInt64(position.TokensOwed0(), safeConvertToInt64(amount0)))
-		position.SetTokensOwed1(safeAddInt64(position.TokensOwed1(), safeConvertToInt64(amount1)))
+		position.SetTokensOwed0(gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(amount0)))
+		position.SetTokensOwed1(gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(amount1)))
 	}
 
 	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
 
-	// Save pool state after modifyPosition may have updated liquidity
-	err = i.savePool(pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
@@ -182,6 +199,8 @@ func (i *poolV1) Burn(
 // Note: Withdrawal fees are applied by the position contract, not here.
 // Only callable by position contract.
 func (i *poolV1) Collect(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -191,19 +210,25 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	caller := runtime.PreviousRealm().Address()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := rlm.Previous().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
-	amount0Req := safeParseInt64(amount0Requested)
-	amount1Req := safeParseInt64(amount1Requested)
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
+	amount0Req := utils.SafeParseInt64(amount0Requested)
+	amount1Req := utils.SafeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
-		panic(errInvalidInput)
+		panic(errors.New(errInvalidInput))
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -219,35 +244,37 @@ func (i *poolV1) Collect(
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
 	if amount0 > 0 {
-		tokenOwed0 := safeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := safeSubInt64(pool.BalanceToken0(), amount0)
+		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
+		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, amount0)
+		common.SafeGRC20Approve(cross(rlm), pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
-		tokenOwed1 := safeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := safeSubInt64(pool.BalanceToken1(), amount1)
+		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
+		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(cross, pool.Token1Path(), positionAddr, amount1)
+		common.SafeGRC20Approve(cross(rlm), pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, *position)
 
-	if err := i.savePool(pool); err != nil {
+	if err := i.savePool(0, rlm, pool); err != nil {
 		panic(err)
 	}
 
-	return formatInt(amount0), formatInt(amount1)
+	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
 // Only callable by admin or governance.
 // Returns amount0, amount1 representing protocol fees collected.
 func (i *poolV1) CollectProtocol(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -255,17 +282,25 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	previousRealm := runtime.PreviousRealm()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedWithdraw()
+
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path, token1Path)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	amount0, amount1 := i.collectProtocol(
+		0,
+		rlm,
 		token0Path,
 		token1Path,
 		fee,
@@ -280,7 +315,7 @@ func (i *poolV1) CollectProtocol(
 		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatUint(fee),
+		"fee", utils.FormatUint(fee),
 		"recipient", recipient.String(),
 		"internal_amount0", amount0,
 		"internal_amount1", amount1,
@@ -293,6 +328,8 @@ func (i *poolV1) CollectProtocol(
 // It ensures requested amounts don't exceed available protocol fees.
 // Returns amount0, amount1 as strings representing collected fees.
 func (i *poolV1) collectProtocol(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -302,11 +339,11 @@ func (i *poolV1) collectProtocol(
 ) (string, string) {
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
-	amount0Req := safeParseInt64(amount0Requested)
-	amount1Req := safeParseInt64(amount1Requested)
+	amount0Req := utils.SafeParseInt64(amount0Requested)
+	amount1Req := utils.SafeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
-		panic(errInvalidInput)
+		panic(errors.New(errInvalidInput))
 	}
 
 	amount0 := minRequestedAmount(amount0Req, pool.ProtocolFeesToken0())
@@ -326,29 +363,29 @@ func (i *poolV1) collectProtocol(
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
 
-	err = i.savePool(pool)
+	err = i.savePool(0, rlm, pool)
 	if err != nil {
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, amount1)
+	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
 
-	return formatInt(amount0), formatInt(amount1)
+	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
 
 // saveProtocolFees updates the protocol fee balances after collection.
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64, int64) {
 	if pool.ProtocolFeesToken0() < amount0 {
-		panic(errUnderflow)
+		panic(errors.New(errUnderflow))
 	}
-	pool.SetProtocolFeesToken0(safeSubInt64(pool.ProtocolFeesToken0(), amount0))
+	pool.SetProtocolFeesToken0(gnsmath.SafeSubInt64(pool.ProtocolFeesToken0(), amount0))
 
 	if pool.ProtocolFeesToken1() < amount1 {
-		panic(errUnderflow)
+		panic(errors.New(errUnderflow))
 	}
-	pool.SetProtocolFeesToken1(safeSubInt64(pool.ProtocolFeesToken1(), amount1))
+	pool.SetProtocolFeesToken1(gnsmath.SafeSubInt64(pool.ProtocolFeesToken1(), amount1))
 
 	return amount0, amount1
 }
@@ -362,27 +399,36 @@ func minRequestedAmount(request, available int64) int64 {
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	cardinalityNext uint16,
 ) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
 	if err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"IncreaseObservationCardinalityNext",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
-		"cardinalityNext", formatUint(cardinalityNext),
+		"cardinalityNext", utils.FormatUint(cardinalityNext),
 	)
 }

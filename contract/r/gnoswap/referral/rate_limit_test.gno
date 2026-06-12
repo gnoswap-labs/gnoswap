@@ -1,7 +1,7 @@
 package referral
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 	"testing"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestRateLimit_AllowsFirstOperation(t *testing.T) {
+func TestRateLimit_AllowsFirstOperation(cur realm, t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 
@@ -30,7 +30,7 @@ func TestRateLimit_AllowsFirstOperation(t *testing.T) {
 	uassert.Equal(t, referrerAddr.String(), ref.String())
 }
 
-func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
+func TestRateLimit_BlocksSecondOperationWithin24Hours(cur realm, t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 	k := setupRateLimitKeeper(t)
@@ -44,13 +44,13 @@ func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
 	// Second register attempt should be blocked by rate limit
 	_, err := k.register(userAddr, newReferrerAddr)
 
-	uassert.ErrorIs(t, err, ErrTooManyRequests)
+	uassert.ErrorContains(t, err, ErrTooManyRequests)
 	// verify original referral is preserved
 	ref, _ := k.get(userAddr)
 	uassert.Equal(t, referrerAddr.String(), ref.String())
 }
 
-func TestRateLimit_IsAddressSpecific(t *testing.T) {
+func TestRateLimit_IsAddressSpecific(cur realm, t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 
@@ -69,7 +69,7 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	uassert.True(t, k.has(user2))
 }
 
-func TestRateLimit_ContractAddressNotRateLimited(t *testing.T) {
+func TestRateLimit_ContractAddressNotRateLimited(cur realm, t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 	k := setupRateLimitKeeper(t)
@@ -85,12 +85,12 @@ func TestRateLimit_ContractAddressNotRateLimited(t *testing.T) {
 	uassert.False(t, k.has(userAddr))
 }
 
-func TestRateLimit_TimeBoundaries(t *testing.T) {
+func TestRateLimit_TimeBoundaries(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		prefix          string
 		timeSinceLastOp int64
-		wantErr         error
+		wantErr         string
 	}{
 		{
 			name:            "24h minus 1 second - blocked",
@@ -102,18 +102,18 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 			name:            "exactly 24h - allowed",
 			prefix:          "exact",
 			timeSinceLastOp: MinTimeBetweenUpdates,
-			wantErr:         nil,
+			wantErr:         "",
 		},
 		{
 			name:            "24h plus 1 second - allowed",
 			prefix:          "after",
 			timeSinceLastOp: MinTimeBetweenUpdates + 1,
-			wantErr:         nil,
+			wantErr:         "",
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			cleanup := setupValidCaller(t)
 			defer cleanup()
 			k := setupRateLimitKeeper(t)
@@ -131,8 +131,8 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 			// Try to register again (simulating update)
 			_, err := k.register(user, ref2)
 
-			if tc.wantErr != nil {
-				uassert.ErrorIs(t, err, tc.wantErr)
+			if tc.wantErr != "" {
+				uassert.ErrorContains(t, err, tc.wantErr)
 			} else {
 				uassert.NoError(t, err)
 				ref, _ := k.get(user)
@@ -142,23 +142,23 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 	}
 }
 
-func TestRateLimit_CheckRateLimitInternal(t *testing.T) {
+func TestRateLimit_CheckRateLimitInternal(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setupLastOps func(k *keeper, addr string)
-		wantErr      error
+		wantErr      string
 	}{
 		{
 			name:         "no entry exists - allowed",
 			setupLastOps: func(k *keeper, addr string) {},
-			wantErr:      nil,
+			wantErr:      "",
 		},
 		{
 			name: "old entry (time=0) - allowed",
 			setupLastOps: func(k *keeper, addr string) {
 				k.lastOps.Set(addr, int64(0))
 			},
-			wantErr: nil,
+			wantErr: "",
 		},
 		{
 			name: "invalid type stored - error",
@@ -177,35 +177,35 @@ func TestRateLimit_CheckRateLimitInternal(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			k := setupRateLimitKeeper(t)
 			userAddr := testutils.TestAddress("user")
 			tc.setupLastOps(k, userAddr.String())
 
 			err := k.checkRateLimit(userAddr.String())
 
-			if tc.wantErr == nil {
+			if tc.wantErr == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.Equal(t, tc.wantErr.Error(), err.Error())
+				uassert.Equal(t, tc.wantErr, err.Error())
 			}
 		})
 	}
 }
 
-func TestRateLimit_UnauthorizedCallerTakesPrecedence(t *testing.T) {
+func TestRateLimit_UnauthorizedCallerTakesPrecedence(cur realm, t *testing.T) {
 	cleanup := setupRateLimitCaller(t, "unauthorized")
 	defer cleanup()
 
 	user := testutils.TestAddress("user")
 	referrer := testutils.TestAddress("referrer")
 
-	uassert.AbortsContains(t, "unauthorized caller", func() {
-		TryRegister(cross, user, referrer.String())
+	uassert.AbortsContains(t, cur, "unauthorized caller", func() {
+		TryRegister(cross(cur), user, referrer.String())
 	})
 }
 
-func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
+func TestRateLimit_SelfReferralTakesPrecedence(cur realm, t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 	k := setupRateLimitKeeper(t)
@@ -214,7 +214,7 @@ func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
 
 	_, err := k.register(user, user)
 
-	uassert.ErrorIs(t, err, ErrSelfReferral)
+	uassert.ErrorContains(t, err, ErrSelfReferral)
 }
 
 func setupRateLimitKeeper(t *testing.T) *keeper {
@@ -224,7 +224,7 @@ func setupRateLimitKeeper(t *testing.T) *keeper {
 
 func setupValidCaller(t *testing.T) func() {
 	t.Helper()
-	origCaller := runtime.OriginCaller()
+	origCaller := unsafe.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
@@ -234,7 +234,7 @@ func setupValidCaller(t *testing.T) func() {
 
 func setupRateLimitCaller(t *testing.T, caller string) func() {
 	t.Helper()
-	origCaller := runtime.OriginCaller()
+	origCaller := unsafe.OriginCaller()
 	switch caller {
 	case "router":
 		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())

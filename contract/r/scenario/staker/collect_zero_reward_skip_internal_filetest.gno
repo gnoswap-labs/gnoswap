@@ -21,6 +21,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -30,7 +31,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -75,106 +75,106 @@ var (
 	maxInt64   int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing zero-reward skip behavior on CollectReward (internal GNS reward)")
 	println()
 
 	println("[SCENARIO] 1. Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool with internal tier 1")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Provider mints position and stakes")
-	providerMintThenStake()
+	providerMintThenStake(cur)
 	println()
 
 	println("[SCENARIO] 4. User mints tiny position (liquidity: 200) and stakes")
-	userMintThenStake()
+	userMintThenStake(cur)
 	println()
 
 	// 1st cycle: 5 sec → 0 (skip), 10 sec → 1 (collect)
 	println("[SCENARIO] 5. Collect at 5 sec → expect 0 GNS (zero-reward skip)")
-	collectGNSAfter5Sec(0)
+	collectGNSAfter5Sec(cur, 0)
 	println()
 
 	println("[SCENARIO] 6. Collect at 10 sec → expect 1 GNS (first non-zero reward)")
-	collectGNSAfter5Sec(1)
+	collectGNSAfter5Sec(cur, 1)
 	println()
 
 	// 2nd cycle: 15 sec → 0 (skip), 20 sec → 1 (collect)
 	println("[SCENARIO] 7. Collect at 15 sec → expect 0 GNS (cycle resets, skip again)")
-	collectGNSAfter5Sec(0)
+	collectGNSAfter5Sec(cur, 0)
 	println()
 
 	println("[SCENARIO] 8. Collect at 20 sec → expect 1 GNS (second non-zero reward)")
-	collectGNSAfter5Sec(1)
+	collectGNSAfter5Sec(cur, 1)
 	println()
 
 	// 3rd cycle: 25 sec → 0 (skip), 30 sec → 1 (collect)
 	println("[SCENARIO] 9. Collect at 25 sec → expect 0 GNS (skip)")
-	collectGNSAfter5Sec(0)
+	collectGNSAfter5Sec(cur, 0)
 	println()
 
 	println("[SCENARIO] 10. Collect at 30 sec → expect 1 GNS (third non-zero reward)")
-	collectGNSAfter5Sec(1)
+	collectGNSAfter5Sec(cur, 1)
 	println()
 
 	println("[SCENARIO] 11. Collect after 86,400 sec (1 day) → expect accumulated GNS")
-	collectGNSAfterOneDay()
+	collectGNSAfterOneDay(cur)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Enable GNS emission (required for internal rewards)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	emission.MintAndDistributeGns(cross)
-	emission.MintAndDistributeGns(cross)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	emission.MintAndDistributeGns(cross(cur))
+	emission.MintAndDistributeGns(cross(cur))
 
-	sr.SetUnStakingFee(cross, 0)
-	pl.SetPoolCreationFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 	testing.SkipHeights(1)
 
-	bar.Transfer(cross, providerUser, 5000000)
-	qux.Transfer(cross, providerUser, 5000000)
+	bar.Transfer(cross(cur), providerUser, 5000000)
+	qux.Transfer(cross(cur), providerUser, 5000000)
 
-	bar.Transfer(cross, user1User, 5000000)
-	qux.Transfer(cross, user1User, 5000000)
+	bar.Transfer(cross(cur), user1User, 5000000)
+	qux.Transfer(cross(cur), user1User, 5000000)
 
 	println("[INFO] initialized accounts with emission enabled")
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	// Set internal tier 1 → pool receives GNS emission
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 
 	println("[INFO] created pool with internal tier 1 (GNS emission enabled)")
 }
 
-func providerMintThenStake() {
+func providerMintThenStake(cur realm) {
 	testing.SetRealm(providerRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -189,21 +189,21 @@ func providerMintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] provider staked position %d (liquidity: %s)\n", lpTokenId, liquidity)
 }
 
-func userMintThenStake() {
+func userMintThenStake(cur realm) {
 	testing.SetRealm(user1Realm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 	lpTokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -218,19 +218,19 @@ func userMintThenStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
-	sr.StakeToken(cross, lpTokenId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
+	sr.StakeToken(cross(cur), lpTokenId, "")
 
 	ufmt.Printf("[INFO] user staked position %d (liquidity: %s)\n", lpTokenId, liquidity)
 }
 
-func collectGNSAfter5Sec(expectedReward int64) {
+func collectGNSAfter5Sec(cur realm, expectedReward int64) {
 	testing.SetRealm(user1Realm)
 
 	testing.SkipHeights(1)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	reward := gnsAfter - gnsBefore
@@ -243,13 +243,13 @@ func collectGNSAfter5Sec(expectedReward int64) {
 	}
 }
 
-func collectGNSAfterOneDay() {
+func collectGNSAfterOneDay(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	testing.SkipHeights(17280)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	totalReward := gnsAfter - gnsBefore
@@ -262,7 +262,7 @@ func collectGNSAfterOneDay() {
 	}
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 

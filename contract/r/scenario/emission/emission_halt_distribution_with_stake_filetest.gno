@@ -12,6 +12,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
@@ -35,7 +36,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -65,29 +65,29 @@ var (
 	wugnotGnsPoolPath = ufmt.Sprintf("%s:%s:%d", wugnotPath, gnsPath, fee3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize emission state and pool")
-	initEmissionState()
-	initPool()
+	initEmissionState(cur)
+	initPool(cur)
 	testing.SkipHeights(1)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position and stake")
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	mintPositionAndStake()
+	mintPositionAndStake(cur)
 	testing.SkipHeights(1)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Collect rewards before halt")
-	collectRewards(1)
+	collectRewards(cur, 1)
 	testing.SkipHeights(1)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Set emission halt")
-	setEmissionHaltState(true)
+	setEmissionHaltState(cur, true)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Collect rewards after halt")
@@ -97,56 +97,56 @@ func main() {
 	ufmt.Println("[SCENARIO] 5. Mint position and stake after halt")
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	mintPositionAndStake()
+	mintPositionAndStake(cur)
 	testing.SkipHeights(1)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Resume emission")
-	setEmissionHaltState(false)
+	setEmissionHaltState(cur, false)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Collect rewards after resume")
-	collectRewards(1, 2)
+	collectRewards(cur, 1, 2)
 	testing.SkipHeights(1)
 	println()
 }
 
-func initEmissionState() {
+func initEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	ufmt.Println("[INFO] Initializing emission state")
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)
 }
 
-func mintPositionAndStake() {
+func mintPositionAndStake(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting and staking position")
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		gnsPath,
 		fee3000,
@@ -161,8 +161,8 @@ func mintPositionAndStake() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	staker.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	staker.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
@@ -170,27 +170,27 @@ func mintPositionAndStake() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func setEmissionHaltState(halted bool) {
+func setEmissionHaltState(cur realm, halted bool) {
 	testing.SetRealm(adminRealm)
-	halt.SetOperationStatus(cross, halt.OpTypeEmission, halted)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, halted)
 
 	ufmt.Printf("[INFO] Emission halt state set to %t\n", halted)
 }
 
-func collectRewards(positionIds ...uint64) {
+func collectRewards(cur realm, positionIds ...uint64) {
 	testing.SetRealm(adminRealm)
 
 	var totalAdminRewards int64
 	var totalStakerBalanceChanges int64
 
-	checkEmissionDistributionChangesFn(func() {
+	checkEmissionDistributionChangesFn(cur, func() {
 		stakerBalanceBeforeMint := gns.BalanceOf(stakerAddr)
-		emission.MintAndDistributeGns(cross)
+		emission.MintAndDistributeGns(cross(cur))
 		totalStakerBalanceChanges = gns.BalanceOf(stakerAddr) - stakerBalanceBeforeMint
 
 		for _, positionId := range positionIds {
 			beforeCollectedGns := gns.BalanceOf(adminAddr)
-			staker.CollectReward(cross, positionId)
+			staker.CollectReward(cross(cur), positionId)
 			afterCollectedGns := gns.BalanceOf(adminAddr)
 
 			totalAdminRewards += (afterCollectedGns - beforeCollectedGns)
@@ -202,7 +202,7 @@ func collectRewards(positionIds ...uint64) {
 	ufmt.Printf("[EXPECTED] total reward: %d\n", totalAdminRewards)
 }
 
-func checkEmissionDistributionChangesFn(fn func()) {
+func checkEmissionDistributionChangesFn(cur realm, fn func()) {
 	beforeTimestamp := time.Now().Unix()
 	beforeEmissionDistributionBalance := emission.GetDistributedToStaker()
 	fn()

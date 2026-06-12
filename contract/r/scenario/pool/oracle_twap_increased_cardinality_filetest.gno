@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -56,7 +57,7 @@ var (
 	maxPrice = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Pool Oracle - TWAP with Increased Observation Cardinality")
 	println("[INFO] Testing TWAP with increased observation slots and price changes")
 	println()
@@ -66,20 +67,20 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 	println()
 
 	// Increase observation cardinality
 	println("[SCENARIO] 2. Increase Observation Cardinality")
 	println("[INFO] Increasing observation cardinality limit to 100")
-	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 100)
+	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 100)
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityNext())
@@ -90,7 +91,7 @@ func main() {
 	testing.SetRealm(posRealm)
 	println("[INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000")
 	pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -116,7 +117,7 @@ func main() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	println("[INFO] Executing swap: zeroForOne=true, amountSpecified=1000000")
 	pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -126,7 +127,7 @@ func main() {
 		minPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -146,7 +147,7 @@ func main() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	println("[INFO] Executing swap: zeroForOne=false, amountSpecified=500000")
 	pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -156,7 +157,7 @@ func main() {
 		maxPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -191,14 +192,14 @@ func main() {
 	println("[EXPECTED] Increased cardinality allows accurate TWAP calculation over longer periods with multiple price changes")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

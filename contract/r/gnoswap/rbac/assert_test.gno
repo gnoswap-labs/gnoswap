@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"chain"
 	"strings"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestAssert_assertIsOwner(t *testing.T) {
+func TestAssert_assertIsOwner(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -40,7 +41,7 @@ func TestAssert_assertIsOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()
@@ -65,7 +66,7 @@ func TestAssert_assertIsOwner(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsPendingOwner(t *testing.T) {
+func TestAssert_assertIsPendingOwner(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		addr        address
@@ -98,7 +99,7 @@ func TestAssert_assertIsPendingOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(ADMIN))
 
 			// Reset manager for test
@@ -113,7 +114,7 @@ func TestAssert_assertIsPendingOwner(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsPendingOwner(tt.addr)
 				})
 			} else {
@@ -123,13 +124,13 @@ func TestAssert_assertIsPendingOwner(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsAdmin(t *testing.T) {
+func TestAssert_assertIsAdmin(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(ADMIN))
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-	initRbac()
+	initRbac(cur)
 
 	tests := []struct {
 		name        string
@@ -157,11 +158,11 @@ func TestAssert_assertIsAdmin(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsAdmin(tt.addr)
 				})
 			} else {
@@ -171,17 +172,17 @@ func TestAssert_assertIsAdmin(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
+func TestAssert_assertIsAdminWithRoleUpdate(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	initRbac()
+	initRbac(cur)
 
 	// Change admin role via ownership transfer
 	testing.SetRealm(testing.NewUserRealm(ADMIN))
-	TransferOwnership(cross, DEV_OPS)
+	TransferOwnership(cross(cur), DEV_OPS)
 
 	testing.SetRealm(testing.NewUserRealm(DEV_OPS))
-	AcceptOwnership(cross)
+	AcceptOwnership(cross(cur))
 
 	tests := []struct {
 		name        string
@@ -203,11 +204,11 @@ func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsAdmin(tt.addr)
 				})
 			} else {
@@ -217,30 +218,30 @@ func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
 	}
 }
 
-func TestAssert_assertFunctionsIntegration(t *testing.T) {
+func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-	initRbac()
+	initRbac(cur)
 
 	// Test complete ownership transfer workflow with assertions
-	t.Run("Ownership transfer workflow with assertions", func(t *testing.T) {
+	t.Run("Ownership transfer workflow with assertions", func(cur realm, t *testing.T) {
 		// Initially, ADMIN should be owner
 		assertIsOwner(ADMIN)
 
 		// DEV_OPS should not be owner or pending owner
-		uassert.PanicsWithMessage(t, "caller is not owner || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not owner || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
 			assertIsOwner(DEV_OPS)
 		})
 
 		// Clear the panic and continue with next test
 	})
 
-	t.Run("Pending owner assertions after transfer", func(t *testing.T) {
+	t.Run("Pending owner assertions after transfer", func(cur realm, t *testing.T) {
 		// Transfer ownership
 		manager = prbac.NewRBACWithAddress(ADMIN)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-		initRbac()
+		initRbac(cur)
 
 		testing.SetRealm(testing.NewUserRealm(ADMIN))
 		err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
@@ -252,28 +253,28 @@ func TestAssert_assertFunctionsIntegration(t *testing.T) {
 		assertIsPendingOwner(DEV_OPS)
 
 		// ADMIN should not be pending owner
-		uassert.PanicsWithMessage(t, "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5", func() {
 			assertIsPendingOwner(ADMIN)
 		})
 	})
 
-	t.Run("Admin assertions", func(t *testing.T) {
+	t.Run("Admin assertions", func(cur realm, t *testing.T) {
 		// Reset for clean admin test
 		manager = prbac.NewRBACWithAddress(ADMIN)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-		initRbac()
+		initRbac(cur)
 
 		// ADMIN should pass admin assertion
 		assertIsAdmin(ADMIN)
 
 		// Non-admin should fail
-		uassert.PanicsWithMessage(t, "caller is not admin || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not admin || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
 			assertIsAdmin(DEV_OPS)
 		})
 	})
 }
 
-func TestAssert_assertIsValidRoleName(t *testing.T) {
+func TestAssert_assertIsValidRoleName(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		roleName    string
@@ -305,9 +306,9 @@ func TestAssert_assertIsValidRoleName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsValidRoleName(tt.roleName)
 				})
 			} else {
@@ -317,7 +318,7 @@ func TestAssert_assertIsValidRoleName(t *testing.T) {
 	}
 }
 
-func TestAssert_assertNotAdminRole(t *testing.T) {
+func TestAssert_assertNotAdminRole(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		roleName    string
@@ -344,9 +345,9 @@ func TestAssert_assertNotAdminRole(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertNotAdminRole(tt.roleName)
 				})
 			} else {
@@ -356,7 +357,7 @@ func TestAssert_assertNotAdminRole(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsValidAddress(t *testing.T) {
+func TestAssert_assertIsValidAddress(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		addr        address
@@ -394,9 +395,9 @@ func TestAssert_assertIsValidAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsValidAddress(tt.addr)
 				})
 			} else {
@@ -406,11 +407,11 @@ func TestAssert_assertIsValidAddress(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsAdminOrGovernance(t *testing.T) {
+func TestAssert_assertIsAdminOrGovernance(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
-	initRbac()
+	initRbac(cur)
 
 	tests := []struct {
 		name        string
@@ -449,14 +450,86 @@ func TestAssert_assertIsAdminOrGovernance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsAdminOrGovernance(tt.addr)
 				})
 			} else {
 				assertIsAdminOrGovernance(tt.addr)
 			}
+		})
+	}
+}
+
+func TestPackageAddress(cur realm, t *testing.T) {
+	tests := []struct {
+		name         string
+		pkgPath      string
+		expectedAddr address
+	}{
+		{
+			name:         "emission package address",
+			pkgPath:      "gno.land/r/gnoswap/emission",
+			expectedAddr: EMISSION_ADDR,
+		},
+		{
+			name:         "pool package address",
+			pkgPath:      "gno.land/r/gnoswap/pool",
+			expectedAddr: POOL_ADDR,
+		},
+		{
+			name:         "position package address",
+			pkgPath:      "gno.land/r/gnoswap/position",
+			expectedAddr: POSITION_ADDR,
+		},
+		{
+			name:         "router package address",
+			pkgPath:      "gno.land/r/gnoswap/router",
+			expectedAddr: ROUTER_ADDR,
+		},
+		{
+			name:         "staker package address",
+			pkgPath:      "gno.land/r/gnoswap/staker",
+			expectedAddr: STAKER_ADDR,
+		},
+		{
+			name:         "protocol fee package address",
+			pkgPath:      "gno.land/r/gnoswap/protocol_fee",
+			expectedAddr: PROTOCOL_FEE_ADDR,
+		},
+		{
+			name:         "community pool package address",
+			pkgPath:      "gno.land/r/gnoswap/community_pool",
+			expectedAddr: COMMUNITY_POOL_ADDR,
+		},
+		{
+			name:         "governance package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/governance",
+			expectedAddr: GOV_GOVERNANCE_ADDR,
+		},
+		{
+			name:         "governance staker package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/staker",
+			expectedAddr: GOV_STAKER_ADDR,
+		},
+		{
+			name:         "xgns package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/xgns",
+			expectedAddr: GOV_XGNS_ADDR,
+		},
+		{
+			name:         "launchpad package address",
+			pkgPath:      "gno.land/r/gnoswap/launchpad",
+			expectedAddr: LAUNCHPAD_ADDR,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			addr := chain.PackageAddress(tt.pkgPath)
+			println("package path: ", tt.pkgPath, "addr: ", addr.String())
+			uassert.Equal(t, addr, tt.expectedAddr)
 		})
 	}
 }

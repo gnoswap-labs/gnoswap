@@ -11,9 +11,10 @@ import (
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/r/onbloc/obl"
 )
 
-func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
+func TestLaunchpadProtocolFee_CollectProtocolFee(cur realm, t *testing.T) {
 	userWithoutProject := testutils.TestAddress("user_no_project")
 
 	tests := []struct {
@@ -47,7 +48,7 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tt.setupFunc()
 			impl := getTestImplementation()
@@ -62,12 +63,12 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 			// Execute
 			collectFn := func() {
 				func(cur realm) {
-					impl.CollectProtocolFee()
-				}(cross)
+					impl.CollectProtocolFee(0, cur)
+				}(cross(cur))
 			}
 
 			if tt.expectedHasPanic {
-				uassert.AbortsContains(t, tt.expectedPanicMessage, collectFn)
+				uassert.AbortsContains(t, cur, tt.expectedPanicMessage, collectFn)
 				return
 			}
 
@@ -77,29 +78,31 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(t *testing.T) {
+func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(cur realm, t *testing.T) {
 	const contractPackagePath = "gno.land/r/test/contract"
 
-	resetTestStore()
-	impl := getTestImplementation()
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 	contractAddr := chain.PackageAddress(contractPackagePath)
 
-	project := launchpad.NewProject(
+	testing.SetRealm(adminRealm)
+	obl.Approve(cross(cur), launchpadAddr, 1000000)
+	launchpad.CreateProject(
+		cross(cur),
 		"Contract Recipient Project",
-		"gno.land/r/demo/token",
-		1000000,
+		testOblTokenPath,
 		contractAddr,
+		1000000,
+		"",
+		"",
 		100,
-		time.Now().Unix(),
+		0,
+		0,
+		time.Now().Unix()+projectMinimumStartDelayTime,
 	)
-	impl.store.GetProjects().Set(project.ID(), project)
 
 	testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-	gov_staker.SetAmountByProjectWallet(cross, contractAddr, 1, true)
+	gov_staker.SetAmountByProjectWallet(cross(cur), contractAddr, 1, true)
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		impl.CollectProtocolFee()
-	}(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 }

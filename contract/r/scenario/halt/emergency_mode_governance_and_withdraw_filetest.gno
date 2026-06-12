@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario: Emergency Mode allows only governance and withdraw operations
 //
 // This test verifies that when Emergency Mode is activated:
@@ -29,6 +31,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
@@ -48,7 +51,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
@@ -96,104 +98,104 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] Emergency Mode allows only governance and withdraw operations")
 	println()
 
 	ufmt.Println("[STEP 1] Initialize governance, pool and tokens")
-	initGovernancePoolAndTokens()
+	initGovernancePoolAndTokens(cur)
 	println()
 
 	ufmt.Println("[STEP 2] Create pool and position before Emergency Mode")
-	createPoolAndPosition()
+	createPoolAndPosition(cur)
 	println()
 
 	ufmt.Println("[STEP 3] Set halt level to Emergency Mode")
-	setEmergencyMode()
+	setEmergencyMode(cur)
 	println()
 
 	ufmt.Println("[STEP 4] Test: Pool creation is BLOCKED in Emergency Mode")
-	testPoolCreationBlocked()
+	testPoolCreationBlocked(cur)
 	println()
 
 	ufmt.Println("[STEP 5] Test: Position mint is BLOCKED in Emergency Mode")
-	testPositionMintBlocked()
+	testPositionMintBlocked(cur)
 	println()
 
 	ufmt.Println("[STEP 6] Test: Router swap is BLOCKED in Emergency Mode")
-	testRouterSwapBlocked()
+	testRouterSwapBlocked(cur)
 	println()
 
 	ufmt.Println("[STEP 7] Test: Governance propose works in Emergency Mode (TextProposal)")
-	testGovernanceProposeTextWorks()
+	testGovernanceProposeTextWorks(cur)
 	println()
 
 	ufmt.Println("[STEP 8] Test: Governance vote works in Emergency Mode (TextProposal)")
-	testGovernanceVoteTextWorks()
+	testGovernanceVoteTextWorks(cur)
 	println()
 
 	ufmt.Println("[STEP 9] Test: TextProposal execute FAILS (text proposals cannot be executed)")
-	testTextProposalExecuteFails()
+	testTextProposalExecuteFails(cur)
 	println()
 
 	ufmt.Println("[STEP 10] Test: Governance propose works in Emergency Mode (ParameterChange)")
-	testGovernanceProposeParameterChangeWorks()
+	testGovernanceProposeParameterChangeWorks(cur)
 	println()
 
 	ufmt.Println("[STEP 11] Test: Governance vote works in Emergency Mode (ParameterChange)")
-	testGovernanceVoteParameterChangeWorks()
+	testGovernanceVoteParameterChangeWorks(cur)
 	println()
 
 	ufmt.Println("[STEP 12] Test: ParameterChange proposal execute SUCCEEDS in Emergency Mode")
-	testParameterChangeProposalExecuteWorks()
+	testParameterChangeProposalExecuteWorks(cur)
 	println()
 
 	ufmt.Println("[STEP 13] Verify proposal status after execution")
-	verifyProposalStatusAfterExecution()
+	verifyProposalStatusAfterExecution(cur)
 	println()
 
 	ufmt.Println("[STEP 14] Verify halt status summary")
-	verifyHaltStatusSummary()
+	verifyHaltStatusSummary(cur)
 	println()
 }
 
-func initGovernancePoolAndTokens() {
+func initGovernancePoolAndTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Initialize emission
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
 	// Distribute tokens to alice and bob
 	defaultTokenAmount := int64(100000000)
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
-	bar.Transfer(cross, bobAddr, defaultTokenAmount)
-	foo.Transfer(cross, bobAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), bobAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), bobAddr, defaultTokenAmount)
 
 	// Distribute GNS tokens for governance
 	gnsAmount := int64(2000000000)
-	gns.Transfer(cross, aliceAddr, gnsAmount)
-	gns.Transfer(cross, bobAddr, gnsAmount)
+	gns.Transfer(cross(cur), aliceAddr, gnsAmount)
+	gns.Transfer(cross(cur), bobAddr, gnsAmount)
 
 	// Delegate GNS tokens for voting power
 	delegatedAmount := gnsAmount / 4
 
 	testing.SetRealm(aliceRealm)
-	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, aliceAddr, delegatedAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, INT64_MAX)
+	gs.Delegate(cross(cur), aliceAddr, delegatedAmount, "")
 
 	testing.SetRealm(bobRealm)
-	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, bobAddr, delegatedAmount, "")
-	setupProposalCreationXGns()
+	gns.Approve(cross(cur), govStakerAddr, INT64_MAX)
+	gs.Delegate(cross(cur), bobAddr, delegatedAmount, "")
+	setupProposalCreationXGns(cur)
 
 	ufmt.Printf("[INFO] Alice GNS balance: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Bob GNS balance: %d\n", gns.BalanceOf(bobAddr))
 	ufmt.Println("[INFO] Governance and tokens initialized")
 }
 
-func setupProposalCreationXGns() {
+func setupProposalCreationXGns(cur realm) {
 	threshold := governance.GetLatestConfig().ProposalCreationThreshold
 	missingAmount := threshold - xgns.BalanceOf(aliceAddr)
 	if missingAmount <= 0 {
@@ -201,34 +203,34 @@ func setupProposalCreationXGns() {
 	}
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, missingAmount)
+	gns.Transfer(cross(cur), aliceAddr, missingAmount)
 
 	testing.SetRealm(aliceRealm)
-	gs.Delegate(cross, proposalCreationDelegateeAddr, missingAmount, "")
+	gs.Delegate(cross(cur), proposalCreationDelegateeAddr, missingAmount, "")
 }
 
-func createPoolAndPosition() {
+func createPoolAndPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 
 	// Mint position
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -250,10 +252,10 @@ func createPoolAndPosition() {
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
 }
 
-func setEmergencyMode() {
+func setEmergencyMode(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 
 	ufmt.Println("[INFO] Emergency Mode activated")
 	ufmt.Println("[INFO] Halt status for each operation:")
@@ -265,33 +267,33 @@ func setEmergencyMode() {
 	ufmt.Printf("  - Withdraw: %t (should be false/allowed)\n", halt.IsHaltedWithdraw())
 }
 
-func testPoolCreationBlocked() {
+func testPoolCreationBlocked(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Attempting to create pool in Emergency Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: pool", func() {
+	uassert.AbortsContains(t, cur, "halted: pool", func() {
 		pool.CreatePool(
-			cross,
+			cross(cur),
 			barPath,
 			fooPath,
 			uint32(500), // different fee tier
-			common.TickMathGetSqrtRatioAtTick(0).ToString(),
+			gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 		)
 	})
 
 	ufmt.Println("[SUCCESS] Pool creation correctly blocked with 'halted: pool'")
 }
 
-func testPositionMintBlocked() {
+func testPositionMintBlocked(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	ufmt.Println("[INFO] Attempting to mint position in Emergency Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: position", func() {
+	uassert.AbortsContains(t, cur, "halted: position", func() {
 		testing.SetOriginSend(chain.Coins{})
 		position.Mint(
-			cross,
+			cross(cur),
 			barPath,
 			fooPath,
 			fee,
@@ -310,17 +312,17 @@ func testPositionMintBlocked() {
 	ufmt.Println("[SUCCESS] Position mint correctly blocked with 'halted: position'")
 }
 
-func testRouterSwapBlocked() {
+func testRouterSwapBlocked(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	foo.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Attempting router swap in Emergency Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: router", func() {
+	uassert.AbortsContains(t, cur, "halted: router", func() {
 		testing.SetOriginSend(chain.Coins{})
 		router.ExactInSwapRoute(
-			cross,
+			cross(cur),
 			barPath,
 			fooPath,
 			"100000",
@@ -335,14 +337,14 @@ func testRouterSwapBlocked() {
 	ufmt.Println("[SUCCESS] Router swap correctly blocked with 'halted: router'")
 }
 
-func testGovernanceProposeTextWorks() {
+func testGovernanceProposeTextWorks(cur realm) {
 	testing.SetRealm(aliceRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 
 	ufmt.Println("[INFO] Attempting to create TextProposal in Emergency Mode...")
 
 	textProposalId = governance.ProposeText(
-		cross,
+		cross(cur),
 		"Emergency Recovery Proposal",
 		"This proposal is created during Emergency Mode to test governance functionality",
 	)
@@ -351,7 +353,7 @@ func testGovernanceProposeTextWorks() {
 	ufmt.Println("[SUCCESS] Governance propose (TextProposal) correctly works in Emergency Mode")
 }
 
-func testGovernanceVoteTextWorks() {
+func testGovernanceVoteTextWorks(cur realm) {
 	// Skip to voting start
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
@@ -361,12 +363,12 @@ func testGovernanceVoteTextWorks() {
 
 	// Alice votes YES
 	testing.SetRealm(aliceRealm)
-	governance.Vote(cross, textProposalId, true)
+	governance.Vote(cross(cur), textProposalId, true)
 	ufmt.Println("[SUCCESS] Alice voted YES on TextProposal in Emergency Mode")
 
 	// Bob votes YES
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, textProposalId, true)
+	governance.Vote(cross(cur), textProposalId, true)
 	ufmt.Println("[SUCCESS] Bob voted YES on TextProposal in Emergency Mode")
 
 	// Check voting info using non-JSON getters
@@ -376,7 +378,7 @@ func testGovernanceVoteTextWorks() {
 	ufmt.Println("[SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode")
 }
 
-func testTextProposalExecuteFails() {
+func testTextProposalExecuteFails(cur realm) {
 	// Skip voting period for ready to execute
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
@@ -386,21 +388,21 @@ func testTextProposalExecuteFails() {
 	ufmt.Printf("[INFO] TextProposal ID: %d\n", textProposalId)
 
 	// TextProposal execution should fail because text proposals cannot be executed
-	uassert.AbortsContains(t, "cannot execute text proposal", func() {
-		governance.Execute(cross, textProposalId)
+	uassert.AbortsContains(t, cur, "cannot execute text proposal", func() {
+		governance.Execute(cross(cur), textProposalId)
 	})
 
 	ufmt.Println("[SUCCESS] TextProposal execution correctly failed with 'cannot execute text proposal'")
 }
 
-func testGovernanceProposeParameterChangeWorks() {
+func testGovernanceProposeParameterChangeWorks(cur realm) {
 	testing.SetRealm(aliceRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 
 	ufmt.Println("[INFO] Attempting to create ParameterChange proposal in Emergency Mode...")
 
 	parameterChangeProposalId = governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"Emergency Parameter Change",
 		"This ParameterChange proposal is created during Emergency Mode to test execute functionality",
 		1,
@@ -411,7 +413,7 @@ func testGovernanceProposeParameterChangeWorks() {
 	ufmt.Println("[SUCCESS] Governance propose (ParameterChange) correctly works in Emergency Mode")
 }
 
-func testGovernanceVoteParameterChangeWorks() {
+func testGovernanceVoteParameterChangeWorks(cur realm) {
 	// Skip to voting start
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
@@ -421,12 +423,12 @@ func testGovernanceVoteParameterChangeWorks() {
 
 	// Alice votes YES
 	testing.SetRealm(aliceRealm)
-	governance.Vote(cross, parameterChangeProposalId, true)
+	governance.Vote(cross(cur), parameterChangeProposalId, true)
 	ufmt.Println("[SUCCESS] Alice voted YES on ParameterChange proposal in Emergency Mode")
 
 	// Bob votes YES
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, parameterChangeProposalId, true)
+	governance.Vote(cross(cur), parameterChangeProposalId, true)
 	ufmt.Println("[SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode")
 
 	// Check voting info using non-JSON getters
@@ -436,7 +438,7 @@ func testGovernanceVoteParameterChangeWorks() {
 	ufmt.Println("[SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode")
 }
 
-func testParameterChangeProposalExecuteWorks() {
+func testParameterChangeProposalExecuteWorks(cur realm) {
 	// Skip voting period for ready to execute
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
@@ -451,13 +453,13 @@ func testParameterChangeProposalExecuteWorks() {
 
 	// Execute the ParameterChange proposal
 	testing.SetRealm(aliceRealm)
-	result := governance.Execute(cross, parameterChangeProposalId)
+	result := governance.Execute(cross(cur), parameterChangeProposalId)
 
 	ufmt.Printf("[SUCCESS] ParameterChange proposal executed in Emergency Mode! Result: %d\n", result)
 	ufmt.Println("[SUCCESS] Governance execute (ParameterChange) correctly works in Emergency Mode")
 }
 
-func verifyProposalStatusAfterExecution() {
+func verifyProposalStatusAfterExecution(cur realm) {
 	testing.SetRealm(adminRealm)
 	ufmt.Println("[INFO] Verifying proposal execution state after execution...")
 
@@ -472,7 +474,7 @@ func verifyProposalStatusAfterExecution() {
 	ufmt.Println("[SUCCESS] Proposal execution state verification completed")
 }
 
-func verifyHaltStatusSummary() {
+func verifyHaltStatusSummary(cur realm) {
 	ufmt.Println("[INFO] Final halt status summary:")
 	ufmt.Println("  Operations BLOCKED (halted: true):")
 	ufmt.Printf("    - Pool: %t\n", halt.IsHaltedPool())

@@ -1,21 +1,24 @@
 package v1
 
 import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/halt"
+	"errors"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/halt"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.
 // Only project recipients can call this function.
-func (lp *launchpadV1) CollectProtocolFee() {
+func (lp *launchpadV1) CollectProtocolFee(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
 	lp.assertHasProject(caller)
 
-	gov_staker.CollectRewardFromLaunchPad(cross, caller)
+	gov_staker.CollectRewardFromLaunchPad(cross(rlm), caller)
 }

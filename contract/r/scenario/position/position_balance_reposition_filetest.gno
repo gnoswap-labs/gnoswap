@@ -43,31 +43,31 @@ var (
 	fooPath = "gno.land/r/onbloc/foo"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position")
-	mintInitialPosition()
+	mintInitialPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Execute swap to generate fees")
-	executeSwapForFees()
+	executeSwapForFees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Reposition (decrease full → swap → reposition)")
-	testRepositionAndBalance()
+	testRepositionAndBalance(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -78,14 +78,14 @@ func initPool() {
 	ufmt.Printf("[EXPECTED] Current tick should be %d\n", poolInfo.Slot0Tick())
 }
 
-func mintInitialPosition() {
+func mintInitialPosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position (8000~12000)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -106,9 +106,9 @@ func mintInitialPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func executeSwapForFees() {
+func executeSwapForFees(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := poolInfo.Slot0Tick()
@@ -116,7 +116,7 @@ func executeSwapForFees() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -126,7 +126,7 @@ func executeSwapForFees() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -140,7 +140,7 @@ func executeSwapForFees() {
 	ufmt.Printf("[EXPECTED] Tick after swap should be %d\n", tickAfter)
 }
 
-func testRepositionAndBalance() {
+func testRepositionAndBalance(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	pos, _ := position.GetPosition(1)
@@ -158,16 +158,16 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] User FOO balance before reposition should be %d\n", fooBalanceStart)
 
 	ufmt.Println("[INFO] Collecting fees")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing full liquidity")
 	_, _, _, _, decreaseAmount0, decreaseAmount1, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		currentLiquidity,
 		"0",
@@ -182,11 +182,11 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Position liquidity after decrease should be %s\n", pos.Liquidity())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Executing swap to adjust balance")
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -196,7 +196,7 @@ func testRepositionAndBalance() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -204,14 +204,14 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", swapAmount1)
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Repositioning to new range (9000~13000)")
 	beforeToken0PoolBalance := bar.BalanceOf(poolAddr)
 	beforeToken1PoolBalance := foo.BalanceOf(poolAddr)
 	_, newLiquidity, _, _, _, _ := position.Reposition(
-		cross,
+		cross(cur),
 		1,
 		9000,
 		13000,
@@ -249,10 +249,10 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Final pool tick should be %d\n", poolInfo.Slot0Tick())
 
 	// Validate reposition balance changes
-	validateRepositionBalances(barBalanceStart, barBalanceFinal, fooBalanceStart, fooBalanceFinal)
+	validateRepositionBalances(cur, barBalanceStart, barBalanceFinal, fooBalanceStart, fooBalanceFinal)
 }
 
-func validateRepositionBalances(barBefore, barAfter, fooBefore, fooAfter int64) {
+func validateRepositionBalances(cur realm, barBefore, barAfter, fooBefore, fooAfter int64) {
 	// Calculate total balance change
 	barChange := barBefore - barAfter
 	fooChange := fooBefore - fooAfter
@@ -273,15 +273,15 @@ func validateRepositionBalances(barBefore, barAfter, fooBefore, fooAfter int64) 
 	ufmt.Println("[EXPECTED] Reposition balance validation passed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -35,11 +35,11 @@ func (m *mockOperation) Validate() error {
 	return m.ValidateErr
 }
 
-func (m *mockOperation) Process() (*SwapResult, error) {
+func (m *mockOperation) Process(_ int, rlm realm) (*SwapResult, error) {
 	return m.Result, m.ProcessErr
 }
 
-func TestExecuteSwapOperation(t *testing.T) {
+func TestExecuteSwapOperation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		operation   RouterOperation
@@ -75,8 +75,8 @@ func TestExecuteSwapOperation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := executeSwapOperation(tt.operation)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			result, err := executeSwapOperation(0, cur, tt.operation)
 			if tt.expectError && err == nil {
 				t.Errorf("expected an error but got nil (test case: %s)", tt.name)
 			}
@@ -90,7 +90,7 @@ func TestExecuteSwapOperation(t *testing.T) {
 	}
 }
 
-func TestBuildRouteEventAttrs(t *testing.T) {
+func TestBuildRouteEventAttrs(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		routeArr string
@@ -114,7 +114,7 @@ func TestBuildRouteEventAttrs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := buildRouteEventAttrs(tt.routeArr)
 
 			uassert.Equal(t, len(result), len(tt.expected))
@@ -125,30 +125,30 @@ func TestBuildRouteEventAttrs(t *testing.T) {
 	}
 }
 
-func TestProcessRoute(t *testing.T) {
+func TestProcessRoute(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
 	op := &baseSwapOperation{}
 
-	t.Run("Single hop route", func(t *testing.T) {
-		testing.SetRealm(adminRealm)
-		CreatePoolWithoutFee(t)
-		MakeThirdMintPositionWithoutFee(t)
-		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
-		route := foobar500
-		toSwap := int64(1000)
-		swapType := ExactIn
+	testing.SetRealm(adminRealm)
+	CreatePoolWithoutFee(cur, t)
+	MakeThirdMintPositionWithoutFee(cur, t)
+	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
+	route := foobar500
+	toSwap := int64(1000)
+	swapType := ExactIn
 
-		router := mockRouter()
-		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType)
-			uassert.Equal(t, err, nil)
-			uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
-			uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
-		}(cross)
-	})
+	router := mockRouter()
+	func(cur realm) {
+		amountIn, amountOut, err := op.processRoute(0, cur, router, route, toSwap, swapType)
+		uassert.Equal(t, err, nil)
+		uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
+		uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
+	}(cross(cur))
 }
 
 // Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
-func TestProcessRoutesWithRemainder(t *testing.T) {
+func TestProcessRoutesWithRemainder(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
 	oddAmount := int64(101)
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
@@ -159,11 +159,11 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
-	CreatePoolWithoutFee(t)
-	MakeThirdMintPositionWithoutFee(t)
-	MakeForthMintPositionWithoutFee(t)
+	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)
+	CreatePoolWithoutFee(cur, t)
+	MakeThirdMintPositionWithoutFee(cur, t)
+	MakeForthMintPositionWithoutFee(cur, t)
 
 	// expected amounts for each route
 	expectedAmounts := []int64{
@@ -173,14 +173,14 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 
 	func(cur realm) {
 		router := mockRouter()
-		_, amountOut, err := op.processRoutes(router, ExactIn)
+		_, amountOut, err := op.processRoutes(0, cur, router, ExactIn)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if amountOut == 0 {
 			t.Error("expected non-zero amountOut")
 		}
-	}(cross)
+	}(cross(cur))
 
 	// check actual swapped amounts for each route
 	for i := range op.routes {
@@ -213,7 +213,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 }
 
-func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
+func TestProcessRoutes_LastRouteUsesRemainingAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -256,10 +256,11 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initRouterTest(cur, t)
 			testing.SetRealm(adminRealm)
-			CreatePoolWithoutFee(t)
-			MakeThirdMintPositionWithoutFee(t)
+			CreatePoolWithoutFee(cur, t)
+			MakeThirdMintPositionWithoutFee(cur, t)
 
 			// Track the amounts used for each route
 			totalUsed := int64(0)
@@ -271,9 +272,9 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 				if i < len(tt.routes)-1 {
 					// For non-last routes, calculate based on quote
 					quote := tt.quotes[i]
-					quoteInt := safeParseInt64(quote)
+					quoteInt := utils.SafeParseInt64(quote)
 
-					amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+					amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 
 					calculatedAmounts[i] = amount
 					totalUsed = totalUsed + amount
@@ -305,7 +306,7 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 }
 
 // Test SwapRouteParams.ExactAmount
-func TestSwapRouteParams_ExactAmount(t *testing.T) {
+func TestSwapRouteParams_ExactAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		exactAmount int64
@@ -329,7 +330,7 @@ func TestSwapRouteParams_ExactAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				exactAmount: tt.exactAmount,
 			}
@@ -340,7 +341,7 @@ func TestSwapRouteParams_ExactAmount(t *testing.T) {
 }
 
 // Test SwapRouteParams.ExpectedExactAmountByFee
-func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
+func TestSwapRouteParams_ExpectedExactAmountByFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		typ         SwapType
@@ -400,7 +401,7 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				typ:         tt.typ,
 				exactAmount: tt.exactAmount,
@@ -412,7 +413,7 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 }
 
 // Test SwapRouteParams.SwapCount
-func TestSwapRouteParams_SwapCount(t *testing.T) {
+func TestSwapRouteParams_SwapCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		routeArr string
@@ -456,7 +457,7 @@ func TestSwapRouteParams_SwapCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				routeArr: tt.routeArr,
 			}
@@ -467,7 +468,7 @@ func TestSwapRouteParams_SwapCount(t *testing.T) {
 }
 
 // Test SwapRouteParams.IsSetSqrtPriceLimitX96
-func TestSwapRouteParams_IsSetSqrtPriceLimitX96(t *testing.T) {
+func TestSwapRouteParams_IsSetSqrtPriceLimitX96(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		sqrtPriceLimitX96 *u256.Uint
@@ -501,7 +502,7 @@ func TestSwapRouteParams_IsSetSqrtPriceLimitX96(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				sqrtPriceLimitX96: tt.sqrtPriceLimitX96,
 			}
@@ -512,7 +513,7 @@ func TestSwapRouteParams_IsSetSqrtPriceLimitX96(t *testing.T) {
 }
 
 // Test createSwapOperation
-func TestCreateSwapOperation(t *testing.T) {
+func TestCreateSwapOperation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		params      SwapRouteParams
@@ -568,7 +569,7 @@ func TestCreateSwapOperation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := mockRouter()
 			op, err := createSwapOperation(router, tt.params)
 
@@ -586,7 +587,7 @@ func TestCreateSwapOperation(t *testing.T) {
 }
 
 // Test processRoute error cases
-func TestProcessRoute_ErrorCases(t *testing.T) {
+func TestProcessRoute_ErrorCases(cur realm, t *testing.T) {
 	op := &baseSwapOperation{}
 
 	tests := []struct {
@@ -608,22 +609,22 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
+					op.processRoute(0, cur, router, tt.route, tt.toSwap, tt.swapType)
 				})
 			} else {
-				op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				op.processRoute(0, cur, router, tt.route, tt.toSwap, tt.swapType)
 			}
 		})
 	}
 }
 
 // Test validateRouteQuote edge cases
-func TestValidateRouteQuote_EdgeCases(t *testing.T) {
+func TestValidateRouteQuote_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -705,7 +706,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
@@ -721,7 +722,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 }
 
 // Test processRoutes with overflow detection
-func TestProcessRoutes_OverflowDetection(t *testing.T) {
+func TestProcessRoutes_OverflowDetection(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		op          *baseSwapOperation
@@ -740,40 +741,44 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initRouterTest(t)
+		initRouterTest(cur, t)
 
-			testing.SetRealm(adminRealm)
-			gns.Approve(cross, poolAddr, math.MaxInt64)
-			bar.Approve(cross, poolAddr, math.MaxInt64)
-			baz.Approve(cross, poolAddr, math.MaxInt64)
-			bar.Approve(cross, routerAddr, math.MaxInt64)
-			baz.Approve(cross, routerAddr, math.MaxInt64)
-			pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
-			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+		testing.SetRealm(adminRealm)
+		gns.Approve(cross(cur), poolAddr, math.MaxInt64)
+		pl.SetPoolCreationFee(cross(cur), 0)
+		poolPath := pl.GetPoolPath(barPath, bazPath, 500)
+		if !pl.ExistsPoolPath(poolPath) {
+			pl.CreatePool(cross(cur), barPath, bazPath, 500, "79228162514264337593543950336")
+		}
+		TokenApprove(cur, t, barPath, admin, poolAddr, maxApprove)
+		TokenApprove(cur, t, bazPath, admin, poolAddr, maxApprove)
+		pn.Mint(cross(cur), barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 
-			router := mockRouter()
+		swapperRealm := testing.NewUserRealm(alice)
+		testing.SetRealm(swapperRealm)
+		TokenFaucet(cur, t, barPath, alice)
+		TokenApprove(cur, t, barPath, alice, routerAddr, maxApprove)
 
-			processRoutesFn := func(cur realm) error {
-				testing.SetRealm(routerRealm)
-				_, _, err := tt.op.processRoutes(router, ExactIn)
-				return err
-			}
+		router := mockRouter()
 
-			if tt.expectPanic {
-				uassert.AbortsContains(t, tt.panicMsg, func() {
-					processRoutesFn(cross)
-				})
-			} else {
-				err := processRoutesFn(cross)
-				uassert.NoError(t, err)
-			}
-		})
+		runProcessRoutes := func(cur realm) error {
+			_, _, err := tt.op.processRoutes(0, cur, router, ExactIn)
+			return err
+		}
+
+		if tt.expectPanic {
+			uassert.AbortsContains(t, cur, tt.panicMsg, func() {
+				runProcessRoutes(cross(cur))
+			})
+		} else {
+			err := runProcessRoutes(cross(cur))
+			uassert.NoError(t, err)
+		}
 	}
 }
 
 // Test handleSingleSwap parameters
-func TestHandleSingleSwap_Parameters(t *testing.T) {
+func TestHandleSingleSwap_Parameters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		route                string
@@ -805,7 +810,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Just verify the parameters are properly structured
 			uassert.NotEmpty(t, tt.route)
 			uassert.True(t, tt.amountSpecified > 0)
@@ -814,7 +819,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 }
 
 // Test handleMultiSwap with different swap types
-func TestHandleMultiSwap_SwapTypes(t *testing.T) {
+func TestHandleMultiSwap_SwapTypes(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		swapType        SwapType
@@ -838,22 +843,22 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic && tt.needsRouter {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					router := mockRouter()
-					router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
+					router.handleMultiSwap(0, cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 				})
 			} else {
 				router := mockRouter()
-				router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
+				router.handleMultiSwap(0, cur, tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 			}
 		})
 	}
 }
 
 // Test processRoutes last route remainder handling
-func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
+func TestProcessRoutes_LastRouteRemainder(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		amountSpecified    int64
@@ -889,12 +894,12 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Calculate what the last route should receive
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -904,7 +909,7 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 }
 
 // Test baseSwapOperation fields initialization
-func TestBaseSwapOperation_Initialization(t *testing.T) {
+func TestBaseSwapOperation_Initialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		routes          []string
@@ -932,7 +937,7 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			op := &baseSwapOperation{
 				routes:          tt.routes,
 				quotes:          tt.quotes,
@@ -947,7 +952,7 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 }
 
 // Test BaseSwapParams struct
-func TestBaseSwapParams_Structure(t *testing.T) {
+func TestBaseSwapParams_Structure(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		params            BaseSwapParams
@@ -996,7 +1001,7 @@ func TestBaseSwapParams_Structure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.NotEmpty(t, tt.params.InputToken)
 			uassert.NotEmpty(t, tt.params.OutputToken)
 			uassert.NotEmpty(t, tt.params.RouteArr)
@@ -1006,7 +1011,7 @@ func TestBaseSwapParams_Structure(t *testing.T) {
 }
 
 // Test SwapResult structure
-func TestSwapResult_Structure(t *testing.T) {
+func TestSwapResult_Structure(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountIn        int64
@@ -1042,7 +1047,7 @@ func TestSwapResult_Structure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := &SwapResult{
 				AmountIn:        tt.amountIn,
 				AmountOut:       tt.amountOut,
@@ -1061,7 +1066,7 @@ func TestSwapResult_Structure(t *testing.T) {
 }
 
 // Test validateRouteQuote with extreme values
-func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
+func TestValidateRouteQuote_ExtremeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		amountSpecified  int64
@@ -1096,9 +1101,9 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedHasPanic {
-				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
 					calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 				})
 			} else {
@@ -1116,7 +1121,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 }
 
 // Test processRoutes with single route
-func TestProcessRoutes_SingleRoute(t *testing.T) {
+func TestProcessRoutes_SingleRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -1141,12 +1146,12 @@ func TestProcessRoutes_SingleRoute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Verify the last route gets all remaining amount
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1157,7 +1162,7 @@ func TestProcessRoutes_SingleRoute(t *testing.T) {
 }
 
 // Test SwapRouteParams with boundary values
-func TestSwapRouteParams_BoundaryValues(t *testing.T) {
+func TestSwapRouteParams_BoundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		params      SwapRouteParams
@@ -1205,7 +1210,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			uassert.NotEmpty(t, tt.params.inputToken, tt.description)
 			uassert.NotEmpty(t, tt.params.outputToken, tt.description)
 			uassert.True(t, tt.params.exactAmount > 0, tt.description)
@@ -1214,7 +1219,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 }
 
 // Test SwapRouteParams.ExactAmount with various formats
-func TestSwapRouteParams_ExactAmount_Formats(t *testing.T) {
+func TestSwapRouteParams_ExactAmount_Formats(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		exactAmount int64
@@ -1242,7 +1247,7 @@ func TestSwapRouteParams_ExactAmount_Formats(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				exactAmount: tt.exactAmount,
 			}
@@ -1253,7 +1258,7 @@ func TestSwapRouteParams_ExactAmount_Formats(t *testing.T) {
 }
 
 // Test SwapRouteParams.SwapCount with complex routes
-func TestSwapRouteParams_SwapCount_Complex(t *testing.T) {
+func TestSwapRouteParams_SwapCount_Complex(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		routeArr    string
@@ -1281,7 +1286,7 @@ func TestSwapRouteParams_SwapCount_Complex(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := &SwapRouteParams{
 				routeArr: tt.routeArr,
 			}
@@ -1292,7 +1297,7 @@ func TestSwapRouteParams_SwapCount_Complex(t *testing.T) {
 }
 
 // Test createSwapOperation with edge cases
-func TestCreateSwapOperation_EdgeCases(t *testing.T) {
+func TestCreateSwapOperation_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		params      SwapRouteParams
@@ -1332,7 +1337,7 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := mockRouter()
 			op, err := createSwapOperation(router, tt.params)
 
@@ -1347,7 +1352,7 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 }
 
 // Test processRoutes remainder calculation accuracy
-func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
+func TestProcessRoutes_RemainderAccuracy(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amountSpecified      int64
@@ -1372,11 +1377,11 @@ func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			totalUsed := int64(0)
 			for i := 0; i < len(tt.quotes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				totalUsed = totalUsed + amount
 			}
 
@@ -1390,7 +1395,7 @@ func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 }
 
 // Test SwapRouteParams methods with empty values
-func TestSwapRouteParams_EmptyValues(t *testing.T) {
+func TestSwapRouteParams_EmptyValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params SwapRouteParams
@@ -1413,7 +1418,7 @@ func TestSwapRouteParams_EmptyValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			switch tt.method {
 			case "ExactAmount":
 				result := tt.params.ExactAmount()

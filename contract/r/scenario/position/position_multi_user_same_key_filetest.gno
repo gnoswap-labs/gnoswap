@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
@@ -50,50 +50,50 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool and users")
-	initPoolAndUsers()
+	initPoolAndUsers(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position for user1")
-	mintUser1Position()
+	mintUser1Position(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint position for user2")
-	mintUser2Position()
+	mintUser2Position(cur)
 	println()
 }
 
-func initPoolAndUsers() {
+func initPoolAndUsers(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 0")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	ufmt.Println("[INFO] Transfer initial tokens to users")
-	bar.Transfer(cross, user1Addr, 100_000_000)
-	baz.Transfer(cross, user1Addr, 100_000_000)
-	bar.Transfer(cross, user2Addr, 100_000_000)
-	baz.Transfer(cross, user2Addr, 100_000_000)
+	bar.Transfer(cross(cur), user1Addr, 100_000_000)
+	baz.Transfer(cross(cur), user1Addr, 100_000_000)
+	bar.Transfer(cross(cur), user2Addr, 100_000_000)
+	baz.Transfer(cross(cur), user2Addr, 100_000_000)
 }
 
-func mintUser1Position() {
+func mintUser1Position(cur realm) {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	baz.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user1 (minTick: -6960, maxTick: 6960)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -108,7 +108,7 @@ func mintUser1Position() {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(-6960, 6960))
+	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
@@ -117,16 +117,16 @@ func mintUser1Position() {
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", positionLiquidity)
 }
 
-func mintUser2Position() {
+func mintUser2Position(cur realm) {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	baz.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user2 (minTick: -6960, maxTick: 6960)")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -141,7 +141,7 @@ func mintUser2Position() {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(-6960, 6960))
+	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
@@ -151,7 +151,7 @@ func mintUser2Position() {
 }
 
 // computePositionKey generates a compact deterministic key for a liquidity position.
-func computePositionKey(
+func computePositionKey(cur realm,
 	tickLower int32,
 	tickUpper int32,
 ) string {

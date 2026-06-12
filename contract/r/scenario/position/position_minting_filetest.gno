@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
@@ -14,7 +15,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -59,70 +59,70 @@ var (
 // Pool setup flag to prevent duplicate creation
 var poolSetup bool = false
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Basic Position Minting")
-	testBasicPositionMinting()
+	testBasicPositionMinting(cur)
 	println()
 
 	println("[SCENARIO] 2. Zero Liquidity Minting Failure")
-	testZeroLiquidityMintingFailure()
+	testZeroLiquidityMintingFailure(cur)
 	println()
 
 	println("[SCENARIO] 3. Insufficient Minimum Amount Minting")
-	testInsufficientMinimumAmountMinting()
+	testInsufficientMinimumAmountMinting(cur)
 	println()
 
 	println("[SCENARIO] 4. Token Approval Required for Minting")
-	testTokenApprovalRequiredForMinting()
+	testTokenApprovalRequiredForMinting(cur)
 	println()
 
 	println("[SCENARIO] 5. Insufficient Balance Minting")
-	testInsufficientBalanceMinting()
+	testInsufficientBalanceMinting(cur)
 	println()
 }
 
-func setupPool() {
+func setupPool(cur realm) {
 	if !poolSetup {
 		println("[INFO] Setting up pool for position tests")
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFee(cross, 0)
-		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		pl.SetPoolCreationFee(cross(cur), 0)
+		gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
+		pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true
 	}
 }
 
-func tokenFaucet(tokenPath string, to address) {
+func tokenFaucet(cur realm, tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
 	case barPath:
-		bar.Transfer(cross, to, defaultAmount)
+		bar.Transfer(cross(cur), to, defaultAmount)
 	case fooPath:
-		foo.Transfer(cross, to, defaultAmount)
+		foo.Transfer(cross(cur), to, defaultAmount)
 	default:
 		panic("token not found")
 	}
 }
 
-func testBasicPositionMinting() {
+func testBasicPositionMinting(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Creating position with valid parameters")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -147,19 +147,19 @@ func testBasicPositionMinting() {
 	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
 }
 
-func testZeroLiquidityMintingFailure() {
+func testZeroLiquidityMintingFailure(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Attempting to mint with zero liquidity")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -171,19 +171,19 @@ func testZeroLiquidityMintingFailure() {
 	println("[EXPECTED] No position should be created")
 }
 
-func testInsufficientMinimumAmountMinting() {
+func testInsufficientMinimumAmountMinting(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
 	println("[INFO] Providing tokens to alice")
-	tokenFaucet(barPath, aliceAddr)
-	tokenFaucet(fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
+	tokenFaucet(cur, fooPath, aliceAddr)
 
 	println("[INFO] Approving tokens for position creation")
-	bar.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Attempting to mint with insufficient minimum amounts")
 	// Note: This would normally panic due to slippage, but for testing we check the behavior
@@ -195,15 +195,15 @@ func testInsufficientMinimumAmountMinting() {
 	println("[EXPECTED] No position should be created")
 }
 
-func testTokenApprovalRequiredForMinting() {
+func testTokenApprovalRequiredForMinting(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(bobRealm)
 
 	// when
 	println("[INFO] Providing tokens to bob")
-	tokenFaucet(barPath, bobAddr)
-	tokenFaucet(fooPath, bobAddr)
+	tokenFaucet(cur, barPath, bobAddr)
+	tokenFaucet(cur, fooPath, bobAddr)
 
 	println("[INFO] Attempting to mint without token approval")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -215,9 +215,9 @@ func testTokenApprovalRequiredForMinting() {
 	println("[EXPECTED] No position should be created")
 }
 
-func testInsufficientBalanceMinting() {
+func testInsufficientBalanceMinting(cur realm) {
 	// given
-	setupPool()
+	setupPool(cur)
 	testing.SetRealm(aliceRealm)
 
 	// when
@@ -232,7 +232,7 @@ func testInsufficientBalanceMinting() {
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

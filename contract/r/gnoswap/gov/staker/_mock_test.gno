@@ -43,7 +43,7 @@ type MockGovStaker struct {
 	Response *MockResponse
 }
 
-func (m *MockGovStaker) Delegate(to address, amount int64, referrer string) int64 {
+func (m *MockGovStaker) Delegate(_ int, rlm realm, to address, amount int64, referrer string) int64 {
 	res, ok := m.Response.Get("Delegate")
 	if !ok {
 		return 0
@@ -51,7 +51,7 @@ func (m *MockGovStaker) Delegate(to address, amount int64, referrer string) int6
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) Undelegate(from address, amount int64) int64 {
+func (m *MockGovStaker) Undelegate(_ int, rlm realm, from address, amount int64) int64 {
 	res, ok := m.Response.Get("Undelegate")
 	if !ok {
 		return 0
@@ -59,7 +59,7 @@ func (m *MockGovStaker) Undelegate(from address, amount int64) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) Redelegate(delegatee, newDelegatee address, amount int64) int64 {
+func (m *MockGovStaker) Redelegate(_ int, rlm realm, delegatee, newDelegatee address, amount int64) int64 {
 	res, ok := m.Response.Get("Redelegate")
 	if !ok {
 		return 0
@@ -67,7 +67,7 @@ func (m *MockGovStaker) Redelegate(delegatee, newDelegatee address, amount int64
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) CollectUndelegatedGns() int64 {
+func (m *MockGovStaker) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	res, ok := m.Response.Get("CollectUndelegatedGns")
 	if !ok {
 		return 0
@@ -75,15 +75,15 @@ func (m *MockGovStaker) CollectUndelegatedGns() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) CollectReward() {
+func (m *MockGovStaker) CollectReward(_ int, rlm realm) {
 	m.Response.Get("CollectReward")
 }
 
-func (m *MockGovStaker) CollectRewardFromLaunchPad(to address) {
+func (m *MockGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	m.Response.Get("CollectRewardFromLaunchPad")
 }
 
-func (m *MockGovStaker) SetAmountByProjectWallet(addr address, amount int64, add bool) {
+func (m *MockGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
 	m.Response.Get("SetAmountByProjectWallet")
 }
 
@@ -323,11 +323,11 @@ func (m *MockGovStaker) GetEmissionAccumulatedTimestamp() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, target address) {
+func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, snapshotTime int64, target address) {
 	m.Response.Get("CleanStakerDelegationSnapshotByAdmin")
 }
 
-func (m *MockGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
+func (m *MockGovStaker) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
 	m.Response.Get("SetUnDelegationLockupPeriodByAdmin")
 }
 

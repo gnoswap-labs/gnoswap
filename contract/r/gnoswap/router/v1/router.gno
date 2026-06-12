@@ -4,11 +4,8 @@ import (
 	"errors"
 	"strconv"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
-
-var one = u256.One()
 
 // ErrorMessages define all error message templates used throughout the router
 const (
@@ -67,7 +64,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit i
 			return ufmt.Errorf(errExactOutTooMuchSpent, limit, amountIn)
 		}
 	default:
-		return errInvalidSwapType
+		return errors.New(errInvalidSwapType)
 	}
 	return nil
 }
@@ -76,7 +73,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit i
 func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
-		return Unknown, errInvalidSwapType
+		return Unknown, errors.New(errInvalidSwapType)
 	}
 	return swapType, nil
 }
@@ -180,6 +177,8 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 
 // finalizeSwap handles post-swap operations and validations.
 func (r *routerV1) finalizeSwap(
+	_ int,
+	rlm realm,
 	inputToken, outputToken string,
 	resultAmountIn, resultAmountOut int64,
 	swapType SwapType,
@@ -191,7 +190,7 @@ func (r *routerV1) finalizeSwap(
 	validator := &SwapValidator{}
 
 	// Handle swap fee
-	resultAmountOutWithoutFee := r.handleSwapFee(outputToken, resultAmountOut)
+	resultAmountOutWithoutFee := r.handleSwapFee(0, rlm, outputToken, resultAmountOut)
 
 	// Validate exact out amount if applicable
 	// If sqrtPriceLimitX96 is set, slippage check is not needed

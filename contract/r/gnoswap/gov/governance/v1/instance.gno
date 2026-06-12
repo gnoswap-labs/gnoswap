@@ -26,8 +26,16 @@ func (g *governanceV1) getCurrentConfigVersion() int64 {
 	return g.store.GetConfigCounter().Get()
 }
 
-func (g *governanceV1) nextConfigVersion() int64 {
-	return g.store.GetConfigCounter().Next()
+// nextConfigVersion increments and persists the config counter. It mutates the
+// underlying KV store, so it requires a realm value that resolves to the
+// governance proxy realm (the only writer-permitted address).
+func (g *governanceV1) nextConfigVersion(_ int, rlm realm) int64 {
+	counter := g.store.GetConfigCounter()
+	next := counter.Next()
+	if err := g.store.SetConfigCounter(0, rlm, counter); err != nil {
+		panic(err)
+	}
+	return next
 }
 
 // Proposal ID methods
@@ -35,8 +43,15 @@ func (g *governanceV1) getCurrentProposalID() int64 {
 	return g.store.GetProposalCounter().Get()
 }
 
-func (g *governanceV1) nextProposalID() int64 {
-	return g.store.GetProposalCounter().Next()
+// nextProposalID increments and persists the proposal counter. Same realm
+// rules as nextConfigVersion.
+func (g *governanceV1) nextProposalID(_ int, rlm realm) int64 {
+	counter := g.store.GetProposalCounter()
+	next := counter.Next()
+	if err := g.store.SetProposalCounter(0, rlm, counter); err != nil {
+		panic(err)
+	}
+	return next
 }
 
 // Config methods
@@ -44,8 +59,8 @@ func (g *governanceV1) getConfig(version int64) (governance.Config, bool) {
 	return g.store.GetConfig(version)
 }
 
-func (g *governanceV1) setConfig(version int64, config governance.Config) error {
-	return g.store.SetConfig(version, config)
+func (g *governanceV1) setConfig(_ int, rlm realm, version int64, config governance.Config) error {
+	return g.store.SetConfig(0, rlm, version, config)
 }
 
 func (g *governanceV1) getCurrentConfig() (governance.Config, bool) {
@@ -62,15 +77,15 @@ func (g *governanceV1) getProposal(id int64) (*governance.Proposal, bool) {
 	return proposal, true
 }
 
-func (g *governanceV1) addProposal(proposal *governance.Proposal) bool {
+func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Proposal) bool {
 	// Set the proposal (ID already set in proposal)
-	err := g.store.SetProposal(proposal.ID(), proposal)
+	err := g.store.SetProposal(0, rlm, proposal.ID(), proposal)
 	if err != nil {
 		return false
 	}
 
 	// Add to user proposals
-	err = g.store.AddUserProposal(proposal.Proposer().String(), proposal.ID())
+	err = g.store.AddUserProposal(0, rlm, proposal.Proposer().String(), proposal.ID())
 	if err != nil {
 		return false
 	}
@@ -109,14 +124,14 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address) bool {
 // Remove inactive user proposals
 // This function is used to remove inactive proposals from the user proposals list.
 // It is used to clean up user's active proposal list when creating a new proposal.
-func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, current int64) error {
+func (g *governanceV1) removeInactiveUserProposals(_ int, rlm realm, proposerAddress address, current int64) error {
 	proposals := g.getUserProposals(proposerAddress.String())
 
 	for _, proposal := range proposals {
 		proposalResolver := NewProposalResolver(proposal)
 
 		if !proposalResolver.IsActive(current) {
-			err := g.store.RemoveUserProposal(proposerAddress.String(), proposal.ID())
+			err := g.store.RemoveUserProposal(0, rlm, proposerAddress.String(), proposal.ID())
 			if err != nil {
 				return err
 			}
@@ -131,8 +146,8 @@ func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*bptree.BPT
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *bptree.BPTree) error {
-	return g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
+func (g *governanceV1) updateProposalUserVotes(_ int, rlm realm, proposal *governance.Proposal, userVotingInfos *bptree.BPTree) error {
+	return g.store.SetProposalVotingInfos(0, rlm, proposal.ID(), userVotingInfos)
 }
 
 // Helper methods for API

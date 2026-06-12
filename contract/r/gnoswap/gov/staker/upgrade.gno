@@ -1,24 +1,33 @@
 package staker
 
 import (
-	"chain/runtime"
-
 	"gno.land/r/gnoswap/access"
 )
 
-// RegisterInitializer registers an implementation
-// This function is called by each implementation version during init
-func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerStore) IGovStaker) {
-	initializerFunc := func(domainStore any) any {
+// RegisterInitializer registers an implementation.
+// This function is called by each implementation version during init.
+//
+// The initializer function creates a new instance of the implementation
+// using the provided IGovStakerStore. It receives a realm value that
+// resolves to the gov/staker proxy realm — the only address with write
+// permission on the shared KV store — so any per-version store
+// bootstrapping performed inside the initializer passes the proxy's
+// authorization check.
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, govStakerStore IGovStakerStore) IGovStaker) {
+	// `cur` captured here is the gov/staker crossing frame. The wrapping
+	// closure forwards it to the v1 initializer so any store writes the
+	// initializer performs run under the proxy's identity rather than the
+	// version package's, which would fail the kvStore ACL.
+	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		currentGovStakerStore, ok := domainStore.(IGovStakerStore)
 		if !ok {
 			panic("domainStore is not an IGovStakerStore")
 		}
 
-		return initializer(currentGovStakerStore)
+		return initializer(0, rlm, currentGovStakerStore)
 	}
 
-	err := versionManager.RegisterInitializer(initializerFunc)
+	err := versionManager.RegisterInitializer(0, cur, initializerFunc)
 	if err != nil {
 		panic(err)
 	}
@@ -33,10 +42,10 @@ func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerSt
 // Only admin or governance can call this function
 func UpgradeImpl(cur realm, packagePath string) {
 	// Check admin or governance permission
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	prev := cur.Previous()
+	access.AssertIsAdminOrGovernance(prev.Address())
 
-	err := versionManager.ChangeImplementation(packagePath)
+	err := versionManager.ChangeImplementation(0, cur, packagePath)
 	if err != nil {
 		panic(err)
 	}

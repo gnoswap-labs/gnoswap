@@ -9,7 +9,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestOracleInitialize(t *testing.T) {
+func TestOracleInitialize(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
@@ -21,7 +21,7 @@ func TestOracleInitialize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -56,7 +56,7 @@ func testInitializeSetsFirstSlot(t *testing.T) {
 	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 }
 
-func TestOracleGrow(t *testing.T) {
+func TestOracleGrow(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
@@ -68,7 +68,7 @@ func TestOracleGrow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -129,7 +129,7 @@ func testGrowAddsDataToSlots(t *testing.T) {
 	}
 }
 
-func TestOracleWrite(t *testing.T) {
+func TestOracleWrite(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
@@ -143,7 +143,7 @@ func TestOracleWrite(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -325,7 +325,7 @@ func testAccumulatesLiquidity(t *testing.T) {
 	}
 }
 
-func TestOracleObserve(t *testing.T) {
+func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
@@ -350,7 +350,7 @@ func TestOracleObserve(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}
@@ -372,13 +372,13 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	os := pl.NewObservationState(currentTime)
 	// Manually set first observation with MaxUint128 liquidity
 	firstObs := os.Observations()[0]
-	os.Observations()[0] = pl.NewObservation(
+	os.SetObservation(0, pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
 		"0", // liquidityCumulative
 		"0", // secondsPerLiquidityCumulativeX128
 		true,
-	)
+	))
 
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -786,7 +786,7 @@ func testObserveFetchMultiple(t *testing.T) {
 	uassert.Equal(t, "0", secondsPerLiquidityX128s[5])
 }
 
-func TestOracleFiveObservations(t *testing.T) {
+func TestOracleFiveObservations(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
@@ -802,7 +802,7 @@ func TestOracleFiveObservations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.fn(t)
 		})
 	}

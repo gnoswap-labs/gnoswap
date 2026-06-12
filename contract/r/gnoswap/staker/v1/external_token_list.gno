@@ -2,14 +2,13 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 )
-
-var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 
 // AddToken adds a new token path to the list of allowed tokens
 // Only the admin can add a new token.
@@ -19,14 +18,22 @@ var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 //
 // Panics:
 //   - If the caller is not the admin
-func (s *stakerV1) AddToken(tokenPath string) {
+func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
+	if err := checkCannotAddDefaultToken(tokenPath); err != nil {
+		panic(err.Error())
+	}
+
+	if err := s.store.AddAllowedToken(0, rlm, tokenPath); err != nil {
 		panic(err.Error())
 	}
 
@@ -48,14 +55,22 @@ func (s *stakerV1) AddToken(tokenPath string) {
 //
 // Panics:
 //   - If the caller is not the admin
-func (s *stakerV1) RemoveToken(tokenPath string) {
+func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if err := modifyTokenList(s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	if err := checkCannotRemoveDefaultToken(tokenPath); err != nil {
+		panic(err.Error())
+	}
+
+	if err := s.store.RemoveAllowedToken(0, rlm, tokenPath); err != nil {
 		panic(err.Error())
 	}
 
@@ -67,61 +82,16 @@ func (s *stakerV1) RemoveToken(tokenPath string) {
 	)
 }
 
-// TokenValidator is a function type that validates a token
-type TokenValidator func(tokenPath string) error
-
-// TokenExecutor is a token manipulation function type
-type TokenExecutor func(tokenPath string, tokens []string) []string
-
-// modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(s *stakerV1, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
-	// validate token operation if validator is provided
-	if validator != nil {
-		if err := validator(tokenPath); err != nil {
-			return err
-		}
-	}
-
-	allowedTokens := s.store.GetAllowedTokens()
-	allowedTokens = executor(tokenPath, allowedTokens)
-	s.store.SetAllowedTokens(allowedTokens)
-	return nil
-}
-
-// addTokenExecutor executes token append operation
-func addTokenExecutor(tokenPath string, tokens []string) []string {
-	if contains(tokens, tokenPath) {
-		return tokens
-	}
-
-	return append(tokens, tokenPath)
-}
-
-// addTokenValidator validates token addition operation
-func addTokenValidator(tokenPath string) error {
-	if contains(defaultAllowed, tokenPath) {
+func checkCannotAddDefaultToken(tokenPath string) error {
+	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
 	}
 
 	return nil
 }
 
-// removeTokenExecutor executes token removal operation
-func removeTokenExecutor(tokenPath string, tokens []string) []string {
-	// find and remove token
-	for i, t := range tokens {
-		if t == tokenPath {
-			return append(tokens[:i], tokens[i+1:]...)
-		}
-	}
-
-	// if token not found, return the original list
-	return tokens
-}
-
-// removeTokenValidator validates token removal operation
-func removeTokenValidator(tokenPath string) error {
-	if contains(defaultAllowed, tokenPath) {
+func checkCannotRemoveDefaultToken(tokenPath string) error {
+	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}
 

@@ -6,12 +6,10 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 )
 
-func TestCalculateAmount_SecurityValidation(t *testing.T) {
+func TestCalculateAmount_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -72,7 +70,7 @@ func TestCalculateAmount_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -94,7 +92,7 @@ func TestCalculateAmount_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
+func TestSetLeftGNSAmount_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -120,7 +118,7 @@ func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -144,7 +142,7 @@ func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
+func TestSetLastExecutedHeight_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		timestamp            int64
@@ -170,7 +168,7 @@ func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -194,7 +192,7 @@ func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 	}
 }
 
-func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
+func TestAssertValidDistributionPct_SecurityValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		pct01                int64
@@ -251,7 +249,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -275,7 +273,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 }
 
 // Test the calculateAmount function in isolation
-func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
+func TestCalculateAmount_IsolatedSecurity(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		amount               int64
@@ -319,7 +317,7 @@ func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -343,7 +341,7 @@ func TestCalculateAmount_IsolatedSecurity(t *testing.T) {
 	}
 }
 
-func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
+func TestAssertValidDistributionPct_IsolatedSecurity(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		pct01                int64
@@ -372,7 +370,7 @@ func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil {
 					if tc.expectedHasPanic {
@@ -404,7 +402,7 @@ func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
 }
 
 // TestAssertValidDistributionTarget tests validation of single distribution targets
-func TestAssertValidDistributionTarget(t *testing.T) {
+func TestAssertValidDistributionTarget(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		target      int
@@ -464,15 +462,17 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertValidDistributionTarget(tt.target)
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMsg, func() {
+						assertValidDistributionTarget(tt.target)
+					})
 			} else {
-				uassert.NotPanics(t, func() {
-					assertValidDistributionTarget(tt.target)
-				})
+				uassert.NotPanics(
+					t, cur, func() {
+						assertValidDistributionTarget(tt.target)
+					})
 			}
 		})
 	}
@@ -480,7 +480,7 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 
 // TestTransferToTarget_CEIPattern tests the Checks-Effects-Interactions pattern
 // This verifies that state is updated BEFORE external calls (gns.Transfer)
-func TestTransferToTarget_CEIPattern(t *testing.T) {
+func TestTransferToTarget_CEIPattern(cur realm, t *testing.T) {
 	tests := []struct {
 		name                         string
 		description                  string
@@ -596,7 +596,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetObject(t)
 
 			// Setup initial state based on target
@@ -617,9 +617,8 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 
 			// Setup balance for emission
 			if tt.setupBalance {
-				emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, emissionAddr, tt.balanceToSetup)
+				gns.Transfer(cross(cur), emissionAddr, tt.balanceToSetup)
 			}
 
 			// Execute transfer
@@ -628,7 +627,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			var err error
 
 			transferToTargetFunc := func(cur realm) error {
-				testing.SetRealm(testing.NewUserRealm(emissionAddr))
+				testing.SetRealm(emissionRealm)
 				targets := map[int]int64{tt.target: tt.amount}
 				amountByAddress, err := applyDistribution(targets)
 				if err != nil {
@@ -637,7 +636,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 
 				beforeBalance := gns.BalanceOf(emissionAddr)
 
-				err = transferToTarget(amountByAddress)
+				err = transferToTarget(0, cur, amountByAddress)
 				if err != nil {
 					return err
 				}
@@ -648,13 +647,13 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			}
 
 			if !tt.setupBalance {
-				uassert.AbortsContains(t, "overflow", func() {
-					transferToTargetFunc(cross)
+				uassert.AbortsContains(t, cur, "overflow", func() {
+					_ = transferToTargetFunc(cross(cur))
 				})
 
 				return
 			} else {
-				err = transferToTargetFunc(cross)
+				err = transferToTargetFunc(cross(cur))
 			}
 
 			uassert.NoError(t, err)
@@ -681,7 +680,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 }
 
 // TestAccumulatedDistribution_SafeMath tests safe math for accumulated distribution values
-func TestAccumulatedDistribution_SafeMath(t *testing.T) {
+func TestAccumulatedDistribution_SafeMath(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		description             string
@@ -760,7 +759,7 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetObject(t)
 
 			// Setup initial state
@@ -780,14 +779,14 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 			}
 
 			// Setup balance for emission
-			emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 			testing.SetRealm(adminRealm)
-			gns.Transfer(cross, emissionAddr, 1000000000)
+			gns.Transfer(cross(cur), emissionAddr, 1000000000)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMessage, func() {
-					_, _ = applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
-				})
+				uassert.PanicsWithMessage(
+					t, cur, tt.panicMessage, func() {
+						_, _ = applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
+					})
 			} else {
 				_, err := applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
 				uassert.NoError(t, err)
@@ -807,366 +806,6 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 					uassert.Equal(t, tt.expectedDistributed, distributedToGovStaker)
 					uassert.Equal(t, tt.expectedAccuDistributed, accuDistributedToGovStaker)
 				}
-			}
-		})
-	}
-}
-
-// TestFormatInt tests formatInt function with edge cases
-func TestFormatInt(t *testing.T) {
-	tests := []struct {
-		name        string
-		value       any
-		expected    string
-		shouldPanic bool
-	}{
-		{
-			name:     "int zero",
-			value:    int(0),
-			expected: "0",
-		},
-		{
-			name:     "int positive",
-			value:    int(123),
-			expected: "123",
-		},
-		{
-			name:     "int negative",
-			value:    int(-123),
-			expected: "-123",
-		},
-		{
-			name:     "int32 zero",
-			value:    int32(0),
-			expected: "0",
-		},
-		{
-			name:     "int32 max",
-			value:    int32(2147483647),
-			expected: "2147483647",
-		},
-		{
-			name:     "int32 min",
-			value:    int32(-2147483648),
-			expected: "-2147483648",
-		},
-		{
-			name:     "int64 zero",
-			value:    int64(0),
-			expected: "0",
-		},
-		{
-			name:     "int64 max",
-			value:    int64(9223372036854775807),
-			expected: "9223372036854775807",
-		},
-		{
-			name:     "int64 min",
-			value:    int64(-9223372036854775808),
-			expected: "-9223372036854775808",
-		},
-		{
-			name:        "invalid type uint",
-			value:       uint(123),
-			shouldPanic: true,
-		},
-		{
-			name:        "invalid type string",
-			value:       "123",
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic but got none")
-					}
-				}()
-				formatInt(tt.value)
-			} else {
-				result := formatInt(tt.value)
-				uassert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-// TestSafeAddInt64 tests the safeAddInt64 function for overflow and underflow protection
-func TestSafeAddInt64(t *testing.T) {
-	tests := []struct {
-		name        string
-		a           int64
-		b           int64
-		expected    int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:     "positive + positive",
-			a:        100,
-			b:        200,
-			expected: 300,
-		},
-		{
-			name:     "negative + negative",
-			a:        -100,
-			b:        -200,
-			expected: -300,
-		},
-		{
-			name:     "positive + negative",
-			a:        100,
-			b:        -50,
-			expected: 50,
-		},
-		{
-			name:     "negative + positive",
-			a:        -100,
-			b:        150,
-			expected: 50,
-		},
-		{
-			name:     "zero + positive",
-			a:        0,
-			b:        100,
-			expected: 100,
-		},
-		{
-			name:     "zero + negative",
-			a:        0,
-			b:        -100,
-			expected: -100,
-		},
-		{
-			name:     "zero + zero",
-			a:        0,
-			b:        0,
-			expected: 0,
-		},
-		{
-			name:     "max int64 + 0",
-			a:        math.MaxInt64,
-			b:        0,
-			expected: math.MaxInt64,
-		},
-		{
-			name:     "min int64 + 0",
-			a:        math.MinInt64,
-			b:        0,
-			expected: math.MinInt64,
-		},
-		{
-			name:        "overflow: max int64 + 1",
-			a:           math.MaxInt64,
-			b:           1,
-			shouldPanic: true,
-			panicMsg:    "int64 addition overflow",
-		},
-		{
-			name:        "overflow: max int64 + max int64",
-			a:           math.MaxInt64,
-			b:           math.MaxInt64,
-			shouldPanic: true,
-			panicMsg:    "int64 addition overflow",
-		},
-		{
-			name:        "overflow: large positive + large positive",
-			a:           math.MaxInt64 - 100,
-			b:           200,
-			shouldPanic: true,
-			panicMsg:    "int64 addition overflow",
-		},
-		{
-			name:        "underflow: min int64 + (-1)",
-			a:           math.MinInt64,
-			b:           -1,
-			shouldPanic: true,
-			panicMsg:    "int64 addition underflow",
-		},
-		{
-			name:        "underflow: min int64 + min int64",
-			a:           math.MinInt64,
-			b:           math.MinInt64,
-			shouldPanic: true,
-			panicMsg:    "int64 addition underflow",
-		},
-		{
-			name:        "underflow: large negative + large negative",
-			a:           math.MinInt64 + 100,
-			b:           -200,
-			shouldPanic: true,
-			panicMsg:    "int64 addition underflow",
-		},
-		{
-			name:     "boundary: max int64 - 1 + 1",
-			a:        math.MaxInt64 - 1,
-			b:        1,
-			expected: math.MaxInt64,
-		},
-		{
-			name:     "boundary: min int64 + 1 + (-1)",
-			a:        math.MinInt64 + 1,
-			b:        -1,
-			expected: math.MinInt64,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeAddInt64(tt.a, tt.b)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					result := safeAddInt64(tt.a, tt.b)
-					uassert.Equal(t, tt.expected, result)
-				})
-			}
-		})
-	}
-}
-
-// TestSafeSubInt64 tests the safeSubInt64 function for overflow and underflow protection
-func TestSafeSubInt64(t *testing.T) {
-	tests := []struct {
-		name        string
-		a           int64
-		b           int64
-		expected    int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:     "positive - positive (positive result)",
-			a:        200,
-			b:        100,
-			expected: 100,
-		},
-		{
-			name:     "positive - positive (negative result)",
-			a:        100,
-			b:        200,
-			expected: -100,
-		},
-		{
-			name:     "negative - negative",
-			a:        -100,
-			b:        -200,
-			expected: 100,
-		},
-		{
-			name:     "positive - negative",
-			a:        100,
-			b:        -50,
-			expected: 150,
-		},
-		{
-			name:     "negative - positive",
-			a:        -100,
-			b:        50,
-			expected: -150,
-		},
-		{
-			name:     "zero - positive",
-			a:        0,
-			b:        100,
-			expected: -100,
-		},
-		{
-			name:     "zero - negative",
-			a:        0,
-			b:        -100,
-			expected: 100,
-		},
-		{
-			name:     "zero - zero",
-			a:        0,
-			b:        0,
-			expected: 0,
-		},
-		{
-			name:     "max int64 - 0",
-			a:        math.MaxInt64,
-			b:        0,
-			expected: math.MaxInt64,
-		},
-		{
-			name:     "min int64 - 0",
-			a:        math.MinInt64,
-			b:        0,
-			expected: math.MinInt64,
-		},
-		{
-			name:        "underflow: min int64 - 1",
-			a:           math.MinInt64,
-			b:           1,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction underflow",
-		},
-		{
-			name:        "underflow: min int64 - max int64",
-			a:           math.MinInt64,
-			b:           math.MaxInt64,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction underflow",
-		},
-		{
-			name:        "underflow: large negative - large positive",
-			a:           math.MinInt64 + 100,
-			b:           200,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction underflow",
-		},
-		{
-			name:        "overflow: max int64 - (-1)",
-			a:           math.MaxInt64,
-			b:           -1,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction overflow",
-		},
-		{
-			name:        "overflow: max int64 - min int64",
-			a:           math.MaxInt64,
-			b:           math.MinInt64,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction overflow",
-		},
-		{
-			name:        "overflow: large positive - large negative",
-			a:           math.MaxInt64 - 100,
-			b:           -200,
-			shouldPanic: true,
-			panicMsg:    "int64 subtraction overflow",
-		},
-		{
-			name:     "boundary: min int64 + 1 - 1",
-			a:        math.MinInt64 + 1,
-			b:        1,
-			expected: math.MinInt64,
-		},
-		{
-			name:     "boundary: max int64 - 1 - (-1)",
-			a:        math.MaxInt64 - 1,
-			b:        -1,
-			expected: math.MaxInt64,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeSubInt64(tt.a, tt.b)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					result := safeSubInt64(tt.a, tt.b)
-					uassert.Equal(t, tt.expected, result)
-				})
 			}
 		})
 	}

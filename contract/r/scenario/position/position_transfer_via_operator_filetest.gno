@@ -10,6 +10,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -26,7 +27,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/pool"
@@ -59,40 +59,40 @@ var (
 	positionId2 uint64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Alice mints two positions")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. Alice grants Bob SetApprovalForAll, Bob moves both positions")
-	operatorTransfersBoth()
+	operatorTransfersBoth(cur)
 	println()
 
 	println("[SCENARIO] 3. After revoking operator, Bob can no longer transfer")
-	revokeOperator()
+	revokeOperator(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	pool.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, aliceAddr, int64(200000000))
-	foo.Transfer(cross, aliceAddr, int64(200000000))
+	bar.Transfer(cross(cur), aliceAddr, int64(200000000))
+	foo.Transfer(cross(cur), aliceAddr, int64(200000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	id1, _, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		-6960, 6960,
 		"10000000", "10000000",
@@ -102,7 +102,7 @@ func setup() {
 	positionId1 = id1
 
 	id2, _, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		-6960, 6960,
 		"10000000", "10000000",
@@ -115,33 +115,33 @@ func setup() {
 	println("[EXPECTED] Position 2:", positionId2)
 }
 
-func operatorTransfersBoth() {
+func operatorTransfersBoth(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gnft.SetApprovalForAll(cross, bobAddr, true)
+	gnft.SetApprovalForAll(cross(cur), bobAddr, true)
 	println("[INFO] Alice set Bob as operator-for-all")
 
 	// Bob, acting as operator, transfers position 1 to himself and position 2
 	// to Carol. Both must succeed under the relaxed transfer rules.
 	testing.SetRealm(bobRealm)
-	gnft.TransferFrom(cross, aliceAddr, bobAddr, tokenIdOf(positionId1))
-	gnft.TransferFrom(cross, aliceAddr, carolAddr, tokenIdOf(positionId2))
+	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId1))
+	gnft.TransferFrom(cross(cur), aliceAddr, carolAddr, tokenIdOf(cur, positionId2))
 
-	owner1 := gnft.MustOwnerOf(tokenIdOf(positionId1))
-	owner2 := gnft.MustOwnerOf(tokenIdOf(positionId2))
+	owner1 := gnft.MustOwnerOf(tokenIdOf(cur, positionId1))
+	owner2 := gnft.MustOwnerOf(tokenIdOf(cur, positionId2))
 	println("[EXPECTED] Position 1 owner is bob:", owner1 == bobAddr)
 	println("[EXPECTED] Position 2 owner is carol:", owner2 == carolAddr)
 }
 
-func revokeOperator() {
+func revokeOperator(cur realm) {
 	// Bob mints another position so we have something Alice still owns to
 	// test the revoked-operator case. We reuse the existing pool.
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, aliceAddr, int64(50000000))
-	foo.Transfer(cross, aliceAddr, int64(50000000))
+	bar.Transfer(cross(cur), aliceAddr, int64(50000000))
+	foo.Transfer(cross(cur), aliceAddr, int64(50000000))
 
 	testing.SetRealm(aliceRealm)
 	id, _, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
 		-6960, 6960,
 		"10000000", "10000000",
@@ -149,21 +149,22 @@ func revokeOperator() {
 		maxTimeout,
 		aliceAddr, "")
 
-	gnft.SetApprovalForAll(cross, bobAddr, false)
+	gnft.SetApprovalForAll(cross(cur), bobAddr, false)
 	println("[INFO] Alice revoked Bob's operator status")
 
 	testing.SetRealm(bobRealm)
 	uassert.AbortsContains(
 		t,
+		cur,
 		"caller is not token owner or approved",
 		func() {
-			gnft.TransferFrom(cross, aliceAddr, bobAddr, tokenIdOf(id))
+			gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, id))
 		},
 	)
 	println("[EXPECTED] Revoked operator transfer is rejected by GRC721 layer")
 }
 
-func tokenIdOf(id uint64) grc721.TokenID {
+func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
 }
 

@@ -4,14 +4,16 @@ import (
 	"math"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
+
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // TestEmissionBoundaryConditions tests for emission at year boundaries
-func TestEmissionBoundaryConditions(t *testing.T) {
+func TestEmissionBoundaryConditions(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	tests := []struct {
 		name           string
@@ -64,7 +66,7 @@ func TestEmissionBoundaryConditions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			amount := GetEmissionAmountPerSecondByTimestamp(tt.timestamp)
 			uassert.Equal(t, tt.expectedAmount, amount,
 				"%s: %s", tt.name, tt.description)
@@ -73,9 +75,9 @@ func TestEmissionBoundaryConditions(t *testing.T) {
 }
 
 // TestEmissionAmountCalculation tests emission amount calculation for different timestamps
-func TestEmissionAmountCalculation(t *testing.T) {
+func TestEmissionAmountCalculation(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	tests := []struct {
 		name           string
@@ -122,7 +124,7 @@ func TestEmissionAmountCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			startTs := GetHalvingYearStartTimestamp(tt.year)
 			endTs := GetHalvingYearEndTimestamp(tt.year)
 			duration := endTs - startTs
@@ -137,7 +139,7 @@ func TestEmissionAmountCalculation(t *testing.T) {
 }
 
 // TestEmissionStateConsistency tests that emission state remains consistent
-func TestEmissionStateConsistency(t *testing.T) {
+func TestEmissionStateConsistency(cur realm, t *testing.T) {
 	resetEmissionState(t)
 
 	tests := []struct {
@@ -149,7 +151,7 @@ func TestEmissionStateConsistency(t *testing.T) {
 		{
 			name: "Initial state consistency",
 			operation: func() {
-				resetObject(t)
+				resetObject(cur, t)
 			},
 			validation: func(t *testing.T) {
 				totalMaxAmount := int64(0)
@@ -191,7 +193,7 @@ func TestEmissionStateConsistency(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.operation()
 			tt.validation(t)
 		})
@@ -199,9 +201,9 @@ func TestEmissionStateConsistency(t *testing.T) {
 }
 
 // TestYearTransitions tests emission calculations at year transitions
-func TestYearTransitions(t *testing.T) {
+func TestYearTransitions(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	tests := []struct {
 		name        string
@@ -230,7 +232,7 @@ func TestYearTransitions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Test at the boundary
 			endTs := GetHalvingYearEndTimestamp(tt.fromYear)
 			nextStartTs := GetHalvingYearStartTimestamp(tt.toYear)
@@ -264,9 +266,9 @@ func TestYearTransitions(t *testing.T) {
 }
 
 // TestEmissionTotalAmount tests that total emission amounts are correct
-func TestEmissionTotalAmount(t *testing.T) {
+func TestEmissionTotalAmount(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	// Calculate total emission by summing all years
 	totalEmission := int64(0)
@@ -300,7 +302,7 @@ func TestEmissionTotalAmount(t *testing.T) {
 }
 
 // TestEmissionStateIsActiveBoundary tests isActive at exact boundary timestamps
-func TestEmissionStateIsActiveBoundary(t *testing.T) {
+func TestEmissionStateIsActiveBoundary(cur realm, t *testing.T) {
 	startTs := int64(1000)
 	es := NewEmissionState(1, startTs)
 	endTs := es.getEndTimestamp()
@@ -322,7 +324,7 @@ func TestEmissionStateIsActiveBoundary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := es.isActive(tt.timestamp)
 			uassert.Equal(t, tt.expected, result, "isActive result mismatch for %s", tt.name)
 		})
@@ -330,7 +332,7 @@ func TestEmissionStateIsActiveBoundary(t *testing.T) {
 }
 
 // TestEmissionStateIsEndedBoundary tests isEnded at exact boundary timestamps
-func TestEmissionStateIsEndedBoundary(t *testing.T) {
+func TestEmissionStateIsEndedBoundary(cur realm, t *testing.T) {
 	startTs := int64(1000)
 	es := NewEmissionState(1, startTs)
 	endTs := es.getEndTimestamp()
@@ -350,7 +352,7 @@ func TestEmissionStateIsEndedBoundary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := es.isEnded(tt.timestamp)
 			uassert.Equal(t, tt.expected, result, "isEnded result mismatch for %s", tt.name)
 		})
@@ -358,7 +360,7 @@ func TestEmissionStateIsEndedBoundary(t *testing.T) {
 }
 
 // TestEmissionStateGetCurrentYearBoundary tests getCurrentYear at year boundaries
-func TestEmissionStateGetCurrentYearBoundary(t *testing.T) {
+func TestEmissionStateGetCurrentYearBoundary(cur realm, t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
@@ -379,7 +381,7 @@ func TestEmissionStateGetCurrentYearBoundary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := es.getCurrentYear(tt.timestamp)
 			uassert.Equal(t, tt.expected, result, "getCurrentYear result mismatch for %s", tt.name)
 		})
@@ -387,15 +389,15 @@ func TestEmissionStateGetCurrentYearBoundary(t *testing.T) {
 }
 
 // TestEmissionStateUninitializedBehavior tests behavior when EmissionState is not initialized
-func TestEmissionStateUninitializedBehavior(t *testing.T) {
+func TestEmissionStateUninitializedBehavior(cur realm, t *testing.T) {
 	// Create uninitialized state
 	es := NewEmissionState(0, 0)
 
-	t.Run("isInitialized should be false", func(t *testing.T) {
+	t.Run("isInitialized should be false", func(cur realm, t *testing.T) {
 		uassert.False(t, es.isInitialized())
 	})
 
-	t.Run("isActive should be false for any timestamp", func(t *testing.T) {
+	t.Run("isActive should be false for any timestamp", func(cur realm, t *testing.T) {
 		timestamps := []int64{-1000, 0, 1, 1000, 9999999}
 		for _, ts := range timestamps {
 			uassert.False(t, es.isActive(ts))
@@ -404,9 +406,9 @@ func TestEmissionStateUninitializedBehavior(t *testing.T) {
 }
 
 // TestEmissionStateAddSubHalvingYearAmounts tests add/sub operations with edge cases
-func TestEmissionStateAddSubHalvingYearAmounts(t *testing.T) {
+func TestEmissionStateAddSubHalvingYearAmounts(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	es := getEmissionState()
 
@@ -427,7 +429,7 @@ func TestEmissionStateAddSubHalvingYearAmounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var err error
 			if tt.operation == "add" {
 				err = es.addHalvingYearAccumulatedAmount(tt.year, tt.amount)
@@ -445,14 +447,14 @@ func TestEmissionStateAddSubHalvingYearAmounts(t *testing.T) {
 }
 
 // TestEmissionStateAmountConsistency tests that accumulated and left amounts stay consistent
-func TestEmissionStateAmountConsistency(t *testing.T) {
+func TestEmissionStateAmountConsistency(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 
 	es := getEmissionState()
 
 	for year := int64(1); year <= 12; year++ {
-		t.Run("Year consistency for year "+formatInt(year), func(t *testing.T) {
+		t.Run("Year consistency for year "+utils.FormatInt(year), func(cur realm, t *testing.T) {
 			initialAccum := es.getHalvingYearAccumulatedAmount(year)
 			initialLeft := es.getHalvingYearLeftAmount(year)
 			maxAmount := GetHalvingYearMaxAmount(year)
@@ -481,7 +483,7 @@ func TestEmissionStateAmountConsistency(t *testing.T) {
 }
 
 // TestEmissionStateTimestampEdgeCases tests edge cases with various timestamps
-func TestEmissionStateTimestampEdgeCases(t *testing.T) {
+func TestEmissionStateTimestampEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		createdHeight  int64
@@ -513,7 +515,7 @@ func TestEmissionStateTimestampEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 			year := es.getCurrentYear(tt.testTimestamp)
 			uassert.Equal(t, tt.expectedYear, year, "Year mismatch for "+tt.name)
@@ -522,9 +524,9 @@ func TestEmissionStateTimestampEdgeCases(t *testing.T) {
 }
 
 // TestAddHalvingYearAccumulatedAmountOverflow tests overflow protection in addHalvingYearAccumulatedAmount
-func TestAddHalvingYearAccumulatedAmountOverflow(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestAddHalvingYearAccumulatedAmountOverflow(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	es := getEmissionState()
 
@@ -577,12 +579,12 @@ func TestAddHalvingYearAccumulatedAmountOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Set initial accumulated amount
 			es.halvingData.setAccumAmount(tt.year, tt.initialValue)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					es.addHalvingYearAccumulatedAmount(tt.year, tt.addAmount)
 				})
 			} else {
@@ -599,9 +601,9 @@ func TestAddHalvingYearAccumulatedAmountOverflow(t *testing.T) {
 }
 
 // TestSubHalvingYearLeftAmountUnderflow tests underflow protection in subHalvingYearLeftAmount
-func TestSubHalvingYearLeftAmountUnderflow(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestSubHalvingYearLeftAmountUnderflow(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	es := getEmissionState()
 
@@ -661,12 +663,12 @@ func TestSubHalvingYearLeftAmountUnderflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Set initial left amount
 			es.halvingData.setLeftAmount(tt.year, tt.initialValue)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					es.subHalvingYearLeftAmount(tt.year, tt.subAmount)
 				})
 			} else {
@@ -683,7 +685,7 @@ func TestSubHalvingYearLeftAmountUnderflow(t *testing.T) {
 }
 
 // TestNewEmissionStateOverflow tests overflow protection in NewEmissionState
-func TestNewEmissionStateOverflow(t *testing.T) {
+func TestNewEmissionStateOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		createdHeight  int64
@@ -726,9 +728,9 @@ func TestNewEmissionStateOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					NewEmissionState(tt.createdHeight, tt.startTimestamp)
 				})
 			} else {

@@ -88,11 +88,11 @@ func assertIsExistsPools(routePathArr string) {
 	}
 }
 
-func assertIsRouterV1(caller address) {
-	if caller != routerV1Addr {
+func assertIsRouterImplementation(caller address) {
+	if caller != routerImplAddr {
 		panic(makeErrorWithDetails(
 			errUnAuthorizedCaller,
-			ufmt.Sprintf("caller %s is not router v1(%s)", caller, routerV1Addr),
+			ufmt.Sprintf("caller %s is not router implementation(%s)", caller, routerImplAddr),
 		))
 	}
 }

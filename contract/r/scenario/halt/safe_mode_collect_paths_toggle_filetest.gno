@@ -1,8 +1,11 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Scenario: Safe Mode blocks delegated protocol-fee collection, while Emergency allows it
 
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -16,7 +19,6 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	communitypool "gno.land/r/gnoswap/community_pool"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -83,78 +85,78 @@ var (
 	launchpadClaimableBarBeforeSafe int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup collect paths before safe mode")
-	setupSafeScenario()
+	setupSafeScenario(cur)
 	println()
 
 	println("[SCENARIO] 2. Enable safe mode")
-	setSafeModeForCollect()
+	setSafeModeForCollect(cur)
 	println()
 
 	println("[SCENARIO] 3. Collect paths are blocked in safe mode")
-	testCollectsBlockedInSafeMode()
+	testCollectsBlockedInSafeMode(cur)
 	println()
 
 	println("[SCENARIO] 4. Switch to emergency mode")
-	setEmergencyModeForProtocolFeeCollect()
+	setEmergencyModeForProtocolFeeCollect(cur)
 	println()
 
 	println("[SCENARIO] 5. Delegated protocol fee collect works in emergency mode")
-	testDelegatedProtocolFeeCollectAllowedInEmergencyMode()
+	testDelegatedProtocolFeeCollectAllowedInEmergencyMode(cur)
 	println()
 }
 
-func setupSafeScenario() {
+func setupSafeScenario(cur realm) {
 	testing.SetRealm(adminRealm3)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
-	pool.SetPoolCreationFee(cross, 0)
-	bar.Transfer(cross, aliceAddr3, 100000000)
-	foo.Transfer(cross, aliceAddr3, 100000000)
-	gns.Transfer(cross, bobAddr3, 5000000)
-	gns.Transfer(cross, carolAddr3, 15000000)
-	pool.CreatePool(cross, barPath3, fooPath3, fee3, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	staker.SetPoolTier(cross, barPath3+":"+fooPath3+":3000", 1)
-	obl.Approve(cross, launchpadAddr3, 1000000000)
-	launchpadProjectID3 = launchpad.CreateProject(cross, "Bar Project", "gno.land/r/onbloc/obl", projectAddr3, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)
+	pool.SetPoolCreationFee(cross(cur), 0)
+	bar.Transfer(cross(cur), aliceAddr3, 100000000)
+	foo.Transfer(cross(cur), aliceAddr3, 100000000)
+	gns.Transfer(cross(cur), bobAddr3, 5000000)
+	gns.Transfer(cross(cur), carolAddr3, 15000000)
+	pool.CreatePool(cross(cur), barPath3, fooPath3, fee3, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	staker.SetPoolTier(cross(cur), barPath3+":"+fooPath3+":3000", 1)
+	obl.Approve(cross(cur), launchpadAddr3, 1000000000)
+	launchpadProjectID3 = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl", projectAddr3, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)
 	testing.SkipHeights(120960)
-	gns.Approve(cross, launchpadAddr3, 1000000000)
-	launchpad.DepositGns(cross, launchpadProjectID3+":30", 1000000000, "")
-	bar.Transfer(cross, stakerAddr3, 1000)
+	gns.Approve(cross(cur), launchpadAddr3, 1000000000)
+	launchpad.DepositGns(cross(cur), launchpadProjectID3+":30", 1000000000, "")
+	bar.Transfer(cross(cur), stakerAddr3, 1000)
 
 	testing.SetRealm(aliceRealm3)
-	bar.Approve(cross, poolAddr3, safeInt64Max)
-	foo.Approve(cross, poolAddr3, safeInt64Max)
-	positionCollectID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -960, 960, "50000000", "50000000", "0", "0", 4102444800, aliceAddr3, "")
-	stakerPositionID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -60, 60, "5000000", "5000000", "1", "1", 4102444800, aliceAddr3, "")
-	gnft.Approve(cross, stakerAddr3, positionIdFromSafe(stakerPositionID3))
-	staker.StakeToken(cross, stakerPositionID3, "")
+	bar.Approve(cross(cur), poolAddr3, safeInt64Max)
+	foo.Approve(cross(cur), poolAddr3, safeInt64Max)
+	positionCollectID3, _, _, _ = position.Mint(cross(cur), barPath3, fooPath3, fee3, -960, 960, "50000000", "50000000", "0", "0", 4102444800, aliceAddr3, "")
+	stakerPositionID3, _, _, _ = position.Mint(cross(cur), barPath3, fooPath3, fee3, -60, 60, "5000000", "5000000", "1", "1", 4102444800, aliceAddr3, "")
+	gnft.Approve(cross(cur), stakerAddr3, positionIdFromSafe(cur, stakerPositionID3))
+	staker.StakeToken(cross(cur), stakerPositionID3, "")
 
 	testing.SetRealm(bobRealm3)
-	gns.Approve(cross, govStakerAddr3, 5000000)
-	govstaker.Delegate(cross, bobAddr3, 5000000, "")
+	gns.Approve(cross(cur), govStakerAddr3, 5000000)
+	govstaker.Delegate(cross(cur), bobAddr3, 5000000, "")
 	testing.SetRealm(carolRealm3)
-	gns.Approve(cross, govStakerAddr3, 15000000)
-	govstaker.Delegate(cross, carolAddr3, 15000000, "")
+	gns.Approve(cross(cur), govStakerAddr3, 15000000)
+	govstaker.Delegate(cross(cur), carolAddr3, 15000000, "")
 
 	testing.SetRealm(stakerRealm3)
-	bar.Approve(cross, protocolFeeAddr3, 1000)
-	pf.AddToProtocolFee(cross, barPath3, 1000)
+	bar.Approve(cross(cur), protocolFeeAddr3, 1000)
+	pf.AddToProtocolFee(cross(cur), barPath3, 1000)
 	testing.SkipHeights(10)
 	testing.SetRealm(govStakerRealm3)
-	emission.MintAndDistributeGns(cross)
-	pf.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	pf.DistributeProtocolFee(cross(cur))
 	_, claimableLaunchpadProtocolFees, claimableLaunchpadErr := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
 	if claimableLaunchpadErr != nil {
 		panic(claimableLaunchpadErr)
 	}
 	launchpadClaimableBarBeforeSafe = claimableLaunchpadProtocolFees[barPath3]
 	testing.SetRealm(adminRealm3)
-	bar.Transfer(cross, stakerAddr3, pendingProtocolFeeAmount)
+	bar.Transfer(cross(cur), stakerAddr3, pendingProtocolFeeAmount)
 	testing.SetRealm(stakerRealm3)
-	bar.Approve(cross, protocolFeeAddr3, pendingProtocolFeeAmount)
-	pf.AddToProtocolFee(cross, barPath3, pendingProtocolFeeAmount)
+	bar.Approve(cross(cur), protocolFeeAddr3, pendingProtocolFeeAmount)
+	pf.AddToProtocolFee(cross(cur), barPath3, pendingProtocolFeeAmount)
 	protocolFeeBarBeforeSafe = bar.BalanceOf(protocolFeeAddr3)
 	govStakerBarBeforeSafe = bar.BalanceOf(govStakerAddr3)
 	bobBarBeforeSafe = bar.BalanceOf(bobAddr3)
@@ -168,9 +170,9 @@ func setupSafeScenario() {
 	ufmt.Println("[INFO] safe mode collect paths prepared")
 }
 
-func setSafeModeForCollect() {
+func setSafeModeForCollect(cur realm) {
 	testing.SetRealm(adminRealm3)
-	halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 	ufmt.Printf("[INFO] Position halted: %t\n", halt.IsHaltedPosition())
 	ufmt.Printf("[INFO] Staker halted: %t\n", halt.IsHaltedStaker())
 	ufmt.Printf("[INFO] GovStaker halted: %t\n", halt.IsHaltedGovStaker())
@@ -178,82 +180,82 @@ func setSafeModeForCollect() {
 	ufmt.Printf("[INFO] Withdraw halted: %t\n", halt.IsHaltedWithdraw())
 }
 
-func testCollectsBlockedInSafeMode() {
+func testCollectsBlockedInSafeMode(cur realm) {
 	testing.SetRealm(aliceRealm3)
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		position.DecreaseLiquidity(cross, positionCollectID3, "1000000", "0", "0", time.Now().Unix()+3600)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		position.DecreaseLiquidity(cross(cur), positionCollectID3, "1000000", "0", "0", time.Now().Unix()+3600)
 	})
 	ufmt.Println("[EXPECTED] position decrease liquidity blocked by withdraw halt")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		position.CollectFee(cross, positionCollectID3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		position.CollectFee(cross(cur), positionCollectID3)
 	})
 	ufmt.Println("[EXPECTED] position collect fee blocked by withdraw halt")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		pool.Burn(cross, barPath3, fooPath3, fee3, -960, 960, "1000000", aliceAddr3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		pool.Burn(cross(cur), barPath3, fooPath3, fee3, -960, 960, "1000000", aliceAddr3)
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		pool.Collect(cross, barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		pool.Collect(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		pool.HandleWithdrawalFee(cross, barPath3, "1", fooPath3, "1", aliceAddr3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		pool.HandleWithdrawalFee(cross(cur), barPath3, "1", fooPath3, "1", aliceAddr3)
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		pool.CollectProtocol(cross, barPath3, fooPath3, fee3, aliceAddr3, "1", "1")
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		pool.CollectProtocol(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, "1", "1")
 	})
 	ufmt.Println("[EXPECTED] pool withdraw helpers blocked by withdraw halt")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		staker.CollectReward(cross, stakerPositionID3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		staker.CollectReward(cross(cur), stakerPositionID3)
 	})
 	ufmt.Println("[EXPECTED] staker collect reward blocked by withdraw halt")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		staker.UnStakeToken(cross, stakerPositionID3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		staker.UnStakeToken(cross(cur), stakerPositionID3)
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		staker.EndExternalIncentive(cross, barPath3+":"+fooPath3+":3000", "missing", aliceAddr3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		staker.EndExternalIncentive(cross(cur), barPath3+":"+fooPath3+":3000", "missing", aliceAddr3)
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		staker.CollectExternalIncentivePenalty(cross, barPath3+":"+fooPath3+":3000", "missing", aliceAddr3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		staker.CollectExternalIncentivePenalty(cross(cur), barPath3+":"+fooPath3+":3000", "missing", aliceAddr3)
 	})
 	ufmt.Println("[EXPECTED] staker recovery helpers blocked by withdraw halt")
 
 	testing.SetRealm(bobRealm3)
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		govstaker.CollectUndelegatedGns(cross)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		govstaker.CollectUndelegatedGns(cross(cur))
 	})
 	ufmt.Println("[EXPECTED] gov staker undelegated collect blocked by withdraw halt")
 
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		govstaker.CollectReward(cross)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		govstaker.CollectReward(cross(cur))
 	})
 	ufmt.Printf("[EXPECTED] gov_staker.CollectReward blocked for bob; BAR before: %d, after: %d\n", bobBarBeforeSafe, bar.BalanceOf(bobAddr3))
 	testing.SetRealm(carolRealm3)
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		govstaker.CollectReward(cross)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		govstaker.CollectReward(cross(cur))
 	})
 	ufmt.Printf("[EXPECTED] gov_staker.CollectReward blocked for carol; BAR before: %d, after: %d\n", carolBarBeforeSafe, bar.BalanceOf(carolAddr3))
 	testing.SetRealm(bobRealm3)
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		govstaker.CollectRewardFromLaunchPad(cross, bobAddr3)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		govstaker.CollectRewardFromLaunchPad(cross(cur), bobAddr3)
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		govstaker.SetAmountByProjectWallet(cross, bobAddr3, 1, false)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		govstaker.SetAmountByProjectWallet(cross(cur), bobAddr3, 1, false)
 	})
 	ufmt.Println("[EXPECTED] gov staker launchpad reward collect blocked by withdraw halt")
 
 	testing.SetRealm(govStakerRealm3)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 	uassert.Equal(t, protocolFeeBarBeforeSafe, bar.BalanceOf(protocolFeeAddr3))
 	uassert.Equal(t, govStakerBarBeforeSafe, bar.BalanceOf(govStakerAddr3))
 	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee in safe mode preserved protocol fee BAR: %d\n", bar.BalanceOf(protocolFeeAddr3))
 
 	testing.SetRealm(projectRealm3)
 	beforeProjectBarBalance := bar.BalanceOf(projectAddr3)
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		launchpad.CollectProtocolFee(cross)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		launchpad.CollectProtocolFee(cross(cur))
 	})
 	_, claimableLaunchpadProtocolFeesDuringSafe, claimableLaunchpadErrDuringSafe := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
 	if claimableLaunchpadErrDuringSafe != nil {
@@ -262,37 +264,37 @@ func testCollectsBlockedInSafeMode() {
 	uassert.Equal(t, launchpadClaimableBarBeforeSafe, claimableLaunchpadProtocolFeesDuringSafe[barPath3])
 	uassert.Equal(t, beforeProjectBarBalance, bar.BalanceOf(projectAddr3))
 	ufmt.Println("[EXPECTED] launchpad collect protocol fee blocked by withdraw halt")
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		launchpad.CollectDepositGns(cross, "1")
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		launchpad.CollectDepositGns(cross(cur), "1")
 	})
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		launchpad.CollectRewardByDepositId(cross, "1")
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		launchpad.CollectRewardByDepositId(cross(cur), "1")
 	})
 	ufmt.Println("[EXPECTED] launchpad withdrawal helpers blocked by withdraw halt")
 
 	testing.SetRealm(testing.NewUserRealm(govStakerAddr3))
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		xgns.Burn(cross, bobAddr3, 1)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		xgns.Burn(cross(cur), bobAddr3, 1)
 	})
 	ufmt.Println("[EXPECTED] xGNS burn blocked by withdraw halt")
 
 	testing.SetRealm(testing.NewUserRealm(communityPoolAddr3))
-	uassert.AbortsContains(t, "halted: withdraw", func() {
-		communitypool.TransferToken(cross, barPath3, bobAddr3, 1)
+	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
+		communitypool.TransferToken(cross(cur), barPath3, bobAddr3, 1)
 	})
 	ufmt.Println("[EXPECTED] community pool transfer blocked by withdraw halt")
 }
 
-func setEmergencyModeForProtocolFeeCollect() {
+func setEmergencyModeForProtocolFeeCollect(cur realm) {
 	testing.SetRealm(adminRealm3)
-	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 	ufmt.Printf("[INFO] GovStaker halted: %t\n", halt.IsHaltedGovStaker())
 	ufmt.Printf("[INFO] Withdraw halted: %t\n", halt.IsHaltedWithdraw())
 }
 
-func testDelegatedProtocolFeeCollectAllowedInEmergencyMode() {
+func testDelegatedProtocolFeeCollectAllowedInEmergencyMode(cur realm) {
 	testing.SetRealm(govStakerRealm3)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 	uassert.Equal(t, protocolFeeBarBeforeSafe-pendingProtocolFeeAmount, bar.BalanceOf(protocolFeeAddr3))
 	uassert.Equal(t, govStakerBarBeforeSafe+pendingProtocolFeeAmount, bar.BalanceOf(govStakerAddr3))
 	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee distributed BAR in emergency mode: %d\n", pendingProtocolFeeAmount)
@@ -302,7 +304,7 @@ func testDelegatedProtocolFeeCollectAllowedInEmergencyMode() {
 	if bobClaimableErr != nil {
 		panic(bobClaimableErr)
 	}
-	govstaker.CollectReward(cross)
+	govstaker.CollectReward(cross(cur))
 	bobBarAfterCollect := bar.BalanceOf(bobAddr3)
 	uassert.True(t, bobProtocolFeeRewards[barPath3] > 0)
 	uassert.Equal(t, bobProtocolFeeRewards[barPath3], bobBarAfterCollect-bobBarBeforeSafe)
@@ -313,7 +315,7 @@ func testDelegatedProtocolFeeCollectAllowedInEmergencyMode() {
 	if carolClaimableErr != nil {
 		panic(carolClaimableErr)
 	}
-	govstaker.CollectReward(cross)
+	govstaker.CollectReward(cross(cur))
 	carolBarAfterCollect := bar.BalanceOf(carolAddr3)
 	uassert.True(t, carolProtocolFeeRewards[barPath3] > 0)
 	uassert.Equal(t, carolProtocolFeeRewards[barPath3], carolBarAfterCollect-carolBarBeforeSafe)
@@ -330,12 +332,12 @@ func testDelegatedProtocolFeeCollectAllowedInEmergencyMode() {
 	}
 	uassert.True(t, claimableLaunchpadBarAfterDisable > 0)
 	beforeProjectBarBalance := bar.BalanceOf(projectAddr3)
-	launchpad.CollectProtocolFee(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 	uassert.Equal(t, beforeProjectBarBalance+claimableLaunchpadBarAfterDisable, bar.BalanceOf(projectAddr3))
 	ufmt.Printf("[EXPECTED] launchpad.CollectProtocolFee BAR claimable: %d, collected delta: %d\n", claimableLaunchpadBarAfterDisable, bar.BalanceOf(projectAddr3)-beforeProjectBarBalance)
 }
 
-func positionIdFromSafe(positionId any) grc721.TokenID {
+func positionIdFromSafe(cur realm, positionId any) grc721.TokenID {
 	switch positionId.(type) {
 	case int:
 		return grc721.TokenID(strconv.Itoa(positionId.(int)))

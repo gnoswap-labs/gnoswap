@@ -19,18 +19,18 @@ func newDelegation() *Delegation {
 	return delegation
 }
 
-func TestMutableGovStakerGetterIsolation(t *testing.T) {
+func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setup     func(m *MockGovStaker)
-		getter    func(t *testing.T) any
+		getter    func(cur realm, t *testing.T) any
 		mutate    func(result any)
 		assertRaw func(t *testing.T, m *MockGovStaker)
 	}{
 		{
 			name: "GetDelegation",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegation", newDelegation(), nil) },
-			getter: func(t *testing.T) any {
+			getter: func(cur realm, t *testing.T) any {
 				delegation, err := GetDelegation(1)
 				uassert.NoError(t, err)
 				return delegation
@@ -55,7 +55,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetDelegationIDs",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationIDs", []int64{1, 2}) },
-			getter: func(t *testing.T) any { return GetDelegationIDs(0, 10) },
+			getter: func(cur realm, t *testing.T) any { return GetDelegationIDs(0, 10) },
 			mutate: func(result any) {
 				values := result.([]int64)
 				values[0] = 99
@@ -70,7 +70,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetDelegatorDelegateeAddresses",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegatorDelegateeAddresses", []address{adminAddr}) },
-			getter: func(t *testing.T) any { return GetDelegatorDelegateeAddresses(adminAddr, 0, 10) },
+			getter: func(cur realm, t *testing.T) any { return GetDelegatorDelegateeAddresses(adminAddr, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]address)
 				values[0] = address("g1test")
@@ -85,7 +85,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetUserDelegationIDs",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetUserDelegationIDs", []int64{3, 4}) },
-			getter: func(t *testing.T) any { return GetUserDelegationIDs(adminAddr, adminAddr) },
+			getter: func(cur realm, t *testing.T) any { return GetUserDelegationIDs(adminAddr, adminAddr) },
 			mutate: func(result any) {
 				values := result.([]int64)
 				values[0] = 88
@@ -100,7 +100,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetClaimableRewardByAddress",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByAddress", int64(10), map[string]int64{"foo": 1}) },
-			getter: func(t *testing.T) any {
+			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByAddress(adminAddr)
 				uassert.NoError(t, err)
 				return rewards
@@ -120,7 +120,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetClaimableRewardByLaunchpad",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByLaunchpad", int64(10), map[string]int64{"foo": 1}) },
-			getter: func(t *testing.T) any {
+			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByLaunchpad(adminAddr)
 				uassert.NoError(t, err)
 				return rewards
@@ -140,7 +140,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetClaimableRewardByRewardID",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByRewardID", int64(10), map[string]int64{"foo": 1}) },
-			getter: func(t *testing.T) any {
+			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByRewardID("reward-1")
 				uassert.NoError(t, err)
 				return rewards
@@ -160,7 +160,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetProtocolFeeAccumulatedX128PerStake",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetProtocolFeeAccumulatedX128PerStake", u256.MustFromDecimal("1000")) },
-			getter: func(t *testing.T) any { return GetProtocolFeeAccumulatedX128PerStake("token") },
+			getter: func(cur realm, t *testing.T) any { return GetProtocolFeeAccumulatedX128PerStake("token") },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
 				value := m.Response.data["GetProtocolFeeAccumulatedX128PerStake"][0].(*u256.Uint)
@@ -170,7 +170,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetEmissionAccumulatedX128PerStake",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetEmissionAccumulatedX128PerStake", u256.MustFromDecimal("3000")) },
-			getter: func(t *testing.T) any { return GetEmissionAccumulatedX128PerStake() },
+			getter: func(cur realm, t *testing.T) any { return GetEmissionAccumulatedX128PerStake() },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
 				value := m.Response.data["GetEmissionAccumulatedX128PerStake"][0].(*u256.Uint)
@@ -180,7 +180,7 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		{
 			name: "GetDelegationWithdraws",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationWithdraws", []DelegationWithdraw{newDelegationWithdraw()}, nil) },
-			getter: func(t *testing.T) any {
+			getter: func(cur realm, t *testing.T) any {
 				withdraws, err := GetDelegationWithdraws(1, 0, 10)
 				uassert.NoError(t, err)
 				return withdraws
@@ -201,12 +201,12 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			mockGovStaker := newMockGovStaker("v1")
 			implementation = mockGovStaker
 			tt.setup(mockGovStaker)
-			result := tt.getter(t)
+			result := tt.getter(cur, t)
 			tt.mutate(result)
 			tt.assertRaw(t, mockGovStaker)
 		})

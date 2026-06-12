@@ -10,7 +10,7 @@ import (
 
 // TestTierAllocationNoLeftover verifies that all deposit amounts are fully allocated
 // to tiers without any leftover due to percentage truncation
-func TestTierAllocationNoLeftover(t *testing.T) {
+func TestTierAllocationNoLeftover(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		depositAmount int64
@@ -70,7 +70,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestStore()
 			lp := getTestImplementation()
 
@@ -78,8 +78,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 			currentHeight := int64(100)
 			testing.SetHeight(currentHeight)
 
-			project, err := lp.createProject(
-				&createProjectParams{
+			project, err := lp.createProject(0, cur, &createProjectParams{
 					name:          "Test Project",
 					tokenPath:     "gno.land/r/onbloc/obl",
 					depositAmount: tt.depositAmount,
@@ -97,7 +96,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 			projects := lp.store.GetProjects()
 			projects.Set(project.ID(), project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 
 			// get all tiers and calculate total allocated
 			tier30, _ := getProjectTier(project, 30)
@@ -130,7 +129,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 }
 
 // TestTierAllocationRemainder specifically tests the remainder handling logic
-func TestTierAllocationRemainder(t *testing.T) {
+func TestTierAllocationRemainder(cur realm, t *testing.T) {
 	resetTestStore()
 	lp := getTestImplementation()
 
@@ -142,8 +141,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 	// 1000 / 3 = 333.33... which truncates to 333
 	depositAmount := int64(1000)
 
-	project, err := lp.createProject(
-		&createProjectParams{
+	project, err := lp.createProject(0, cur, &createProjectParams{
 			name:          "Remainder Test",
 			tokenPath:     "gno.land/r/onbloc/obl",
 			depositAmount: depositAmount,
@@ -161,7 +159,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)
-	lp.store.SetProjects(projects)
+	lp.store.SetProjects(0, cur, projects)
 
 	tier30, _ := getProjectTier(project, 30)
 	tier90, _ := getProjectTier(project, 90)

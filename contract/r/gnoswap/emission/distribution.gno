@@ -2,12 +2,13 @@ package emission
 
 import (
 	"chain"
-	"chain/runtime"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -93,7 +94,7 @@ func ChangeDistributionPct(
 ) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionPct(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
@@ -101,25 +102,25 @@ func ChangeDistributionPct(
 	// Distribute accumulated emissions with current ratios before changing ratios.
 	// This prevents retroactive application of new ratios to emissions that occurred
 	// under previous ratio configurations.
-	MintAndDistributeGns(cross)
+	MintAndDistributeGns(cur)
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
 		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
 
 	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"liquidityStakerPct", formatInt(liquidityStakerPct),
-		"devOpsPct", formatInt(devOpsPct),
-		"communityPoolPct", formatInt(communityPoolPct),
-		"govStakerPct", formatInt(govStakerPct),
+		"liquidityStakerPct", utils.FormatInt(liquidityStakerPct),
+		"devOpsPct", utils.FormatInt(devOpsPct),
+		"communityPoolPct", utils.FormatInt(communityPoolPct),
+		"govStakerPct", utils.FormatInt(govStakerPct),
 	)
 }
 
@@ -142,10 +143,10 @@ func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 		}
 
 		distributable[target] = distAmount
-		totalSent = safeAddInt64(totalSent, distAmount)
+		totalSent = gnsmath.SafeAddInt64(totalSent, distAmount)
 	}
 
-	leftAmount := safeSubInt64(amount, totalSent)
+	leftAmount := gnsmath.SafeSubInt64(amount, totalSent)
 	return distributable, leftAmount
 }
 
@@ -177,23 +178,23 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 
 		switch target {
 		case LIQUIDITY_STAKER:
-			distributedToStaker = safeAddInt64(distributedToStaker, amount)
-			accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
+			distributedToStaker = gnsmath.SafeAddInt64(distributedToStaker, amount)
+			accuDistributedToStaker = gnsmath.SafeAddInt64(accuDistributedToStaker, amount)
 			addr = access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 		case DEVOPS:
-			distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
-			accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
+			distributedToDevOps = gnsmath.SafeAddInt64(distributedToDevOps, amount)
+			accuDistributedToDevOps = gnsmath.SafeAddInt64(accuDistributedToDevOps, amount)
 			addr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 		case COMMUNITY_POOL:
-			distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
-			accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
+			distributedToCommunityPool = gnsmath.SafeAddInt64(distributedToCommunityPool, amount)
+			accuDistributedToCommunityPool = gnsmath.SafeAddInt64(accuDistributedToCommunityPool, amount)
 			addr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 		case GOV_STAKER:
-			distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
-			accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
+			distributedToGovStaker = gnsmath.SafeAddInt64(distributedToGovStaker, amount)
+			accuDistributedToGovStaker = gnsmath.SafeAddInt64(accuDistributedToGovStaker, amount)
 			addr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 		default:
@@ -203,15 +204,15 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 			)
 		}
 
-		amountByAddress[addr] = safeAddInt64(amountByAddress[addr], amount)
+		amountByAddress[addr] = gnsmath.SafeAddInt64(amountByAddress[addr], amount)
 	}
 
 	return amountByAddress, nil
 }
 
-func transferToTarget(targets map[address]int64) error {
+func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 	for address, amount := range targets {
-		gns.Transfer(cross, address, amount)
+		gns.Transfer(cross(rlm), address, amount)
 	}
 
 	return nil
@@ -296,10 +297,14 @@ func GetStakerEmissionAmountPerSecond() int64 {
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
 func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
-	halvingBlocks, halvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
+	gnsHalvingBlocks, gnsHalvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
+	halvingBlocks := make([]int64, len(gnsHalvingBlocks))
+	halvingEmissions := make([]int64, len(gnsHalvingEmissions))
+
 	for i := range halvingBlocks {
+		halvingBlocks[i] = gnsHalvingBlocks[i]
 		// Applying staker ratio for past halving blocks
-		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
+		halvingEmissions[i] = calculateAmount(gnsHalvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
 	}
 
 	return halvingBlocks, halvingEmissions
@@ -309,7 +314,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 //
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
 	distributedToStaker = 0
@@ -319,7 +324,7 @@ func ClearDistributedToStaker(cur realm) {
 //
 // Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsGovStaker(caller)
 	distributedToGovStaker = 0
 }

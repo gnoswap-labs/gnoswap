@@ -3,11 +3,14 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -68,45 +71,46 @@ type LiquidityScenario struct {
 	expectedBehavior string
 }
 
-func setupStablecoinPool(t *testing.T) *pl.Pool {
+func setupStablecoinPool(cur realm, t *testing.T) *pl.Pool {
 	t.Helper()
-	initPoolTest(t)
+	initPoolTest(cur, t)
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	// BAR-BAZ: Stablecoin pair simulation (low fee)
-	mockInstanceCreatePool(barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
 	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier100))
 	return pool
 }
 
-func setupVolatilePool(t *testing.T) *pl.Pool {
+func setupVolatilePool(cur realm, t *testing.T) *pl.Pool {
 	t.Helper()
-	initPoolTest(t)
+	initPoolTest(cur, t)
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	// FOO-BAR: Volatile token pair (high fee)
-	mockInstanceCreatePool(barTokenPath, fooTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barTokenPath, fooTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 
 	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000))
 	return pool
 }
 
-func addLiquidityWithValidation(t *testing.T, pool *pl.Pool, scenario LiquidityScenario) (string, string) {
+func addLiquidityWithValidation(cur realm, t *testing.T, pool *pl.Pool, scenario LiquidityScenario) (string, string) {
 	// Save state before adding liquidity
 	beforeLiquidity := new(u256.Uint).Set(pool.Liquidity())
 	beforeBalance0 := getTokenBalance(t, pool.Token0Path(), poolAddr)
 	beforeBalance1 := getTokenBalance(t, pool.Token1Path(), poolAddr)
 
 	// Approve tokens for pool
-	approveTokensForPool(t, pool)
+	approveTokensForPool(cur, t, pool)
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
 
-	amount0, amount1 := mockInstanceMint(
+	amount0, amount1 := mockInstanceMint2(
+		cur,
 		pool.Token0Path(),
 		pool.Token1Path(),
 		pool.Fee(),
@@ -153,21 +157,21 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 			expectedTick, timeElapsed, actualIncrease))
 }
 
-func TestPriceCumulative_BusinessScenarios(t *testing.T) {
+func TestPriceCumulative_BusinessScenarios(cur realm, t *testing.T) {
 	scenarios := []struct {
 		name        string
 		description string
-		setupEnv    func() *PoolTestEnv
+		setupEnv    func(cur realm) *PoolTestEnv
 		timeElapsed int64
 		context     string
 	}{
 		{
 			name:        "stablecoin_pair_hourly_accumulation",
 			description: "Stablecoin pair's 1-hour price accumulation",
-			setupEnv: func() *PoolTestEnv {
+			setupEnv: func(cur realm) *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+					GivenPoolCreated(cur, barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
 			},
 			timeElapsed: ONE_HOUR,
 			context:     "Precise accumulation is important for high-volume stablecoin pairs",
@@ -175,10 +179,10 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 		{
 			name:        "volatile_pair_minute_precision",
 			description: "Volatile token's minute-level precise accumulation",
-			setupEnv: func() *PoolTestEnv {
+			setupEnv: func(cur realm) *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(fooPath, barPath, FeeTier3000, VOLATILE_PRICE_RATIO)
+					GivenPoolCreated(cur, fooPath, barPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 			},
 			timeElapsed: ONE_MINUTE,
 			context:     "Precise accumulation is important even for fast price volatility",
@@ -186,10 +190,10 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 		{
 			name:        "daily_accumulation_stability",
 			description: "Daily accumulation stability verification",
-			setupEnv: func() *PoolTestEnv {
+			setupEnv: func(cur realm) *PoolTestEnv {
 				return NewPoolTestEnv(t).
 					AsAdmin().
-					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+					GivenPoolCreated(cur, barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
 			},
 			timeElapsed: ONE_DAY,
 			context:     "Avoid overflows and precision loss in long-term accumulation",
@@ -197,9 +201,9 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			// Given: Pool with specific business context using DSL
-			env := scenario.setupEnv()
+			env := scenario.setupEnv(cur)
 			pool := env.pools[GetPoolPath(barPath, bazPath, FeeTier100)]
 			if pool == nil {
 				pool = env.pools[GetPoolPath(fooPath, barPath, FeeTier3000)]
@@ -211,12 +215,12 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 
 			// Then: Business logic should work exactly as expected
 			t.Logf("✓ %s: %s", scenario.description, scenario.context)
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
 
-func TestLiquidityManagement_ProviderStrategies(t *testing.T) {
+func TestLiquidityManagement_ProviderStrategies(cur realm, t *testing.T) {
 	strategies := []LiquidityScenario{
 		{
 			name:             "concentrated_liquidity_strategy",
@@ -245,12 +249,12 @@ func TestLiquidityManagement_ProviderStrategies(t *testing.T) {
 	}
 
 	for _, strategy := range strategies {
-		t.Run(strategy.name, func(t *testing.T) {
+		t.Run(strategy.name, func(cur realm, t *testing.T) {
 			// Given: Volatile token pool
-			pool := setupVolatilePool(t)
+			pool := setupVolatilePool(cur, t)
 
 			// When: Provide liquidity with specific strategy
-			amount0, amount1 := addLiquidityWithValidation(t, pool, strategy)
+			amount0, amount1 := addLiquidityWithValidation(cur, t, pool, strategy)
 
 			// Then: Verify result matches strategy
 			validateLiquidityStrategy(t, pool, strategy, amount0, amount1)
@@ -260,12 +264,12 @@ func TestLiquidityManagement_ProviderStrategies(t *testing.T) {
 	}
 }
 
-func TestMint_SecurityAndValidation(t *testing.T) {
+func TestMint_SecurityAndValidation(cur realm, t *testing.T) {
 	securityTests := []struct {
 		name           string
 		description    string
-		setupCondition func(t *testing.T) *pl.Pool
-		action         func(t *testing.T, pool *pl.Pool)
+		setupCondition func(cur realm, t *testing.T) *pl.Pool
+		action         func(cur realm, t *testing.T, pool *pl.Pool)
 		expectedResult string
 		securityRisk   string
 	}{
@@ -273,13 +277,13 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 			name:           "prevent_zero_liquidity_exploit",
 			description:    "Prevent zero liquidity position creation attempt",
 			setupCondition: setupStablecoinPool,
-			action: func(t *testing.T, pool *pl.Pool) {
-				approveTokensForPool(t, pool)
+			action: func(cur realm, t *testing.T, pool *pl.Pool) {
+				approveTokensForPool(cur, t, pool)
 				testing.SetRealm(posRealm)
 
 				expectedAbortMsg := "[GNOSWAP-POOL-007] zero liquidity"
-				uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
-					mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				uassert.AbortsWithMessage(t, cur, expectedAbortMsg, func() {
+					mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, "0", adminAddr)
 				})
 			},
@@ -290,8 +294,8 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 			name:           "prevent_invalid_tick_range",
 			description:    "Prevent error due to invalid tick range",
 			setupCondition: setupVolatilePool,
-			action: func(t *testing.T, pool *pl.Pool) {
-				approveTokensForPool(t, pool)
+			action: func(cur realm, t *testing.T, pool *pl.Pool) {
+				approveTokensForPool(cur, t, pool)
 				testing.SetRealm(posRealm)
 
 				tickLower := int32(100)
@@ -299,10 +303,10 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 
 				// tickLower > tickUpper
 				expectedAbortMsg := "[GNOSWAP-POOL-017] invalid tick and tick spacing requested"
-				uassert.AbortsContains(t,
+				uassert.AbortsContains(t, cur,
 					expectedAbortMsg,
 					func() {
-						mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+						mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 							tickLower, tickUpper, SMALL_LIQUIDITY, adminAddr)
 					})
 			},
@@ -313,8 +317,8 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 			name:           "liquidity_overflow_protection",
 			description:    "Prevent liquidity overflow attack",
 			setupCondition: setupStablecoinPool,
-			action: func(t *testing.T, pool *pl.Pool) {
-				approveTokensForPool(t, pool)
+			action: func(cur realm, t *testing.T, pool *pl.Pool) {
+				approveTokensForPool(cur, t, pool)
 				testing.SetRealm(posRealm)
 
 				// Maximum allowed liquidity overflow attempt
@@ -325,9 +329,9 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 					"[GNOSWAP-POOL-006] invalid liquidity calculated || liquidityGrossAfter(%s) overflows maxLiquidity(%s)",
 					overflowAmount, maxLiquidity.ToString(),
 				)
-				uassert.AbortsWithMessage(t, expectedAbortMsg,
+				uassert.AbortsWithMessage(t, cur, expectedAbortMsg,
 					func() {
-						mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+						mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 							NARROW_RANGE_LOWER, NARROW_RANGE_UPPER,
 							overflowAmount, adminAddr)
 					})
@@ -338,22 +342,22 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 	}
 
 	for _, test := range securityTests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Given: Set up security test conditions
-			pool := test.setupCondition(t)
+			pool := test.setupCondition(cur, t)
 
 			// When: Execute security risk scenario
-			test.action(t, pool)
+			test.action(cur, t, pool)
 
 			// Then: Verify appropriate security measures
 			t.Logf("✓ %s: %s - %s", test.description, test.expectedResult, test.securityRisk)
 
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
 
-func TestBurn_LiquidityWithdrawalScenarios(t *testing.T) {
+func TestBurn_LiquidityWithdrawalScenarios(cur realm, t *testing.T) {
 	withdrawalScenarios := []struct {
 		name             string
 		description      string
@@ -389,21 +393,21 @@ func TestBurn_LiquidityWithdrawalScenarios(t *testing.T) {
 	}
 
 	for _, scenario := range withdrawalScenarios {
-		t.Run(scenario.name, func(t *testing.T) {
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			// Given: Set up pool with liquidity
-			pool := setupStablecoinPool(t)
-			approveTokensForPool(t, pool)
+			pool := setupStablecoinPool(cur, t)
+			approveTokensForPool(cur, t, pool)
 
 			// Add initial liquidity
 			testing.SetRealm(posRealm)
-			mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 				scenario.initialLiquidity, adminAddr)
 
 			beforeLiquidity := new(u256.Uint).Set(pool.Liquidity())
 
 			// When: Withdraw specified amount of liquidity
-			amount0, amount1 := mockInstanceBurn(
+			amount0, amount1 := mockInstanceBurn(0, cur,
 				pool.Token0Path(),
 				pool.Token1Path(),
 				pool.Fee(),
@@ -430,12 +434,12 @@ func TestBurn_LiquidityWithdrawalScenarios(t *testing.T) {
 			t.Logf("✓ %s: %s (Token0: %s, Token1: %s)",
 				scenario.description, scenario.businessContext, amount0, amount1)
 
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
 
-func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
+func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) {
 	edgeCases := []struct {
 		name             string
 		description      string
@@ -475,26 +479,25 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range edgeCases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Set up pool with specific conditions
-			pool := &pl.Pool{}
+			pool := pl.NewPool(fooTokenPath, barTokenPath, FeeTier3000, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 100, tt.initialTick, 0)
 
-			slot0 := pl.Slot0{}
-			slot0.SetSqrtPriceX96(u256.MustFromDecimal(EQUAL_PRICE_RATIO))
-			slot0.SetTick(tt.initialTick)
+			slot0 := pl.NewSlot0(u256.MustFromDecimal(EQUAL_PRICE_RATIO), tt.initialTick, 0, true)
 			pool.SetSlot0(slot0)
 
-			observationState := &pl.ObservationState{}
+			observationState := pl.NewObservationState(100)
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
 			observationState.SetCardinalityNext(1)
-			obs := &pl.Observation{}
-			obs.SetBlockTimestamp(100)
-			obs.SetTickCumulative(5000000000)
-			obs.SetLiquidityCumulative("3000000")
-			obs.SetSecondsPerLiquidityCumulativeX128("0")
-			obs.SetInitialized(true)
-			observationState.SetObservations(map[uint16]*pl.Observation{0: obs})
+			obs := pl.NewObservation(
+				100,
+				5000000000,
+				"3000000",
+				"0",
+				true,
+			)
+			observationState.SetObservation(0, obs)
 			pool.SetObservationState(observationState)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
@@ -542,27 +545,27 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 	}
 }
 
-func TestAccessControl_AuthorizationValidation(t *testing.T) {
+func TestAccessControl_AuthorizationValidation(cur realm, t *testing.T) {
 	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 	authTests := []struct {
 		name          string
 		description   string
-		action        func(t *testing.T)
+		action        func(cur realm, t *testing.T)
 		expectedError string
 		securityRisk  string
 	}{
 		{
 			name:        "unauthorized_mint_attempt",
 			description: "Unauthorized mint attempt",
-			action: func(t *testing.T) {
-				pool := setupStablecoinPool(t)
-				approveTokensForPool(t, pool)
+			action: func(cur realm, t *testing.T) {
+				pool := setupStablecoinPool(cur, t)
+				approveTokensForPool(cur, t, pool)
 
 				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not position", unauthorizedAddr.String())
-				uassert.AbortsWithMessage(t, expectedMsg, func() {
-					mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				uassert.AbortsWithMessage(t, cur, expectedMsg, func() {
+					mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, MEDIUM_LIQUIDITY, unauthorizedAddr)
 				})
 			},
@@ -572,13 +575,13 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 		{
 			name:        "unauthorized_protocol_fee_collection",
 			description: "Unauthorized protocol fee collection attempt",
-			action: func(t *testing.T) {
-				pool := setupStablecoinPool(t)
+			action: func(cur realm, t *testing.T) {
+				pool := setupStablecoinPool(cur, t)
 
 				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not admin or governance", unauthorizedAddr.String())
-				uassert.AbortsWithMessage(t, expectedMsg, func() {
-					mockInstanceCollectProtocol(
+				uassert.AbortsWithMessage(t, cur, expectedMsg, func() {
+					mockInstanceCollectProtocol(0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						unauthorizedAddr, "100", "100",
 					)
@@ -590,15 +593,15 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 	}
 
 	for _, test := range authTests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			// When & Then: Execute authorization validation
-			test.action(t)
+			test.action(cur, t)
 			t.Logf("✓ %s: %s (Security risk: %s)", test.description, test.expectedError, test.securityRisk)
 		})
 	}
 }
 
-func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
+func TestPoolCreation_ValidationAndInitialization(cur realm, t *testing.T) {
 	creationTests := []struct {
 		name            string
 		description     string
@@ -665,15 +668,15 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 	}
 
 	for _, test := range creationTests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Setup
-			initPoolTest(t)
+			initPoolTest(cur, t)
 			testing.SetRealm(adminRealm)
-			mockInstanceSetPoolCreationFee(0)
+			mockInstanceSetPoolCreationFee(0, cur, 0)
 
 			if test.expectSuccess {
 				// When: Expected pool creation success
-				mockInstanceCreatePool(test.token0Path, test.token1Path, test.fee, test.sqrtPriceX96)
+				mockInstanceCreatePool(0, cur, test.token0Path, test.token1Path, test.fee, test.sqrtPriceX96)
 
 				// Then: Verify pool is correctly initialized
 				poolPath := GetPoolPath(test.token0Path, test.token1Path, test.fee)
@@ -685,8 +688,8 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 				t.Logf("✓ %s: Pool creation success (%s)", test.description, test.businessContext)
 			} else {
 				// When & Then: Expected pool creation failure
-				uassert.AbortsWithMessage(t, test.expectedError, func() {
-					mockInstanceCreatePool(test.token0Path, test.token1Path, test.fee, test.sqrtPriceX96)
+				uassert.AbortsWithMessage(t, cur, test.expectedError, func() {
+					mockInstanceCreatePool(0, cur, test.token0Path, test.token1Path, test.fee, test.sqrtPriceX96)
 				})
 
 				t.Logf("✓ %s: Appropriately rejected (%s)", test.description, test.businessContext)
@@ -695,11 +698,11 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 	}
 }
 
-func TestFeeCollection_RevenueDistribution(t *testing.T) {
+func TestFeeCollection_RevenueDistribution(cur realm, t *testing.T) {
 	feeTests := []struct {
 		name             string
 		description      string
-		setupScenario    func(t *testing.T) (*pl.Pool, address)
+		setupScenario    func(cur realm, t *testing.T) (*pl.Pool, address)
 		collectionAmount map[string]string // token0, token1
 		expectedBehavior string
 		revenueImpact    string
@@ -707,8 +710,8 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_full_available_fees",
 			description: "Collect full available fees",
-			setupScenario: func(t *testing.T) (*pl.Pool, address) {
-				return setupPoolWithTradingActivity(t)
+			setupScenario: func(cur realm, t *testing.T) (*pl.Pool, address) {
+				return setupPoolWithTradingActivity(cur, t)
 			},
 			collectionAmount: map[string]string{"token0": "100", "token1": "100"},
 			expectedBehavior: "Collect only actual fees",
@@ -717,8 +720,8 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_zero_amount",
 			description: "Request to collect 0 fees",
-			setupScenario: func(t *testing.T) (*pl.Pool, address) {
-				return setupPoolWithTradingActivity(t)
+			setupScenario: func(cur realm, t *testing.T) (*pl.Pool, address) {
+				return setupPoolWithTradingActivity(cur, t)
 			},
 			collectionAmount: map[string]string{"token0": "0", "token1": "0"},
 			expectedBehavior: "Nothing collected",
@@ -727,8 +730,8 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_nonexistent_position",
 			description: "Collect fees from nonexistent position",
-			setupScenario: func(t *testing.T) (*pl.Pool, address) {
-				pool := setupStablecoinPool(t)
+			setupScenario: func(cur realm, t *testing.T) (*pl.Pool, address) {
+				pool := setupStablecoinPool(cur, t)
 				recipient := testutils.TestAddress("nonexistent")
 				return pool, recipient
 			},
@@ -739,9 +742,9 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 	}
 
 	for _, test := range feeTests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Given: Set up fee collection scenario
-			pool, recipient := test.setupScenario(t)
+			pool, recipient := test.setupScenario(cur, t)
 
 			// Collect must be called by position realm
 			testing.SetRealm(posRealm)
@@ -754,14 +757,14 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 					"[GNOSWAP-POOL-005] requested data not found || positionKey(%s) does not exist",
 					positionKey,
 				)
-				uassert.AbortsWithMessage(t, expectedError, func() {
-					mockInstanceCollect(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				uassert.AbortsWithMessage(t, cur, expectedError, func() {
+					mockInstanceCollect(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						recipient, tickLower, tickUpper, // Non-existent range
 						test.collectionAmount["token0"], test.collectionAmount["token1"])
 				})
 			} else {
 				// When: Execute
-				amount0, amount1 := mockInstanceCollect(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				amount0, amount1 := mockInstanceCollect(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					recipient, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 					test.collectionAmount["token0"], test.collectionAmount["token1"])
 
@@ -776,16 +779,16 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 					test.description, amount0, amount1, test.revenueImpact)
 			}
 
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
 
-func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
+func TestProtocolFeeManagement_GovernanceControls(cur realm, t *testing.T) {
 	protocolTests := []struct {
 		name             string
 		description      string
-		setupCondition   func(t *testing.T) *pl.Pool
+		setupCondition   func(cur realm, t *testing.T) *pl.Pool
 		feeSettings      map[string]uint32 // protocol fee settings
 		collectionAmount map[string]string
 		expectedOutcome  string
@@ -803,8 +806,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 		{
 			name:        "collect_with_active_protocol_fees",
 			description: "Collect active protocol fees",
-			setupCondition: func(t *testing.T) *pl.Pool {
-				return setupPoolWithProtocolFees(t)
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				return setupPoolWithProtocolFees(cur, t)
 			},
 			feeSettings:      map[string]uint32{"fee0": 10, "fee1": 10},
 			collectionAmount: map[string]string{"amount0": "1000000", "amount1": "1000000"},
@@ -814,8 +817,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 		{
 			name:        "collect_more_than_available",
 			description: "Attempt to collect more than available fees",
-			setupCondition: func(t *testing.T) *pl.Pool {
-				return setupPoolWithProtocolFees(t)
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				return setupPoolWithProtocolFees(cur, t)
 			},
 			feeSettings:      map[string]uint32{"fee0": 10, "fee1": 10},
 			collectionAmount: map[string]string{"amount0": "999999999999999999", "amount1": "999999999999999999"},
@@ -825,14 +828,14 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 	}
 
 	for _, test := range protocolTests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			// Given: Set up protocol fee test conditions
-			pool := test.setupCondition(t)
+			pool := test.setupCondition(cur, t)
 
 			// Set protocol fees
 			testing.SetRealm(adminRealm)
 			if test.feeSettings["fee0"] > 0 || test.feeSettings["fee1"] > 0 {
-				mockInstanceSetFeeProtocol(uint8(test.feeSettings["fee0"]), uint8(test.feeSettings["fee1"]))
+				mockInstanceSetFeeProtocol(0, cur, uint8(test.feeSettings["fee0"]), uint8(test.feeSettings["fee1"]))
 			}
 
 			// Check state before collection
@@ -840,7 +843,7 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 			beforeFees1 := pool.ProtocolFeesToken1()
 
 			// When: Collect
-			amount0, amount1 := mockInstanceCollectProtocol(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			amount0, amount1 := mockInstanceCollectProtocol(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				adminAddr, test.collectionAmount["amount0"], test.collectionAmount["amount1"])
 
 			// Then: Verify collection result
@@ -848,8 +851,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 			afterFees1 := pool.ProtocolFeesToken1()
 
 			// Verify collected amount does not exceed previous balance
-			collected0 := safeConvertToInt64(u256.MustFromDecimal(amount0))
-			collected1 := safeConvertToInt64(u256.MustFromDecimal(amount1))
+			collected0 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount0))
+			collected1 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount1))
 
 			uassert.True(t, collected0 <= beforeFees0,
 				"Collected amount exceeds available fees")
@@ -857,8 +860,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 				"Collected amount exceeds available fees")
 
 			// Verify protocol fees are appropriately decreased
-			expectedAfter0 := safeSubInt64(beforeFees0, collected0)
-			expectedAfter1 := safeSubInt64(beforeFees1, collected1)
+			expectedAfter0 := gnsmath.SafeSubInt64(beforeFees0, collected0)
+			expectedAfter1 := gnsmath.SafeSubInt64(beforeFees1, collected1)
 
 			uassert.Equal(t, expectedAfter0, afterFees0)
 			uassert.Equal(t, expectedAfter1, afterFees1)
@@ -866,102 +869,103 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 			t.Logf("✓ %s: %s (Collected: %s/%s) - %s",
 				test.description, test.expectedOutcome, amount0, amount1, test.governanceImpact)
 
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
 
-func setupPoolWithTradingActivity(t *testing.T) (*pl.Pool, address) {
+func setupPoolWithTradingActivity(cur realm, t *testing.T) (*pl.Pool, address) {
 	t.Helper()
-	initPoolTest(t)
+	initPoolTest(cur, t)
 
 	// Create stablecoin pool
-	pool := setupStablecoinPool(t)
+	pool := setupStablecoinPool(cur, t)
 
 	// Add liquidity
-	approveTokensForPool(t, pool)
+	approveTokensForPool(cur, t, pool)
 	testing.SetRealm(posRealm)
 	recipient := adminAddr
 
-	mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+	mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, recipient)
 
 	// Execute swap for trading activity simulation
-	simulateSwapActivity(t, pool)
+	simulateSwapActivity(cur, t, pool)
 
 	return pool, recipient
 }
 
-func setupPoolWithProtocolFees(t *testing.T) *pl.Pool {
+func setupPoolWithProtocolFees(cur realm, t *testing.T) *pl.Pool {
 	t.Helper()
 
 	// Create pool
-	pool := setupStablecoinPool(t)
+	pool := setupStablecoinPool(cur, t)
 
 	// Set protocol fees
 	testing.SetRealm(adminRealm)
-	mockInstanceSetFeeProtocol(10, 10) // 10% protocol fee
+	mockInstanceSetFeeProtocol(0, cur, 10, 10) // 10% protocol fee
 
 	// Add liquidity and create protocol fees through trading activity
-	approveTokensForPool(t, pool)
+	approveTokensForPool(cur, t, pool)
 	testing.SetRealm(posRealm)
 
-	mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+	mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
 
 	// Create protocol fees through trading activity
-	simulateSwapActivity(t, pool)
+	simulateSwapActivity(cur, t, pool)
 
 	return pool
 }
 
-func simulateSwapActivity(t *testing.T, pool *pl.Pool) {
+func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 	t.Helper()
 
 	// Set tokens and execute swap
 	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
 
 	// Send tokens to router
 	switch pool.Token0Path() {
 	case barTokenPath:
-		bar.Transfer(cross, routerAddr, 20000000)
+		bar.Transfer(cross(cur), routerAddr, 20000000)
 	case bazTokenPath:
-		baz.Transfer(cross, routerAddr, 20000000)
+		baz.Transfer(cross(cur), routerAddr, 20000000)
 	case fooTokenPath:
-		foo.Transfer(cross, routerAddr, 20000000)
+		foo.Transfer(cross(cur), routerAddr, 20000000)
 	}
 
 	switch pool.Token1Path() {
 	case barTokenPath:
-		bar.Transfer(cross, routerAddr, 20000000)
+		bar.Transfer(cross(cur), routerAddr, 20000000)
 	case bazTokenPath:
-		baz.Transfer(cross, routerAddr, 20000000)
+		baz.Transfer(cross(cur), routerAddr, 20000000)
 	case fooTokenPath:
-		foo.Transfer(cross, routerAddr, 20000000)
+		foo.Transfer(cross(cur), routerAddr, 20000000)
 	}
 
 	// Create fees through swap execution
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	approveTokenForRouter(t, pool.Token0Path())
+	approveTokenForRouter(cur, t, pool.Token0Path())
 
-	mockInstanceSwap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+	mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 		})
 
 	testing.SkipHeights(1)
 }
 
-func approveTokenForRouter(t *testing.T, tokenPath string) {
+func approveTokenForRouter(cur realm, t *testing.T, tokenPath string) {
 	t.Helper()
 
 	switch tokenPath {
 	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
+		bar.Approve(cross(cur), poolAddr, maxApprove)
 	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
+		baz.Approve(cross(cur), poolAddr, maxApprove)
 	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
+		foo.Approve(cross(cur), poolAddr, maxApprove)
 	}
 }
 
@@ -983,28 +987,12 @@ func validateLiquidityStrategy(t *testing.T, pool *pl.Pool, strategy LiquiditySc
 	}
 }
 
-func approveTokensForPool(t *testing.T, pool *pl.Pool) {
+func approveTokensForPool(cur realm, t *testing.T, pool *pl.Pool) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	// Approve tokens for pool
-	switch pool.Token0Path() {
-	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
-	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
-	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
-	}
-
-	switch pool.Token1Path() {
-	case fooTokenPath:
-		foo.Approve(cross, poolAddr, maxApprove)
-	case barTokenPath:
-		bar.Approve(cross, poolAddr, maxApprove)
-	case bazTokenPath:
-		baz.Approve(cross, poolAddr, maxApprove)
-	}
+	common.SafeGRC20Approve(cross(cur), pool.Token0Path(), poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross(cur), pool.Token1Path(), poolAddr, maxApprove)
 }
 
 func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
@@ -1023,7 +1011,7 @@ func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	}
 }
 
-func TestCollect(t *testing.T) {
+func TestCollect(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		burnAmount         string
@@ -1083,15 +1071,15 @@ func TestCollect(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Create pool with liquidity and burn to create tokensOwed
-			pool := setupStablecoinPool(t)
-			approveTokensForPool(t, pool)
+			pool := setupStablecoinPool(cur, t)
+			approveTokensForPool(cur, t, pool)
 			testing.SetRealm(posRealm)
 
-			mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
-			mockInstanceBurn(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			mockInstanceBurn(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, tt.burnAmount, adminAddr)
 
 			positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
@@ -1100,8 +1088,8 @@ func TestCollect(t *testing.T) {
 			// When: Collect with specific request amounts
 			testing.SetRealm(posRealm)
 			if tt.expectedPanic {
-				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
-					mockInstanceCollect(
+				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMsg, func() {
+					mockInstanceCollect(0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 						tt.request0, tt.request1,
@@ -1111,7 +1099,7 @@ func TestCollect(t *testing.T) {
 				return
 			}
 
-			amount0, amount1 := mockInstanceCollect(
+			amount0, amount1 := mockInstanceCollect(0, cur,
 				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 				tt.request0, tt.request1,
@@ -1125,9 +1113,9 @@ func TestCollect(t *testing.T) {
 
 			// Verify tokensOwed decreased correctly
 			positionAfter := mustGetPositionByPool(pool, positionKey)
-			uassert.Equal(t, tt.expectedOwed0After, formatInt(positionAfter.TokensOwed0()),
+			uassert.Equal(t, tt.expectedOwed0After, utils.FormatInt(positionAfter.TokensOwed0()),
 				"TokensOwed0 should decrease by collected amount")
-			uassert.Equal(t, tt.expectedOwed1After, formatInt(positionAfter.TokensOwed1()),
+			uassert.Equal(t, tt.expectedOwed1After, utils.FormatInt(positionAfter.TokensOwed1()),
 				"TokensOwed1 should decrease by collected amount")
 
 			// Verify pool balance >= tokensOwed invariant
@@ -1136,10 +1124,10 @@ func TestCollect(t *testing.T) {
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
 				tt.request0, tt.request1,
-				formatInt(positionBefore.TokensOwed0()), formatInt(positionBefore.TokensOwed1()),
+				utils.FormatInt(positionBefore.TokensOwed0()), utils.FormatInt(positionBefore.TokensOwed1()),
 				tt.expectedOwed0After, tt.expectedOwed1After)
 
-			resetObject(t)
+			resetObject(cur, t)
 		})
 	}
 }
@@ -1152,31 +1140,31 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 
 	uassert.True(t, pool.BalanceToken0() >= position.TokensOwed0(),
 		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
-			formatInt(pool.BalanceToken0()), formatInt(position.TokensOwed0())))
+			utils.FormatInt(pool.BalanceToken0()), utils.FormatInt(position.TokensOwed0())))
 	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
-			formatInt(pool.BalanceToken1()), formatInt(position.TokensOwed1())))
+			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
 }
 
-func TestSwap_ZeroOutputAllowed(t *testing.T) {
-	InitialisePoolTest(t)
+func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
+	InitialisePoolTest(cur, t)
 	testing.SetRealm(adminRealm)
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
-	mockInstanceCreatePool(barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(0, cur, barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
 
 	pool := getMockInstance().mustGetPoolBy(barTokenPath, fooTokenPath, 500)
-	approveTokensForPool(t, pool)
+	approveTokensForPool(cur, t, pool)
 
 	testing.SetRealm(posRealm)
-	mockInstanceMint(barTokenPath, fooTokenPath, 500, FULL_RANGE_LOWER, FULL_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceMint(0, cur, barTokenPath, fooTokenPath, 500, FULL_RANGE_LOWER, FULL_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
 
 	slot0Before := pool.Slot0()
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	bar.Approve(cross, poolAddr, 1)
+	bar.Approve(cross(cur), poolAddr, 1)
 
-	amount0, amount1 := mockInstanceSwap(
+	amount0, amount1 := mockInstanceSwap(0, cur,
 		barTokenPath,
 		fooTokenPath,
 		500,
@@ -1186,7 +1174,7 @@ func TestSwap_ZeroOutputAllowed(t *testing.T) {
 		"4295128740",
 		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-			return mockSwapCallback(barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
 		},
 	)
 

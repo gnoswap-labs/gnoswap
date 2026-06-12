@@ -2,13 +2,12 @@ package fuzzutils
 
 import (
 	"strings"
-	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
+func RunFuzzTest(t fuzz.TestingT, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
 	isHandlePanic := true
 	isPrintLog := false
@@ -74,7 +73,7 @@ func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), o
 	printResultLog(t, iterations, result)
 }
 
-func printResultLog(t *testing.T, iterations int, result *Result) {
+func printResultLog(t fuzz.TestingT, iterations int, result *Result) {
 	result.PrintLog(t)
 
 	if result.UnexpectedResultsCount() > 0 {

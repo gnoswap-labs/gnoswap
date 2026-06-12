@@ -8,6 +8,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -18,7 +19,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -75,48 +75,48 @@ var (
 	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and set tier")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. User A creates and stakes position (before tier removal)")
-	userACreatePosition()
+	userACreatePosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Accumulate rewards for User A")
-	accumulateRewardsForUserA()
+	accumulateRewardsForUserA(cur)
 	println()
 
 	println("[SCENARIO] 5. Remove pool from tier")
-	removePoolFromTier()
+	removePoolFromTier(cur)
 	println()
 
 	println("[SCENARIO] 6. User B creates and stakes position (after tier removal)")
-	userBCreatePosition()
+	userBCreatePosition(cur)
 	println()
 
 	println("[SCENARIO] 7. Wait and collect rewards")
-	waitAndCollectRewards()
+	waitAndCollectRewards(cur)
 	println()
 
 	println("[SCENARIO] 8. Verify multi-position scenario")
-	verifyMultiPositionScenario()
+	verifyMultiPositionScenario(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -124,21 +124,21 @@ func initAndSetup() {
 	// Send tokens to users
 	testing.SetRealm(adminRealm)
 	println("[INFO] distribute tokens to users")
-	bar.Transfer(cross, user1Addr, 10000)
-	baz.Transfer(cross, user1Addr, 10000)
-	bar.Transfer(cross, user2Addr, 10000)
-	baz.Transfer(cross, user2Addr, 10000)
+	bar.Transfer(cross(cur), user1Addr, 10000)
+	baz.Transfer(cross(cur), user1Addr, 10000)
+	bar.Transfer(cross(cur), user2Addr, 10000)
+	baz.Transfer(cross(cur), user2Addr, 10000)
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool to tier 2")
-	sr.SetPoolTier(cross, poolPath, 2)
+	sr.SetPoolTier(cross(cur), poolPath, 2)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier: %d (should be 2)\n", currentTier)
@@ -148,17 +148,17 @@ func createPoolAndSetTier() {
 	}
 }
 
-func userACreatePosition() {
+func userACreatePosition(cur realm) {
 	testing.SetRealm(user1Realm)
 
 	println("[INFO] User A approves tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] User A mints position (tick range: -200 ~ 200)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -178,13 +178,13 @@ func userACreatePosition() {
 	ufmt.Printf("[EXPECTED] User A liquidity: %s\n", liquidity)
 
 	println("[INFO] User A approves NFT to staker and stakes position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionA))
-	sr.StakeToken(cross, positionA, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionA))
+	sr.StakeToken(cross(cur), positionA, "")
 
 	println("[INFO] User A position staked successfully")
 }
 
-func accumulateRewardsForUserA() {
+func accumulateRewardsForUserA(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10 blocks to accumulate rewards for User A")
@@ -193,11 +193,11 @@ func accumulateRewardsForUserA() {
 	println("[INFO] User A has accumulated rewards while pool is in tier 2")
 }
 
-func removePoolFromTier() {
+func removePoolFromTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] remove pool from tier system")
-	sr.RemovePoolTier(cross, poolPath)
+	sr.RemovePoolTier(cross(cur), poolPath)
 
 	currentTier := sr.GetPoolTier(poolPath)
 	ufmt.Printf("[EXPECTED] pool tier: %d (should be 0)\n", currentTier)
@@ -207,17 +207,17 @@ func removePoolFromTier() {
 	}
 }
 
-func userBCreatePosition() {
+func userBCreatePosition(cur realm) {
 	testing.SetRealm(user2Realm)
 
 	println("[INFO] User B approves tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] User B mints position (tick range: -100 ~ 100)")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -237,17 +237,17 @@ func userBCreatePosition() {
 	ufmt.Printf("[EXPECTED] User B liquidity: %s\n", liquidity)
 
 	println("[INFO] User B tries to stake position (should fail)")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionB))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionB))
 
 	println("[EXPECTED] User B cannot stake position after tier removal")
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-007] pool is not incentivized", func() {
-		sr.StakeToken(cross, positionB, "")
+	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-007] pool is not incentivized", func() {
+		sr.StakeToken(cross(cur), positionB, "")
 	})
 
 	println("[INFO] confirmed: cannot stake to non-incentivized pool")
 }
 
-func waitAndCollectRewards() {
+func waitAndCollectRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip 10 blocks (no new rewards as tier is 0)")
@@ -257,7 +257,7 @@ func waitAndCollectRewards() {
 	testing.SetRealm(user1Realm)
 	println("[INFO] User A attempts to collect rewards")
 	beforeGnsA := gns.BalanceOf(user1Addr)
-	sr.CollectReward(cross, positionA)
+	sr.CollectReward(cross(cur), positionA)
 	afterGnsA := gns.BalanceOf(user1Addr)
 	rewardUserA = afterGnsA - beforeGnsA
 
@@ -266,7 +266,7 @@ func waitAndCollectRewards() {
 	println("[INFO] User B cannot collect rewards (position not staked)")
 }
 
-func verifyMultiPositionScenario() {
+func verifyMultiPositionScenario(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] verify multi-position scenario")
@@ -284,7 +284,7 @@ func verifyMultiPositionScenario() {
 	println("[INFO] confirmed: positions cannot be staked to non-incentivized pools")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"chain/runtime"
 	"errors"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
@@ -11,7 +10,10 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
+	// Package-init reads use chain/runtime/unsafe.CurrentRealm because there
+	// is no `cur realm` in scope at package-initialization time. The values
+	// captured here describe the gov/staker realm itself, not any caller.
+	currentAddress address
 	domainPath     = "gno.land/r/gnoswap/gov/staker"
 
 	kvStore store.KVStore
@@ -20,7 +22,9 @@ var (
 	implementation IGovStaker
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+
 	// Initialize KVStore
 	kvStore = store.NewKVStore(currentAddress)
 
@@ -29,7 +33,7 @@ func init() {
 	implementation = nil
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewGovStakerStore(kvStore)
 }
 

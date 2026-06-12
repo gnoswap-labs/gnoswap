@@ -43,22 +43,22 @@ var (
 	votingWeightSmoothingDuration = int64(0)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 	votingWeightSmoothingDuration = int64(config.VotingWeightSmoothingDuration)
 
 	println("[SCENARIO] 1. Transfer GNS to alice for delegation")
-	transferGnsToAlice()
+	transferGnsToAlice(cur)
 	println()
 
 	println("[SCENARIO] 2. Check initial voting power (before delegation)")
-	checkVotingPower("alice", aliceAddr)
-	checkVotingPower("bob", bobAddr)
+	checkVotingPower(cur, "alice", aliceAddr)
+	checkVotingPower(cur, "bob", bobAddr)
 	println()
 
 	println("[SCENARIO] 3. Alice delegates GNS to Bob")
-	delegateFromAliceToBob()
+	delegateFromAliceToBob(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip voting weight smoothing duration")
@@ -66,11 +66,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Check voting power after delegation")
-	checkVotingPowerAfterDelegation()
+	checkVotingPowerAfterDelegation(cur)
 	println()
 
 	println("[SCENARIO] 6. Alice undelegates from Bob")
-	undelegateFromBob()
+	undelegateFromBob(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip voting weight smoothing duration for voting power update")
@@ -78,32 +78,32 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Check voting power after undelegation")
-	checkVotingPowerAfterUndelegation()
+	checkVotingPowerAfterUndelegation(cur)
 	println()
 }
 
-func transferGnsToAlice() {
+func transferGnsToAlice(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, aliceAddr, 2_000_000_000)
+	gns.Transfer(cross(cur), aliceAddr, 2_000_000_000)
 	ufmt.Printf("[INFO] transferred 2,000,000,000 GNS to alice\n")
 }
 
-func checkVotingPower(name string, addr address) {
+func checkVotingPower(cur realm, name string, addr address) {
 	votingWeight, _ := gs.GetUserDelegationAmountAtSnapshot(addr, time.Now().Unix()-votingWeightSmoothingDuration)
 	ufmt.Printf("[INFO] %s voting weight: %d\n", name, votingWeight)
 }
 
-func delegateFromAliceToBob() {
+func delegateFromAliceToBob(cur realm) {
 	delegateAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	gns.Approve(cross, govStakerAddr, delegateAmount)
-	gs.Delegate(cross, bobAddr, delegateAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, delegateAmount)
+	gs.Delegate(cross(cur), bobAddr, delegateAmount, "")
 
 	ufmt.Printf("[INFO] alice delegated %d GNS to bob\n", delegateAmount)
 }
 
-func checkVotingPowerAfterDelegation() {
+func checkVotingPowerAfterDelegation(cur realm) {
 	aliceVotingWeight, _ := gs.GetUserDelegationAmountAtSnapshot(aliceAddr, time.Now().Unix()-votingWeightSmoothingDuration)
 	bobVotingWeight, _ := gs.GetUserDelegationAmountAtSnapshot(bobAddr, time.Now().Unix()-votingWeightSmoothingDuration)
 
@@ -116,16 +116,16 @@ func checkVotingPowerAfterDelegation() {
 	}
 }
 
-func undelegateFromBob() {
+func undelegateFromBob(cur realm) {
 	undelegateAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	gs.Undelegate(cross, bobAddr, undelegateAmount)
+	gs.Undelegate(cross(cur), bobAddr, undelegateAmount)
 
 	ufmt.Printf("[INFO] alice undelegated %d GNS from bob\n", undelegateAmount)
 }
 
-func checkVotingPowerAfterUndelegation() {
+func checkVotingPowerAfterUndelegation(cur realm) {
 	aliceVotingWeight, _ := gs.GetUserDelegationAmountAtSnapshot(aliceAddr, time.Now().Unix()-votingWeightSmoothingDuration)
 	bobVotingWeight, _ := gs.GetUserDelegationAmountAtSnapshot(bobAddr, time.Now().Unix()-votingWeightSmoothingDuration)
 

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -39,48 +39,48 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[TEST] Capital Efficiency Boundaries Analysis")
 	println("==================================================")
 
 	// Setup
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Give Alice plenty of tokens
 	largeAmount := int64(1_000_000_000_000_000) // 1e15
-	bar.Transfer(cross, aliceAddr, largeAmount)
-	baz.Transfer(cross, aliceAddr, largeAmount)
+	bar.Transfer(cross(cur), aliceAddr, largeAmount)
+	baz.Transfer(cross(cur), aliceAddr, largeAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, largeAmount)
-	baz.Approve(cross, poolAddr, largeAmount)
-	bar.Approve(cross, positionAddr, largeAmount)
-	baz.Approve(cross, positionAddr, largeAmount)
+	bar.Approve(cross(cur), poolAddr, largeAmount)
+	baz.Approve(cross(cur), poolAddr, largeAmount)
+	bar.Approve(cross(cur), positionAddr, largeAmount)
+	baz.Approve(cross(cur), positionAddr, largeAmount)
 
 	// Test 1: Symmetric large amounts in narrow range
 	println("\n[TEST 1] Symmetric Large Amounts in Narrow Range")
-	testSymmetricNarrowRange()
+	testSymmetricNarrowRange(cur)
 
 	// Test 2: Test different range widths
 	println("\n[TEST 2] Capital Deployment vs Range Width")
-	testRangeWidthEfficiency()
+	testRangeWidthEfficiency(cur)
 
 	// Test 3: Find the actual limits
 	println("\n[TEST 3] Finding Actual Deployment Limits")
-	testActualLimits()
+	testActualLimits(cur)
 }
 
-func testSymmetricNarrowRange() {
+func testSymmetricNarrowRange(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool with tight tick spacing
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100, // 0.01% fee
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -96,7 +96,7 @@ func testSymmetricNarrowRange() {
 	for _, amount := range testAmounts {
 		// Use very narrow range: just 2 ticks
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 100,
 			0, 2, // 2-tick range
 			amount, amount, // SYMMETRIC amounts
@@ -126,16 +126,16 @@ func testSymmetricNarrowRange() {
 	}
 }
 
-func testRangeWidthEfficiency() {
+func testRangeWidthEfficiency(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create new pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -160,7 +160,7 @@ func testRangeWidthEfficiency() {
 
 	for _, r := range ranges {
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			r.lower, r.upper,
 			testAmount, testAmount,
@@ -185,16 +185,16 @@ func testRangeWidthEfficiency() {
 	}
 }
 
-func testActualLimits() {
+func testActualLimits(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create new pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -222,7 +222,7 @@ func testActualLimits() {
 		ufmt.Printf("  Alice balance: bar=%d, baz=%d\n", aliceBar, aliceBaz)
 
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 3000,
 			-60, 60, // Minimum range for fee tier 3000
 			amount, amount,

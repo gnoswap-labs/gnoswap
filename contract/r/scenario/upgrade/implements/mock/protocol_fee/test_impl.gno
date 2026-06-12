@@ -15,8 +15,8 @@ func NewV3ValidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IPro
 	}
 }
 
-func init() {
-	protocolFee.RegisterInitializer(cross, func(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
+func init(cur realm) {
+	protocolFee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
 		return NewV3ValidProtocolFee(store)
 	})
 }
@@ -41,33 +41,33 @@ func (t *TestProtocolFee) ExecuteFn(fnName string, actualFn func(args ...any) an
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() {
+func (t *TestProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	t.ExecuteFn(
 		"DistributeProtocolFee",
-		func(args ...any) any { t.instance.DistributeProtocolFee(); return nil },
+		func(args ...any) any { t.instance.DistributeProtocolFee(0, rlm); return nil },
 	)
 }
 
-func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
+func (t *TestProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	t.ExecuteFn(
 		"SetDevOpsPct",
-		func(args ...any) any { t.instance.SetDevOpsPct(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetDevOpsPct(0, rlm, args[0].(int64)); return nil },
 		pct,
 	)
 }
 
-func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
+func (t *TestProtocolFee) SetGovStakerPct(_ int, rlm realm, pct int64) {
 	t.ExecuteFn(
 		"SetGovStakerPct",
-		func(args ...any) any { t.instance.SetGovStakerPct(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetGovStakerPct(0, rlm, args[0].(int64)); return nil },
 		pct,
 	)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+func (t *TestProtocolFee) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	return t.ExecuteFn(
 		"AddToProtocolFee",
-		func(args ...any) any { return t.instance.AddToProtocolFee(args[0].(string), args[1].(int64)) },
+		func(args ...any) any { return t.instance.AddToProtocolFee(0, rlm, args[0].(string), args[1].(int64)) },
 		tokenPath, amount,
 	).(error)
 }

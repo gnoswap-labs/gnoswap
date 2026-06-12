@@ -1,9 +1,11 @@
 package v1
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 	"strings"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -27,6 +29,10 @@ const (
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
+	// payer identifies the user for dry-run simulations. It is resolved once at
+	// the entry point via unsafe.PreviousRealm since dry-run paths are
+	// read-only and carry no realm value to thread.
+	payer address
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -48,7 +54,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut = p.router.singleDrySwap(&singleParams)
+	amountIn, amountOut = p.router.singleDrySwap(p.payer, &singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -70,7 +76,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	numHops int,
 	amountSpecified int64,
 ) (int64, int64, error) {
-	recipient := runtime.PreviousRealm().Address()
+	recipient := p.payer
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
@@ -78,9 +84,9 @@ func (p *SwapProcessor) ProcessMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(*swapParams, numHops, route)
+		return p.router.multiDrySwap(p.payer, *swapParams, numHops, route)
 	case ExactOut:
-		return p.router.multiDrySwapNegative(*swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(p.payer, *swapParams, numHops, route)
 	default:
 		return 0, 0, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}
@@ -112,7 +118,7 @@ func (p *SwapProcessor) ValidateSwapResults(
 	validator := &SwapValidator{}
 
 	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, safeAbsInt64(amountSpecified), swapCount); err != nil {
+		if err := validator.exactOutAmount(resultAmountOut, gnsmath.SafeAbsInt64(amountSpecified), swapCount); err != nil {
 			return resultAmountIn, resultAmountOut, false
 		}
 	}
@@ -137,8 +143,8 @@ func (p *SwapProcessor) ValidateSwapResults(
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut int64,
 ) (int64, int64, error) {
-	newAmountIn := safeAddInt64(resultAmountIn, amountIn)
-	newAmountOut := safeAddInt64(resultAmountOut, amountOut)
+	newAmountIn := gnsmath.SafeAddInt64(resultAmountIn, amountIn)
+	newAmountOut := gnsmath.SafeAddInt64(resultAmountOut, amountOut)
 
 	return newAmountIn, newAmountOut, nil
 }
@@ -172,14 +178,14 @@ func (r *routerV1) DrySwapRoute(
 	inputAmount, outputAmount, success := r.drySwapRoute(
 		inputToken,
 		outputToken,
-		safeParseInt64(specifiedAmount),
+		utils.SafeParseInt64(specifiedAmount),
 		swapTypeStr,
 		strRouteArr,
 		quoteArr,
-		safeParseInt64(tokenAmountLimit),
+		utils.SafeParseInt64(tokenAmountLimit),
 	)
 
-	return formatInt64(inputAmount), formatInt64(outputAmount), success
+	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), success
 }
 
 // drySwapRoute is a function for applying cross realm.
@@ -193,7 +199,7 @@ func (r *routerV1) drySwapRoute(
 	common.MustRegistered(inputToken, outputToken)
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{router: r}
+	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)
@@ -223,7 +229,7 @@ func (r *routerV1) drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(gnsmath.SafeAbsInt64(amountSpecified), swapFee)
 		amountSpecified = -amountSpecifiedWithRouterFee
 	}
 
@@ -246,7 +252,7 @@ func (r *routerV1) drySwapRoute(
 			}
 
 			// update the remaining amount
-			resultRemainRequestAmount := safeSubInt64(remainRequestAmount, swapAmount)
+			resultRemainRequestAmount := gnsmath.SafeSubInt64(remainRequestAmount, swapAmount)
 
 			remainRequestAmount = resultRemainRequestAmount
 			toSwapAmount = swapAmount
@@ -287,7 +293,7 @@ func (r *routerV1) drySwapRoute(
 	// simulate deduct router fee
 	feeAmountInt64 := calculateRouterFee(resultAmountOut, swapFee)
 
-	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
+	resultAmountOut = gnsmath.SafeSubInt64(resultAmountOut, feeAmountInt64)
 
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
 }

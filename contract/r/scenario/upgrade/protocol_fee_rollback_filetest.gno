@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // ProtocolFee contract rollback scenario test
 package main
 
@@ -26,17 +28,17 @@ const (
 	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] ProtocolFee Contract Rollback Test")
-	testProtocolFeeRollback()
+	testProtocolFeeRollback(cur)
 	println()
 }
 
-func testProtocolFeeRollback() {
+func testProtocolFeeRollback(cur realm) {
 	// First, upgrade to test version
 	ufmt.Println("[INFO] Preparing: Upgrading to test version")
 	testing.SetRealm(adminRealm)
-	protocolFee.UpgradeImpl(cross, protocolFeeTestPath)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeTestPath)
 
 	currentVersion := protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -47,7 +49,7 @@ func testProtocolFeeRollback() {
 	// Rollback to v1
 	ufmt.Println("[INFO] Rolling back protocol_fee contract to v1")
 	testing.SetRealm(adminRealm)
-	protocolFee.UpgradeImpl(cross, protocolFeeV1Path)
+	protocolFee.UpgradeImpl(cross(cur), protocolFeeV1Path)
 
 	currentVersion = protocolFee.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] ProtocolFee rolled back to: %s\n", currentVersion)

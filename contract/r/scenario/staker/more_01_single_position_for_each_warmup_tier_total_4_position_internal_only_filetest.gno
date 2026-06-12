@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 
@@ -58,48 +58,48 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup single pool for internal emission")
-	initAndSetupSinglePool()
+	initAndSetupSinglePool(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint 4 positions")
-	mintPositions()
+	mintPositions(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake position 01 and test warm-up progression")
-	stakeTokenPos01AndTestWarmUp()
+	stakeTokenPos01AndTestWarmUp(cur)
 	println()
 
 	println("[SCENARIO] 5. Stake positions 02-04")
-	stakeTokensPos02To04()
+	stakeTokensPos02To04(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect rewards for all positions")
-	collectRewardsAll()
+	collectRewardsAll(cur)
 	println()
 
 	println("[SCENARIO] 7. Test single block reward distribution")
-	testSingleBlockRewardDistribution()
+	testSingleBlockRewardDistribution(cur)
 }
 
-func initAndSetupSinglePool() {
+func initAndSetupSinglePool(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] set community pool distribution to 0%")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
 		0, // communityPoolPct
@@ -110,27 +110,27 @@ func initAndSetupSinglePool() {
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintPositions() {
+func mintPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint position 01 (tick range: -30 ~ 30)")
 	positionId1, liquidity1, amount0_1, amount1_1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -151,7 +151,7 @@ func mintPositions() {
 
 	println("[INFO] mint position 02 (tick range: -30 ~ 30)")
 	positionId2, liquidity2, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -171,7 +171,7 @@ func mintPositions() {
 
 	println("[INFO] mint position 03 (tick range: -30 ~ 30)")
 	positionId3, liquidity3, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -191,7 +191,7 @@ func mintPositions() {
 
 	println("[INFO] mint position 04 (tick range: -30 ~ 30)")
 	positionId4, liquidity4, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -210,19 +210,19 @@ func mintPositions() {
 	testing.SkipHeights(1)
 }
 
-func stakeTokenPos01AndTestWarmUp() {
+func stakeTokenPos01AndTestWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for 30% warm-up")
 	userOldGns := gns.BalanceOf(adminUser)
 	communityOldGns := gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	userNewGns := gns.BalanceOf(adminUser)
 	communityNewGns := gns.BalanceOf(communityPoolAddr)
@@ -237,13 +237,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 50% warm-up")
 	testing.SkipHeights(216001)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -258,13 +258,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 70% warm-up")
 	testing.SkipHeights(432001)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -279,13 +279,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 100% warm-up")
 	testing.SkipHeights(1728000)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -299,35 +299,35 @@ func stakeTokenPos01AndTestWarmUp() {
 	testing.SkipHeights(1)
 }
 
-func stakeTokensPos02To04() {
+func stakeTokensPos02To04(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 
 	println("[INFO] stake position 03")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(3))
-	sr.StakeToken(cross, 3, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 3))
+	sr.StakeToken(cross(cur), 3, "")
 	testing.SkipHeights(1)
 
 	println("[INFO] stake position 04")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(4))
-	sr.StakeToken(cross, 4, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 4))
+	sr.StakeToken(cross(cur), 4, "")
 	testing.SkipHeights(1)
 }
 
-func collectRewardsAll() {
+func collectRewardsAll(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect rewards for all positions")
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
-	sr.CollectReward(cross, 3)
-	sr.CollectReward(cross, 4)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
+	sr.CollectReward(cross(cur), 3)
+	sr.CollectReward(cross(cur), 4)
 }
 
-func testSingleBlockRewardDistribution() {
+func testSingleBlockRewardDistribution(cur realm) {
 	testing.SkipHeights(1)
 
 	testing.SetRealm(adminRealm)
@@ -336,7 +336,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 01 (100% warm-up)
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	pos01Reward := afterGns - beforeGns
 
@@ -344,7 +344,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 02 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterGns = gns.BalanceOf(adminUser)
 	pos02Reward := afterGns - beforeGns
 
@@ -352,7 +352,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 03 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross(cur), 3)
 	afterGns = gns.BalanceOf(adminUser)
 	pos03Reward := afterGns - beforeGns
 
@@ -360,7 +360,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 04 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4)
+	sr.CollectReward(cross(cur), 4)
 	afterGns = gns.BalanceOf(adminUser)
 	pos04Reward := afterGns - beforeGns
 
@@ -375,7 +375,7 @@ func testSingleBlockRewardDistribution() {
 	ufmt.Printf("[INFO] expected reward per position (25%% share): %d\n", expectedPerPosition)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

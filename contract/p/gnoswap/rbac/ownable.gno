@@ -1,6 +1,9 @@
 package rbac
 
-import "chain"
+import (
+	"chain"
+	"errors"
+)
 
 const (
 	OwnershipTransferEvent        = "OwnershipTransfer"
@@ -12,7 +15,7 @@ const (
 // preventing accidental transfers to incorrect addresses.
 //
 // Note: This package does not verify callers. Consuming realms must extract the actual
-// caller using `runtime.PreviousRealm` or `runtime.OriginCaller` and pass it to these methods.
+// caller from the live realm context and pass it to these methods.
 type Ownable2Step struct {
 	owner        address
 	pendingOwner address
@@ -34,11 +37,11 @@ func newOwnable2StepWithAddress(addr address) *Ownable2Step {
 //   - ErrInvalidAddress: newOwner is empty or has an invalid format
 func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 	if !o.IsOwner(caller) {
-		return ErrUnauthorized
+		return errors.New(ErrUnauthorized)
 	}
 
 	if newOwner == zeroAddress || !newOwner.IsValid() {
-		return ErrInvalidAddress
+		return errors.New(ErrInvalidAddress)
 	}
 
 	o.pendingOwner = newOwner
@@ -60,11 +63,11 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 //   - ErrPendingUnauthorized: caller is not the pending owner
 func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
 	if o.pendingOwner == zeroAddress {
-		return ErrNoPendingOwner
+		return errors.New(ErrNoPendingOwner)
 	}
 
 	if !o.IsPendingOwner(caller) {
-		return ErrPendingUnauthorized
+		return errors.New(ErrPendingUnauthorized)
 	}
 
 	prevOwner := o.owner
@@ -87,7 +90,7 @@ func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
 //   - ErrUnauthorized: caller is not the current owner
 func (o *Ownable2Step) DropOwnershipBy(caller address) error {
 	if !o.IsOwner(caller) {
-		return ErrUnauthorized
+		return errors.New(ErrUnauthorized)
 	}
 
 	prevOwner := o.owner

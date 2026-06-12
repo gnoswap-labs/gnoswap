@@ -10,7 +10,7 @@ import (
 )
 
 // TestProposal_TypeOperations tests proposal type operations
-func TestProposal_TypeOperations(t *testing.T) {
+func TestProposal_TypeOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		proposalType   governance.ProposalType
@@ -44,7 +44,7 @@ func TestProposal_TypeOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when & then
 			uassert.Equal(t, tc.proposalType.String(), tc.expectedString)
 			uassert.Equal(t, tc.proposalType.IsExecutable(), tc.isExecutable)
@@ -53,7 +53,7 @@ func TestProposal_TypeOperations(t *testing.T) {
 }
 
 // TestProposal_Validation tests proposal validation
-func TestProposal_Validation(t *testing.T) {
+func TestProposal_Validation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		metadata      *governance.ProposalMetadata
@@ -81,16 +81,10 @@ func TestProposal_Validation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			baseTime := time.Now().Unix()
-			config := governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			}
+			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
@@ -115,15 +109,9 @@ func TestProposal_Validation(t *testing.T) {
 }
 
 // TestProposal_StatusOperations tests proposal status operations
-func TestProposal_StatusOperations(t *testing.T) {
+func TestProposal_StatusOperations(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 	tests := []struct {
 		name           string
@@ -156,7 +144,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			proposal := newTestProposal(
 				1,
@@ -189,7 +177,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 
 // TestProposal_IsActive_StatusTypeCaching tests the IsActive method with StatusType caching
 // This test verifies that IsActive correctly determines proposal activity based on status
-func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
+func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 	baseTime := int64(1000)
 
 	tests := []struct {
@@ -462,15 +450,9 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			config := governance.Config{
-				VotingStartDelay: tc.votingStartDelay,
-				VotingPeriod:     tc.votingPeriod,
-				ExecutionDelay:   tc.executionDelay,
-				ExecutionWindow:  tc.executionWindow,
-				Quorum:           tc.quorum,
-			}
+			config := governance.NewConfig(tc.votingStartDelay, tc.votingPeriod, 0, tc.quorum, 0, tc.executionDelay, tc.executionWindow)
 
 			proposal := newTestProposal(
 				1,
@@ -502,7 +484,7 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 }
 
 // // TestNewProposal tests creation of new proposal
-func TestNewProposal(t *testing.T) {
+func TestNewProposal(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		proposalType governance.ProposalType
@@ -527,16 +509,10 @@ func TestNewProposal(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			baseTime := time.Now().Unix()
-			config := governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			}
+			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 			// when
 			proposal := newTestProposal(
