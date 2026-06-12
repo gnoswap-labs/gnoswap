@@ -1,6 +1,3 @@
-// Package utils provides pure, deterministic formatting and parsing helpers
-// shared across GnoSwap realms. Every function here is side-effect free and
-// depends only on the standard library and ufmt.
 package utils
 
 import (
