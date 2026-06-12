@@ -13,7 +13,7 @@ const (
 
 	maxProjectConditionCount = 5
 
-	projectMinimumStartDelayTime = int64(dayTime * 3) // 3 days
+	projectMinimumStartDelayTime = dayTime * 3 // 3 days
 )
 
 // contract paths

@@ -79,7 +79,7 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 		},
 		{
 			name:            "Cannot vote twice",
-			votingInfo:      governance.NewVotingInfo(100),
+			votingInfo:      newVotedInfo(100, false, 50, 1000, 1234567890),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
@@ -108,6 +108,16 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func newVotedInfo(availableWeight int64, votedYes bool, votedWeight int64, votedHeight int64, votedAt int64) *governance.VotingInfo {
+	votingInfo := governance.NewVotingInfo(availableWeight)
+	votingInfo.SetVotedWeight(votedWeight)
+	votingInfo.SetVotedHeight(votedHeight)
+	votingInfo.SetVotedAt(votedAt)
+	votingInfo.SetVoted(true)
+	votingInfo.SetVotedYes(votedYes)
+	return votingInfo
 }
 
 // TestVotingInfo_VotingTypeAndStatus tests the voting type and status getters
