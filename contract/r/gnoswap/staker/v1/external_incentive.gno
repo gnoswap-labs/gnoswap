@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -52,7 +53,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
-	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
+	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
 
@@ -261,7 +262,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
-	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
+	duration := gnsmath.SafeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
 	// distributable = floor((rewardPerSecondX128 * duration) / 2^128).
 	// With Q128 scaling the truncation per second collapses to at most 1 wei
 	// across the entire duration, so `remainder` is effectively zero and the
@@ -272,12 +273,12 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		q128,
 	)
 
-	distributable := safeConvertToInt64(distributableU256)
-	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
+	distributable := gnsmath.SafeConvertToInt64(distributableU256)
+	remainder := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
-	refund := safeAddInt64(unclaimableReward, remainder)
+	refund := gnsmath.SafeAddInt64(unclaimableReward, remainder)
 
-	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
+	maxRefund := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
 	if refund > maxRefund {
 		refund = maxRefund
 	}
@@ -376,7 +377,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	}
 
 	// Reset accumulated penalty
-	incentiveResolver.SetAccumulatedPenaltyAmount(safeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
+	incentiveResolver.SetAccumulatedPenaltyAmount(gnsmath.SafeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
 	incentivesResolver.update(incentiveResolver.ExternalIncentive)
 
 	// Transfer penalty to refund address

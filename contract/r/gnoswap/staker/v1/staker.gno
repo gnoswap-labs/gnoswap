@@ -451,7 +451,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		}
 
 		externalPenalty := reward.ExternalPenalty[incentiveId]
-		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+		totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
 
 		if incentiveResolver.RewardAmount() < totalRewardAmount {
 			// Do not update last collect time here; insufficient funds should
@@ -473,10 +473,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		// process reward states
 		rewardToken := incentive.RewardToken()
 
-		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
+		toUserExternalReward[rewardToken] = gnsmath.SafeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
+		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
+		incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
 		incentiveResolver.addDistributedRewardAmount(rewardAmount)
 		incentiveResolver.addAccumulatedPenaltyAmount(externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
@@ -589,13 +589,13 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	if internalRewardToUser > 0 {
 		// internal reward to user
-		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardToUser)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, internalRewardToUser)
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	if internalRewardPenalty > 0 {
 		// internal penalty to community pool
-		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardPenalty)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, internalRewardPenalty)
 		depositResolver.addCollectedInternalReward(internalRewardPenalty)
 	}
 
@@ -603,7 +603,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	// unclaimable amounts are reset in the same collect window.
 	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
-		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
 	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)

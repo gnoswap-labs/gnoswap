@@ -10,6 +10,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -385,15 +386,15 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 // Test Redelegate function
 func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            address
-		from              address
-		to                address
-		amount            int64
-		expectPanic       bool
-		expectedError     string
-		setupDelegation   bool
-		delegationAmount  int64
+		name             string
+		caller           address
+		from             address
+		to               address
+		amount           int64
+		expectPanic      bool
+		expectedError    string
+		setupDelegation  bool
+		delegationAmount int64
 	}{
 		{
 			name:             "Successful redelegation",
@@ -525,13 +526,13 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(user))
 	callStakerDelegate(cur, validator, amount, "")
 
-	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
-	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+	uassert.Equal(t, xgns.TotalSupply(), gnsmath.SafeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), gnsmath.SafeAddInt64(initialBalance, amount))
 
 	callStakerUndelegate(cur, validator, amount)
 
-	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
-	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+	uassert.Equal(t, xgns.TotalSupply(), gnsmath.SafeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), gnsmath.SafeAddInt64(initialBalance, amount))
 
 	callStakerCollectUndelegatedGns(cur)
 
@@ -1334,14 +1335,14 @@ func TestStakerDelegate_BoundaryConditions_TotalDelegatedAmount(cur realm, t *te
 					}()
 					// This simulates the safe arithmetic used in delegate(0, cur)
 					current := gs.store.GetTotalDelegatedAmount()
-					newTotal := safeAddInt64(current, tt.addAmount)
+					newTotal := gnsmath.SafeAddInt64(current, tt.addAmount)
 					_ = gs.store.SetTotalDelegatedAmount(0, cur, newTotal)
 				}()
 				uassert.True(t, didPanic)
 			} else {
 				// When: Add amount near boundary
 				current := gs.store.GetTotalDelegatedAmount()
-				newTotal := safeAddInt64(current, tt.addAmount)
+				newTotal := gnsmath.SafeAddInt64(current, tt.addAmount)
 				err = gs.store.SetTotalDelegatedAmount(0, cur, newTotal)
 
 				// Then: Should succeed
@@ -1397,14 +1398,14 @@ func TestStakerDelegate_BoundaryConditions_Undelegate(cur realm, t *testing.T) {
 					}()
 					// This simulates the safe arithmetic used in unDelegate(0, cur)
 					current := gs.store.GetTotalDelegatedAmount()
-					newTotal := safeSubInt64(current, tt.subAmount)
+					newTotal := gnsmath.SafeSubInt64(current, tt.subAmount)
 					_ = gs.store.SetTotalDelegatedAmount(0, cur, newTotal)
 				}()
 				uassert.True(t, didPanic)
 			} else {
 				// When: Subtract amount
 				current := gs.store.GetTotalDelegatedAmount()
-				newTotal := safeSubInt64(current, tt.subAmount)
+				newTotal := gnsmath.SafeSubInt64(current, tt.subAmount)
 				err = gs.store.SetTotalDelegatedAmount(0, cur, newTotal)
 
 				// Then: Should succeed
@@ -1459,7 +1460,7 @@ func TestStakerDelegate_BoundaryConditions_CollectDelegations(cur realm, t *test
 
 			// When: Simulate collection logic
 			currentLocked := gs.store.GetTotalLockedAmount()
-			newLocked := safeSubInt64(currentLocked, tt.collectAmount)
+			newLocked := gnsmath.SafeSubInt64(currentLocked, tt.collectAmount)
 			if newLocked < 0 {
 				newLocked = 0
 			}
@@ -1517,14 +1518,14 @@ func TestStakerDelegate_BoundaryConditions_AccumulateCollected(cur realm, t *tes
 					}()
 					collected := int64(0)
 					for _, amt := range tt.amounts {
-						collected = safeAddInt64(collected, amt)
+						collected = gnsmath.SafeAddInt64(collected, amt)
 					}
 				}()
 				uassert.True(t, didPanic)
 			} else {
 				collected := int64(0)
 				for _, amt := range tt.amounts {
-					collected = safeAddInt64(collected, amt)
+					collected = gnsmath.SafeAddInt64(collected, amt)
 				}
 
 				// Then: Should have accumulated all amounts

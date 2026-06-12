@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"chain/runtime/unsafe"
 	"strings"
 
-	"chain/runtime/unsafe"
-
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -117,7 +117,7 @@ func (p *SwapProcessor) ValidateSwapResults(
 	validator := &SwapValidator{}
 
 	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, safeAbsInt64(amountSpecified), swapCount); err != nil {
+		if err := validator.exactOutAmount(resultAmountOut, gnsmath.SafeAbsInt64(amountSpecified), swapCount); err != nil {
 			return resultAmountIn, resultAmountOut, false
 		}
 	}
@@ -142,8 +142,8 @@ func (p *SwapProcessor) ValidateSwapResults(
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut int64,
 ) (int64, int64, error) {
-	newAmountIn := safeAddInt64(resultAmountIn, amountIn)
-	newAmountOut := safeAddInt64(resultAmountOut, amountOut)
+	newAmountIn := gnsmath.SafeAddInt64(resultAmountIn, amountIn)
+	newAmountOut := gnsmath.SafeAddInt64(resultAmountOut, amountOut)
 
 	return newAmountIn, newAmountOut, nil
 }
@@ -228,7 +228,7 @@ func (r *routerV1) drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(gnsmath.SafeAbsInt64(amountSpecified), swapFee)
 		amountSpecified = -amountSpecifiedWithRouterFee
 	}
 
@@ -251,7 +251,7 @@ func (r *routerV1) drySwapRoute(
 			}
 
 			// update the remaining amount
-			resultRemainRequestAmount := safeSubInt64(remainRequestAmount, swapAmount)
+			resultRemainRequestAmount := gnsmath.SafeSubInt64(remainRequestAmount, swapAmount)
 
 			remainRequestAmount = resultRemainRequestAmount
 			toSwapAmount = swapAmount
@@ -292,7 +292,7 @@ func (r *routerV1) drySwapRoute(
 	// simulate deduct router fee
 	feeAmountInt64 := calculateRouterFee(resultAmountOut, swapFee)
 
-	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
+	resultAmountOut = gnsmath.SafeSubInt64(resultAmountOut, feeAmountInt64)
 
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
 }

@@ -790,8 +790,8 @@ func TestPositionFeeCollection_Scenarios(cur realm, t *testing.T) {
 				}
 
 				// Update position with simulated fees
-				position.SetTokensOwed0(safeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
-				position.SetTokensOwed1(safeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
+				position.SetTokensOwed0(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
+				position.SetTokensOwed1(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
 				pool.SetPosition(posKey, position)
 			}
 
@@ -1438,7 +1438,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					liq := u256.MustFromDecimal(tt.liquidity)
-					liqDelta := safeConvertToInt128(liq)
+					liqDelta := gnsmath.SafeConvertToInt128(liq)
 					params := ModifyPositionParams{
 						owner:          positionAddr,
 						tickLower:      -60,
@@ -1449,7 +1449,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(cur realm, t *testing.T) {
 				})
 			} else {
 				liq := u256.MustFromDecimal(tt.liquidity)
-				liqDelta := safeConvertToInt128(liq)
+				liqDelta := gnsmath.SafeConvertToInt128(liq)
 				params := ModifyPositionParams{
 					owner:          positionAddr,
 					tickLower:      -60,
@@ -1476,7 +1476,7 @@ func TestPosition_LiquidityBoundaryExistingPositionUpdate(cur realm, t *testing.
 		owner:          positionAddr,
 		tickLower:      -60,
 		tickUpper:      60,
-		liquidityDelta: safeConvertToInt128(initialLiquidity),
+		liquidityDelta: gnsmath.SafeConvertToInt128(initialLiquidity),
 	}
 
 	position, _, _, err := modifyPosition(pool, params)

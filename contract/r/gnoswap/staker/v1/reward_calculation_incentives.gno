@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 
@@ -119,7 +120,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.EndTimestamp(),
 		)
 
-		timeDiff = safeAddInt64(timeDiff, duration)
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
 
 		return true
 	})
@@ -142,7 +143,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.StartTimestamp(),
 			incentive.EndTimestamp(),
 		)
-		timeDiff = safeAddInt64(timeDiff, duration)
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
 
 		// ensures continue iterating through all unclaimable periods
 		return false
@@ -156,7 +157,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 		incentive.RewardPerSecondX128(),
 		q128,
 	)
-	return safeConvertToInt64(unclaimable)
+	return gnsmath.SafeConvertToInt64(unclaimable)
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period
@@ -179,5 +180,5 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 	}
 
 	// Calculate overlap duration
-	return safeSubInt64(endTime, startTime)
+	return gnsmath.SafeSubInt64(endTime, startTime)
 }

@@ -1,6 +1,8 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -45,7 +47,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAd
 //   - amount: amount to add to the deposit
 func (lpdr *LaunchpadProjectDepositsResolver) addDeposit(ownerAddress string, amount int64) {
 	currentDeposit, _ := lpdr.LaunchpadProjectDeposits.GetDeposit(ownerAddress)
-	newDeposit := safeAddInt64(currentDeposit, amount)
+	newDeposit := gnsmath.SafeAddInt64(currentDeposit, amount)
 	if newDeposit < 0 {
 		newDeposit = 0
 	}
@@ -63,7 +65,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) removeDeposit(ownerAddress string,
 	if !exists {
 		return
 	}
-	newDeposit := safeSubInt64(currentDeposit, amount)
+	newDeposit := gnsmath.SafeSubInt64(currentDeposit, amount)
 	if newDeposit < 0 {
 		newDeposit = 0
 	}

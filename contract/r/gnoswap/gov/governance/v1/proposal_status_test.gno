@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -334,7 +335,7 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(2000)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(2000, 60, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDiv(2000, 60, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -352,7 +353,7 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(500)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(500, 40, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDiv(500, 40, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -388,29 +389,29 @@ func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 		createdAt       int64
 	}{
 		{
-			name: "Create with standard config",
-			config: governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
+			name:            "Create with standard config",
+			config:          governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
 			maxVotingWeight: 10_000_000_000,
 			executable:      true,
 			createdAt:       1000,
 		},
 		{
-			name: "Create with zero delays",
-			config: governance.NewConfig(0, 0, 0, 0, 0, 0, 0),
+			name:            "Create with zero delays",
+			config:          governance.NewConfig(0, 0, 0, 0, 0, 0, 0),
 			maxVotingWeight: 0,
 			executable:      false,
 			createdAt:       0,
 		},
 		{
-			name: "Create with negative delays",
-			config: governance.NewConfig(-1, -1, 0, -1, 0, -1, -1),
+			name:            "Create with negative delays",
+			config:          governance.NewConfig(-1, -1, 0, -1, 0, -1, -1),
 			maxVotingWeight: -1,
 			executable:      true,
 			createdAt:       -1,
 		},
 		{
-			name: "Create non-executable proposal",
-			config: governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
+			name:            "Create non-executable proposal",
+			config:          governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
 			maxVotingWeight: 10_000_000_000,
 			executable:      false,
 			createdAt:       time.Now().Unix(),

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -78,7 +79,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 	for token, protocolFeeAmount := range protocolFeeAmounts {
 		previousProtocolFeeAmount := self.GetProtocolFeeAmount(token)
 
-		protocolFeeDelta := safeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
+		protocolFeeDelta := gnsmath.SafeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
 
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
@@ -175,7 +176,7 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 	if currentTotal > math.MaxInt64-amount {
 		return errors.New("total staked amount would overflow")
 	}
-	updatedTotalStakedAmount := safeAddInt64(currentTotal, amount)
+	updatedTotalStakedAmount := gnsmath.SafeAddInt64(currentTotal, amount)
 
 	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
 	if err != nil {
@@ -216,7 +217,7 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 
 	self.setRewardState(address, rewardState)
 
-	updatedTotalStakedAmount := safeSubInt64(self.GetTotalStakedAmount(), amount)
+	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
 	if updatedTotalStakedAmount < 0 {
 		updatedTotalStakedAmount = 0
 	}

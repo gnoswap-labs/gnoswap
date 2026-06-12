@@ -24,6 +24,7 @@ var (
 	errTickMathOverflow         = errors.New("tick_math: overflow")
 	errLiquidityIdenticalTicks  = errors.New("liquidity_math: identical ticks")
 	errLiquidityOverflow        = errors.New("liquidity_math: overflow")
+	errSafeMathOverflow         = errors.New("safe_math: overflow")
 )
 
 func newErrorWithDetail(err error, detail string) string {

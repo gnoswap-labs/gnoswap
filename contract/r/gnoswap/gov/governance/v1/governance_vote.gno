@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 
@@ -126,7 +128,7 @@ func (gv *governanceV1) vote(
 		weightAtCreated = 0
 	}
 
-	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
+	votingWeight := gnsmath.SafeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")

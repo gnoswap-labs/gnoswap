@@ -903,7 +903,7 @@ func TestDelegation_BoundaryConditions(cur realm, t *testing.T) {
 		// Now: UnDelegatedAmount = MaxInt64-1000
 		//      DelegatedAmount = MaxInt64 - (MaxInt64-1000) = 1000 (valid)
 
-		// when: try to undelegate more causing overflow in safeAddInt64
+		// when: try to undelegate more causing overflow in gnsmath.SafeAddInt64
 		didPanic := false
 		func() {
 			defer func() {
@@ -911,7 +911,7 @@ func TestDelegation_BoundaryConditions(cur realm, t *testing.T) {
 					didPanic = true
 				}
 			}()
-			// This should panic in safeAddInt64(UnDelegatedAmount, amount)
+			// This should panic in gnsmath.SafeAddInt64(UnDelegatedAmount, amount)
 			// (MaxInt64-1000) + 1001 would be MaxInt64+1 (overflow!)
 			resolver.UnDelegate(1001, 100, 100, 500)
 		}()

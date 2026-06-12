@@ -6,6 +6,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -37,16 +38,16 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	reservedTokens := pfs.ReservedTokens()
 
 	for _, token := range reservedTokens {
-		toDevOpsAmount := safeSubInt64(
+		toDevOpsAmount := gnsmath.SafeSubInt64(
 			pfs.GetAccuTransferToDevOpsByTokenPath(token),
 			pfs.GetActualDistributedToDevOpsByTokenPath(token),
 		)
-		toGovStakerAmount := safeSubInt64(
+		toGovStakerAmount := gnsmath.SafeSubInt64(
 			pfs.GetAccuTransferToGovStakerByTokenPath(token),
 			pfs.GetActualDistributedToGovStakerByTokenPath(token),
 		)
 
-		amount := safeAddInt64(toDevOpsAmount, toGovStakerAmount)
+		amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
 		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// amount should be less than or equal to balance
@@ -211,8 +212,8 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	pfs := pf.getProtocolFeeState()
 
-	toDevOpsAmount := safeMulDiv(amount, pfs.DevOpsPct(), 10000)
-	toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
+	toDevOpsAmount := gnsmath.SafeMulDiv(amount, pfs.DevOpsPct(), 10000)
+	toGovStakerAmount := gnsmath.SafeSubInt64(amount, toDevOpsAmount)
 
 	if err := pfs.addAccuToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {
 		panic(err)

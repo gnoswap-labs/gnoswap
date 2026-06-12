@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -272,7 +273,7 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(cur realm, t *testing.T) {
 					quote := tt.quotes[i]
 					quoteInt := safeParseInt64(quote)
 
-					amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+					amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 
 					calculatedAmounts[i] = amount
 					totalUsed = totalUsed + amount
@@ -897,7 +898,7 @@ func TestProcessRoutes_LastRouteRemainder(cur realm, t *testing.T) {
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
 				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1149,7 +1150,7 @@ func TestProcessRoutes_SingleRoute(cur realm, t *testing.T) {
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
 				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1379,7 +1380,7 @@ func TestProcessRoutes_RemainderAccuracy(cur realm, t *testing.T) {
 			totalUsed := int64(0)
 			for i := 0; i < len(tt.quotes)-1; i++ {
 				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				totalUsed = totalUsed + amount
 			}
 

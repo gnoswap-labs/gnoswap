@@ -7,6 +7,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -75,7 +76,7 @@ func (i *poolV1) Mint(
 	checkTickSpacing(tickLower, tickSpacing)
 	checkTickSpacing(tickUpper, tickSpacing)
 
-	liquidityDelta := safeConvertToInt128(liquidity)
+	liquidityDelta := gnsmath.SafeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1, err := modifyPosition(pool, positionParam)
 	if err != nil {
@@ -146,7 +147,7 @@ func (i *poolV1) Burn(
 	defer i.unlockPool(0, rlm)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
-	liqAmountInt256 := safeConvertToInt128(liqAmount)
+	liqAmountInt256 := gnsmath.SafeConvertToInt128(liqAmount)
 	liqDelta := i256.Zero().Neg(liqAmountInt256)
 
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
@@ -160,8 +161,8 @@ func (i *poolV1) Burn(
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
 
-		position.SetTokensOwed0(safeAddInt64(position.TokensOwed0(), safeConvertToInt64(amount0)))
-		position.SetTokensOwed1(safeAddInt64(position.TokensOwed1(), safeConvertToInt64(amount1)))
+		position.SetTokensOwed0(gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(amount0)))
+		position.SetTokensOwed1(gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(amount1)))
 	}
 
 	positionKey := getPositionKey(tickLower, tickUpper)
@@ -241,16 +242,16 @@ func (i *poolV1) Collect(
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
 	if amount0 > 0 {
-		tokenOwed0 := safeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := safeSubInt64(pool.BalanceToken0(), amount0)
+		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
+		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
 		common.SafeGRC20Approve(cross(rlm), pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
-		tokenOwed1 := safeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := safeSubInt64(pool.BalanceToken1(), amount1)
+		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
+		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
@@ -377,12 +378,12 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64,
 	if pool.ProtocolFeesToken0() < amount0 {
 		panic(errUnderflow)
 	}
-	pool.SetProtocolFeesToken0(safeSubInt64(pool.ProtocolFeesToken0(), amount0))
+	pool.SetProtocolFeesToken0(gnsmath.SafeSubInt64(pool.ProtocolFeesToken0(), amount0))
 
 	if pool.ProtocolFeesToken1() < amount1 {
 		panic(errUnderflow)
 	}
-	pool.SetProtocolFeesToken1(safeSubInt64(pool.ProtocolFeesToken1(), amount1))
+	pool.SetProtocolFeesToken1(gnsmath.SafeSubInt64(pool.ProtocolFeesToken1(), amount1))
 
 	return amount0, amount1
 }
