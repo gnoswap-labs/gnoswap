@@ -63,6 +63,12 @@ func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64
 		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerSecond(year))
 	}
 
+	emissionEndTimestamp := halvingData.getEndTimestamp(HALVING_END_YEAR)
+	if fromTime <= emissionEndTimestamp && emissionEndTimestamp < toTime {
+		halvingTimes = append(halvingTimes, safeAddInt64(emissionEndTimestamp, 1))
+		halvingEmissions = append(halvingEmissions, 0)
+	}
+
 	return halvingTimes, halvingEmissions
 }
 
