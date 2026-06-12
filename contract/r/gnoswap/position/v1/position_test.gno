@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -43,7 +44,7 @@ func IsRegistered(t *testing.T, tokenPath string) error {
 	if mockRegistry[tokenPath] {
 		return nil
 	}
-	return errInvalidTokenPath
+	return errors.New(errInvalidTokenPath)
 }
 
 func setupPoolAndApprovals(cur realm, t *testing.T, faucet bool) {
@@ -1479,7 +1480,7 @@ func TestValidateTokenPath(cur realm, t *testing.T) {
 
 			if tt.expectError {
 				uassert.NotNil(t, err, "expected error but got nil")
-				uassert.Equal(t, errInvalidTokenPath.Error(), err.Error())
+				uassert.Equal(t, errInvalidTokenPath, err.Error())
 			} else {
 				if err != nil {
 					t.Errorf("expected no error but got: %v", err)

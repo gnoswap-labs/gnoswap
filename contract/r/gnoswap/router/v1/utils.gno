@@ -2,6 +2,7 @@ package v1
 
 import (
 	"bytes"
+	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, err
 
 	toSwap := safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
 	if toSwap == 0 {
-		return 0, errInvalidSwapAmount
+		return 0, errors.New(errInvalidSwapAmount)
 	}
 
 	return toSwap, nil
@@ -38,7 +39,7 @@ func assertHopsInRange(hops int) {
 	case 1, 2, 3:
 		return
 	default:
-		panic(errHopsOutOfRange)
+		panic(errors.New(errHopsOutOfRange))
 	}
 }
 
@@ -428,12 +429,12 @@ func safeMulDivInt64(a, b, c int64) int64 {
 	// calculate amount to swap for this route
 	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	result = i256.Zero().Div(result, i256.NewInt(c))
 	if !result.IsInt64() {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	return result.Int64()
@@ -441,7 +442,7 @@ func safeMulDivInt64(a, b, c int64) int64 {
 
 func safeAbsInt64(a int64) int64 {
 	if a == math.MinInt64 {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	if a < 0 {

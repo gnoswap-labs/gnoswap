@@ -2,6 +2,7 @@ package gnft
 
 import (
 	"chain"
+	"errors"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -244,7 +245,7 @@ func Render(path string) string {
 // setTokenURI sets the metadata URI for a specific token ID.
 func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	previousRealm := rlm.Previous()
@@ -252,7 +253,7 @@ func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) err
 
 	_, err := nft.SetTokenURI(previousAddr, tid, tURI)
 	if err != nil {
-		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
+		return makeErrorWithDetails(err.Error(), ufmt.Sprintf("token id (%s)", tid))
 	}
 
 	chain.Emit(

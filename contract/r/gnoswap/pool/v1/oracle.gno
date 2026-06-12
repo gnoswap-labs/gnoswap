@@ -118,7 +118,7 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 	// calculate liquidity cumulative
 	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	prevLiqCum := u256.MustFromDecimal(lastObservation.LiquidityCumulative())
@@ -236,7 +236,7 @@ func writeObservation(
 func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 	observation, ok := os.Observations()[os.Index()]
 	if !ok || observation == nil {
-		return nil, errNotInitializedObservation
+		return nil, errors.New(errNotInitializedObservation)
 	}
 
 	return observation, nil
@@ -247,7 +247,7 @@ func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
 	obs, ok := os.Observations()[index]
 	if !ok || obs == nil {
-		return nil, errNotInitializedObservation
+		return nil, errors.New(errNotInitializedObservation)
 	}
 
 	return obs, nil
@@ -377,7 +377,7 @@ func getSurroundingObservations(
 
 	// Ensure that the target is chronologically at or after the oldest observation
 	if !lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
-		return nil, nil, errObservationTooOld
+		return nil, nil, errors.New(errObservationTooOld)
 	}
 
 	// If we've reached this point, we have to binary search

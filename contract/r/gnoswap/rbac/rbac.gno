@@ -25,7 +25,7 @@ func initRbac(cur realm) {
 		err := manager.RegisterRole(roleName, addr)
 		if err != nil {
 			panic(makeErrorWithDetails(
-				err,
+				err.Error(),
 				ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
 			))
 		}
@@ -90,7 +90,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
 		panic(makeErrorWithDetails(
-			err,
+			err.Error(),
 			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
 		))
 	}
@@ -123,7 +123,7 @@ func RemoveRole(cur realm, roleName string) {
 	err := manager.RemoveRole(roleName)
 	if err != nil {
 		panic(makeErrorWithDetails(
-			err,
+			err.Error(),
 			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}

@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -33,7 +34,7 @@ func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 
 func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
@@ -43,7 +44,7 @@ func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm r
 
 func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
@@ -53,7 +54,7 @@ func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm r
 
 func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
@@ -76,7 +77,7 @@ type emissionAccessor struct{}
 
 func (e *emissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	return emission.MintAndDistributeGns(cross(rlm))
@@ -92,7 +93,7 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 
 func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	// Wrap the caller-provided callback in an adapter constructed HERE, inside
@@ -126,7 +127,7 @@ type gnftAccessor struct{}
 
 func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return gnft.Approve(cross(rlm), approved, tid)
@@ -134,7 +135,7 @@ func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.To
 
 func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	return gnft.Mint(cross(rlm), to, tid)
@@ -142,7 +143,7 @@ func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) gr
 
 func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 	if !rlm.IsCurrent() {
-		panic(ErrSpoofedRealm)
+		panic(errors.New(ErrSpoofedRealm))
 	}
 
 	gnft.Burn(cross(rlm), tid)
@@ -150,7 +151,7 @@ func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
 
 func (n *gnftAccessor) TransferFrom(_ int, rlm realm, from, to address, tid grc721.TokenID) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return gnft.TransferFrom(cross(rlm), from, to, tid)

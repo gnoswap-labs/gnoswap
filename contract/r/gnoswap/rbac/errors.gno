@@ -1,22 +1,20 @@
 package rbac
 
 import (
-	"errors"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-var (
-	errCallerIsNotOwner             = errors.New("caller is not owner")
-	errCallerIsNotAdmin             = errors.New("caller is not admin")
-	errCallerIsNotAdminOrGovernance = errors.New("caller is not admin or governance")
-	errCallerIsNotPendingOwner      = errors.New("caller is not pending owner")
-	errInvalidAddress               = errors.New("invalid address")
-	errInvalidRoleName              = errors.New("invalid role name")
-	errAdminRoleUpdateForbidden     = errors.New("admin role is managed by owner")
+const (
+	errCallerIsNotOwner             = "caller is not owner"
+	errCallerIsNotAdmin             = "caller is not admin"
+	errCallerIsNotAdminOrGovernance = "caller is not admin or governance"
+	errCallerIsNotPendingOwner      = "caller is not pending owner"
+	errInvalidAddress               = "invalid address"
+	errInvalidRoleName              = "invalid role name"
+	errAdminRoleUpdateForbidden     = "admin role is managed by owner"
 )
 
 // makeErrorWithDetails combines an error with additional details.
-func makeErrorWithDetails(err error, details string) error {
-	return ufmt.Errorf("%s || %s", err.Error(), details)
+func makeErrorWithDetails(message string, details string) error {
+	return ufmt.Errorf("%s || %s", message, details)
 }

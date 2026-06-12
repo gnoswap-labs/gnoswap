@@ -1,6 +1,7 @@
 package referral
 
 import (
+	"errors"
 	"time"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -42,7 +43,7 @@ func (k *keeper) register(addr, refAddr address) (address, error) {
 		if k.has(addr) {
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
-				return zeroAddress, ErrNotFound
+				return zeroAddress, errors.New(ErrNotFound)
 			}
 		}
 
@@ -62,10 +63,10 @@ func (k *keeper) register(addr, refAddr address) (address, error) {
 // validateAddresses validates that addresses are properly formatted and not self-referencing.
 func (k *keeper) validateAddresses(addr, refAddr address) error {
 	if !addr.IsValid() || (!isRemovalRequest(refAddr) && !refAddr.IsValid()) {
-		return ErrInvalidAddress
+		return errors.New(ErrInvalidAddress)
 	}
 	if addr == refAddr {
-		return ErrSelfReferral
+		return errors.New(ErrSelfReferral)
 	}
 	return nil
 }
@@ -80,17 +81,17 @@ func (k *keeper) has(addr address) bool {
 // Returns ErrNotFound if no referral exists.
 func (k *keeper) get(addr address) (address, error) {
 	if !addr.IsValid() {
-		return zeroAddress, ErrInvalidAddress
+		return zeroAddress, errors.New(ErrInvalidAddress)
 	}
 
 	val, ok := k.store.Get(addr.String())
 	if !ok {
-		return zeroAddress, ErrNotFound
+		return zeroAddress, errors.New(ErrNotFound)
 	}
 
 	refAddr, ok := val.(string)
 	if !ok {
-		return zeroAddress, ErrInvalidAddress
+		return zeroAddress, errors.New(ErrInvalidAddress)
 	}
 
 	return address(refAddr), nil
@@ -105,17 +106,17 @@ func (k *keeper) isEmpty() bool {
 // Returns ErrNotFound if no operation exists.
 func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 	if !addr.IsValid() {
-		return 0, ErrInvalidAddress
+		return 0, errors.New(ErrInvalidAddress)
 	}
 
 	val, ok := k.lastOps.Get(addr.String())
 	if !ok {
-		return 0, ErrNotFound
+		return 0, errors.New(ErrNotFound)
 	}
 
 	ts, ok := val.(int64)
 	if !ok {
-		return 0, ErrInvalidTime
+		return 0, errors.New(ErrInvalidTime)
 	}
 
 	return ts, nil
@@ -133,12 +134,12 @@ func (k *keeper) checkRateLimit(addr string) error {
 
 	lastOpTime, ok := lastOpTimeRaw.(int64)
 	if !ok {
-		return ErrInvalidTime
+		return errors.New(ErrInvalidTime)
 	}
 
 	timeSinceLastOp := now - lastOpTime
 	if timeSinceLastOp < MinTimeBetweenUpdates {
-		return ErrTooManyRequests
+		return errors.New(ErrTooManyRequests)
 	}
 
 	return nil

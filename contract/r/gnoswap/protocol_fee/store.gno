@@ -31,9 +31,10 @@ const (
 	StoreKeyReservedTokens StoreKey = "reservedTokens"
 )
 
-const defaultDevOpsPct = int64(0)
-
-var errSpoofedRealm = errors.New("rlm does not match the current crossing frame")
+const (
+	defaultDevOpsPct = int64(0)
+	errSpoofedRealm  = "rlm does not match the current crossing frame"
+)
 
 // NewBPTreeN allocates a BP-tree under /r/gnoswap/protocol_fee's realm context
 // so tree.Set leaf-slot writes clear the readonly-taint gate regardless of
@@ -54,7 +55,7 @@ func (s *protocolFeeStore) HasDevOpsPctStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeDevOpsPct(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDevOpsPct.String(), defaultDevOpsPct)
@@ -71,7 +72,7 @@ func (s *protocolFeeStore) GetDevOpsPct() int64 {
 
 func (s *protocolFeeStore) SetDevOpsPct(_ int, rlm realm, pct int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDevOpsPct.String(), pct)
@@ -84,7 +85,7 @@ func (s *protocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeAccuToGovStaker(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyAccuToGovStaker.String(), NewBPTreeN(16))
@@ -120,7 +121,7 @@ func (s *protocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, bool
 
 func (s *protocolFeeStore) SetAccuToGovStakerItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	accuToGovStaker, err := s.kvStore.GetBPTree(StoreKeyAccuToGovStaker.String())
@@ -140,7 +141,7 @@ func (s *protocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeAccuToDevOps(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyAccuToDevOps.String(), NewBPTreeN(16))
@@ -176,7 +177,7 @@ func (s *protocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, bool) {
 
 func (s *protocolFeeStore) SetAccuToDevOpsItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	accuToDevOps, err := s.kvStore.GetBPTree(StoreKeyAccuToDevOps.String())
@@ -196,7 +197,7 @@ func (s *protocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeDistributedToGovStakerHistory(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDistributedToGovStakerHistory.String(), NewBPTreeN(16))
@@ -232,7 +233,7 @@ func (s *protocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string
 
 func (s *protocolFeeStore) SetDistributedToGovStakerHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	distributedToGovStakerHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToGovStakerHistory.String())
@@ -252,7 +253,7 @@ func (s *protocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeDistributedToDevOpsHistory(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDistributedToDevOpsHistory.String(), NewBPTreeN(16))
@@ -288,7 +289,7 @@ func (s *protocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (
 
 func (s *protocolFeeStore) SetDistributedToDevOpsHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	distributedToDevOpsHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToDevOpsHistory.String())
@@ -308,7 +309,7 @@ func (s *protocolFeeStore) HasReservedTokensStoreKey() bool {
 
 func (s *protocolFeeStore) InitializeReservedTokens(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyReservedTokens.String(), []string{})
@@ -330,7 +331,7 @@ func (s *protocolFeeStore) GetReservedTokens() []string {
 
 func (s *protocolFeeStore) SetReservedTokens(_ int, rlm realm, reservedTokens []string) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	if reservedTokens == nil {
@@ -342,7 +343,7 @@ func (s *protocolFeeStore) SetReservedTokens(_ int, rlm realm, reservedTokens []
 
 func (s *protocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	reservedTokens := s.GetReservedTokens()

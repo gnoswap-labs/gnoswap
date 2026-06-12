@@ -42,7 +42,7 @@ func AcceptOwnership(cur realm) {
 	err = manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), newOwner)
 	if err != nil {
 		panic(makeErrorWithDetails(
-			err,
+			err.Error(),
 			ufmt.Sprintf(
 				"role name: %s, address: %s",
 				prbac.ROLE_ADMIN.String(), newOwner.String()),

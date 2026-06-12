@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	"gno.land/r/gnoswap/emission"
@@ -36,7 +37,7 @@ import (
 // Returns voting weight used as string.
 func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovernance()

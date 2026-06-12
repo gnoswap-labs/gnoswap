@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -15,7 +16,7 @@ import (
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
-		panic(errInvalidPoolPath)
+		panic(errors.New(errInvalidPoolPath))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
@@ -164,12 +165,12 @@ func safeMulDivInt64(a, b, c int64) int64 {
 	// calculate amount to swap for this route
 	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	result = i256.Zero().Div(result, i256.NewInt(c))
 	if !result.IsInt64() {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	return result.Int64()

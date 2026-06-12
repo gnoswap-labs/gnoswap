@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -49,7 +50,7 @@ func (gv *governanceV1) Reconfigure(
 	executionWindow int64,
 ) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	// Check if system is halted before proceeding

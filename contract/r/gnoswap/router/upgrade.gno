@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -16,7 +17,7 @@ import (
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, routerStore IRouterStore) IRouter) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			return errSpoofedRealm
+			return errors.New(errSpoofedRealm)
 		}
 
 		currentRouterStore, ok := domainStore.(IRouterStore)

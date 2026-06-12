@@ -53,7 +53,7 @@ func (s *governanceStore) GetConfigCounter() *Counter {
 
 func (s *governanceStore) SetConfigCounter(_ int, rlm realm, counter *Counter) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyConfigCounter.String(), counter)
@@ -79,7 +79,7 @@ func (s *governanceStore) GetProposalCounter() *Counter {
 
 func (s *governanceStore) SetProposalCounter(_ int, rlm realm, counter *Counter) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposalCounter.String(), counter)
@@ -106,7 +106,7 @@ func (s *governanceStore) GetConfigs() *bptree.BPTree {
 
 func (s *governanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyConfigs.String(), configs)
@@ -129,7 +129,7 @@ func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 
 func (s *governanceStore) SetConfig(_ int, rlm realm, version int64, config Config) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasConfigsStoreKey() {
@@ -163,7 +163,7 @@ func (s *governanceStore) GetProposals() *bptree.BPTree {
 
 func (s *governanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
@@ -185,7 +185,7 @@ func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 
 func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasProposalsStoreKey() {
@@ -219,7 +219,7 @@ func (s *governanceStore) GetProposalUserVotingInfos() *bptree.BPTree {
 
 func (s *governanceStore) SetProposalUserVotingInfos(_ int, rlm realm, votingInfos *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposalUserVotingInfos.String(), votingInfos)
@@ -242,7 +242,7 @@ func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTr
 
 func (s *governanceStore) SetProposalVotingInfos(_ int, rlm realm, proposalID int64, votingInfos *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasProposalUserVotingInfosStoreKey() {
@@ -276,7 +276,7 @@ func (s *governanceStore) GetUserProposals() *bptree.BPTree {
 
 func (s *governanceStore) SetUserProposals(_ int, rlm realm, userProposals *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyUserProposals.String(), userProposals)
@@ -303,7 +303,7 @@ func (s *governanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 
 func (s *governanceStore) AddUserProposal(_ int, rlm realm, user string, proposalID int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasUserProposalsStoreKey() {
@@ -330,7 +330,7 @@ func (s *governanceStore) AddUserProposal(_ int, rlm realm, user string, proposa
 
 func (s *governanceStore) RemoveUserProposal(_ int, rlm realm, user string, proposalID int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasUserProposalsStoreKey() {

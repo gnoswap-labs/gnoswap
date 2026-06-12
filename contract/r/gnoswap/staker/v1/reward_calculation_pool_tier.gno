@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -397,7 +398,7 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 // - int64: The reward for the pool.
 func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
 	if emission < 0 || tierRatio < 0 || tierCount < 0 {
-		panic(errCalculationError)
+		panic(errors.New(errCalculationError))
 	}
 
 	if emission == 0 || tierRatio == 0 || tierCount == 0 {

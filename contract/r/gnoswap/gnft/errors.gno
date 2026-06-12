@@ -1,28 +1,26 @@
 package gnft
 
 import (
-	"errors"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-var (
-	errCannotSetURI   = errors.New("[GNOSWAP-GNFT-001] cannot set URI")
-	errInvalidAddress = errors.New("[GNOSWAP-GNFT-002] invalid address")
+const (
+	errCannotSetURI   = "[GNOSWAP-GNFT-001] cannot set URI"
+	errInvalidAddress = "[GNOSWAP-GNFT-002] invalid address"
 
 	// Transfer errors
-	errNotOwnerOrApproved = errors.New("[GNOSWAP-GNFT-003] caller is not token owner or approved")
-	errTokenNotExists     = errors.New("[GNOSWAP-GNFT-004] token does not exist")
-	errTransferToSelf     = errors.New("[GNOSWAP-GNFT-005] cannot transfer to self")
+	errNotOwnerOrApproved = "[GNOSWAP-GNFT-003] caller is not token owner or approved"
+	errTokenNotExists     = "[GNOSWAP-GNFT-004] token does not exist"
+	errTransferToSelf     = "[GNOSWAP-GNFT-005] cannot transfer to self"
 
-	errInvalidTokenParams      = errors.New("[GNOSWAP-GNFT-006] invalid token parameters")
-	errInvalidTokenParamsRange = errors.New("[GNOSWAP-GNFT-007] token parameters out of range")
-	errInvalidColorFormat      = errors.New("[GNOSWAP-GNFT-008] invalid color format")
-	errStakedTokenLocked       = errors.New("[GNOSWAP-GNFT-009] staked token is locked")
-	errSpoofedRealm            = errors.New("[GNOSWAP-GNFT-010] rlm does not match the current crossing frame")
+	errInvalidTokenParams      = "[GNOSWAP-GNFT-006] invalid token parameters"
+	errInvalidTokenParamsRange = "[GNOSWAP-GNFT-007] token parameters out of range"
+	errInvalidColorFormat      = "[GNOSWAP-GNFT-008] invalid color format"
+	errStakedTokenLocked       = "[GNOSWAP-GNFT-009] staked token is locked"
+	errSpoofedRealm            = "[GNOSWAP-GNFT-010] rlm does not match the current crossing frame"
 )
 
 // makeErrorWithDetails creates an error with additional context.
-func makeErrorWithDetails(err error, details string) error {
-	return ufmt.Errorf("%s || %s", err.Error(), details)
+func makeErrorWithDetails(message string, details string) error {
+	return ufmt.Errorf("%s || %s", message, details)
 }

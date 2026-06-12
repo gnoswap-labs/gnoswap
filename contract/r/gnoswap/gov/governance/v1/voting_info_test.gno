@@ -51,7 +51,7 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 		weight          int64
 		height          int64
 		timestamp       int64
-		expectedError   error
+		expectedError   string
 		expectedVoted   bool
 		expectedVoteYes bool
 	}{
@@ -62,7 +62,7 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 			weight:          50,
 			height:          1000,
 			timestamp:       1234567890,
-			expectedError:   nil,
+			expectedError:   "",
 			expectedVoted:   true,
 			expectedVoteYes: true,
 		},
@@ -73,7 +73,7 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 			weight:          50,
 			height:          1000,
 			timestamp:       1234567890,
-			expectedError:   nil,
+			expectedError:   "",
 			expectedVoted:   true,
 			expectedVoteYes: false,
 		},
@@ -97,14 +97,14 @@ func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 			err := resolver.vote(tc.voteYes, tc.weight, tc.height, tc.timestamp)
 
 			// then
-			if tc.expectedError == nil {
+			if tc.expectedError == "" {
 				uassert.Equal(t, tc.votingInfo.IsVoted(), tc.expectedVoted)
 				uassert.Equal(t, tc.votingInfo.VotedYes(), tc.expectedVoteYes)
 				uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.weight)
 				uassert.Equal(t, tc.votingInfo.VotedHeight(), tc.height)
 				uassert.Equal(t, tc.votingInfo.VotedAt(), tc.timestamp)
 			} else {
-				uassert.ErrorIs(t, err, tc.expectedError)
+				uassert.ErrorContains(t, err, tc.expectedError)
 			}
 		})
 	}

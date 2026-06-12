@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
@@ -193,7 +194,7 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 
 	// Validate pool reference
 	if currentSwapBatch.Pool() == nil {
-		return errPoolNotFound
+		return errors.New(errPoolNotFound)
 	}
 
 	batch := currentSwapBatch

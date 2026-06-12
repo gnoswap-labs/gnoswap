@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -44,7 +45,7 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 // Only admin or governance can call this function.
 func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -71,7 +72,7 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 // Only admin or governance can call this function.
 func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -98,7 +99,7 @@ func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 // Only admin or governance can call this function.
 func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedStaker()

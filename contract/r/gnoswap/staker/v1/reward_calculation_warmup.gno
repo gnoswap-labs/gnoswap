@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"math"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -64,7 +65,7 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
 	perPositionReward, overflow := u256.Zero().MulOverflow(poolRewardUint, positionLiquidity)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
 
@@ -72,13 +73,13 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 	rewardRatio := u256.NewUint(warmup.WarmupRatio)
 	totalReward, overflow := u256.Zero().MulOverflow(perPositionReward, rewardRatio)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	totalReward = u256.Zero().Div(totalReward, divisor)
 
 	totalPenalty, overflow := u256.Zero().MulOverflow(perPositionReward, penaltyRatio)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	totalPenalty = u256.Zero().Div(totalPenalty, divisor)
 	return safeConvertToInt64(totalReward), safeConvertToInt64(totalPenalty)

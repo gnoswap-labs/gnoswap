@@ -2,6 +2,7 @@ package gnft
 
 import (
 	b64 "encoding/base64"
+	"errors"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -135,27 +136,27 @@ func validateCoordinate(value int, min int, max int, name string) error {
 func parseImageParams(s string) (*ImageParams, error) {
 	parts := strings.Split(s, ",")
 	if len(parts) != 6 {
-		return nil, errInvalidTokenParams
+		return nil, errors.New(errInvalidTokenParams)
 	}
 
 	x1, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return nil, errInvalidTokenParams
+		return nil, errors.New(errInvalidTokenParams)
 	}
 
 	y1, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, errInvalidTokenParams
+		return nil, errors.New(errInvalidTokenParams)
 	}
 
 	x2, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return nil, errInvalidTokenParams
+		return nil, errors.New(errInvalidTokenParams)
 	}
 
 	y2, err := strconv.Atoi(parts[3])
 	if err != nil {
-		return nil, errInvalidTokenParams
+		return nil, errors.New(errInvalidTokenParams)
 	}
 
 	// Validate coordinate ranges with detailed error messages
@@ -177,7 +178,7 @@ func parseImageParams(s string) (*ImageParams, error) {
 
 	// Validate color format (#XXXXXX)
 	if !isValidHexColor(color1) || !isValidHexColor(color2) {
-		return nil, errInvalidColorFormat
+		return nil, errors.New(errInvalidColorFormat)
 	}
 
 	return &ImageParams{

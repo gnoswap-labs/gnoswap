@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -79,7 +80,7 @@ func (r *DelegationWithdrawResolver) IsCollected() bool {
 //   - error: nil on success, error if collection is not allowed
 func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) error {
 	if !r.IsCollectable(currentTime) {
-		return errWithdrawNotCollectable
+		return errors.New(errWithdrawNotCollectable)
 	}
 
 	r.withdraw.SetCollectedAmount(safeAddInt64(r.withdraw.CollectedAmount(), amount))

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -74,7 +75,7 @@ func (p *positionV1) mint(_ int, rlm realm, params MintParams) (uint64, *u256.Ui
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
 	token0, token1 := input.token0, input.token1
 	if err := validateTokenPath(token0, token1); err != nil {
-		return ProcessedMintInput{}, makeErrorWithDetails(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1))
+		return ProcessedMintInput{}, makeErrorWithDetails(err.Error(), ufmt.Sprintf("token0(%s), token1(%s)", token0, token1))
 	}
 
 	pair := TokenPair{
@@ -139,7 +140,7 @@ func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidit
 	posLiquidity := u256.MustFromDecimal(position.Liquidity())
 	liquidityAmount, overflow := u256.Zero().AddOverflow(posLiquidity, liquidity)
 	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
+		return 0, nil, nil, nil, "", errors.New(errOverflow)
 	}
 
 	position.SetTokensOwed0(tokensOwed0)
@@ -165,10 +166,10 @@ func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidit
 // validateTokenPath validates token paths are not identical, not conflicting, and in valid format.
 func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
-		return errInvalidTokenPath
+		return errors.New(errInvalidTokenPath)
 	}
 	if !isValidTokenPath(token0) || !isValidTokenPath(token1) {
-		return errInvalidTokenPath
+		return errors.New(errInvalidTokenPath)
 	}
 	return nil
 }

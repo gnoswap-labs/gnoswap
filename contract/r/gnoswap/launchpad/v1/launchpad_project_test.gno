@@ -402,12 +402,12 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(cur realm, t *testing.T
 	tests := []struct {
 		name          string
 		projectName   string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "project name is valid",
 			projectName:   "Obl Protocol",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "project name is empty",
@@ -429,10 +429,10 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(cur realm, t *testing.T
 
 			err := params.validateName()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -442,12 +442,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *tes
 	tests := []struct {
 		name          string
 		tokenPath     string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "token path is valid",
 			tokenPath:     "gno.land/r/onbloc/obl",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "token path is empty",
@@ -469,10 +469,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *tes
 
 			err := params.validateTokenPath()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -482,12 +482,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateRecipient(cur realm, t *tes
 	tests := []struct {
 		name          string
 		recipient     address
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "recipient is valid",
 			recipient:     testutils.TestAddress("projectAddr"),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "recipient is invalid",
@@ -504,10 +504,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateRecipient(cur realm, t *tes
 
 			err := params.validateRecipient()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -517,12 +517,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(cur realm, t 
 	tests := []struct {
 		name          string
 		depositAmount int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "deposit amount is valid",
 			depositAmount: 1_000_000_000,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "deposit amount is zero",
@@ -544,10 +544,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(cur realm, t 
 
 			err := params.validateDepositAmount()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -559,14 +559,14 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(cur realm, t *testing
 		tier30Ratio   int64
 		tier90Ratio   int64
 		tier180Ratio  int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "ratio is valid by sum is 100",
 			tier30Ratio:   10,
 			tier90Ratio:   20,
 			tier180Ratio:  70,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "ratio is invalid by sum is not 100",
@@ -608,10 +608,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(cur realm, t *testing
 
 			err := params.validateRatio()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -623,12 +623,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *tes
 	tests := []struct {
 		name          string
 		startTime     int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "start time is valid",
 			startTime:     int64(time.Now().Unix() + minimumStartDelayTime),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "start time is invalid by in the past",
@@ -655,10 +655,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *tes
 
 			err := params.validateStartTime(int64(time.Now().Unix()), minimumStartDelayTime)
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -672,13 +672,13 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *te
 		name             string
 		conditionTokens  string
 		conditionAmounts string
-		expectedError    error
+		expectedError    string
 	}{
 		{
 			name:             "conditions are valid",
 			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
 			conditionAmounts: "1000*PAD*2000",
-			expectedError:    nil,
+			expectedError:    "",
 		},
 		{
 			name:             "conditions are invalid by not registered token path",
@@ -721,10 +721,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *te
 
 			err := params.validateConditions()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -41,7 +42,7 @@ import (
 // Transfers rewards directly to caller.
 func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -99,7 +100,7 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -174,7 +175,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 //   - if access control operations fail
 func (gs *govStakerV1) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	if add {

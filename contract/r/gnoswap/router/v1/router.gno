@@ -64,7 +64,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit i
 			return ufmt.Errorf(errExactOutTooMuchSpent, limit, amountIn)
 		}
 	default:
-		return errInvalidSwapType
+		return errors.New(errInvalidSwapType)
 	}
 	return nil
 }
@@ -73,7 +73,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit i
 func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
-		return Unknown, errInvalidSwapType
+		return Unknown, errors.New(errInvalidSwapType)
 	}
 	return swapType, nil
 }

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -120,7 +121,7 @@ func (r *ProposalResolver) execute(
 ) error {
 	// Verify proposal is in executable state
 	if !r.IsExecutable(executedAt) {
-		return errProposalNotExecutable
+		return errors.New(errProposalNotExecutable)
 	}
 
 	// Mark proposal as executed
@@ -134,11 +135,11 @@ func (r *ProposalResolver) cancel(
 	canceledBy address,
 ) error {
 	if r.statusResolver.IsCanceled(canceledAt) {
-		return errAlreadyCanceledProposal
+		return errors.New(errAlreadyCanceledProposal)
 	}
 
 	if !r.statusResolver.IsUpcoming(canceledAt) {
-		return errUnableToCancelVotingProposal
+		return errors.New(errUnableToCancelVotingProposal)
 	}
 
 	// Mark proposal as canceled

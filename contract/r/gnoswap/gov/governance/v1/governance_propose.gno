@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	"gno.land/r/gnoswap/gov/xgns"
@@ -39,7 +40,7 @@ func (gv *governanceV1) ProposeText(
 	description string,
 ) (newProposalId int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovernance()
@@ -53,7 +54,7 @@ func (gv *governanceV1) ProposeText(
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
-		panic(errDataNotFound)
+		panic(errors.New(errDataNotFound))
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
@@ -64,7 +65,7 @@ func (gv *governanceV1) ProposeText(
 
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress) {
-		panic(errAlreadyActiveProposal)
+		panic(errors.New(errAlreadyActiveProposal))
 	}
 
 	// Get snapshot time and total voting weight for proposal creation
@@ -150,7 +151,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	amount int64,
 ) (newProposalId int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovernance()
@@ -166,7 +167,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
-		panic(errDataNotFound)
+		panic(errors.New(errDataNotFound))
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
@@ -177,7 +178,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress) {
-		panic(errAlreadyActiveProposal)
+		panic(errors.New(errAlreadyActiveProposal))
 	}
 
 	// Get snapshot time and total voting weight for proposal creation
@@ -265,7 +266,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	executions string,
 ) (newProposalId int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovernance()
@@ -279,7 +280,7 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	config, ok := gv.getCurrentConfig()
 	if !ok {
-		panic(errDataNotFound)
+		panic(errors.New(errDataNotFound))
 	}
 
 	// Clean up inactive user proposals before checking if caller already has an active proposal
@@ -290,7 +291,7 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress) {
-		panic(errAlreadyActiveProposal)
+		panic(errors.New(errAlreadyActiveProposal))
 	}
 
 	// Get snapshot time and total voting weight for proposal creation
@@ -374,7 +375,7 @@ func (gv *governanceV1) createProposal(
 
 	// Check if proposer has enough xGNS balance to create proposal
 	if proposerXGnsBalance < config.ProposalCreationThreshold {
-		return nil, errNotEnoughBalance
+		return nil, errors.New(errNotEnoughBalance)
 	}
 
 	// Generate unique proposal ID
@@ -406,7 +407,7 @@ func (gv *governanceV1) createProposal(
 	// Store the proposal in state
 	success := gv.addProposal(0, rlm, proposal)
 	if !success {
-		return nil, errDataNotFound
+		return nil, errors.New(errDataNotFound)
 	}
 
 	return proposal, nil
@@ -437,7 +438,7 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 
 	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
 	if totalVotingWeight <= 0 {
-		return 0, snapshotTime, errNotEnoughVotingWeight
+		return 0, snapshotTime, errors.New(errNotEnoughVotingWeight)
 	}
 
 	return totalVotingWeight, snapshotTime, nil

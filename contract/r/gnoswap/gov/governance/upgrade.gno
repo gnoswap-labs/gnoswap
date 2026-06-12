@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -23,7 +24,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, governanc
 	// the version package's, which would fail the kvStore ACL.
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			panic(ErrSpoofedRealm)
+			panic(errors.New(ErrSpoofedRealm))
 		}
 
 		currentGovernanceStore, ok := domainStore.(IGovernanceStore)

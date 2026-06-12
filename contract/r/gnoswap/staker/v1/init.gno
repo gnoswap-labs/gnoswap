@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	"gno.land/r/gnoswap/emission"
@@ -24,7 +25,7 @@ func init(cur realm) {
 func registerStakerV1(cur realm) {
 	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
 		if !rlm.IsCurrent() {
-			panic(errSpoofedRealm)
+			panic(errors.New(errSpoofedRealm))
 		}
 
 		err := initStoreData(0, rlm, stakerStore, emissionAccessor)

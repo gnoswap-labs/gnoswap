@@ -1181,7 +1181,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 
 		_, err := updateAmounts(step, state, false)
 
-		uassert.ErrorIs(t, err, errOverflow,
+		uassert.ErrorContains(t, err, errOverflow,
 			"Should prevent overflow when amountCalculated would exceed MAX_INT64")
 	})
 
@@ -1223,7 +1223,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, true)
-		uassert.ErrorIs(t, err, errUnderflow,
+		uassert.ErrorContains(t, err, errUnderflow,
 			"Should prevent underflow when amountOut exceeds MAX_INT256")
 	})
 
@@ -1284,7 +1284,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, false)
-		uassert.ErrorIs(t, err, errOverflow,
+		uassert.ErrorContains(t, err, errOverflow,
 			"Should detect overflow caused by fee accumulation")
 	})
 }

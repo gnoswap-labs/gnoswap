@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 	"strconv"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,7 +22,7 @@ import (
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	prev := rlm.Previous()
@@ -91,7 +92,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedProtocolFee()
@@ -130,7 +131,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedProtocolFee()
@@ -171,11 +172,11 @@ func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	if halt.IsHaltedProtocolFee() {
-		return errProtocolFeeHalted
+		return errors.New(errProtocolFeeHalted)
 	}
 
 	prev := rlm.Previous()

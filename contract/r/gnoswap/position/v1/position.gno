@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -46,7 +47,7 @@ func (p *positionV1) Mint(
 	referrer string,
 ) (uint64, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -160,7 +161,7 @@ func (p *positionV1) IncreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -184,7 +185,7 @@ func (p *positionV1) IncreaseLiquidity(
 
 	err := validateTokenPath(token0, token1)
 	if err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+		panic(newErrorWithDetail(err.Error(), ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
@@ -260,7 +261,7 @@ func (p *positionV1) DecreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -338,7 +339,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -370,7 +371,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 
 	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
 	if err != nil {
-		panic(newErrorWithDetail(err, "failed to get current fee growth"))
+		panic(newErrorWithDetail(err.Error(), "failed to get current fee growth"))
 	}
 
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, currentFeeGrowth)
@@ -443,7 +444,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	previousRealm := rlm.Previous()

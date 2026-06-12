@@ -1,6 +1,7 @@
 package launchpad
 
 import (
+	"errors"
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
@@ -59,7 +60,7 @@ func (s *launchpadStore) GetProjects() *bptree.BPTree {
 // SetProjects stores the projects tree.
 func (s *launchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjects.String(), projects)
@@ -88,7 +89,7 @@ func (s *launchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 // SetProjectTierRewardManagers stores the project tier reward managers tree.
 func (s *launchpadStore) SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjectTierRewardManagers.String(), managers)
@@ -116,7 +117,7 @@ func (s *launchpadStore) GetDepositCounter() *Counter {
 
 func (s *launchpadStore) SetDepositCounter(_ int, rlm realm, counter *Counter) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDepositCounter.String(), counter)
@@ -152,7 +153,7 @@ func (s *launchpadStore) GetDeposits() *bptree.BPTree {
 // SetDeposits stores the deposits tree.
 func (s *launchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)

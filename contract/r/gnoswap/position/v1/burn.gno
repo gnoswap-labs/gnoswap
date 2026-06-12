@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/p/gnoswap/consts"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -57,7 +58,7 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 	burnedAmount1 := safeParseInt64(burn1)
 
 	if burnedAmount0 < 0 || burnedAmount1 < 0 {
-		panic(errUnderflow)
+		panic(errors.New(errUnderflow))
 	}
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())

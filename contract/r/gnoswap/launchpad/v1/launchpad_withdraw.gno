@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -24,7 +25,7 @@ import (
 // Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
-		return 0, errSpoofedRealm
+		return 0, errors.New(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()

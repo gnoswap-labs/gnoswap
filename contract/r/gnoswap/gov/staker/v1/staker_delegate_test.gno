@@ -334,7 +334,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 			setupDelegate: true,
 			undelegateAmt: minimumAmount * 10,
 			expectPanic:   true,
-			expectedError: errNotEnoughDelegated.Error(),
+			expectedError: errNotEnoughDelegated,
 			description:   "Should reject when requested exceeds delegated",
 		},
 		{
@@ -385,15 +385,15 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(cur realm, t *te
 // Test Redelegate function
 func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            address
-		from              address
-		to                address
-		amount            int64
-		expectPanic       bool
-		expectedError     string
-		setupDelegation   bool
-		delegationAmount  int64
+		name             string
+		caller           address
+		from             address
+		to               address
+		amount           int64
+		expectPanic      bool
+		expectedError    string
+		setupDelegation  bool
+		delegationAmount int64
 	}{
 		{
 			name:             "Successful redelegation",
@@ -411,7 +411,7 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			to:               testutils.TestAddress("reval_to2"),
 			amount:           minimumAmount * 2,
 			expectPanic:      true,
-			expectedError:    errNotEnoughDelegated.Error(),
+			expectedError:    errNotEnoughDelegated,
 			setupDelegation:  true,
 			delegationAmount: minimumAmount,
 		},
@@ -422,7 +422,7 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			to:            testutils.TestAddress("reval_to3"),
 			amount:        minimumAmount,
 			expectPanic:   true,
-			expectedError: errNotEnoughDelegated.Error(),
+			expectedError: errNotEnoughDelegated,
 		},
 		{
 			name:          "Invalid delegator address should panic",
@@ -449,7 +449,7 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			to:            testutils.TestAddress("reval_same"),
 			amount:        minimumAmount,
 			expectPanic:   true,
-			expectedError: errSameDelegatee.Error(),
+			expectedError: errSameDelegatee,
 		},
 	}
 

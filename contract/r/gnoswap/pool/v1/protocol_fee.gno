@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -41,7 +42,7 @@ func (i *poolV1) HandleWithdrawalFee(
 	positionCaller address,
 ) (string, string, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -122,7 +123,7 @@ func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -154,7 +155,7 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -195,7 +196,7 @@ func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
 	feeAmount, overflow := u256.Zero().MulOverflow(amount, fee)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10_000))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)

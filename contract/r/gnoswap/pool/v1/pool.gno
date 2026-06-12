@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -51,7 +52,7 @@ func (i *poolV1) Mint(
 	positionCaller address,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -66,7 +67,7 @@ func (i *poolV1) Mint(
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
 	if liquidity.IsZero() {
-		panic(errZeroLiquidity)
+		panic(errors.New(errZeroLiquidity))
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -132,7 +133,7 @@ func (i *poolV1) Burn(
 	positionCaller address,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -208,7 +209,7 @@ func (i *poolV1) Collect(
 	amount1Requested string,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -225,7 +226,7 @@ func (i *poolV1) Collect(
 	amount1Req := safeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
-		panic(errInvalidInput)
+		panic(errors.New(errInvalidInput))
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -280,7 +281,7 @@ func (i *poolV1) CollectProtocol(
 	amount1Requested string, // uint128
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -340,7 +341,7 @@ func (i *poolV1) collectProtocol(
 	amount1Req := safeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
-		panic(errInvalidInput)
+		panic(errors.New(errInvalidInput))
 	}
 
 	amount0 := minRequestedAmount(amount0Req, pool.ProtocolFeesToken0())
@@ -375,12 +376,12 @@ func (i *poolV1) collectProtocol(
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64, int64) {
 	if pool.ProtocolFeesToken0() < amount0 {
-		panic(errUnderflow)
+		panic(errors.New(errUnderflow))
 	}
 	pool.SetProtocolFeesToken0(safeSubInt64(pool.ProtocolFeesToken0(), amount0))
 
 	if pool.ProtocolFeesToken1() < amount1 {
-		panic(errUnderflow)
+		panic(errors.New(errUnderflow))
 	}
 	pool.SetProtocolFeesToken1(safeSubInt64(pool.ProtocolFeesToken1(), amount1))
 
@@ -404,7 +405,7 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	cardinalityNext uint16,
 ) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()

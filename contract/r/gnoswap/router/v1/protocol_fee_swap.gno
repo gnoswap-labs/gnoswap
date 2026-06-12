@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -42,7 +43,7 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedRouter()
@@ -56,7 +57,7 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 	if fee > 1000 {
 		panic(ufmt.Errorf(
 			"%s: fee must be in range 0 to 1000 (10%). got %d",
-			errInvalidSwapFee.Error(), fee,
+			errInvalidSwapFee, fee,
 		))
 	}
 

@@ -12,9 +12,9 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-var (
-	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
 
+var (
 	kvStore store.KVStore
 
 	versionManager version_manager.VersionManager

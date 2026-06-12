@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/launchpad"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -27,7 +28,7 @@ func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.U
 
 	reward, overflow := u256.Zero().MulOverflow(actualRewardPerDepositX128, u256.NewUintFromInt64(r.DepositAmount()))
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	reward = reward.Rsh(reward, 128)
 	return safeConvertToInt64(reward)
