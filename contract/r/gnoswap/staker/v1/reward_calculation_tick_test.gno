@@ -274,3 +274,61 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 		})
 	}
 }
+
+func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+	batchTime := int64(1010)
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.modifyDeposit(liquidity, startTime, 5)
+
+	tickResolver := poolResolver.TickResolver(10)
+	tickResolver.modifyDepositUpper(startTime, liquidity)
+	tickResolver.modifyDepositLower(startTime, liquidity)
+	tick := pool.Ticks().Get(10)
+	if tick.StakedLiquidityGross().IsZero() {
+		t.Fatalf("tick 10 must remain initialized")
+	}
+	if !tick.StakedLiquidityDelta().IsZero() {
+		t.Fatalf("tick 10 delta = %s, want 0", tick.StakedLiquidityDelta().ToString())
+	}
+
+	instance.getPools().set(poolPath, pool)
+	instance.swapStartHook(0, cur, poolPath, batchTime)
+	instance.tickCrossHook(0, cur, poolPath, 10, false, batchTime)
+
+	batch := instance.store.GetCurrentSwapBatch()
+	if batch == nil {
+		t.Fatal("current swap batch not found")
+	}
+	crosses := batch.Crosses()
+	if len(crosses) != 1 {
+		t.Fatalf("batch crosses length = %d, want 1", len(crosses))
+	}
+	if crosses[0].TickID() != 10 {
+		t.Fatalf("batch tick = %d, want 10", crosses[0].TickID())
+	}
+	if !crosses[0].Delta().IsZero() {
+		t.Fatalf("batch delta = %s, want 0", crosses[0].Delta().ToString())
+	}
+
+	err := instance.swapEndHook(0, cur, poolPath)
+	if err != nil {
+		t.Fatalf("swapEndHook failed: %s", err.Error())
+	}
+	if instance.store.GetCurrentSwapBatch() != nil {
+		t.Fatal("current swap batch must be cleared")
+	}
+	if poolResolver.CurrentTick(batchTime) != 10 {
+		t.Fatalf("historical tick = %d, want 10", poolResolver.CurrentTick(batchTime))
+	}
+	if tickResolver.CurrentOutsideAccumulation(batchTime).IsZero() {
+		t.Fatal("tick 10 outside accumulation was not updated")
+	}
+}
