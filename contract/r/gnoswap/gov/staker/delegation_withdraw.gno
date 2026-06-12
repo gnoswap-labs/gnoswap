@@ -1,5 +1,9 @@
 package staker
 
+import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+)
+
 // DelegationWithdraw represents a pending withdrawal from a delegation.
 // This struct tracks undelegated amounts that are subject to lockup periods
 // and manages the collection process once the lockup period expires.
@@ -133,7 +137,7 @@ func NewDelegationWithdraw(
 		unDelegateAmount:  unDelegateAmount,
 		unDelegatedHeight: createdHeight,
 		unDelegatedAt:     createdAt,
-		collectableTime:   safeAddInt64(createdAt, unDelegationLockupPeriod),
+		collectableTime:   gnsmath.SafeAddInt64(createdAt, unDelegationLockupPeriod),
 		collectedAmount:   0,
 		collectedAt:       0,
 		collected:         false,

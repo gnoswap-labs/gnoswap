@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -101,24 +102,24 @@ func (p *positionV1) Mint(
 		"Mint",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"tickLower", formatInt(processedInput.tickLower),
-		"tickUpper", formatInt(processedInput.tickUpper),
+		"tickLower", utils.FormatInt(processedInput.tickLower),
+		"tickUpper", utils.FormatInt(processedInput.tickUpper),
 		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
-		"lpPositionId", formatUint(id),
+		"lpPositionId", utils.FormatUint(id),
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(id),
 		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
-		"token0Balance", formatInt(pl.GetBalanceToken0(processedInput.poolPath)),
-		"token1Balance", formatInt(pl.GetBalanceToken1(processedInput.poolPath)),
-		"tickCumulative", formatInt(tickCumulative),
+		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(processedInput.poolPath)),
+		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(processedInput.poolPath)),
+		"tickCumulative", utils.FormatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
-		"observationTimestamp", formatInt(observationTimestamp),
+		"observationTimestamp", utils.FormatInt(observationTimestamp),
 		"referrer", actualReferrer,
 	)
 
@@ -211,19 +212,19 @@ func (p *positionV1) IncreaseLiquidity(
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"caller", caller.String(),
-		"lpPositionId", formatUint(positionId),
+		"lpPositionId", utils.FormatUint(positionId),
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", formatInt(pl.GetBalanceToken1(poolPath)),
-		"tickCumulative", formatInt(tickCumulative),
+		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
+		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"tickCumulative", utils.FormatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
-		"observationTimestamp", formatInt(observationTimestamp),
+		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -295,7 +296,7 @@ func (p *positionV1) DecreaseLiquidity(
 		"DecreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpPositionId", formatUint(positionId),
+		"lpPositionId", utils.FormatUint(positionId),
 		"poolPath", poolPath,
 		"liquidityDelta", liquidity,
 		"feeAmount0", fee0,
@@ -305,12 +306,12 @@ func (p *positionV1) DecreaseLiquidity(
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", formatInt(pl.GetBalanceToken1(poolPath)),
-		"tickCumulative", formatInt(tickCumulative),
+		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
+		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"tickCumulative", utils.FormatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
-		"observationTimestamp", formatInt(observationTimestamp),
+		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity, fee0, fee1, amount0, amount1, poolPath
@@ -384,24 +385,24 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		token0, token1, fee,
 		caller,
 		position.TickLower(), position.TickUpper(),
-		formatInt(tokensOwed0), formatInt(tokensOwed1),
+		utils.FormatInt(tokensOwed0), utils.FormatInt(tokensOwed1),
 	)
 	amount0Uint256 := u256.MustFromDecimal(amount0)
 	amount1Uint256 := u256.MustFromDecimal(amount1)
-	amount0Int64 := safeConvertToInt64(amount0Uint256)
-	amount1Int64 := safeConvertToInt64(amount1Uint256)
+	amount0Int64 := gnsmath.SafeConvertToInt64(amount0Uint256)
+	amount1Int64 := gnsmath.SafeConvertToInt64(amount1Uint256)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
 	if tokensOwed0 < amount0Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
-	position.SetTokensOwed0(safeSubInt64(tokensOwed0, amount0Int64))
+	position.SetTokensOwed0(gnsmath.SafeSubInt64(tokensOwed0, amount0Int64))
 
 	if tokensOwed1 < amount1Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
-	position.SetTokensOwed1(safeSubInt64(tokensOwed1, amount1Int64))
+	position.SetTokensOwed1(gnsmath.SafeSubInt64(tokensOwed1, amount1Int64))
 	p.mustUpdatePosition(0, rlm, positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
@@ -416,7 +417,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"CollectSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpPositionId", formatUint(positionId),
+		"lpPositionId", utils.FormatUint(positionId),
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
@@ -428,7 +429,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"WithdrawalFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", formatUint(positionId),
+		"lpTokenId", utils.FormatUint(positionId),
 		"poolPath", position.PoolKey(),
 		"feeAmount0", fee0Str,
 		"feeAmount1", fee1Str,
@@ -461,7 +462,7 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 		"SetPositionOperator",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpPositionId", formatUint(id),
+		"lpPositionId", utils.FormatUint(id),
 		"prevOperator", prevOperator.String(),
 		"newOperator", operator.String(),
 	)
@@ -500,5 +501,5 @@ func calculatePositionBalances(position *pos.Position) (int64, int64) {
 		liquidity,
 	)
 
-	return safeConvertToInt64(token0Balance), safeConvertToInt64(token1Balance)
+	return gnsmath.SafeConvertToInt64(token0Balance), gnsmath.SafeConvertToInt64(token1Balance)
 }

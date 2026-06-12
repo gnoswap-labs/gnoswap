@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -128,18 +130,18 @@ func (lp *launchpadV1) CreateProject(
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
-		"depositAmount", formatInt(depositAmount),
-		"tier30Ratio", formatInt(params.tier30Ratio),
-		"tier90Ratio", formatInt(params.tier90Ratio),
-		"tier180Ratio", formatInt(params.tier180Ratio),
-		"startTime", formatInt(params.startTime),
+		"depositAmount", utils.FormatInt(depositAmount),
+		"tier30Ratio", utils.FormatInt(params.tier30Ratio),
+		"tier90Ratio", utils.FormatInt(params.tier90Ratio),
+		"tier180Ratio", utils.FormatInt(params.tier180Ratio),
+		"startTime", utils.FormatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(tier30.TotalDistributeAmount()),
-		"tier30EndTime", formatInt(tier30.EndTime()),
-		"tier90Amount", formatInt(tier90.TotalDistributeAmount()),
-		"tier90EndTime", formatInt(tier90.EndTime()),
-		"tier180Amount", formatInt(tier180.TotalDistributeAmount()),
-		"tier180EndTime", formatInt(tier180.EndTime()),
+		"tier30Amount", utils.FormatInt(tier30.TotalDistributeAmount()),
+		"tier30EndTime", utils.FormatInt(tier30.EndTime()),
+		"tier90Amount", utils.FormatInt(tier90.TotalDistributeAmount()),
+		"tier90EndTime", utils.FormatInt(tier90.EndTime()),
+		"tier180Amount", utils.FormatInt(tier180.TotalDistributeAmount()),
+		"tier180EndTime", utils.FormatInt(tier180.EndTime()),
 	}, conditionEventAttrs...)
 
 	chain.Emit(
@@ -201,13 +203,13 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	for _, duration := range projectTierDurations {
 		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
 		tierDurationTime := projectTierDurationTimes[duration]
-		tierDistributeAmount := safeMulDiv(params.depositAmount, projectTierRatios[duration], 100)
-		accumulatedTierDistributeAmount = safeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
+		tierDistributeAmount := gnsmath.SafeMulDivInt64(params.depositAmount, projectTierRatios[duration], 100)
+		accumulatedTierDistributeAmount = gnsmath.SafeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
 
 		// if the last tier, distribute the remaining amount
 		if duration == projectTier180 {
-			remainTierDistributeAmount := safeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
-			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
+			remainTierDistributeAmount := gnsmath.SafeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
+			tierDistributeAmount = gnsmath.SafeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
 		projectTier := newProjectTier(
@@ -289,15 +291,15 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectI
 		"projectId", projectID,
 		"recipient", recipient.String(),
 		"tokenPath", project.TokenPath(),
-		"leftReward", formatInt(projectLeftReward),
-		"tier30Full", formatInt(tier30.TotalDepositAmount()),
-		"tier30Left", formatInt(getCalculatedLeftReward(tier30)),
-		"tier90Full", formatInt(tier90.TotalDepositAmount()),
-		"tier90Left", formatInt(getCalculatedLeftReward(tier90)),
-		"tier180Full", formatInt(tier180.TotalDepositAmount()),
-		"tier180Left", formatInt(getCalculatedLeftReward(tier180)),
-		"currentHeight", formatInt(currentHeight),
-		"currentTime", formatInt(currentTime),
+		"leftReward", utils.FormatInt(projectLeftReward),
+		"tier30Full", utils.FormatInt(tier30.TotalDepositAmount()),
+		"tier30Left", utils.FormatInt(getCalculatedLeftReward(tier30)),
+		"tier90Full", utils.FormatInt(tier90.TotalDepositAmount()),
+		"tier90Left", utils.FormatInt(getCalculatedLeftReward(tier90)),
+		"tier180Full", utils.FormatInt(tier180.TotalDepositAmount()),
+		"tier180Left", utils.FormatInt(getCalculatedLeftReward(tier180)),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"currentTime", utils.FormatInt(currentTime),
 	)
 
 	return projectLeftReward
@@ -329,27 +331,27 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 				return 0, err
 			}
 
-			accumCollectableReward = safeAddInt64(accumCollectableReward, claimableReward)
+			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, claimableReward)
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
-		accumLeftReward = safeAddInt64(accumLeftReward, leftReward)
-		accumCollectedReward = safeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
-		accumTotalDistributeAmount = safeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
+		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
+		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
+		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
 	}
 
 	if accumLeftReward == 0 {
 		return 0, errors.New("project has no remaining amount")
 	}
 
-	actualTotalDistributeAmount := safeAddInt64(accumCollectedReward, accumLeftReward)
+	actualTotalDistributeAmount := gnsmath.SafeAddInt64(accumCollectedReward, accumLeftReward)
 	if accumTotalDistributeAmount != actualTotalDistributeAmount {
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
 	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
 	projectLeftReward := accumLeftReward
-	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
+	refundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
 
 	if refundableAmount < 0 {
 		return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))

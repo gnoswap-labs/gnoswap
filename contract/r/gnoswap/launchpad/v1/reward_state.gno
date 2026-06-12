@@ -3,6 +3,7 @@ package v1
 import (
 	"gno.land/r/gnoswap/launchpad"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -30,7 +31,7 @@ func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.U
 		panic(errOverflow)
 	}
 	reward = reward.Rsh(reward, 128)
-	return safeConvertToInt64(reward)
+	return gnsmath.SafeConvertToInt64(reward)
 }
 
 // calculateClaimableReward calculates the amount of reward that can be claimed

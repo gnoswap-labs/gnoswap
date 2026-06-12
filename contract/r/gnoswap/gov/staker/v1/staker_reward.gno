@@ -5,6 +5,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -66,7 +67,7 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 			"prevRealm", prev.PkgPath(),
 			"from", from.String(),
 			"to", caller.String(),
-			"emissionRewardAmount", formatInt(emissionReward),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
 
@@ -85,7 +86,7 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 				"tokenPath", tokenPath,
 				"from", from.String(),
 				"to", caller.String(),
-				"collectedAmount", formatInt(amount),
+				"collectedAmount", utils.FormatInt(amount),
 			)
 		}
 	}
@@ -135,7 +136,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 			"prevRealm", prev.PkgPath(),
 			"from", from.String(),
 			"to", to.String(),
-			"emissionRewardAmount", formatInt(emissionReward),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
 
@@ -154,7 +155,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 				"tokenPath", tokenPath,
 				"from", from.String(),
 				"to", to.String(),
-				"collectedAmount", formatInt(amount),
+				"collectedAmount", utils.FormatInt(amount),
 			)
 		}
 	}

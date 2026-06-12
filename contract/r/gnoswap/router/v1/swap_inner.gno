@@ -9,6 +9,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	pl "gno.land/r/gnoswap/pool"
 	plv1 "gno.land/r/gnoswap/pool/v1"
@@ -76,7 +77,7 @@ func (r *routerV1) swapInner(
 		data.fee,
 		recipient,
 		zeroForOne,
-		formatInt64(amountSpecified),
+		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
@@ -114,7 +115,7 @@ func (r *routerV1) swapDryInner(
 		data.tokenOut,
 		data.fee,
 		zeroForOne,
-		formatInt64(amountSpecified),
+		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {

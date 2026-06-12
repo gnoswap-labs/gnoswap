@@ -5,8 +5,10 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -69,8 +71,8 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newFee", formatUint(fee),
-		"prevFee", formatUint(prevSwapFee),
+		"newFee", utils.FormatUint(fee),
+		"prevFee", utils.FormatUint(prevSwapFee),
 	)
 }
 
@@ -99,10 +101,10 @@ func (r *routerV1) handleSwapFee(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", currentTokenPath,
-		"amount", formatInt64(feeAmountInt64),
+		"amount", utils.FormatInt(feeAmountInt64),
 	)
 
-	return safeSubInt64(amount, feeAmountInt64)
+	return gnsmath.SafeSubInt64(amount, feeAmountInt64)
 }
 
 func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
@@ -115,7 +117,7 @@ func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := r.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
@@ -156,7 +158,7 @@ func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	}
 
 	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
-	return safeConvertToInt64(feeAmount)
+	return gnsmath.SafeConvertToInt64(feeAmount)
 }
 
 // calculate amount to fetch from pool including router fee
@@ -175,7 +177,7 @@ func calculateExactOutWithRouterFee(amount int64, swapFee uint64) int64 {
 			u256.NewUint(10000-swapFee),
 		)
 
-		return safeConvertToInt64(poolAmount)
+		return gnsmath.SafeConvertToInt64(poolAmount)
 	}
 
 	return amount

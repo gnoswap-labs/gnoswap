@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
@@ -270,9 +272,9 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(cur realm, t *testing.T) {
 				if i < len(tt.routes)-1 {
 					// For non-last routes, calculate based on quote
 					quote := tt.quotes[i]
-					quoteInt := safeParseInt64(quote)
+					quoteInt := utils.SafeParseInt64(quote)
 
-					amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+					amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 
 					calculatedAmounts[i] = amount
 					totalUsed = totalUsed + amount
@@ -896,8 +898,8 @@ func TestProcessRoutes_LastRouteRemainder(cur realm, t *testing.T) {
 			// Calculate what the last route should receive
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1148,8 +1150,8 @@ func TestProcessRoutes_SingleRoute(cur realm, t *testing.T) {
 			// Verify the last route gets all remaining amount
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1378,8 +1380,8 @@ func TestProcessRoutes_RemainderAccuracy(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			totalUsed := int64(0)
 			for i := 0; i < len(tt.quotes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := utils.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				totalUsed = totalUsed + amount
 			}
 

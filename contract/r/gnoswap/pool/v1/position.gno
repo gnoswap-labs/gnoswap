@@ -90,8 +90,8 @@ func positionUpdate(
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128.ToString())
 
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		owed0 := safeAddInt64(position.TokensOwed0(), safeConvertToInt64(tokensOwed0))
-		owed1 := safeAddInt64(position.TokensOwed1(), safeConvertToInt64(tokensOwed1))
+		owed0 := gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(tokensOwed0))
+		owed1 := gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(tokensOwed1))
 
 		position.SetTokensOwed0(owed0)
 		position.SetTokensOwed1(owed1)

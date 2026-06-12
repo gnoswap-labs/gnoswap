@@ -2,10 +2,11 @@ package v1
 
 import (
 	"bytes"
-	"math"
 	"strconv"
 	"strings"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 
@@ -24,7 +25,7 @@ func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, err
 		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	toSwap := safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
+	toSwap := gnsmath.SafeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
 	if toSwap == 0 {
 		return 0, errInvalidSwapAmount
 	}
@@ -265,70 +266,6 @@ func splitSingleChar(s string, sep byte) []string {
 	return result
 }
 
-// formatUint formats an unsigned integer to string.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatInt64 formats a signed integer to string.
-func formatInt64(v any) string {
-	switch v := v.(type) {
-	case int8:
-		return strconv.FormatInt(int64(v), 10)
-	case int16:
-		return strconv.FormatInt(int64(v), 10)
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type %T", v))
-	}
-}
-
-// safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
-//
-// This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
-// the maximum allowable range for int64 (`2^63 - 1`), it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - int64: The converted value if it falls within the int64 range.
-//
-// Panics:
-//   - If the `value` exceeds the range of int64, the function will panic with an error indicating
-//     the overflow and the original value.
-func safeConvertToInt64(value *u256.Uint) int64 {
-	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(9223372036854775807) {
-		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max 9223372036854775807)",
-			value.ToString(),
-		))
-	}
-	return int64(res)
-}
-
-func safeParseInt64(value string) int64 {
-	amountInt64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt64
-}
-
 // parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
 // This function converts route paths (which maintain swap direction) into canonical pool paths
 // (which use alphabetical token ordering).
@@ -395,58 +332,5 @@ func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 		panic("tokenA and tokenB cannot be the same")
 	}
 
-	return tokenA + ":" + tokenB + ":" + formatUint(fee)
-}
-
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-	return a + b
-}
-
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-	return a - b
-}
-
-func safeMulDivInt64(a, b, c int64) int64 {
-	if a == 0 || b == 0 {
-		return 0
-	}
-
-	// calculate amount to swap for this route
-	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
-	if overflow {
-		panic(errOverflow)
-	}
-
-	result = i256.Zero().Div(result, i256.NewInt(c))
-	if !result.IsInt64() {
-		panic(errOverflow)
-	}
-
-	return result.Int64()
-}
-
-func safeAbsInt64(a int64) int64 {
-	if a == math.MinInt64 {
-		panic(errOverflow)
-	}
-
-	if a < 0 {
-		return -a
-	}
-
-	return a
+	return tokenA + ":" + tokenB + ":" + utils.FormatUint(fee)
 }

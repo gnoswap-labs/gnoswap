@@ -15,6 +15,7 @@ import (
 	"gno.land/r/onbloc/obl"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 )
 
@@ -409,17 +410,17 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 	currentHeight := runtime.ChainHeight()
 
 	project, _ := lp.createProject(0, cur, &createProjectParams{
-			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
-			depositAmount: 1000000,
-			tier30Ratio:   30,
-			tier90Ratio:   30,
-			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"),
-			startTime:     currentTime + 10,
-			currentTime:   currentTime,
-			currentHeight: currentHeight,
-		},
+		name:          "Test Project",
+		tokenPath:     "gno.land/r/onbloc/obl",
+		depositAmount: 1000000,
+		tier30Ratio:   30,
+		tier90Ratio:   30,
+		tier180Ratio:  40,
+		recipient:     testutils.TestAddress("project"),
+		startTime:     currentTime + 10,
+		currentTime:   currentTime,
+		currentHeight: currentHeight,
+	},
 	)
 
 	projects := lp.store.GetProjects()
@@ -644,7 +645,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(cur realm, t *
 			depositAmount := int64(1000000000)
 
 			for i := 0; i < tt.numDeposits; i++ {
-				userAddr := testutils.TestAddress("multiuser" + formatInt(int64(i)))
+				userAddr := testutils.TestAddress("multiuser" + utils.FormatInt(int64(i)))
 				testing.SetOriginCaller(userAddr)
 				deposit, _, _, _, _ := lp.depositGns(0, cur, project, 30, depositAmount, userAddr)
 				depositIDs[i] = deposit.ID()
@@ -1039,17 +1040,17 @@ func initLaunchpadWithdrawTestWithTier(cur realm, t *testing.T, depositor addres
 
 	// Setup test project with equal distribution across all tiers
 	project, _ := lp.createProject(0, cur, &createProjectParams{
-			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
-			depositAmount: 1000000,
-			tier30Ratio:   34,
-			tier90Ratio:   33,
-			tier180Ratio:  33,
-			recipient:     testutils.TestAddress("project"),
-			startTime:     currentTime + 10,
-			currentTime:   currentTime,
-			currentHeight: currentHeight,
-		},
+		name:          "Test Project",
+		tokenPath:     "gno.land/r/onbloc/obl",
+		depositAmount: 1000000,
+		tier30Ratio:   34,
+		tier90Ratio:   33,
+		tier180Ratio:  33,
+		recipient:     testutils.TestAddress("project"),
+		startTime:     currentTime + 10,
+		currentTime:   currentTime,
+		currentHeight: currentHeight,
+	},
 	)
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)

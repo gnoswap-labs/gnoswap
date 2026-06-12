@@ -11,7 +11,9 @@ import (
 	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 )
 
@@ -106,8 +108,8 @@ func MintGns(cur realm, address address) int64 {
 	}
 
 	setLastMintedTimestamp(currentTime)
-	setMintedEmissionAmount(safeAddInt64(MintedEmissionAmount(), amountToMint))
-	setLeftEmissionAmount(safeSubInt64(LeftEmissionAmount(), amountToMint))
+	setMintedEmissionAmount(gnsmath.SafeAddInt64(MintedEmissionAmount(), amountToMint))
+	setLeftEmissionAmount(gnsmath.SafeSubInt64(LeftEmissionAmount(), amountToMint))
 
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
@@ -118,10 +120,10 @@ func MintGns(cur realm, address address) int64 {
 		"MintGNS",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"mintedBlockTime", formatInt(currentTime),
-		"mintedGNSAmount", formatInt(amountToMint),
-		"accumMintedGNSAmount", formatInt(MintedEmissionAmount()),
-		"accumLeftMintGNSAmount", formatInt(LeftEmissionAmount()),
+		"mintedBlockTime", utils.FormatInt(currentTime),
+		"mintedGNSAmount", utils.FormatInt(amountToMint),
+		"accumMintedGNSAmount", utils.FormatInt(MintedEmissionAmount()),
+		"accumLeftMintGNSAmount", utils.FormatInt(LeftEmissionAmount()),
 	)
 
 	return amountToMint
@@ -221,14 +223,14 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 		}
 
 		amountPerSecond := state.getHalvingYearAmountPerSecond(year)
-		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
+		yearAmountToMint := gnsmath.SafeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
-			leftover := safeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
-			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
+			leftover := gnsmath.SafeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
+			yearAmountToMint = gnsmath.SafeAddInt64(yearAmountToMint, leftover)
 		}
 
-		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
+		totalAmountToMint = gnsmath.SafeAddInt64(totalAmountToMint, yearAmountToMint)
 
 		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
 		if err != nil {

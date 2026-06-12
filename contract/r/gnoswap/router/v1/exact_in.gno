@@ -6,6 +6,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -71,14 +72,14 @@ func (r *routerV1) ExactInSwapRoute(
 		quoteArr:          quoteArr,
 		deadline:          deadline,
 		typ:               ExactIn,
-		exactAmount:       safeParseInt64(amountIn),
-		limitAmount:       safeParseInt64(amountOutMin),
+		exactAmount:       utils.SafeParseInt64(amountIn),
+		limitAmount:       utils.SafeParseInt64(amountOutMin),
 		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
 	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
 
-	return formatInt64(inputAmount), formatInt64(outputAmount)
+	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }
 
 // ExactInSingleSwapRoute swaps an exact amount of input tokens for output tokens through a single route.
@@ -139,14 +140,14 @@ func (r *routerV1) ExactInSingleSwapRoute(
 		quoteArr:          "100",
 		deadline:          deadline,
 		typ:               ExactIn,
-		exactAmount:       safeParseInt64(amountIn),
-		limitAmount:       safeParseInt64(amountOutMin),
+		exactAmount:       utils.SafeParseInt64(amountIn),
+		limitAmount:       utils.SafeParseInt64(amountOutMin),
 		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 
 	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
 
-	return formatInt64(inputAmount), formatInt64(outputAmount)
+	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }
 
 // exactInSwapRoute executes the swap operation and handles token transfers and referral registration.
@@ -192,10 +193,10 @@ func (r *routerV1) exactInSwapRoute(
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,
-		"exactAmount", formatInt64(params.exactAmount),
+		"exactAmount", utils.FormatInt(params.exactAmount),
 		"quote", params.quoteArr,
-		"resultInputAmount", formatInt64(resultInputAmount),
-		"resultOutputAmount", formatInt64(resultOutputAmount),
+		"resultInputAmount", utils.FormatInt(resultInputAmount),
+		"resultOutputAmount", utils.FormatInt(resultOutputAmount),
 		"referrer", actualReferrer,
 	}, buildRouteEventAttrs(params.routeArr)...)
 

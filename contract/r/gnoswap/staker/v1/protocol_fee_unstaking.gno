@@ -4,7 +4,9 @@ import (
 	"chain"
 	"errors"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -30,7 +32,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := safeMulDivInt64(amount, safeUint64ToInt64(unstakingFee), 10000)
+	feeAmount := gnsmath.SafeMulDivInt64(amount, gnsmath.SafeUint64ToInt64(unstakingFee), 10000)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}
@@ -47,7 +49,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
 	s.addToProtocolFee(0, rlm)
 
-	return safeSubInt64(amount, feeAmount), feeAmount, nil
+	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
 func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
@@ -60,7 +62,7 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := s.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
@@ -121,8 +123,8 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 		"SetUnStakingFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevUnStakingFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevUnStakingFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 

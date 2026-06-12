@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
@@ -45,7 +46,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 		"SetUnDelegationLockupPeriod",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
-		"period", formatInt(period),
+		"period", utils.FormatInt(period),
 	)
 }
 
@@ -91,7 +92,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, sn
 		"CleanStakerDelegationSnapshot",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
-		"snapshotTime", formatInt(snapshotTime),
+		"snapshotTime", utils.FormatInt(snapshotTime),
 		"target", target.String(),
 	)
 }

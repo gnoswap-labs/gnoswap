@@ -6,9 +6,12 @@ import (
 	"errors"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
+
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
@@ -103,7 +106,7 @@ func (gs *govStakerV1) Delegate(
 		"prevRealm", prev.PkgPath(),
 		"from", resolver.delegation.DelegateFrom().String(),
 		"to", resolver.delegation.DelegateTo().String(),
-		"amount", formatInt(resolver.DelegatedAmount()),
+		"amount", utils.FormatInt(resolver.DelegatedAmount()),
 		"referrer", registeredReferrer,
 	)
 
@@ -177,7 +180,7 @@ func (gs *govStakerV1) Undelegate(
 		"prevRealm", prev.PkgPath(),
 		"from", caller.String(),
 		"to", from.String(),
-		"amount", formatInt(unDelegationAmount),
+		"amount", utils.FormatInt(unDelegationAmount),
 	)
 
 	return unDelegationAmount
@@ -269,7 +272,7 @@ func (gs *govStakerV1) Redelegate(
 		"from", delegator.String(),
 		"previousDelegatee", delegatee.String(),
 		"newDelegatee", newDelegatee.String(),
-		"amount", formatInt(resolver.DelegatedAmount()),
+		"amount", utils.FormatInt(resolver.DelegatedAmount()),
 	)
 
 	return amount
@@ -313,7 +316,7 @@ func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 		"prevRealm", prev.PkgPath(),
 		"from", prev.Address().String(),
 		"to", caller.String(),
-		"collectedAmount", formatInt(collectedAmount),
+		"collectedAmount", utils.FormatInt(collectedAmount),
 	)
 
 	return collectedAmount
@@ -380,7 +383,7 @@ func (gs *govStakerV1) unDelegate(
 			continue
 		}
 
-		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		totalDelegated = gnsmath.SafeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
 		delegations = append(delegations, delegation)
 	}
 
@@ -418,7 +421,7 @@ func (gs *govStakerV1) unDelegate(
 		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
 		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
-		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
+		unDelegationAmount = gnsmath.SafeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -453,7 +456,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			continue
 		}
 
-		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		totalDelegated = gnsmath.SafeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
 		delegations = append(delegations, delegation)
 	}
 
@@ -490,7 +493,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
 		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
 
-		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
+		unDelegationAmount = gnsmath.SafeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -502,7 +505,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 func (gs *govStakerV1) increaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	if err := gs.store.SetTotalDelegatedAmount(0, rlm, safeAddInt64(currentDelegated, amount)); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(0, rlm, gnsmath.SafeAddInt64(currentDelegated, amount)); err != nil {
 		return err
 	}
 
@@ -512,7 +515,7 @@ func (gs *govStakerV1) increaseTotalDelegatedAmount(_ int, rlm realm, amount int
 func (gs *govStakerV1) decreaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	newDelegated := safeSubInt64(currentDelegated, amount)
+	newDelegated := gnsmath.SafeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}
@@ -526,7 +529,7 @@ func (gs *govStakerV1) decreaseTotalDelegatedAmount(_ int, rlm realm, amount int
 func (gs *govStakerV1) increaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	if err := gs.store.SetTotalLockedAmount(0, rlm, safeAddInt64(currentLocked, amount)); err != nil {
+	if err := gs.store.SetTotalLockedAmount(0, rlm, gnsmath.SafeAddInt64(currentLocked, amount)); err != nil {
 		return err
 	}
 
@@ -536,7 +539,7 @@ func (gs *govStakerV1) increaseTotalLockedAmount(_ int, rlm realm, amount int64)
 func (gs *govStakerV1) decreaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	newLocked := safeSubInt64(currentLocked, amount)
+	newLocked := gnsmath.SafeSubInt64(currentLocked, amount)
 	if newLocked < 0 {
 		newLocked = 0
 	}
@@ -569,7 +572,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegationRaw, exists := allDelegations.Get(formatInt(id))
+			delegationRaw, exists := allDelegations.Get(utils.FormatInt(id))
 			if !exists {
 				continue
 			}
@@ -587,7 +590,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			}
 
 			// Simple addition since addToCollectedAmount was removed
-			totalCollectedAmount = safeAddInt64(totalCollectedAmount, collectedAmount)
+			totalCollectedAmount = gnsmath.SafeAddInt64(totalCollectedAmount, collectedAmount)
 
 			// Save updated delegation state after collection
 			if resolver.IsEmpty() {

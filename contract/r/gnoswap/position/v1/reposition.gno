@@ -4,6 +4,7 @@ import (
 	"chain"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -122,24 +123,24 @@ func (p *positionV1) Reposition(
 		"Reposition",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lpPositionId", formatUint(positionId),
-		"tickLower", formatInt(tickLower),
-		"tickUpper", formatInt(tickUpper),
+		"lpPositionId", utils.FormatUint(positionId),
+		"tickLower", utils.FormatInt(tickLower),
+		"tickUpper", utils.FormatInt(tickUpper),
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"prevTickLower", formatInt(oldTickLower),
-		"prevTickUpper", formatInt(oldTickUpper),
+		"prevTickLower", utils.FormatInt(oldTickLower),
+		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolKey),
-		"token0Balance", formatInt(poolToken0Balance),
-		"token1Balance", formatInt(poolToken1Balance),
-		"tickCumulative", formatInt(tickCumulative),
+		"token0Balance", utils.FormatInt(poolToken0Balance),
+		"token1Balance", utils.FormatInt(poolToken1Balance),
+		"tickCumulative", utils.FormatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
-		"observationTimestamp", formatInt(observationTimestamp),
+		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()

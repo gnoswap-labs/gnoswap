@@ -4,6 +4,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -266,7 +267,7 @@ func calculateClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int6
 
 		// Calculate claimable reward for this deposit
 		claimable := calculateClaimableReward(rewardState, accumulatedReward)
-		totalClaimable = safeAddInt64(totalClaimable, claimable)
+		totalClaimable = gnsmath.SafeAddInt64(totalClaimable, claimable)
 
 		return false
 	})

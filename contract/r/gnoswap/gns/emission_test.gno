@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
+
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -452,7 +454,7 @@ func TestEmissionStateAmountConsistency(cur realm, t *testing.T) {
 	es := getEmissionState()
 
 	for year := int64(1); year <= 12; year++ {
-		t.Run("Year consistency for year "+formatInt(year), func(cur realm, t *testing.T) {
+		t.Run("Year consistency for year "+utils.FormatInt(year), func(cur realm, t *testing.T) {
 			initialAccum := es.getHalvingYearAccumulatedAmount(year)
 			initialLeft := es.getHalvingYearLeftAmount(year)
 			maxAmount := GetHalvingYearMaxAmount(year)

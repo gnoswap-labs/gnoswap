@@ -5,6 +5,9 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 
@@ -106,11 +109,11 @@ func (gv *governanceV1) ProposeText(
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
 		"title", title,
-		"proposalId", formatInt(proposal.ID()),
-		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
-		"configVersion", formatInt(proposal.ConfigVersion()),
-		"createdAt", formatInt(proposal.CreatedAt()),
+		"proposalId", utils.FormatInt(proposal.ID()),
+		"quorumAmount", utils.FormatInt(proposal.VotingQuorumAmount()),
+		"maxVotingWeight", utils.FormatInt(proposal.VotingMaxWeight()),
+		"configVersion", utils.FormatInt(proposal.ConfigVersion()),
+		"createdAt", utils.FormatInt(proposal.CreatedAt()),
 	)
 
 	return proposal.ID()
@@ -221,12 +224,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		"title", title,
 		"to", to.String(),
 		"tokenPath", tokenPath,
-		"amount", formatInt(amount),
-		"proposalId", formatInt(proposal.ID()),
-		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
-		"configVersion", formatInt(proposal.ConfigVersion()),
-		"createdAt", formatInt(proposal.CreatedAt()),
+		"amount", utils.FormatInt(amount),
+		"proposalId", utils.FormatInt(proposal.ID()),
+		"quorumAmount", utils.FormatInt(proposal.VotingQuorumAmount()),
+		"maxVotingWeight", utils.FormatInt(proposal.VotingMaxWeight()),
+		"configVersion", utils.FormatInt(proposal.ConfigVersion()),
+		"createdAt", utils.FormatInt(proposal.CreatedAt()),
 	)
 
 	return proposal.ID()
@@ -332,12 +335,12 @@ func (gv *governanceV1) ProposeParameterChange(
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
 		"title", title,
-		"numToExecute", formatInt(numToExecute),
-		"proposalId", formatInt(proposal.ID()),
-		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
-		"configVersion", formatInt(proposal.ConfigVersion()),
-		"createdAt", formatInt(proposal.CreatedAt()),
+		"numToExecute", utils.FormatInt(numToExecute),
+		"proposalId", utils.FormatInt(proposal.ID()),
+		"quorumAmount", utils.FormatInt(proposal.VotingQuorumAmount()),
+		"maxVotingWeight", utils.FormatInt(proposal.VotingMaxWeight()),
+		"configVersion", utils.FormatInt(proposal.ConfigVersion()),
+		"createdAt", utils.FormatInt(proposal.CreatedAt()),
 	)
 
 	return proposal.ID()
@@ -435,7 +438,7 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 		totalAtCurrent = 0
 	}
 
-	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
+	totalVotingWeight := gnsmath.SafeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
 	if totalVotingWeight <= 0 {
 		return 0, snapshotTime, errNotEnoughVotingWeight
 	}

@@ -4,6 +4,8 @@ import (
 	"chain"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/access"
 )
 
@@ -21,9 +23,9 @@ func InitEmissionState(cur realm, createdHeight int64, startTimestamp int64) {
 		"InitEmissionState",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"height", formatInt(createdHeight),
-		"timestamp", formatInt(time.Now().Unix()),
-		"startTimestamp", formatInt(emissionState.getStartTimestamp()),
-		"endTimestamp", formatInt(emissionState.getEndTimestamp()),
+		"height", utils.FormatInt(createdHeight),
+		"timestamp", utils.FormatInt(time.Now().Unix()),
+		"startTimestamp", utils.FormatInt(emissionState.getStartTimestamp()),
+		"endTimestamp", utils.FormatInt(emissionState.getEndTimestamp()),
 	)
 }

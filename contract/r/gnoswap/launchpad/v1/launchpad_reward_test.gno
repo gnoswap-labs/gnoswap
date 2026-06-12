@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -490,7 +491,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(cu
 		remainingAmount += tier.TotalDistributeAmount() - tier.TotalCollectedAmount()
 	}
 	uassert.Equal(t, reward, totalCollectedAmount)
-	uassert.Equal(t, safeSubInt64(storedProject.DepositAmount(), reward), remainingAmount)
+	uassert.Equal(t, gnsmath.SafeSubInt64(storedProject.DepositAmount(), reward), remainingAmount)
 }
 
 // TestCollectRewardByDepositId_Failure tests error scenarios
@@ -535,10 +536,10 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(cur realm, t *testing.
 				recipientSuffix: "recv8",
 				tier30Pct:       100,
 			},
-			setupDeposit:     true,
-			depositOwner:     "haltOwner1",
-			caller:           "haltOwner1",
-			haltLevel:        halt.HaltLevelEmergency,
+			setupDeposit: true,
+			depositOwner: "haltOwner1",
+			caller:       "haltOwner1",
+			haltLevel:    halt.HaltLevelEmergency,
 		},
 		{
 			name: "FAIL: complete halt",

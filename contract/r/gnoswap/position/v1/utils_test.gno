@@ -5,6 +5,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -439,9 +440,9 @@ func TestSafeConvertToInt64(cur realm, t *testing.T) {
 						t.Errorf("expected panic %v, got %v", tt.expectedError, r)
 					}
 				}()
-				safeConvertToInt64(tt.value)
+				gnsmath.SafeConvertToInt64(tt.value)
 			} else {
-				result := safeConvertToInt64(tt.value)
+				result := gnsmath.SafeConvertToInt64(tt.value)
 				uassert.Equal(t, tt.expected, result)
 			}
 		})
@@ -480,21 +481,25 @@ func TestSubUint256EquivalenceWithLegacyFormula(cur realm, t *testing.T) {
 		// additional boundary and domain cases
 		{name: "zero_minus_two", x: "0", y: "2"},
 		{name: "underflow_by_one", x: "100", y: "101"},
-		{name: "underflow_by_one_at_uint128_boundary",
-			x: "340282366920938463463374607431768211455", // 2^128 - 1
-			y: "340282366920938463463374607431768211456", // 2^128
+		{
+			name: "underflow_by_one_at_uint128_boundary",
+			x:    "340282366920938463463374607431768211455", // 2^128 - 1
+			y:    "340282366920938463463374607431768211456", // 2^128
 		},
-		{name: "normal_sub_at_q128",
-			x: "680564733841876926926749214863536422912", // 2 * 2^128
-			y: "340282366920938463463374607431768211456", // 2^128
+		{
+			name: "normal_sub_at_q128",
+			x:    "680564733841876926926749214863536422912", // 2 * 2^128
+			y:    "340282366920938463463374607431768211456", // 2^128
 		},
 		{name: "zero_minus_max", x: "0", y: MAX_UINT256},
-		{name: "one_minus_max_minus_one",
-			x: "1",
-			y: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+		{
+			name: "one_minus_max_minus_one",
+			x:    "1",
+			y:    "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
 		},
 		{name: "equal_mid_range", x: "12345678901234567890", y: "12345678901234567890"},
-		{name: "fee_growth_typical_underflow",
+		{
+			name: "fee_growth_typical_underflow",
 			// realistic fee growth accumulator: global < position snapshot means new epoch
 			x: "1000000000000000000000000000000000000", // ~1e36 (small accumulator)
 			y: "999999999999999999999999999999999999999",

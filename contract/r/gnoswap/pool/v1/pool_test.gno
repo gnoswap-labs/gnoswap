@@ -3,7 +3,9 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -849,8 +851,8 @@ func TestProtocolFeeManagement_GovernanceControls(cur realm, t *testing.T) {
 			afterFees1 := pool.ProtocolFeesToken1()
 
 			// Verify collected amount does not exceed previous balance
-			collected0 := safeConvertToInt64(u256.MustFromDecimal(amount0))
-			collected1 := safeConvertToInt64(u256.MustFromDecimal(amount1))
+			collected0 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount0))
+			collected1 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount1))
 
 			uassert.True(t, collected0 <= beforeFees0,
 				"Collected amount exceeds available fees")
@@ -858,8 +860,8 @@ func TestProtocolFeeManagement_GovernanceControls(cur realm, t *testing.T) {
 				"Collected amount exceeds available fees")
 
 			// Verify protocol fees are appropriately decreased
-			expectedAfter0 := safeSubInt64(beforeFees0, collected0)
-			expectedAfter1 := safeSubInt64(beforeFees1, collected1)
+			expectedAfter0 := gnsmath.SafeSubInt64(beforeFees0, collected0)
+			expectedAfter1 := gnsmath.SafeSubInt64(beforeFees1, collected1)
 
 			uassert.Equal(t, expectedAfter0, afterFees0)
 			uassert.Equal(t, expectedAfter1, afterFees1)
@@ -1111,9 +1113,9 @@ func TestCollect(cur realm, t *testing.T) {
 
 			// Verify tokensOwed decreased correctly
 			positionAfter := mustGetPositionByPool(pool, positionKey)
-			uassert.Equal(t, tt.expectedOwed0After, formatInt(positionAfter.TokensOwed0()),
+			uassert.Equal(t, tt.expectedOwed0After, utils.FormatInt(positionAfter.TokensOwed0()),
 				"TokensOwed0 should decrease by collected amount")
-			uassert.Equal(t, tt.expectedOwed1After, formatInt(positionAfter.TokensOwed1()),
+			uassert.Equal(t, tt.expectedOwed1After, utils.FormatInt(positionAfter.TokensOwed1()),
 				"TokensOwed1 should decrease by collected amount")
 
 			// Verify pool balance >= tokensOwed invariant
@@ -1122,7 +1124,7 @@ func TestCollect(cur realm, t *testing.T) {
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
 				tt.request0, tt.request1,
-				formatInt(positionBefore.TokensOwed0()), formatInt(positionBefore.TokensOwed1()),
+				utils.FormatInt(positionBefore.TokensOwed0()), utils.FormatInt(positionBefore.TokensOwed1()),
 				tt.expectedOwed0After, tt.expectedOwed1After)
 
 			resetObject(cur, t)
@@ -1138,10 +1140,10 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 
 	uassert.True(t, pool.BalanceToken0() >= position.TokensOwed0(),
 		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
-			formatInt(pool.BalanceToken0()), formatInt(position.TokensOwed0())))
+			utils.FormatInt(pool.BalanceToken0()), utils.FormatInt(position.TokensOwed0())))
 	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
-			formatInt(pool.BalanceToken1()), formatInt(position.TokensOwed1())))
+			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
 }
 
 func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {

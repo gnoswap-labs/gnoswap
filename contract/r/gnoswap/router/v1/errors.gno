@@ -18,7 +18,6 @@ var (
 	errUnAuthorizedCaller     = errors.New("[GNOSWAP-ROUTER-009] unauthorized caller")
 	errHopsOutOfRange         = errors.New("[GNOSWAP-ROUTER-010] number of hops must be 1~3")
 	errSameTokenSwap          = errors.New("[GNOSWAP-ROUTER-011] cannot swap same token")
-	errOverflow               = errors.New("[GNOSWAP-ROUTER-012] overflow")
 	errInvalidRoutePath       = errors.New("[GNOSWAP-ROUTER-013] invalid route path")
 	errInvalidRouteFirstToken = errors.New("[GNOSWAP-ROUTER-014] invalid route first token")
 	errInvalidRouteLastToken  = errors.New("[GNOSWAP-ROUTER-015] invalid route last token")

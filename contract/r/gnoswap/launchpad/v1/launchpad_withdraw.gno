@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -63,7 +64,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 			"prevAddr", caller.String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"depositId", depositID,
-			"amount", formatInt(rewardAmount),
+			"amount", utils.FormatInt(rewardAmount),
 		)
 	}
 
@@ -75,7 +76,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
-		"amount", formatInt(withdrawalAmount),
+		"amount", utils.FormatInt(withdrawalAmount),
 	)
 
 	return withdrawalAmount, nil

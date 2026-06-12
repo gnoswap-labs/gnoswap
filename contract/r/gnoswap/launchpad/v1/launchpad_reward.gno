@@ -5,6 +5,9 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
@@ -48,7 +51,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
-		"amount", formatInt(rewardAmount),
+		"amount", utils.FormatInt(rewardAmount),
 	)
 
 	return rewardAmount
@@ -91,7 +94,7 @@ func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad
 
 	// Update total collected amount for the tier
 	if rewardAmount > 0 {
-		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+		projectTier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
 		project.SetTier(deposit.Tier(), projectTier)
 
 		projects := lp.store.GetProjects()

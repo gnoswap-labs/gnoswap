@@ -10,6 +10,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"
@@ -1258,7 +1259,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			for i, dep := range tt.deposits {
 				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
-				rm.SetReward("deposit"+formatInt(int64(i)), rewardState)
+				rm.SetReward("deposit"+utils.FormatInt(int64(i)), rewardState)
 			}
 
 			projectTierRewardManagers.Set(tierID, rm)
