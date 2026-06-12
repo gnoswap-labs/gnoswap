@@ -236,12 +236,18 @@ func (i *poolV1) Swap(
 	}
 
 	var onTickCross tickCrossHookFn
+	var hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 	if i.store.HasTickCrossHook() {
-		hook := i.store.GetTickCrossHook()
+		hook = i.store.GetTickCrossHook()
+	}
+	onTickCross = func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64) {
+		chain.Emit(
+			"PoolTickCross",
+			"poolPath", pool.PoolPath(),
+			"tick", NewTickEventInfo(tickId, *mustGetTick(pool, tickId)).ToString(),
+		)
 		if hook != nil {
-			onTickCross = func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-				hook(cross(rlm), poolPath, tickId, zeroForOne, timestamp)
-			}
+			hook(cross(rlm), pool.PoolPath(), tickId, zeroForOne, timestamp)
 		}
 	}
 
@@ -378,9 +384,9 @@ func (i *poolV1) DrySwap(
 	return result.Amount0.ToString(), result.Amount1.ToString(), true
 }
 
-// tickCrossHookFn is invoked from inside the swap loop whenever an
-// initialized tick is crossed. DrySwap passes nil to skip side effects.
-type tickCrossHookFn func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+// tickCrossHookFn is invoked after an initialized tick is crossed. Swap uses it
+// for externally visible side effects; DrySwap passes nil.
+type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64)
 
 // computeSwap performs the core swap computation without modifying pool state.
 // The computation continues until either:
@@ -768,7 +774,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		newState.liquidity = gnsmath.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if onTickCross != nil {
-			onTickCross(pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)
+			onTickCross(pool, step.tickNext, zeroForOne, cache.blockTimestamp)
 		}
 	}
 
