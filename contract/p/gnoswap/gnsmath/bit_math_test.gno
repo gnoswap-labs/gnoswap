@@ -164,7 +164,7 @@ func TestBitMath_BitMathMostSignificantBit(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, errMSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errMSBZeroInput, func() {
 					BitMathMostSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return
@@ -342,7 +342,7 @@ func TestBitMath_BitMathLeastSignificantBit(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, errLSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errLSBZeroInput, func() {
 					BitMathLeastSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return

@@ -1,6 +1,8 @@
 package gnsmath
 
 import (
+	"errors"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/p/gnoswap/consts"
@@ -107,7 +109,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 			r := masks[i-1]
 			temp, overflow := temp.MulOverflow(ratio, r)
 			if overflow {
-				panic(errTickMathOverflow)
+				panic(errors.New(errTickMathOverflow))
 			}
 			ratio = ratio.Rsh(temp, 128)
 		}
@@ -251,7 +253,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	for i := 0; i < 14; i++ {
 		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
-			panic(errTickMathOverflow)
+			panic(errors.New(errTickMathOverflow))
 		}
 		r = tempR.Rsh(tempR, 127)
 
@@ -267,7 +269,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	// Calculate tick from log_sqrt10001
 	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier())
 	if overflow {
-		panic(errTickMathOverflow)
+		panic(errors.New(errTickMathOverflow))
 	}
 
 	// Calculate tick bounds

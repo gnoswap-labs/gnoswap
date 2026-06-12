@@ -265,7 +265,7 @@ func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 			amountRemaining: i256.MustFromDecimal("100"),
 			feePips:         1,
 			shouldPanic:     true,
-			panicMsg:        errInvalidPoolSqrtPrice.Error(),
+			panicMsg:        errInvalidPoolSqrtPrice,
 		},
 		{
 			name:            "sqrt_price_above_maximum",
@@ -275,7 +275,7 @@ func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
 			feePips:         1,
 			shouldPanic:     true,
-			panicMsg:        errInvalidPoolSqrtPrice.Error(),
+			panicMsg:        errInvalidPoolSqrtPrice,
 		},
 	}
 
