@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -34,18 +35,18 @@ func (rb *RBAC) IsAuthorized(roleName string, addr address) bool {
 //
 // Errors:
 // `RegisterRole` returns an error in the following situations:
-//  - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
-//  - `ErrRoleAlreadyExists`: the role to be registered already exists in rbac.
-//    Since system roles are registered through `initRbac`, attempting to register
-//    a new role with a system role name will return an `ErrRoleAlreadyExists` error.
+//   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
+//   - `ErrRoleAlreadyExists`: the role to be registered already exists in rbac.
+//     Since system roles are registered through `initRbac`, attempting to register
+//     a new role with a system role name will return an `ErrRoleAlreadyExists` error.
 func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {
-		return ErrInvalidRoleName
+		return errors.New(ErrInvalidRoleName)
 	}
 
 	if rb.existsRole(roleName) {
-		return ErrRoleAlreadyExists
+		return errors.New(ErrRoleAlreadyExists)
 	}
 
 	rb.roles[roleName] = NewRole(roleName, addr)
@@ -62,16 +63,16 @@ func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {
-		return ErrInvalidRoleName
+		return errors.New(ErrInvalidRoleName)
 	}
 
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return ErrRoleDoesNotExist
+		return errors.New(ErrRoleDoesNotExist)
 	}
 
 	if addr == zeroAddress || !addr.IsValid() {
-		return ErrInvalidAddress
+		return errors.New(ErrInvalidAddress)
 	}
 
 	role.setAddress(addr)
@@ -88,16 +89,16 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 func (rb *RBAC) RemoveRole(roleName string) error {
 	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {
-		return ErrInvalidRoleName
+		return errors.New(ErrInvalidRoleName)
 	}
 
 	if !rb.existsRole(roleName) {
-		return ErrRoleDoesNotExist
+		return errors.New(ErrRoleDoesNotExist)
 	}
 
 	// Check if it's a system role
 	if IsSystemRole(roleName) {
-		return ErrCannotRemoveSystemRole
+		return errors.New(ErrCannotRemoveSystemRole)
 	}
 
 	// Simply delete the role since permissions are no longer managed here
@@ -124,7 +125,7 @@ func (rb *RBAC) GetAllRoleAddresses() map[string]address {
 func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return "", ErrRoleDoesNotExist
+		return "", errors.New(ErrRoleDoesNotExist)
 	}
 
 	return role.Address(), nil
@@ -132,12 +133,12 @@ func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 
 // Owner returns the current owner address.
 func (rb *RBAC) Owner() address {
-    return rb.ownable.Owner()
+	return rb.ownable.Owner()
 }
 
 // PendingOwner returns the pending owner address during ownership transfer.
 func (rb *RBAC) PendingOwner() address {
-    return rb.ownable.PendingOwner()
+	return rb.ownable.PendingOwner()
 }
 
 // AcceptOwnershipBy completes the ownership transfer process.
@@ -147,7 +148,7 @@ func (rb *RBAC) PendingOwner() address {
 //   - `ErrNoPendingOwner`: no ownership transfer is pending
 //   - `ErrPendingUnauthorized`: addr is not the pending owner
 func (rb *RBAC) AcceptOwnershipBy(addr address) error {
-    return rb.ownable.AcceptOwnershipBy(addr)
+	return rb.ownable.AcceptOwnershipBy(addr)
 }
 
 // DropOwnershipBy removes the owner, effectively disabling owner-only actions.
@@ -156,7 +157,7 @@ func (rb *RBAC) AcceptOwnershipBy(addr address) error {
 // Errors:
 //   - `ErrUnauthorized`: addr is not the current owner
 func (rb *RBAC) DropOwnershipBy(addr address) error {
-    return rb.ownable.DropOwnershipBy(addr)
+	return rb.ownable.DropOwnershipBy(addr)
 }
 
 // TransferOwnershipBy initiates the two-step ownership transfer process.

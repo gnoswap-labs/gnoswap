@@ -122,7 +122,7 @@ func TestDropOwnershipVulnerability(t *testing.T) {
 	// verify bob can no longer claim ownership
 	testing.SetOriginCaller(bob)
 	err = o.AcceptOwnershipBy(bob)
-	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
+	uassert.ErrorContains(t, err, ErrNoPendingOwner)
 }
 
 // Errors
@@ -134,8 +134,8 @@ func TestErrUnauthorized(t *testing.T) {
 
 	testing.SetOriginCaller(bob)
 
-	uassert.ErrorContains(t, o.TransferOwnershipBy(alice, bob), ErrUnauthorized.Error())
-	uassert.ErrorContains(t, o.DropOwnershipBy(bob), ErrUnauthorized.Error())
+	uassert.ErrorContains(t, o.TransferOwnershipBy(alice, bob), ErrUnauthorized)
+	uassert.ErrorContains(t, o.DropOwnershipBy(bob), ErrUnauthorized)
 }
 
 func TestErrInvalidAddress(t *testing.T) {
@@ -144,10 +144,10 @@ func TestErrInvalidAddress(t *testing.T) {
 	o := NewRBACWithAddress(alice)
 
 	err := o.TransferOwnershipBy("", alice)
-	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
+	uassert.ErrorContains(t, err, ErrInvalidAddress)
 
 	err = o.TransferOwnershipBy("10000000001000000000100000000010000000001000000000", alice)
-	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
+	uassert.ErrorContains(t, err, ErrInvalidAddress)
 }
 
 func TestErrNoPendingOwner(t *testing.T) {
@@ -156,7 +156,7 @@ func TestErrNoPendingOwner(t *testing.T) {
 	o := NewRBACWithAddress(alice)
 
 	err := o.AcceptOwnershipBy(alice)
-	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
+	uassert.ErrorContains(t, err, ErrNoPendingOwner)
 }
 
 func TestErrPendingUnauthorized(t *testing.T) {
@@ -170,7 +170,7 @@ func TestErrPendingUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
 
 	err = o.AcceptOwnershipBy(alice)
-	uassert.ErrorContains(t, err, ErrPendingUnauthorized.Error())
+	uassert.ErrorContains(t, err, ErrPendingUnauthorized)
 }
 
 // Edge Cases
@@ -226,7 +226,7 @@ func TestOwnable_MultipleTransferAttempts(t *testing.T) {
 	// Bob should not be able to accept (no longer pending owner)
 	testing.SetOriginCaller(bob)
 	err = o.AcceptOwnershipBy(bob)
-	uassert.ErrorContains(t, err, ErrPendingUnauthorized.Error())
+	uassert.ErrorContains(t, err, ErrPendingUnauthorized)
 
 	// Only charlie can accept
 	testing.SetOriginCaller(charlie)
@@ -282,5 +282,5 @@ func TestOwnable_AcceptAfterAccepted(t *testing.T) {
 
 	// Bob tries to accept again (should fail - no pending owner)
 	err = o.AcceptOwnershipBy(bob)
-	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
+	uassert.ErrorContains(t, err, ErrNoPendingOwner)
 }
