@@ -2,6 +2,8 @@
 package mock
 
 import (
+	"errors"
+
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,7 +17,7 @@ type gnftAccessor struct{}
 
 func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	if !rlm.IsCurrent() {
-		return position.ErrSpoofedRealm
+		return errors.New(position.ErrSpoofedRealm)
 	}
 
 	return gnft.Approve(cross(rlm), approved, tid)
@@ -151,7 +153,10 @@ func (t *TestPosition) CollectFee(_ int, rlm realm, positionId uint64) (uint64, 
 func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, operator address) {
 	t.ExecuteFn(
 		"SetPositionOperator",
-		func(args ...any) any { t.instance.SetPositionOperator(0, rlm, args[0].(uint64), args[1].(address)); return nil },
+		func(args ...any) any {
+			t.instance.SetPositionOperator(0, rlm, args[0].(uint64), args[1].(address))
+			return nil
+		},
 		positionId, operator,
 	)
 }
