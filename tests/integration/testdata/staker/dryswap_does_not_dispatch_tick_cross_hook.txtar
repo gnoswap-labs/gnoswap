@@ -87,7 +87,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolStakedLiquidity(\
 # DrySwap may cross pool ticks during simulation, but it must not dispatch the staker tick-cross hook.
 gnokey maketx run test1 $WORK/run/dryswap_cross_tick.gno -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
 # stdout true
-# stdout 'PoolTickCross'
+! stdout 'PoolTickCross'
 ! stdout 'StakerTickCross'
 ! stdout 'BatchStakerTickCross'
 
