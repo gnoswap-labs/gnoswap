@@ -1,17 +1,15 @@
 package store
 
-import "errors"
-
-var (
+const (
 	// Authorization errors
-	ErrAuthorizedCallerAlreadyRegistered = errors.New("authorized caller already registered")
-	ErrAuthorizedCallerNotFound          = errors.New("authorized caller not found")
-	ErrInvalidPermission                 = errors.New("invalid permission")
+	ErrAuthorizedCallerAlreadyRegistered = "authorized caller already registered"
+	ErrAuthorizedCallerNotFound          = "authorized caller not found"
+	ErrInvalidPermission                 = "invalid permission"
 
 	// Data access errors
-	ErrKeyNotFound            = errors.New("key not found")
-	ErrWritePermissionDenied  = errors.New("write permission denied")
-	ErrUpdatePermissionDenied = errors.New("update permission denied")
-	ErrFailedCast             = errors.New("failed to cast")
-	ErrSpoofedRealm           = errors.New("rlm does not match the current crossing frame")
+	ErrKeyNotFound            = "key not found"
+	ErrWritePermissionDenied  = "write permission denied"
+	ErrUpdatePermissionDenied = "update permission denied"
+	ErrFailedCast             = "failed to cast"
+	ErrSpoofedRealm           = "rlm does not match the current crossing frame"
 )
