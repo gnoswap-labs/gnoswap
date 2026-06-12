@@ -46,7 +46,7 @@ deploy-int256:
 
 deploy-consts:
 	$(info ************ deploy consts ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/consts -pkgpath gno.land/p/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20000ugnot -gas-wanted 20000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/consts -pkgpath gno.land/p/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 36000ugnot -gas-wanted 36000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-rbac:
