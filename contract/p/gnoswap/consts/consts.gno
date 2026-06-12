@@ -1,20 +1,3 @@
-// Package consts provides protocol-wide numeric constants as constructor
-// functions instead of package-level mutable singletons.
-//
-// Rationale:
-//
-// *u256.Uint and *i256.Int are pointers to mutable values whose methods can
-// mutate the receiver in place (e.g. z[0] = ...). Exposing them as
-// package-level vars means every caller shares the same pointer, so an
-// accidental in-place mutation (or using one as a Set source) silently
-// corrupts the value for all other callers and realms. In /p/ packages the VM
-// blocks in-place mutation of immutable-package objects, but the guidance is
-// not to rely on that runtime guard.
-//
-// Each function here returns a freshly allocated value, so callers never share
-// a backing instance. Values are built from little-endian [4]uint64 array
-// literals (u256.Uint / i256.Int are defined as [4]uint64) rather than from
-// MustFromDecimal, avoiding decimal string parsing at every call.
 package consts
 
 import (
