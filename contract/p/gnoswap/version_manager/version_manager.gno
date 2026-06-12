@@ -21,7 +21,7 @@ import (
 // ErrSpoofedRealm is returned when the supplied realm token does not match the
 // live crossing frame (rlm.IsCurrent() == false). It signals a stale or
 // spoofed token captured in an earlier frame.
-var ErrSpoofedRealm = "rlm does not match the current crossing frame"
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
 
 // versionManager is the concrete implementation of VersionManager interface.
 // It manages multiple versioned implementations of a domain (e.g., protocol_fee/v1, protocol_fee/v2).
