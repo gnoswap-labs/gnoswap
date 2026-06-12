@@ -4,6 +4,7 @@ import (
 	"chain"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -123,7 +124,7 @@ func (i *poolV1) CreatePool(
 			"prevRealm", previousRealm.PkgPath(),
 			"poolPath", poolPath,
 			"feeTokenPath", GNS_PATH,
-			"feeAmount", formatInt(poolCreationFee),
+			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}
 	i.addToProtocolFee(0, rlm)
@@ -135,11 +136,11 @@ func (i *poolV1) CreatePool(
 		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatUint(fee),
+		"fee", utils.FormatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
 		"poolPath", poolPath,
-		"tick", formatInt(pool.Slot0Tick()),
-		"tickSpacing", formatInt(poolInfo.TickSpacing()),
+		"tick", utils.FormatInt(pool.Slot0Tick()),
+		"tickSpacing", utils.FormatInt(poolInfo.TickSpacing()),
 	)
 }
 
@@ -233,11 +234,11 @@ func (i *poolV1) setFeeProtocolInternal(_ int, rlm realm, feeProtocol0, feeProto
 		"SetFeeProtocol",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFeeProtocol0", formatUint(feeProtocol0Old),
-		"prevFeeProtocol1", formatUint(feeProtocol1Old),
-		"feeProtocol0", formatUint(feeProtocol0),
-		"feeProtocol1", formatUint(feeProtocol1),
-		"newFee", formatUint(newFee),
+		"prevFeeProtocol0", utils.FormatUint(feeProtocol0Old),
+		"prevFeeProtocol1", utils.FormatUint(feeProtocol1Old),
+		"feeProtocol0", utils.FormatUint(feeProtocol0),
+		"feeProtocol1", utils.FormatUint(feeProtocol1),
+		"newFee", utils.FormatUint(newFee),
 	)
 
 	return nil

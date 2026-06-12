@@ -3,6 +3,7 @@ package v1
 import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 type tickCrossEventInfo struct {
@@ -18,7 +19,7 @@ type tickCrossEventInfo struct {
 // - sld: Staked Liquidity Delta
 // - oa: Outside Accumulation
 func (t *tickCrossEventInfo) ToString() string {
-	return "{\"t\":" + formatAnyInt(t.tickID) +
+	return "{\"t\":" + utils.FormatInt(t.tickID) +
 		",\"slg\":\"" + t.stakedLiquidityGross.ToString() + "\"" +
 		",\"sld\":\"" + t.stakedLiquidityDelta.ToString() + "\"" +
 		",\"oa\":\"" + t.outsideAccumulation.ToString() + "\"}"

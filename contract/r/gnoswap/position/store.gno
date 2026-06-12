@@ -2,9 +2,9 @@ package position
 
 import (
 	"errors"
-	"strconv"
 
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -79,13 +79,13 @@ func (s *positionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) error
 func (s *positionStore) HasPosition(positionId uint64) bool {
 	positions := s.GetPositions()
 
-	return positions.Has(uint64ToString(positionId))
+	return positions.Has(utils.Uint64ToString(positionId))
 }
 
 func (s *positionStore) GetPosition(positionId uint64) (Position, bool) {
 	positions := s.GetPositions()
 
-	result, ok := positions.Get(uint64ToString(positionId))
+	result, ok := positions.Get(utils.Uint64ToString(positionId))
 	if !ok {
 		return Position{}, false
 	}
@@ -109,7 +109,7 @@ func (s *positionStore) SetPosition(_ int, rlm realm, positionId uint64, positio
 
 	positions := s.GetPositions()
 
-	positions.Set(uint64ToString(positionId), position)
+	positions.Set(utils.Uint64ToString(positionId), position)
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositions.String(), positions)
 }
@@ -125,7 +125,7 @@ func (s *positionStore) RemovePosition(_ int, rlm realm, positionId uint64) erro
 
 	positions := s.GetPositions()
 
-	positions.Remove(uint64ToString(positionId))
+	positions.Remove(utils.Uint64ToString(positionId))
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositions.String(), positions)
 }
@@ -136,8 +136,4 @@ func NewPositionStore(kvStore store.KVStore) IPositionStore {
 	return &positionStore{
 		kvStore: kvStore,
 	}
-}
-
-func uint64ToString(id uint64) string {
-	return strconv.FormatUint(id, 10)
 }

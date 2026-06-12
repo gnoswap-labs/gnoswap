@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
@@ -38,9 +40,9 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
-		"tier", formatUint(tier),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(runtime.ChainHeight()),
+		"tier", utils.FormatUint(tier),
+		"currentTime", utils.FormatInt(currentTime),
+		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
 }
 
@@ -68,10 +70,10 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
-		"prevTier", formatUint(previousTier),
-		"newTier", formatUint(newTier),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(runtime.ChainHeight()),
+		"prevTier", utils.FormatUint(previousTier),
+		"newTier", utils.FormatUint(newTier),
+		"currentTime", utils.FormatInt(currentTime),
+		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
 }
 
@@ -98,8 +100,8 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(runtime.ChainHeight()),
+		"currentTime", utils.FormatInt(currentTime),
+		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
 }
 
@@ -122,8 +124,8 @@ func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 		"SetWarmUp",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"pct", formatAnyInt(pct),
-		"timeDuration", formatAnyInt(timeDuration),
+		"pct", utils.FormatInt(pct),
+		"timeDuration", utils.FormatInt(timeDuration),
 	)
 }
 

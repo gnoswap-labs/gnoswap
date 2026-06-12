@@ -8,6 +8,7 @@ import (
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -116,10 +117,10 @@ func ChangeDistributionPct(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"liquidityStakerPct", formatInt(liquidityStakerPct),
-		"devOpsPct", formatInt(devOpsPct),
-		"communityPoolPct", formatInt(communityPoolPct),
-		"govStakerPct", formatInt(govStakerPct),
+		"liquidityStakerPct", utils.FormatInt(liquidityStakerPct),
+		"devOpsPct", utils.FormatInt(devOpsPct),
+		"communityPoolPct", utils.FormatInt(communityPoolPct),
+		"govStakerPct", utils.FormatInt(govStakerPct),
 	)
 }
 

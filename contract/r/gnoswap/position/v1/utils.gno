@@ -109,41 +109,6 @@ func splitOf(poolKey string) (string, string, uint32) {
 	return pToken0, pToken1, uint32(pFee)
 }
 
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-func formatInt(v any) string {
-	switch v := v.(type) {
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case int:
-		return strconv.Itoa(v)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
-}
-
-func safeParseInt64(value string) int64 {
-	amountInt64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt64
 }

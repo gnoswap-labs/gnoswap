@@ -6,6 +6,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -146,8 +147,8 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 		"SetPoolCreationFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatInt(prevPoolCreationFee),
-		"newFee", formatInt(fee),
+		"prevFee", utils.FormatInt(prevPoolCreationFee),
+		"newFee", utils.FormatInt(fee),
 	)
 }
 
@@ -179,8 +180,8 @@ func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 		"SetWithdrawalFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevWithdrawalFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevWithdrawalFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 

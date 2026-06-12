@@ -9,6 +9,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -129,18 +130,18 @@ func (lp *launchpadV1) CreateProject(
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
-		"depositAmount", formatInt(depositAmount),
-		"tier30Ratio", formatInt(params.tier30Ratio),
-		"tier90Ratio", formatInt(params.tier90Ratio),
-		"tier180Ratio", formatInt(params.tier180Ratio),
-		"startTime", formatInt(params.startTime),
+		"depositAmount", utils.FormatInt(depositAmount),
+		"tier30Ratio", utils.FormatInt(params.tier30Ratio),
+		"tier90Ratio", utils.FormatInt(params.tier90Ratio),
+		"tier180Ratio", utils.FormatInt(params.tier180Ratio),
+		"startTime", utils.FormatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(tier30.TotalDistributeAmount()),
-		"tier30EndTime", formatInt(tier30.EndTime()),
-		"tier90Amount", formatInt(tier90.TotalDistributeAmount()),
-		"tier90EndTime", formatInt(tier90.EndTime()),
-		"tier180Amount", formatInt(tier180.TotalDistributeAmount()),
-		"tier180EndTime", formatInt(tier180.EndTime()),
+		"tier30Amount", utils.FormatInt(tier30.TotalDistributeAmount()),
+		"tier30EndTime", utils.FormatInt(tier30.EndTime()),
+		"tier90Amount", utils.FormatInt(tier90.TotalDistributeAmount()),
+		"tier90EndTime", utils.FormatInt(tier90.EndTime()),
+		"tier180Amount", utils.FormatInt(tier180.TotalDistributeAmount()),
+		"tier180EndTime", utils.FormatInt(tier180.EndTime()),
 	}, conditionEventAttrs...)
 
 	chain.Emit(
@@ -290,15 +291,15 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectI
 		"projectId", projectID,
 		"recipient", recipient.String(),
 		"tokenPath", project.TokenPath(),
-		"leftReward", formatInt(projectLeftReward),
-		"tier30Full", formatInt(tier30.TotalDepositAmount()),
-		"tier30Left", formatInt(getCalculatedLeftReward(tier30)),
-		"tier90Full", formatInt(tier90.TotalDepositAmount()),
-		"tier90Left", formatInt(getCalculatedLeftReward(tier90)),
-		"tier180Full", formatInt(tier180.TotalDepositAmount()),
-		"tier180Left", formatInt(getCalculatedLeftReward(tier180)),
-		"currentHeight", formatInt(currentHeight),
-		"currentTime", formatInt(currentTime),
+		"leftReward", utils.FormatInt(projectLeftReward),
+		"tier30Full", utils.FormatInt(tier30.TotalDepositAmount()),
+		"tier30Left", utils.FormatInt(getCalculatedLeftReward(tier30)),
+		"tier90Full", utils.FormatInt(tier90.TotalDepositAmount()),
+		"tier90Left", utils.FormatInt(getCalculatedLeftReward(tier90)),
+		"tier180Full", utils.FormatInt(tier180.TotalDepositAmount()),
+		"tier180Left", utils.FormatInt(getCalculatedLeftReward(tier180)),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"currentTime", utils.FormatInt(currentTime),
 	)
 
 	return projectLeftReward

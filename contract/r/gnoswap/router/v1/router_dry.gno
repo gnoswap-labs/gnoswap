@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
@@ -177,14 +178,14 @@ func (r *routerV1) DrySwapRoute(
 	inputAmount, outputAmount, success := r.drySwapRoute(
 		inputToken,
 		outputToken,
-		safeParseInt64(specifiedAmount),
+		utils.SafeParseInt64(specifiedAmount),
 		swapTypeStr,
 		strRouteArr,
 		quoteArr,
-		safeParseInt64(tokenAmountLimit),
+		utils.SafeParseInt64(tokenAmountLimit),
 	)
 
-	return formatInt64(inputAmount), formatInt64(outputAmount), success
+	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), success
 }
 
 // drySwapRoute is a function for applying cross realm.

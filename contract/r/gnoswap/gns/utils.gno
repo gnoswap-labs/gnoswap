@@ -1,8 +1,6 @@
 package gns
 
 import (
-	"strconv"
-
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -37,19 +35,4 @@ func i64Min(x, y int64) int64 {
 		return x
 	}
 	return y
-}
-
-// formatInt formats signed integer types to string.
-// Supports int32, int64, and int. Panics for unsupported types.
-func formatInt(v any) string {
-	switch v := v.(type) {
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case int:
-		return strconv.Itoa(v)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
 }

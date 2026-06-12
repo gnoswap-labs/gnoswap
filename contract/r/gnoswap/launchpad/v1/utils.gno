@@ -13,18 +13,6 @@ const (
 	MIN_INT64 = math.MinInt64
 )
 
-func formatBool(value bool) string {
-	if value {
-		return "true"
-	}
-	return "false"
-}
-
-// formatInt returns the string representation of the int64 value.
-func formatInt(value int64) string {
-	return strconv.FormatInt(value, 10)
-}
-
 func buildConditionEventAttrs(conditionTokens string, conditionAmounts string) []string {
 	if conditionTokens == "" {
 		return []string{}

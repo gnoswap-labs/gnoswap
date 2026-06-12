@@ -100,47 +100,6 @@ func TestUtils_parseProjectTierID(cur realm, t *testing.T) {
 	}
 }
 
-func TestUtils_formatInt(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		value    int64
-		expected string
-	}{
-		{
-			name:     "format zero",
-			value:    0,
-			expected: "0",
-		},
-		{
-			name:     "format positive number",
-			value:    1000,
-			expected: "1000",
-		},
-		{
-			name:     "format negative number",
-			value:    -1000,
-			expected: "-1000",
-		},
-		{
-			name:     "format MaxInt64",
-			value:    9223372036854775807,
-			expected: "9223372036854775807",
-		},
-		{
-			name:     "format MinInt64",
-			value:    -9223372036854775808,
-			expected: "-9223372036854775808",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result := formatInt(tt.value)
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
 func TestUtils_buildConditionEventAttrs(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -136,14 +137,14 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lastTimestamp", formatInt(lastExecutedTimestamp),
-		"currentTimestamp", formatInt(currentTimestamp),
-		"currentHeight", formatInt(currentHeight),
-		"mintedAmount", formatInt(mintedEmissionRewardAmount),
-		"prevLeftAmount", formatInt(prevLeftAmount),
-		"distributedAmount", formatInt(totalDistAmount),
-		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
-		"gnsTotalSupply", formatInt(gns.TotalSupply()),
+		"lastTimestamp", utils.FormatInt(lastExecutedTimestamp),
+		"currentTimestamp", utils.FormatInt(currentTimestamp),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"mintedAmount", utils.FormatInt(mintedEmissionRewardAmount),
+		"prevLeftAmount", utils.FormatInt(prevLeftAmount),
+		"distributedAmount", utils.FormatInt(totalDistAmount),
+		"currentLeftAmount", utils.FormatInt(GetLeftGNSAmount()),
+		"gnsTotalSupply", utils.FormatInt(gns.TotalSupply()),
 	)
 
 	return totalDistAmount, true
@@ -207,10 +208,10 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	chain.Emit(
 		"SetDistributionStartTime",
 		"caller", caller.String(),
-		"prevStartTimestamp", formatInt(prevStartTimestamp),
-		"newStartTimestamp", formatInt(startTimestamp),
-		"height", formatInt(runtime.ChainHeight()),
-		"timestamp", formatInt(time.Now().Unix()),
+		"prevStartTimestamp", utils.FormatInt(prevStartTimestamp),
+		"newStartTimestamp", utils.FormatInt(startTimestamp),
+		"height", utils.FormatInt(runtime.ChainHeight()),
+		"timestamp", utils.FormatInt(time.Now().Unix()),
 	)
 }
 

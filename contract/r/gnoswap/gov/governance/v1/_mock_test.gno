@@ -1,7 +1,9 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -57,7 +59,7 @@ func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool)
 	if m.configs == nil {
 		return governance.NewDefaultConfig(), false
 	}
-	result, exists := m.configs.Get(formatInt(version))
+	result, exists := m.configs.Get(utils.FormatInt(version))
 	if !exists {
 		return governance.NewDefaultConfig(), false
 	}
@@ -68,7 +70,7 @@ func (m *mockGovernanceStore) SetConfig(_ int, rlm realm, version int64, config 
 	if m.configs == nil {
 		m.configs = governance.NewConfigTree()
 	}
-	m.configs.Set(formatInt(version), config)
+	m.configs.Set(utils.FormatInt(version), config)
 	return nil
 }
 
@@ -85,7 +87,7 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	proposal, exists := m.proposals.Get(formatInt(proposalID))
+	proposal, exists := m.proposals.Get(utils.FormatInt(proposalID))
 	if !exists {
 		return nil, false
 	}
@@ -96,7 +98,7 @@ func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, pr
 	if m.proposals == nil {
 		m.proposals = governance.NewProposalTree()
 	}
-	m.proposals.Set(formatInt(proposalID), proposal)
+	m.proposals.Set(utils.FormatInt(proposalID), proposal)
 	return nil
 }
 
@@ -118,7 +120,7 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
-	result, exists := m.proposalUserVotingInfos.Get(formatInt(proposalID))
+	result, exists := m.proposalUserVotingInfos.Get(utils.FormatInt(proposalID))
 	if !exists {
 		return nil, false
 	}
@@ -132,7 +134,7 @@ func (m *mockGovernanceStore) SetProposalVotingInfos(_ int, rlm realm, proposalI
 	if m.proposalUserVotingInfos == nil {
 		m.proposalUserVotingInfos = governance.NewProposalUserVotingInfoTree()
 	}
-	m.proposalUserVotingInfos.Set(formatInt(proposalID), votingInfos)
+	m.proposalUserVotingInfos.Set(utils.FormatInt(proposalID), votingInfos)
 	return nil
 }
 

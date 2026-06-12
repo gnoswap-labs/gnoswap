@@ -8,6 +8,7 @@ import (
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -70,8 +71,8 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newFee", formatUint(fee),
-		"prevFee", formatUint(prevSwapFee),
+		"newFee", utils.FormatUint(fee),
+		"prevFee", utils.FormatUint(prevSwapFee),
 	)
 }
 
@@ -100,7 +101,7 @@ func (r *routerV1) handleSwapFee(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", currentTokenPath,
-		"amount", formatInt64(feeAmountInt64),
+		"amount", utils.FormatInt(feeAmountInt64),
 	)
 
 	return gnsmath.SafeSubInt64(amount, feeAmountInt64)

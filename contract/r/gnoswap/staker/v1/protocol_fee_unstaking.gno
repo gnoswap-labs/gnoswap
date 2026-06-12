@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -122,8 +123,8 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 		"SetUnStakingFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevUnStakingFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevUnStakingFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 

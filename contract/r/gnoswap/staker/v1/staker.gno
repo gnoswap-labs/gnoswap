@@ -10,6 +10,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/rbac"
@@ -314,13 +315,13 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		"StakeToken",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"positionId", formatUint(positionId),
+		"positionId", utils.FormatUint(positionId),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
-		"positionUpperTick", formatAnyInt(tickUpper),
-		"positionLowerTick", formatAnyInt(tickLower),
-		"currentTick", formatAnyInt(currentTick),
-		"isInRange", formatBool(isInRange),
+		"positionUpperTick", utils.FormatInt(tickUpper),
+		"positionLowerTick", utils.FormatInt(tickLower),
+		"currentTick", utils.FormatInt(currentTick),
+		"isInRange", utils.FormatBool(isInRange),
 		"referrer", actualReferrer,
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
@@ -437,10 +438,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 				"SkippedMissingIncentive",
 				"prevAddr", previousRealm.Address().String(),
 				"prevRealm", previousRealm.PkgPath(),
-				"positionId", formatUint(positionId),
+				"positionId", utils.FormatUint(positionId),
 				"incentiveId", incentiveId,
-				"currentTime", formatAnyInt(currentTime),
-				"currentHeight", formatAnyInt(blockHeight),
+				"currentTime", utils.FormatInt(currentTime),
+				"currentHeight", utils.FormatInt(blockHeight),
 			)
 			continue
 		}
@@ -460,12 +461,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 				"InsufficientExternalReward",
 				"prevAddr", previousRealm.Address().String(),
 				"prevRealm", previousRealm.PkgPath(),
-				"positionId", formatUint(positionId),
+				"positionId", utils.FormatUint(positionId),
 				"incentiveId", incentiveId,
-				"requiredAmount", formatAnyInt(totalRewardAmount),
-				"availableAmount", formatAnyInt(incentiveResolver.RewardAmount()),
-				"currentTime", formatAnyInt(currentTime),
-				"currentHeight", formatAnyInt(blockHeight),
+				"requiredAmount", utils.FormatInt(totalRewardAmount),
+				"availableAmount", utils.FormatInt(incentiveResolver.RewardAmount()),
+				"currentTime", utils.FormatInt(currentTime),
+				"currentHeight", utils.FormatInt(blockHeight),
 			)
 			continue
 		}
@@ -510,12 +511,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"ProtocolFeeExternalReward",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"fromPositionId", formatUint(positionId),
+			"fromPositionId", utils.FormatUint(positionId),
 			"fromPoolPath", incentive.TargetPoolPath(),
 			"feeTokenPath", rewardToken,
-			"feeAmount", formatAnyInt(feeAmount),
-			"currentTime", formatAnyInt(currentTime),
-			"currentHeight", formatAnyInt(blockHeight),
+			"feeAmount", utils.FormatInt(feeAmount),
+			"currentTime", utils.FormatInt(currentTime),
+			"currentHeight", utils.FormatInt(blockHeight),
 		)
 
 		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
@@ -532,17 +533,17 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"CollectReward",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"positionId", formatUint(positionId),
+			"positionId", utils.FormatUint(positionId),
 			"poolPath", deposit.TargetPoolPath(),
 			"recipient", deposit.Owner().String(),
 			"incentiveId", incentiveId,
 			"rewardToken", rewardToken,
-			"rewardAmount", formatAnyInt(rewardAmount),
-			"rewardToUser", formatAnyInt(toUser),
-			"rewardToFee", formatAnyInt(rewardAmount-toUser),
-			"rewardPenalty", formatAnyInt(externalPenalty),
-			"currentTime", formatAnyInt(currentTime),
-			"currentHeight", formatAnyInt(blockHeight),
+			"rewardAmount", utils.FormatInt(rewardAmount),
+			"rewardToUser", utils.FormatInt(toUser),
+			"rewardToFee", utils.FormatInt(rewardAmount-toUser),
+			"rewardPenalty", utils.FormatInt(externalPenalty),
+			"currentTime", utils.FormatInt(currentTime),
+			"currentHeight", utils.FormatInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
 			"globalRewardRatioAccX128", globalAccX128,
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
@@ -576,12 +577,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"ProtocolFeeInternalReward",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"fromPositionId", formatUint(positionId),
+			"fromPositionId", utils.FormatUint(positionId),
 			"fromPoolPath", deposit.TargetPoolPath(),
 			"feeTokenPath", GNS_PATH,
-			"feeAmount", formatAnyInt(internalRewardToFee),
-			"currentTime", formatAnyInt(currentTime),
-			"currentHeight", formatAnyInt(blockHeight),
+			"feeAmount", utils.FormatInt(internalRewardToFee),
+			"currentTime", utils.FormatInt(currentTime),
+			"currentHeight", utils.FormatInt(blockHeight),
 		)
 	}
 
@@ -634,8 +635,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		gns.Transfer(cross(rlm), communityPoolAddr, unClaimableInternal)
 	}
 
-	rewardToUser := formatAnyInt(internalRewardToUser)
-	rewardPenalty := formatAnyInt(internalRewardPenalty)
+	rewardToUser := utils.FormatInt(internalRewardToUser)
+	rewardPenalty := utils.FormatInt(internalRewardPenalty)
 
 	if !skipInternalUpdate {
 		poolPath := depositResolver.TargetPoolPath()
@@ -654,17 +655,17 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"CollectReward",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"positionId", formatUint(positionId),
+			"positionId", utils.FormatUint(positionId),
 			"poolPath", depositResolver.TargetPoolPath(),
 			"recipient", depositResolver.Owner().String(),
 			"rewardToken", GNS_PATH,
-			"rewardAmount", formatAnyInt(internalReward),
+			"rewardAmount", utils.FormatInt(internalReward),
 			"rewardToUser", rewardToUser,
-			"rewardToFee", formatAnyInt(internalRewardToFee),
+			"rewardToFee", utils.FormatInt(internalRewardToFee),
 			"rewardPenalty", rewardPenalty,
-			"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
-			"currentTime", formatAnyInt(currentTime),
-			"currentHeight", formatAnyInt(blockHeight),
+			"rewardUnClaimableAmount", utils.FormatInt(unClaimableInternal),
+			"currentTime", utils.FormatInt(currentTime),
+			"currentHeight", utils.FormatInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
 			"globalRewardRatioAccX128", globalAccX128,
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
@@ -741,14 +742,14 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 		"UnStakeToken",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"positionId", formatUint(positionId),
+		"positionId", utils.FormatUint(positionId),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"from", stakerAddr.String(),
 		"to", deposit.Owner().String(),
-		"currentTick", formatAnyInt(currentTick),
+		"currentTick", utils.FormatInt(currentTick),
 		"stakedLiquidity", stakedLiquidity.ToString(),
 		"globalRewardRatioAccX128", globalAccX128,
 	)

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -293,7 +294,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 			TokenFaucet2(cur, t, gnsTokenPath, routerContract)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			swapAmount := safeParseInt64(tt.amountIn)
+			swapAmount := utils.SafeParseInt64(tt.amountIn)
 			bar.Transfer(cross(cur), routerContract, swapAmount)
 
 			beforeBarBalance := bar.BalanceOf(tt.recipient)
@@ -353,8 +354,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 				testing.SkipHeights(1)
 				afterBarBalance := bar.BalanceOf(tt.recipient)
 
-				drySwapAmountOutInt := safeParseInt64(drySwapAmountOut)
-				amountOutInt := safeParseInt64(amountOut)
+				drySwapAmountOutInt := utils.SafeParseInt64(drySwapAmountOut)
+				amountOutInt := utils.SafeParseInt64(amountOut)
 				if drySwapAmountOutInt < 0 {
 					drySwapAmountOutInt = -drySwapAmountOutInt
 				}
@@ -702,7 +703,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			router.handleSwapFee(0, cur, tt.outputToken, safeParseInt64(drySwapAmountOut))
+			router.handleSwapFee(0, cur, tt.outputToken, utils.SafeParseInt64(drySwapAmountOut))
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -902,7 +903,7 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			common.SafeGRC20Approve(cross(cur), tt.inputToken, routerAddr, math.MaxInt64)
 
-			amountSpecified := safeParseInt64(tt.amountSpecified)
+			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
 			router := mockRouter()
 
@@ -1009,10 +1010,10 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 			createMultiHopPools(cur, t)
 
 			op := &baseSwapOperation{
-				amountSpecified: safeParseInt64(tt.toSwap),
+				amountSpecified: utils.SafeParseInt64(tt.toSwap),
 			}
 
-			toSwapAmount := safeParseInt64(tt.toSwap)
+			toSwapAmount := utils.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
 			common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)

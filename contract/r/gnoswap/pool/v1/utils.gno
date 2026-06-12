@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strconv"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -110,48 +108,4 @@ func checkTickSpacing(tick, tickSpacing int32) {
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
 		))
 	}
-}
-
-// formatUint converts various unsigned integer types to string representation.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint16:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatInt converts various signed integer types to string representation.
-func formatInt(v any) string {
-	switch v := v.(type) {
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case int:
-		return strconv.Itoa(v)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatBool converts a boolean value to string representation.
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
-
-func safeParseInt64(value string) int64 {
-	amountInt64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt64
 }

@@ -10,6 +10,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -222,8 +223,8 @@ func (i *poolV1) Collect(
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	amount0Req := safeParseInt64(amount0Requested)
-	amount1Req := safeParseInt64(amount1Requested)
+	amount0Req := utils.SafeParseInt64(amount0Requested)
+	amount1Req := utils.SafeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
 		panic(errInvalidInput)
@@ -264,7 +265,7 @@ func (i *poolV1) Collect(
 		panic(err)
 	}
 
-	return formatInt(amount0), formatInt(amount1)
+	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
@@ -313,7 +314,7 @@ func (i *poolV1) CollectProtocol(
 		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", formatUint(fee),
+		"fee", utils.FormatUint(fee),
 		"recipient", recipient.String(),
 		"internal_amount0", amount0,
 		"internal_amount1", amount1,
@@ -337,8 +338,8 @@ func (i *poolV1) collectProtocol(
 ) (string, string) {
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
-	amount0Req := safeParseInt64(amount0Requested)
-	amount1Req := safeParseInt64(amount1Requested)
+	amount0Req := utils.SafeParseInt64(amount0Requested)
+	amount1Req := utils.SafeParseInt64(amount1Requested)
 
 	if amount0Req < 0 || amount1Req < 0 {
 		panic(errInvalidInput)
@@ -369,7 +370,7 @@ func (i *poolV1) collectProtocol(
 	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
 	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
 
-	return formatInt(amount0), formatInt(amount1)
+	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
 
 // saveProtocolFees updates the protocol fee balances after collection.
@@ -427,6 +428,6 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
-		"cardinalityNext", formatUint(cardinalityNext),
+		"cardinalityNext", utils.FormatUint(cardinalityNext),
 	)
 }

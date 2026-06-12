@@ -7,6 +7,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
@@ -105,7 +106,7 @@ func (gs *govStakerV1) Delegate(
 		"prevRealm", prev.PkgPath(),
 		"from", resolver.delegation.DelegateFrom().String(),
 		"to", resolver.delegation.DelegateTo().String(),
-		"amount", formatInt(resolver.DelegatedAmount()),
+		"amount", utils.FormatInt(resolver.DelegatedAmount()),
 		"referrer", registeredReferrer,
 	)
 
@@ -179,7 +180,7 @@ func (gs *govStakerV1) Undelegate(
 		"prevRealm", prev.PkgPath(),
 		"from", caller.String(),
 		"to", from.String(),
-		"amount", formatInt(unDelegationAmount),
+		"amount", utils.FormatInt(unDelegationAmount),
 	)
 
 	return unDelegationAmount
@@ -271,7 +272,7 @@ func (gs *govStakerV1) Redelegate(
 		"from", delegator.String(),
 		"previousDelegatee", delegatee.String(),
 		"newDelegatee", newDelegatee.String(),
-		"amount", formatInt(resolver.DelegatedAmount()),
+		"amount", utils.FormatInt(resolver.DelegatedAmount()),
 	)
 
 	return amount
@@ -315,7 +316,7 @@ func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 		"prevRealm", prev.PkgPath(),
 		"from", prev.Address().String(),
 		"to", caller.String(),
-		"collectedAmount", formatInt(collectedAmount),
+		"collectedAmount", utils.FormatInt(collectedAmount),
 	)
 
 	return collectedAmount
@@ -571,7 +572,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegationRaw, exists := allDelegations.Get(formatInt(id))
+			delegationRaw, exists := allDelegations.Get(utils.FormatInt(id))
 			if !exists {
 				continue
 			}

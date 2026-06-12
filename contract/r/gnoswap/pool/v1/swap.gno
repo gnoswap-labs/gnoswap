@@ -12,6 +12,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -292,27 +293,27 @@ func (i *poolV1) Swap(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
-		"zeroForOne", formatBool(zeroForOne),
+		"zeroForOne", utils.FormatBool(zeroForOne),
 		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,
-		"protocolFee0", formatInt(pool.ProtocolFeesToken0()),
-		"protocolFee1", formatInt(pool.ProtocolFeesToken1()),
+		"protocolFee0", utils.FormatInt(pool.ProtocolFeesToken0()),
+		"protocolFee1", utils.FormatInt(pool.ProtocolFeesToken1()),
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"exactIn", strconv.FormatBool(comp.ExactInput),
 		"currentTick", strconv.FormatInt(int64(pool.Slot0Tick()), 10),
 		"liquidity", pool.Liquidity().ToString(),
 		"feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128().ToString(),
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
-		"balanceToken0", formatInt(pool.BalanceToken0()),
-		"balanceToken1", formatInt(pool.BalanceToken1()),
-		"tickCumulative", formatInt(lastObservation.TickCumulative()),
+		"balanceToken0", utils.FormatInt(pool.BalanceToken0()),
+		"balanceToken1", utils.FormatInt(pool.BalanceToken1()),
+		"tickCumulative", utils.FormatInt(lastObservation.TickCumulative()),
 		"liquidityCumulative", lastObservation.LiquidityCumulative(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
-		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
+		"observationTimestamp", utils.FormatInt(lastObservation.BlockTimestamp()),
 	)
 
 	return token0Amount, token1Amount

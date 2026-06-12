@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
@@ -61,9 +63,9 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"targetProjectTierId", targetProjectTierID,
-			"amount", formatInt(depositAmount),
+			"amount", utils.FormatInt(depositAmount),
 			"depositId", deposit.ID(),
-			"claimableTime", formatInt(rewardState.ClaimableTime()),
+			"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 			"tierAmountPerSecondX128", distributeAmountPerSecondX128,
 		)
 	}
@@ -73,9 +75,9 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"targetProjectTierId", targetProjectTierID,
-		"amount", formatInt(depositAmount),
+		"amount", utils.FormatInt(depositAmount),
 		"depositId", deposit.ID(),
-		"claimableTime", formatInt(rewardState.ClaimableTime()),
+		"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 		"referrer", actualReferrer,
 	)
 

@@ -2,8 +2,8 @@ package v1
 
 import (
 	"errors"
-	"strconv"
 
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -102,12 +102,12 @@ func (m *mockGovStakerStore) SetDelegations(_ int, rlm realm, delegations *bptre
 }
 
 func (m *mockGovStakerStore) HasDelegation(id int64) bool {
-	_, exists := m.delegations.Get(uint64ToString(uint64(id)))
+	_, exists := m.delegations.Get(utils.Uint64ToString(uint64(id)))
 	return exists
 }
 
 func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) {
-	value, exists := m.delegations.Get(uint64ToString(uint64(id)))
+	value, exists := m.delegations.Get(utils.Uint64ToString(uint64(id)))
 	if !exists {
 		return nil, false
 	}
@@ -115,13 +115,13 @@ func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) 
 }
 
 func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
-	m.delegations.Remove(uint64ToString(uint64(id)))
-	m.delegations.Set(uint64ToString(uint64(id)), delegation)
+	m.delegations.Remove(utils.Uint64ToString(uint64(id)))
+	m.delegations.Set(utils.Uint64ToString(uint64(id)), delegation)
 	return nil
 }
 
 func (m *mockGovStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
-	_, _ = m.delegations.Remove(uint64ToString(uint64(id)))
+	_, _ = m.delegations.Remove(utils.Uint64ToString(uint64(id)))
 	return nil
 }
 
@@ -264,11 +264,6 @@ func (m *mockGovStakerStore) SetLaunchpadProjectDeposits(_ int, rlm realm, depos
 }
 
 var errNotInitialized = errors.New("not initialized")
-
-// uint64ToString converts uint64 to string
-func uint64ToString(n uint64) string {
-	return strconv.FormatUint(n, 10)
-}
 
 // createTestGovStaker creates a govStakerV1 instance for testing
 func createTestGovStaker() *govStakerV1 {

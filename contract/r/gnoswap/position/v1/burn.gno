@@ -4,6 +4,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -53,8 +54,8 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 	pToken0, pToken1, pFee := splitOf(position.PoolKey())
 	burn0, burn1 := pl.Burn(cross(rlm), pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
-	burnedAmount0 := safeParseInt64(burn0)
-	burnedAmount1 := safeParseInt64(burn1)
+	burnedAmount0 := utils.SafeParseInt64(burn0)
+	burnedAmount1 := utils.SafeParseInt64(burn1)
 
 	if burnedAmount0 < 0 || burnedAmount1 < 0 {
 		panic(errUnderflow)

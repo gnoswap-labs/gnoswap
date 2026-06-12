@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -103,17 +104,17 @@ func TestTierDurationConsistency(cur realm, t *testing.T) {
 			}
 
 			project, err := lp.createProject(0, cur, &createProjectParams{
-					name:          "Test Project " + tt.name,
-					tokenPath:     "gno.land/r/onbloc/obl",
-					depositAmount: 10000000,
-					tier30Ratio:   tier30Ratio,
-					tier90Ratio:   tier90Ratio,
-					tier180Ratio:  tier180Ratio,
-					recipient:     testutils.TestAddress("project"),
-					startTime:     currentTime,
-					currentTime:   currentTime,
-					currentHeight: currentHeight,
-				},
+				name:          "Test Project " + tt.name,
+				tokenPath:     "gno.land/r/onbloc/obl",
+				depositAmount: 10000000,
+				tier30Ratio:   tier30Ratio,
+				tier90Ratio:   tier90Ratio,
+				tier180Ratio:  tier180Ratio,
+				recipient:     testutils.TestAddress("project"),
+				startTime:     currentTime,
+				currentTime:   currentTime,
+				currentHeight: currentHeight,
+			},
 			)
 			uassert.NoError(t, err)
 			uassert.NotNil(t, project, "project should not be nil")
@@ -144,7 +145,7 @@ func TestTierDurationConsistency(cur realm, t *testing.T) {
 
 			// Make deposits
 			for i := 0; i < tt.depositCount; i++ {
-				user := testutils.TestAddress("user" + formatInt(int64(i)))
+				user := testutils.TestAddress("user" + utils.FormatInt(int64(i)))
 				testing.SetOriginCaller(user)
 
 				_, _, isFirstDeposit, _, _ := lp.depositGns(0, cur, project, tt.tierType, 1000000, user)

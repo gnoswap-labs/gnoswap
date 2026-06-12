@@ -6,6 +6,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -68,19 +69,19 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 	}
 
 	// Emit voting event for tracking and transparency
-	userVoteWeight := formatInt(userVote.VotedWeight())
+	userVoteWeight := utils.FormatInt(userVote.VotedWeight())
 	voterStr := voter.String()
 
 	chain.Emit(
 		"Vote",
 		"prevAddr", voterStr,
 		"prevPkgPath", voterRealm.PkgPath(),
-		"proposalId", formatInt(proposalID),
+		"proposalId", utils.FormatInt(proposalID),
 		"voter", voterStr,
 		"yes", userVote.VotingType(),
 		"voteWeight", userVoteWeight,
-		"voteYes", formatInt(totalYesVoteWeight),
-		"voteNo", formatInt(totalNoVoteWeight),
+		"voteYes", utils.FormatInt(totalYesVoteWeight),
+		"voteNo", utils.FormatInt(totalNoVoteWeight),
 	)
 
 	return userVoteWeight

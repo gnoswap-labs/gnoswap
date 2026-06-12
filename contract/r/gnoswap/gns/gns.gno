@@ -13,6 +13,7 @@ import (
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 )
 
@@ -119,10 +120,10 @@ func MintGns(cur realm, address address) int64 {
 		"MintGNS",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"mintedBlockTime", formatInt(currentTime),
-		"mintedGNSAmount", formatInt(amountToMint),
-		"accumMintedGNSAmount", formatInt(MintedEmissionAmount()),
-		"accumLeftMintGNSAmount", formatInt(LeftEmissionAmount()),
+		"mintedBlockTime", utils.FormatInt(currentTime),
+		"mintedGNSAmount", utils.FormatInt(amountToMint),
+		"accumMintedGNSAmount", utils.FormatInt(MintedEmissionAmount()),
+		"accumLeftMintGNSAmount", utils.FormatInt(LeftEmissionAmount()),
 	)
 
 	return amountToMint

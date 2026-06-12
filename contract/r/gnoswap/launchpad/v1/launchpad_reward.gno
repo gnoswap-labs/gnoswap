@@ -6,6 +6,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -50,7 +51,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
-		"amount", formatInt(rewardAmount),
+		"amount", utils.FormatInt(rewardAmount),
 	)
 
 	return rewardAmount

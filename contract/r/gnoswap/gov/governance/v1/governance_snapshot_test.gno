@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -210,7 +211,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 			// Create voting infos
 			votingInfos := governance.NewProposalUserVotingInfoTree()
 			for i := 0; i < tt.numVotes; i++ {
-				voterAddr := address("g1voter0000000000000000000000000000000" + formatInt(int64(i)))
+				voterAddr := address("g1voter0000000000000000000000000000000" + utils.FormatInt(int64(i)))
 				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos.Set(voterAddr.String(), votingInfo)
 			}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 
@@ -265,45 +266,6 @@ func splitSingleChar(s string, sep byte) []string {
 	return result
 }
 
-// formatUint formats an unsigned integer to string.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
-// formatInt64 formats a signed integer to string.
-func formatInt64(v any) string {
-	switch v := v.(type) {
-	case int8:
-		return strconv.FormatInt(int64(v), 10)
-	case int16:
-		return strconv.FormatInt(int64(v), 10)
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type %T", v))
-	}
-}
-
-func safeParseInt64(value string) int64 {
-	amountInt64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt64
-}
-
 // parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
 // This function converts route paths (which maintain swap direction) into canonical pool paths
 // (which use alphabetical token ordering).
@@ -370,5 +332,5 @@ func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 		panic("tokenA and tokenB cannot be the same")
 	}
 
-	return tokenA + ":" + tokenB + ":" + formatUint(fee)
+	return tokenA + ":" + tokenB + ":" + utils.FormatUint(fee)
 }

@@ -19,16 +19,6 @@ func marshal(data *json.Node) string {
 	return string(b)
 }
 
-// formatUint formats a uint64 to a string
-func formatUint(v uint64) string {
-	return strconv.FormatUint(v, 10)
-}
-
-// formatInt formats an int64 to a string
-func formatInt(v int64) string {
-	return strconv.FormatInt(v, 10)
-}
-
 // getUint64FromTree returns the uint64 value from the tree
 func getUint64FromTree(tree *bptree.BPTree, key string) uint64 {
 	value, exists := tree.Get(key)
