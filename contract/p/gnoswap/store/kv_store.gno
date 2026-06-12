@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -53,7 +55,7 @@ func (k *kvStore) Has(key string) bool {
 func (k *kvStore) Get(key string) (any, error) {
 	value, exists := k.data[k.makeKey(key)]
 	if !exists {
-		return nil, ErrKeyNotFound
+		return nil, errors.New(ErrKeyNotFound)
 	}
 
 	return value, nil
@@ -134,11 +136,11 @@ func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
 // registration.
 func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Address()) {
-		return ErrWritePermissionDenied
+		return errors.New(ErrWritePermissionDenied)
 	}
 
 	k.data[k.makeKey(key)] = value
@@ -153,17 +155,17 @@ func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 // offers for EOA / test callers is intentionally not extended here.
 func (k *kvStore) Delete(_ int, rlm realm, key string) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	caller := rlm.Address()
 
 	if !k.IsWriteAuthorized(caller) {
-		return ErrWritePermissionDenied
+		return errors.New(ErrWritePermissionDenied)
 	}
 
 	if !k.Has(key) {
-		return ErrKeyNotFound
+		return errors.New(ErrKeyNotFound)
 	}
 
 	delete(k.data, k.makeKey(key))
@@ -192,7 +194,7 @@ func (k *kvStore) IsWriteAuthorized(caller address) bool {
 // GetAuthorizedCallers returns all authorized callers and their permissions
 func (k *kvStore) GetAuthorizedCallers() (map[address]Permission, error) {
 	if k.authorizedCallers == nil {
-		return make(map[address]Permission), ErrAuthorizedCallerNotFound
+		return make(map[address]Permission), errors.New(ErrAuthorizedCallerNotFound)
 	}
 
 	return k.authorizedCallers, nil
@@ -201,19 +203,19 @@ func (k *kvStore) GetAuthorizedCallers() (map[address]Permission, error) {
 // AddAuthorizedCaller adds a new authorized caller with the specified permission
 func (k *kvStore) AddAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
-		return ErrUpdatePermissionDenied
+		return errors.New(ErrUpdatePermissionDenied)
 	}
 
 	if k.isRegisteredAuthorizedCaller(caller) {
-		return ErrAuthorizedCallerAlreadyRegistered
+		return errors.New(ErrAuthorizedCallerAlreadyRegistered)
 	}
 
 	if !isValidPermission(permission) {
-		return ErrInvalidPermission
+		return errors.New(ErrInvalidPermission)
 	}
 
 	k.authorizedCallers[caller] = permission
@@ -224,19 +226,19 @@ func (k *kvStore) AddAuthorizedCaller(_ int, rlm realm, caller address, permissi
 // UpdateAuthorizedCaller updates the permission of an existing authorized caller
 func (k *kvStore) UpdateAuthorizedCaller(_ int, rlm realm, caller address, permission Permission) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
-		return ErrUpdatePermissionDenied
+		return errors.New(ErrUpdatePermissionDenied)
 	}
 
 	if !k.isRegisteredAuthorizedCaller(caller) {
-		return ErrAuthorizedCallerNotFound
+		return errors.New(ErrAuthorizedCallerNotFound)
 	}
 
 	if !isValidPermission(permission) {
-		return ErrInvalidPermission
+		return errors.New(ErrInvalidPermission)
 	}
 
 	k.authorizedCallers[caller] = permission
@@ -247,15 +249,15 @@ func (k *kvStore) UpdateAuthorizedCaller(_ int, rlm realm, caller address, permi
 // RemoveAuthorizedCaller removes an authorized caller
 func (k *kvStore) RemoveAuthorizedCaller(_ int, rlm realm, caller address) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !k.isUpdatableAuthorizedCaller(rlm.Address()) {
-		return ErrUpdatePermissionDenied
+		return errors.New(ErrUpdatePermissionDenied)
 	}
 
 	if !k.isRegisteredAuthorizedCaller(caller) {
-		return ErrAuthorizedCallerNotFound
+		return errors.New(ErrAuthorizedCallerNotFound)
 	}
 
 	delete(k.authorizedCallers, caller)

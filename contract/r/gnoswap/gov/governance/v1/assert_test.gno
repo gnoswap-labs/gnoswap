@@ -49,7 +49,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 			caller:           testutils.TestAddress("proposer1"),
 			proposalID:       999,
 			expectedPanic:    true,
-			expectedPanicMsg: errProposalNotFound.Error(),
+			expectedPanicMsg: errProposalNotFound,
 		},
 		{
 			name: "panic - caller is not proposer",
@@ -71,7 +71,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 			caller:           testutils.TestAddress("not_proposer"),
 			proposalID:       2,
 			expectedPanic:    true,
-			expectedPanicMsg: errNotProposer.Error(),
+			expectedPanicMsg: errNotProposer,
 		},
 		{
 			name: "success - different proposer for different proposal",

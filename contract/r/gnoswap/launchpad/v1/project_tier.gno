@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/launchpad"
 
+	"gno.land/p/gnoswap/consts"
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -42,9 +44,9 @@ func updateTierDistributeAmountPerSecond(t *launchpad.ProjectTier) {
 		return
 	}
 
-	totalDistributeAmountX128, overflow := u256.Zero().MulOverflow(u256.NewUintFromInt64(t.TotalDistributeAmount()), q128.Clone())
+	totalDistributeAmountX128, overflow := u256.Zero().MulOverflow(u256.NewUintFromInt64(t.TotalDistributeAmount()), consts.Q128())
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	// Divide by time duration in seconds

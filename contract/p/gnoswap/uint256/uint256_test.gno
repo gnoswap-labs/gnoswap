@@ -1,6 +1,7 @@
 package uint256
 
 import (
+	"errors"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
@@ -81,7 +82,7 @@ func TestFromDecimal(cur realm, t *testing.T) {
 			input   string
 			wantErr error
 		}{
-			{"overflow", "115792089237316195423570985008687907853269984665640564039457584007913129639936", ErrBig256Range},
+			{"overflow", "115792089237316195423570985008687907853269984665640564039457584007913129639936", errors.New(ErrBig256Range)},
 			{"invalid_characters", "123abc456", nil}, // expects any error
 			{"empty_string", "", nil},                // expects any error
 		}
@@ -90,7 +91,7 @@ func TestFromDecimal(cur realm, t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				_, err := FromDecimal(tt.input)
 				if tt.wantErr != nil {
-					if err != tt.wantErr {
+					if err.Error() != tt.wantErr.Error() {
 						t.Errorf("FromDecimal(%q) error = %v, want %v", tt.input, err, tt.wantErr)
 					}
 					return

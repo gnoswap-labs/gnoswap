@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"bytes"
 	"strconv"
 	"strings"
@@ -27,7 +28,7 @@ func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, err
 
 	toSwap := gnsmath.SafeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
 	if toSwap == 0 {
-		return 0, errInvalidSwapAmount
+		return 0, errors.New(errInvalidSwapAmount)
 	}
 
 	return toSwap, nil
@@ -39,7 +40,7 @@ func assertHopsInRange(hops int) {
 	case 1, 2, 3:
 		return
 	default:
-		panic(errHopsOutOfRange)
+		panic(errors.New(errHopsOutOfRange))
 	}
 }
 

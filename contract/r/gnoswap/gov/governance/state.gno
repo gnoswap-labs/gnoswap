@@ -9,6 +9,8 @@ import (
 	"gno.land/p/gnoswap/version_manager"
 )
 
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
+
 var (
 	// currentAddress and domainPath describe the governance realm itself.
 	// They are captured from the `cur realm` parameter in init(cur realm),
@@ -20,10 +22,6 @@ var (
 
 	versionManager version_manager.VersionManager
 	implementation IGovernance
-
-	// ErrSpoofedRealm is returned/panicked when a captured realm token no
-	// longer matches the live crossing frame (rlm.IsCurrent() == false).
-	ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
 )
 
 func init(cur realm) {

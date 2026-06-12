@@ -73,7 +73,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 }
 
 func TestSafeMulDivInt64_Panics(cur realm, t *testing.T) {
-	uassert.PanicsWithMessage(t, cur, errSafeMathOverflow.Error(), func() {
+	uassert.PanicsWithMessage(t, cur, errSafeMathOverflow, func() {
 		SafeMulDivInt64(math.MaxInt64, 4, 1)
 	})
 }
@@ -85,7 +85,7 @@ func TestSafeAbsInt64(t *testing.T) {
 }
 
 func TestSafeAbsInt64_Panics(cur realm, t *testing.T) {
-	uassert.PanicsWithMessage(t, cur, errSafeMathOverflow.Error(), func() {
+	uassert.PanicsWithMessage(t, cur, errSafeMathOverflow, func() {
 		SafeAbsInt64(math.MinInt64)
 	})
 }

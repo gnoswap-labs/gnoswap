@@ -7,6 +7,7 @@ const (
 	HALVING_END_YEAR   = int64(12)
 )
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 // Annual halving amount - maximum issuance per year
 var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
 	18_750_000_000_000 * 12, // Year 1:  225000000000000

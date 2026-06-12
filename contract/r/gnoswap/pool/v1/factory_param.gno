@@ -3,16 +3,10 @@ package v1
 import (
 	"strings"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
-)
-
-var Q192 = u256.Zero().Lsh(u256.One(), 192)
-
-var (
-	minSqrtRatio = u256.MustFromDecimal(MIN_SQRT_RATIO)
-	maxSqrtRatio = u256.MustFromDecimal(MAX_SQRT_RATIO)
 )
 
 const (
@@ -76,7 +70,7 @@ func (p *poolCreateConfig) update() error {
 		token0Path, token1Path = token1Path, token0Path
 
 		// newPrice = 2^192 / oldPrice
-		newPrice := u256.Zero().Div(Q192, p.sqrtPriceX96)
+		newPrice := u256.Zero().Div(consts.Q192(), p.sqrtPriceX96)
 
 		// Check if calculated price is within valid range
 		if err := validateSqrtPriceX96(newPrice); err != nil {
@@ -107,7 +101,7 @@ func (p *poolCreateConfig) poolPath() string {
 // validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
 func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	// Valid range is [minSqrtRatio, maxSqrtRatio) - same as TickMathGetTickAtSqrtRatio
-	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
+	if sqrtPriceX96.Lt(consts.MinSqrtRatio()) || sqrtPriceX96.Gte(consts.MaxSqrtRatio()) {
 		return makeErrorWithDetails(
 			errOutOfRange,
 			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),

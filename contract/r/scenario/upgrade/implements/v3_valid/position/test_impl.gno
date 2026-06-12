@@ -2,6 +2,8 @@
 package v3_valid
 
 import (
+	"errors"
+
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,7 +17,7 @@ type gnftAccessor struct{}
 
 func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
 	if !rlm.IsCurrent() {
-		return position.ErrSpoofedRealm
+		return errors.New(position.ErrSpoofedRealm)
 	}
 
 	return gnft.Approve(cross(rlm), approved, tid)

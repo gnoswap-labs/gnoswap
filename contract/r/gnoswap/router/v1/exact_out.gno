@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -52,7 +53,7 @@ func (r *routerV1) ExactOutSwapRoute(
 	referrer string,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedRouter()
@@ -119,7 +120,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	referrer string,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedRouter()

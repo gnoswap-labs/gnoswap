@@ -329,7 +329,7 @@ func TestSvgGenerator_paramsToImageRaw_InvalidParams(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
-			uassert.Equal(t, errInvalidTokenParams.Error(), err.Error())
+			uassert.Equal(t, errInvalidTokenParams, err.Error())
 		})
 	}
 }
@@ -577,7 +577,7 @@ func TestSvgGenerator_outOfRangeValues(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
 			// Error now includes detailed coordinate info, check contains base error
-			uassert.True(t, strings.Contains(err.Error(), errInvalidTokenParamsRange.Error()))
+			uassert.True(t, strings.Contains(err.Error(), errInvalidTokenParamsRange))
 		})
 	}
 }
@@ -657,7 +657,7 @@ func TestSvgGenerator_outOfRangeValues_DetailedErrors(cur realm, t *testing.T) {
 
 			errMsg := err.Error()
 			// Verify error message contains base error
-			uassert.True(t, strings.Contains(errMsg, errInvalidTokenParamsRange.Error()))
+			uassert.True(t, strings.Contains(errMsg, errInvalidTokenParamsRange))
 			// Verify error message contains coordinate name
 			uassert.True(t, strings.Contains(errMsg, tc.expectedCoordName+"="))
 			// Verify error message contains the actual value
@@ -720,7 +720,7 @@ func TestSvgGenerator_invalidColorFormat(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
-			uassert.Equal(t, errInvalidColorFormat.Error(), err.Error())
+			uassert.Equal(t, errInvalidColorFormat, err.Error())
 		})
 	}
 }
@@ -849,7 +849,7 @@ func TestSvgGenerator_parseImageParams(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		input         string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:  "valid params - standard format",
@@ -1011,16 +1011,16 @@ func TestSvgGenerator_parseImageParams(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.input)
-			if tc.expectedError == nil {
+			if tc.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
 				uassert.Error(t, err)
 				// For range validation errors, check if error contains base error message
 				// (detailed errors include coordinate info)
 				if tc.expectedError == errInvalidTokenParamsRange {
-					uassert.True(t, strings.Contains(err.Error(), tc.expectedError.Error()))
+					uassert.True(t, strings.Contains(err.Error(), tc.expectedError))
 				} else {
-					uassert.Equal(t, tc.expectedError.Error(), err.Error())
+					uassert.Equal(t, tc.expectedError, err.Error())
 				}
 			}
 		})

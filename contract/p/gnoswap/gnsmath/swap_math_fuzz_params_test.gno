@@ -3,6 +3,7 @@ package gnsmath
 import (
 	"math"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -36,15 +37,15 @@ func (p *swapMathComputeSwapStepParams) IsValid() bool {
 		return false
 	}
 
-	if p.sqrtRatioCurrentX96.Lt(MIN_SQRT_RATIO) || p.sqrtRatioCurrentX96.Gt(MAX_SQRT_RATIO) {
+	if p.sqrtRatioCurrentX96.Lt(MIN_SQRT_RATIO()) || p.sqrtRatioCurrentX96.Gt(MAX_SQRT_RATIO()) {
 		return false
 	}
 
-	if p.sqrtRatioTargetX96.Lt(MIN_SQRT_RATIO) || p.sqrtRatioTargetX96.Gt(MAX_SQRT_RATIO) {
+	if p.sqrtRatioTargetX96.Lt(MIN_SQRT_RATIO()) || p.sqrtRatioTargetX96.Gt(MAX_SQRT_RATIO()) {
 		return false
 	}
 
-	if p.liquidity.Gt(maxUint128) {
+	if p.liquidity.Gt(consts.MaxUint128()) {
 		return false
 	}
 
@@ -67,9 +68,9 @@ func (p *swapMathComputeSwapStepParams) ToString() string {
 }
 
 func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepParams {
-	sqrtCurrent := fuzz.Uint256Range(MIN_SQRT_RATIO.ToString(), MAX_SQRT_RATIO.ToString()).Draw(t, "sqrtRatioCurrentX96").(*u256.Uint)
-	sqrtTarget := fuzz.Uint256Range(MIN_SQRT_RATIO.ToString(), MAX_SQRT_RATIO.ToString()).Draw(t, "sqrtRatioTargetX96").(*u256.Uint)
-	liquidity := fuzz.Uint256Range("1", maxUint128.ToString()).Draw(t, "liquidity").(*u256.Uint)
+	sqrtCurrent := fuzz.Uint256Range(MIN_SQRT_RATIO().ToString(), MAX_SQRT_RATIO().ToString()).Draw(t, "sqrtRatioCurrentX96").(*u256.Uint)
+	sqrtTarget := fuzz.Uint256Range(MIN_SQRT_RATIO().ToString(), MAX_SQRT_RATIO().ToString()).Draw(t, "sqrtRatioTargetX96").(*u256.Uint)
+	liquidity := fuzz.Uint256Range("1", consts.MaxUint128().ToString()).Draw(t, "liquidity").(*u256.Uint)
 
 	feePips := fuzz.Uint64Range(1, 999_999).Draw(t, "feePips").(uint64)
 

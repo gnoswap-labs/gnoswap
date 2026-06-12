@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -41,7 +42,7 @@ func (r *routerV1) SwapCallback(
 	payer address,
 ) error {
 	if !rlm.IsCurrent() {
-		return errSpoofedRealm
+		return errors.New(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedRouter()

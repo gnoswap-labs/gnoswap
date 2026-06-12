@@ -3,15 +3,9 @@ package gnsmath
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-)
-
-var (
-	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
-	q96Uint    = u256.MustFromDecimal(Q96)
-	// only used for return value
-	zeroI256 = i256.Zero()
 )
 
 // computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.
@@ -31,7 +25,7 @@ var (
 //   - If the resulting liquidity exceeds the uint128 range, `SafeConvertToUint128` will trigger a panic.
 func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
-	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, q96Uint)
+	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, consts.Q96())
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
@@ -75,7 +69,7 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 			ufmt.Sprintf("sqrtRatioAX96 (%s) and sqrtRatioBX96 (%s) are identical", sqrtRatioAX96.ToString(), sqrtRatioBX96.ToString()),
 		))
 	}
-	res := u256.MulDiv(amount1, q96Uint, diff)
+	res := u256.MulDiv(amount1, consts.Q96(), diff)
 	return SafeConvertToUint128(res)
 }
 
@@ -180,7 +174,7 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	}
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
-	res := u256.MulDiv(liquidity, diff, q96Uint)
+	res := u256.MulDiv(liquidity, diff, consts.Q96())
 
 	return res
 }
@@ -270,14 +264,14 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	yAbs := y.Abs()
 
 	// Subtract or add based on the sign of y
-	if y.Lt(zeroI256) {
+	if y.Lt(i256.Zero()) {
 		z := u256.Zero().Sub(x, yAbs)
 		if z.Gte(x) {
 			panic(ufmt.Sprintf(
 				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
 				x.ToString(), y.ToString(), z.ToString()))
 		}
-		if z.Gt(maxUint128) {
+		if z.Gt(consts.MaxUint128()) {
 			panic(ufmt.Sprintf(
 				"liquidity_math: result exceeds uint128 range (z: %s)",
 				z.ToString()))
@@ -291,7 +285,7 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
 			x.ToString(), y.ToString(), z.ToString()))
 	}
-	if z.Gt(maxUint128) {
+	if z.Gt(consts.MaxUint128()) {
 		panic(ufmt.Sprintf(
 			"liquidity_math: result exceeds uint128 range (z: %s)",
 			z.ToString()))
@@ -331,7 +325,7 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 // validUint128 := SafeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211455")) // Valid
 // SafeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211456")) // Panics due to overflow
 func SafeConvertToUint128(value *u256.Uint) *u256.Uint {
-	if value.Gt(maxUint128) {
+	if value.Gt(consts.MaxUint128()) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint128 range",
 			errLiquidityOverflow, value.ToString()))

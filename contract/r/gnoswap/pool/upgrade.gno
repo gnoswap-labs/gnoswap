@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -18,7 +19,7 @@ import (
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore IPoolStore) IPool) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			panic(ErrSpoofedRealm)
+			panic(errors.New(ErrSpoofedRealm))
 		}
 
 		currentPoolStore, ok := domainStore.(IPoolStore)

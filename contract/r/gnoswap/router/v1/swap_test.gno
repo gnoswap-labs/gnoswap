@@ -716,10 +716,3 @@ func TestMultiSwapProcessor_DirectionMatching(cur realm, t *testing.T) {
 		})
 	}
 }
-
-func TestZeroValue_Constant(cur realm, t *testing.T) {
-	// Verify zero constant is properly initialized
-	uassert.NotNil(t, zero)
-	uassert.True(t, zero.IsZero())
-	uassert.Equal(t, "0", zero.ToString())
-}

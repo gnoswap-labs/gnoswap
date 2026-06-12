@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
@@ -22,7 +23,7 @@ import (
 // Only callable by deposit owner.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -982,8 +983,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 				pool.SetRewardCacheAt(tt.startTime, tt.rewardPerSecond)
 
 				// Build deterministic global accumulation snapshots.
-				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
-				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
+				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), consts.Q128())
+				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), consts.Q128())
 				pool.SetGlobalRewardRatioAccumulationAt(tt.startTime, startAcc.ToString())
 				pool.SetGlobalRewardRatioAccumulationAt(tt.endTime, endAcc.ToString())
 				for _, h := range history {

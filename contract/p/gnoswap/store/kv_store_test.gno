@@ -189,7 +189,7 @@ func TestPermissionUpdateVsRemove(cur realm, t *testing.T) {
 	// Test that zero value Permission cannot be used
 	var zeroPermission Permission
 	err = store.UpdateAuthorizedCaller(0, cur, caller1, zeroPermission)
-	uassert.ErrorIs(t, ErrInvalidPermission, err)
+	uassert.ErrorContains(t, err, ErrInvalidPermission)
 
 	// Test removing caller completely
 	err = store.RemoveAuthorizedCaller(0, cur, caller1)
@@ -216,7 +216,7 @@ func TestAddAuthorizedCaller_Errors(cur realm, t *testing.T) {
 				store.AddAuthorizedCaller(0, cur, caller, Write)
 
 				err := store.AddAuthorizedCaller(0, cur, caller, Write)
-				uassert.ErrorIs(t, err, ErrAuthorizedCallerAlreadyRegistered)
+				uassert.ErrorContains(t, err, ErrAuthorizedCallerAlreadyRegistered)
 			},
 		},
 		{
@@ -229,7 +229,7 @@ func TestAddAuthorizedCaller_Errors(cur realm, t *testing.T) {
 
 				var invalidPermission Permission = 99
 				err := store.AddAuthorizedCaller(0, cur, caller, invalidPermission)
-				uassert.ErrorIs(t, err, ErrInvalidPermission)
+				uassert.ErrorContains(t, err, ErrInvalidPermission)
 			},
 		},
 		{
@@ -242,7 +242,7 @@ func TestAddAuthorizedCaller_Errors(cur realm, t *testing.T) {
 				caller := testutils.TestAddress("caller")
 
 				err := store.AddAuthorizedCaller(0, cur, caller, Write)
-				uassert.ErrorIs(t, err, ErrUpdatePermissionDenied)
+				uassert.ErrorContains(t, err, ErrUpdatePermissionDenied)
 			},
 		},
 	}
@@ -268,7 +268,7 @@ func TestUpdateAuthorizedCaller_Errors(cur realm, t *testing.T) {
 				caller := testutils.TestAddress("caller")
 
 				err := store.UpdateAuthorizedCaller(0, cur, caller, Write)
-				uassert.ErrorIs(t, err, ErrAuthorizedCallerNotFound)
+				uassert.ErrorContains(t, err, ErrAuthorizedCallerNotFound)
 			},
 		},
 		{
@@ -282,7 +282,7 @@ func TestUpdateAuthorizedCaller_Errors(cur realm, t *testing.T) {
 
 				var invalidPermission Permission = 100
 				err := store.UpdateAuthorizedCaller(0, cur, caller, invalidPermission)
-				uassert.ErrorIs(t, err, ErrInvalidPermission)
+				uassert.ErrorContains(t, err, ErrInvalidPermission)
 			},
 		},
 		{
@@ -298,7 +298,7 @@ func TestUpdateAuthorizedCaller_Errors(cur realm, t *testing.T) {
 
 				testing.SetRealm(testing.NewUserRealm(otherAddr))
 				err := store.UpdateAuthorizedCaller(0, cur, caller, Write)
-				uassert.ErrorIs(t, err, ErrUpdatePermissionDenied)
+				uassert.ErrorContains(t, err, ErrUpdatePermissionDenied)
 			},
 		},
 	}
@@ -324,7 +324,7 @@ func TestRemoveAuthorizedCaller_Errors(cur realm, t *testing.T) {
 				caller := testutils.TestAddress("caller")
 
 				err := store.RemoveAuthorizedCaller(0, cur, caller)
-				uassert.ErrorIs(t, err, ErrAuthorizedCallerNotFound)
+				uassert.ErrorContains(t, err, ErrAuthorizedCallerNotFound)
 			},
 		},
 		{
@@ -340,7 +340,7 @@ func TestRemoveAuthorizedCaller_Errors(cur realm, t *testing.T) {
 
 				testing.SetRealm(testing.NewUserRealm(otherAddr))
 				err := store.RemoveAuthorizedCaller(0, cur, caller)
-				uassert.ErrorIs(t, err, ErrUpdatePermissionDenied)
+				uassert.ErrorContains(t, err, ErrUpdatePermissionDenied)
 			},
 		},
 	}
@@ -361,56 +361,56 @@ func TestKeyNotFound(cur realm, t *testing.T) {
 			name: "Get",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.Get("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "Delete",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				err := store.Delete(0, cur, "nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetInt64",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetInt64("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetUint64",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetUint64("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetBool",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetBool("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetString",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetString("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetAddress",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetAddress("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "GetBPTree",
 			verifyFn: func(cur realm, t *testing.T, store KVStore) {
 				_, err := store.GetBPTree("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
+				uassert.ErrorContains(t, err, ErrKeyNotFound)
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -46,7 +47,7 @@ func TestBurn_CalculateTokensOwed(cur realm, t *testing.T) {
 		},
 		{
 			name:                            "Wrapped underflow computes modular delta",
-			feeGrowthInsideLastX128:         q128.Clone(),
+			feeGrowthInsideLastX128:         consts.Q128(),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal(MAX_UINT256),
 			positionLiquidity:               u256.One(),
 			expected:                        u256.One(),
@@ -56,7 +57,7 @@ func TestBurn_CalculateTokensOwed(cur realm, t *testing.T) {
 			name:                            "Wrapped underflow computes upstream overflow-boundary value 16",
 			feeGrowthInsideLastX128:         u256.MustFromDecimal("15"),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal(MAX_UINT256),
-			positionLiquidity:               q128.Clone(),
+			positionLiquidity:               consts.Q128(),
 			expected:                        u256.MustFromDecimal("16"),
 			shouldPanic:                     false,
 		},
@@ -64,7 +65,7 @@ func TestBurn_CalculateTokensOwed(cur realm, t *testing.T) {
 			name:                            "Wrapped underflow computes upstream overflow-boundary value 13",
 			feeGrowthInsideLastX128:         u256.Zero(),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal(maxUint256Minus12),
-			positionLiquidity:               q128.Clone(),
+			positionLiquidity:               consts.Q128(),
 			expected:                        u256.MustFromDecimal("13"),
 			shouldPanic:                     false,
 		},
@@ -221,8 +222,8 @@ func TestBurn_CalculateFees(cur realm, t *testing.T) {
 				return pos
 			},
 			feeGrowthInside: FeeGrowthInside{
-				feeGrowthInside0LastX128: q128.Clone(),
-				feeGrowthInside1LastX128: q128.Clone(),
+				feeGrowthInside0LastX128: consts.Q128(),
+				feeGrowthInside1LastX128: consts.Q128(),
 			},
 			expectedTokensOwed0: 8,
 			expectedTokensOwed1: 10,
@@ -235,7 +236,7 @@ func TestBurn_CalculateFees(cur realm, t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128.ToString(),
+					consts.Q128().ToString(),
 					u256.MustFromDecimal(MAX_UINT256).ToString(),
 					u256.MustFromDecimal(maxUint256Minus12).ToString(),
 					0,
@@ -260,7 +261,7 @@ func TestBurn_CalculateFees(cur realm, t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128.ToString(),
+					consts.Q128().ToString(),
 					u256.MustFromDecimal(MAX_UINT256).ToString(),
 					u256.MustFromDecimal(maxUint256Minus12).ToString(),
 					7,
@@ -285,7 +286,7 @@ func TestBurn_CalculateFees(cur realm, t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128.ToString(),
+					consts.Q128().ToString(),
 					"0",
 					"0",
 					9223372036854775807, // Already max tokens owed
@@ -309,7 +310,7 @@ func TestBurn_CalculateFees(cur realm, t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128.ToString(),
+					consts.Q128().ToString(),
 					"0",
 					"0",
 					0,

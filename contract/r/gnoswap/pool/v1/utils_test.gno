@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -297,6 +298,7 @@ func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 
 	// 2. Verify MAX_SQRT_RATIO
 
+	maxSqrtRatio := consts.MaxSqrtRatio()
 	uassert.Equal(t, MAX_SQRT_RATIO, "1461446703485210103287273052203988822378723970342")
 	uassert.True(t, maxSqrtRatio.Gt(maxUint128), "MAX_SQRT_RATIO should be > MAX_UINT128")
 
@@ -341,6 +343,7 @@ func TestVerifyToUint128MaskingLogic(cur realm, t *testing.T) {
 // Additional verification: Ensure masked values are within uint128 range
 func TestToUint128MaskedValuesRange(cur realm, t *testing.T) {
 	maxUint128 := u256.MustFromDecimal(MAX_UINT128)
+	maxSqrtRatio := consts.MaxSqrtRatio()
 
 	// toUint128 results
 	resultMaxSqrt := toUint128(maxSqrtRatio)

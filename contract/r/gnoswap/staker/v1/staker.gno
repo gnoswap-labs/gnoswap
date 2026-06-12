@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -192,7 +193,7 @@ func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSe
 // Note: Out-of-range positions earn no rewards but can be staked.
 func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedStaker()
@@ -398,7 +399,7 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -698,7 +699,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { // poolPath
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	caller := rlm.Previous().Address()
@@ -805,7 +806,7 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 
 // tokenHasLiquidity checks if the target positionId has non-zero liquidity
 func tokenHasLiquidity(positionId uint64) error {
-	if getLiquidity(positionId).Lte(zeroUint256) {
+	if getLiquidity(positionId).Lte(u256.Zero()) {
 		return ufmt.Errorf(
 			"%v: positionId(%d) has no liquidity",
 			errZeroLiquidity, positionId,

@@ -151,7 +151,7 @@ func (r *routerV1) handleMultiSwap(
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
 		return r.multiSwapNegative(0, rlm, *sp, numHops, route)
 	default:
-		panic(errInvalidSwapType)
+		panic(errors.New(errInvalidSwapType))
 	}
 }
 

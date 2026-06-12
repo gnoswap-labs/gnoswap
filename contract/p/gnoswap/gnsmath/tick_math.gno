@@ -1,64 +1,77 @@
 package gnsmath
 
 import (
+	"errors"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Pre-calculated ratio constants for performance optimization.
-// These values are pre-computed to avoid runtime decimal parsing.
-var (
-	// Initial ratio constants - exactly matching Uniswap V3
-	ratio0 = u256.MustFromDecimal("340265354078544963557816517032075149313") // 0xfffcb933bd6fad37aa2d162d1a594001
-	ratio1 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 0x100000000000000000000000000000000 (2^128)
+//
+// These were previously package-level vars (a slice plus 19 exposed pointers),
+// the exact "globally exposed mutable array" anti-pattern. They are now
+// constructors: each call returns freshly allocated values built from
+// little-endian [4]uint64 literals, so no caller shares a mutable instance and
+// no runtime decimal parsing happens. Values match Uniswap V3 exactly.
 
-	// Bit mask ratio constants in order (bit 1 to bit 19)
-	ratioConstants = []*u256.Uint{
-		u256.MustFromDecimal("340248342086729790484326174814286782778"), // 0xfff97272373d413259a46990580e213a (bit 1)
-		u256.MustFromDecimal("340214320654664324051920982716015181260"), // 0xfff2e50f5f656932ef12357cf3c7fdcc (bit 2)
-		u256.MustFromDecimal("340146287995602323631171512101879684304"), // 0xffe5caca7e10e4e61c3624eaa0941cd0 (bit 3)
-		u256.MustFromDecimal("340010263488231146823593991679159461444"), // 0xffcb9843d60f6159c9db58835c926644 (bit 4)
-		u256.MustFromDecimal("339738377640345403697157401104375502016"), // 0xff973b41fa98c081472e6896dfb254c0 (bit 5)
-		u256.MustFromDecimal("339195258003219555707034227454543997025"), // 0xff2ea16466c96a3843ec78b326b52861 (bit 6)
-		u256.MustFromDecimal("338111622100601834656805679988414885971"), // 0xfe5dee046a99a2a811c461f1969c3053 (bit 7)
-		u256.MustFromDecimal("335954724994790223023589805789778977700"), // 0xfcbe86c7900a88aedcffc83b479aa3a4 (bit 8)
-		u256.MustFromDecimal("331682121138379247127172139078559817300"), // 0xf987a7253ac413176f2b074cf7815e54 (bit 9)
-		u256.MustFromDecimal("323299236684853023288211250268160618739"), // 0xf3392b0822b70005940c7a398e4b70f3 (bit 10)
-		u256.MustFromDecimal("307163716377032989948697243942600083929"), // 0xe7159475a2c29b7443b29c7fa6e889d9 (bit 11)
-		u256.MustFromDecimal("277268403626896220162999269216087595045"), // 0xd097f3bdfd2022b8845ad8f792aa5825 (bit 12)
-		u256.MustFromDecimal("225923453940442621947126027127485391333"), // 0xa9f746462d870fdf8a65dc1f90e061e5 (bit 13)
-		u256.MustFromDecimal("149997214084966997727330242082538205943"), // 0x70d869a156d2a1b890bb3df62baf32f7 (bit 14)
-		u256.MustFromDecimal("66119101136024775622716233608466517926"),  // 0x31be135f97d08fd981231505542fcfa6 (bit 15)
-		u256.MustFromDecimal("12847376061809297530290974190478138313"),  // 0x9aa508b5b7a84e1c677de54f3e99bc9 (bit 16)
-		u256.MustFromDecimal("485053260817066172746253684029974020"),    // 0x5d6af8dedb81196699c329225ee604 (bit 17)
-		u256.MustFromDecimal("691415978906521570653435304214168"),       // 0x2216e584f5fa1ea926041bedfe98 (bit 18)
-		u256.MustFromDecimal("1404880482679654955896180642"),            // 0x48a170391f7dc42444e8fa2 (bit 19)
+// initialRatio returns the LSB-selected initial ratio.
+// absTick&0x1 != 0 selects ratio0 (0xfffcb933bd6fad37aa2d162d1a594001),
+// otherwise ratio1 (2^128).
+func initialRatio(odd bool) *u256.Uint {
+	if odd {
+		return &u256.Uint{12262481743371124737, 18445821805675392311, 0, 0} // 0xfffcb933bd6fad37aa2d162d1a594001
 	}
+	return &u256.Uint{0, 0, 1, 0} // 0x100000000000000000000000000000000 (2^128)
+}
 
-	// Pre-computed constants for optimization
-	maxUint256   = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
-	minSqrtRatio = u256.MustFromDecimal("4295128739")                                                                     // same as TickMathGetSqrtRatioAtTick(minTick)
-	maxSqrtRatio = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")                              // same as TickMathGetSqrtRatioAtTick(maxTick)
+// ratioConstants returns the bit-mask ratio constants in order (bit 1 to bit 19).
+func ratioConstants() []*u256.Uint {
+	return []*u256.Uint{
+		&u256.Uint{6459403834229662010, 18444899583751176498, 0, 0},  // 0xfff97272373d413259a46990580e213a (bit 1)
+		&u256.Uint{17226890335427755468, 18443055278223354162, 0, 0}, // 0xfff2e50f5f656932ef12357cf3c7fdcc (bit 2)
+		&u256.Uint{2032852871939366096, 18439367220385604838, 0, 0},  // 0xffe5caca7e10e4e61c3624eaa0941cd0 (bit 3)
+		&u256.Uint{14545316742740207172, 18431993317065449817, 0, 0}, // 0xffcb9843d60f6159c9db58835c926644 (bit 4)
+		&u256.Uint{5129152022828963008, 18417254355718160513, 0, 0},  // 0xff973b41fa98c081472e6896dfb254c0 (bit 5)
+		&u256.Uint{4894419605888772193, 18387811781193591352, 0, 0},  // 0xff2ea16466c96a3843ec78b326b52861 (bit 6)
+		&u256.Uint{1280255884321894483, 18329067761203520168, 0, 0},  // 0xfe5dee046a99a2a811c461f1969c3053 (bit 7)
+		&u256.Uint{15924666964335305636, 18212142134806087854, 0, 0}, // 0xfcbe86c7900a88aedcffc83b479aa3a4 (bit 8)
+		&u256.Uint{8010504389359918676, 17980523815641551639, 0, 0},  // 0xf987a7253ac413176f2b074cf7815e54 (bit 9)
+		&u256.Uint{10668036004952895731, 17526086738831147013, 0, 0}, // 0xf3392b0822b70005940c7a398e4b70f3 (bit 10)
+		&u256.Uint{4878133418470705625, 16651378430235024244, 0, 0},  // 0xe7159475a2c29b7443b29c7fa6e889d9 (bit 11)
+		&u256.Uint{9537173718739605541, 15030750278693429944, 0, 0},  // 0xd097f3bdfd2022b8845ad8f792aa5825 (bit 12)
+		&u256.Uint{9972618978014552549, 12247334978882834399, 0, 0},  // 0xa9f746462d870fdf8a65dc1f90e061e5 (bit 13)
+		&u256.Uint{10428997489610666743, 8131365268884726200, 0, 0},  // 0x70d869a156d2a1b890bb3df62baf32f7 (bit 14)
+		&u256.Uint{9305304367709015974, 3584323654723342297, 0, 0},   // 0x31be135f97d08fd981231505542fcfa6 (bit 15)
+		&u256.Uint{14301143598189091785, 696457651847595233, 0, 0},   // 0x9aa508b5b7a84e1c677de54f3e99bc9 (bit 16)
+		&u256.Uint{7393154844743099908, 26294789957452057, 0, 0},     // 0x5d6af8dedb81196699c329225ee604 (bit 17)
+		&u256.Uint{2209338891292245656, 37481735321082, 0, 0},        // 0x2216e584f5fa1ea926041bedfe98 (bit 18)
+		&u256.Uint{10518117631919034274, 76158723, 0, 0},             // 0x48a170391f7dc42444e8fa2 (bit 19)
+	}
+}
 
-	// MSB calculation thresholds - pre-computed for performance
-	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
-	msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
-	msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
-	msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
-	msb8Threshold   = u256.NewUint(255)                                               // 2^8 - 1
-	msb4Threshold   = u256.NewUint(15)                                                // 2^4 - 1
-	msb2Threshold   = u256.NewUint(3)                                                 // 2^2 - 1
-	msb1Threshold   = u256.One()                                                      // 1
+// MSB calculation thresholds - returned as fresh instances per call.
+func msb128Threshold() *u256.Uint {
+	return &u256.Uint{18446744073709551615, 18446744073709551615, 0, 0}
+}                                // 2^128 - 1
+func msb64Threshold() *u256.Uint { return &u256.Uint{18446744073709551615, 0, 0, 0} } // 2^64 - 1
+func msb32Threshold() *u256.Uint { return &u256.Uint{4294967295, 0, 0, 0} }           // 2^32 - 1
+func msb16Threshold() *u256.Uint { return &u256.Uint{65535, 0, 0, 0} }                // 2^16 - 1
+func msb8Threshold() *u256.Uint  { return &u256.Uint{255, 0, 0, 0} }                  // 2^8 - 1
+func msb4Threshold() *u256.Uint  { return &u256.Uint{15, 0, 0, 0} }                   // 2^4 - 1
+func msb2Threshold() *u256.Uint  { return &u256.Uint{3, 0, 0, 0} }                    // 2^2 - 1
+func msb1Threshold() *u256.Uint  { return &u256.Uint{1, 0, 0, 0} }                    // 1
 
-	// Pre-computed constants for tick calculation
-	log2Multiplier = i256.MustFromDecimal("255738958999603826347141")
-	tickLowOffset  = i256.MustFromDecimal("3402992956809132418596140100660247210")
-	tickHiOffset   = i256.MustFromDecimal("291339464771989622907027621153398088495")
+// Pre-computed constants for tick calculation - returned as fresh instances per call.
+func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} }               // 255738958999603826347141
+func tickLowOffset() *i256.Int  { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} }   // 3402992956809132418596140100660247210
+func tickHiOffset() *i256.Int   { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
 
-	oneLsh32 = u256.Zero().Lsh(u256.One(), 32) // 1 << 32
-)
+// oneLsh32 returns 1 << 32.
+func oneLsh32() *u256.Uint { return &u256.Uint{4294967296, 0, 0, 0} }
 
 // TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
 //
@@ -83,39 +96,20 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)
 
-	// Validate critical constants are initialized
-	if ratio0 == nil || ratio1 == nil {
-		panic(newErrorWithDetail(
-			errTickMathInvalidInput,
-			"ratio constants are not initialized",
-		))
-	}
-
 	// Initialize ratio based on LSB - exactly like Uniswap V3
-	var ratio *u256.Uint
-
-	if absTick&0x1 != 0 {
-		ratio = ratio0.Clone()
-	} else {
-		ratio = ratio1.Clone()
-	}
+	ratio := initialRatio(absTick&0x1 != 0)
 
 	temp := u256.Zero()
+	masks := ratioConstants()
 
 	// Apply bit masks using optimized loop - maintains exact same logic
 	for i := 1; i < 20; i++ {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
-			r := ratioConstants[i-1]
-			if r == nil {
-				panic(newErrorWithDetail(
-					errTickMathInvalidInput,
-					"ratio constants are not initialized",
-				))
-			}
+			r := masks[i-1]
 			temp, overflow := temp.MulOverflow(ratio, r)
 			if overflow {
-				panic(errTickMathOverflow)
+				panic(errors.New(errTickMathOverflow))
 			}
 			ratio = ratio.Rsh(temp, 128)
 		}
@@ -123,13 +117,13 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 
 	// Invert ratio for positive ticks
 	if tick > 0 {
-		ratio = temp.Div(maxUint256, ratio)
+		ratio = temp.Div(consts.MaxUint256(), ratio)
 	}
 
 	// Convert from Q128.128 to Q128.96 with rounding up.
 	// This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96
-	upper := u256.Zero().Rsh(ratio, 32)           // ratio >> 32
-	remainder := u256.Zero().Mod(ratio, oneLsh32) // ratio % (1 << 32)
+	upper := u256.Zero().Rsh(ratio, 32)             // ratio >> 32
+	remainder := u256.Zero().Mod(ratio, oneLsh32()) // ratio % (1 << 32)
 
 	// Round up: add 1 if remainder != 0
 	if !remainder.IsZero() {
@@ -153,42 +147,42 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
 	// Optimized MSB calculation using pre-computed thresholds
-	if temp.Gt(msb128Threshold) {
+	if temp.Gt(msb128Threshold()) {
 		msb |= 128
 		temp = temp.Rsh(temp, 128)
 	}
 
-	if temp.Gt(msb64Threshold) {
+	if temp.Gt(msb64Threshold()) {
 		msb |= 64
 		temp = temp.Rsh(temp, 64)
 	}
 
-	if temp.Gt(msb32Threshold) {
+	if temp.Gt(msb32Threshold()) {
 		msb |= 32
 		temp = temp.Rsh(temp, 32)
 	}
 
-	if temp.Gt(msb16Threshold) {
+	if temp.Gt(msb16Threshold()) {
 		msb |= 16
 		temp = temp.Rsh(temp, 16)
 	}
 
-	if temp.Gt(msb8Threshold) {
+	if temp.Gt(msb8Threshold()) {
 		msb |= 8
 		temp = temp.Rsh(temp, 8)
 	}
 
-	if temp.Gt(msb4Threshold) {
+	if temp.Gt(msb4Threshold()) {
 		msb |= 4
 		temp = temp.Rsh(temp, 4)
 	}
 
-	if temp.Gt(msb2Threshold) {
+	if temp.Gt(msb2Threshold()) {
 		msb |= 2
 		temp = temp.Rsh(temp, 2)
 	}
 
-	if temp.Gt(msb1Threshold) {
+	if temp.Gt(msb1Threshold()) {
 		msb |= 1
 	}
 
@@ -224,7 +218,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 		))
 	}
 
-	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
+	if sqrtPriceX96.Lt(consts.MinSqrtRatio()) || sqrtPriceX96.Gte(consts.MaxSqrtRatio()) {
 		panic(newErrorWithDetail(
 			errTickMathOutOfRange,
 			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),
@@ -259,7 +253,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	for i := 0; i < 14; i++ {
 		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
-			panic(errTickMathOverflow)
+			panic(errors.New(errTickMathOverflow))
 		}
 		r = tempR.Rsh(tempR, 127)
 
@@ -273,17 +267,17 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	}
 
 	// Calculate tick from log_sqrt10001
-	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
+	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier())
 	if overflow {
-		panic(errTickMathOverflow)
+		panic(errors.New(errTickMathOverflow))
 	}
 
 	// Calculate tick bounds
-	tickLow := i256.Zero().Sub(logSqrt10001, tickLowOffset)
+	tickLow := i256.Zero().Sub(logSqrt10001, tickLowOffset())
 	tickLow = tickLow.Rsh(tickLow, 128)
 	tickLowInt32 := int32(tickLow.Int64())
 
-	tickHi := i256.Zero().Add(logSqrt10001, tickHiOffset)
+	tickHi := i256.Zero().Add(logSqrt10001, tickHiOffset())
 	tickHi = tickHi.Rsh(tickHi, 128)
 	tickHiInt32 := int32(tickHi.Int64())
 

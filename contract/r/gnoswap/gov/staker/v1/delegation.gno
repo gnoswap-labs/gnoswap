@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-var errCollectAmountExceedsCollectable = errors.New("amount to collect is greater than collectable amount")
+const errCollectAmountExceedsCollectable = "amount to collect is greater than collectable amount"
 
 type DelegationResolver struct {
 	delegation *staker.Delegation

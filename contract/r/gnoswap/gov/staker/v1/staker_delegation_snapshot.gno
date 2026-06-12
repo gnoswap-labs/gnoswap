@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
@@ -27,7 +28,7 @@ import (
 // Note: This change affects all future undelegation operations
 func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovStaker()
@@ -70,7 +71,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 //   - if active proposals have snapshotTime older than the cleanup threshold
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, snapshotTime int64, target address) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovStaker()

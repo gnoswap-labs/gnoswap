@@ -76,20 +76,20 @@ func TestGlobalKeeper_TryRegister(cur realm, t *testing.T) {
 			expectedPanicMessage: "unauthorized caller",
 		},
 		{
-			name:           "Fail register with invalid referral - invalid format",
-			callerRealm:    routerRealm,
-			addr:           testutils.TestAddress("test6"),
-			referral:       "invalid_ref",
+			name:             "Fail register with invalid referral - invalid format",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("test6"),
+			referral:         "invalid_ref",
 			expectedReferrer: "",
-			expectedPanics: false,
+			expectedPanics:   false,
 		},
 		{
-			name:           "Fail register with invalid user address",
-			callerRealm:    routerRealm,
-			addr:           zeroAddress,
-			referral:       testutils.TestAddress("referrer4").String(),
+			name:             "Fail register with invalid user address",
+			callerRealm:      routerRealm,
+			addr:             zeroAddress,
+			referral:         testutils.TestAddress("referrer4").String(),
 			expectedReferrer: "",
-			expectedPanics: false,
+			expectedPanics:   false,
 		},
 		{
 			name:             "Empty referral returns existing referral without registration",
@@ -292,34 +292,34 @@ func TestGlobalKeeper_IsEmpty(cur realm, t *testing.T) {
 
 func TestGlobalKeeper_GetLastOpTimestamp(cur realm, t *testing.T) {
 	tests := []struct {
-		name           string
-		addr           string
-		setupReferral  bool
-		expectedErr    error
+		name          string
+		addr          string
+		setupReferral bool
+		expectedErr   string
 	}{
 		{
-			name:           "Success get last op timestamp",
-			addr:           testutils.TestAddress("user1").String(),
-			setupReferral:  true,
-			expectedErr:    nil,
+			name:          "Success get last op timestamp",
+			addr:          testutils.TestAddress("user1").String(),
+			setupReferral: true,
+			expectedErr:   "",
 		},
 		{
-			name:           "ErrNotFound for non-existing",
-			addr:           testutils.TestAddress("user2").String(),
-			setupReferral:  false,
-			expectedErr:    ErrNotFound,
+			name:          "ErrNotFound for non-existing",
+			addr:          testutils.TestAddress("user2").String(),
+			setupReferral: false,
+			expectedErr:   ErrNotFound,
 		},
 		{
-			name:           "ErrInvalidAddress for empty string",
-			addr:           "",
-			setupReferral:  false,
-			expectedErr:    ErrInvalidAddress,
+			name:          "ErrInvalidAddress for empty string",
+			addr:          "",
+			setupReferral: false,
+			expectedErr:   ErrInvalidAddress,
 		},
 		{
-			name:           "ErrInvalidAddress for invalid format",
-			addr:           "invalid",
-			setupReferral:  false,
-			expectedErr:    ErrInvalidAddress,
+			name:          "ErrInvalidAddress for invalid format",
+			addr:          "invalid",
+			setupReferral: false,
+			expectedErr:   ErrInvalidAddress,
 		},
 	}
 
@@ -340,11 +340,11 @@ func TestGlobalKeeper_GetLastOpTimestamp(cur realm, t *testing.T) {
 
 			got, err := GetLastOpTimestamp(tc.addr)
 
-			if tc.expectedErr == nil {
+			if tc.expectedErr == "" {
 				uassert.NoError(t, err)
 				uassert.True(t, got >= before && got <= after)
 			} else {
-				uassert.ErrorIs(t, err, tc.expectedErr)
+				uassert.ErrorContains(t, err, tc.expectedErr)
 			}
 		})
 	}
@@ -357,7 +357,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 		referrer         string
 		setupReferral    string
 		expectedReferrer string
-		expectedHas       bool
+		expectedHas      bool
 	}{
 		{
 			name:             "Empty referrer falls back to stored referral",
@@ -365,7 +365,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 			referrer:         "",
 			setupReferral:    testutils.TestAddress("stored1").String(),
 			expectedReferrer: testutils.TestAddress("stored1").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 		{
 			name:             "Valid referrer registers successfully",
@@ -373,7 +373,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 			referrer:         testutils.TestAddress("referrer2").String(),
 			setupReferral:    "",
 			expectedReferrer: testutils.TestAddress("referrer2").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 		{
 			name:             "Invalid referrer falls back to stored referral",
@@ -381,7 +381,7 @@ func TestGlobalKeeper_TryRegisterFallbacks(cur realm, t *testing.T) {
 			referrer:         "invalid_referrer",
 			setupReferral:    testutils.TestAddress("stored3").String(),
 			expectedReferrer: testutils.TestAddress("stored3").String(),
-			expectedHas:       true,
+			expectedHas:      true,
 		},
 	}
 

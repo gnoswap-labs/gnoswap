@@ -164,7 +164,7 @@ func TestBitMath_BitMathMostSignificantBit(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, errMSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errMSBZeroInput, func() {
 					BitMathMostSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return
@@ -342,7 +342,7 @@ func TestBitMath_BitMathLeastSignificantBit(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, errLSBZeroInput.Error(), func() {
+				uassert.PanicsWithMessage(t, cur, errLSBZeroInput, func() {
 					BitMathLeastSignificantBit(u256.MustFromDecimal(tc.input))
 				})
 				return
@@ -561,52 +561,52 @@ func TestBitMath_VerifyCalculations(t *testing.T) {
 }
 
 func TestBitMath_ShiftTableCompleteness(t *testing.T) {
-	// Verify msbShifts covers all necessary ranges
+	// Verify newMsbShifts() covers all necessary ranges
 	t.Run("msb_shifts_coverage", func(t *testing.T) {
 		expectedShifts := []uint{128, 64, 32, 16, 8, 4, 2, 1}
 
-		if len(msbShifts) != len(expectedShifts) {
-			t.Errorf("msbShifts has %d entries, expected %d", len(msbShifts), len(expectedShifts))
+		if len(newMsbShifts()) != len(expectedShifts) {
+			t.Errorf("newMsbShifts() has %d entries, expected %d", len(newMsbShifts()), len(expectedShifts))
 		}
 
 		for i, expected := range expectedShifts {
-			if i < len(msbShifts) && msbShifts[i].shift != expected {
-				t.Errorf("msbShifts[%d].shift = %d, expected %d", i, msbShifts[i].shift, expected)
+			if i < len(newMsbShifts()) && newMsbShifts()[i].shift != expected {
+				t.Errorf("newMsbShifts()[%d].shift = %d, expected %d", i, newMsbShifts()[i].shift, expected)
 			}
 		}
 
 		// Verify bit patterns are correct powers of 2
-		for i, s := range msbShifts {
+		for i, s := range newMsbShifts() {
 			// Calculate expected value: 2^shift
 			expected := new(u256.Uint).Lsh(u256.One(), s.shift)
 			if !s.bitPattern.Eq(expected) {
-				t.Errorf("msbShifts[%d].bitPattern incorrect for shift %d", i, s.shift)
+				t.Errorf("newMsbShifts()[%d].bitPattern incorrect for shift %d", i, s.shift)
 			}
 		}
 	})
 
-	// Verify lsbShifts covers all necessary ranges
+	// Verify newLsbShifts() covers all necessary ranges
 	t.Run("lsb_shifts_coverage", func(t *testing.T) {
 		expectedShifts := []uint{128, 64, 32, 16, 8, 4, 2, 1}
 
-		if len(lsbShifts) != len(expectedShifts) {
-			t.Errorf("lsbShifts has %d entries, expected %d", len(lsbShifts), len(expectedShifts))
+		if len(newLsbShifts()) != len(expectedShifts) {
+			t.Errorf("newLsbShifts() has %d entries, expected %d", len(newLsbShifts()), len(expectedShifts))
 		}
 
 		for i, expected := range expectedShifts {
-			if i < len(lsbShifts) && lsbShifts[i].shift != expected {
-				t.Errorf("lsbShifts[%d].shift = %d, expected %d", i, lsbShifts[i].shift, expected)
+			if i < len(newLsbShifts()) && newLsbShifts()[i].shift != expected {
+				t.Errorf("newLsbShifts()[%d].shift = %d, expected %d", i, newLsbShifts()[i].shift, expected)
 			}
 		}
 
 		// Verify bit patterns are correct (2^shift - 1)
-		for i, s := range lsbShifts {
+		for i, s := range newLsbShifts() {
 			// Calculate expected value: 2^shift - 1
 			powerOfTwo := new(u256.Uint).Lsh(u256.One(), s.shift)
 			expected := new(u256.Uint).Sub(powerOfTwo, u256.One())
 
 			if !s.bitPattern.Eq(expected) {
-				t.Errorf("lsbShifts[%d].bitPattern incorrect for shift %d", i, s.shift)
+				t.Errorf("newLsbShifts()[%d].bitPattern incorrect for shift %d", i, s.shift)
 			}
 		}
 	})

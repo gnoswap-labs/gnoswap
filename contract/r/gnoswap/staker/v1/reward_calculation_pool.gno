@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -415,12 +416,12 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
 			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
@@ -433,12 +434,12 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
 		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
@@ -475,12 +476,12 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
 			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
-				panic(errOverflow)
+				panic(errors.New(errOverflow))
 			}
 
 			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
@@ -494,12 +495,12 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
 		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
-			panic(errOverflow)
+			panic(errors.New(errOverflow))
 		}
 
 		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)

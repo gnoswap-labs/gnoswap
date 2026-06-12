@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
-		panic(errInvalidPoolPath)
+		panic(errors.New(errInvalidPoolPath))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]

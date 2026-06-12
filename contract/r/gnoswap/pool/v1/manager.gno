@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/utils"
@@ -62,7 +63,7 @@ func (i *poolV1) CreatePool(
 	sqrtPriceX96 string,
 ) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -152,7 +153,7 @@ func (i *poolV1) CreatePool(
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -323,7 +324,7 @@ func (i *poolV1) setFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uin
 //     Returns `nil` if both values are valid.
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
-		return errInvalidProtocolFeePct
+		return errors.New(errInvalidProtocolFeePct)
 	}
 	return nil
 }

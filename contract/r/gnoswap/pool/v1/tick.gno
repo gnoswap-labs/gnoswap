@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -20,12 +21,27 @@ const (
 	MAX_TICK                           int32 = 887272
 )
 
-var (
-	maxLiquidityPerTickSpacing1FromDec   = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_1)
-	maxLiquidityPerTickSpacing10FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_10)
-	maxLiquidityPerTickSpacing60FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_60)
-	maxLiquidityPerTickSpacing200FromDec = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_200)
-)
+// maxLiquidityPerTickSpacing* return the precomputed max-liquidity-per-tick for
+// each supported tick spacing. They are constructors (not package-level vars) so
+// each caller receives a fresh instance — calculateMaxLiquidityPerTick returns
+// the value directly to callers, and a shared singleton could otherwise be
+// mutated in place and corrupt every caller. Values are built from little-endian
+// [4]uint64 literals to avoid runtime decimal parsing.
+func maxLiquidityPerTickSpacing1FromDec() *u256.Uint {
+	return &u256.Uint{3639524637645646277, 10395196556700, 0, 0} // 191757530477355301479181766273477
+}
+
+func maxLiquidityPerTickSpacing10FromDec() *u256.Uint {
+	return &u256.Uint{4727306266354938262, 103951672670308, 0, 0} // 1917569901783203986719870431555990
+}
+
+func maxLiquidityPerTickSpacing60FromDec() *u256.Uint {
+	return &u256.Uint{1428959955126579298, 623727610269131, 0, 0} // 11505743598341114571880798222544994
+}
+
+func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
+	return &u256.Uint{6592429331424883148, 2078974875882965, 0, 0} // 38350317471085141830651933667504588
+}
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
 func GetTickLiquidityGross(p *pl.Pool, tick int32) string {
@@ -337,19 +353,19 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	switch tickSpacing {
 	case 1:
-		return maxLiquidityPerTickSpacing1FromDec
+		return maxLiquidityPerTickSpacing1FromDec()
 	case 10:
-		return maxLiquidityPerTickSpacing10FromDec
+		return maxLiquidityPerTickSpacing10FromDec()
 	case 60:
-		return maxLiquidityPerTickSpacing60FromDec
+		return maxLiquidityPerTickSpacing60FromDec()
 	case 200:
-		return maxLiquidityPerTickSpacing200FromDec
+		return maxLiquidityPerTickSpacing200FromDec()
 	default:
 		minTick := (MIN_TICK / tickSpacing) * tickSpacing
 		maxTick := (MAX_TICK / tickSpacing) * tickSpacing
 		numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-		return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
+		return u256.Zero().Div(consts.MaxUint128(), u256.NewUint(numTicks))
 	}
 }
 

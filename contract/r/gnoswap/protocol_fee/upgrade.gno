@@ -1,6 +1,7 @@
 package protocol_fee
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -24,7 +25,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, protocolF
 	// version package's, which would fail the kvStore ACL.
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			return errSpoofedRealm
+			return errors.New(errSpoofedRealm)
 		}
 
 		currentProtocolFeeStore, ok := domainStore.(IProtocolFeeStore)

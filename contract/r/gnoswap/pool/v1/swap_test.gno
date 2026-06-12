@@ -6,6 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -1180,7 +1181,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 
 		_, err := updateAmounts(step, state, false)
 
-		uassert.ErrorIs(t, err, errOverflow,
+		uassert.ErrorContains(t, err, errOverflow,
 			"Should prevent overflow when amountCalculated would exceed MAX_INT64")
 	})
 
@@ -1222,7 +1223,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, true)
-		uassert.ErrorIs(t, err, errUnderflow,
+		uassert.ErrorContains(t, err, errUnderflow,
 			"Should prevent underflow when amountOut exceeds MAX_INT256")
 	})
 
@@ -1259,14 +1260,14 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 
 		state := SwapState{
 			amountSpecifiedRemaining: i256.MustFromDecimal("-1000"),
-			amountCalculated:         maxInt64,
+			amountCalculated:         consts.MaxInt64I256(),
 		}
 
 		// no change to amountCalculated
 		updatedState, err := updateAmounts(step, state, false)
 
 		uassert.NoError(t, err, "Should allow calculation at exactly MAX_INT64")
-		uassert.True(t, updatedState.amountCalculated.Eq(maxInt64),
+		uassert.True(t, updatedState.amountCalculated.Eq(consts.MaxInt64I256()),
 			"Should maintain MAX_INT64 value")
 	})
 
@@ -1283,7 +1284,7 @@ func TestUpdateAmounts_OverflowProtection(cur realm, t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, false)
-		uassert.ErrorIs(t, err, errOverflow,
+		uassert.ErrorContains(t, err, errOverflow,
 			"Should detect overflow caused by fee accumulation")
 	})
 }

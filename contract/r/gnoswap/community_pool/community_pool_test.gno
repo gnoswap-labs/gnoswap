@@ -10,16 +10,17 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/rbac" // initialize rbac package
+	// initialize rbac package
 )
 
 var (
-	adminAddr  = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	adminAddr  = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(adminAddr)
 
-	communityPoolAddr = rbac.DefaultRoleAddresses[prabc.ROLE_COMMUNITY_POOL]
+	communityPoolAddr = access.MustGetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
 	gnsPath  = "gno.land/r/gnoswap/gns"
 	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance")

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -56,7 +57,7 @@ func (v *VotingInfoResolver) voteNo(weight int64, votedHeight int64, votedAt int
 func (v *VotingInfoResolver) vote(votedYes bool, weight int64, votedHeight int64, votedAt int64) error {
 	// Prevent double voting - each user can only vote once per proposal
 	if v.IsVoted() {
-		return errAlreadyVoted
+		return errors.New(errAlreadyVoted)
 	}
 
 	// Record all voting details

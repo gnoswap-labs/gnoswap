@@ -1,6 +1,10 @@
 package staker
 
-import "gno.land/r/gnoswap/access"
+import (
+	"errors"
+
+	"gno.land/r/gnoswap/access"
+)
 
 // RegisterInitializer registers a new staker implementation version.
 // This function is called by each version (v1, v2, etc.) during initialization
@@ -14,7 +18,7 @@ import "gno.land/r/gnoswap/access"
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			panic(ErrSpoofedRealm)
+			panic(errors.New(ErrSpoofedRealm))
 		}
 
 		currentStakerStore, ok := domainStore.(IStakerStore)

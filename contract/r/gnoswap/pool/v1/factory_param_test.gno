@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -220,11 +221,11 @@ func TestUpdateWithWrapping(cur realm, t *testing.T) {
 
 				newSqrtPriceX96 := params.SqrtPriceX96()
 
-				if newSqrtPriceX96.Lt(minSqrtRatio) || newSqrtPriceX96.Gt(maxSqrtRatio) {
+				if newSqrtPriceX96.Lt(consts.MinSqrtRatio()) || newSqrtPriceX96.Gt(consts.MaxSqrtRatio()) {
 					t.Errorf("Inverted price %s is out of valid range [%s, %s]",
 						newSqrtPriceX96.ToString(),
-						minSqrtRatio.ToString(),
-						maxSqrtRatio.ToString())
+						consts.MinSqrtRatio().ToString(),
+						consts.MaxSqrtRatio().ToString())
 				}
 			}
 		})

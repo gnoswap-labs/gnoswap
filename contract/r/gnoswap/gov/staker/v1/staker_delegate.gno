@@ -56,7 +56,7 @@ func (gs *govStakerV1) Delegate(
 	referrer string,
 ) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovStaker()
@@ -141,7 +141,7 @@ func (gs *govStakerV1) Undelegate(
 	amount int64,
 ) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -219,7 +219,7 @@ func (gs *govStakerV1) Redelegate(
 	amount int64,
 ) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovStaker()
@@ -283,7 +283,7 @@ func (gs *govStakerV1) Redelegate(
 // Burns xGNS and returns GNS tokens.
 func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -388,7 +388,7 @@ func (gs *govStakerV1) unDelegate(
 	}
 
 	if amount > totalDelegated {
-		return 0, errNotEnoughDelegated
+		return 0, errors.New(errNotEnoughDelegated)
 	}
 
 	// Process undelegation across multiple delegation records if necessary
@@ -443,7 +443,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 ) (int64, error) {
 	delegationIDs := gs.getUserDelegationIDsWithDelegatee(delegator, delegatee)
 	if len(delegationIDs) == 0 {
-		return 0, errNotEnoughDelegated
+		return 0, errors.New(errNotEnoughDelegated)
 	}
 
 	unDelegationAmount := amount
@@ -461,7 +461,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	if amount > totalDelegated {
-		return 0, errNotEnoughDelegated
+		return 0, errors.New(errNotEnoughDelegated)
 	}
 
 	// Process undelegation across multiple delegation records if necessary

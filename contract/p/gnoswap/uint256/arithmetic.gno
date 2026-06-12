@@ -4,7 +4,9 @@
 // calculations using 256-bit unsigned integers.
 package uint256
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // Add sets z to the sum x+y and returns z.
 func (z *Uint) Add(x, y *Uint) *Uint {
@@ -361,7 +363,7 @@ func udivremKnuth(quot, u, d []uint64) {
 
 		var qhat, rhat uint64
 		if u2 >= dh { // Division overflows.
-			qhat = MAX_UINT64
+			qhat = 18446744073709551615 // max uint64
 			// NOTE: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
 		} else {
 			qhat, rhat = udivrem2by1(u2, u1, dh, reciprocal)
@@ -420,7 +422,7 @@ func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 
 // reciprocal2by1 computes <^d, ^0> / d.
 func reciprocal2by1(d uint64) uint64 {
-	reciprocal, _ := bits.Div64(^d, MAX_UINT64, d)
+	reciprocal, _ := bits.Div64(^d, 18446744073709551615, d)
 	return reciprocal
 }
 

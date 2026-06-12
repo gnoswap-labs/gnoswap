@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/common"
 )
@@ -9,21 +10,21 @@ import (
 func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) {
 	proposal, exists := gv.getProposal(proposalID)
 	if !exists {
-		panic(errProposalNotFound)
+		panic(errors.New(errProposalNotFound))
 	}
 
 	if !proposal.IsProposer(caller) {
-		panic(errNotProposer)
+		panic(errors.New(errNotProposer))
 	}
 }
 
 func assertIsValidSmoothingPeriod(smoothingPeriod int64) {
 	if smoothingPeriod < 0 {
-		panic(errInvalidSmoothingPeriod)
+		panic(errors.New(errInvalidSmoothingPeriod))
 	}
 
 	if smoothingPeriod > maxSmoothingPeriod {
-		panic(errInvalidSmoothingPeriod)
+		panic(errors.New(errInvalidSmoothingPeriod))
 	}
 }
 

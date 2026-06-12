@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
@@ -36,7 +37,7 @@ func (p *positionV1) Reposition(
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedPosition()
@@ -71,7 +72,7 @@ func (p *positionV1) Reposition(
 	}
 
 	if err := validateTokenPath(token0, token1); err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+		panic(newErrorWithDetail(err.Error(), ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
 	poolKey := position.PoolKey()
@@ -98,7 +99,7 @@ func (p *positionV1) Reposition(
 
 	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
 	if err != nil {
-		panic(newErrorWithDetail(err, "failed to get current fee growth"))
+		panic(newErrorWithDetail(err.Error(), "failed to get current fee growth"))
 	}
 	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())

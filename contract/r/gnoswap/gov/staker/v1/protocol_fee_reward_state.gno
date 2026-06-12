@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 
+	"gno.land/p/gnoswap/consts"
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
@@ -102,7 +103,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 		rewardAmount := u256.MulDiv(
 			rewardDebtDeltaX128,
 			u256.NewUintFromInt64(stakedAmount),
-			q128,
+			consts.Q128(),
 		)
 
 		rewardAmounts[token] = gnsmath.SafeConvertToInt64(rewardAmount)

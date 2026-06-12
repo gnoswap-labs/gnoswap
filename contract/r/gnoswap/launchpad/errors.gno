@@ -1,5 +1,3 @@
 package launchpad
 
-import "errors"
-
-var ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"

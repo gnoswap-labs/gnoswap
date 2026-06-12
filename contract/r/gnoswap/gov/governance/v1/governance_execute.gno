@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/utils"
@@ -40,7 +41,7 @@ import (
 // Callable by anyone once proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	// Check if execution is allowed (system not halted for execution)
@@ -89,19 +90,19 @@ func (gv *governanceV1) executeProposal(
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		return nil, errDataNotFound
+		return nil, errors.New(errDataNotFound)
 	}
 
 	// Text proposals cannot be executed (they are informational only)
 	if proposal.IsTextType() {
-		return nil, errTextProposalNotExecutable
+		return nil, errors.New(errTextProposalNotExecutable)
 	}
 
 	proposalResolver := NewProposalResolver(proposal)
 
 	// Verify proposal is in executable state (timing and voting requirements met)
 	if !proposalResolver.IsExecutable(executedAt) {
-		return nil, errProposalNotExecutable
+		return nil, errors.New(errProposalNotExecutable)
 	}
 
 	// Mark proposal as executed in its status
@@ -154,7 +155,7 @@ func (gv *governanceV1) executeProposal(
 // Only callable by original proposer before voting begins.
 func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedGovernance()
@@ -196,7 +197,7 @@ func (gv *governanceV1) cancel(
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		return nil, errDataNotFound
+		return nil, errors.New(errDataNotFound)
 	}
 
 	proposalResolver := NewProposalResolver(proposal)

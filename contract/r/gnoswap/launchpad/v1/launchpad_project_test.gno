@@ -9,6 +9,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 
@@ -402,12 +403,12 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(cur realm, t *testing.T
 	tests := []struct {
 		name          string
 		projectName   string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "project name is valid",
 			projectName:   "Obl Protocol",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "project name is empty",
@@ -429,10 +430,10 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(cur realm, t *testing.T
 
 			err := params.validateName()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -442,12 +443,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *tes
 	tests := []struct {
 		name          string
 		tokenPath     string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "token path is valid",
 			tokenPath:     "gno.land/r/onbloc/obl",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "token path is empty",
@@ -469,10 +470,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *tes
 
 			err := params.validateTokenPath()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -482,12 +483,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateRecipient(cur realm, t *tes
 	tests := []struct {
 		name          string
 		recipient     address
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "recipient is valid",
 			recipient:     testutils.TestAddress("projectAddr"),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "recipient is invalid",
@@ -504,10 +505,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateRecipient(cur realm, t *tes
 
 			err := params.validateRecipient()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -517,12 +518,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(cur realm, t 
 	tests := []struct {
 		name          string
 		depositAmount int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "deposit amount is valid",
 			depositAmount: 1_000_000_000,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "deposit amount is zero",
@@ -544,10 +545,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(cur realm, t 
 
 			err := params.validateDepositAmount()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -559,14 +560,14 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(cur realm, t *testing
 		tier30Ratio   int64
 		tier90Ratio   int64
 		tier180Ratio  int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "ratio is valid by sum is 100",
 			tier30Ratio:   10,
 			tier90Ratio:   20,
 			tier180Ratio:  70,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "ratio is invalid by sum is not 100",
@@ -608,10 +609,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(cur realm, t *testing
 
 			err := params.validateRatio()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -623,12 +624,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *tes
 	tests := []struct {
 		name          string
 		startTime     int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "start time is valid",
 			startTime:     int64(time.Now().Unix() + minimumStartDelayTime),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "start time is invalid by in the past",
@@ -655,10 +656,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *tes
 
 			err := params.validateStartTime(int64(time.Now().Unix()), minimumStartDelayTime)
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -672,13 +673,13 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *te
 		name             string
 		conditionTokens  string
 		conditionAmounts string
-		expectedError    error
+		expectedError    string
 	}{
 		{
 			name:             "conditions are valid",
 			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
 			conditionAmounts: "1000*PAD*2000",
-			expectedError:    nil,
+			expectedError:    "",
 		},
 		{
 			name:             "conditions are invalid by not registered token path",
@@ -721,10 +722,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *te
 
 			err := params.validateConditions()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -935,12 +936,12 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 	t.Run("calculate claimable rewards with active deposits", func(cur realm, t *testing.T) {
 		// Create reward manager with accumulated rewards
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Add reward state for deposit with priceDebt = 0.5
 		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, // deposit amount
 			1000,    // start time
 			2000,    // end time
@@ -958,7 +959,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 
 	t.Run("no active deposits returns zero", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		// No reward states added
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
@@ -968,18 +969,18 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, 
 
 	t.Run("multiple deposits with different claimable rewards", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
 		rewardState1 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit1", rewardState1)
 
 		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
 		rewardState2 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
+			u256.Zero().Div(consts.Q128(), u256.NewUint(4)), // priceDebt = 0.25
 			200_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit2", rewardState2)
@@ -1008,10 +1009,10 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 		// Setup reward manager with claimable rewards
 		projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
 		rm.SetReward("deposit1", rewardState)
@@ -1135,11 +1136,11 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
 
 			// Set accumulated reward: Q128 / accumulatedRewardRatio
-			accumulatedReward := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
+			accumulatedReward := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
 			rm.SetAccumulatedRewardPerDepositX128(accumulatedReward)
 
 			// Set price debt: Q128 / priceDebtRatio
-			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
+			priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
 			rm.SetReward("deposit1", rewardState)
 
@@ -1254,10 +1255,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			// Setup reward manager with multiple deposits
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 accumulated
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 accumulated
 
 			for i, dep := range tt.deposits {
-				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
+				priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
 				rm.SetReward("deposit"+utils.FormatInt(int64(i)), rewardState)
 			}
@@ -1345,7 +1346,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			// Setup empty reward manager
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 			// No reward states added
 
 			projectTierRewardManagers.Set(tierID, rm)

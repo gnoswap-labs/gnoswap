@@ -1,5 +1,7 @@
 package v1
 
+import "errors"
+
 // assertPoolUnlocked is the read-only reentrancy guard. It reports the global
 // pool lock state without mutating it, so it is safe to call before the access
 // checks: a call that aborts on authorization afterwards leaves no persisted
@@ -9,7 +11,7 @@ package v1
 // entrypoint invoked while a swap holds the lock (reentrancy protection).
 func (i *poolV1) assertPoolUnlocked() {
 	if i.store.HasUnlocked() && !i.store.GetUnlocked() {
-		panic(errLockedPool)
+		panic(errors.New(errLockedPool))
 	}
 }
 

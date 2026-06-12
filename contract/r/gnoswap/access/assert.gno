@@ -2,6 +2,7 @@ package access
 
 import (
 	"chain"
+	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -128,7 +129,7 @@ func AssertIsValidAddress(addr address) {
 // Used to ensure calls come from user accounts, not other contracts.
 func AssertIsUser(_ int, rlm realm) {
 	if !rlm.IsUser() {
-		panic(errCallerNotUser)
+		panic(errors.New(errCallerNotUser))
 	}
 }
 

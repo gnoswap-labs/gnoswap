@@ -1,11 +1,9 @@
 package v1
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
+	"errors"
 	"gno.land/r/gnoswap/common"
 )
-
-var zero = u256.Zero()
 
 // SwapExecutor defines the interface for executing swaps.
 type SwapExecutor interface {
@@ -16,7 +14,7 @@ type SwapExecutor interface {
 // executeSwap is the common logic for both real and dry swaps.
 func (r *routerV1) executeSwap(executor SwapExecutor, p *SingleSwapParams) (int64, int64) {
 	if p.tokenIn == p.tokenOut {
-		panic(errSameTokenSwap)
+		panic(errors.New(errSameTokenSwap))
 	}
 
 	common.MustRegistered(p.tokenIn, p.tokenOut)

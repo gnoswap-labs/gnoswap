@@ -244,7 +244,7 @@ func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 		withdraw                staker.DelegationWithdraw
 		collectAmount           int64
 		currentTime             int64
-		expectedError           error
+		expectedError           string
 		expectedCollected       bool
 		expectedCollectedAmount int64
 	}{
@@ -259,7 +259,7 @@ func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 			),
 			collectAmount:           100,
 			currentTime:             2000, // After collectableTime
-			expectedError:           nil,
+			expectedError:           "",
 			expectedCollected:       true,
 			expectedCollectedAmount: 100,
 		},
@@ -316,8 +316,8 @@ func TestDelegationWithdrawResolver_Collect(cur realm, t *testing.T) {
 			err := resolver.Collect(tc.collectAmount, tc.currentTime)
 
 			// then
-			if tc.expectedError != nil {
-				uassert.ErrorIs(t, err, tc.expectedError)
+			if tc.expectedError != "" {
+				uassert.ErrorContains(t, err, tc.expectedError)
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, withdraw.IsCollected(), tc.expectedCollected)
@@ -391,7 +391,7 @@ func TestDelegationWithdrawResolver_CollectErrors(cur realm, t *testing.T) {
 		err := resolver.Collect(100, collectableTime-1)
 
 		// then - should fail
-		uassert.ErrorIs(t, err, errWithdrawNotCollectable)
+		uassert.ErrorContains(t, err, errWithdrawNotCollectable)
 		uassert.False(t, withdraw.IsCollected())
 	})
 

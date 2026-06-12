@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -618,7 +619,7 @@ func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(cur realm, t *test
 	upperTick.SetFeeGrowthOutside1X128("0")
 	storedPool.SetTick(position.TickUpper(), upperTick)
 
-	expectedFee0 := u256.MulDiv(u256.NewUint(2), u256.MustFromDecimal(MAX_UINT256), q128)
+	expectedFee0 := u256.MulDiv(u256.NewUint(2), u256.MustFromDecimal(MAX_UINT256), consts.Q128())
 
 	fee0, fee1 := mockInstance.GetUnclaimedFee(1)
 
@@ -630,7 +631,7 @@ func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(cur realm, t *testing.T)
 	setupPositionGetter(cur, t)
 
 	position := mockInstance.mustGetPosition(1)
-	position.SetLiquidity(q128.ToString())
+	position.SetLiquidity(consts.Q128().ToString())
 	position.SetFeeGrowthInside0LastX128("0")
 	position.SetFeeGrowthInside1LastX128("0")
 	mockInstance.mustUpdatePosition(0, cur, 1, *position)

@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -64,7 +65,7 @@ func (s *govStakerStore) GetUnDelegationLockupPeriod() int64 {
 
 func (s *govStakerStore) SetUnDelegationLockupPeriod(_ int, rlm realm, period int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyUnDelegationLockupPeriod, period)
@@ -90,7 +91,7 @@ func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
 
 func (s *govStakerStore) SetTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyTotalDelegatedAmount, amount)
@@ -116,7 +117,7 @@ func (s *govStakerStore) GetTotalLockedAmount() int64 {
 
 func (s *govStakerStore) SetTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyTotalLockedAmount, amount)
@@ -129,7 +130,7 @@ func (s *govStakerStore) HasDelegationsStoreKey() bool {
 
 func (s *govStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
@@ -159,7 +160,7 @@ func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 
 func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *Delegation) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	delegations := s.GetAllDelegations()
@@ -170,7 +171,7 @@ func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *D
 
 func (s *govStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	delegations := s.GetAllDelegations()
@@ -213,7 +214,7 @@ func (s *govStakerStore) GetDelegationCounter() *Counter {
 
 func (s *govStakerStore) SetDelegationCounter(_ int, rlm realm, counter *Counter) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDelegationNextID, counter)
@@ -240,7 +241,7 @@ func (s *govStakerStore) GetTotalDelegationHistory() *UintTree {
 
 func (s *govStakerStore) SetTotalDelegationHistory(_ int, rlm realm, history *UintTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyTotalDelegationHistory, history)
@@ -267,7 +268,7 @@ func (s *govStakerStore) GetUserDelegationHistory() *bptree.BPTree {
 
 func (s *govStakerStore) SetUserDelegationHistory(_ int, rlm realm, history *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyUserDelegationHistory, history)
@@ -293,7 +294,7 @@ func (s *govStakerStore) GetEmissionRewardManager() *EmissionRewardManager {
 
 func (s *govStakerStore) SetEmissionRewardManager(_ int, rlm realm, manager *EmissionRewardManager) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyEmissionRewardManager, manager)
@@ -319,7 +320,7 @@ func (s *govStakerStore) GetProtocolFeeRewardManager() *ProtocolFeeRewardManager
 
 func (s *govStakerStore) SetProtocolFeeRewardManager(_ int, rlm realm, manager *ProtocolFeeRewardManager) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProtocolFeeRewardManager, manager)
@@ -345,7 +346,7 @@ func (s *govStakerStore) GetDelegationManager() *DelegationManager {
 
 func (s *govStakerStore) SetDelegationManager(_ int, rlm realm, manager *DelegationManager) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDelegationManager, manager)
@@ -371,7 +372,7 @@ func (s *govStakerStore) GetLaunchpadProjectDeposits() *LaunchpadProjectDeposits
 
 func (s *govStakerStore) SetLaunchpadProjectDeposits(_ int, rlm realm, deposits *LaunchpadProjectDeposits) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyLaunchpadProjectDeposits, deposits)

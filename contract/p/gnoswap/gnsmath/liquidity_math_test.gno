@@ -6,6 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -625,7 +626,7 @@ func TestLiquidityAmounts_MulDivOverflowProtection(cur realm, t *testing.T) {
 				})
 			} else {
 				result := computeLiquidityForAmount0(tt.sqrtRatioA, tt.sqrtRatioB, tt.value)
-				if result.Gt(maxUint128) {
+				if result.Gt(consts.MaxUint128()) {
 					t.Errorf("Result exceeds uint128 range")
 				}
 			}

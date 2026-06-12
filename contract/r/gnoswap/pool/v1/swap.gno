@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"errors"
 	"strconv"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 
+	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -38,7 +40,7 @@ var (
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -64,7 +66,7 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -90,7 +92,7 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -167,7 +169,7 @@ func (i *poolV1) Swap(
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	i.assertPoolUnlocked()
@@ -470,7 +472,7 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 func validatePriceLimits(slot0 pl.Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
 		cond1 := sqrtPriceLimitX96.Lt(slot0.SqrtPriceX96())
-		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
+		cond2 := sqrtPriceLimitX96.Gt(consts.MinSqrtRatio())
 		if !(cond1 && cond2) {
 			panic(newErrorWithDetail(
 				errPriceOutOfRange,
@@ -483,7 +485,7 @@ func validatePriceLimits(slot0 pl.Slot0, zeroForOne bool, sqrtPriceLimitX96 *u25
 		}
 	} else {
 		cond1 := sqrtPriceLimitX96.Gt(slot0.SqrtPriceX96())
-		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
+		cond2 := sqrtPriceLimitX96.Lt(consts.MaxSqrtRatio())
 		if !(cond1 && cond2) {
 			panic(newErrorWithDetail(
 				errPriceOutOfRange,
@@ -580,14 +582,14 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 
 	newFeeAmount, overflow := u256.Zero().SubOverflow(step.feeAmount, delta)
 	if overflow {
-		return state, step, errUnderflow
+		return state, step, errors.New(errUnderflow)
 	}
 
 	step.feeAmount = newFeeAmount
 
 	newProtocolFee, overflow := u256.Zero().AddOverflow(state.protocolFee, delta)
 	if overflow {
-		return state, step, errOverflow
+		return state, step, errors.New(errOverflow)
 	}
 	state.protocolFee = newProtocolFee
 
@@ -661,12 +663,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Poo
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(maxInt256) {
-		return state, errOverflow
+		return state, errors.New(errOverflow)
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		return state, errOverflow
+		return state, errors.New(errOverflow)
 	}
 
 	var (
@@ -678,31 +680,31 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	if exactInput {
 		amountSpecifiedRemaining, overflow = i256.Zero().SubOverflow(state.amountSpecifiedRemaining, amountInWithFee)
 		if overflow {
-			return state, errUnderflow
+			return state, errors.New(errUnderflow)
 		}
 		amountCalculated, overflow = i256.Zero().SubOverflow(state.amountCalculated, i256.FromUint256(step.amountOut))
 		if overflow {
-			return state, errUnderflow
+			return state, errors.New(errUnderflow)
 		}
 	} else {
 		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
 		if overflow {
-			return state, errOverflow
+			return state, errors.New(errOverflow)
 		}
 		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
 		if overflow {
-			return state, errOverflow
+			return state, errors.New(errOverflow)
 		}
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
 	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
-		return state, errOverflow
+		return state, errors.New(errOverflow)
 	}
 
 	// If an underflowed value is stored in state, it may cause problems in the next step
 	if amountCalculated.Lt(minInt64) || amountSpecifiedRemaining.Lt(minInt64) {
-		return state, errUnderflow
+		return state, errors.New(errUnderflow)
 	}
 
 	state.amountSpecifiedRemaining = amountSpecifiedRemaining

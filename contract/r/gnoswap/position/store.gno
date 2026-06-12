@@ -44,7 +44,7 @@ func (s *positionStore) GetPositions() *bptree.BPTree {
 
 func (s *positionStore) SetPositions(_ int, rlm realm, positions *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositions.String(), positions)
@@ -70,7 +70,7 @@ func (s *positionStore) GetPositionNextID() uint64 {
 
 func (s *positionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositionNextID.String(), nextID)
@@ -100,7 +100,7 @@ func (s *positionStore) GetPosition(positionId uint64) (Position, bool) {
 
 func (s *positionStore) SetPosition(_ int, rlm realm, positionId uint64, position Position) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasPositionsStoreKey() {
@@ -116,7 +116,7 @@ func (s *positionStore) SetPosition(_ int, rlm realm, positionId uint64, positio
 
 func (s *positionStore) RemovePosition(_ int, rlm realm, positionId uint64) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	if !s.HasPositionsStoreKey() {

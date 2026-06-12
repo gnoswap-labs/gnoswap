@@ -50,7 +50,7 @@ func (lp *launchpadV1) CreateProject(
 	startTime int64,
 ) string {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedLaunchpad()
@@ -247,7 +247,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 // Only admin can call this function. Returns the amount of rewards transferred.
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
 	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
+		panic(errors.New(errSpoofedRealm))
 	}
 
 	halt.AssertIsNotHaltedLaunchpad()
