@@ -7,7 +7,7 @@ import (
 // Previously, we used a different zero address ("g1000000..."),
 // but we changed the value because using the address
 // below appears to have become the de facto standard practice.
-var zeroAddress address = address("")
+const zeroAddress address = address("")
 
 type MintParams struct {
 	token0         string     // token0 path for a specific pool

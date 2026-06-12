@@ -21,7 +21,7 @@ import (
 // ErrSpoofedRealm is returned when the supplied realm token does not match the
 // live crossing frame (rlm.IsCurrent() == false). It signals a stale or
 // spoofed token captured in an earlier frame.
-var ErrSpoofedRealm = errors.New("rlm does not match the current crossing frame")
+var ErrSpoofedRealm = "rlm does not match the current crossing frame"
 
 // versionManager is the concrete implementation of VersionManager interface.
 // It manages multiple versioned implementations of a domain (e.g., protocol_fee/v1, protocol_fee/v2).
@@ -76,7 +76,7 @@ type versionManager struct {
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath).
 func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	// Validate initializer is not nil to prevent panic during initialization
@@ -146,7 +146,7 @@ func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func
 //   - error: If realm token is spoofed, target version is not registered, or initializer is invalid
 func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath string) error {
 	if !rlm.IsCurrent() {
-		return ErrSpoofedRealm
+		return errors.New(ErrSpoofedRealm)
 	}
 
 	// Retrieve the registered initializer function

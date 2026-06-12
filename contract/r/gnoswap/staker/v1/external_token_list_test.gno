@@ -55,7 +55,7 @@ func TestAddToken(cur realm, t *testing.T) {
 			initStakerTest(cur, t)
 
 			// given
-			getMockInstance().store.SetAllowedTokens(0, cur, defaultAllowed)
+			getMockInstance().store.SetAllowedTokens(0, cur, _defaultAllowedTokens)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
@@ -91,7 +91,7 @@ func TestRemoveToken(cur realm, t *testing.T) {
 	customTokenPath := "gno.land/r/gnoswap/v1/custom"
 
 	currentDefaultTokens := make([]string, 0)
-	currentDefaultTokens = append(currentDefaultTokens, defaultAllowed...)
+	currentDefaultTokens = append(currentDefaultTokens, _defaultAllowedTokens...)
 	currentDefaultTokens = append(currentDefaultTokens, customTokenPath)
 
 	tests := []struct {

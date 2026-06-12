@@ -9,6 +9,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"
@@ -26,8 +27,6 @@ import (
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-
-	"gno.land/r/gnoswap/rbac"
 )
 
 const (
@@ -57,8 +56,8 @@ const (
 )
 
 var (
-	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
-	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
+	positionAddr = access.MustGetAddress(prabc.ROLE_POSITION.String())
+	stakerAddr   = access.MustGetAddress(prabc.ROLE_STAKER.String())
 
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
@@ -66,17 +65,17 @@ var (
 )
 
 var (
-	adminAddr  = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
+	adminAddr  = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(adminAddr)
 
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 
-	emissionAddr    = rbac.DefaultRoleAddresses[prabc.ROLE_EMISSION]
-	poolAddr        = rbac.DefaultRoleAddresses[prabc.ROLE_POOL]
-	protocolFeeAddr = rbac.DefaultRoleAddresses[prabc.ROLE_PROTOCOL_FEE]
-	routerAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_ROUTER]
-	devOpsAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_DEVOPS]
+	emissionAddr    = access.MustGetAddress(prabc.ROLE_EMISSION.String())
+	poolAddr        = access.MustGetAddress(prabc.ROLE_POOL.String())
+	protocolFeeAddr = access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	routerAddr      = access.MustGetAddress(prabc.ROLE_ROUTER.String())
+	devOpsAddr      = access.MustGetAddress(prabc.ROLE_DEVOPS.String())
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 

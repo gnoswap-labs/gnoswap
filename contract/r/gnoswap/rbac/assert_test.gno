@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"chain"
 	"strings"
 	"testing"
 
@@ -457,6 +458,78 @@ func TestAssert_assertIsAdminOrGovernance(cur realm, t *testing.T) {
 			} else {
 				assertIsAdminOrGovernance(tt.addr)
 			}
+		})
+	}
+}
+
+func TestPackageAddress(cur realm, t *testing.T) {
+	tests := []struct {
+		name         string
+		pkgPath      string
+		expectedAddr address
+	}{
+		{
+			name:         "emission package address",
+			pkgPath:      "gno.land/r/gnoswap/emission",
+			expectedAddr: EMISSION_ADDR,
+		},
+		{
+			name:         "pool package address",
+			pkgPath:      "gno.land/r/gnoswap/pool",
+			expectedAddr: POOL_ADDR,
+		},
+		{
+			name:         "position package address",
+			pkgPath:      "gno.land/r/gnoswap/position",
+			expectedAddr: POSITION_ADDR,
+		},
+		{
+			name:         "router package address",
+			pkgPath:      "gno.land/r/gnoswap/router",
+			expectedAddr: ROUTER_ADDR,
+		},
+		{
+			name:         "staker package address",
+			pkgPath:      "gno.land/r/gnoswap/staker",
+			expectedAddr: STAKER_ADDR,
+		},
+		{
+			name:         "protocol fee package address",
+			pkgPath:      "gno.land/r/gnoswap/protocol_fee",
+			expectedAddr: PROTOCOL_FEE_ADDR,
+		},
+		{
+			name:         "community pool package address",
+			pkgPath:      "gno.land/r/gnoswap/community_pool",
+			expectedAddr: COMMUNITY_POOL_ADDR,
+		},
+		{
+			name:         "governance package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/governance",
+			expectedAddr: GOV_GOVERNANCE_ADDR,
+		},
+		{
+			name:         "governance staker package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/staker",
+			expectedAddr: GOV_STAKER_ADDR,
+		},
+		{
+			name:         "xgns package address",
+			pkgPath:      "gno.land/r/gnoswap/gov/xgns",
+			expectedAddr: GOV_XGNS_ADDR,
+		},
+		{
+			name:         "launchpad package address",
+			pkgPath:      "gno.land/r/gnoswap/launchpad",
+			expectedAddr: LAUNCHPAD_ADDR,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			addr := chain.PackageAddress(tt.pkgPath)
+			println("package path: ", tt.pkgPath, "addr: ", addr.String())
+			uassert.Equal(t, addr, tt.expectedAddr)
 		})
 	}
 }

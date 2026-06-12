@@ -12,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/halt"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/rbac"
 )
 
 var (
@@ -585,11 +584,7 @@ func TestXgns_SupplyInfo(cur realm, t *testing.T) {
 // Helper functions
 
 func getContractAddress(roleName string) address {
-	addr, exists := access.GetAddress(roleName)
-	if !exists {
-		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
-	}
-	return addr
+	return access.MustGetAddress(roleName)
 }
 
 func cleanup(cur realm, t *testing.T) {

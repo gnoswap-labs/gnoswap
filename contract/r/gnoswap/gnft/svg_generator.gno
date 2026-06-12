@@ -9,6 +9,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 // SVG template structure:
 // The template is split at variable insertion points for efficient string concatenation.
 // Full template with placeholders (for reference):

@@ -6,19 +6,7 @@ import (
 	"strconv"
 )
 
-const (
-	MAX_UINT64  = ^uint64(0)
-	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-)
-
-var ErrBig256Range = errors.New("decimal number > 256 bits")
-
-var (
-	zero  = Uint{0, 0, 0, 0}
-	one   = Uint{1, 0, 0, 0}
-	two   = Uint{2, 0, 0, 0}
-	three = Uint{3, 0, 0, 0}
-)
+const ErrBig256Range = "decimal number > 256 bits"
 
 // Uint represents a 256-bit unsigned integer.
 // It is stored as an array of 4 uint64 in little-endian order,
@@ -49,9 +37,13 @@ func One() *Uint {
 	return &Uint{1, 0, 0, 0}
 }
 
+func MaxUint256() *Uint {
+	return &Uint{18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615}
+}
+
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
 func (z *Uint) SetAllOne() *Uint {
-	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, MAX_UINT64, MAX_UINT64
+	z[3], z[2], z[1], z[0] = 18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615
 	return z
 }
 
@@ -90,17 +82,20 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 		sLen = len(s)
 	}
 
-	maxLen := len(MAX_UINT256)
+	// maxUint256Str is the string representation of the maximum uint256 value.
+	maxUint256Str := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
+	maxLen := len(maxUint256Str)
 	if sLen < maxLen {
 		return z.fromDecimal(s)
 	}
 	if sLen == maxLen {
-		if s > MAX_UINT256 {
-			return ErrBig256Range
+		if s > maxUint256Str {
+			return errors.New(ErrBig256Range)
 		}
 		return z.fromDecimal(s)
 	}
-	return ErrBig256Range
+	return errors.New(ErrBig256Range)
 }
 
 // FromDecimal creates a new Uint from a decimal string.
@@ -173,12 +168,12 @@ func (z *Uint) fromDecimal(bs string) error {
 			// Check for overflow in multiplication
 			base, overflow := base.MulOverflow(base, &multipliers[i])
 			if overflow {
-				return ErrBig256Range
+				return errors.New(ErrBig256Range)
 			}
 			// Check for overflow in addition
 			base, overflow = base.AddOverflow(base, z)
 			if overflow {
-				return ErrBig256Range
+				return errors.New(ErrBig256Range)
 			}
 			z.Set(base)
 		}

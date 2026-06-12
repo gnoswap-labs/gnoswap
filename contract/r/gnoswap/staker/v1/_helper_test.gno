@@ -45,6 +45,8 @@ const (
 	stakerPackagePath string = "gno.land/r/gnoswap/staker"
 )
 
+var _defaultAllowedTokens = []string{wugnotPath, gnsPath}
+
 var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")

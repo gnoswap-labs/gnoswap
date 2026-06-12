@@ -804,7 +804,7 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 
 // tokenHasLiquidity checks if the target positionId has non-zero liquidity
 func tokenHasLiquidity(positionId uint64) error {
-	if getLiquidity(positionId).Lte(zeroUint256) {
+	if getLiquidity(positionId).Lte(u256.Zero()) {
 		return ufmt.Errorf(
 			"%v: positionId(%d) has no liquidity",
 			errZeroLiquidity, positionId,

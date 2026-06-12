@@ -2,6 +2,7 @@ package v1
 
 import (
 	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -35,7 +36,7 @@ type DryMultiSwapExecutor struct {
 
 // Run performs a dry swap operation without changing state.
 func (e *DryMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, _ address) (int64, int64) {
-	return e.router.swapDryInner(p.amountSpecified, zero, data)
+	return e.router.swapDryInner(p.amountSpecified, u256.Zero(), data)
 }
 
 // RealMultiSwapExecutor implements MultiSwapExecutor for actual swap operations.
@@ -46,7 +47,7 @@ type RealMultiSwapExecutor struct {
 
 // Run performs a real swap operation with state changes.
 func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient address) (int64, int64) {
-	return e.router.swapInner(0, e.rlm, p.amountSpecified, recipient, zero, data)
+	return e.router.swapInner(0, e.rlm, p.amountSpecified, recipient, u256.Zero(), data)
 }
 
 // MultiSwapProcessor handles the execution flow for multi-hop swaps.
@@ -226,7 +227,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 			rlm,
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
-			zero,
+			u256.Zero(),
 			callbackData,
 		)
 

@@ -36,7 +36,7 @@ func init() {
 		if fwd.IsZero() {
 			fwd = u256.MustFromDecimal(MIN_SQRT_RATIO)
 		}
-		fwd.Add(fwd, one) // fwd += 1 in-place
+		fwd.Add(fwd, u256.One()) // fwd += 1 in-place
 		sqrtPriceLimitForward[fee] = fwd
 
 		// zeroForOne=false: price must stay below maximum
@@ -45,7 +45,7 @@ func init() {
 		if bwd.IsZero() {
 			bwd = u256.MustFromDecimal(MAX_SQRT_RATIO)
 		}
-		bwd.Sub(bwd, one) // bwd -= 1 in-place
+		bwd.Sub(bwd, u256.One()) // bwd -= 1 in-place
 		sqrtPriceLimitBackward[fee] = bwd
 	}
 }
@@ -165,7 +165,7 @@ type DrySwapExecutor struct {
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	return e.router.swapDryInner(
 		p.amountSpecified,
-		zero,
+		u256.Zero(),
 		newSwapCallbackData(p, e.payer),
 	)
 }

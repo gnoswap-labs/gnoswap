@@ -4,11 +4,8 @@ import (
 	"errors"
 	"strconv"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
-
-var one = u256.One()
 
 // ErrorMessages define all error message templates used throughout the router
 const (

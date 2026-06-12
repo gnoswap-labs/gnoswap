@@ -20,7 +20,7 @@ func initRbac(cur realm) {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	// Prepare initial roles for one-time initialization
-	for role, addr := range DefaultRoleAddresses {
+	for role, addr := range _defaultRoleAddresses {
 		roleName := role.String()
 		err := manager.RegisterRole(roleName, addr)
 		if err != nil {

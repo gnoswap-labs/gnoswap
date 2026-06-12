@@ -1,11 +1,8 @@
 package v1
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
 )
-
-var zero = u256.Zero()
 
 // SwapExecutor defines the interface for executing swaps.
 type SwapExecutor interface {

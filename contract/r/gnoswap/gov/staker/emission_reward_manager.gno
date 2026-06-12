@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
+const errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
 
 // EmissionRewardManager manages the distribution of emission rewards to stakers.
 type EmissionRewardManager struct {

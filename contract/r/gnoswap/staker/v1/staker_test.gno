@@ -10,6 +10,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
@@ -19,7 +20,6 @@ import (
 	"gno.land/r/onbloc/bar"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/position/v1"
 )
@@ -43,7 +43,7 @@ func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 		// setup
-		govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
+		govAddr := access.MustGetAddress(prabc.ROLE_GOVERNANCE.String())
 		testing.SetRealm(testing.NewUserRealm(govAddr))
 
 		mockInstanceSetMinimumRewardAmount(cross(cur), 1000000000)
@@ -504,7 +504,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
 
 	// Set up high unstaking fee to ensure penalty exists
-	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]
+	govAddr := access.MustGetAddress(prabc.ROLE_GOVERNANCE.String())
 	testing.SetRealm(testing.NewUserRealm(govAddr))
 	mockInstanceSetUnstakingFee(cross(cur), 1000) // 10% (maximum allowed)
 

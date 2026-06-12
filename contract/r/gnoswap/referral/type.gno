@@ -1,10 +1,9 @@
 package referral
 
-var (
-	zeroAddress = address("")
-	// selfAddress is cached at package initialization to ensure consistent comparison.
-	selfAddress address
-)
+const zeroAddress = address("")
+
+// selfAddress is cached at package initialization to ensure consistent comparison.
+var selfAddress address
 
 func init(cur realm) {
 	selfAddress = cur.Address()

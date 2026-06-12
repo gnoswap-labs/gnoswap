@@ -22,18 +22,21 @@ const (
 	GNS_PATH      string = "gno.land/r/gnoswap/gns"
 )
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurations = []int64{
 	projectTier30,
 	projectTier90,
 	projectTier180,
 }
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurationTimes = map[int64]int64{
 	projectTier30:  dayTime * projectTier30,  // 30 days
 	projectTier90:  dayTime * projectTier90,  // 90 days
 	projectTier180: dayTime * projectTier180, // 180 days
 }
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierRewardCollectableDuration = map[int64]int64{
 	projectTier30:  dayTime * 1, // 1 days
 	projectTier90:  dayTime * 1, // 1 days

@@ -6,9 +6,8 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 )
-
-var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 
 // AddToken adds a new token path to the list of allowed tokens
 // Only the admin can add a new token.
@@ -83,7 +82,7 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 }
 
 func checkCannotAddDefaultToken(tokenPath string) error {
-	if contains(defaultAllowed, tokenPath) {
+	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
 	}
 
@@ -91,7 +90,7 @@ func checkCannotAddDefaultToken(tokenPath string) error {
 }
 
 func checkCannotRemoveDefaultToken(tokenPath string) error {
-	if contains(defaultAllowed, tokenPath) {
+	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}
 
