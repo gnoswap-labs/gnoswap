@@ -92,7 +92,7 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 		panic("feeAmountTickSpacing is nil")
 	}
 
-	return feeAmountTickSpacing
+	return cloneFeeAmountTickSpacings(feeAmountTickSpacing)
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
@@ -179,7 +179,7 @@ func (s *poolStore) GetPendingProtocolFees() map[string]int64 {
 		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
 	}
 
-	return pendingProtocolFees
+	return cloneStringInt64Map(pendingProtocolFees)
 }
 
 func (s *poolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {

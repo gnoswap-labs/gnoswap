@@ -192,7 +192,7 @@ func (s *stakerStore) GetAllowedTokens() []string {
 		panic(ufmt.Sprintf("failed to cast result to []string: %T", result))
 	}
 
-	return tokens
+	return cloneStringSlice(tokens)
 }
 
 func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
@@ -617,7 +617,7 @@ func (s *stakerStore) GetWarmupTemplate() []Warmup {
 		panic(ufmt.Sprintf("failed to cast result to []Warmup: %T", result))
 	}
 
-	return warmups
+	return cloneWarmups(warmups)
 }
 
 func (s *stakerStore) SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) error {

@@ -207,11 +207,11 @@ func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) 
 }
 
 func (d *Deposit) Warmups() []Warmup {
-	return d.warmups
+	return cloneWarmups(d.warmups)
 }
 
 func (d *Deposit) SetWarmups(warmups []Warmup) {
-	d.warmups = warmups
+	d.warmups = cloneWarmups(warmups)
 }
 
 func (d *Deposit) LastExternalIncentiveUpdatedAt() int64 {
