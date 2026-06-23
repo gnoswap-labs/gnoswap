@@ -1,7 +1,6 @@
 package launchpad
 
 import (
-	"chain/runtime"
 	"errors"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
@@ -11,8 +10,11 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	// Package-init reads use chain/runtime/unsafe.CurrentRealm because there
+	// is no `cur realm` in scope at package-initialization time. The values
+	// captured here describe the launchpad realm itself, not any caller.
+	currentAddress address
+	domainPath     string
 
 	kvStore store.KVStore
 
@@ -20,7 +22,10 @@ var (
 	implementation ILaunchpad
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+	domainPath = cur.PkgPath()
+
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
 

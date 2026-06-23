@@ -13,7 +13,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
+func TestLaunchpadProtocolFee_CollectProtocolFee(cur realm, t *testing.T) {
 	userWithoutProject := testutils.TestAddress("user_no_project")
 
 	tests := []struct {
@@ -47,7 +47,7 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			tt.setupFunc()
 			impl := getTestImplementation()
@@ -61,13 +61,11 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 
 			// Execute
 			collectFn := func() {
-				func(cur realm) {
-					impl.CollectProtocolFee()
-				}(cross)
+				impl.CollectProtocolFee(0, cur)
 			}
 
 			if tt.expectedHasPanic {
-				uassert.AbortsContains(t, tt.expectedPanicMessage, collectFn)
+				uassert.AbortsContains(t, cur, tt.expectedPanicMessage, collectFn)
 				return
 			}
 
@@ -77,7 +75,7 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(t *testing.T) {
+func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(cur realm, t *testing.T) {
 	const contractPackagePath = "gno.land/r/test/contract"
 
 	resetTestStore()
@@ -95,11 +93,9 @@ func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(t *testing.T)
 	impl.store.GetProjects().Set(project.ID(), project)
 
 	testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-	gov_staker.SetAmountByProjectWallet(cross, contractAddr, 1, true)
+	gov_staker.SetAmountByProjectWallet(cross(cur), contractAddr, 1, true)
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		impl.CollectProtocolFee()
-	}(cross)
+	testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+	impl.CollectProtocolFee(0, cur)
 }

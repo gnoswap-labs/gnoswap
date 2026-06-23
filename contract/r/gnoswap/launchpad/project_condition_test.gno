@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestProjectCondition_Getters(t *testing.T) {
+func TestProjectCondition_Getters(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -33,7 +33,7 @@ func TestProjectCondition_Getters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			condition := &ProjectCondition{
 				tokenPath:     tt.tokenPath,
@@ -53,7 +53,7 @@ func TestProjectCondition_Getters(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_IsAvailable(t *testing.T) {
+func TestProjectCondition_IsAvailable(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		tokenPath         string
@@ -93,7 +93,7 @@ func TestProjectCondition_IsAvailable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			condition := &ProjectCondition{
 				tokenPath:     tt.tokenPath,
@@ -106,7 +106,7 @@ func TestProjectCondition_IsAvailable(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_CheckCondition(t *testing.T) {
+func TestProjectCondition_CheckCondition(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -153,7 +153,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			condition := &ProjectCondition{
 				tokenPath:     tt.tokenPath,
@@ -173,7 +173,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_NewProjectCondition(t *testing.T) {
+func TestProjectCondition_NewProjectCondition(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		tokenPath         string
@@ -193,7 +193,7 @@ func TestProjectCondition_NewProjectCondition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute
 			condition := NewProjectCondition(tt.tokenPath, tt.minimumAmount)
 
@@ -204,7 +204,7 @@ func TestProjectCondition_NewProjectCondition(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_NewProjectConditionsWithError(t *testing.T) {
+func TestProjectCondition_NewProjectConditionsWithError(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string
@@ -277,7 +277,7 @@ func TestProjectCondition_NewProjectConditionsWithError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute
 			conditions, err := NewProjectConditionsWithError(tt.conditionTokens, tt.conditionAmounts)
 

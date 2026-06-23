@@ -8,7 +8,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestUtils_parseProjectTierID(t *testing.T) {
+func TestUtils_parseProjectTierID(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		projectTierID     string
@@ -83,7 +83,7 @@ func TestUtils_parseProjectTierID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedPanic {
 				defer func() {
 					r := recover()
@@ -102,7 +102,7 @@ func TestUtils_parseProjectTierID(t *testing.T) {
 	}
 }
 
-func TestUtils_safeConvertToInt64(t *testing.T) {
+func TestUtils_safeConvertToInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		value         *u256.Uint
@@ -145,7 +145,7 @@ func TestUtils_safeConvertToInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedPanic {
 				defer func() {
 					r := recover()
@@ -162,7 +162,7 @@ func TestUtils_safeConvertToInt64(t *testing.T) {
 	}
 }
 
-func TestUtils_formatInt(t *testing.T) {
+func TestUtils_formatInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		value    int64
@@ -196,14 +196,14 @@ func TestUtils_formatInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := formatInt(tt.value)
 			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
 
-func TestUtils_buildConditionEventAttrs(t *testing.T) {
+func TestUtils_buildConditionEventAttrs(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string
@@ -236,7 +236,7 @@ func TestUtils_buildConditionEventAttrs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := buildConditionEventAttrs(tt.conditionTokens, tt.conditionAmounts)
 
 			uassert.Equal(t, len(result), len(tt.expected))
@@ -247,7 +247,7 @@ func TestUtils_buildConditionEventAttrs(t *testing.T) {
 	}
 }
 
-func TestSafeMulDivInt64(t *testing.T) {
+func TestSafeMulDivInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		a           int64
@@ -375,9 +375,9 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() { safeMulDiv(tt.a, tt.b, tt.c) })
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() { safeMulDiv(tt.a, tt.b, tt.c) })
 			} else {
 				result := safeMulDiv(tt.a, tt.b, tt.c)
 				uassert.Equal(t, result, tt.expected)

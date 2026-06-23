@@ -8,7 +8,7 @@ import (
 )
 
 // Test for NewCounter, next, and Get methods.
-func TestCounter_NewCounter(t *testing.T) {
+func TestCounter_NewCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initValue     int64
@@ -50,7 +50,7 @@ func TestCounter_NewCounter(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given: create counter and set initial value if needed
 			c := NewCounter()
 			if tc.initValue != 0 {

@@ -15,6 +15,8 @@ func CreateProject(
 	startTime int64,
 ) string {
 	return getImplementation().CreateProject(
+		0,
+		cur,
 		name,
 		tokenPath,
 		recipient,
@@ -30,25 +32,25 @@ func CreateProject(
 
 // CollectProtocolFee collects accumulated protocol fees from launchpad operations.
 func CollectProtocolFee(cur realm) {
-	getImplementation().CollectProtocolFee()
+	getImplementation().CollectProtocolFee(0, cur)
 }
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
-	return getImplementation().TransferLeftFromProjectByAdmin(projectID, recipient)
+	return getImplementation().TransferLeftFromProjectByAdmin(0, cur, projectID, recipient)
 }
 
 // DepositGns deposits GNS tokens to a launchpad project tier.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	return getImplementation().DepositGns(targetProjectTierID, depositAmount, referrer)
+	return getImplementation().DepositGns(0, cur, targetProjectTierID, depositAmount, referrer)
 }
 
 // CollectDepositGns collects rewards from a deposit.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	return getImplementation().CollectDepositGns(depositID)
+	return getImplementation().CollectDepositGns(0, cur, depositID)
 }
 
 // CollectRewardByDepositId collects rewards from a deposit.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
-	return getImplementation().CollectRewardByDepositId(depositID)
+	return getImplementation().CollectRewardByDepositId(0, cur, depositID)
 }
