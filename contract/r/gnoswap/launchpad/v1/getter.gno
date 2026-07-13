@@ -39,8 +39,8 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 // Returns nil and error if project not found.
 func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
-	value, exists := projects.Get(projectId)
-	if !exists {
+	value := projects.Get(projectId)
+	if value == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectId))
 	}
 
@@ -311,8 +311,8 @@ func (lp *launchpadV1) GetProjectTierDepositIDs(projectId string, tier int64, of
 // Returns nil and error if deposit not found.
 func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -328,8 +328,8 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 // Returns empty string and error if deposit not found.
 func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -345,8 +345,8 @@ func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -362,8 +362,8 @@ func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
 // Returns empty string and error if deposit not found.
 func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -379,8 +379,8 @@ func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error)
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -396,8 +396,8 @@ func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -413,8 +413,8 @@ func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -430,8 +430,8 @@ func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) 
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -447,8 +447,8 @@ func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) 
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -464,8 +464,8 @@ func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
@@ -487,8 +487,8 @@ func (lp *launchpadV1) GetProjectTierRewardManagerCount() int {
 // Returns nil and error if reward manager not found.
 func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
+	value := managers.Get(projectTierId)
+	if value == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
 	}
 
@@ -603,8 +603,8 @@ func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId strin
 // Returns nil and error if reward manager or reward state not found.
 func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
+	value := managers.Get(projectTierId)
+	if value == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
 	}
 
@@ -614,8 +614,8 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	}
 
 	rewards := manager.Rewards()
-	rewardValue, exists := rewards.Get(depositId)
-	if !exists {
+	rewardValue := rewards.Get(depositId)
+	if rewardValue == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
 	}
 

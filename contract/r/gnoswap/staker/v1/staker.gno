@@ -76,8 +76,8 @@ func (self *Deposits) Size() int {
 
 // get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
-	depositI, ok := self.tree.Get(EncodeUint(positionId))
-	if !ok {
+	depositI := self.tree.Get(EncodeUint(positionId))
+	if depositI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("positionId(%d) not found", positionId),
@@ -125,8 +125,8 @@ func (self *ExternalIncentives) Size() int { return self.tree.Size() }
 
 // get retrieves an external incentive by ID.
 func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
-	incentiveI, ok := self.tree.Get(incentiveId)
-	if !ok {
+	incentiveI := self.tree.Get(incentiveId)
+	if incentiveI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentiveId(%s) not found", incentiveId),
@@ -219,8 +219,8 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	poolPath := pn.GetPositionPoolKey(positionId)
 	pools := s.getPools()
 
-	pool, ok := pools.Get(poolPath)
-	if !ok {
+	pool := pools.Get(poolPath)
+	if pool == nil {
 		panic(makeErrorWithDetails(
 			errNonIncentivizedPool,
 			ufmt.Sprintf("cannot stake position to non existing pool(%s)", poolPath),
@@ -520,7 +520,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"currentHeight", utils.FormatInt(blockHeight),
 		)
 
-		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
+		pool := s.getPools().Get(deposit.TargetPoolPath())
 		poolResolver := NewPoolResolver(pool)
 		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
@@ -641,7 +641,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	if !skipInternalUpdate {
 		poolPath := depositResolver.TargetPoolPath()
-		pool, _ := s.getPools().Get(poolPath)
+		pool := s.getPools().Get(poolPath)
 		poolResolver := NewPoolResolver(pool)
 
 		// Get accumulator values for reward calculation tracking
@@ -731,7 +731,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 
 	// Get pool and accumulator values for reward calculation tracking
 	currentTime := time.Now().Unix()
-	pool, _ := s.getPools().Get(poolPath)
+	pool := s.getPools().Get(poolPath)
 	poolResolver := NewPoolResolver(pool)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
@@ -761,7 +761,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 func (s *stakerV1) applyUnStake(positionId uint64) error {
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
-	pool, ok := s.getPools().Get(depositResolver.TargetPoolPath())
+	pool := s.getPools().Get(depositResolver.TargetPoolPath())
 	poolResolver := NewPoolResolver(pool)
 	if !ok {
 		return ufmt.Errorf(

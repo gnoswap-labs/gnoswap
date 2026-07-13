@@ -68,8 +68,8 @@ func NewTickResolver(tick *sr.Tick) *TickResolver {
 // swapStartHook is called when a swap starts
 // This hook initializes the batch processor for accumulating tick crosses
 func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp int64) {
-	pool, ok := s.getPools().Get(poolPath)
-	if !ok {
+	pool := s.getPools().Get(poolPath)
+	if pool == nil {
 		return
 	}
 
@@ -122,8 +122,8 @@ func (s *stakerV1) swapEndHook(_ int, rlm realm, poolPath string) error {
 // - Outside swaps: processes tick crosses immediately for real-time updates
 // The hybrid approach optimizes for both swap performance and non-swap responsiveness
 func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-	pool, ok := s.getPools().Get(poolPath)
-	if !ok {
+	pool := s.getPools().Get(poolPath)
+	if pool == nil {
 		return
 	}
 

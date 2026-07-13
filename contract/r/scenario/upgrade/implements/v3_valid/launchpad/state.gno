@@ -9,8 +9,8 @@ import (
 
 func (lp *launchpadV1) getProject(projectID string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
-	project, ok := projects.Get(projectID)
-	if !ok {
+	project := projects.Get(projectID)
+	if project == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
@@ -38,8 +38,8 @@ func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*la
 
 func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
-	rewardManager, ok := managers.Get(projectTierID)
-	if !ok {
+	rewardManager := managers.Get(projectTierID)
+	if rewardManager == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("reward manager(%s) not found", projectTierID))
 	}
 
@@ -62,8 +62,8 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
 
 func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
-	depositI, ok := deposits.Get(depositID)
-	if !ok {
+	depositI := deposits.Get(depositID)
+	if depositI == nil {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
 

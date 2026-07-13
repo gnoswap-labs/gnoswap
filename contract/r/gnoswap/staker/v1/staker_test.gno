@@ -912,16 +912,16 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Verify data at timestamp 100
-	value1, exists1 := retrieved.Get(100)
-	if !exists1 {
+	value1 := retrieved.Get(100)
+	if value1 == nil {
 		t.Error("Expected pool map at timestamp 100")
 	}
 	pMap1, ok := value1.(*bptree.BPTree)
 	if !ok {
 		t.Fatalf("Expected *bptree.BPTree at timestamp 100, got %T", value1)
 	}
-	idsValue1, exists := pMap1.Get(poolPath1)
-	if !exists {
+	idsValue1 := pMap1.Get(poolPath1)
+	if idsValue1 == nil {
 		t.Error("Expected incentives for poolPath1 at timestamp 100")
 	}
 	ids1 := idsValue1.([]string)
@@ -930,8 +930,8 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Verify data at timestamp 200
-	value2, exists2 := retrieved.Get(200)
-	if !exists2 {
+	value2 := retrieved.Get(200)
+	if value2 == nil {
 		t.Error("Expected pool map at timestamp 200")
 	}
 	pMap2, ok := value2.(*bptree.BPTree)
@@ -940,8 +940,8 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Check poolPath1 at timestamp 200
-	idsValue2a, exists := pMap2.Get(poolPath1)
-	if !exists {
+	idsValue2a := pMap2.Get(poolPath1)
+	if idsValue2a == nil {
 		t.Error("Expected incentives for poolPath1 at timestamp 200")
 	}
 	ids2a := idsValue2a.([]string)
@@ -950,8 +950,8 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Check poolPath2 at timestamp 200
-	idsValue2b, exists := pMap2.Get(poolPath2)
-	if !exists {
+	idsValue2b := pMap2.Get(poolPath2)
+	if idsValue2b == nil {
 		t.Error("Expected incentives for poolPath2 at timestamp 200")
 	}
 	ids2b := idsValue2b.([]string)

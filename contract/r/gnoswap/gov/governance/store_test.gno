@@ -557,7 +557,7 @@ func TestStoreSetAndGetProposalVotingInfos(cur realm, t *testing.T) {
 				uassert.True(t, exists, "proposal voting infos for proposal 1 should exist")
 				uassert.NotEqual(t, nil, retrieved)
 
-				val, ok := retrieved.Get("user1")
+				val := retrieved.Get("user1")
 				uassert.True(t, ok, "user1 voting info should exist")
 				uassert.Equal(t, "vote_data", val)
 			},

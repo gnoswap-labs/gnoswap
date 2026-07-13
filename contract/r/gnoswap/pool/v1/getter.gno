@@ -93,8 +93,8 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 
 	positions := pool.Positions()
 
-	result, exist := positions.Get(key)
-	if !exist {
+	result := positions.Get(key)
+	if result == nil {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected position(%s) to exist", key),
@@ -358,8 +358,8 @@ func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
 		return pl.NewPositionInfo(), err
 	}
 
-	iPositionInfo, ok := pool.Positions().Get(key)
-	if !ok {
+	iPositionInfo := pool.Positions().Get(key)
+	if iPositionInfo == nil {
 		return pl.NewPositionInfo(), ufmt.Errorf("position %s not found", key)
 	}
 

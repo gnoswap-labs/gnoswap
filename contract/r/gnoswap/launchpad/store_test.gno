@@ -382,7 +382,7 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				uassert.True(t, ls.HasDepositsKey())
 
 				retrievedProjects := ls.GetProjects()
-				val, _ := retrievedProjects.Get("project1")
+				val := retrievedProjects.Get("project1")
 				uassert.Equal(t, "data1", val)
 
 				retrievedManagers := ls.GetProjectTierRewardManagers()

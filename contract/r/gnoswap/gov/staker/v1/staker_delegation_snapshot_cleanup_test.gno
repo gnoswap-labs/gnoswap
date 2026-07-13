@@ -106,7 +106,7 @@ func TestCleanTotalDelegationHistory(cur realm, t *testing.T) {
 			if tt.expectedEntries > 0 {
 				// Verify the preserved pre-cutoff entry, if any.
 				if tt.expectedPreservedTimestamp > 0 {
-					value, exists := resultHistory.Get(tt.expectedPreservedTimestamp)
+					value := resultHistory.Get(tt.expectedPreservedTimestamp)
 					uassert.True(t, exists)
 					uassert.Equal(t, tt.expectedPreservedValue, value.(int64))
 				}

@@ -220,7 +220,7 @@ func TestDelegationManager_SetUserDelegations(cur realm, t *testing.T) {
 			result := dm.GetUserDelegations()
 			uassert.Equal(t, result.Size(), len(tc.delegations))
 			for delegator, delegatees := range tc.delegations {
-				resultDelegatees, exists := result.Get(delegator)
+				resultDelegatees := result.Get(delegator)
 				uassert.True(t, exists)
 				resultTree, ok := resultDelegatees.(*bptree.BPTree)
 				uassert.True(t, ok)

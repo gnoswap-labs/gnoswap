@@ -85,8 +85,8 @@ func (s *positionStore) HasPosition(positionId uint64) bool {
 func (s *positionStore) GetPosition(positionId uint64) (Position, bool) {
 	positions := s.GetPositions()
 
-	result, ok := positions.Get(utils.Uint64ToString(positionId))
-	if !ok {
+	result := positions.Get(utils.Uint64ToString(positionId))
+	if result == nil {
 		return Position{}, false
 	}
 

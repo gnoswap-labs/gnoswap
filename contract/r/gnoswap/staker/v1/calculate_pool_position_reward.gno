@@ -159,8 +159,8 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 // calculates internal unclaimable reward for the pool
 func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
-	pool, ok := s.getPools().Get(poolPath)
-	if !ok {
+	pool := s.getPools().Get(poolPath)
+	if pool == nil {
 		return 0
 	}
 	poolResolver := NewPoolResolver(pool)
@@ -180,8 +180,8 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 			return false
 		}
 
-		incentiveIdsValue, exists := poolIncentiveIds.Get(poolPath)
-		if !exists {
+		incentiveIdsValue := poolIncentiveIds.Get(poolPath)
+		if incentiveIdsValue == nil {
 			return false
 		}
 

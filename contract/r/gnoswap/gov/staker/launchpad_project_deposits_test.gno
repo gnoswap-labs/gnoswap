@@ -80,7 +80,7 @@ func TestLaunchpadProjectDeposits_SetAndGetDeposits(cur realm, t *testing.T) {
 
 			// Verify each deposit
 			for owner, expectedAmount := range tc.depositsToSet {
-				value, exists := result.Get(owner)
+				value := result.Get(owner)
 				uassert.True(t, exists)
 				uassert.Equal(t, value.(int64), expectedAmount)
 			}
@@ -110,7 +110,7 @@ func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 
 			// then
 			uassert.Equal(t, deposits.Size(), 2)
-			value1, exists1 := deposits.Get("owner1")
+			value1 := deposits.Get("owner1")
 			uassert.True(t, exists1)
 			uassert.Equal(t, value1.(int64), int64(1000))
 
@@ -119,7 +119,7 @@ func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 
 			// then
 			uassert.Equal(t, deposits.Size(), 1)
-			_, exists := deposits.Get("owner1")
+			exists := deposits.Get("owner1") != nil
 			uassert.False(t, exists)
 		})
 	}

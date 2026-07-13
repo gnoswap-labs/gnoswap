@@ -122,7 +122,7 @@ func NewPoolTierBy(
 // CurrentReward returns the current per-pool reward for the given tier.
 func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	currentEmission := self.getEmission()
-	tierRatio, err := self.tierRatio.Get(tier)
+	tierRatio := self.tierRatio.Get(tier)
 	if err != nil {
 		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 	}
@@ -150,7 +150,7 @@ func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 
 // CurrentTier returns the tier of the given pool.
 func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
-	if tierI, ok := self.membership.Get(poolPath); !ok {
+	if tierI := self.membership.Get(poolPath); tierI == nil {
 		return 0
 	} else {
 		tier, ok = tierI.(uint64)
@@ -183,8 +183,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 	if nextTier == 0 {
 		// removed from the tier
 		self.membership.Remove(poolPath)
-		pool, ok := pools.Get(poolPath)
-		if !ok {
+		pool := pools.Get(poolPath)
+		if pool == nil {
 			panic("changeTier: pool not found")
 		}
 		poolResolver := NewPoolResolver(pool)
@@ -202,8 +202,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 
 	// Cache updated reward for each tiered pool
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		pool, ok := pools.Get(key)
-		if !ok {
+		pool := pools.Get(key)
+		if pool == nil {
 			panic("changeTier: pool not found")
 		}
 		tier, ok := value.(uint64)
@@ -263,8 +263,8 @@ func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 // cacheRewardForPool caches internal reward/accumulators for a single pool only.
 // This avoids iterating all tiered pools on every position reward calculation.
 func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, poolPath string) {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
+	pool := pools.Get(poolPath)
+	if pool == nil {
 		return
 	}
 
@@ -332,8 +332,8 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		pool, ok := pools.Get(key)
-		if !ok {
+		pool := pools.Get(key)
+		if pool == nil {
 			return false
 		}
 
@@ -373,7 +373,7 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // Pool not in any tier
 	}
 
-	tierRatio, err := self.tierRatio.Get(tierNum)
+	tierRatio := self.tierRatio.Get(tierNum)
 	if err != nil {
 		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 	}
@@ -421,7 +421,7 @@ func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 			continue
 		}
 
-		tierRatio, err := self.tierRatio.Get(tierNum)
+		tierRatio := self.tierRatio.Get(tierNum)
 		if err != nil {
 			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 		}

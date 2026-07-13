@@ -155,7 +155,7 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 
 				// Verify deposit exists in deposits tree
 				deposits := lp.store.GetDeposits()
-				_, exists := deposits.Get(depositID)
+				exists := deposits.Get(depositID) != nil
 				uassert.True(t, exists)
 			},
 		},

@@ -159,8 +159,8 @@ func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee 
 	}
 
 	delegateeStr := delegatee.String()
-	delegationIDs, exists := userDelegations.Get(delegateeStr)
-	if !exists {
+	delegationIDs := userDelegations.Get(delegateeStr)
+	if delegationIDs == nil {
 		return nil
 	}
 

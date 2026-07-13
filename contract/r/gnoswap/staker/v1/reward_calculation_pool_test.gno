@@ -49,12 +49,12 @@ func TestPoolsGetSet(cur realm, t *testing.T) {
 				pool := sr.NewPool(tt.poolPath, currentTime)
 				pools.set(tt.poolPath, pool)
 
-				retrieved, ok := pools.Get(tt.poolPath)
+				retrieved := pools.Get(tt.poolPath)
 				uassert.True(t, ok)
 				uassert.NotNil(t, retrieved)
 				uassert.Equal(t, tt.poolPath, retrieved.PoolPath())
 			} else {
-				_, ok := pools.Get(tt.poolPath)
+				ok := pools.Get(tt.poolPath) != nil
 				uassert.False(t, ok)
 			}
 		})

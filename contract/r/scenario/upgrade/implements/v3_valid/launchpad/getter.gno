@@ -37,8 +37,8 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 // Returns nil and error if project not found.
 func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
-	value, exists := projects.Get(projectId)
-	if !exists {
+	value := projects.Get(projectId)
+	if value == nil {
 		return nil, errors.New("project not found")
 	}
 
@@ -303,8 +303,8 @@ func (lp *launchpadV1) GetProjectTierDepositIDs(projectId string, tier int64, of
 // Returns nil and error if deposit not found.
 func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
-	value, exists := deposits.Get(depositId)
-	if !exists {
+	value := deposits.Get(depositId)
+	if value == nil {
 		return nil, errors.New("deposit not found")
 	}
 
@@ -424,8 +424,8 @@ func (lp *launchpadV1) GetProjectTierRewardManagerCount() int {
 // GetProjectTierRewardManager retrieves a reward manager by project tier ID.
 func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
+	value := managers.Get(projectTierId)
+	if value == nil {
 		return nil, errors.New("reward manager not found")
 	}
 
@@ -540,8 +540,8 @@ func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId strin
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
 func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
+	value := managers.Get(projectTierId)
+	if value == nil {
 		return nil, errors.New("reward manager not found")
 	}
 
@@ -551,8 +551,8 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	}
 
 	rewards := manager.Rewards()
-	rewardValue, exists := rewards.Get(depositId)
-	if !exists {
+	rewardValue := rewards.Get(depositId)
+	if rewardValue == nil {
 		return nil, errors.New("reward state not found")
 	}
 

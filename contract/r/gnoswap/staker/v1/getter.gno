@@ -13,8 +13,8 @@ import (
 
 // getPoolByPoolPath retrieves the pool by its path.
 func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
-	result, ok := s.store.GetPools().Get(poolPath)
-	if !ok {
+	result := s.store.GetPools().Get(poolPath)
+	if result == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
@@ -57,8 +57,8 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 	pool := s.getPoolByPoolPath(poolPath)
 
 	incentives := pool.Incentives()
-	incentive, exist := incentives.IncentiveTrees().Get(incentiveId)
-	if !exist {
+	incentive := incentives.IncentiveTrees().Get(incentiveId)
+	if incentive == nil {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 

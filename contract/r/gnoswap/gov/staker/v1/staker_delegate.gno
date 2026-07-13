@@ -572,8 +572,8 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegationRaw, exists := allDelegations.Get(utils.FormatInt(id))
-			if !exists {
+			delegationRaw := allDelegations.Get(utils.FormatInt(id))
+			if delegationRaw == nil {
 				continue
 			}
 			delegation, ok := delegationRaw.(*staker.Delegation)
