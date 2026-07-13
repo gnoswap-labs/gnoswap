@@ -32,8 +32,8 @@ func (dm *DelegationManager) SetUserDelegations(userDelegations *bptree.BPTree) 
 
 // GetDelegatorDelegations returns all delegations for a specific delegator.
 func (dm *DelegationManager) GetDelegatorDelegations(delegator string) (*bptree.BPTree, bool) {
-	delegations, exists := dm.userDelegations.Get(delegator)
-	if !exists {
+	delegations := dm.userDelegations.Get(delegator)
+	if delegations == nil {
 		return nil, false
 	}
 	delegationsTree, ok := delegations.(*bptree.BPTree)
@@ -49,8 +49,8 @@ func (dm *DelegationManager) GetDelegationIDs(delegator, delegatee string) ([]in
 	if !exists {
 		return nil, false
 	}
-	ids, exists := delegations.Get(delegatee)
-	if !exists {
+	ids := delegations.Get(delegatee)
+	if ids == nil {
 		return nil, false
 	}
 	idsSlice, ok := ids.([]int64)
