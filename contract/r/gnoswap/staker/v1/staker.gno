@@ -219,8 +219,8 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	poolPath := pn.GetPositionPoolKey(positionId)
 	pools := s.getPools()
 
-	pool := pools.Get(poolPath)
-	if pool == nil {
+	pool, ok := pools.Get(poolPath)
+	if !ok {
 		panic(makeErrorWithDetails(
 			errNonIncentivizedPool,
 			ufmt.Sprintf("cannot stake position to non existing pool(%s)", poolPath),
@@ -520,7 +520,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"currentHeight", utils.FormatInt(blockHeight),
 		)
 
-		pool := s.getPools().Get(deposit.TargetPoolPath())
+		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
 		poolResolver := NewPoolResolver(pool)
 		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
@@ -641,7 +641,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	if !skipInternalUpdate {
 		poolPath := depositResolver.TargetPoolPath()
-		pool := s.getPools().Get(poolPath)
+		pool, _ := s.getPools().Get(poolPath)
 		poolResolver := NewPoolResolver(pool)
 
 		// Get accumulator values for reward calculation tracking
@@ -731,7 +731,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 
 	// Get pool and accumulator values for reward calculation tracking
 	currentTime := time.Now().Unix()
-	pool := s.getPools().Get(poolPath)
+	pool, _ := s.getPools().Get(poolPath)
 	poolResolver := NewPoolResolver(pool)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
@@ -761,7 +761,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 func (s *stakerV1) applyUnStake(positionId uint64) error {
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
-	pool := s.getPools().Get(depositResolver.TargetPoolPath())
+	pool, ok := s.getPools().Get(depositResolver.TargetPoolPath())
 	poolResolver := NewPoolResolver(pool)
 	if !ok {
 		return ufmt.Errorf(

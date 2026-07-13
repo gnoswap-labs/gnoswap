@@ -2542,7 +2542,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 				}
 
 				// verify accumulated penalty was reduced
-				pool := instance.getPools().Get(poolPath)
+				pool, ok := instance.getPools().Get(poolPath)
 				poolResolver := NewPoolResolver(pool)
 				updatedIncentive, exists := poolResolver.IncentivesResolver().Get(tt.incentiveId)
 				uassert.True(t, exists)
@@ -2718,7 +2718,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) 
 		result := mockInstanceCollectExternalIncentivePenalty(cross(cur), poolPath, incentiveId, refundAddress)
 		uassert.Equal(t, int64(5000), result)
 
-		pool := getMockInstance().getPools().Get(poolPath)
+		pool, ok := getMockInstance().getPools().Get(poolPath)
 		uassert.True(t, exists)
 		poolResolver := NewPoolResolver(pool)
 		updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)

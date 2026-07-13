@@ -155,8 +155,8 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	assertIsValidAddress(refundAddress)
 
 	// checks if the pool has been incentivized
-	pool := s.getPools().Get(targetPoolPath)
-	if pool == nil {
+	pool, ok := s.getPools().Get(targetPoolPath)
+	if !ok {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
@@ -318,8 +318,8 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	assertIsPoolExists(s, targetPoolPath)
 	assertIsValidAddress(refundAddress)
 
-	pool := s.getPools().Get(targetPoolPath)
-	if pool == nil {
+	pool, ok := s.getPools().Get(targetPoolPath)
+	if !ok {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
@@ -417,7 +417,7 @@ func (s *stakerV1) addIncentiveIdByCreationTime(_ int, rlm realm, poolPath, ince
 	freshPoolIncentiveIds := sr.NewBPTreeN(16)
 	found := false
 
-	if currentPoolIncentiveIdsValue := incentivesByTime.Get(creationTime); currentPoolIncentiveIdsValue != nil {
+	if currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(creationTime); ok {
 		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 		if !ok {
 			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))

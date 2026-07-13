@@ -54,7 +54,7 @@ func TestPoolsGetSet(cur realm, t *testing.T) {
 				uassert.NotNil(t, retrieved)
 				uassert.Equal(t, tt.poolPath, retrieved.PoolPath())
 			} else {
-				ok := pools.Get(tt.poolPath) != nil
+				_, ok := pools.Get(tt.poolPath)
 				uassert.False(t, ok)
 			}
 		})

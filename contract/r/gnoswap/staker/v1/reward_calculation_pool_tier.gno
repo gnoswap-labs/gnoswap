@@ -122,7 +122,7 @@ func NewPoolTierBy(
 // CurrentReward returns the current per-pool reward for the given tier.
 func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	currentEmission := self.getEmission()
-	tierRatio := self.tierRatio.Get(tier)
+	tierRatio, err := self.tierRatio.Get(tier)
 	if err != nil {
 		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 	}
@@ -153,6 +153,7 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 	if tierI := self.membership.Get(poolPath); tierI == nil {
 		return 0
 	} else {
+		var ok bool
 		tier, ok = tierI.(uint64)
 		if !ok {
 			panic("failed to cast tier to uint64")
@@ -183,8 +184,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 	if nextTier == 0 {
 		// removed from the tier
 		self.membership.Remove(poolPath)
-		pool := pools.Get(poolPath)
-		if pool == nil {
+		pool, ok := pools.Get(poolPath)
+		if !ok {
 			panic("changeTier: pool not found")
 		}
 		poolResolver := NewPoolResolver(pool)
@@ -202,8 +203,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 
 	// Cache updated reward for each tiered pool
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		pool := pools.Get(key)
-		if pool == nil {
+		pool, ok := pools.Get(key)
+		if !ok {
 			panic("changeTier: pool not found")
 		}
 		tier, ok := value.(uint64)
@@ -263,8 +264,8 @@ func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 // cacheRewardForPool caches internal reward/accumulators for a single pool only.
 // This avoids iterating all tiered pools on every position reward calculation.
 func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, poolPath string) {
-	pool := pools.Get(poolPath)
-	if pool == nil {
+	pool, ok := pools.Get(poolPath)
+	if !ok {
 		return
 	}
 
@@ -332,8 +333,8 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		pool := pools.Get(key)
-		if pool == nil {
+		pool, ok := pools.Get(key)
+		if !ok {
 			return false
 		}
 
@@ -373,7 +374,7 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // Pool not in any tier
 	}
 
-	tierRatio := self.tierRatio.Get(tierNum)
+	tierRatio, err := self.tierRatio.Get(tierNum)
 	if err != nil {
 		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 	}
@@ -421,7 +422,7 @@ func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 			continue
 		}
 
-		tierRatio := self.tierRatio.Get(tierNum)
+		tierRatio, err := self.tierRatio.Get(tierNum)
 		if err != nil {
 			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 		}

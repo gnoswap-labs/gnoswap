@@ -1347,7 +1347,7 @@ func (event *TestEventCreatePool) Apply(cur realm, t *testing.T, canonical *cano
 }
 
 func (event *TestEventCreatePool) IsValid(canonical *canonicalRewardState) bool {
-	ok := canonical.global.pools.Get(event.poolPath) != nil
+	_, ok := canonical.global.pools.Get(event.poolPath)
 	return !ok
 }
 
@@ -1361,7 +1361,7 @@ type TestEventChangeTier struct {
 }
 
 func (event *TestEventChangeTier) IsValid(canonical *canonicalRewardState) bool {
-	ok := canonical.global.pools.Get(event.poolPath) != nil
+	_, ok := canonical.global.pools.Get(event.poolPath)
 	return ok
 }
 
@@ -1395,7 +1395,7 @@ func (event *TestEventStakeToken) Apply(cur realm, t *testing.T, canonical *cano
 }
 
 func (event *TestEventStakeToken) IsValid(canonical *canonicalRewardState) bool {
-	ok := canonical.global.pools.Get(event.poolPath) != nil
+	_, ok := canonical.global.pools.Get(event.poolPath)
 	return ok
 }
 
@@ -1413,7 +1413,7 @@ func (event *TestEventMoveTick) Apply(cur realm, t *testing.T, canonical *canoni
 }
 
 func (event *TestEventMoveTick) IsValid(canonical *canonicalRewardState) bool {
-	ok := canonical.global.pools.Get(event.poolPath) != nil
+	_, ok := canonical.global.pools.Get(event.poolPath)
 	return ok
 }
 
