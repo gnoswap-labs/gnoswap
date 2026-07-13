@@ -58,8 +58,8 @@ func (e *EmissionRewardManager) GetDistributedAmount() int64 {
 }
 
 func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardState, bool, error) {
-	ri, ok := e.rewardStates.Get(addr)
-	if !ok {
+	ri := e.rewardStates.Get(addr)
+	if ri == nil {
 		return nil, false, nil
 	}
 	rs, castOk := ri.(*EmissionRewardState)

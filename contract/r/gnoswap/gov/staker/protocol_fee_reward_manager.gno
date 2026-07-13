@@ -42,8 +42,8 @@ func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 /* Getters */
 
 func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewardState, bool, error) {
-	ri, ok := p.rewardStates.Get(addr)
-	if !ok {
+	ri := p.rewardStates.Get(addr)
+	if ri == nil {
 		return nil, false, nil
 	}
 	rs, castOk := ri.(*ProtocolFeeRewardState)

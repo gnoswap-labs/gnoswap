@@ -29,8 +29,8 @@ func (lpd *LaunchpadProjectDeposits) SetDeposits(deposits *bptree.BPTree) {
 }
 
 func (lpd *LaunchpadProjectDeposits) GetDeposit(ownerAddress string) (int64, bool) {
-	deposit, exists := lpd.deposits.Get(ownerAddress)
-	if !exists {
+	deposit := lpd.deposits.Get(ownerAddress)
+	if deposit == nil {
 		return 0, false
 	}
 	amount, ok := deposit.(int64)
