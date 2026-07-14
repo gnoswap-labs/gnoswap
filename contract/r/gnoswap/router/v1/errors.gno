@@ -1,4 +1,4 @@
-package v1
+package router
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"

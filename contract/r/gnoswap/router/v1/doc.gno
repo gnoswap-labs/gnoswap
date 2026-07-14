@@ -6,4 +6,4 @@
 //
 // All swap functions include deadline checks and minimum output validation
 // to protect users from unfavorable price movements.
-package v1
+package router

@@ -1,4 +1,4 @@
-package v1
+package protocol_fee
 
 // GetDevOpsPct returns the percentage allocated to devOps.
 func (pf *protocolFeeV1) GetDevOpsPct() int64 {

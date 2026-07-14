@@ -1,4 +1,4 @@
-package v1
+package protocol_fee
 
 import (
 	prabc "gno.land/p/gnoswap/rbac"

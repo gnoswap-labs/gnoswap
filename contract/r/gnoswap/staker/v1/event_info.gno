@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	i256 "gno.land/p/gnoswap/int256"

@@ -1,4 +1,4 @@
-package v1
+package staker
 
 const (
 	GNS_PATH    string = "gno.land/r/gnoswap/gns"

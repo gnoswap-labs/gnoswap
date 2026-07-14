@@ -1,4 +1,4 @@
-package v1
+package protocol_fee
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"

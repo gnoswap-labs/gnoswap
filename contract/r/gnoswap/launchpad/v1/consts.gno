@@ -1,4 +1,4 @@
-package v1
+package launchpad
 
 const (
 	projectTier30  = int64(30)
