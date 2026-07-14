@@ -275,12 +275,12 @@ type Slot0 struct {
 	unlocked     bool       // whether the pool is currently locked to reentrancy
 }
 
-func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96 }
+func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96.Clone() }
 func (s *Slot0) Tick() int32              { return s.tick }
 func (s *Slot0) FeeProtocol() uint8       { return s.feeProtocol }
 func (s *Slot0) Unlocked() bool           { return s.unlocked }
 
-func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96 }
+func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96.Clone() }
 func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
 func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }

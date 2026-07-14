@@ -129,11 +129,9 @@ func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
 
 // Set stores a value with the given key.
 //
-// rlm.IsCurrent() must hold (rejects spoofed/stale realm tokens). When the
-// caller is code, rlm.Address() -- the caller realm -- must be in
-// the authorized writers set. EOA / user-realm callers (IsCode == false)
-// bypass the ACL so deploy and test flows can populate state without prior
-// registration.
+// rlm.IsCurrent() must hold (rejects spoofed/stale realm tokens). Code callers
+// must be in the authorized writers set. User-realm (EOA) callers bypass the ACL
+// to support deploy and test flows — symmetric with Delete below.
 func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -150,17 +148,14 @@ func (k *kvStore) Set(_ int, rlm realm, key string, value any) error {
 
 // Delete removes a key from the store.
 //
-// Unlike Set, Delete has no IsCode bypass: rlm.Address() is always
-// consulted against the ACL. Delete is destructive, so the relaxed path Set
-// offers for EOA / test callers is intentionally not extended here.
+// Follows the same ACL policy as Set: code callers require authorization,
+// user-realm (EOA) callers bypass the ACL.
 func (k *kvStore) Delete(_ int, rlm realm, key string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	caller := rlm.Address()
-
-	if !k.IsWriteAuthorized(caller) {
+	if rlm.IsCode() && !k.IsWriteAuthorized(rlm.Address()) {
 		return errors.New(ErrWritePermissionDenied)
 	}
 
@@ -191,13 +186,18 @@ func (k *kvStore) IsWriteAuthorized(caller address) bool {
 	return k.authorizedCallers[caller] >= Write
 }
 
-// GetAuthorizedCallers returns all authorized callers and their permissions
+// GetAuthorizedCallers returns a copy of the authorized callers map with their permissions.
+// A copy is returned so callers cannot mutate the ACL map directly.
 func (k *kvStore) GetAuthorizedCallers() (map[address]Permission, error) {
 	if k.authorizedCallers == nil {
 		return make(map[address]Permission), errors.New(ErrAuthorizedCallerNotFound)
 	}
 
-	return k.authorizedCallers, nil
+	out := make(map[address]Permission, len(k.authorizedCallers))
+	for addr, perm := range k.authorizedCallers {
+		out[addr] = perm
+	}
+	return out, nil
 }
 
 // AddAuthorizedCaller adds a new authorized caller with the specified permission
