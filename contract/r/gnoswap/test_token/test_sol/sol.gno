@@ -1,4 +1,4 @@
-package sol
+package test_sol
 
 import (
 	"strings"

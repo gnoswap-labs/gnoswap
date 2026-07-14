@@ -1,4 +1,4 @@
-package trx
+package test_trx
 
 import (
 	"strings"

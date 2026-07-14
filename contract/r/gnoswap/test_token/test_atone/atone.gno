@@ -1,4 +1,4 @@
-package atone
+package test_atone
 
 import (
 	"strings"
