@@ -1,4 +1,4 @@
-package v_permprobe
+package attempt_store_writer
 
 import (
 	pool "gno.land/r/gnoswap/pool"

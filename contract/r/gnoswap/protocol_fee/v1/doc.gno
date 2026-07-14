@@ -3,4 +3,4 @@
 // This contract accumulates fees generated from trading activity and
 // distributes them to devOps and governance stakers according to
 // configurable percentages set through governance.
-package v1
+package protocol_fee

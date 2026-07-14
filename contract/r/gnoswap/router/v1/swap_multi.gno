@@ -1,4 +1,4 @@
-package v1
+package router
 
 import (
 	prbac "gno.land/p/gnoswap/rbac"

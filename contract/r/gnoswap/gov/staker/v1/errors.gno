@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"

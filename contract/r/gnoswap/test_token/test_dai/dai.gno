@@ -1,4 +1,4 @@
-package dai
+package test_dai
 
 import (
 	"strings"

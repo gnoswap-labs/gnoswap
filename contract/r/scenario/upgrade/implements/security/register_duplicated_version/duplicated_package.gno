@@ -1,4 +1,4 @@
-package v_dup_probe
+package register_duplicated_version
 
 import (
 	pool "gno.land/r/gnoswap/pool"

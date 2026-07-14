@@ -1,4 +1,4 @@
-package btc
+package test_btc
 
 import (
 	"strings"

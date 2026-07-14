@@ -1,4 +1,4 @@
-package v1
+package staker
 
 // Evaluate against the canonical implementation
 

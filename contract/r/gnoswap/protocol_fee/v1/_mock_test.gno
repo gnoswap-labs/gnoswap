@@ -1,4 +1,4 @@
-package v1
+package protocol_fee
 
 import (
 	bptree "gno.land/p/nt/bptree/v0"

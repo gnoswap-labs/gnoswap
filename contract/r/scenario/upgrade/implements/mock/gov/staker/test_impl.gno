@@ -3,7 +3,7 @@ package mock
 
 import (
 	"gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/gov/staker/v1"
+	v1 "gno.land/r/gnoswap/gov/staker/v1"
 )
 
 func NewV3ValidGovStaker(store staker.IGovStakerStore) staker.IGovStaker {
