@@ -144,8 +144,8 @@ func (p *Pool) HasTick(tick int32) bool {
 func (p *Pool) GetTick(tick int32) (TickInfo, error) {
 	tickKey := EncodeTickKey(tick)
 
-	iTickInfo, ok := p.ticks.Get(tickKey)
-	if !ok {
+	iTickInfo := p.ticks.Get(tickKey)
+	if iTickInfo == nil {
 		return TickInfo{}, ufmt.Errorf("tick %d not found", tick)
 	}
 

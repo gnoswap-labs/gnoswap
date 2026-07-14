@@ -21,8 +21,8 @@ func marshal(data *json.Node) string {
 
 // getUint64FromTree returns the uint64 value from the tree
 func getUint64FromTree(tree *bptree.BPTree, key string) uint64 {
-	value, exists := tree.Get(key)
-	if !exists {
+	value := tree.Get(key)
+	if value == nil {
 		return 0
 	}
 

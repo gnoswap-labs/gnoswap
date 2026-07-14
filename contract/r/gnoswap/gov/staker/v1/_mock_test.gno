@@ -102,13 +102,13 @@ func (m *mockGovStakerStore) SetDelegations(_ int, rlm realm, delegations *bptre
 }
 
 func (m *mockGovStakerStore) HasDelegation(id int64) bool {
-	_, exists := m.delegations.Get(utils.Uint64ToString(uint64(id)))
+	exists := m.delegations.Get(utils.Uint64ToString(uint64(id))) != nil
 	return exists
 }
 
 func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) {
-	value, exists := m.delegations.Get(utils.Uint64ToString(uint64(id)))
-	if !exists {
+	value := m.delegations.Get(utils.Uint64ToString(uint64(id)))
+	if value == nil {
 		return nil, false
 	}
 	return value.(*staker.Delegation), true
@@ -176,7 +176,7 @@ func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
 }
 
 func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
-	_, exists := m.userDelegations.Get(user)
+	exists := m.userDelegations.Get(user) != nil
 	return exists
 }
 
@@ -186,8 +186,8 @@ func (m *mockGovStakerStore) SetUserDelegations(delegations *bptree.BPTree) erro
 }
 
 func (m *mockGovStakerStore) GetUserDelegations(user string) ([]int64, error) {
-	value, exists := m.userDelegations.Get(user)
-	if !exists {
+	value := m.userDelegations.Get(user)
+	if value == nil {
 		return nil, errors.New("user delegations not found")
 	}
 

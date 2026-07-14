@@ -197,8 +197,8 @@ func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *pro
 }
 
 func retrieveAmount(tree *bptree.BPTree, key string) int64 {
-	amountI, exists := tree.Get(key)
-	if !exists {
+	amountI := tree.Get(key)
+	if amountI == nil {
 		return 0
 	}
 	res, ok := amountI.(int64)

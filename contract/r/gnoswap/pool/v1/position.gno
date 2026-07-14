@@ -137,8 +137,8 @@ func PositionTokensOwed1(p *pl.Pool, key string) int64 {
 
 // GetPosition returns the position info for a given key.
 func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
-	iPositionInfo, exist := p.Positions().Get(key)
-	if !exist {
+	iPositionInfo := p.Positions().Get(key)
+	if iPositionInfo == nil {
 		newPosition := pl.NewDefaultPositionInfo()
 		return newPosition, false
 	}

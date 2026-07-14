@@ -138,15 +138,14 @@ func (s *govStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BP
 
 func (s *govStakerStore) HasDelegation(id int64) bool {
 	delegations := s.GetAllDelegations()
-	_, exists := delegations.Get(utils.Int64ToString(id))
-	return exists
+	return delegations.Get(utils.Int64ToString(id)) != nil
 }
 
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	delegations := s.GetAllDelegations()
 
-	result, exists := delegations.Get(utils.Int64ToString(id))
-	if !exists {
+	result := delegations.Get(utils.Int64ToString(id))
+	if result == nil {
 		return nil, false
 	}
 

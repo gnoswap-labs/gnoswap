@@ -59,8 +59,8 @@ func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool)
 	if m.configs == nil {
 		return governance.NewDefaultConfig(), false
 	}
-	result, exists := m.configs.Get(utils.FormatInt(version))
-	if !exists {
+	result := m.configs.Get(utils.FormatInt(version))
+	if result == nil {
 		return governance.NewDefaultConfig(), false
 	}
 	return result.(governance.Config), true
@@ -87,8 +87,8 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	proposal, exists := m.proposals.Get(utils.FormatInt(proposalID))
-	if !exists {
+	proposal := m.proposals.Get(utils.FormatInt(proposalID))
+	if proposal == nil {
 		return nil, false
 	}
 	return proposal.(*governance.Proposal), true
@@ -120,8 +120,8 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
-	result, exists := m.proposalUserVotingInfos.Get(utils.FormatInt(proposalID))
-	if !exists {
+	result := m.proposalUserVotingInfos.Get(utils.FormatInt(proposalID))
+	if result == nil {
 		return nil, false
 	}
 	return result.(*bptree.BPTree), true
@@ -156,8 +156,8 @@ func (m *mockGovernanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	if m.userProposals == nil {
 		return nil, false
 	}
-	result, exists := m.userProposals.Get(user)
-	if !exists {
+	result := m.userProposals.Get(user)
+	if result == nil {
 		return nil, false
 	}
 	return result.([]int64), true
@@ -169,7 +169,7 @@ func (m *mockGovernanceStore) AddUserProposal(_ int, rlm realm, user string, pro
 	}
 
 	var proposalIDs []int64
-	if existing, ok := m.userProposals.Get(user); ok {
+	if existing := m.userProposals.Get(user); existing != nil {
 		proposalIDs = existing.([]int64)
 	}
 	proposalIDs = append(proposalIDs, proposalID)
@@ -183,12 +183,12 @@ func (m *mockGovernanceStore) RemoveUserProposal(_ int, rlm realm, user string, 
 		return nil
 	}
 
-	proposalIDsRaw, ok := m.userProposals.Get(user)
-	if !ok {
+	proposalIDsRaw := m.userProposals.Get(user)
+	if proposalIDsRaw == nil {
 		return nil
 	}
 
-	proposalIDs, ok := proposalIDsRaw.([]int64)
+	proposalIDs := proposalIDsRaw.([]int64)
 	newProposalIDs := make([]int64, 0)
 
 	for _, id := range proposalIDs {

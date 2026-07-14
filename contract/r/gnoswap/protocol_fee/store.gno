@@ -106,8 +106,8 @@ func (s *protocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, bool
 		panic(err)
 	}
 
-	result, ok := accuToGovStaker.Get(tokenPath)
-	if !ok {
+	result := accuToGovStaker.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -162,8 +162,8 @@ func (s *protocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, bool) {
 		panic(err)
 	}
 
-	result, ok := accuToDevOps.Get(tokenPath)
-	if !ok {
+	result := accuToDevOps.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -218,8 +218,8 @@ func (s *protocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string
 		panic(err)
 	}
 
-	result, ok := distributedToGovStakerHistory.Get(tokenPath)
-	if !ok {
+	result := distributedToGovStakerHistory.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -274,8 +274,8 @@ func (s *protocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (
 		panic(err)
 	}
 
-	result, ok := distributedToDevOpsHistory.Get(tokenPath)
-	if !ok {
+	result := distributedToDevOpsHistory.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 

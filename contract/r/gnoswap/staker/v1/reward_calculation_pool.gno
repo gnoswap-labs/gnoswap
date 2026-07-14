@@ -28,8 +28,8 @@ func NewPools() *Pools {
 
 // Get returns the pool for the given poolPath
 func (self *Pools) Get(poolPath string) (*sr.Pool, bool) {
-	v, ok := self.tree.Get(poolPath)
-	if !ok {
+	v := self.tree.Get(poolPath)
+	if v == nil {
 		return nil, false
 	}
 	p, ok := v.(*sr.Pool)

@@ -443,8 +443,8 @@ func initPoolTest(cur realm, t *testing.T) {
 
 func mustGetStoredTestPool(poolPath string) *pl.Pool {
 	pools := mockPoolStore.GetPools()
-	poolValue, ok := pools.Get(poolPath)
-	if !ok {
+	poolValue := pools.Get(poolPath)
+	if poolValue == nil {
 		panic("test pool not found")
 	}
 

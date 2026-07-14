@@ -114,8 +114,8 @@ func (s *governanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTree) e
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	configs := s.GetConfigs()
-	result, ok := configs.Get(formatInt64Key(version))
-	if !ok {
+	result := configs.Get(formatInt64Key(version))
+	if result == nil {
 		return Config{}, false
 	}
 
@@ -171,8 +171,8 @@ func (s *governanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTre
 
 func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 	proposals := s.GetProposals()
-	result, ok := proposals.Get(formatInt64Key(proposalID))
-	if !ok {
+	result := proposals.Get(formatInt64Key(proposalID))
+	if result == nil {
 		return nil, false
 	}
 
@@ -227,8 +227,8 @@ func (s *governanceStore) SetProposalUserVotingInfos(_ int, rlm realm, votingInf
 
 func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
-	votingInfo, ok := votingInfos.Get(formatInt64Key(proposalID))
-	if !ok {
+	votingInfo := votingInfos.Get(formatInt64Key(proposalID))
+	if votingInfo == nil {
 		return nil, false
 	}
 
@@ -288,8 +288,8 @@ func (s *governanceStore) GetUserProposalsTree() *bptree.BPTree {
 
 func (s *governanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	userProposals := s.GetUserProposals()
-	result, ok := userProposals.Get(user)
-	if !ok {
+	result := userProposals.Get(user)
+	if result == nil {
 		return nil, false
 	}
 
@@ -314,7 +314,8 @@ func (s *governanceStore) AddUserProposal(_ int, rlm realm, user string, proposa
 
 	// Get existing proposals for user
 	var proposalIDs []int64
-	if existing, ok := userProposals.Get(user); ok {
+	if existing := userProposals.Get(user); existing != nil {
+		var ok bool
 		proposalIDs, ok = existing.([]int64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast result to []int64: %T", existing))
@@ -338,9 +339,9 @@ func (s *governanceStore) RemoveUserProposal(_ int, rlm realm, user string, prop
 	}
 
 	userProposals := s.GetUserProposals()
-	proposalIDsRaw, ok := userProposals.Get(user)
+	proposalIDsRaw := userProposals.Get(user)
 	// proposal already removed
-	if !ok {
+	if proposalIDsRaw == nil {
 		return nil
 	}
 

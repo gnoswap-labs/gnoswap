@@ -73,7 +73,7 @@ func (k *keeper) validateAddresses(addr, refAddr address) error {
 
 // has returns true if a referral exists for the given address.
 func (k *keeper) has(addr address) bool {
-	_, exists := k.store.Get(addr.String())
+	exists := k.store.Get(addr.String()) != nil
 	return exists
 }
 
@@ -84,8 +84,8 @@ func (k *keeper) get(addr address) (address, error) {
 		return zeroAddress, errors.New(ErrInvalidAddress)
 	}
 
-	val, ok := k.store.Get(addr.String())
-	if !ok {
+	val := k.store.Get(addr.String())
+	if val == nil {
 		return zeroAddress, errors.New(ErrNotFound)
 	}
 
@@ -109,8 +109,8 @@ func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 		return 0, errors.New(ErrInvalidAddress)
 	}
 
-	val, ok := k.lastOps.Get(addr.String())
-	if !ok {
+	val := k.lastOps.Get(addr.String())
+	if val == nil {
 		return 0, errors.New(ErrNotFound)
 	}
 
@@ -127,8 +127,8 @@ func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 
-	lastOpTimeRaw, exists := k.lastOps.Get(addr)
-	if !exists {
+	lastOpTimeRaw := k.lastOps.Get(addr)
+	if lastOpTimeRaw == nil {
 		return nil
 	}
 

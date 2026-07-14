@@ -150,9 +150,10 @@ func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 
 // CurrentTier returns the tier of the given pool.
 func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
-	if tierI, ok := self.membership.Get(poolPath); !ok {
+	if tierI := self.membership.Get(poolPath); tierI == nil {
 		return 0
 	} else {
+		var ok bool
 		tier, ok = tierI.(uint64)
 		if !ok {
 			panic("failed to cast tier to uint64")

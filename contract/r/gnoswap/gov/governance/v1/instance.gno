@@ -165,8 +165,8 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return nil, false
 	}
 
-	votingInfoRaw, exists := votingInfosTree.Get(addr.String())
-	if !exists {
+	votingInfoRaw := votingInfosTree.Get(addr.String())
+	if votingInfoRaw == nil {
 		return nil, false
 	}
 

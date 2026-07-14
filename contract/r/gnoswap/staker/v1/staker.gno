@@ -76,8 +76,8 @@ func (self *Deposits) Size() int {
 
 // get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
-	depositI, ok := self.tree.Get(EncodeUint(positionId))
-	if !ok {
+	depositI := self.tree.Get(EncodeUint(positionId))
+	if depositI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("positionId(%d) not found", positionId),
@@ -125,8 +125,8 @@ func (self *ExternalIncentives) Size() int { return self.tree.Size() }
 
 // get retrieves an external incentive by ID.
 func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
-	incentiveI, ok := self.tree.Get(incentiveId)
-	if !ok {
+	incentiveI := self.tree.Get(incentiveId)
+	if incentiveI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("incentiveId(%s) not found", incentiveId),

@@ -49,8 +49,8 @@ func (s *mockProtocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
 }
 
 func (s *mockProtocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, bool) {
-	result, ok := s.accuToGovStaker.Get(tokenPath)
-	if !ok {
+	result := s.accuToGovStaker.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -83,8 +83,8 @@ func (s *mockProtocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
 }
 
 func (s *mockProtocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, bool) {
-	result, ok := s.accuToDevOps.Get(tokenPath)
-	if !ok {
+	result := s.accuToDevOps.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -116,8 +116,8 @@ func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree
 }
 
 func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool) {
-	result, ok := s.distributedToGovStakerHistory.Get(tokenPath)
-	if !ok {
+	result := s.distributedToGovStakerHistory.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 
@@ -148,8 +148,8 @@ func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
 }
 
 func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool) {
-	result, ok := s.distributedToDevOpsHistory.Get(tokenPath)
-	if !ok {
+	result := s.distributedToDevOpsHistory.Get(tokenPath)
+	if result == nil {
 		return 0, false
 	}
 

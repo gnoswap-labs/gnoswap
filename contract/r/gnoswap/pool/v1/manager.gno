@@ -182,8 +182,8 @@ func (i *poolV1) setFeeAmountTickSpacing(_ int, rlm realm, fee uint32, tickSpaci
 func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 	pools := i.store.GetPools()
 
-	iPool, exist := pools.Get(poolPath)
-	if !exist {
+	iPool := pools.Get(poolPath)
+	if iPool == nil {
 		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 

@@ -147,8 +147,8 @@ func TestStoreSetAndGetPools(cur realm, t *testing.T) {
 				uassert.True(t, ps.HasPools(), "should have pools after setting")
 				retrievedPools := ps.GetPools()
 				uassert.NotEqual(t, nil, retrievedPools)
-				val, exists := retrievedPools.Get("pool1")
-				uassert.True(t, exists, "pool1 should exist")
+				val := retrievedPools.Get("pool1")
+				uassert.NotNil(t, val, "pool1 should not be nil")
 				uassert.Equal(t, "data1", val)
 			},
 		},
@@ -699,7 +699,7 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				uassert.True(t, ps.HasWithdrawalFeeBPS())
 
 				retrievedPools := ps.GetPools()
-				val, _ := retrievedPools.Get("pool1")
+				val := retrievedPools.Get("pool1")
 				uassert.Equal(t, "data1", val)
 
 				retrievedFeeMap := ps.GetFeeAmountTickSpacing()

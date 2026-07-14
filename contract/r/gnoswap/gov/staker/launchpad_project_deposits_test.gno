@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // TestNewLaunchpadProjectDeposits tests creating a new launchpad project deposits
@@ -80,8 +80,8 @@ func TestLaunchpadProjectDeposits_SetAndGetDeposits(cur realm, t *testing.T) {
 
 			// Verify each deposit
 			for owner, expectedAmount := range tc.depositsToSet {
-				value, exists := result.Get(owner)
-				uassert.True(t, exists)
+				value := result.Get(owner)
+				uassert.NotNil(t, value, "deposit for %s should not be nil", owner)
 				uassert.Equal(t, value.(int64), expectedAmount)
 			}
 		})
@@ -110,8 +110,8 @@ func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 
 			// then
 			uassert.Equal(t, deposits.Size(), 2)
-			value1, exists1 := deposits.Get("owner1")
-			uassert.True(t, exists1)
+			value1 := deposits.Get("owner1")
+			uassert.NotNil(t, value1, "deposit for owner1 should not be nil")
 			uassert.Equal(t, value1.(int64), int64(1000))
 
 			// when - remove a deposit
@@ -119,7 +119,7 @@ func TestLaunchpadProjectDeposits_Operations(cur realm, t *testing.T) {
 
 			// then
 			uassert.Equal(t, deposits.Size(), 1)
-			_, exists := deposits.Get("owner1")
+			exists := deposits.Get("owner1") != nil
 			uassert.False(t, exists)
 		})
 	}

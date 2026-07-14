@@ -283,8 +283,8 @@ func (i *Incentives) SetUnclaimablePeriods(unclaimablePeriods *UintTree) {
 
 // Incentive returns an incentive by ID
 func (i *Incentives) Incentive(incentiveId string) (*ExternalIncentive, bool) {
-	value, exists := i.incentives.Get(incentiveId)
-	if !exists {
+	value := i.incentives.Get(incentiveId)
+	if value == nil {
 		return nil, false
 	}
 	incentive, ok := value.(*ExternalIncentive)
@@ -586,8 +586,8 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 }
 
 func (t *Ticks) Get(tickId int32) *Tick {
-	v, ok := t.tree.Get(EncodeInt(tickId))
-	if !ok {
+	v := t.tree.Get(EncodeInt(tickId))
+	if v == nil {
 		tick := &Tick{
 			id:                   tickId,
 			stakedLiquidityGross: u256.Zero(),

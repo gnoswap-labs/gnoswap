@@ -31,8 +31,8 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 }
 
 func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
-	value, ok := tree.Get(id)
-	if !ok {
+	value := tree.Get(id)
+	if value == nil {
 		return nil, false
 	}
 	v, ok := value.(*sr.ExternalIncentive)

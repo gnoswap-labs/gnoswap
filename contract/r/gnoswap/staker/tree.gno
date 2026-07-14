@@ -49,8 +49,8 @@ func NewUintTreeN(fanout int) *UintTree {
 }
 
 func (self *UintTree) Get(key int64) (any, bool) {
-	v, ok := self.tree.Get(EncodeInt64(key))
-	if !ok {
+	v := self.tree.Get(EncodeInt64(key))
+	if v == nil {
 		return nil, false
 	}
 	return v, true
