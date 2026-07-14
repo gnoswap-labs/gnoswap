@@ -1,4 +1,4 @@
-package atom
+package test_atom
 
 import (
 	"strings"

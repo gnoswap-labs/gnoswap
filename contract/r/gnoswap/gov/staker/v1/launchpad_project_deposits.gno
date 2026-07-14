@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	gnsmath "gno.land/p/gnoswap/gnsmath"

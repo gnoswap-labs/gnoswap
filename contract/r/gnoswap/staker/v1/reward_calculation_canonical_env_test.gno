@@ -1,4 +1,4 @@
-package v1
+package staker
 
 // "Canonical" implementation of reward calculation.
 // Used for testing and reference.

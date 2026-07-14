@@ -1,4 +1,4 @@
-package usdc
+package test_usdc
 
 import (
 	"strings"

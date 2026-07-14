@@ -1,4 +1,4 @@
-package photon
+package test_photon
 
 import (
 	"strings"

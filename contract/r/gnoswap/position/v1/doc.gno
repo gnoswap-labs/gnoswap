@@ -3,4 +3,4 @@
 // Each position is represented as a non-transferable GRC721 NFT with concentrated
 // liquidity within a specific tick range. The package handles position lifecycle
 // including minting, liquidity adjustments, fee collection, and repositioning.
-package v1
+package position

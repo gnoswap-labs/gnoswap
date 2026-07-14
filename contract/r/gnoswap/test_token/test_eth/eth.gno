@@ -1,4 +1,4 @@
-package eth
+package test_eth
 
 import (
 	"strings"

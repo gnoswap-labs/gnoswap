@@ -1,4 +1,4 @@
-package pool_initializer
+package try_register_pool_initializer
 
 import (
 	pool "gno.land/r/gnoswap/pool"

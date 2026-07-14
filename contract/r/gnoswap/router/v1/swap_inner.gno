@@ -1,4 +1,4 @@
-package v1
+package router
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
