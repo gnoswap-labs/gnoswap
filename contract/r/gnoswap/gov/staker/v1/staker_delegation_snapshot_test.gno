@@ -194,7 +194,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(cur realm, t *testing.T) {
 		// then: should preserve continuity and clean old entries
 		history := gs.store.GetTotalDelegationHistory()
 		// Should have at least the cutoff entry
-		val := history.Get(cutoff)
+		val, exists := history.Get(cutoff)
 		uassert.True(t, exists || history.Size() > 0)
 		_ = val
 	})

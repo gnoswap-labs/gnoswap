@@ -636,7 +636,7 @@ func TestModifyPosition_WithDifferentPrice(cur realm, t *testing.T) {
 
 		// Validate final position state
 		positionValue := pool.Positions().Get(posKey)
-		uassert.True(t, exists, "Position should still exist")
+		uassert.NotNil(t, positionValue, "Position should still exist")
 		position := positionValue.(pl.PositionInfo)
 		uassert.Equal(t, MEDIUM_LIQUIDITY, position.Liquidity(), "Final liquidity should match")
 	})
@@ -952,7 +952,7 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 
 		// Then: Verify position is updated, not duplicated
 		positionValue := pool.Positions().Get(posKey)
-		uassert.True(t, exists, "Position should exist")
+		uassert.NotNil(t, positionValue, "Position should exist")
 		position := positionValue.(pl.PositionInfo)
 
 		expectedLiquidity := new(u256.Uint).Add(
@@ -1046,7 +1046,7 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 
 		// Then: Verify position state
 		positionValue := pool.Positions().Get(posKey)
-		uassert.True(t, exists, "Position entry should still exist")
+		uassert.NotNil(t, positionValue, "Position entry should still exist")
 		position := positionValue.(pl.PositionInfo)
 
 		uassert.Equal(t, "0", position.Liquidity(),

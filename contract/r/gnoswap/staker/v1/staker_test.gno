@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -912,7 +912,10 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Verify data at timestamp 100
-	value1 := retrieved.Get(100)
+	value1, ok := retrieved.Get(100)
+	if !ok {
+		t.Error("Expected to find value at timestamp 100")
+	}
 	if value1 == nil {
 		t.Error("Expected pool map at timestamp 100")
 	}
@@ -930,7 +933,10 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	}
 
 	// Verify data at timestamp 200
-	value2 := retrieved.Get(200)
+	value2, ok := retrieved.Get(200)
+	if !ok {
+		t.Error("Expected to find value at timestamp 200")
+	}
 	if value2 == nil {
 		t.Error("Expected pool map at timestamp 200")
 	}

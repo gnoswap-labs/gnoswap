@@ -556,8 +556,8 @@ func TestExternalIncentivesByCreationTimeSliceStorage(cur realm, t *testing.T) {
 
 	tree.Set(timestamp, poolIncentives)
 
-	value := tree.Get(timestamp)
-	if value == nil {
+	value, ok := tree.Get(timestamp)
+	if !ok {
 		t.Fatal("Expected timestamp entry to exist")
 	}
 
@@ -588,7 +588,10 @@ func TestExternalIncentivesByCreationTimeSliceStorage(cur realm, t *testing.T) {
 	poolTree.Set(poolPath, incentiveIds)
 	tree.Set(timestamp, poolTree)
 
-	value2 := tree.Get(timestamp)
+	value2, ok := tree.Get(timestamp)
+	if !ok {
+		t.Fatal("Expected to find value at timestamp 1000")
+	}
 	poolTree2 := value2.(*bptree.BPTree)
 	idsValue2 := poolTree2.Get(poolPath)
 	stored2 := idsValue2.([]string)
@@ -608,7 +611,10 @@ func TestExternalIncentivesByCreationTimeSliceStorage(cur realm, t *testing.T) {
 	poolTree2.Set(poolPath2, incentiveIds3)
 	tree.Set(timestamp, poolTree2)
 
-	value3 := tree.Get(timestamp)
+	value3, ok := tree.Get(timestamp)
+	if !ok {
+		t.Fatal("Expected to find value at timestamp 1000")
+	}
 	poolTree3 := value3.(*bptree.BPTree)
 	idsValue3 := poolTree3.Get(poolPath2)
 	if idsValue3 == nil {
@@ -729,7 +735,7 @@ func addIncentiveIdByCreationTimeForTest(cur realm, t *testing.T, instance *stak
 	}
 	entries := []poolEntry{}
 
-	if existing := incentivesByTime.Get(creationTime); existing != nil {
+	if existing, ok := incentivesByTime.Get(creationTime); ok {
 		existingTree, ok := existing.(*bptree.BPTree)
 		if !ok {
 			t.Fatalf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", existing)
@@ -821,8 +827,8 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 	// Verify all 3 incentives are stored at the same timestamp for the same pool
 	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
-	poolMapValue := incentivesByTime.Get(currentTime)
-	if poolMapValue == nil {
+	poolMapValue, ok := incentivesByTime.Get(currentTime)
+	if !ok {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
 
@@ -918,8 +924,8 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 		}
 
 		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue := incentivesByTime.Get(ts)
-		if currentPoolIncentiveIdsValue == nil {
+		currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(ts)
+		if !ok {
 			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 		}
 
@@ -974,7 +980,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 
 				// Get incentive IDs for the target pool
 				idsValue := poolMap.Get(poolPath)
-				if exists {
+				if idsValue != nil {
 					ids, ok := idsValue.([]string)
 					if !ok {
 						t.Fatalf("Expected []string for pool %s, got %T", poolPath, idsValue)
@@ -1053,8 +1059,8 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 		}
 
 		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue := incentivesByTime.Get(currentTime)
-		if currentPoolIncentiveIdsValue == nil {
+		currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(currentTime)
+		if !ok {
 			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
 		}
 
@@ -1085,8 +1091,8 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 	// Verify all 3 pools have their incentives stored at the same timestamp
 	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
-	poolMapValue := incentivesByTime.Get(currentTime)
-	if poolMapValue == nil {
+	poolMapValue, ok := incentivesByTime.Get(currentTime)
+	if !ok {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
 
@@ -1956,15 +1962,15 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 
 			for _, exp := range tt.expected {
 				// Get time entry
-				value := incentivesByTime.Get(exp.creationTime)
-				uassert.True(t, exists, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
+				value, ok := incentivesByTime.Get(exp.creationTime)
+				uassert.True(t, ok, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
 
 				poolIncentives, ok := value.(*bptree.BPTree)
 				uassert.True(t, ok, "Expected value to be *bptree.BPTree")
 
 				// Get pool entry
 				incentiveIdsValue := poolIncentives.Get(exp.poolPath)
-				uassert.True(t, exists, ufmt.Sprintf("Expected pool %s to exist at time %d", exp.poolPath, exp.creationTime))
+				uassert.True(t, incentiveIdsValue != nil, ufmt.Sprintf("Expected pool %s to exist at time %d", exp.poolPath, exp.creationTime))
 
 				incentiveIds, ok := incentiveIdsValue.([]string)
 				uassert.True(t, ok, "Expected value to be []string")
@@ -2084,7 +2090,7 @@ func TestAddIncentiveIdByCreationTime_IterationRange(cur realm, t *testing.T) {
 			incentivesByTime.Iterate(tt.rangeStart, tt.rangeEnd, func(key int64, value any) bool {
 				poolTree := value.(*bptree.BPTree)
 				idsValue := poolTree.Get(tt.queryPoolPath)
-				if exists {
+				if idsValue != nil {
 					ids := idsValue.([]string)
 					found = append(found, ids...)
 				}
@@ -2543,6 +2549,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 
 				// verify accumulated penalty was reduced
 				pool, ok := instance.getPools().Get(poolPath)
+				uassert.True(t, ok)
 				poolResolver := NewPoolResolver(pool)
 				updatedIncentive, exists := poolResolver.IncentivesResolver().Get(tt.incentiveId)
 				uassert.True(t, exists)
@@ -2719,7 +2726,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) 
 		uassert.Equal(t, int64(5000), result)
 
 		pool, ok := getMockInstance().getPools().Get(poolPath)
-		uassert.True(t, exists)
+		uassert.True(t, ok)
 		poolResolver := NewPoolResolver(pool)
 		updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
 		uassert.True(t, exists)

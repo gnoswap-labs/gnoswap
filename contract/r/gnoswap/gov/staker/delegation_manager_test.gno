@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // TestDelegationManager_NewDelegationManager tests the DelegationManager constructor
@@ -221,7 +221,8 @@ func TestDelegationManager_SetUserDelegations(cur realm, t *testing.T) {
 			uassert.Equal(t, result.Size(), len(tc.delegations))
 			for delegator, delegatees := range tc.delegations {
 				resultDelegatees := result.Get(delegator)
-				uassert.True(t, exists)
+				uassert.NotNil(t, resultDelegatees, "delegatees for %s should not be nil", delegator)
+
 				resultTree, ok := resultDelegatees.(*bptree.BPTree)
 				uassert.True(t, ok)
 				uassert.Equal(t, resultTree.Size(), len(delegatees))

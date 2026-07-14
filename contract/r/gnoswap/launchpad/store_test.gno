@@ -386,14 +386,16 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				uassert.Equal(t, "data1", val)
 
 				retrievedManagers := ls.GetProjectTierRewardManagers()
-				val, _ = retrievedManagers.Get("manager1")
+				val = retrievedManagers.Get("manager1")
+				uassert.NotNil(t, val, "manager1 should not be nil")
 				uassert.Equal(t, "mdata1", val)
 
 				retrievedCounter := ls.GetDepositCounter()
 				uassert.NotEqual(t, nil, retrievedCounter)
 
 				retrievedDeposits := ls.GetDeposits()
-				val, _ = retrievedDeposits.Get("deposit1")
+				val = retrievedDeposits.Get("deposit1")
+				uassert.NotNil(t, val, "deposit1 should not be nil")
 				uassert.Equal(t, "ddata1", val)
 			},
 		},

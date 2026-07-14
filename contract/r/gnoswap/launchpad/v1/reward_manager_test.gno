@@ -1962,8 +1962,7 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 
 			// Verify it was stored in the tree
 			stored := manager.Rewards().Get(tt.depositId)
-			uassert.True(t, exists)
-			uassert.NotNil(t, stored)
+			uassert.NotNil(t, stored, "reward state should not be nil")
 
 			// Verify the stored state has correct deposit amount
 			storedState, ok := stored.(*launchpad.RewardState)

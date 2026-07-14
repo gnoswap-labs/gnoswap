@@ -148,7 +148,7 @@ func TestStoreSetAndGetPools(cur realm, t *testing.T) {
 				retrievedPools := ps.GetPools()
 				uassert.NotEqual(t, nil, retrievedPools)
 				val := retrievedPools.Get("pool1")
-				uassert.True(t, exists, "pool1 should exist")
+				uassert.NotNil(t, val, "pool1 should not be nil")
 				uassert.Equal(t, "data1", val)
 			},
 		},
