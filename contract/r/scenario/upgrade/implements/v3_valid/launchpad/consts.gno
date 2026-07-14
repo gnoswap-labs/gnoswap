@@ -1,4 +1,4 @@
-package v3
+package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
