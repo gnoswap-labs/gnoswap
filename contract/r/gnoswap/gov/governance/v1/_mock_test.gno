@@ -188,7 +188,7 @@ func (m *mockGovernanceStore) RemoveUserProposal(_ int, rlm realm, user string, 
 		return nil
 	}
 
-	proposalIDs, ok := proposalIDsRaw.([]int64)
+	proposalIDs := proposalIDsRaw.([]int64)
 	newProposalIDs := make([]int64, 0)
 
 	for _, id := range proposalIDs {
