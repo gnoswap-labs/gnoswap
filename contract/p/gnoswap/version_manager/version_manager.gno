@@ -12,26 +12,29 @@ package version_manager
 
 import (
 	"chain"
-	"chain/runtime"
 	"errors"
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
+
+// ErrSpoofedRealm is returned when the supplied realm token does not match the
+// live crossing frame (rlm.IsCurrent() == false). It signals a stale or
+// spoofed token captured in an earlier frame.
+const ErrSpoofedRealm = "rlm does not match the current crossing frame"
 
 // versionManager is the concrete implementation of VersionManager interface.
 // It manages multiple versioned implementations of a domain (e.g., protocol_fee/v1, protocol_fee/v2).
 //
 // Storage Access Model:
 // Implementation realms do NOT receive direct storage permissions. Instead, when calls flow
-// from the domain proxy to the implementation, runtime.CurrentRealm() remains the domain
-// (proxy) realm, which already has write permission to the KVStore. This design prevents
-// external callers from directly invoking implementation realms to modify storage.
+// from the domain proxy to the implementation, the proxy realm (which has write permission
+// to the KVStore) is the one that drives the storage. This design prevents external callers
+// from directly invoking implementation realms to modify storage.
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
-	initializers map[string]func(store any) any
+	initializers map[string]func(_ int, rlm realm, store any) any
 
 	// domainKVStore is the shared storage layer accessible by all versions
 	// The domain (proxy) realm is the owner and has write permission
@@ -39,7 +42,7 @@ type versionManager struct {
 
 	// initializeDomainStoreFn wraps the KVStore into domain-specific storage interface
 	// This abstraction decouples the version manager from domain-specific storage implementations
-	initializeDomainStoreFn func(kvStore store.KVStore) any
+	initializeDomainStoreFn func(_ int, rlm realm, kvStore store.KVStore) any
 
 	// domainPath defines the base path for this domain (e.g., "gno.land/r/gnoswap/protocol_fee")
 	// Used for security validation to ensure only authorized packages can register
@@ -57,24 +60,33 @@ type versionManager struct {
 // This method must be called by each version package (e.g., v1, v2) during initialization.
 //
 // The registration process:
-//  1. Validates the caller is within the authorized domain path
-//  2. Stores the initializer function for later version switching
+//  1. Validates the realm token is the live crossing frame (rejects spoofed tokens)
+//  2. Validates the caller is within the authorized domain path
+//  3. Stores the initializer function for later version switching
 //
 // Parameters:
+//   - rlm: the live realm token threaded in by the caller; rlm.Previous() identifies the
+//     version package that is registering. The leading `_ int` is a v2 sentinel that surfaces
+//     as a `0` at every call site so the realm-threading is visible to the reader.
 //   - initializer: A function that receives a storage interface and returns an implementation instance
 //
 // Returns:
-//   - error: If caller is unauthorized, already registered, or permission setup fails
+//   - error: If realm token is spoofed, caller is unauthorized, already registered, or initializer is nil
 //
-// Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath)
-func (vm *versionManager) RegisterInitializer(initializer func(store any) any) error {
+// Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath).
+func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	// Validate initializer is not nil to prevent panic during initialization
 	if initializer == nil {
 		return errors.New("version_manager: initializer cannot be nil")
 	}
 
-	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
-	previousRealm := runtime.PreviousRealm()
+	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2).
+	// rlm.Previous() corresponds to v1's runtime.PreviousRealm().
+	previousRealm := rlm.Previous()
 	if previousRealm.IsUser() {
 		return errors.New("version_manager: caller cannot be user")
 	}
@@ -101,7 +113,7 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	// Initialize the current implementation if it hasn't been done yet
 	if vm.currentPackagePath == "" || vm.currentImplementation == nil {
 		vm.currentPackagePath = targetPackagePath
-		vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+		vm.currentImplementation = initializer(0, rlm, vm.initializeDomainStoreFn(0, rlm, vm.domainKVStore))
 
 		chain.Emit(
 			"InitializeImplementation",
@@ -117,15 +129,26 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 // This enables zero-downtime upgrades by switching the active implementation at runtime.
 //
 // The switching process:
-//  1. Validates the target version has been registered via RegisterInitializer
-//  2. Retrieves and executes the target version's initializer
+//  1. Validates the realm token is the live crossing frame (rejects spoofed tokens)
+//  2. Validates the target version has been registered via RegisterInitializer
+//  3. Retrieves and executes the target version's initializer
+//
+// Authorization is the caller realm's responsibility — version_manager only rejects
+// spoofed realm tokens. Upgrade ACLs (admin / governance) live in the wrapping /r/ realm
+// (see each module's upgrade.gno).
 //
 // Parameters:
+//   - rlm: the live realm token threaded in by the caller. The leading `_ int` is a v2
+//     sentinel that surfaces as a `0` at every call site so the realm-threading is visible.
 //   - packagePath: The full package path of the target version (e.g., "gno.land/r/gnoswap/protocol_fee/v2")
 //
 // Returns:
-//   - error: If target version is not registered or initializer is invalid
-func (vm *versionManager) ChangeImplementation(packagePath string) error {
+//   - error: If realm token is spoofed, target version is not registered, or initializer is invalid
+func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	// Retrieve the registered initializer function
 	initializer, ok := vm.initializers[packagePath]
 	if !ok {
@@ -138,7 +161,7 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 
 	prevPackagePath := vm.currentPackagePath
 	vm.currentPackagePath = packagePath
-	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+	vm.currentImplementation = initializer(0, rlm, vm.initializeDomainStoreFn(0, rlm, vm.domainKVStore))
 
 	chain.Emit(
 		"ChangeImplementation",
@@ -159,7 +182,7 @@ func (vm *versionManager) GetDomainPath() string {
 // GetInitializers returns the map containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
-func (vm *versionManager) GetInitializers() map[string]func(store any) any {
+func (vm *versionManager) GetInitializers() map[string]func(_ int, rlm realm, store any) any {
 	return vm.initializers
 }
 
@@ -186,7 +209,7 @@ func (vm *versionManager) GetCurrentImplementation() any {
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"
 //   - Invalid callers: "gno.land/r/gnoswap/other", "gno.land/r/attacker/malicious"
 func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
-	// `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
+	// `domainPath` is set via the current realm's PkgPath in each contract.
 	// Therefore, there is no need for a separate trailing slash check,
 	// and the prefix is determined by directly appending `/` for version detection.
 	prefix := vm.domainPath + "/"
@@ -207,7 +230,7 @@ func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
 //
 //   - initializeDomainStoreFn: A factory function that wraps the KVStore into a domain-specific storage interface
 //     This abstraction allows each version to work with a familiar storage API
-//     Example: func(kvStore store.KVStore) any { return NewProtocolFeeStore(kvStore) }
+//     Example: func(_ int, rlm realm, kvStore store.KVStore) any { return NewProtocolFeeStore(kvStore) }
 //
 // Returns:
 //   - VersionManager: An initialized version manager ready to accept implementation registrations
@@ -219,29 +242,14 @@ func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
 func NewVersionManager(
 	domainPath string,
 	kvStore store.KVStore,
-	initializeDomainStoreFn func(kvStore store.KVStore) any,
+	initializeDomainStoreFn func(_ int, rlm realm, kvStore store.KVStore) any,
 ) VersionManager {
 	return &versionManager{
 		domainPath:              domainPath,
 		domainKVStore:           kvStore,
 		initializeDomainStoreFn: initializeDomainStoreFn,
-		initializers:            make(map[string]func(store any) any),
+		initializers:            make(map[string]func(_ int, rlm realm, store any) any),
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}
-}
-
-// makeInitializerSafe creates a safe copy of an initializer function.
-// Used to verify stored initializer types during inspection.
-func makeInitializerSafe(data any) any {
-	fn, ok := data.(func(store any) any)
-	if !ok {
-		panic(ufmt.Sprintf("expected func(store any) any, got %T", data))
-	}
-
-	cpy := func(store any) any {
-		return fn(store)
-	}
-
-	return cpy
 }

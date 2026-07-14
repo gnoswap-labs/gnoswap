@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetDevOpsPct(t *testing.T) {
+func TestGetDevOpsPct(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -23,7 +23,7 @@ func TestGetDevOpsPct(t *testing.T) {
 			name: "success - get custom devOps percentage (30%)",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetDevOpsPct(3000)
+				pf.store.SetDevOpsPct(0, cur, 3000)
 				return pf
 			},
 			expected: 3000,
@@ -32,7 +32,7 @@ func TestGetDevOpsPct(t *testing.T) {
 			name: "success - get 100% devOps percentage",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetDevOpsPct(10000)
+				pf.store.SetDevOpsPct(0, cur, 10000)
 				return pf
 			},
 			expected: 10000,
@@ -40,7 +40,7 @@ func TestGetDevOpsPct(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetDevOpsPct()
 			uassert.Equal(t, result, tt.expected)
@@ -48,7 +48,7 @@ func TestGetDevOpsPct(t *testing.T) {
 	}
 }
 
-func TestGetGovStakerPct(t *testing.T) {
+func TestGetGovStakerPct(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -65,7 +65,7 @@ func TestGetGovStakerPct(t *testing.T) {
 			name: "success - get govStaker percentage when devOps is 30%",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetDevOpsPct(3000)
+				pf.store.SetDevOpsPct(0, cur, 3000)
 				return pf
 			},
 			expected: 7000,
@@ -74,7 +74,7 @@ func TestGetGovStakerPct(t *testing.T) {
 			name: "success - get 0% govStaker when devOps is 100%",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetDevOpsPct(10000)
+				pf.store.SetDevOpsPct(0, cur, 10000)
 				return pf
 			},
 			expected: 0,
@@ -82,7 +82,7 @@ func TestGetGovStakerPct(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetGovStakerPct()
 			uassert.Equal(t, result, tt.expected)
@@ -90,7 +90,7 @@ func TestGetGovStakerPct(t *testing.T) {
 	}
 }
 
-func TestGetReservedTokens(t *testing.T) {
+func TestGetReservedTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -107,7 +107,7 @@ func TestGetReservedTokens(t *testing.T) {
 			name: "success - get single reserved token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.AddReservedToken("gno.land/r/foo")
+				pf.store.AddReservedToken(0, cur, "gno.land/r/foo")
 				return pf
 			},
 			expected: []string{"gno.land/r/foo"},
@@ -116,9 +116,9 @@ func TestGetReservedTokens(t *testing.T) {
 			name: "success - get multiple reserved tokens",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.AddReservedToken("gno.land/r/foo")
-				pf.store.AddReservedToken("gno.land/r/bar")
-				pf.store.AddReservedToken("gno.land/r/baz")
+				pf.store.AddReservedToken(0, cur, "gno.land/r/foo")
+				pf.store.AddReservedToken(0, cur, "gno.land/r/bar")
+				pf.store.AddReservedToken(0, cur, "gno.land/r/baz")
 				return pf
 			},
 			expected: []string{"gno.land/r/foo", "gno.land/r/bar", "gno.land/r/baz"},
@@ -126,7 +126,7 @@ func TestGetReservedTokens(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetReservedTokens()
 			uassert.Equal(t, len(result), len(tt.expected))
@@ -137,7 +137,7 @@ func TestGetReservedTokens(t *testing.T) {
 	}
 }
 
-func TestGetAccuTransfersToGovStaker(t *testing.T) {
+func TestGetAccuTransfersToGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -154,7 +154,7 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 			name: "success - get accumulated transfers with single token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToGovStakerItem("gno.land/r/foo", 1000)
+				pf.store.SetAccuToGovStakerItem(0, cur, "gno.land/r/foo", 1000)
 				return pf
 			},
 			expected: map[string]int64{"gno.land/r/foo": 1000},
@@ -163,9 +163,9 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 			name: "success - get accumulated transfers with multiple tokens",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToGovStakerItem("gno.land/r/foo", 1000)
-				pf.store.SetAccuToGovStakerItem("gno.land/r/bar", 2000)
-				pf.store.SetAccuToGovStakerItem("gno.land/r/baz", 3000)
+				pf.store.SetAccuToGovStakerItem(0, cur, "gno.land/r/foo", 1000)
+				pf.store.SetAccuToGovStakerItem(0, cur, "gno.land/r/bar", 2000)
+				pf.store.SetAccuToGovStakerItem(0, cur, "gno.land/r/baz", 3000)
 				return pf
 			},
 			expected: map[string]int64{
@@ -177,7 +177,7 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetAccuTransfersToGovStaker()
 			uassert.Equal(t, len(result), len(tt.expected))
@@ -188,7 +188,7 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 	}
 }
 
-func TestGetAccuTransfersToDevOps(t *testing.T) {
+func TestGetAccuTransfersToDevOps(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -205,7 +205,7 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 			name: "success - get accumulated transfers with single token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToDevOpsItem("gno.land/r/foo", 500)
+				pf.store.SetAccuToDevOpsItem(0, cur, "gno.land/r/foo", 500)
 				return pf
 			},
 			expected: map[string]int64{"gno.land/r/foo": 500},
@@ -214,9 +214,9 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 			name: "success - get accumulated transfers with multiple tokens",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToDevOpsItem("gno.land/r/foo", 500)
-				pf.store.SetAccuToDevOpsItem("gno.land/r/bar", 1000)
-				pf.store.SetAccuToDevOpsItem("gno.land/r/baz", 1500)
+				pf.store.SetAccuToDevOpsItem(0, cur, "gno.land/r/foo", 500)
+				pf.store.SetAccuToDevOpsItem(0, cur, "gno.land/r/bar", 1000)
+				pf.store.SetAccuToDevOpsItem(0, cur, "gno.land/r/baz", 1500)
 				return pf
 			},
 			expected: map[string]int64{
@@ -228,7 +228,7 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetAccuTransfersToDevOps()
 			uassert.Equal(t, len(result), len(tt.expected))
@@ -239,7 +239,7 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 	}
 }
 
-func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
+func TestGetAccuTransferToGovStakerByTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setupFn   func() *protocolFeeV1
@@ -250,7 +250,7 @@ func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 			name: "success - get accumulated transfer for existing token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToGovStakerItem("gno.land/r/foo", 3000)
+				pf.store.SetAccuToGovStakerItem(0, cur, "gno.land/r/foo", 3000)
 				return pf
 			},
 			tokenPath: "gno.land/r/foo",
@@ -267,7 +267,7 @@ func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath)
 			uassert.Equal(t, result, tt.expected)
@@ -275,7 +275,7 @@ func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 	}
 }
 
-func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
+func TestGetAccuTransferToDevOpsByTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setupFn   func() *protocolFeeV1
@@ -286,7 +286,7 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 			name: "success - get accumulated transfer for existing token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetAccuToDevOpsItem("gno.land/r/foo", 1500)
+				pf.store.SetAccuToDevOpsItem(0, cur, "gno.land/r/foo", 1500)
 				return pf
 			},
 			tokenPath: "gno.land/r/foo",
@@ -303,7 +303,7 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetAccuTransferToDevOpsByTokenPath(tt.tokenPath)
 			uassert.Equal(t, result, tt.expected)

@@ -71,70 +71,70 @@ var (
 	incentiveID      string = ""
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing rewardDust refund mechanism")
 	println()
 
 	println("[SCENARIO] 1. Initialize account and settings")
-	initAccountAndSettings()
+	initAccountAndSettings(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with amount that causes dust")
-	createExternalIncentiveWithDust()
+	createExternalIncentiveWithDust(cur)
 	println()
 
 	println("[SCENARIO] 5. Start external incentive")
-	startExternalIncentive()
+	startExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 6. Stake position")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 7. Wait until incentive ends and verify dust refund")
-	endExternalIncentiveAndVerifyDustRefund()
+	endExternalIncentiveAndVerifyDustRefund(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect reward staked position")
-	collectRewardStakedPosition()
+	collectRewardStakedPosition(cur)
 	println()
 
 	println("[SCENARIO] 9. Collect external incentive penalty")
-	collectExternalIncentivePenalty()
+	collectExternalIncentivePenalty(cur)
 	println()
 
 	println("[SUCCESS] Test completed - rewardDust mechanism works correctly!")
 }
 
-func initAccountAndSettings() {
+func initAccountAndSettings(cur realm) {
 	println("[INFO] initialize account and settings")
 
 	// Admin already has tokens in test environment
 	// Transfer tokens to external creator
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, externalCreatorUser, 100_000_000)
-	qux.Transfer(cross, externalCreatorUser, 100_000_000)
+	bar.Transfer(cross(cur), externalCreatorUser, 100_000_000)
+	qux.Transfer(cross(cur), externalCreatorUser, 100_000_000)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] create pool bar:qux:100")
 	testing.SkipHeights(1)
 
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -142,18 +142,18 @@ func createPool() {
 	)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position (tick range: -100 ~ 100)")
 	testing.SkipHeights(1)
 
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -171,7 +171,7 @@ func mintPosition() {
 
 var incentiveCreationTime int64
 
-func createExternalIncentiveWithDust() {
+func createExternalIncentiveWithDust(cur realm) {
 	// Use a reward amount and duration that will cause dust
 	// For 90 days: 10000000007 / 7776000 = 1286 with remainder 7
 	// This means rewardDust = 7
@@ -180,13 +180,13 @@ func createExternalIncentiveWithDust() {
 
 	println("[INFO] transfer tokens to external creator")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, externalCreatorUser, rewardAmount)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	bar.Transfer(cross(cur), externalCreatorUser, rewardAmount)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve tokens for external incentive creation")
 	testing.SetRealm(externalCreatorRealm)
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, maxInt64)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	// Use fixed timestamps for test reproducibility
 	startTime := int64(1234569600) // Fixed start time
@@ -204,7 +204,7 @@ func createExternalIncentiveWithDust() {
 	ufmt.Printf("[INFO] incentive creation time: %d\n", incentiveCreationTime)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
 		rewardAmount,
@@ -213,7 +213,7 @@ func createExternalIncentiveWithDust() {
 	)
 }
 
-func startExternalIncentive() {
+func startExternalIncentive(cur realm) {
 	// Skip to incentive start time
 	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
@@ -224,19 +224,19 @@ func startExternalIncentive() {
 	println("[INFO] external incentive started")
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position")
 	testing.SkipHeights(1)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	println("[INFO] position staked successfully")
 }
 
-func endExternalIncentiveAndVerifyDustRefund() {
+func endExternalIncentiveAndVerifyDustRefund(cur realm) {
 	// Skip to after incentive end time
 	externalEndTime := int64(1234569600 + 90*24*60*60) // start + 90 days
 	nowTime := time.Now().Unix()
@@ -259,7 +259,7 @@ func endExternalIncentiveAndVerifyDustRefund() {
 
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		incentiveID,
 		externalCreatorUser,
@@ -308,28 +308,28 @@ func endExternalIncentiveAndVerifyDustRefund() {
 		legacyDust, barRefunded, legacyDust/barRefunded)
 }
 
-func collectRewardStakedPosition() {
+func collectRewardStakedPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect reward staked position")
 	testing.SkipHeights(1)
 
 	beforeBarBalance := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBarBalance := bar.BalanceOf(adminUser)
 
 	barReward := afterBarBalance - beforeBarBalance
 	ufmt.Printf("[EXPECTED] bar reward: %d\n", barReward)
 }
 
-func collectExternalIncentivePenalty() {
+func collectExternalIncentivePenalty(cur realm) {
 	testing.SetRealm(externalCreatorRealm)
 
 	println("[INFO] collect external incentive penalty", incentiveID)
 	testing.SkipHeights(1)
 
 	beforeBarBalance := bar.BalanceOf(externalCreatorUser)
-	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
+	sr.CollectExternalIncentivePenalty(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
 	afterBarBalance := bar.BalanceOf(externalCreatorUser)
 
 	barPenalty := afterBarBalance - beforeBarBalance
@@ -340,7 +340,7 @@ func collectExternalIncentivePenalty() {
 	ufmt.Printf("[EXPECTED] staker bar balance: %d\n", stakerBarBalance)
 }
 
-func positionIdFrom(tokenId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, tokenId uint64) grc721.TokenID {
 	return grc721.TokenID(ufmt.Sprintf("%d", tokenId))
 }
 

@@ -8,7 +8,8 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -83,9 +84,9 @@ type PositionModificationScenario struct {
 }
 
 // setupTestPool creates a pool with specified parameters for testing
-func setupTestPool(t *testing.T, token0, token1 string, fee uint32, sqrtPrice string) *pl.Pool {
+func setupTestPool(cur realm, t *testing.T, token0, token1 string, fee uint32, sqrtPrice string) *pl.Pool {
 	t.Helper()
-	initPoolTest(t)
+	initPoolTest(cur, t)
 
 	tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee)
 	poolParams := newPoolParams(token0, token1, fee, sqrtPrice, tickSpacing, 0)
@@ -93,11 +94,11 @@ func setupTestPool(t *testing.T, token0, token1 string, fee uint32, sqrtPrice st
 }
 
 // setupPoolAtPrice creates a pool at a specific tick price
-func setupPoolAtPrice(t *testing.T, tick int32) *pl.Pool {
+func setupPoolAtPrice(cur realm, t *testing.T, tick int32) *pl.Pool {
 	t.Helper()
 
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick).ToString()
-	return setupTestPool(t, barPath, fooPath, FeeTier500, sqrtPrice)
+	sqrtPrice := gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString()
+	return setupTestPool(cur, t, barPath, fooPath, FeeTier500, sqrtPrice)
 }
 
 // createPositionWithValidation creates a position and validates the output
@@ -177,7 +178,7 @@ func validatePositionFees(t *testing.T, position pl.PositionInfo, expectedLevel 
 	case "none":
 		if hasToken0Fees || hasToken1Fees {
 			t.Errorf("Expected no fees but found token0: %s, token1: %s",
-				formatInt(position.TokensOwed0()), formatInt(position.TokensOwed1()))
+				utils.FormatInt(position.TokensOwed0()), utils.FormatInt(position.TokensOwed1()))
 		}
 	case "low", "medium", "high":
 		if !hasToken0Fees && !hasToken1Fees {
@@ -197,7 +198,7 @@ func assertPositionInvariants(t *testing.T, position pl.PositionInfo) {
 	}
 }
 
-func TestPositionGetKey(t *testing.T) {
+func TestPositionGetKey(cur realm, t *testing.T) {
 	scenarios := []struct {
 		name            string
 		description     string
@@ -237,7 +238,7 @@ func TestPositionGetKey(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			key := getPositionKey(scenario.tickLower, scenario.tickUpper)
 
 			uassert.NotEmpty(t, key, "Position key should not be empty")
@@ -253,7 +254,7 @@ func TestPositionGetKey(t *testing.T) {
 	}
 }
 
-func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
+func TestPositionUpdateWithKey_LPStrategies(cur realm, t *testing.T) {
 	scenarios := []struct {
 		name             string
 		description      string
@@ -304,8 +305,8 @@ func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			pool := setupPoolAtPrice(t, 0) // Price at tick 0
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
+			pool := setupPoolAtPrice(cur, t, 0) // Price at tick 0
 			alice := testutils.TestAddress(LP_ALICE)
 			positionKey := getPositionKey(MODERATE_LOWER, MODERATE_UPPER)
 
@@ -339,7 +340,7 @@ func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
 	}
 }
 
-func TestPositionUpdate_FeeAccumulation(t *testing.T) {
+func TestPositionUpdate_FeeAccumulation(cur realm, t *testing.T) {
 	scenarios := []LiquidityUpdateScenario{
 		{
 			name:             "new_position_no_fees",
@@ -394,9 +395,9 @@ func TestPositionUpdate_FeeAccumulation(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			// initial position state
-			position := pl.PositionInfo{}
+			position := pl.NewPositionInfo()
 			position.SetLiquidity(scenario.initialLiquidity)
 			position.SetFeeGrowthInside0LastX128("0")
 			position.SetFeeGrowthInside1LastX128("0")
@@ -441,7 +442,7 @@ func TestPositionUpdate_FeeAccumulation(t *testing.T) {
 	}
 }
 
-func TestPositionUpdateNegativeValues(t *testing.T) {
+func TestPositionUpdateNegativeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		initialLiquidity      string
@@ -501,8 +502,8 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			position := pl.PositionInfo{}
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			position := pl.NewPositionInfo()
 			position.SetLiquidity(tt.initialLiquidity)
 			position.SetFeeGrowthInside0LastX128(tt.initialFeeGrowth0Last)
 			position.SetFeeGrowthInside1LastX128(tt.initialFeeGrowth1Last)
@@ -510,7 +511,7 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			position.SetTokensOwed1(0)
 
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
 				})
 				return
@@ -529,7 +530,7 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 	}
 }
 
-func TestModifyPosition_WithDifferentPrice(t *testing.T) {
+func TestModifyPosition_WithDifferentPrice(cur realm, t *testing.T) {
 	priceTests := []struct {
 		priceScenario string
 		currentTick   int32
@@ -572,11 +573,11 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 		},
 	}
 
-	t.Run("price_impact_on_positions", func(t *testing.T) {
+	t.Run("price_impact_on_positions", func(cur realm, t *testing.T) {
 		for _, test := range priceTests {
-			t.Run(test.priceScenario, func(t *testing.T) {
+			t.Run(test.priceScenario, func(cur realm, t *testing.T) {
 				// Given: Pool at specific price
-				pool := setupPoolAtPrice(t, test.currentTick)
+				pool := setupPoolAtPrice(cur, t, test.currentTick)
 
 				// When: Create position
 				params := ModifyPositionParams{
@@ -608,9 +609,9 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 		}
 	})
 
-	t.Run("position_lifecycle", func(t *testing.T) {
+	t.Run("position_lifecycle", func(cur realm, t *testing.T) {
 		// Simulate full position lifecycle
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		bob := testutils.TestAddress(LP_BOB)
 
 		// 1. Initial position creation
@@ -641,11 +642,11 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 	})
 }
 
-func TestModifyPositionEdgeCases(t *testing.T) {
+func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 	const fee500 = uint32(500)
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(-10000).ToString()
+	sqrtPrice := gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString()
 
-	t.Run("liquidityDelta is zero", func(t *testing.T) {
+	t.Run("liquidityDelta is zero", func(cur realm, t *testing.T) {
 		poolParams := newPoolParams(
 			barPath,
 			fooPath,
@@ -666,7 +667,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		uassert.Equal(t, err.Error(), "[GNOSWAP-POOL-007] zero liquidity || both liquidityDelta and current position's liquidity are zero")
 	})
 
-	t.Run("liquidityDelta is negative", func(t *testing.T) {
+	t.Run("liquidityDelta is negative", func(cur realm, t *testing.T) {
 		poolParams := newPoolParams(
 			barPath,
 			fooPath,
@@ -694,7 +695,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 	})
 }
 
-func TestPositionFeeCollection_Scenarios(t *testing.T) {
+func TestPositionFeeCollection_Scenarios(cur realm, t *testing.T) {
 	scenarios := []FeeCollectionScenario{
 		{
 			name:                "new_position_no_trading",
@@ -735,9 +736,9 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
+		t.Run(scenario.name, func(cur realm, t *testing.T) {
 			// Given: Setup pool and position
-			pool := setupPoolAtPrice(t, 0)
+			pool := setupPoolAtPrice(cur, t, 0)
 			alice := testutils.TestAddress(LP_ALICE)
 
 			// Create position
@@ -790,9 +791,9 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 				}
 
 				// Update position with simulated fees
-				position.SetTokensOwed0(safeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
-				position.SetTokensOwed1(safeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
-				pool.Positions().Set(posKey, position)
+				position.SetTokensOwed0(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
+				position.SetTokensOwed1(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
+				pool.SetPosition(posKey, position)
 			}
 
 			// Update position to trigger any additional calculations
@@ -810,10 +811,10 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 	}
 }
 
-func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
-	t.Run("fee_overflow_protection", func(t *testing.T) {
+func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
+	t.Run("fee_overflow_protection", func(cur realm, t *testing.T) {
 		// Given: Position with maximum liquidity
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		alice := testutils.TestAddress(LP_ALICE)
 
 		// Create position with large but valid liquidity
@@ -833,15 +834,15 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 
 		// Update position to trigger fee calculation
 		params.liquidityDelta = i256.Zero()
-		uassert.PanicsContains(t, "overflows int64 range", func() {
+		uassert.PanicsContains(t, cur, "overflows int64 range", func() {
 			modifyPosition(pool, params)
 		})
 
 		t.Logf("✓ Fee overflow protection: overflow is rejected at int64 boundary")
 	})
 
-	t.Run("fee_accumulation_different_ranges", func(t *testing.T) {
-		pool := setupPoolAtPrice(t, 0)
+	t.Run("fee_accumulation_different_ranges", func(cur realm, t *testing.T) {
+		pool := setupPoolAtPrice(cur, t, 0)
 
 		// Create positions with different ranges
 		ranges := []struct {
@@ -882,7 +883,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 				// Simulate fee accumulation for in-range positions
 				position.SetTokensOwed0(1000)
 				position.SetTokensOwed1(1000)
-				pool.Positions().Set(posKey, position)
+				pool.SetPosition(posKey, position)
 			}
 		}
 
@@ -910,16 +911,16 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			} else {
 				// Out-of-range positions may still accumulate some fees depending on implementation
 				t.Logf("✓ %s: Fee state: token0=%s, token1=%s",
-					r.description, formatInt(position.TokensOwed0()), formatInt(position.TokensOwed1()))
+					r.description, utils.FormatInt(position.TokensOwed0()), utils.FormatInt(position.TokensOwed1()))
 			}
 		}
 	})
 }
 
-func TestPositionSecurity_EdgeCases(t *testing.T) {
-	t.Run("duplicate_position_handling", func(t *testing.T) {
+func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
+	t.Run("duplicate_position_handling", func(cur realm, t *testing.T) {
 		// Given: Pool with existing position
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		alice := testutils.TestAddress(LP_ALICE)
 
 		// Create initial position
@@ -964,8 +965,8 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		t.Logf("✓ Duplicate position handling: Successfully merged liquidity")
 	})
 
-	t.Run("extreme_tick_ranges", func(t *testing.T) {
-		pool := setupPoolAtPrice(t, 0)
+	t.Run("extreme_tick_ranges", func(cur realm, t *testing.T) {
+		pool := setupPoolAtPrice(cur, t, 0)
 
 		extremeRanges := []struct {
 			name      string
@@ -997,7 +998,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		}
 
 		for _, test := range extremeRanges {
-			t.Run(test.name, func(t *testing.T) {
+			t.Run(test.name, func(cur realm, t *testing.T) {
 				owner := testutils.TestAddress("extreme")
 				params := ModifyPositionParams{
 					owner:          owner,
@@ -1022,9 +1023,9 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("position_removal_complete", func(t *testing.T) {
+	t.Run("position_removal_complete", func(cur realm, t *testing.T) {
 		// Given: Position with liquidity
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 		bob := testutils.TestAddress(LP_BOB)
 
 		// Create position
@@ -1056,9 +1057,9 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		t.Logf("✓ Complete position removal: Liquidity zeroed, tokens returned")
 	})
 
-	t.Run("verify_position_state_after_multiple_updates", func(t *testing.T) {
+	t.Run("verify_position_state_after_multiple_updates", func(cur realm, t *testing.T) {
 		// Given: Pool with multiple positions
-		pool := setupPoolAtPrice(t, 0)
+		pool := setupPoolAtPrice(cur, t, 0)
 
 		// Simulate multiple LPs with overlapping ranges
 		lps := []struct {
@@ -1101,18 +1102,18 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 }
 
 // Test public getter functions for position info
-func TestPositionLiquidity(t *testing.T) {
+func TestPositionLiquidity(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setupFn              func(t *testing.T) (*pl.Pool, string)
+		setupFn              func(cur realm, t *testing.T) (*pl.Pool, string)
 		expectedResult       string
 		expectedPanic        bool
 		expectedPanicMessage string
 	}{
 		{
 			name: "success - get liquidity of position with non-zero liquidity",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1128,8 +1129,8 @@ func TestPositionLiquidity(t *testing.T) {
 		},
 		{
 			name: "fail - get liquidity of non-existent position (returns zero)",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-120, 120)
 				return pool, key
 			},
@@ -1140,13 +1141,13 @@ func TestPositionLiquidity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 
 			liquidity := "0"
 
 			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
 					liquidity = PositionLiquidity(pool, key)
 				})
 			} else {
@@ -1158,16 +1159,16 @@ func TestPositionLiquidity(t *testing.T) {
 	}
 }
 
-func TestPositionFeeGrowthInside0LastX128(t *testing.T) {
+func TestPositionFeeGrowthInside0LastX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(t *testing.T) (*pl.Pool, string)
+		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
 		verifyFn func(t *testing.T, feeGrowth string)
 	}{
 		{
 			name: "success - get fee growth for position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1186,24 +1187,24 @@ func TestPositionFeeGrowthInside0LastX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 			feeGrowth := PositionFeeGrowthInside0LastX128(pool, key)
 			tt.verifyFn(t, feeGrowth)
 		})
 	}
 }
 
-func TestPositionFeeGrowthInside1LastX128(t *testing.T) {
+func TestPositionFeeGrowthInside1LastX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(t *testing.T) (*pl.Pool, string)
+		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
 		verifyFn func(t *testing.T, feeGrowth string)
 	}{
 		{
 			name: "success - get fee growth for position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1222,24 +1223,24 @@ func TestPositionFeeGrowthInside1LastX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 			feeGrowth := PositionFeeGrowthInside1LastX128(pool, key)
 			tt.verifyFn(t, feeGrowth)
 		})
 	}
 }
 
-func TestPositionTokensOwed0(t *testing.T) {
+func TestPositionTokensOwed0(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(t *testing.T) (*pl.Pool, string)
+		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
 		verifyFn func(t *testing.T, tokensOwed int64)
 	}{
 		{
 			name: "success - get tokens owed for position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1258,24 +1259,24 @@ func TestPositionTokensOwed0(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 			tokensOwed := PositionTokensOwed0(pool, key)
 			tt.verifyFn(t, tokensOwed)
 		})
 	}
 }
 
-func TestPositionTokensOwed1(t *testing.T) {
+func TestPositionTokensOwed1(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(t *testing.T) (*pl.Pool, string)
+		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
 		verifyFn func(t *testing.T, tokensOwed int64)
 	}{
 		{
 			name: "success - get tokens owed for position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1294,25 +1295,25 @@ func TestPositionTokensOwed1(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 			tokensOwed := PositionTokensOwed1(pool, key)
 			tt.verifyFn(t, tokensOwed)
 		})
 	}
 }
 
-func TestGetPositionByPool(t *testing.T) {
+func TestGetPositionByPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setupFn     func(t *testing.T) (*pl.Pool, string)
+		setupFn     func(cur realm, t *testing.T) (*pl.Pool, string)
 		shouldExist bool
 		verifyFn    func(t *testing.T, position pl.PositionInfo, exists bool)
 	}{
 		{
 			name: "success - get existing position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
@@ -1332,8 +1333,8 @@ func TestGetPositionByPool(t *testing.T) {
 		},
 		{
 			name: "success - get non-existent position returns zero position",
-			setupFn: func(t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(t, 0)
+			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(cur, t, 0)
 				key := getPositionKey(-120, 120)
 				return pool, key
 			},
@@ -1346,15 +1347,15 @@ func TestGetPositionByPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool, key := tt.setupFn(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool, key := tt.setupFn(cur, t)
 			position, exists := GetPositionByPool(pool, key)
 			tt.verifyFn(t, position, exists)
 		})
 	}
 }
 
-func TestPosition_TickBoundaryEdgeCases(t *testing.T) {
+func TestPosition_TickBoundaryEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		tickLower   int32
@@ -1382,7 +1383,7 @@ func TestPosition_TickBoundaryEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// getPositionKey generates key without validation
 			key := getPositionKey(tt.tickLower, tt.tickUpper)
 			uassert.NotEqual(t, "", key, "Position key should not be empty")
@@ -1390,7 +1391,7 @@ func TestPosition_TickBoundaryEdgeCases(t *testing.T) {
 	}
 }
 
-func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
+func TestPosition_LiquidityBoundaryEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		liquidity   string
@@ -1432,13 +1433,13 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool := setupPoolAtPrice(t, 0)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pool := setupPoolAtPrice(cur, t, 0)
 
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					liq := u256.MustFromDecimal(tt.liquidity)
-					liqDelta := safeConvertToInt128(liq)
+					liqDelta := gnsmath.SafeConvertToInt128(liq)
 					params := ModifyPositionParams{
 						owner:          positionAddr,
 						tickLower:      -60,
@@ -1449,7 +1450,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 				})
 			} else {
 				liq := u256.MustFromDecimal(tt.liquidity)
-				liqDelta := safeConvertToInt128(liq)
+				liqDelta := gnsmath.SafeConvertToInt128(liq)
 				params := ModifyPositionParams{
 					owner:          positionAddr,
 					tickLower:      -60,
@@ -1467,8 +1468,8 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 	}
 }
 
-func TestPosition_LiquidityBoundaryExistingPositionUpdate(t *testing.T) {
-	pool := setupPoolAtPrice(t, 0)
+func TestPosition_LiquidityBoundaryExistingPositionUpdate(cur realm, t *testing.T) {
+	pool := setupPoolAtPrice(cur, t, 0)
 	maxLiquidityPerTick := u256.MustFromDecimal("1917569901783203986719870431555990")
 	initialLiquidity := new(u256.Uint).Sub(maxLiquidityPerTick, u256.One())
 
@@ -1476,7 +1477,7 @@ func TestPosition_LiquidityBoundaryExistingPositionUpdate(t *testing.T) {
 		owner:          positionAddr,
 		tickLower:      -60,
 		tickUpper:      60,
-		liquidityDelta: safeConvertToInt128(initialLiquidity),
+		liquidityDelta: gnsmath.SafeConvertToInt128(initialLiquidity),
 	}
 
 	position, _, _, err := modifyPosition(pool, params)
@@ -1489,14 +1490,14 @@ func TestPosition_LiquidityBoundaryExistingPositionUpdate(t *testing.T) {
 	uassert.Equal(t, maxLiquidityPerTick.ToString(), position.Liquidity())
 
 	params.liquidityDelta = i256.MustFromDecimal("1")
-	uassert.PanicsContains(t, "maxLiquidity", func() {
+	uassert.PanicsContains(t, cur, "maxLiquidity", func() {
 		modifyPosition(pool, params)
 	})
 }
 
-func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
-	t.Run("TokensOwed overflow detection", func(t *testing.T) {
-		pool := setupPoolAtPrice(t, 0)
+func TestPosition_AmountOverflowEdgeCases(cur realm, t *testing.T) {
+	t.Run("TokensOwed overflow detection", func(cur realm, t *testing.T) {
+		pool := setupPoolAtPrice(cur, t, 0)
 
 		// Add initial liquidity
 		params := ModifyPositionParams{

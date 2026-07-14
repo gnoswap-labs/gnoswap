@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Emission single block precision test
 // Scenario: Test emission accuracy with multiple rapid ratio changes
 //
@@ -34,15 +36,15 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 )
 
-func main() {
-	testSingleBlockPrecision()
+func main(cur realm) {
+	testSingleBlockPrecision(cur)
 }
 
-func testSingleBlockPrecision() {
+func testSingleBlockPrecision(cur realm) {
 	println("[SCENARIO] 1. Setup initial 25/25/25/25 distribution ratio")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		2500, // liquidityStakerPct
 		2500, // devOpsPct
 		2500, // communityPoolPct
@@ -54,7 +56,7 @@ func testSingleBlockPrecision() {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
-	emission.SetDistributionStartTime(cross, distributionStartTime)
+	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
 
@@ -76,9 +78,9 @@ func testSingleBlockPrecision() {
 
 	println("[SCENARIO] 4. Change distribution ratio to 40/30/20/10")
 	testing.SetRealm(adminRealm)
-	getBalanceChanges(func() {
+	getBalanceChanges(cur, func() {
 		emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		4000, // liquidityStakerPct
 		3000, // devOpsPct
 		2000, // communityPoolPct
@@ -117,9 +119,9 @@ func testSingleBlockPrecision() {
 
 	println("[SCENARIO] 6. Change distribution ratio to 70/15/10/5")
 	testing.SetRealm(adminRealm)
-	getBalanceChanges(func() {
+	getBalanceChanges(cur, func() {
 		emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7000, // liquidityStakerPct
 		1500, // devOpsPct
 		1000, // communityPoolPct
@@ -161,7 +163,7 @@ func testSingleBlockPrecision() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond3, elapsedSeconds3, expectedTotalEmission3))
 	println()
 
-	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
+	getBalanceChanges(cur, func() { emission.MintAndDistributeGns(cross(cur)) })
 	finalStaker := emission.GetDistributedToStaker()
 	finalDevops := emission.GetDistributedToDevOps()
 	finalCommunity := emission.GetDistributedToCommunityPool()
@@ -186,7 +188,7 @@ func testSingleBlockPrecision() {
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
 }
 
-func getBalanceChanges(fn func()) {
+func getBalanceChanges(cur realm, fn func()) {
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	devopsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())

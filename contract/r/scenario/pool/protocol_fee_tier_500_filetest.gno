@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -52,33 +53,33 @@ var (
 
 var poolPath string
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Protocol Fee Calculation - Fee Tier 100 (0.05%)")
 	println("[INFO] Fee tier: 500 (0.05%)")
 	println("[INFO] Protocol fee setting: 10/10 (10% of swap fee)")
 	println()
 
-	setupProtocolFee()
-	setupPool()
-	testMintPosition()
-	testSwapAndCheckFees()
-	printSummary()
+	setupProtocolFee(cur)
+	setupPool(cur)
+	testMintPosition(cur)
+	testSwapAndCheckFees(cur)
+	printSummary(cur)
 }
 
-func setupProtocolFee() {
+func setupProtocolFee(cur realm) {
 	println("[INFO] Setting protocol fee to 10/10")
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 10, 10)
+	pool.SetFeeProtocol(cross(cur), 10, 10)
 }
 
-func setupPool() {
+func setupPool(cur realm) {
 	println("[INFO] Creating pool with fee tier 500")
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	poolPath = pool.GetPoolPath(barPath, fooPath, fee500)
 	println("[INFO] Pool created:", poolPath)
@@ -89,11 +90,11 @@ func setupPool() {
 	println()
 }
 
-func testMintPosition() {
+func testMintPosition(cur realm) {
 	println("[SCENARIO] 1. Mint liquidity position")
 	testing.SetRealm(posRealm)
 	mint0, mint1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -106,12 +107,12 @@ func testMintPosition() {
 	println()
 }
 
-func testSwapAndCheckFees() {
+func testSwapAndCheckFees(cur realm) {
 	// Swap 1: token0 -> token1
 	println("[SCENARIO] 2. Swap token0 -> token1")
 	testing.SetRealm(rouRealm)
 	swap0, swap1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -132,7 +133,7 @@ func testSwapAndCheckFees() {
 	// Swap 2: token1 -> token0
 	println("[SCENARIO] 3. Swap token1 -> token0")
 	swap0_2, swap1_2 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -151,7 +152,7 @@ func testSwapAndCheckFees() {
 	println()
 }
 
-func printSummary() {
+func printSummary(cur realm) {
 	println("[SCENARIO] 4. Protocol Fee Summary")
 	testing.SetRealm(adminRealm)
 	finalFee0 := pool.GetProtocolFeesToken0(poolPath)
@@ -167,11 +168,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
 	}
 
 	return nil

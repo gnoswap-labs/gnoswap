@@ -20,25 +20,25 @@ var (
 	startTimestamp int64 = time.Now().Unix() + 2 // blockTime in seconds
 )
 
-func TestGetHalvingYear(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestGetHalvingYear(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
-	t.Run("during halving years", func(t *testing.T) {
+	t.Run("during halving years", func(cur realm, t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 			firstTimestampOfYear := GetHalvingYearStartTimestamp(year)
 			uassert.Equal(t, year, GetHalvingYear(firstTimestampOfYear))
 		}
 	})
 
-	t.Run("no year after 12 years", func(t *testing.T) {
+	t.Run("no year after 12 years", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYear(GetEmissionEndTimestamp()+1))
 	})
 }
 
-func TestEmissionState_CalculateAmountPerSeconds(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestEmissionState_CalculateAmountPerSeconds(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	// Test emission state basic functions
 	uassert.True(t, IsEmissionInitialized())
@@ -66,11 +66,11 @@ func TestEmissionState_CalculateAmountPerSeconds(t *testing.T) {
 	}
 }
 
-func TestHalvingYearGetters(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestHalvingYearGetters(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
-	t.Run("valid years (1-12)", func(t *testing.T) {
+	t.Run("valid years (1-12)", func(cur realm, t *testing.T) {
 		var prevendTimestamp int64
 
 		for year := int64(1); year <= HALVING_END_YEAR; year++ {
@@ -102,7 +102,7 @@ func TestHalvingYearGetters(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid year 0", func(t *testing.T) {
+	t.Run("invalid year 0", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
@@ -110,7 +110,7 @@ func TestHalvingYearGetters(t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
 	})
 
-	t.Run("invalid year 13", func(t *testing.T) {
+	t.Run("invalid year 13", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
@@ -119,9 +119,9 @@ func TestHalvingYearGetters(t *testing.T) {
 	})
 }
 
-func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestAmountPerSecondsPerHalvingYear(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	// Test that we can get the amount per seconds for a valid year
 	amountPerSeconds := GetAmountPerSecondPerHalvingYear(6)
@@ -130,9 +130,9 @@ func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
 
 // TestGetHalvingYearInfoValidation tests various scenarios for GetHalvingYearInfo
 // to ensure proper validation and handling of edge cases
-func TestGetHalvingYearInfoValidation(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestGetHalvingYearInfoValidation(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	es := getEmissionState()
 
@@ -205,7 +205,7 @@ func TestGetHalvingYearInfoValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			timestamp := es.getStartTimestamp() + tt.timestampOffset
 			year, _, _ := GetHalvingYearInfo(timestamp)
 
@@ -216,9 +216,9 @@ func TestGetHalvingYearInfoValidation(t *testing.T) {
 }
 
 // TestHalvingDataGettersWithInvalidYear tests that HalvingData getters handle invalid years properly
-func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
 
 	hd := &HalvingData{
 		startTimestamps: make([]int64, HALVING_END_YEAR),
@@ -289,7 +289,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.getter(tt.year)
 			uassert.Equal(t, tt.expected, result,
 				"Unexpected result for %s", tt.name)
@@ -298,7 +298,7 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 }
 
 // TestHalvingDataSettersWithInvalidYear tests all HalvingData setters with invalid years
-func TestHalvingDataSettersWithInvalidYear(t *testing.T) {
+func TestHalvingDataSettersWithInvalidYear(cur realm, t *testing.T) {
 	hd := NewHalvingData(1000)
 
 	tests := []struct {
@@ -339,7 +339,7 @@ func TestHalvingDataSettersWithInvalidYear(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := tt.setter(tt.year)
 
 			if tt.shouldError {
@@ -352,7 +352,7 @@ func TestHalvingDataSettersWithInvalidYear(t *testing.T) {
 }
 
 // TestHalvingDataBoundaryTimestamps tests HalvingData with boundary timestamp values
-func TestHalvingDataBoundaryTimestamps(t *testing.T) {
+func TestHalvingDataBoundaryTimestamps(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		startTimestamp int64
@@ -391,7 +391,7 @@ func TestHalvingDataBoundaryTimestamps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			hd := NewHalvingData(tt.startTimestamp)
 
 			startTimestamp := hd.getStartTimestamp(tt.year)
@@ -404,7 +404,7 @@ func TestHalvingDataBoundaryTimestamps(t *testing.T) {
 }
 
 // TestHalvingDataAmountOperations tests amount calculations with edge values
-func TestHalvingDataAmountOperations(t *testing.T) {
+func TestHalvingDataAmountOperations(cur realm, t *testing.T) {
 	hd := NewHalvingData(1000)
 
 	tests := []struct {
@@ -461,7 +461,7 @@ func TestHalvingDataAmountOperations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			tt.operation()
 			tt.validateAmount(t)
 		})
@@ -469,7 +469,7 @@ func TestHalvingDataAmountOperations(t *testing.T) {
 }
 
 // TestHalvingDataAddAccumAmountOverflow tests overflow protection in HalvingData.addAccumAmount
-func TestHalvingDataAddAccumAmountOverflow(t *testing.T) {
+func TestHalvingDataAddAccumAmountOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		year         int64
@@ -533,14 +533,14 @@ func TestHalvingDataAddAccumAmountOverflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			hd := NewHalvingData(1000)
 
 			// Set initial accumulated amount
 			hd.setAccumAmount(tt.year, tt.initialValue)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					hd.addAccumAmount(tt.year, tt.addAmount)
 				})
 			} else {

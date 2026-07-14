@@ -2,12 +2,14 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -41,66 +43,72 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Caller is not admin/governance
 //   - Fee > 1000 bps (10%)
 //   - Router or ProtocolFee is halted
-func (r *routerV1) SetSwapFee(fee uint64) {
+func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	// max swap fee is 1000 (bps)
 	if fee > 1000 {
 		panic(ufmt.Errorf(
 			"%s: fee must be in range 0 to 1000 (10%). got %d",
-			errInvalidSwapFee.Error(), fee,
+			errInvalidSwapFee, fee,
 		))
 	}
 
 	prevSwapFee := r.store.GetSwapFee()
-	if err := r.store.SetSwapFee(fee); err != nil {
+	if err := r.store.SetSwapFee(0, rlm, fee); err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newFee", formatUint(fee),
-		"prevFee", formatUint(prevSwapFee),
+		"newFee", utils.FormatUint(fee),
+		"prevFee", utils.FormatUint(prevSwapFee),
 	)
 }
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func (r *routerV1) handleSwapFee(
+	_ int,
+	rlm realm,
 	outputToken string,
 	amount int64,
 ) int64 {
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
-		r.addToProtocolFee()
+		r.addToProtocolFee(0, rlm)
 		return amount
 	}
 
 	currentTokenPath := outputToken
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
-	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
-	r.addToProtocolFee()
+	r.addPendingProtocolFee(0, rlm, currentTokenPath, feeAmountInt64)
+	r.addToProtocolFee(0, rlm)
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	chain.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", currentTokenPath,
-		"amount", formatInt64(feeAmountInt64),
+		"amount", utils.FormatInt(feeAmountInt64),
 	)
 
-	return safeSubInt64(amount, feeAmountInt64)
+	return gnsmath.SafeSubInt64(amount, feeAmountInt64)
 }
 
-func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
@@ -110,8 +118,8 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := r.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -120,7 +128,7 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (r *routerV1) addToProtocolFee() {
+func (r *routerV1) addToProtocolFee(_ int, rlm realm) {
 	pendingProtocolFees := r.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
@@ -133,14 +141,14 @@ func (r *routerV1) addToProtocolFee() {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
 			remainingProtocolFees[tokenPath] = amount
 			continue
 		}
 	}
 
-	if err := r.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+	if err := r.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -151,7 +159,7 @@ func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	}
 
 	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
-	return safeConvertToInt64(feeAmount)
+	return gnsmath.SafeConvertToInt64(feeAmount)
 }
 
 // calculate amount to fetch from pool including router fee
@@ -170,7 +178,7 @@ func calculateExactOutWithRouterFee(amount int64, swapFee uint64) int64 {
 			u256.NewUint(10000-swapFee),
 		)
 
-		return safeConvertToInt64(poolAmount)
+		return gnsmath.SafeConvertToInt64(poolAmount)
 	}
 
 	return amount

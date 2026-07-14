@@ -40,27 +40,27 @@ var (
 	fooPath = "gno.land/r/onbloc/foo"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position")
-	mintInitialPosition()
+	mintInitialPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Increase liquidity and check balances")
-	testIncreaseLiquidityAndBalance()
+	testIncreaseLiquidityAndBalance(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -68,14 +68,14 @@ func initPool() {
 	)
 }
 
-func mintInitialPosition() {
+func mintInitialPosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -96,7 +96,7 @@ func mintInitialPosition() {
 	ufmt.Printf("[EXPECTED] Initial amount1 should be %s\n", amount1)
 }
 
-func testIncreaseLiquidityAndBalance() {
+func testIncreaseLiquidityAndBalance(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
@@ -108,12 +108,12 @@ func testIncreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] User FOO balance before increase should be %d\n", fooBalanceBefore)
 	ufmt.Printf("[EXPECTED] Position liquidity before increase should be %s\n", liquidityBefore)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Increasing liquidity")
 	_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"50000000",
 		"50000000",
@@ -150,10 +150,10 @@ func testIncreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 
 	// Validate token conservation and correctness
-	validateIncreaseLiquidityBalances(barChange, fooChange, barBalanceBefore, barBalanceAfter, fooBalanceBefore, fooBalanceAfter)
+	validateIncreaseLiquidityBalances(cur, barChange, fooChange, barBalanceBefore, barBalanceAfter, fooBalanceBefore, fooBalanceAfter)
 }
 
-func validateIncreaseLiquidityBalances(barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
+func validateIncreaseLiquidityBalances(cur realm, barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
 	// User should lose tokens when increasing liquidity
 	if barChange <= 0 {
 		panic(ufmt.Sprintf("[ERROR] BAR balance should decrease (change: %d)", barChange))

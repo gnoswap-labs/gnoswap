@@ -10,8 +10,10 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
@@ -55,7 +57,7 @@ type testDepositConfig struct {
 
 // setupTestEnvironment initializes test environment with given config
 // Returns launchpad address and admin realm
-func setupTestEnvironment(t *testing.T, cfg testEnvConfig) (address, runtime.Realm) {
+func setupTestEnvironment(cur realm, t *testing.T, cfg testEnvConfig) (address, runtime.Realm) {
 	resetTestStore()
 	initTestStore()
 
@@ -75,7 +77,7 @@ func setupTestEnvironment(t *testing.T, cfg testEnvConfig) (address, runtime.Rea
 	adminRealm := testing.NewUserRealm(adminAddr)
 
 	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 
 	return launchpadAddr, adminRealm
 }
@@ -86,6 +88,7 @@ func setupTestEnvironment(t *testing.T, cfg testEnvConfig) (address, runtime.Rea
 
 // createTestProject creates a project with given config and returns project ID
 func createTestProject(
+	cur realm,
 	t *testing.T,
 	lp *launchpadV1,
 	launchpadAddr address,
@@ -100,30 +103,37 @@ func createTestProject(
 	}
 
 	if tokenPath == testOblTokenPath {
-		obl.Approve(cross, launchpadAddr, cfg.rewardAmount)
+		obl.Approve(cross(cur), launchpadAddr, cfg.rewardAmount)
 	}
 
 	startTime := testing.GetContext().Time.Unix() + projectMinimumStartDelayTime
 
-	var projectID string
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+	name := cfg.name
+	if name == "" {
+		name = "Test Project"
+	}
 
-		name := cfg.name
-		if name == "" {
-			name = "Test Project"
-		}
+	project, err := lp.createProject(0, cur, &createProjectParams{
+		name:                  name,
+		tokenPath:             tokenPath,
+		recipient:             testutils.TestAddress(cfg.recipientSuffix),
+		depositAmount:         cfg.rewardAmount,
+		tier30Ratio:           cfg.tier30Pct,
+		tier90Ratio:           cfg.tier90Pct,
+		tier180Ratio:          cfg.tier180Pct,
+		startTime:             startTime,
+		currentTime:           testing.GetContext().Time.Unix(),
+		currentHeight:         testing.GetContext().Height,
+		minimumStartDelayTime: projectMinimumStartDelayTime,
+	})
+	uassert.Nil(t, err)
 
-		projectID = lp.CreateProject(
-			name,
-			tokenPath,
-			testutils.TestAddress(cfg.recipientSuffix),
-			cfg.rewardAmount,
-			"", "",
-			cfg.tier30Pct, cfg.tier90Pct, cfg.tier180Pct,
-			startTime,
-		)
-	}(cross)
+	if tokenPath == testOblTokenPath {
+		testing.SetRealm(adminRealm)
+		obl.Transfer(cross(cur), launchpadAddr, cfg.rewardAmount)
+	}
+
+	projectID := project.ID()
 
 	// Activate project by skipping past start time (add buffer to ensure activation)
 	testing.SkipHeights(secondsToBlocks(projectMinimumStartDelayTime) + 20)
@@ -131,8 +141,34 @@ func createTestProject(
 	return projectID
 }
 
+// createV1OwnedDeposit creates a deposit via the public DepositGns so the
+// deposit is owned by the launchpad v1 realm (the caller the test harness
+// resolves). Use when the deposit must later be collected through the public
+// CollectRewardByDepositId, whose caller is also resolved to the v1 realm.
+func createV1OwnedDeposit(
+	cur realm,
+	t *testing.T,
+	lp *launchpadV1,
+	launchpadAddr address,
+	projectID string,
+	tier int64,
+	depositAmount int64,
+) string {
+	if tier == 0 {
+		tier = 30
+	}
+	fundDepositCaller(cur, launchpadAddr, depositAmount)
+
+	tierID := projectID + ":" + strconv.FormatInt(tier, 10)
+	return func(cur realm) string {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		return lp.DepositGns(0, cur, tierID, depositAmount, "")
+	}(cross(cur))
+}
+
 // createTestDeposit creates a deposit for given user and returns user address and deposit ID
 func createTestDeposit(
+	cur realm,
 	t *testing.T,
 	lp *launchpadV1,
 	launchpadAddr address,
@@ -148,11 +184,11 @@ func createTestDeposit(
 
 	// Transfer GNS to user
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, userAddr, cfg.depositAmount*2)
+	gns.Transfer(cross(cur), userAddr, cfg.depositAmount*2)
 
 	// User approves and deposits
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-	gns.Approve(cross, launchpadAddr, cfg.depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, cfg.depositAmount)
 
 	tier := cfg.tier
 	if tier == 0 {
@@ -160,16 +196,19 @@ func createTestDeposit(
 	}
 
 	var depositID string
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		depositID = lp.DepositGns(projectID+":"+formatInt(tier), cfg.depositAmount, "")
-	}(cross)
+	project, err := lp.getProject(projectID)
+	uassert.Nil(t, err)
+
+	deposit, _, _, _, err := lp.depositGns(0, cur, project, tier, cfg.depositAmount, userAddr)
+	uassert.Nil(t, err)
+	depositID = deposit.ID()
 
 	return userAddr, depositID
 }
 
 // createTestDeposits creates multiple deposits and returns user addresses and deposit IDs
 func createTestDeposits(
+	cur realm,
 	t *testing.T,
 	lp *launchpadV1,
 	launchpadAddr address,
@@ -181,7 +220,7 @@ func createTestDeposits(
 	depositIDs := make([]string, len(configs))
 
 	for i, cfg := range configs {
-		userAddrs[i], depositIDs[i] = createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, cfg)
+		userAddrs[i], depositIDs[i] = createTestDeposit(cur, t, lp, launchpadAddr, adminRealm, projectID, cfg)
 	}
 
 	return userAddrs, depositIDs
@@ -191,16 +230,34 @@ func createTestDeposits(
 // Test Reward Collection Functions
 // =============================================================================
 
-// collectTestReward collects reward for given user and deposit
-// Returns the reward amount
-func collectTestReward(t *testing.T, lp *launchpadV1, userAddr address, depositID string) int64 {
-	testing.SetRealm(testing.NewUserRealm(userAddr))
+// collectTestReward collects reward for given user and deposit.
+// Returns the reward amount.
+//
+// Deposits created by createTestDeposit are owned by explicit user addresses
+// (via the internal depositGns), but the public CollectRewardByDepositId
+// resolves its caller to the launchpad v1 realm in this harness, which fails
+// the deposit-owner assertion. Collect via the internal path with the deposit
+// looked up directly so per-depositor reward accounting is preserved.
+func collectTestReward(cur realm, t *testing.T, lp *launchpadV1, userAddr address, depositID string) int64 {
+	deposit := lp.mustGetDeposit(depositID)
 
 	var rewardAmount int64
+	var rewardTokenPath string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		rewardAmount = lp.CollectRewardByDepositId(depositID)
-	}(cross)
+		tokenPath, amount, err := lp.collectDepositReward(0, cur, deposit, testing.GetContext().Height, testing.GetContext().Time.Unix())
+		if err != nil {
+			panic(err)
+		}
+		rewardTokenPath = tokenPath
+		rewardAmount = amount
+	}(cross(cur))
+
+	// Transfer reward to the depositor, mirroring CollectRewardByDepositId.
+	if rewardAmount > 0 {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		common.SafeGRC20Transfer(cross(cur), rewardTokenPath, deposit.Depositor(), rewardAmount)
+	}
 
 	return rewardAmount
 }
@@ -258,10 +315,10 @@ var (
 // initTestStore initializes a new test store
 func initTestStore() {
 	testStore = &testLaunchpadStore{
-		projects:                  bptree.NewBPTreeN(16),
-		projectTierRewardManagers: bptree.NewBPTreeN(16),
+		projects:                  launchpad.NewBPTreeN(16),
+		projectTierRewardManagers: launchpad.NewBPTreeN(16),
 		depositCounter:            launchpad.NewCounter(),
-		deposits:                  bptree.NewBPTreeN(16),
+		deposits:                  launchpad.NewBPTreeN(16),
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -287,12 +344,12 @@ func (s *testLaunchpadStore) HasProjectsKey() bool {
 
 func (s *testLaunchpadStore) GetProjects() *bptree.BPTree {
 	if s.projects == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.projects
 }
 
-func (s *testLaunchpadStore) SetProjects(projects *bptree.BPTree) error {
+func (s *testLaunchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) error {
 	s.projects = projects
 	return nil
 }
@@ -303,12 +360,12 @@ func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
 
 func (s *testLaunchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 	if s.projectTierRewardManagers == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.projectTierRewardManagers
 }
 
-func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *bptree.BPTree) error {
+func (s *testLaunchpadStore) SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error {
 	s.projectTierRewardManagers = managers
 	return nil
 }
@@ -321,7 +378,7 @@ func (s *testLaunchpadStore) GetDepositCounter() *launchpad.Counter {
 	return s.depositCounter
 }
 
-func (s *testLaunchpadStore) SetDepositCounter(counter *launchpad.Counter) error {
+func (s *testLaunchpadStore) SetDepositCounter(_ int, rlm realm, counter *launchpad.Counter) error {
 	s.depositCounter = counter
 	return nil
 }
@@ -336,12 +393,12 @@ func (s *testLaunchpadStore) HasDepositsKey() bool {
 
 func (s *testLaunchpadStore) GetDeposits() *bptree.BPTree {
 	if s.deposits == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return s.deposits
 }
 
-func (s *testLaunchpadStore) SetDeposits(deposits *bptree.BPTree) error {
+func (s *testLaunchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
 	s.deposits = deposits
 	return nil
 }
@@ -351,7 +408,7 @@ func (s *testLaunchpadStore) SetDeposits(deposits *bptree.BPTree) error {
 // getTestProjects returns the projects tree
 func getTestProjects() *bptree.BPTree {
 	if testStore == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return testStore.GetProjects()
 }
@@ -370,7 +427,7 @@ func setTestProjects(tree *bptree.BPTree) {
 // getTestProjectTierRewardManagers returns the projectTierRewardManagers tree
 func getTestProjectTierRewardManagers() *bptree.BPTree {
 	if testStore == nil {
-		return bptree.NewBPTreeN(16)
+		return launchpad.NewBPTreeN(16)
 	}
 	return testStore.GetProjectTierRewardManagers()
 }
@@ -395,7 +452,13 @@ func getDeposit(depositID string) (*launchpad.Deposit, error) {
 	return lp.getDeposit(depositID)
 }
 
+// createProjectTest creates a project via the internal createProject and funds
+// the launchpad with the reward tokens. The public CreateProject derives its
+// admin caller from rlm.Previous(), which the test harness resolves to the
+// launchpad v1 realm rather than the admin, so it cannot be exercised directly
+// here; the public auth path is covered by TestLaunchpadProject_* tests.
 func createProjectTest(
+	cur realm,
 	t *testing.T,
 	projectName string,
 	tokenPath string,
@@ -406,37 +469,59 @@ func createProjectTest(
 	tier180Pct int64,
 	startTime int64,
 ) string {
-	return func(cur realm) string {
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+	projectID := func(cur realm) string {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.CreateProject(
-			projectName,
-			tokenPath,
-			recipient,
-			rewardAmount,
-			"", "",
-			tier30Pct, tier90Pct, tier180Pct,
-			startTime,
-		)
-	}(cross)
+		project, err := testImpl.createProject(0, cur, &createProjectParams{
+			name:                  projectName,
+			tokenPath:             tokenPath,
+			recipient:             recipient,
+			depositAmount:         rewardAmount,
+			tier30Ratio:           tier30Pct,
+			tier90Ratio:           tier90Pct,
+			tier180Ratio:          tier180Pct,
+			startTime:             startTime,
+			currentTime:           testing.GetContext().Time.Unix(),
+			currentHeight:         testing.GetContext().Height,
+			minimumStartDelayTime: projectMinimumStartDelayTime,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return project.ID()
+	}(cross(cur))
+
+	// Fund the launchpad with the reward tokens, mirroring CreateProject's
+	// TransferFrom(caller -> launchpad).
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross(cur), launchpadAddr, rewardAmount)
+
+	return projectID
 }
 
-func depositGnsTest(t *testing.T, depositID string, depositAmount int64) string {
+func depositGnsTest(cur realm, t *testing.T, depositID string, depositAmount int64) string {
+	// The public DepositGns caller resolves to the launchpad v1 realm in this
+	// harness; fund and approve GNS from that realm so the deposit succeeds.
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	fundDepositCaller(cur, launchpadAddr, depositAmount)
+
 	return func(cur realm) string {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.DepositGns(
-			depositID,
+		return testImpl.DepositGns(0, cur, depositID,
 			depositAmount,
 			"",
 		)
-	}(cross)
+	}(cross(cur))
 }
 
-func collectRewardTest(t *testing.T, depositID string) int64 {
+func collectRewardTest(cur realm, t *testing.T, depositID string) int64 {
 	return func(cur realm) int64 {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.CollectRewardByDepositId(depositID)
-	}(cross)
+		return testImpl.CollectRewardByDepositId(0, cur, depositID)
+	}(cross(cur))
 }

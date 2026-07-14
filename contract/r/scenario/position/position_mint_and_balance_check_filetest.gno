@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -53,44 +53,44 @@ var (
 	fee        = uint32(3000)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize tokens and pool")
-	initTokensAndPool()
+	initTokensAndPool(cur)
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 3000000000000}})
 
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 
-	initTokensAndPoolPostDeposit()
+	initTokensAndPoolPostDeposit(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint first position with Alice")
-	mintAlicePosition()
+	mintAlicePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint second position with Bob")
-	mintBobPosition()
+	mintBobPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Check pool balances")
-	checkPoolBalances()
+	checkPoolBalances(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Compare position balances")
-	comparePositionBalances()
+	comparePositionBalances(cur)
 	println()
 }
 
-func initTokensAndPool() {
+func initTokensAndPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(1000000000000)
 
 	ufmt.Println("[INFO] Distributing GNS tokens")
-	gns.Transfer(cross, aliceAddr, defaultTokenAmount)
-	gns.Transfer(cross, bobAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	gns.Transfer(cross(cur), bobAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
@@ -98,26 +98,26 @@ func initTokensAndPool() {
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 }
 
-func initTokensAndPoolPostDeposit() {
+func initTokensAndPoolPostDeposit(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(1000000000000)
 	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
-	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
-	wugnot.Transfer(cross, bobAddr, defaultTokenAmount)
+	wugnot.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
+	wugnot.Transfer(cross(cur), bobAddr, defaultTokenAmount)
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend, cur)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, bobAddr, distributedGnotCoin)
 
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial GNS balance of Alice: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial GNS balance of Bob: %d\n", gns.BalanceOf(bobAddr))
@@ -126,23 +126,23 @@ func initTokensAndPoolPostDeposit() {
 
 	ufmt.Printf("[INFO] Creating %s:%s:%d pool (tick: %d)\n", token0Path, token1Path, fee, 1)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(1).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(1).ToString(),
 	)
 }
 
-func mintAlicePosition() {
+func mintAlicePosition(cur realm) {
 	testing.SetRealm(aliceRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -163,14 +163,14 @@ func mintAlicePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func mintBobPosition() {
+func mintBobPosition(cur realm) {
 	testing.SetRealm(bobRealm)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Bob")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -191,7 +191,7 @@ func mintBobPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkPoolBalances() {
+func checkPoolBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking pool balances")
@@ -202,7 +202,7 @@ func checkPoolBalances() {
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 }
 
-func comparePositionBalances() {
+func comparePositionBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")

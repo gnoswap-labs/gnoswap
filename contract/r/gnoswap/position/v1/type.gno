@@ -4,13 +4,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// 2 ** 128
-var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
-
 // Previously, we used a different zero address ("g1000000..."),
 // but we changed the value because using the address
 // below appears to have become the de facto standard practice.
-var zeroAddress address = address("")
+const zeroAddress address = address("")
 
 type MintParams struct {
 	token0         string     // token0 path for a specific pool

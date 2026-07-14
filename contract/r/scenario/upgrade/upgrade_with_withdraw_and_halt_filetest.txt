@@ -268,7 +268,7 @@ func createPool() {
 		barPath,
 		fooPath,
 		uint32(3000),
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	poolPath := pool.GetPoolPath(barPath, fooPath, uint32(3000))

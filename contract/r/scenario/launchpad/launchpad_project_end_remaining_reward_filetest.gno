@@ -44,17 +44,17 @@ var (
 	projectAddr = testutils.TestAddress("project-owner")
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectId := "gno.land/r/onbloc/obl:123"
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	println()
 
 	println("[SCENARIO] 2. Partial deposits - only tier 30 receives deposits")
 	println("[INFO] Only Alice and Bob deposit to tier 30, tier 90 and 180 have no deposits")
-	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
-	depositGns(bobAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, aliceAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, bobAddr, projectTier30Id, int64(1_000_000))
 	println()
 
 	println("[SCENARIO] 3. Skip blocks to pass collect wait duration")
@@ -64,11 +64,11 @@ func main() {
 
 	println("[SCENARIO] 4. Depositors collect their rewards")
 	println("[INFO] Alice collecting reward")
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 
 	println("[INFO] Bob collecting reward")
-	collectReward(bobAddr, "2")
+	collectReward(cur, bobAddr, "2")
 	println()
 
 	println("[SCENARIO] 5. Skip blocks to end project")
@@ -79,24 +79,24 @@ func main() {
 
 	println("[SCENARIO] 6. Depositors collect final rewards after project ends")
 	println("[INFO] Alice collecting final reward")
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 
 	println("[INFO] Bob collecting final reward")
-	collectReward(bobAddr, "2")
+	collectReward(cur, bobAddr, "2")
 	println()
 
 	println("[SCENARIO] 7. Depositors withdraw their GNS deposits")
 	println("[INFO] Alice withdrawing deposit")
-	withdrawDeposit(aliceAddr, "1")
+	withdrawDeposit(cur, aliceAddr, "1")
 	println()
 
 	println("[INFO] Bob withdrawing deposit")
-	withdrawDeposit(bobAddr, "2")
+	withdrawDeposit(cur, bobAddr, "2")
 	println()
 
 	println("[SCENARIO] 8. Check project recipient balance before refund")
-	checkProjectRecipientBalance()
+	checkProjectRecipientBalance(cur)
 	println()
 
 	println("[SCENARIO] 9. Admin transfers remaining rewards to project recipient")
@@ -104,15 +104,15 @@ func main() {
 	println("[INFO] - Tier 90 full amount (no deposits): 200,000,000 OBL")
 	println("[INFO] - Tier 180 full amount (no deposits): 700,000,000 OBL")
 	println("[INFO] - Any undistributed rewards from tier 30")
-	transferRemainingRewards(projectId)
+	transferRemainingRewards(cur, projectId)
 	println()
 
 	println("[SCENARIO] 10. Check project recipient balance after refund")
-	checkProjectRecipientBalance()
+	checkProjectRecipientBalance(cur)
 	println()
 }
 
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -128,9 +128,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -153,18 +153,18 @@ func createOBLProject() {
 	println("[INFO] Tier 180 reward: 700,000,000 OBL (70%)")
 }
 
-func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
+func depositGns(cur realm, depositorAddr address, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	ufmt.Printf("[INFO] Admin transferring %d GNS to depositor\n", depositAmount)
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -174,40 +174,40 @@ func depositGns(depositorAddr address, projectTierId string, depositAmount int64
 	testing.SkipHeights(1)
 }
 
-func collectReward(ownerAddr address, depositId string) {
+func collectReward(cur realm, ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
+	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
 }
 
-func withdrawDeposit(ownerAddr address, depositId string) {
+func withdrawDeposit(cur realm, ownerAddr address, depositId string) {
 	println("[INFO] Withdrawing deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
 	beforeGnsBalance := gns.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] GNS balance before: %d\n", beforeGnsBalance)
 
-	gnsAmount, _ := launchpad.CollectDepositGns(cross, depositId)
+	gnsAmount, _ := launchpad.CollectDepositGns(cross(cur), depositId)
 
 	afterGnsBalance := gns.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] GNS balance after: %d\n", afterGnsBalance)
 	ufmt.Printf("[INFO] GNS withdrawn: %d\n", gnsAmount)
 }
 
-func checkProjectRecipientBalance() {
+func checkProjectRecipientBalance(cur realm) {
 	oblBalance := obl.BalanceOf(projectAddr)
 	ufmt.Printf("[INFO] Project recipient OBL balance: %d\n", oblBalance)
 }
 
-func transferRemainingRewards(projectId string) {
+func transferRemainingRewards(cur realm, projectId string) {
 	println("[INFO] Admin transferring remaining rewards to project recipient")
 	testing.SetRealm(adminRealm)
 
@@ -216,7 +216,7 @@ func transferRemainingRewards(projectId string) {
 	ufmt.Printf("[INFO] Launchpad OBL balance before: %d\n", launchpadBalanceBefore)
 	ufmt.Printf("[INFO] Recipient OBL balance before: %d\n", recipientBalanceBefore)
 
-	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
+	launchpad.TransferLeftFromProjectByAdmin(cross(cur), projectId, projectAddr)
 
 	launchpadBalanceAfter := obl.BalanceOf(launchpadAddr)
 	recipientBalanceAfter := obl.BalanceOf(projectAddr)

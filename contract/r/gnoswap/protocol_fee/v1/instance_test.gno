@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/protocol_fee"
 )
 
-func TestNewProtocolFeeV1(t *testing.T) {
+func TestNewProtocolFeeV1(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() protocol_fee.IProtocolFeeStore
@@ -40,7 +40,7 @@ func TestNewProtocolFeeV1(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			store := tt.setupFn()
 			pf := NewProtocolFeeV1(store)
 			tt.verifyFn(t, pf)
@@ -48,7 +48,7 @@ func TestNewProtocolFeeV1(t *testing.T) {
 	}
 }
 
-func TestGetProtocolFeeState(t *testing.T) {
+func TestGetProtocolFeeState(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
@@ -68,7 +68,7 @@ func TestGetProtocolFeeState(t *testing.T) {
 			name: "success - state reflects store data",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetDevOpsPct(2500)
+				pf.store.SetDevOpsPct(0, cur, 2500)
 				return pf
 			},
 			verifyFn: func(t *testing.T, state *protocolFeeState) {
@@ -80,7 +80,7 @@ func TestGetProtocolFeeState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pf := tt.setupFn()
 			state := pf.getProtocolFeeState()
 			tt.verifyFn(t, state)

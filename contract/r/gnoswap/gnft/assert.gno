@@ -1,8 +1,6 @@
 package gnft
 
 import (
-	"chain/runtime"
-
 	"gno.land/p/demo/tokens/grc721"
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -41,7 +39,7 @@ func assertToIsValidAddress(to address) {
 // assertIsAllowedTransfer enforces that NFTs held
 // by the staker (i.e. currently staked) can only be moved by the staker itself.
 // Other tokens fall through to the standard GRC721 owner/approval checks performed inside nft.
-func assertIsAllowedTransfer(tid grc721.TokenID) {
+func assertIsAllowedTransfer(caller address, tid grc721.TokenID) {
 	owner, err := nft.OwnerOf(tid)
 	if err != nil {
 		// Surface the same not-found error as the standard transfer path.
@@ -53,7 +51,6 @@ func assertIsAllowedTransfer(tid grc721.TokenID) {
 		return
 	}
 
-	caller := runtime.PreviousRealm().Address()
 	if caller != stakerAddr {
 		panic(makeErrorWithDetails(
 			errStakedTokenLocked,

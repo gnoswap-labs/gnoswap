@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Test partial collection with multiple undelegations at different times
 
 package main
@@ -31,102 +33,102 @@ var (
 	minAmount = int64(1_000_000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test partial collection with multiple undelegations")
 	println()
 
 	println("[STEP 1] Setup - Transfer GNS to alice")
-	setupGNS()
+	setupGNS(cur)
 	println()
 
 	println("[STEP 2] Alice delegates to validator")
-	delegateToValidator()
+	delegateToValidator(cur)
 	println()
 
 	println("[STEP 3] Alice undelegates 3M GNS (first)")
-	undelegateFirst()
+	undelegateFirst(cur)
 	println()
 
 	println("[STEP 4] Wait 1 hour and undelegate 3M GNS (second)")
 	testing.SkipHeights(720) // 1 hour = 3600 seconds / 5 = 720 blocks
-	undelegateSecond()
+	undelegateSecond(cur)
 	println()
 
 	println("[STEP 5] Wait 1 hour and undelegate 4M GNS (third)")
 	testing.SkipHeights(720) // 1 hour = 720 blocks
-	undelegateThird()
+	undelegateThird(cur)
 	println()
 
 	println("[STEP 6] Wait 7 days from first undelegate and collect")
 	testing.SkipHeights(119520) // 7 days from first undelegate (120960 - 1440 = 119520)
-	collectFirst()
+	collectFirst(cur)
 	println()
 
 	println("[STEP 7] Wait 1 hour and collect second batch")
 	testing.SkipHeights(720) // 7 days from second undelegate
-	collectSecond()
+	collectSecond(cur)
 	println()
 
 	println("[STEP 8] Wait 1 hour and collect third batch")
 	testing.SkipHeights(720) // 7 days from third undelegate
-	collectThird()
+	collectThird(cur)
 	println()
 
 	println("[SCENARIO] Complete - Partial collection verified")
 }
 
-func setupGNS() {
+func setupGNS(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, minAmount*12)
+	gns.Transfer(cross(cur), aliceAddr, minAmount*12)
 	ufmt.Printf("[INFO] Transferred %d GNS to alice\n", minAmount*12)
 }
 
-func delegateToValidator() {
+func delegateToValidator(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gns.Approve(cross, govStakerAddr, minAmount*10)
-	staker.Delegate(cross, validatorAddr, minAmount*10, "")
+	gns.Approve(cross(cur), govStakerAddr, minAmount*10)
+	staker.Delegate(cross(cur), validatorAddr, minAmount*10, "")
 	ufmt.Printf("[INFO] Alice delegated %d GNS to validator\n", minAmount*10)
 }
 
-func undelegateFirst() {
+func undelegateFirst(cur realm) {
 	testing.SetRealm(aliceRealm)
-	staker.Undelegate(cross, validatorAddr, minAmount*3)
+	staker.Undelegate(cross(cur), validatorAddr, minAmount*3)
 	ufmt.Printf("[INFO] Alice undelegated %d GNS (first batch)\n", minAmount*3)
 }
 
-func undelegateSecond() {
+func undelegateSecond(cur realm) {
 	testing.SetRealm(aliceRealm)
-	staker.Undelegate(cross, validatorAddr, minAmount*3)
+	staker.Undelegate(cross(cur), validatorAddr, minAmount*3)
 	ufmt.Printf("[INFO] Alice undelegated %d GNS (second batch)\n", minAmount*3)
 }
 
-func undelegateThird() {
+func undelegateThird(cur realm) {
 	testing.SetRealm(aliceRealm)
-	staker.Undelegate(cross, validatorAddr, minAmount*4)
+	staker.Undelegate(cross(cur), validatorAddr, minAmount*4)
 	ufmt.Printf("[INFO] Alice undelegated %d GNS (third batch)\n", minAmount*4)
 }
 
-func collectFirst() {
+func collectFirst(cur realm) {
 	testing.SetRealm(aliceRealm)
-	collected := staker.CollectUndelegatedGns(cross)
+	collected := staker.CollectUndelegatedGns(cross(cur))
 	ufmt.Printf("[EXPECTED] Alice collected %d GNS (first batch only)\n", collected)
 
 	balance := gns.BalanceOf(aliceAddr)
 	ufmt.Printf("[EXPECTED] Alice's GNS balance: %d\n", balance)
 }
 
-func collectSecond() {
+func collectSecond(cur realm) {
 	testing.SetRealm(aliceRealm)
-	collected := staker.CollectUndelegatedGns(cross)
+	collected := staker.CollectUndelegatedGns(cross(cur))
 	ufmt.Printf("[EXPECTED] Alice collected %d GNS (second batch)\n", collected)
 
 	balance := gns.BalanceOf(aliceAddr)
 	ufmt.Printf("[EXPECTED] Alice's GNS balance: %d\n", balance)
 }
 
-func collectThird() {
+func collectThird(cur realm) {
 	testing.SetRealm(aliceRealm)
-	collected := staker.CollectUndelegatedGns(cross)
+	collected := staker.CollectUndelegatedGns(cross(cur))
 	ufmt.Printf("[EXPECTED] Alice collected %d GNS (third batch)\n", collected)
 
 	balance := gns.BalanceOf(aliceAddr)

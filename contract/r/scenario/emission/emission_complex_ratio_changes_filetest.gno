@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Emission complex ratio changes scenario test
 // Scenario: Complex governance adjustments with all 4 recipients active
 //
@@ -33,22 +35,22 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 )
 
-func main() {
-	testComplexRatioChanges()
+func main(cur realm) {
+	testComplexRatioChanges(cur)
 }
 
-func testComplexRatioChanges() {
+func testComplexRatioChanges(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[SCENARIO] 1. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
-	emission.SetDistributionStartTime(cross, distributionStartTime)
+	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println()
 
 	println("[SCENARIO] 2. Set Period 1 ratio (40/30/20/10)")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		4000, // liquidityStakerPct
 		3000, // devOpsPct
 		2000, // communityPoolPct
@@ -75,7 +77,7 @@ func testComplexRatioChanges() {
 
 	println("[SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		5000, // liquidityStakerPct
 		2500, // devOpsPct
 		1500, // communityPoolPct
@@ -121,7 +123,7 @@ func testComplexRatioChanges() {
 
 	println("[SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)")
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		6000, // liquidityStakerPct
 		2000, // devOpsPct
 		1000, // communityPoolPct

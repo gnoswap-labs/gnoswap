@@ -49,54 +49,54 @@ var (
 	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	println()
 
 	println("[SCENARIO] 2. Single deposit by Alice")
-	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, aliceAddr, projectTier30Id, int64(1_000_000))
 	println()
 
 	println("[SCENARIO] 3. Simulate swap fee")
 	println("[INFO] Swap fee is collected when users swap tokens via router")
-	simulateSwapFee(500, 1000)
+	simulateSwapFee(cur, 500, 1000)
 	println()
 
 	println("[SCENARIO] 4. Simulate pool creation fee")
 	println("[INFO] Pool creation fee is collected when a new pool is created")
-	simulatePoolCreationFee(300, 600)
+	simulatePoolCreationFee(cur, 300, 600)
 	println()
 
 	println("[SCENARIO] 5. Simulate withdrawal fee")
 	println("[INFO] Withdrawal fee is collected when LP withdraws liquidity")
-	simulateWithdrawalFee(200, 400)
+	simulateWithdrawalFee(cur, 200, 400)
 	println()
 
 	println("[SCENARIO] 6. Simulate unstaking fee")
 	println("[INFO] Unstaking fee is collected when staker collects staking rewards")
-	simulateUnstakingFee(100, 200)
+	simulateUnstakingFee(cur, 100, 200)
 	println()
 
 	println("[SCENARIO] 7. Distribute protocol fee")
-	distributeProtocolFee()
+	distributeProtocolFee(cur)
 	println()
 
 	println("[SCENARIO] 8. Project recipient collects protocol fee")
-	collectProtocolFeeForProjectRecipient()
+	collectProtocolFeeForProjectRecipient(cur)
 	println()
 
 	println("[SCENARIO] 9. Add more protocol fees and collect again")
 	println("[INFO] Adding additional swap and unstaking fees")
-	simulateSwapFee(1000, 2000)
-	simulateUnstakingFee(500, 1000)
-	distributeProtocolFee()
-	collectProtocolFeeForProjectRecipient()
+	simulateSwapFee(cur, 1000, 2000)
+	simulateUnstakingFee(cur, 500, 1000)
+	distributeProtocolFee(cur)
+	collectProtocolFeeForProjectRecipient(cur)
 	println()
 }
 
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -112,9 +112,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -133,18 +133,18 @@ func createOBLProject() {
 	println("[INFO] Project created with ID:", projectId)
 }
 
-func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
+func depositGns(cur realm, depositorAddr address, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	println("[INFO] Admin transferring GNS to depositor")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -155,90 +155,90 @@ func depositGns(depositorAddr address, projectTierId string, depositAmount int64
 	testing.SkipHeights(1)
 }
 
-func simulateSwapFee(barAmount, quxAmount int64) {
+func simulateSwapFee(cur realm, barAmount, quxAmount int64) {
 	println("[INFO] Simulating swap fee from router")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
 
 	ufmt.Printf("[INFO] Swap fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
 }
 
-func simulatePoolCreationFee(barAmount, quxAmount int64) {
+func simulatePoolCreationFee(cur realm, barAmount, quxAmount int64) {
 	println("[INFO] Simulating pool creation fee")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
 
 	ufmt.Printf("[INFO] Pool creation fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
 }
 
-func simulateWithdrawalFee(barAmount, quxAmount int64) {
+func simulateWithdrawalFee(cur realm, barAmount, quxAmount int64) {
 	println("[INFO] Simulating withdrawal fee from LP position")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
 
 	ufmt.Printf("[INFO] Withdrawal fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
 }
 
-func simulateUnstakingFee(barAmount, quxAmount int64) {
+func simulateUnstakingFee(cur realm, barAmount, quxAmount int64) {
 	println("[INFO] Simulating unstaking fee from staker rewards")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
 
 	ufmt.Printf("[INFO] Unstaking fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
 }
 
-func distributeProtocolFee() {
+func distributeProtocolFee(cur realm) {
 	println("[INFO] Distributing protocol fee to gov/staker")
 
 	testing.SetRealm(govStakerRealm)
-	protocol_fee.DistributeProtocolFee(cross)
+	protocol_fee.DistributeProtocolFee(cross(cur))
 
 	println("[INFO] Protocol fee distributed")
 	testing.SkipHeights(1)
 }
 
-func collectProtocolFeeForProjectRecipient() {
+func collectProtocolFeeForProjectRecipient(cur realm) {
 	println("[INFO] Project recipient collecting protocol fee")
 
 	testing.SetRealm(govStakerRealm)
 	emissionReward, protocolFeeRewards, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
-	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFeeRewards))
+	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(cur, protocolFeeRewards))
 
 	testing.SetRealm(projectRealm)
 
@@ -247,7 +247,7 @@ func collectProtocolFeeForProjectRecipient() {
 	ufmt.Printf("[INFO] BAR balance before: %d\n", prevBarBalance)
 	ufmt.Printf("[INFO] QUX balance before: %d\n", prevQuxBalance)
 
-	launchpad.CollectProtocolFee(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 
 	afterBarBalance := bar.BalanceOf(projectAddr)
 	afterQuxBalance := qux.BalanceOf(projectAddr)
@@ -257,7 +257,7 @@ func collectProtocolFeeForProjectRecipient() {
 	ufmt.Printf("[INFO] QUX collected: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
-func formatProtocolFees(fees map[string]int64) string {
+func formatProtocolFees(cur realm, fees map[string]int64) string {
 	if len(fees) == 0 {
 		return "map[]"
 	}

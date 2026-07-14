@@ -3,13 +3,13 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -58,12 +58,12 @@ var (
 // DrySwap Test - ZeroForOne True with Positive Amount Specified
 // Testing DrySwap functionality with zeroForOne=true and amountSpecified=16000
 // Expected behavior: Calculate swap amounts without executing the actual swap
-func main() {
-	testDrySwapZeroForOneTruePositiveAmount(t)
+func main(cur realm) {
+	testDrySwapZeroForOneTruePositiveAmount(cur, t)
 }
 
 // testDrySwapZeroForOneTruePositiveAmount tests DrySwap with zeroForOne=true and positive amountSpecified
-func testDrySwapZeroForOneTruePositiveAmount(t *testing.T) {
+func testDrySwapZeroForOneTruePositiveAmount(cur realm, t *testing.T) {
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for DrySwap test")
 	println("[INFO] Token0:", barPath)
@@ -74,23 +74,23 @@ func testDrySwapZeroForOneTruePositiveAmount(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,

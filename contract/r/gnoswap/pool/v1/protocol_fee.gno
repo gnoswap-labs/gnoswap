@@ -2,10 +2,12 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -33,40 +35,48 @@ const (
 // - the amount of token0 after the fee
 // - the amount of token1 after the fee
 func (i *poolV1) HandleWithdrawalFee(
+	_ int,
+	rlm realm,
 	token0Path string,
 	amount0 string, // uint256
 	token1Path string,
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
-	i.lockPool()
-	defer i.unlockPool()
 
 	// only position contract can call this function
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsPosition(caller)
 
 	common.MustRegistered(token0Path, token1Path)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	fee := u256.NewUint(i.store.GetWithdrawalFeeBPS())
 	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
 	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
 
-	fee0Int64 := safeConvertToInt64(fee0)
-	fee1Int64 := safeConvertToInt64(fee1)
+	fee0Int64 := gnsmath.SafeConvertToInt64(fee0)
+	fee1Int64 := gnsmath.SafeConvertToInt64(fee1)
 
-	i.addPendingProtocolFee(token0Path, fee0Int64)
-	i.addPendingProtocolFee(token1Path, fee1Int64)
-	i.addToProtocolFee()
-	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
-	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
+	i.addPendingProtocolFee(0, rlm, token0Path, fee0Int64)
+	i.addPendingProtocolFee(0, rlm, token1Path, fee1Int64)
+	i.addToProtocolFee(0, rlm)
+	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
+	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
 
-func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
+func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
@@ -76,8 +86,8 @@ func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := i.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := i.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -86,7 +96,7 @@ func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (i *poolV1) addToProtocolFee() {
+func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
 	pendingProtocolFees := i.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
@@ -99,31 +109,37 @@ func (i *poolV1) addToProtocolFee() {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
 			remainingProtocolFees[tokenPath] = amount
 			continue
 		}
 	}
 
-	if err := i.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+	if err := i.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
 		panic(err)
 	}
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
-func (i *poolV1) SetPoolCreationFee(fee int64) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	previousRealm := runtime.PreviousRealm()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	prevPoolCreationFee := i.store.GetPoolCreationFee()
-	err := i.setPoolCreationFee(fee)
+	err := i.setPoolCreationFee(0, rlm, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -132,25 +148,31 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 		"SetPoolCreationFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatInt(prevPoolCreationFee),
-		"newFee", formatInt(fee),
+		"prevFee", utils.FormatInt(prevPoolCreationFee),
+		"newFee", utils.FormatInt(fee),
 	)
 }
 
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
-func (i *poolV1) SetWithdrawalFee(fee uint64) {
-	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
+func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
 
-	previousRealm := runtime.PreviousRealm()
+	i.assertPoolUnlocked()
+	halt.AssertIsNotHaltedPool()
+
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
+	i.lockPool(0, rlm)
+	defer i.unlockPool(0, rlm)
+
 	prevWithdrawalFee := i.store.GetWithdrawalFeeBPS()
 
-	err := i.setWithdrawalFee(fee)
+	err := i.setWithdrawalFee(0, rlm, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -159,8 +181,8 @@ func (i *poolV1) SetWithdrawalFee(fee uint64) {
 		"SetWithdrawalFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevWithdrawalFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevWithdrawalFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 
@@ -176,7 +198,7 @@ func (i *poolV1) SetWithdrawalFee(fee uint64) {
 func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
 	feeAmount, overflow := u256.Zero().MulOverflow(amount, fee)
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10_000))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
@@ -185,7 +207,7 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
 // And SetPoolCreationFee
-func (i *poolV1) setPoolCreationFee(fee int64) error {
+func (i *poolV1) setPoolCreationFee(_ int, rlm realm, fee int64) error {
 	if fee < 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
@@ -194,7 +216,7 @@ func (i *poolV1) setPoolCreationFee(fee int64) error {
 	}
 
 	// update pool creation fee
-	err := i.store.SetPoolCreationFee(fee)
+	err := i.store.SetPoolCreationFee(0, rlm, fee)
 	if err != nil {
 		return err
 	}
@@ -204,7 +226,7 @@ func (i *poolV1) setPoolCreationFee(fee int64) error {
 
 // setWithdrawalFee this function is internal function called by SetWithdrawalFee
 // function and SetWithdrawalFee function
-func (i *poolV1) setWithdrawalFee(fee uint64) error {
+func (i *poolV1) setWithdrawalFee(_ int, rlm realm, fee uint64) error {
 	if fee > MaxBpsValue {
 		return makeErrorWithDetails(
 			errInvalidWithdrawalFeePct,
@@ -212,7 +234,7 @@ func (i *poolV1) setWithdrawalFee(fee uint64) error {
 		)
 	}
 
-	err := i.store.SetWithdrawalFeeBPS(fee)
+	err := i.store.SetWithdrawalFeeBPS(0, rlm, fee)
 	if err != nil {
 		return err
 	}

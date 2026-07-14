@@ -23,6 +23,18 @@ type UintTree struct {
 	fanout int
 }
 
+// NewBPTreeN allocates a raw BP-tree under /r/gnoswap/staker's realm
+// context (the realm that declares Pool/Deposit/ExternalIncentive). The tree's
+// PkgID is therefore /r/gnoswap/staker, matching the domain values it stores,
+// so tree.Set leaf-slot writes clear the readonly-taint gate regardless of
+// which realm (staker/v1, mock) calls Set (borrow rule #2 borrows m.Realm to
+// the tree's owning realm). Implementations and mocks must allocate trees that
+// hold /r/gnoswap/staker-declared values through here rather than calling
+// bptree.NewBPTreeN directly in their own realm.
+func NewBPTreeN(fanout int) *bptree.BPTree {
+	return bptree.NewBPTreeN(fanout)
+}
+
 // NewUintTree creates a new UintTree instance with default fanout 64.
 func NewUintTree() *UintTree {
 	return NewUintTreeN(64)

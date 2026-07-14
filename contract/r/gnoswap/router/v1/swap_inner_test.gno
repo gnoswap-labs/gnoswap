@@ -4,18 +4,17 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	prabc "gno.land/p/gnoswap/rbac"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
 
-func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
+func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		zeroForOne        bool
@@ -36,7 +35,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected: u256.Zero().Add(
-				common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
+				gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
 				u256.One(),
 			),
 		},
@@ -46,14 +45,14 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected: u256.Zero().Sub(
-				common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
+				gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
 				u256.One(),
 			),
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(
 				tt.zeroForOne,
 				tt.fee,
@@ -64,7 +63,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 	}
 }
 
-func TestMustGetSqrtPriceLimit(t *testing.T) {
+func TestMustGetSqrtPriceLimit(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		limits      map[uint32]*u256.Uint
@@ -76,49 +75,49 @@ func TestMustGetSqrtPriceLimit(t *testing.T) {
 			name:     "forward limit fee 100",
 			limits:   sqrtPriceLimitForward,
 			fee:      100,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 500",
 			limits:   sqrtPriceLimitForward,
 			fee:      500,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 3000",
 			limits:   sqrtPriceLimitForward,
 			fee:      3000,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
 		},
 		{
 			name:     "forward limit fee 10000",
 			limits:   sqrtPriceLimitForward,
 			fee:      10000,
-			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
+			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 100",
 			limits:   sqrtPriceLimitBackward,
 			fee:      100,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 500",
 			limits:   sqrtPriceLimitBackward,
 			fee:      500,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 3000",
 			limits:   sqrtPriceLimitBackward,
 			fee:      3000,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
 		},
 		{
 			name:     "backward limit fee 10000",
 			limits:   sqrtPriceLimitBackward,
 			fee:      10000,
-			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
+			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
 		},
 		{
 			name:        "unknown fee panics",
@@ -129,9 +128,9 @@ func TestMustGetSqrtPriceLimit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "unknown fee", func() {
+				uassert.PanicsContains(t, cur, "unknown fee", func() {
 					mustGetSqrtPriceLimit(tt.limits, tt.fee)
 				})
 			} else {
@@ -142,13 +141,15 @@ func TestMustGetSqrtPriceLimit(t *testing.T) {
 	}
 }
 
-func TestSwapInner(t *testing.T) {
+func TestSwapInner(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name              string
-		setupFn           func(*TestEnv)
+		setupFn           func(cur realm, env *TestEnv)
 		amountSpecified   int64
 		recipient         address
 		sqrtPriceLimitX96 *u256.Uint
@@ -160,9 +161,9 @@ func TestSwapInner(t *testing.T) {
 	}{
 		{
 			name: "normal swap - exact input",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-				TokenFaucet(t, barPath, alice)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
+				TokenFaucet(cur, env.t, barPath, alice)
 			},
 			amountSpecified:   100,
 			recipient:         alice,
@@ -179,9 +180,9 @@ func TestSwapInner(t *testing.T) {
 		},
 		{
 			name: "insufficient balance - large amount",
-			setupFn: func(env *TestEnv) {
-				defaultSetupFn(env)
-				TokenFaucet(t, barPath, alice)
+			setupFn: func(cur realm, env *TestEnv) {
+				runDefaultSetup(cur, env)
+				TokenFaucet(cur, env.t, barPath, alice)
 			},
 			amountSpecified:   9223372036854775807, // Large amount (int64 max)
 			recipient:         alice,
@@ -200,28 +201,29 @@ func TestSwapInner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			env := NewTestEnv(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
 
 			if tt.setupFn != nil {
-				tt.setupFn(env)
+				tt.setupFn(cur, env)
 			}
 
 			// Additional setup for swapInner test requirements
 			aliceRealm := testing.NewUserRealm(alice)
 			testing.SetRealm(aliceRealm)
-			bar.Approve(cross, routerAddr, maxApprove)
-			baz.Approve(cross, routerAddr, maxApprove)
-			bar.Approve(cross, poolAddr, maxApprove)
-			baz.Approve(cross, poolAddr, maxApprove)
-			TokenFaucet(t, barPath, routerAddr)
+			bar.Approve(cross(cur), routerAddr, maxApprove)
+			baz.Approve(cross(cur), routerAddr, maxApprove)
+			bar.Approve(cross(cur), poolAddr, maxApprove)
+			baz.Approve(cross(cur), poolAddr, maxApprove)
+			TokenFaucet(cur, t, barPath, routerAddr)
 
 			testing.SetRealm(routerRealm)
 
 			router := mockRouter()
 
 			swapInnerFn := func(cur realm) (int64, int64) {
-				return router.swapInner(
+				return router.swapInner(0, cur,
 					tt.amountSpecified,
 					tt.recipient,
 					tt.sqrtPriceLimitX96,
@@ -230,11 +232,11 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			if tt.expectError {
-				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-					swapInnerFn(cross)
+				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
+					swapInnerFn(cross(cur))
 				})
 			} else {
-				poolRecv, poolOut := swapInnerFn(cross)
+				poolRecv, poolOut := swapInnerFn(cross(cur))
 
 				if !tt.expectError {
 					uassert.Equal(t, strconv.FormatInt(poolRecv, 10), strconv.FormatInt(tt.expectedRecv, 10))

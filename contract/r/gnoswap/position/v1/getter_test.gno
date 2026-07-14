@@ -3,36 +3,37 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
 var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
-func setupPositionGetter(t *testing.T) {
+func setupPositionGetter(cur realm, t *testing.T) {
 	t.Helper()
-	initPositionTest(t)
+	initPositionTest(cur, t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
-	mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(cur, barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
 
-func setupMultiplePositions(t *testing.T) {
+func setupMultiplePositions(cur realm, t *testing.T) {
 	t.Helper()
-	initPositionTest(t)
+	initPositionTest(cur, t)
 
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+	createPoolWithoutFee(cur, barPath, fooPath, fee500, 0)
 
 	// Create 3 positions with different tick ranges
-	mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	mockInstanceMint(barPath, fooPath, fee500, -5000, 5000, "500000", "500000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	mockInstanceMint(barPath, fooPath, fee500, -2000, 2000, "200000", "200000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(cur, barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(cur, barPath, fooPath, fee500, -5000, 5000, "500000", "500000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	mockInstanceMint(cur, barPath, fooPath, fee500, -2000, 2000, "200000", "200000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
 
-func TestPositionGetter(t *testing.T) {
+func TestPositionGetter(cur realm, t *testing.T) {
 	positionId := uint64(1)
-	setupPositionGetter(t)
+	setupPositionGetter(cur, t)
 
 	testCases := []struct {
 		name     string
@@ -163,63 +164,63 @@ func TestPositionGetter(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := tt.testFunc()
 			uassert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestGetPositionCount(t *testing.T) {
+func TestGetPositionCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		expected int
 	}{
 		{
 			name: "empty store returns zero",
-			setup: func(t *testing.T) {
-				initPositionTest(t)
+			setup: func(cur realm, t *testing.T) {
+				initPositionTest(cur, t)
 			},
 			expected: 0,
 		},
 		{
 			name: "returns correct count after minting 3 positions",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			expected: 3,
 		},
 		{
 			name: "returns correct count after single mint",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			expected: 1,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			count := mockInstance.GetPositionCount()
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetPositionIDs(t *testing.T) {
+func TestGetPositionIDs(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		offset         int
 		count          int
 		expectedLength int
 	}{
 		{
 			name: "empty store returns empty slice",
-			setup: func(t *testing.T) {
-				initPositionTest(t)
+			setup: func(cur realm, t *testing.T) {
+				initPositionTest(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -227,8 +228,8 @@ func TestGetPositionIDs(t *testing.T) {
 		},
 		{
 			name: "returns all position IDs",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -236,8 +237,8 @@ func TestGetPositionIDs(t *testing.T) {
 		},
 		{
 			name: "pagination with offset 0 and count 2",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:         0,
 			count:          2,
@@ -245,8 +246,8 @@ func TestGetPositionIDs(t *testing.T) {
 		},
 		{
 			name: "pagination with offset 2 returns remaining",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:         2,
 			count:          10,
@@ -254,8 +255,8 @@ func TestGetPositionIDs(t *testing.T) {
 		},
 		{
 			name: "offset beyond range returns empty",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:         100,
 			count:          10,
@@ -264,16 +265,16 @@ func TestGetPositionIDs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			ids := mockInstance.GetPositionIDs(tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
 }
 
-func TestGetPositionTokenBalances(t *testing.T) {
-	setupPositionGetter(t)
+func TestGetPositionTokenBalances(cur realm, t *testing.T) {
+	setupPositionGetter(cur, t)
 	positionId := uint64(1)
 
 	testCases := []struct {
@@ -297,20 +298,20 @@ func TestGetPositionTokenBalances(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			uassert.True(t, tc.testFunc())
 		})
 	}
 }
 
-func TestGetPositionTokenBalances_LiquidityBoundaries(t *testing.T) {
-	t.Run("large bounded stored liquidity remains readable", func(t *testing.T) {
-		setupPositionGetter(t)
+func TestGetPositionTokenBalances_LiquidityBoundaries(cur realm, t *testing.T) {
+	t.Run("large bounded stored liquidity remains readable", func(cur realm, t *testing.T) {
+		setupPositionGetter(cur, t)
 		positionId := uint64(1)
 
 		pos := mockInstance.mustGetPosition(positionId)
 		pos.SetLiquidity("1000000000000")
-		mockInstance.mustUpdatePosition(positionId, *pos)
+		mockInstance.mustUpdatePosition(0, cur, positionId, *pos)
 
 		balance0, balance1 := mockInstance.GetPositionTokenBalances(positionId)
 		uassert.True(t, balance0 >= 0)
@@ -318,39 +319,39 @@ func TestGetPositionTokenBalances_LiquidityBoundaries(t *testing.T) {
 		uassert.True(t, balance0 != 0 || balance1 != 0)
 	})
 
-	t.Run("maxLiquidityPerTick-sized stored liquidity fails at int64 conversion, not earlier", func(t *testing.T) {
-		setupPositionGetter(t)
+	t.Run("maxLiquidityPerTick-sized stored liquidity fails at int64 conversion, not earlier", func(cur realm, t *testing.T) {
+		setupPositionGetter(cur, t)
 		positionId := uint64(1)
 
 		pos := mockInstance.mustGetPosition(positionId)
 		pos.SetLiquidity(u256.MustFromDecimal("1917569901783203986719870431555990").ToString())
-		mockInstance.mustUpdatePosition(positionId, *pos)
+		mockInstance.mustUpdatePosition(0, cur, positionId, *pos)
 
-		uassert.PanicsContains(t, "overflows int64 range", func() {
+		uassert.PanicsContains(t, cur, "overflows int64 range", func() {
 			mockInstance.GetPositionTokenBalances(positionId)
 		})
 	})
 }
 
-func TestGetPositionExistence(t *testing.T) {
+func TestGetPositionExistence(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   bool
 	}{
 		{
 			name: "non-existent position returns false",
-			setup: func(t *testing.T) {
-				initPositionTest(t)
+			setup: func(cur realm, t *testing.T) {
+				initPositionTest(cur, t)
 			},
 			positionId: 9999,
 			expected:   false,
 		},
 		{
 			name: "existing position returns true",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId: 1,
 			expected:   true,
@@ -358,33 +359,33 @@ func TestGetPositionExistence(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			_, exists := mockInstance.GetPosition(tc.positionId)
 			uassert.Equal(t, tc.expected, exists)
 		})
 	}
 }
 
-func TestGetterExistPosition(t *testing.T) {
+func TestGetterExistPosition(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   bool
 	}{
 		{
 			name: "returns false for non-existent position",
-			setup: func(t *testing.T) {
-				initPositionTest(t)
+			setup: func(cur realm, t *testing.T) {
+				initPositionTest(cur, t)
 			},
 			positionId: 9999,
 			expected:   false,
 		},
 		{
 			name: "returns true for existing position",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId: 1,
 			expected:   true,
@@ -392,16 +393,16 @@ func TestGetterExistPosition(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			exists := mockInstance.ExistPosition(tc.positionId)
 			uassert.Equal(t, tc.expected, exists)
 		})
 	}
 }
 
-func TestGetPositionDetailsGetter(t *testing.T) {
-	setupPositionGetter(t)
+func TestGetPositionDetailsGetter(cur realm, t *testing.T) {
+	setupPositionGetter(cur, t)
 	positionId := uint64(1)
 
 	testCases := []struct {
@@ -475,24 +476,24 @@ func TestGetPositionDetailsGetter(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			result := tc.testFunc()
 			uassert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestIsBurned(t *testing.T) {
+func TestIsBurned(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   bool
 	}{
 		{
 			name: "newly minted position is not burned",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId: 1,
 			expected:   false,
@@ -500,25 +501,25 @@ func TestIsBurned(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			result := mockInstance.IsBurned(tc.positionId)
 			uassert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestIsInRange(t *testing.T) {
+func TestIsInRange(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   bool
 	}{
 		{
 			name: "position with tick range including current tick is in range",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId: 1,
 			expected:   true,
@@ -526,25 +527,25 @@ func TestIsInRange(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			result := mockInstance.IsInRange(tc.positionId)
 			uassert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestGetPositionOperator(t *testing.T) {
+func TestGetPositionOperator(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   address
 	}{
 		{
 			name: "returns correct operator for position",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId: 1,
 			expected:   address(""),
@@ -552,26 +553,26 @@ func TestGetPositionOperator(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			result := mockInstance.GetPositionOperator(tc.positionId)
 			uassert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestGetUnclaimedFee(t *testing.T) {
+func TestGetUnclaimedFee(cur realm, t *testing.T) {
 	testCases := []struct {
 		name         string
-		setup        func(t *testing.T)
+		setup        func(cur realm, t *testing.T)
 		positionId   uint64
 		expectedFee0 string
 		expectedFee1 string
 	}{
 		{
 			name: "newly minted position has zero unclaimed fees",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId:   1,
 			expectedFee0: "0",
@@ -580,8 +581,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			fee0, fee1 := mockInstance.GetUnclaimedFee(tc.positionId)
 			uassert.Equal(t, tc.expectedFee0, fee0.ToString())
 			uassert.Equal(t, tc.expectedFee1, fee1.ToString())
@@ -589,14 +590,14 @@ func TestGetUnclaimedFee(t *testing.T) {
 	}
 }
 
-func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
-	setupPositionGetter(t)
+func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(cur realm, t *testing.T) {
+	setupPositionGetter(cur, t)
 
 	position := mockInstance.mustGetPosition(1)
 	position.SetLiquidity(MAX_UINT256)
 	position.SetFeeGrowthInside0LastX128("0")
 	position.SetFeeGrowthInside1LastX128("0")
-	mockInstance.mustUpdatePosition(1, *position)
+	mockInstance.mustUpdatePosition(0, cur, 1, *position)
 
 	storedPool := mustGetStoredTestPool(position.PoolKey())
 	storedPool.SetFeeGrowthGlobal0X128(u256.NewUint(2))
@@ -618,7 +619,7 @@ func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
 	upperTick.SetFeeGrowthOutside1X128("0")
 	storedPool.SetTick(position.TickUpper(), upperTick)
 
-	expectedFee0 := u256.MulDiv(u256.NewUint(2), u256.MustFromDecimal(MAX_UINT256), q128)
+	expectedFee0 := u256.MulDiv(u256.NewUint(2), u256.MustFromDecimal(MAX_UINT256), consts.Q128())
 
 	fee0, fee1 := mockInstance.GetUnclaimedFee(1)
 
@@ -626,14 +627,14 @@ func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
 	uassert.Equal(t, "0", fee1.ToString())
 }
 
-func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(t *testing.T) {
-	setupPositionGetter(t)
+func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(cur realm, t *testing.T) {
+	setupPositionGetter(cur, t)
 
 	position := mockInstance.mustGetPosition(1)
-	position.SetLiquidity(q128.ToString())
+	position.SetLiquidity(consts.Q128().ToString())
 	position.SetFeeGrowthInside0LastX128("0")
 	position.SetFeeGrowthInside1LastX128("0")
-	mockInstance.mustUpdatePosition(1, *position)
+	mockInstance.mustUpdatePosition(0, cur, 1, *position)
 
 	storedPool := mustGetStoredTestPool(position.PoolKey())
 	storedPool.SetFeeGrowthGlobal0X128(u256.NewUint(15))
@@ -661,25 +662,25 @@ func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(t *testing.T) {
 	uassert.Equal(t, "13", fee1.ToString())
 }
 
-func TestMustGetPositionPanic(t *testing.T) {
+func TestMustGetPositionPanic(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		shouldPanic bool
 	}{
 		{
 			name: "panics for non-existent position",
-			setup: func(t *testing.T) {
-				initPositionTest(t)
+			setup: func(cur realm, t *testing.T) {
+				initPositionTest(cur, t)
 			},
 			positionId:  9999,
 			shouldPanic: true,
 		},
 		{
 			name: "does not panic for existing position",
-			setup: func(t *testing.T) {
-				setupPositionGetter(t)
+			setup: func(cur realm, t *testing.T) {
+				setupPositionGetter(cur, t)
 			},
 			positionId:  1,
 			shouldPanic: false,
@@ -687,10 +688,10 @@ func TestMustGetPositionPanic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			if tc.shouldPanic {
-				uassert.PanicsWithMessage(t, "[GNOSWAP-POSITION-012] position does not exist || position with position ID(9999) doesn't exist", func() {
+				uassert.PanicsWithMessage(t, cur, "[GNOSWAP-POSITION-012] position does not exist || position with position ID(9999) doesn't exist", func() {
 					mockInstance.mustGetPosition(tc.positionId)
 				})
 			} else {
@@ -702,18 +703,18 @@ func TestMustGetPositionPanic(t *testing.T) {
 	}
 }
 
-func TestGetPositionIDsOrder(t *testing.T) {
+func TestGetPositionIDsOrder(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		offset   int
 		count    int
 		expected []uint64
 	}{
 		{
 			name: "returns position IDs in correct order",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:   0,
 			count:    10,
@@ -721,8 +722,8 @@ func TestGetPositionIDsOrder(t *testing.T) {
 		},
 		{
 			name: "returns first position ID only",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:   0,
 			count:    1,
@@ -730,8 +731,8 @@ func TestGetPositionIDsOrder(t *testing.T) {
 		},
 		{
 			name: "returns second and third position IDs with offset",
-			setup: func(t *testing.T) {
-				setupMultiplePositions(t)
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
 			},
 			offset:   1,
 			count:    2,
@@ -740,8 +741,8 @@ func TestGetPositionIDsOrder(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			tc.setup(cur, t)
 			ids := mockInstance.GetPositionIDs(tc.offset, tc.count)
 			uassert.Equal(t, len(tc.expected), len(ids))
 			for i, expectedId := range tc.expected {
@@ -751,8 +752,8 @@ func TestGetPositionIDsOrder(t *testing.T) {
 	}
 }
 
-func TestGetPositionWithMultiplePositions(t *testing.T) {
-	setupMultiplePositions(t)
+func TestGetPositionWithMultiplePositions(cur realm, t *testing.T) {
+	setupMultiplePositions(cur, t)
 
 	testCases := []struct {
 		name              string
@@ -792,7 +793,7 @@ func TestGetPositionWithMultiplePositions(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			pos, exists := mockInstance.GetPosition(tc.positionId)
 			uassert.Equal(t, tc.expectedExists, exists)
 			if exists {

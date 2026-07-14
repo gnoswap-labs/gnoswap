@@ -1,17 +1,15 @@
 package v1
 
 import (
-	"chain/runtime"
-
+	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	pl "gno.land/r/gnoswap/pool"
 	plv1 "gno.land/r/gnoswap/pool/v1"
@@ -35,20 +33,20 @@ func init() {
 	for _, fee := range []uint32{plv1.FeeTier100, plv1.FeeTier500, plv1.FeeTier3000, plv1.FeeTier10000} {
 		// zeroForOne=true: price must stay above minimum
 		minTick := getMinTick(fee) + 1
-		fwd := common.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
+		fwd := gnsmath.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
 		if fwd.IsZero() {
 			fwd = u256.MustFromDecimal(MIN_SQRT_RATIO)
 		}
-		fwd.Add(fwd, one) // fwd += 1 in-place
+		fwd.Add(fwd, u256.One()) // fwd += 1 in-place
 		sqrtPriceLimitForward[fee] = fwd
 
 		// zeroForOne=false: price must stay below maximum
 		maxTick := getMaxTick(fee) - 1
-		bwd := common.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
+		bwd := gnsmath.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
 		if bwd.IsZero() {
 			bwd = u256.MustFromDecimal(MAX_SQRT_RATIO)
 		}
-		bwd.Sub(bwd, one) // bwd -= 1 in-place
+		bwd.Sub(bwd, u256.One()) // bwd -= 1 in-place
 		sqrtPriceLimitBackward[fee] = bwd
 	}
 }
@@ -56,6 +54,8 @@ func init() {
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func (r *routerV1) swapInner(
+	_ int,
+	rlm realm,
 	amountSpecified int64,
 	recipient address,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -71,21 +71,21 @@ func (r *routerV1) swapInner(
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	amount0Str, amount1Str := pl.Swap(
-		cross,
+		cross(rlm),
 		token0Path,
 		token1Path,
 		data.fee,
 		recipient,
 		zeroForOne,
-		formatInt64(amountSpecified),
+		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			// assert is pool to prevent unauthorized callback
-			caller := runtime.PreviousRealm().Address()
+			caller := cur.Previous().Address()
 			access.AssertIsPool(caller)
 
-			return router.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, data.payer)
+			return router.SwapCallback(cross(cur), token0Path, token1Path, amount0Delta, amount1Delta, data.payer)
 		},
 	)
 
@@ -115,7 +115,7 @@ func (r *routerV1) swapDryInner(
 		data.tokenOut,
 		data.fee,
 		zeroForOne,
-		formatInt64(amountSpecified),
+		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {
@@ -135,15 +135,18 @@ func (r *routerV1) swapDryInner(
 
 // RealSwapExecutor implements SwapExecutor for actual swaps.
 type RealSwapExecutor struct {
+	rlm    realm
 	router *routerV1
 }
 
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
-	caller := runtime.PreviousRealm().Address()
+	caller := e.rlm.Previous().Address()
 	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	return e.router.swapInner(
+		0,
+		e.rlm,
 		p.amountSpecified,
 		recipient,             // if single swap => user will receive
 		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
@@ -154,16 +157,17 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 // DrySwapExecutor implements SwapExecutor for dry swaps.
 type DrySwapExecutor struct {
 	router *routerV1
+	// payer is the user's address resolved at the entry point (DrySwapRoute),
+	// since dry-run paths do not have a realm value to read PreviousRealm from.
+	payer address
 }
 
 // execute performs the dry swap execution.
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
-	previousRealmAddr := runtime.PreviousRealm().Address()
-
 	return e.router.swapDryInner(
 		p.amountSpecified,
-		zero,
-		newSwapCallbackData(p, previousRealmAddr),
+		u256.Zero(),
+		newSwapCallbackData(p, e.payer),
 	)
 }
 

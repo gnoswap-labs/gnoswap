@@ -92,16 +92,14 @@
 // ```go
 //
 //	import (
-//	    "chain/runtime"
-//
 //	    "gno.land/r/gnoswap/referral"
 //	)
 //
 //	func SwapWithReferral(cur realm, referralCode string, ...) {
 //	    // Get the caller address
-//	    caller := runtime.PreviousRealm().Address()
+//	    caller := cur.Previous().Address()
 //
-//	    actualReferrer := referral.TryRegister(cross, caller, referralCode)
+//	    actualReferrer := referral.TryRegister(cross(cur), caller, referralCode)
 //
 //	    // Continue with swap logic...
 //	}

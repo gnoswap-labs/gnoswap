@@ -2,6 +2,8 @@
 package mock
 
 import (
+	"errors"
+
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -13,16 +15,28 @@ import (
 // NFTAccessor implementation for test
 type gnftAccessor struct{}
 
-func (n *gnftAccessor) Approve(approved address, tid grc721.TokenID) error {
-	return gnft.Approve(cross, approved, tid)
+func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.TokenID) error {
+	if !rlm.IsCurrent() {
+		return errors.New(position.ErrSpoofedRealm)
+	}
+
+	return gnft.Approve(cross(rlm), approved, tid)
 }
 
-func (n *gnftAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
-	return gnft.Mint(cross, to, tid)
+func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	return gnft.Mint(cross(rlm), to, tid)
 }
 
-func (n *gnftAccessor) Burn(tid grc721.TokenID) {
-	gnft.Burn(cross, tid)
+func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
+	if !rlm.IsCurrent() {
+		panic(position.ErrSpoofedRealm)
+	}
+
+	gnft.Burn(cross(rlm), tid)
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {
@@ -50,8 +64,8 @@ func NewV3ValidPosition(store position.IPositionStore) position.IPosition {
 	}
 }
 
-func init() {
-	position.RegisterInitializer(cross, func(store position.IPositionStore) position.IPosition {
+func init(cur realm) {
+	position.RegisterInitializer(cross(cur), func(_ int, rlm realm, store position.IPositionStore) position.IPosition {
 		return NewV3ValidPosition(store)
 	})
 }
@@ -76,11 +90,11 @@ func (t *TestPosition) ExecuteFn(fnName string, actualFn func(args ...any) any, 
 }
 
 // IPositionManager interface
-func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, referrer string) (uint64, string, string, string) {
+func (t *TestPosition) Mint(_ int, rlm realm, token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, referrer string) (uint64, string, string, string) {
 	result := t.ExecuteFn(
 		"Mint",
 		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.Mint(args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(address), args[11].(string))
+			r1, r2, r3, r4 := t.instance.Mint(0, rlm, args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(address), args[11].(string))
 			return []any{r1, r2, r3, r4}
 		},
 		token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer,
@@ -88,11 +102,11 @@ func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower 
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string)
 }
 
-func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string) {
+func (t *TestPosition) IncreaseLiquidity(_ int, rlm realm, positionId uint64, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string) {
 	result := t.ExecuteFn(
 		"IncreaseLiquidity",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5 := t.instance.IncreaseLiquidity(args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(int64))
+			r1, r2, r3, r4, r5 := t.instance.IncreaseLiquidity(0, rlm, args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(int64))
 			return []any{r1, r2, r3, r4, r5}
 		},
 		positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline,
@@ -100,11 +114,11 @@ func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr st
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string)
 }
 
-func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
+func (t *TestPosition) DecreaseLiquidity(_ int, rlm realm, positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
 	result := t.ExecuteFn(
 		"DecreaseLiquidity",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6, r7 := t.instance.DecreaseLiquidity(args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(int64))
+			r1, r2, r3, r4, r5, r6, r7 := t.instance.DecreaseLiquidity(0, rlm, args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(int64))
 			return []any{r1, r2, r3, r4, r5, r6, r7}
 		},
 		positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline,
@@ -112,11 +126,11 @@ func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string,
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string), result[5].(string), result[6].(string)
 }
 
-func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
+func (t *TestPosition) Reposition(_ int, rlm realm, positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
 	result := t.ExecuteFn(
 		"Reposition",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6 := t.instance.Reposition(args[0].(uint64), args[1].(int32), args[2].(int32), args[3].(string), args[4].(string), args[5].(string), args[6].(string), args[7].(int64))
+			r1, r2, r3, r4, r5, r6 := t.instance.Reposition(0, rlm, args[0].(uint64), args[1].(int32), args[2].(int32), args[3].(string), args[4].(string), args[5].(string), args[6].(string), args[7].(int64))
 			return []any{r1, r2, r3, r4, r5, r6}
 		},
 		positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline,
@@ -124,11 +138,11 @@ func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper 
 	return result[0].(uint64), result[1].(string), result[2].(int32), result[3].(int32), result[4].(string), result[5].(string)
 }
 
-func (t *TestPosition) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
+func (t *TestPosition) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
 	result := t.ExecuteFn(
 		"CollectFee",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6 := t.instance.CollectFee(args[0].(uint64))
+			r1, r2, r3, r4, r5, r6 := t.instance.CollectFee(0, rlm, args[0].(uint64))
 			return []any{r1, r2, r3, r4, r5, r6}
 		},
 		positionId,
@@ -136,10 +150,13 @@ func (t *TestPosition) CollectFee(positionId uint64) (uint64, string, string, st
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string), result[5].(string)
 }
 
-func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) {
+func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, operator address) {
 	t.ExecuteFn(
 		"SetPositionOperator",
-		func(args ...any) any { t.instance.SetPositionOperator(args[0].(uint64), args[1].(address)); return nil },
+		func(args ...any) any {
+			t.instance.SetPositionOperator(0, rlm, args[0].(uint64), args[1].(address))
+			return nil
+		},
 		positionId, operator,
 	)
 }

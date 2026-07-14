@@ -41,47 +41,47 @@ var (
 	fee500  uint32 = 500
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 10000")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (8000~12000)")
-	mintInitialPosition()
+	mintInitialPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Check initial position state")
-	checkInitialPositionState()
+	checkInitialPositionState(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Increase position liquidity")
-	increasePositionLiquidity()
+	increasePositionLiquidity(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Check increased position state")
-	checkIncreasedPositionState()
+	checkIncreasedPositionState(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Execute swap to generate fees")
-	executeSwap()
+	executeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Decrease position liquidity")
-	decreasePositionLiquidity()
+	decreasePositionLiquidity(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 8. Check final position state")
-	checkFinalPositionState()
+	checkFinalPositionState(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -89,14 +89,14 @@ func initPool() {
 	)
 }
 
-func mintInitialPosition() {
+func mintInitialPosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 18394892)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting initial position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -117,7 +117,7 @@ func mintInitialPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkInitialPositionState() {
+func checkInitialPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
@@ -128,14 +128,14 @@ func checkInitialPositionState() {
 	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 }
 
-func increasePositionLiquidity() {
+func increasePositionLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 18394892)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Increasing position liquidity")
 	_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"50000000",
 		"50000000",
@@ -149,7 +149,7 @@ func increasePositionLiquidity() {
 	ufmt.Printf("[EXPECTED] Amount1 added should be %s\n", amount1)
 }
 
-func checkIncreasedPositionState() {
+func checkIncreasedPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
@@ -160,15 +160,15 @@ func checkIncreasedPositionState() {
 	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 }
 
-func executeSwap() {
+func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 20000000)
+	bar.Approve(cross(cur), poolAddr, 20000000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -178,7 +178,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -186,20 +186,20 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func decreasePositionLiquidity() {
+func decreasePositionLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, 100000000)
-	foo.Approve(cross, poolAddr, 100000000)
+	bar.Approve(cross(cur), poolAddr, 100000000)
+	foo.Approve(cross(cur), poolAddr, 100000000)
 
 	ufmt.Println("[INFO] Collecting fees before decrease")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
 	ufmt.Println("[INFO] Decreasing position liquidity")
 	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"100000000",
 		"0",
@@ -212,7 +212,7 @@ func decreasePositionLiquidity() {
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 }
 
-func checkFinalPositionState() {
+func checkFinalPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
@@ -220,20 +220,20 @@ func checkFinalPositionState() {
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
 
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] Final fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Final fee1 should be %s\n", fee1)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

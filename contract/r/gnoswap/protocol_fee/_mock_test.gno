@@ -39,19 +39,19 @@ type MockProtocolFee struct {
 	Response *MockResponse
 }
 
-func (m *MockProtocolFee) DistributeProtocolFee() {
+func (m *MockProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	m.Response.Get("DistributeProtocolFee")
 }
 
-func (m *MockProtocolFee) SetDevOpsPct(pct int64) {
+func (m *MockProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	m.Response.Get("SetDevOpsPct")
 }
 
-func (m *MockProtocolFee) SetGovStakerPct(pct int64) {
+func (m *MockProtocolFee) SetGovStakerPct(_ int, rlm realm, pct int64) {
 	m.Response.Get("SetGovStakerPct")
 }
 
-func (m *MockProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+func (m *MockProtocolFee) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	res, ok := m.Response.Get("AddToProtocolFee")
 	if !ok || len(res) == 0 || res[0] == nil {
 		return nil

@@ -15,8 +15,8 @@ func NewV3ValidGovStaker(store staker.IGovStakerStore) staker.IGovStaker {
 	}
 }
 
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IGovStakerStore) staker.IGovStaker {
+func init(cur realm) {
+	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IGovStakerStore) staker.IGovStaker {
 		return NewV3ValidGovStaker(store)
 	})
 }
@@ -41,62 +41,62 @@ func (t *TestGovStaker) ExecuteFn(fnName string, actualFn func(args ...any) any,
 }
 
 // IGovStakerDelegation interface
-func (t *TestGovStaker) Delegate(to address, amount int64, referrer string) int64 {
+func (t *TestGovStaker) Delegate(_ int, rlm realm, to address, amount int64, referrer string) int64 {
 	return t.ExecuteFn(
 		"Delegate",
 		func(args ...any) any {
-			return t.instance.Delegate(args[0].(address), args[1].(int64), args[2].(string))
+			return t.instance.Delegate(0, rlm, args[0].(address), args[1].(int64), args[2].(string))
 		},
 		to, amount, referrer,
 	).(int64)
 }
 
-func (t *TestGovStaker) Undelegate(from address, amount int64) int64 {
+func (t *TestGovStaker) Undelegate(_ int, rlm realm, from address, amount int64) int64 {
 	return t.ExecuteFn(
 		"Undelegate",
-		func(args ...any) any { return t.instance.Undelegate(args[0].(address), args[1].(int64)) },
+		func(args ...any) any { return t.instance.Undelegate(0, rlm, args[0].(address), args[1].(int64)) },
 		from, amount,
 	).(int64)
 }
 
-func (t *TestGovStaker) Redelegate(delegatee, newDelegatee address, amount int64) int64 {
+func (t *TestGovStaker) Redelegate(_ int, rlm realm, delegatee, newDelegatee address, amount int64) int64 {
 	return t.ExecuteFn(
 		"Redelegate",
 		func(args ...any) any {
-			return t.instance.Redelegate(args[0].(address), args[1].(address), args[2].(int64))
+			return t.instance.Redelegate(0, rlm, args[0].(address), args[1].(address), args[2].(int64))
 		},
 		delegatee, newDelegatee, amount,
 	).(int64)
 }
 
-func (t *TestGovStaker) CollectUndelegatedGns() int64 {
+func (t *TestGovStaker) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	return t.ExecuteFn(
 		"CollectUndelegatedGns",
-		func(args ...any) any { return t.instance.CollectUndelegatedGns() },
+		func(args ...any) any { return t.instance.CollectUndelegatedGns(0, rlm) },
 	).(int64)
 }
 
 // IGovStakerReward interface
-func (t *TestGovStaker) CollectReward() {
+func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
 	t.ExecuteFn(
 		"CollectReward",
-		func(args ...any) any { t.instance.CollectReward(); return nil },
+		func(args ...any) any { t.instance.CollectReward(0, rlm); return nil },
 	)
 }
 
-func (t *TestGovStaker) CollectRewardFromLaunchPad(to address) {
+func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	t.ExecuteFn(
 		"CollectRewardFromLaunchPad",
-		func(args ...any) any { t.instance.CollectRewardFromLaunchPad(args[0].(address)); return nil },
+		func(args ...any) any { t.instance.CollectRewardFromLaunchPad(0, rlm, args[0].(address)); return nil },
 		to,
 	)
 }
 
-func (t *TestGovStaker) SetAmountByProjectWallet(addr address, amount int64, add bool) {
+func (t *TestGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
 	t.ExecuteFn(
 		"SetAmountByProjectWallet",
 		func(args ...any) any {
-			t.instance.SetAmountByProjectWallet(args[0].(address), args[1].(int64), args[2].(bool))
+			t.instance.SetAmountByProjectWallet(0, rlm, args[0].(address), args[1].(int64), args[2].(bool))
 			return nil
 		},
 		addr, amount, add,
@@ -183,11 +183,11 @@ func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, ma
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, threshold int64, target address) {
 	t.ExecuteFn(
 		"CleanStakerDelegationSnapshotByAdmin",
 		func(args ...any) any {
-			t.instance.CleanStakerDelegationSnapshotByAdmin(args[0].(int64), args[1].(address))
+			t.instance.CleanStakerDelegationSnapshotByAdmin(0, rlm, args[0].(int64), args[1].(address))
 			return nil
 		},
 		threshold,
@@ -195,10 +195,10 @@ func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, ta
 	)
 }
 
-func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
+func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
 	t.ExecuteFn(
 		"SetUnDelegationLockupPeriodByAdmin",
-		func(args ...any) any { t.instance.SetUnDelegationLockupPeriodByAdmin(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetUnDelegationLockupPeriodByAdmin(0, rlm, args[0].(int64)); return nil },
 		period,
 	)
 }

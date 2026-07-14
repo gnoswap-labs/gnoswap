@@ -51,8 +51,12 @@ func (s *governanceStore) GetConfigCounter() *Counter {
 	return counter
 }
 
-func (s *governanceStore) SetConfigCounter(counter *Counter) error {
-	return s.kvStore.Set(StoreKeyConfigCounter.String(), counter)
+func (s *governanceStore) SetConfigCounter(_ int, rlm realm, counter *Counter) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyConfigCounter.String(), counter)
 }
 
 func (s *governanceStore) HasProposalCounterStoreKey() bool {
@@ -73,8 +77,12 @@ func (s *governanceStore) GetProposalCounter() *Counter {
 	return counter
 }
 
-func (s *governanceStore) SetProposalCounter(counter *Counter) error {
-	return s.kvStore.Set(StoreKeyProposalCounter.String(), counter)
+func (s *governanceStore) SetProposalCounter(_ int, rlm realm, counter *Counter) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProposalCounter.String(), counter)
 }
 
 // Configs methods
@@ -96,8 +104,12 @@ func (s *governanceStore) GetConfigs() *bptree.BPTree {
 	return configs
 }
 
-func (s *governanceStore) SetConfigs(configs *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
+func (s *governanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyConfigs.String(), configs)
 }
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
@@ -115,7 +127,11 @@ func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	return config, true
 }
 
-func (s *governanceStore) SetConfig(version int64, config Config) error {
+func (s *governanceStore) SetConfig(_ int, rlm realm, version int64, config Config) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	if !s.HasConfigsStoreKey() {
 		return errors.New("configs store key not found")
 	}
@@ -123,7 +139,7 @@ func (s *governanceStore) SetConfig(version int64, config Config) error {
 	configs := s.GetConfigs()
 	configs.Set(formatInt64Key(version), config)
 
-	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
+	return s.kvStore.Set(0, rlm, StoreKeyConfigs.String(), configs)
 }
 
 // Proposals methods
@@ -145,8 +161,12 @@ func (s *governanceStore) GetProposals() *bptree.BPTree {
 	return proposals
 }
 
-func (s *governanceStore) SetProposals(proposals *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
+func (s *governanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }
 
 func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
@@ -163,7 +183,11 @@ func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 	return proposal, true
 }
 
-func (s *governanceStore) SetProposal(proposalID int64, proposal *Proposal) error {
+func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	if !s.HasProposalsStoreKey() {
 		return errors.New("proposals store key not found")
 	}
@@ -171,7 +195,7 @@ func (s *governanceStore) SetProposal(proposalID int64, proposal *Proposal) erro
 	proposals := s.GetProposals()
 	proposals.Set(formatInt64Key(proposalID), proposal)
 
-	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
+	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }
 
 // Proposal User Voting Infos methods
@@ -193,8 +217,12 @@ func (s *governanceStore) GetProposalUserVotingInfos() *bptree.BPTree {
 	return votingInfos
 }
 
-func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
+func (s *governanceStore) SetProposalUserVotingInfos(_ int, rlm realm, votingInfos *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
 func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
@@ -212,7 +240,11 @@ func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTr
 	return votingInfoTree, true
 }
 
-func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error {
+func (s *governanceStore) SetProposalVotingInfos(_ int, rlm realm, proposalID int64, votingInfos *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	if !s.HasProposalUserVotingInfosStoreKey() {
 		return errors.New("proposal user voting infos store key not found")
 	}
@@ -220,7 +252,7 @@ func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *
 	allVotingInfos := s.GetProposalUserVotingInfos()
 	allVotingInfos.Set(formatInt64Key(proposalID), votingInfos)
 
-	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
+	return s.kvStore.Set(0, rlm, StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
 }
 
 // User Proposals methods
@@ -242,8 +274,12 @@ func (s *governanceStore) GetUserProposals() *bptree.BPTree {
 	return userProposals
 }
 
-func (s *governanceStore) SetUserProposals(userProposals *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+func (s *governanceStore) SetUserProposals(_ int, rlm realm, userProposals *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyUserProposals.String(), userProposals)
 }
 
 func (s *governanceStore) GetUserProposalsTree() *bptree.BPTree {
@@ -265,7 +301,11 @@ func (s *governanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	return proposalIDs, true
 }
 
-func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
+func (s *governanceStore) AddUserProposal(_ int, rlm realm, user string, proposalID int64) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	if !s.HasUserProposalsStoreKey() {
 		return errors.New("user proposals store key not found")
 	}
@@ -285,10 +325,14 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	proposalIDs = append(proposalIDs, proposalID)
 	userProposals.Set(user, proposalIDs)
 
-	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+	return s.kvStore.Set(0, rlm, StoreKeyUserProposals.String(), userProposals)
 }
 
-func (s *governanceStore) RemoveUserProposal(user string, proposalID int64) error {
+func (s *governanceStore) RemoveUserProposal(_ int, rlm realm, user string, proposalID int64) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
 	if !s.HasUserProposalsStoreKey() {
 		return errors.New("user proposals store key not found")
 	}
@@ -319,7 +363,7 @@ func (s *governanceStore) RemoveUserProposal(user string, proposalID int64) erro
 		userProposals.Set(user, newProposalIDs)
 	}
 
-	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+	return s.kvStore.Set(0, rlm, StoreKeyUserProposals.String(), userProposals)
 }
 
 // NewGovernanceStore creates a new governance store instance with the provided KV store.

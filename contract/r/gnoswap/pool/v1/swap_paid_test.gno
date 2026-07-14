@@ -4,13 +4,14 @@ import (
 	"chain"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestSwapCallback_Pay(t *testing.T) {
+func TestSwapCallback_Pay(cur realm, t *testing.T) {
 	tests := []struct {
 		name                            string
 		poolInfo                        swapPaidCreatePoolParams
@@ -279,7 +280,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				recipient:           adminAddr,
 				payer:               adminAddr,
 				zeroForOne:          true,
-				sqrtPriceLimitX96:   common.TickMathGetSqrtRatioAtTick(-10).ToString(),
+				sqrtPriceLimitX96:   gnsmath.TickMathGetSqrtRatioAtTick(-10).ToString(),
 				isUseCallbackAmount: true,
 			},
 			expectedToken0PoolBalanceChange: 502882,
@@ -288,13 +289,14 @@ func TestSwapCallback_Pay(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initSwapPaid(t)
-			defer initSwapPaid(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initSwapPaid(cur, t)
+			defer initSwapPaid(cur, t)
 
-			initSwapPaidCreatePool(t, tt.poolInfo.token0Path, tt.poolInfo.token1Path, tt.poolInfo.feeTier)
+			initSwapPaidCreatePool(cur, t, tt.poolInfo.token0Path, tt.poolInfo.token1Path, tt.poolInfo.feeTier)
 			for _, pos := range tt.positionInfo {
 				initSwapPaidSetFeeMintPosition(
+					cur,
 					t,
 					pos.token0Path,
 					pos.token1Path,
@@ -315,6 +317,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 				resultAmount0, resultAmount1 := mockInstanceSwap(
+					0, cur,
 					tt.swapInfo.token0Path,
 					tt.swapInfo.token1Path,
 					tt.poolInfo.feeTier,
@@ -339,6 +342,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 						}
 
 						return swapPaidSwapCallback(
+							cur,
 							tt.swapInfo.token0Path,
 							tt.swapInfo.token1Path,
 							currentAmount0Delta,
@@ -354,7 +358,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 			}
 
 			if tt.expectedHasPanic {
-				uassert.AbortsContains(t, tt.expectedHasPanicMessage, func() {
+				uassert.AbortsContains(t, cur, tt.expectedHasPanicMessage, func() {
 					swapFn()
 				})
 			} else {
@@ -368,6 +372,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 }
 
 func swapPaidSwapCallback(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	amount0Delta int64,
@@ -376,31 +381,32 @@ func swapPaidSwapCallback(
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
 }
 
 // test helpers
-func initSwapPaid(t *testing.T) {
-	initPoolTest(t)
+func initSwapPaid(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
 }
 
-func initSwapPaidCreatePool(t *testing.T, token0Path, token1Path string, feeTier uint32) {
+func initSwapPaidCreatePool(cur realm, t *testing.T, token0Path, token1Path string, feeTier uint32) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
 
 	if !getMockInstance().ExistsPoolPath(GetPoolPath(token0Path, token1Path, feeTier)) {
-		mockInstanceCreatePool(token0Path, token1Path, feeTier, common.TickMathGetSqrtRatioAtTick(0).ToString())
+		mockInstanceCreatePool(0, cur, token0Path, token1Path, feeTier, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	}
 }
 
 func initSwapPaidSetFeeMintPosition(
+	cur realm,
 	t *testing.T,
 	token0Path,
 	token1Path string,
@@ -415,18 +421,18 @@ func initSwapPaidSetFeeMintPosition(
 	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
+		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, amount0Requested)
 	}
 
 	if amount1Requested > 0 {
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
+		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amount1Requested)
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,
@@ -434,8 +440,9 @@ func initSwapPaidSetFeeMintPosition(
 		uint256.NewUintFromInt64(amount1Requested),
 	)
 
-	testing.SetRealm(testing.NewUserRealm(positionAddr))
+	testing.SetRealm(posRealm)
 	mockInstanceMint(
+		0, cur,
 		token0Path,
 		token1Path,
 		feeTier,

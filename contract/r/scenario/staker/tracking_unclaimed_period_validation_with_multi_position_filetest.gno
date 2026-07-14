@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -11,7 +12,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -63,57 +63,57 @@ var (
 	poolPath3 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize system")
-	initSystem()
+	initSystem(cur)
 
 	println()
 	println("[SCENARIO] 2. Pool initialization and first collection (bar:baz:100)")
-	testPoolInitializationBehavior()
+	testPoolInitializationBehavior(cur)
 
 	println()
 	println("[SCENARIO] 3. Unclaimable period reward distribution (foo:qux:100)")
-	testUnclaimablePeriodRewardDistribution()
+	testUnclaimablePeriodRewardDistribution(cur)
 
 	println()
 	println("[SCENARIO] 4. Claimable period collection behavior (bar:foo:500)")
-	testClaimablePeriodCollection()
+	testClaimablePeriodCollection(cur)
 }
 
-func initSystem() {
+func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set distribution start time")
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SkipHeights(2)
 }
 
-func testPoolInitializationBehavior() {
+func testPoolInitializationBehavior(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:baz:100")
-	pl.CreatePool(cross, barPath, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
-	sr.SetPoolTier(cross, poolPath1, 1)
+	sr.SetPoolTier(cross(cur), poolPath1, 1)
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -128,39 +128,39 @@ func testPoolInitializationBehavior() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 	testing.SkipHeights(2)
 
 	println("[INFO] collect reward immediately after first stake")
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	println("[EXPECTED] no unclaimable rewards sent to community pool")
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 	testing.SkipHeights(5)
 }
 
 // Test unclaimable period reward distribution
-func testUnclaimablePeriodRewardDistribution() {
+func testUnclaimablePeriodRewardDistribution(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool foo:qux:100")
-	pl.CreatePool(cross, fooPath, quxPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), fooPath, quxPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
-	sr.SetPoolTier(cross, poolPath2, 1)
+	sr.SetPoolTier(cross(cur), poolPath2, 1)
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	foo.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		quxPath,
 		fee100,
@@ -175,11 +175,11 @@ func testUnclaimablePeriodRewardDistribution() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	positionId2, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		quxPath,
 		fee100,
@@ -194,20 +194,20 @@ func testUnclaimablePeriodRewardDistribution() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId2))))
-	sr.StakeToken(cross, positionId2, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId2))))
+	sr.StakeToken(cross(cur), positionId2, "")
 
 	println("[INFO] accumulate rewards for 10 blocks")
 	testing.SkipHeights(10)
 
 	println("[INFO] unstake first position (pool still has liquidity from second position)")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 
 	println("[INFO] wait 5 blocks with pool still having liquidity")
 	testing.SkipHeights(5)
 
 	println("[INFO] unstake second position to enter true unclaimable period")
-	sr.UnStakeToken(cross, positionId2)
+	sr.UnStakeToken(cross(cur), positionId2)
 	actualUnclaimableStart := time.Now().Unix()
 	ufmt.Printf("[EXPECTED] unclaimable period start: %d\n", actualUnclaimableStart)
 
@@ -216,27 +216,27 @@ func testUnclaimablePeriodRewardDistribution() {
 	midTime := time.Now().Unix()
 
 	println("[INFO] re-stake first position and collect reward mid-period")
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	communityBalanceBefore1 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
 	unclaimableRound1 := communityBalanceAfter1 - communityBalanceBefore1
 
 	println("[INFO] unstake first position again to continue unclaimable")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 
 	println("[INFO] wait 5 more blocks")
 	testing.SkipHeights(5)
 
 	println("[INFO] re-stake and collect again")
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 	endTime := time.Now().Unix()
 
 	communityBalanceBefore2 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter2 := gns.BalanceOf(communityPoolAddr)
 	unclaimableRound2 := communityBalanceAfter2 - communityBalanceBefore2
 
@@ -259,31 +259,31 @@ func testUnclaimablePeriodRewardDistribution() {
 	}
 
 	println("[INFO] unstake positions for cleanup")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 	// positionId2 is already unstaked
 	testing.SkipHeights(5)
 }
 
 // Test claimable period collection behavior
-func testClaimablePeriodCollection() {
+func testClaimablePeriodCollection(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create pool bar:foo:500")
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 1")
-	sr.SetPoolTier(cross, poolPath3, 1)
+	sr.SetPoolTier(cross(cur), poolPath3, 1)
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for pool")
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position")
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -298,8 +298,8 @@ func testClaimablePeriodCollection() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	println("[INFO] wait 10 blocks while pool is claimable")
 	testing.SkipHeights(10)
@@ -308,7 +308,7 @@ func testClaimablePeriodCollection() {
 	collectionTime := time.Now().Unix()
 
 	communityBalanceBefore1 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
 	unclaimableDuringClaimable := communityBalanceAfter1 - communityBalanceBefore1
 
@@ -316,19 +316,19 @@ func testClaimablePeriodCollection() {
 	ufmt.Printf("[EXPECTED] unclaimable sent during claimable: %d\n", unclaimableDuringClaimable)
 
 	println("[INFO] unstake to enter unclaimable period")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 	actualUnclaimableStart := time.Now().Unix()
 
 	println("[INFO] wait 10 blocks during unclaimable")
 	testing.SkipHeights(10)
 
 	println("[INFO] stake again and collect")
-	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
+	sr.StakeToken(cross(cur), positionId, "")
 	actualUnclaimableEnd := time.Now().Unix()
 
 	communityBalanceBefore2 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter2 := gns.BalanceOf(communityPoolAddr)
 	unclaimableAfterPeriod := communityBalanceAfter2 - communityBalanceBefore2
 
@@ -341,10 +341,10 @@ func testClaimablePeriodCollection() {
 	}
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId)
+	sr.UnStakeToken(cross(cur), positionId)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

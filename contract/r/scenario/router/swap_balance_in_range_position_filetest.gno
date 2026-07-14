@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -31,10 +31,10 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
@@ -52,71 +52,71 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userFoo          int64
-	poolBar          int64
-	poolFoo          int64
-	routerBar        int64
-	routerFoo        int64
-	protocolFeeBar   int64
-	protocolFeeFoo   int64
+	userBar        int64
+	userFoo        int64
+	poolBar        int64
+	poolFoo        int64
+	routerBar      int64
+	routerFoo      int64
+	protocolFeeBar int64
+	protocolFeeFoo int64
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Swap Balance Validation - In Range Position")
 	println("[INFO] Purpose: Validate balance changes with in-range position swaps")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	initial := setupEnvironment()
-	printBalanceSnapshot("Initial State", initial)
+	initial := setupEnvironment(cur)
+	printBalanceSnapshot(cur, "Initial State", initial)
 	println()
 
 	println("[SCENARIO] 2. Create Pool")
-	afterPool := createPool()
-	printBalanceSnapshot("After Pool Creation", afterPool)
+	afterPool := createPool(cur)
+	printBalanceSnapshot(cur, "After Pool Creation", afterPool)
 	println()
 
 	println("[SCENARIO] 3. Mint In-Range Position")
-	afterMint := mintInRangePosition()
-	printBalanceSnapshot("After Position Mint", afterMint)
+	afterMint := mintInRangePosition(cur)
+	printBalanceSnapshot(cur, "After Position Mint", afterMint)
 	println()
 
 	println("[SCENARIO] 4. Exact In Swap (FOO -> BAR)")
-	afterExactIn := performExactInSwap()
-	printBalanceSnapshot("After Exact In Swap", afterExactIn)
-	validateBalanceChange(afterMint, afterExactIn, "ExactIn")
+	afterExactIn := performExactInSwap(cur)
+	printBalanceSnapshot(cur, "After Exact In Swap", afterExactIn)
+	validateBalanceChange(cur, afterMint, afterExactIn, "ExactIn")
 	println()
 
 	println("[SCENARIO] 5. Exact Out Swap (BAR -> FOO)")
-	afterExactOut := performExactOutSwap()
-	printBalanceSnapshot("After Exact Out Swap", afterExactOut)
-	validateBalanceChange(afterExactIn, afterExactOut, "ExactOut")
+	afterExactOut := performExactOutSwap(cur)
+	printBalanceSnapshot(cur, "After Exact Out Swap", afterExactOut)
+	validateBalanceChange(cur, afterExactIn, afterExactOut, "ExactOut")
 	println()
 
 	println("[SCENARIO] 6. System Balance Conservation Check")
-	validateSystemBalance(initial, afterExactOut)
+	validateSystemBalance(cur, initial, afterExactOut)
 	println()
 
 	println("[SCENARIO] Complete - All balance validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:          bar.BalanceOf(userAddr),
-		userFoo:          foo.BalanceOf(userAddr),
-		poolBar:          bar.BalanceOf(poolAddr),
-		poolFoo:          foo.BalanceOf(poolAddr),
-		routerBar:        bar.BalanceOf(routerAddr),
-		routerFoo:        foo.BalanceOf(routerAddr),
-		protocolFeeBar:   bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo:   foo.BalanceOf(protocolFeeAddr),
+		userBar:        bar.BalanceOf(userAddr),
+		userFoo:        foo.BalanceOf(userAddr),
+		poolBar:        bar.BalanceOf(poolAddr),
+		poolFoo:        foo.BalanceOf(poolAddr),
+		routerBar:      bar.BalanceOf(routerAddr),
+		routerFoo:      foo.BalanceOf(routerAddr),
+		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
+		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User BAR balance:", snapshot.userBar)
 	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
@@ -128,41 +128,41 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
 }
 
-func setupEnvironment() BalanceSnapshot {
+func setupEnvironment(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
+	bar.Transfer(cross(cur), userAddr, initialBalance)
+	foo.Transfer(cross(cur), userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func createPool() BalanceSnapshot {
+func createPool(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func mintInRangePosition() BalanceSnapshot {
+func mintInRangePosition(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
 
 	// Mint position covering wide range around current price (tick 0)
 	// This ensures the position stays in range during swaps
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -182,14 +182,14 @@ func mintInRangePosition() BalanceSnapshot {
 	println("[INFO] Amount0 (BAR):", amount0)
 	println("[INFO] Amount1 (FOO):", amount1)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func performExactInSwap() BalanceSnapshot {
+func performExactInSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	foo.Approve(cross, routerAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
 
 	// Swap FOO -> BAR (exact in)
 	// This should increase the price (more FOO in pool, less BAR)
@@ -197,7 +197,7 @@ func performExactInSwap() BalanceSnapshot {
 	println("[INFO] Swapping", swapAmount, "FOO -> BAR")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -210,16 +210,16 @@ func performExactInSwap() BalanceSnapshot {
 
 	println("[INFO] Exact In - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performExactOutSwap() BalanceSnapshot {
+func performExactOutSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	// Swap BAR -> FOO (exact out)
 	// This should decrease the price (more BAR in pool, less FOO)
@@ -227,7 +227,7 @@ func performExactOutSwap() BalanceSnapshot {
 	println("[INFO] Swapping BAR ->", swapAmount, "FOO")
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -240,12 +240,12 @@ func performExactOutSwap() BalanceSnapshot {
 
 	println("[INFO] Exact Out - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
 	// User balance should change (tokens swapped)
@@ -267,7 +267,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
 
 	// Router should have zero balance after swap (no stuck funds)
-	assertRouterIsEmpty(after)
+	assertRouterIsEmpty(cur, after)
 
 	// Exact conservation: user + pool + protocol fee changes must sum to 0
 	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
@@ -283,7 +283,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
-func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+func assertRouterIsEmpty(cur realm, snapshot BalanceSnapshot) {
 	if snapshot.routerBar != 0 {
 		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
 	}
@@ -292,7 +292,7 @@ func assertRouterIsEmpty(snapshot BalanceSnapshot) {
 	}
 }
 
-func validateSystemBalance(initial, final BalanceSnapshot) {
+func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 	println("[INFO] Validating system-wide balance conservation")
 
 	// Total supply in system should be conserved

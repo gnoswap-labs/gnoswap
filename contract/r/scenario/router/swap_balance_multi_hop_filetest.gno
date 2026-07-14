@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -76,57 +76,57 @@ type BalanceSnapshot struct {
 	protocolFeeQux   int64
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Swap Balance Validation - Multi-Hop Swaps")
 	println("[INFO] Purpose: Validate balance changes across multiple pool hops")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	initial := setupEnvironment()
-	printBalanceSnapshot("Initial State", initial)
+	initial := setupEnvironment(cur)
+	printBalanceSnapshot(cur, "Initial State", initial)
 	println()
 
 	println("[SCENARIO] 2. Create Pools & Mint Positions")
 	println("  Creating 3 pools: BAR-FOO, FOO-BAZ, BAZ-QUX")
-	afterSetup := setupPoolsAndPositions()
-	printBalanceSnapshot("After Setup", afterSetup)
+	afterSetup := setupPoolsAndPositions(cur)
+	printBalanceSnapshot(cur, "After Setup", afterSetup)
 	println()
 
 	println("[SCENARIO] 3. Single Hop Swap (BAR -> FOO)")
-	afterSingleHop := performSingleHopSwap()
-	printBalanceSnapshot("After Single Hop", afterSingleHop)
-	validateBalanceChange(afterSetup, afterSingleHop, "SingleHop")
+	afterSingleHop := performSingleHopSwap(cur)
+	printBalanceSnapshot(cur, "After Single Hop", afterSingleHop)
+	validateBalanceChange(cur, afterSetup, afterSingleHop, "SingleHop")
 	println()
 
 	println("[SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)")
-	afterTwoHop := performTwoHopSwap()
-	printBalanceSnapshot("After Two Hop", afterTwoHop)
-	validateBalanceChange(afterSingleHop, afterTwoHop, "TwoHop")
-	validateNoIntermediateBalance(afterTwoHop)
+	afterTwoHop := performTwoHopSwap(cur)
+	printBalanceSnapshot(cur, "After Two Hop", afterTwoHop)
+	validateBalanceChange(cur, afterSingleHop, afterTwoHop, "TwoHop")
+	validateNoIntermediateBalance(cur, afterTwoHop)
 	println()
 
 	println("[SCENARIO] 5. Three Hop Swap (BAR -> FOO -> BAZ -> QUX)")
-	afterThreeHop := performThreeHopSwap()
-	printBalanceSnapshot("After Three Hop", afterThreeHop)
-	validateBalanceChange(afterTwoHop, afterThreeHop, "ThreeHop")
-	validateNoIntermediateBalance(afterThreeHop)
+	afterThreeHop := performThreeHopSwap(cur)
+	printBalanceSnapshot(cur, "After Three Hop", afterThreeHop)
+	validateBalanceChange(cur, afterTwoHop, afterThreeHop, "ThreeHop")
+	validateNoIntermediateBalance(cur, afterThreeHop)
 	println()
 
 	println("[SCENARIO] 6. Reverse Three Hop Swap (QUX -> BAZ -> FOO -> BAR)")
-	afterReverse := performReverseThreeHopSwap()
-	printBalanceSnapshot("After Reverse Three Hop", afterReverse)
-	validateBalanceChange(afterThreeHop, afterReverse, "ReverseThreeHop")
-	validateNoIntermediateBalance(afterReverse)
+	afterReverse := performReverseThreeHopSwap(cur)
+	printBalanceSnapshot(cur, "After Reverse Three Hop", afterReverse)
+	validateBalanceChange(cur, afterThreeHop, afterReverse, "ReverseThreeHop")
+	validateNoIntermediateBalance(cur, afterReverse)
 	println()
 
 	println("[SCENARIO] 7. System Balance Conservation")
-	validateSystemBalance(initial, afterReverse)
+	validateSystemBalance(cur, initial, afterReverse)
 	println()
 
 	println("[SCENARIO] Complete - All multi-hop validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
 		userBar:        bar.BalanceOf(userAddr),
 		userBaz:        baz.BalanceOf(userAddr),
@@ -151,65 +151,65 @@ func getBalanceSnapshot() BalanceSnapshot {
 	return snapshot
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[BALANCE]", step)
 	println("  User - BAR:", snapshot.userBar, "FOO:", snapshot.userFoo, "BAZ:", snapshot.userBaz, "QUX:", snapshot.userQux)
 	println("  Pools - BAR:", snapshot.poolBarFooBar, "FOO:", snapshot.poolFooBazFoo, "BAZ:", snapshot.poolBazQuxBaz, "QUX:", snapshot.poolBazQuxQux)
 	println("  Router - BAR:", snapshot.routerBar, "FOO:", snapshot.routerFoo, "BAZ:", snapshot.routerBaz, "QUX:", snapshot.routerQux)
 }
 
-func setupEnvironment() BalanceSnapshot {
+func setupEnvironment(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	bar.Transfer(cross, userAddr, initialBalance)
-	baz.Transfer(cross, userAddr, initialBalance)
-	foo.Transfer(cross, userAddr, initialBalance)
-	qux.Transfer(cross, userAddr, initialBalance)
+	bar.Transfer(cross(cur), userAddr, initialBalance)
+	baz.Transfer(cross(cur), userAddr, initialBalance)
+	foo.Transfer(cross(cur), userAddr, initialBalance)
+	qux.Transfer(cross(cur), userAddr, initialBalance)
 
 	testing.SetRealm(userRealm)
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func setupPoolsAndPositions() BalanceSnapshot {
+func setupPoolsAndPositions(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
-	qux.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
+	qux.Approve(cross(cur), poolAddr, max_approve)
 
 	// Create Pool 1: BAR-FOO
 	println("[INFO] Creating BAR-FOO pool")
-	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, barPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	pl.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross(cur), barPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
 	// Create Pool 2: FOO-BAZ
 	println("[INFO] Creating FOO-BAZ pool")
-	pl.CreatePool(cross, bazPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	pl.CreatePool(cross(cur), bazPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross(cur), bazPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
 	// Create Pool 3: BAZ-QUX
 	println("[INFO] Creating BAZ-QUX pool")
-	pl.CreatePool(cross, bazPath, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, quxPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
+	pl.CreatePool(cross(cur), bazPath, quxPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	pn.Mint(cross(cur), bazPath, quxPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, "")
 
 	println("[INFO] All pools and positions created")
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func performSingleHopSwap() BalanceSnapshot {
+func performSingleHopSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(10_000_000_000)
 	println("[INFO] Single Hop: Swapping", swapAmount, "BAR -> FOO")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -222,22 +222,22 @@ func performSingleHopSwap() BalanceSnapshot {
 
 	println("[INFO] Single Hop - In:", amountIn, "Out:", amountOut)
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performTwoHopSwap() BalanceSnapshot {
+func performTwoHopSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(5_000_000_000)
 	println("[INFO] Two Hop: Swapping", swapAmount, "BAR -> FOO -> BAZ")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -251,22 +251,22 @@ func performTwoHopSwap() BalanceSnapshot {
 	println("[INFO] Two Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)")
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performThreeHopSwap() BalanceSnapshot {
+func performThreeHopSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	qux.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	qux.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(3_000_000_000)
 	println("[INFO] Three Hop: Swapping", swapAmount, "BAR -> FOO -> BAZ -> QUX")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -280,22 +280,22 @@ func performThreeHopSwap() BalanceSnapshot {
 	println("[INFO] Three Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)")
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func performReverseThreeHopSwap() BalanceSnapshot {
+func performReverseThreeHopSwap(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	qux.Approve(cross, routerAddr, max_approve)
-	bar.Approve(cross, routerAddr, max_approve)
+	qux.Approve(cross(cur), routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
 
 	swapAmount := int64(2_000_000_000)
 	println("[INFO] Reverse Three Hop: Swapping", swapAmount, "QUX -> BAZ -> FOO -> BAR")
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		quxPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
@@ -309,12 +309,12 @@ func performReverseThreeHopSwap() BalanceSnapshot {
 	println("[INFO] Reverse Three Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)")
 
-	snapshot := getBalanceSnapshot()
-	assertRouterIsEmpty(snapshot)
+	snapshot := getBalanceSnapshot(cur)
+	assertRouterIsEmpty(cur, snapshot)
 	return snapshot
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[VALIDATION] Balance Change Check for", swapType)
 
 	userBarDiff := after.userBar - before.userBar
@@ -337,7 +337,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("  Protocol Fee QUX change:", protocolFeeQuxDiff)
 
 	// Router must be empty
-	assertRouterIsEmpty(after)
+	assertRouterIsEmpty(cur, after)
 
 	// At least one token must decrease (input) and one must increase (output)
 	changedTokens := 0
@@ -381,7 +381,7 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[VALIDATION] Exact balance conservation verified for multi-hop swap")
 }
 
-func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+func assertRouterIsEmpty(cur realm, snapshot BalanceSnapshot) {
 	if snapshot.routerBar != 0 {
 		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
 	}
@@ -396,7 +396,7 @@ func assertRouterIsEmpty(snapshot BalanceSnapshot) {
 	}
 }
 
-func validateNoIntermediateBalance(snapshot BalanceSnapshot) {
+func validateNoIntermediateBalance(cur realm, snapshot BalanceSnapshot) {
 	println("[VALIDATION] Checking for stuck intermediate tokens")
 
 	// Router should never hold any tokens after swap completes
@@ -416,7 +416,7 @@ func validateNoIntermediateBalance(snapshot BalanceSnapshot) {
 	println("[VALIDATION] No intermediate tokens stuck - clean multi-hop execution")
 }
 
-func validateSystemBalance(initial, final BalanceSnapshot) {
+func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 	println("[VALIDATION] System-Wide Balance Conservation Across All Hops")
 
 	// Calculate total for each token (including protocol fees)

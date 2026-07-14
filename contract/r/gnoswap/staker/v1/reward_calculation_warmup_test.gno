@@ -13,7 +13,7 @@ import (
 )
 
 func createWarmup(ratio uint64) sr.Warmup {
-	return sr.Warmup{WarmupRatio: ratio}
+	return sr.NewWarmup(0, 0, ratio)
 }
 
 func assertRewardPenalty(t *testing.T, expected, actual int64, label string) {
@@ -21,7 +21,7 @@ func assertRewardPenalty(t *testing.T, expected, actual int64, label string) {
 	uassert.Equal(t, expected, actual, ufmt.Sprintf("%s mismatch: expected %d, got %d", label, expected, actual))
 }
 
-func TestDefaultWarmupTemplate(t *testing.T) {
+func TestDefaultWarmupTemplate(cur realm, t *testing.T) {
 	warmups := sr.DefaultWarmupTemplate()
 
 	expectedRatios := []uint64{30, 50, 70, 100}
@@ -33,7 +33,7 @@ func TestDefaultWarmupTemplate(t *testing.T) {
 	uassert.Equal(t, int64(math.MaxInt64), warmups[3].TimeDuration)
 }
 
-func TestInstantiateWarmup(t *testing.T) {
+func TestInstantiateWarmup(cur realm, t *testing.T) {
 	currentTime := int64(100000) // Arbitrary time for testing
 	warmups := sr.DefaultWarmupTemplate()
 	warmups = instantiateWarmup(warmups, currentTime)
@@ -44,7 +44,7 @@ func TestInstantiateWarmup(t *testing.T) {
 	}
 }
 
-func TestWarmupApply(t *testing.T) {
+func TestWarmupApply(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		warmupRatio uint64
@@ -60,7 +60,7 @@ func TestWarmupApply(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			warmup := createWarmup(tt.warmupRatio)
 
 			reward, penalty := applyWarmup(
@@ -82,7 +82,7 @@ func TestWarmupApply(t *testing.T) {
 	}
 }
 
-func TestWarmupEdgeCases(t *testing.T) {
+func TestWarmupEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		ratio    uint64
@@ -97,7 +97,7 @@ func TestWarmupEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			warmup := createWarmup(tt.ratio)
 			position := u256.NewUint(tt.position)
 			staked := u256.NewUint(tt.staked)
@@ -117,7 +117,7 @@ func TestWarmupEdgeCases(t *testing.T) {
 	}
 }
 
-func TestFindWarmup(t *testing.T) {
+func TestFindWarmup(cur realm, t *testing.T) {
 	deposit := sr.NewDeposit(testutils.TestAddress("creator"), "test_pool", u256.NewUint(100000), 100000, 100000, 100000, sr.DefaultWarmupTemplate())
 
 	warmups := sr.DefaultWarmupTemplate()
@@ -137,14 +137,14 @@ func TestFindWarmup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(ufmt.Sprintf("height_%d", tt.height), func(t *testing.T) {
+		t.Run(ufmt.Sprintf("height_%d", tt.height), func(cur realm, t *testing.T) {
 			depositResolver := NewDepositResolver(deposit)
 			uassert.Equal(t, tt.expectedIndex, depositResolver.FindWarmup(tt.height))
 		})
 	}
 }
 
-func TestRewardCalculationPrecision(t *testing.T) {
+func TestRewardCalculationPrecision(cur realm, t *testing.T) {
 	warmup := createWarmup(33) // possible decimal point
 
 	cases := []struct {
@@ -181,7 +181,7 @@ func TestRewardCalculationPrecision(t *testing.T) {
 	staked := u256.NewUint(1)
 
 	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			reward, penalty := applyWarmup(
 				warmup,
 				tt.reward,
@@ -196,7 +196,7 @@ func TestRewardCalculationPrecision(t *testing.T) {
 	}
 }
 
-func TestModifyWarmup(t *testing.T) {
+func TestModifyWarmup(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		index         int
@@ -211,11 +211,11 @@ func TestModifyWarmup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			warmups := sr.DefaultWarmupTemplate()
 
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
+				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
 					modifyWarmup(warmups, tt.index, tt.duration)
 				})
 			} else {
@@ -226,7 +226,7 @@ func TestModifyWarmup(t *testing.T) {
 	}
 }
 
-func TestMultipleWarmupPeriods(t *testing.T) {
+func TestMultipleWarmupPeriods(cur realm, t *testing.T) {
 	secondsInDay := int64(86400)
 	baseRewardPerBlock := int64(50)
 
@@ -265,7 +265,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			startHeight := int64(1000)
 			testing.SkipHeights(startHeight)
 
@@ -299,7 +299,7 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 	}
 }
 
-func TestModifyWarmupLastTierValidation(t *testing.T) {
+func TestModifyWarmupLastTierValidation(cur realm, t *testing.T) {
 	warmupTemplate := sr.DefaultWarmupTemplate()
 
 	tests := []struct {
@@ -357,12 +357,12 @@ func TestModifyWarmupLastTierValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Reset warmupTemplate to default before each test
 			warmupTemplate = sr.DefaultWarmupTemplate()
 
 			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.panicMessage, func() {
+				uassert.PanicsContains(t, cur, tt.panicMessage, func() {
 					modifyWarmup(warmupTemplate, tt.tierIndex, tt.newDuration)
 				})
 			} else {
@@ -375,8 +375,8 @@ func TestModifyWarmupLastTierValidation(t *testing.T) {
 	}
 }
 
-func TestWarmupOverflowProtection(t *testing.T) {
-	t.Run("safeAddTime overflow handling", func(t *testing.T) {
+func TestWarmupOverflowProtection(cur realm, t *testing.T) {
+	t.Run("safeAddTime overflow handling", func(cur realm, t *testing.T) {
 		tests := []struct {
 			name        string
 			currentTime int64
@@ -410,7 +410,7 @@ func TestWarmupOverflowProtection(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(cur realm, t *testing.T) {
 				result := safeAddTime(tt.currentTime, tt.duration)
 				uassert.Equal(t, tt.expected, result,
 					ufmt.Sprintf("safeAddTime(%d, %d) should return %d, got %d",
@@ -419,7 +419,7 @@ func TestWarmupOverflowProtection(t *testing.T) {
 		}
 	})
 
-	t.Run("instantiate warmup with overflow protection and last tier validation", func(t *testing.T) {
+	t.Run("instantiate warmup with overflow protection and last tier validation", func(cur realm, t *testing.T) {
 		// Reset to default template
 		warmupTemplate := sr.DefaultWarmupTemplate()
 

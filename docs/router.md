@@ -4,19 +4,19 @@ Swap routing: single-hop, multi-hop (max 3 hops), exact-in, exact-out, split rou
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `exact_in.gno` | Exact input swap logic |
-| `exact_out.gno` | Exact output swap logic |
-| `swap_single.gno` | Single-hop swap |
-| `swap_multi.gno` | Multi-hop swap (up to 3 hops) |
-| `swap_inner.gno` | Core swap execution |
-| `router.gno` | Router entry points |
-| `base.gno` | Base utilities |
+| File              | Purpose                       |
+| ----------------- | ----------------------------- |
+| `exact_in.gno`    | Exact input swap logic        |
+| `exact_out.gno`   | Exact output swap logic       |
+| `swap_single.gno` | Single-hop swap               |
+| `swap_multi.gno`  | Multi-hop swap (up to 3 hops) |
+| `swap_inner.gno`  | Core swap execution           |
+| `router.gno`      | Router entry points           |
+| `base.gno`        | Base utilities                |
 
 ## Rules
 
-- **SwapCallback** must verify both: `access.AssertIsPool(caller)` + `assertIsRouterV1()`. Missing either check allows forged callbacks.
+- **SwapCallback** must verify both: `access.AssertIsPool(caller)` + `assertIsRouterImplementation()`. Missing either check allows forged callbacks.
 - Exact-out slippage: output tolerance is ±`swapCount` (one per hop) to account for rounding.
 - Router fee charged on output tokens. Fee cap: 10%. Validate all fee-setting functions.
 - Route format: `TOKEN0:TOKEN1:FEE*POOL*TOKEN1:TOKEN2:FEE*POOL*...` — verify any route-parsing changes against this.

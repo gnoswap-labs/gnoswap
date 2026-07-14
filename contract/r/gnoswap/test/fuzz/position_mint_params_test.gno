@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -170,13 +170,13 @@ func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string, 
 	}()
 
 	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
 	amount0U256 := u256.MustFromDecimal(amount0Str)
 	amount1U256 := u256.MustFromDecimal(amount1Str)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

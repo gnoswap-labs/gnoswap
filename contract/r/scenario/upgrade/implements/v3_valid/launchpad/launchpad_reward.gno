@@ -16,11 +16,15 @@ import (
 //
 // Returns amount of reward collected.
 // Only callable by deposit owner.
-func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
@@ -28,7 +32,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	deposit := lp.mustGetDeposit(depositID)
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
-	rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +49,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (int64, error) {
 	if currentTime <= 0 {
 		return 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}

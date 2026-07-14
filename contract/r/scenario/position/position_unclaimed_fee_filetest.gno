@@ -40,59 +40,59 @@ var (
 	fee500  uint32 = 500
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 10000")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint in-range position (8000~12000)")
-	mintInRangePosition()
+	mintInRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint lower range position (5000~8000)")
-	mintLowerRangePosition()
+	mintLowerRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Mint upper range position (12000~14000)")
-	mintUpperRangePosition()
+	mintUpperRangePosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Check unclaimed fees before swap")
-	checkUnclaimedFeesBeforeSwap()
+	checkUnclaimedFeesBeforeSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Execute first swap")
-	executeFirstSwap()
+	executeFirstSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Check unclaimed fees after first swap")
-	checkUnclaimedFeesAfterFirstSwap()
+	checkUnclaimedFeesAfterFirstSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 8. Execute second swap")
-	executeSecondSwap()
+	executeSecondSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 9. Check unclaimed fees after second swap")
-	checkUnclaimedFeesAfterSecondSwap()
+	checkUnclaimedFeesAfterSecondSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 10. Execute third swap")
-	executeThirdSwap()
+	executeThirdSwap(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 11. Check final unclaimed fees")
-	checkFinalUnclaimedFees()
+	checkFinalUnclaimedFees(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -100,14 +100,14 @@ func initPool() {
 	)
 }
 
-func mintInRangePosition() {
+func mintInRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 18394892)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 18394892)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position in range")
 	positionId, _, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -127,14 +127,14 @@ func mintInRangePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func mintLowerRangePosition() {
+func mintLowerRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 0)
-	foo.Approve(cross, poolAddr, 50000000)
+	bar.Approve(cross(cur), poolAddr, 0)
+	foo.Approve(cross(cur), poolAddr, 50000000)
 
 	ufmt.Println("[INFO] Minting position in lower range")
 	positionId, _, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -154,14 +154,14 @@ func mintLowerRangePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func mintUpperRangePosition() {
+func mintUpperRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 50000000)
-	foo.Approve(cross, poolAddr, 0)
+	bar.Approve(cross(cur), poolAddr, 50000000)
+	foo.Approve(cross(cur), poolAddr, 0)
 
 	ufmt.Println("[INFO] Minting position in upper range")
 	positionId, _, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -181,7 +181,7 @@ func mintUpperRangePosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkUnclaimedFeesBeforeSwap() {
+func checkUnclaimedFeesBeforeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 	amount0, amount1 := position.GetUnclaimedFee(1)
 
@@ -189,15 +189,15 @@ func checkUnclaimedFeesBeforeSwap() {
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
 }
 
-func executeFirstSwap() {
+func executeFirstSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 1234567)
+	bar.Approve(cross(cur), poolAddr, 1234567)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing first swap")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -207,7 +207,7 @@ func executeFirstSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -215,7 +215,7 @@ func executeFirstSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func checkUnclaimedFeesAfterFirstSwap() {
+func checkUnclaimedFeesAfterFirstSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 	amount0, amount1 := position.GetUnclaimedFee(1)
 
@@ -223,15 +223,15 @@ func checkUnclaimedFeesAfterFirstSwap() {
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
 }
 
-func executeSecondSwap() {
+func executeSecondSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing second swap")
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -241,7 +241,7 @@ func executeSecondSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -249,7 +249,7 @@ func executeSecondSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func checkUnclaimedFeesAfterSecondSwap() {
+func checkUnclaimedFeesAfterSecondSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 	amount0, amount1 := position.GetUnclaimedFee(1)
 
@@ -257,15 +257,15 @@ func checkUnclaimedFeesAfterSecondSwap() {
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
 }
 
-func executeThirdSwap() {
+func executeThirdSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing third swap")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -275,7 +275,7 @@ func executeThirdSwap() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -283,7 +283,7 @@ func executeThirdSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
 }
 
-func checkFinalUnclaimedFees() {
+func checkFinalUnclaimedFees(cur realm) {
 	testing.SetRealm(adminRealm)
 	amount0, amount1 := position.GetUnclaimedFee(1)
 
@@ -291,15 +291,15 @@ func checkFinalUnclaimedFees() {
 	ufmt.Printf("[EXPECTED] Final unclaimed fee1 should be %s\n", amount1)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

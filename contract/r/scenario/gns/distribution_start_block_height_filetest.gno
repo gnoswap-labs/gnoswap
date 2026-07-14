@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -22,31 +24,31 @@ const (
 	defaultBlockTime   = 2000        // 2 seconds = 2000 milliseconds
 )
 
+var t = &testing.T{}
+
 var (
 	emissionAddr = chain.PackageAddress("gno.land/r/gnoswap/emission")
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	userAddr     = testutils.TestAddress("user")
-
-	t *testing.T
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test Distribution Start Block Height with Halving Year Adjustment")
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Run each scenario
-	testScenario1InitialConfiguration()
-	testScenario2SetDistributionStartHeight()
-	testScenario3VerifyHalvingYearBoundaries()
-	testScenario4EmissionAfterStartHeight()
-	testScenario5ReinitializeProtection()
-	testScenario6VerifyTotalEmissionPeriod()
+	testScenario1InitialConfiguration(cur)
+	testScenario2SetDistributionStartHeight(cur)
+	testScenario3VerifyHalvingYearBoundaries(cur)
+	testScenario4EmissionAfterStartHeight(cur)
+	testScenario5ReinitializeProtection(cur)
+	testScenario6VerifyTotalEmissionPeriod(cur)
 
 	println("[EXPECTED] All scenarios should pass")
 }
 
-func testScenario1InitialConfiguration() {
+func testScenario1InitialConfiguration(cur realm) {
 	println("[SCENARIO] 1. Initial Halving Year Configuration")
 
 	// Get initial emission state
@@ -58,12 +60,12 @@ func testScenario1InitialConfiguration() {
 	ufmt.Println()
 }
 
-func testScenario2SetDistributionStartHeight() {
+func testScenario2SetDistributionStartHeight(cur realm) {
 	println("[SCENARIO] 2. Set Distribution Start Height and Check Halving Year Adjustment")
 
 	testing.SetOriginCaller(adminAddr)
 	futureTimestamp := time.Now().Unix() + 10000/defaultBlockTime
-	emission.SetDistributionStartTime(cross, futureTimestamp)
+	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	// Check if halving years were adjusted
 	newStartHeight := gns.GetEmissionStartTimestamp()
@@ -77,7 +79,7 @@ func testScenario2SetDistributionStartHeight() {
 	ufmt.Println()
 }
 
-func testScenario3VerifyHalvingYearBoundaries() {
+func testScenario3VerifyHalvingYearBoundaries(cur realm) {
 	println("[SCENARIO] 3. Verify Halving Year Boundaries")
 
 	for year := int64(1); year <= 3; year++ {
@@ -91,7 +93,7 @@ func testScenario3VerifyHalvingYearBoundaries() {
 	ufmt.Println()
 }
 
-func testScenario4EmissionAfterStartHeight() {
+func testScenario4EmissionAfterStartHeight(cur realm) {
 	println("[SCENARIO] 4. Test Emission After Reaching Start Height")
 
 	// Skip blocks to reach start height
@@ -101,7 +103,7 @@ func testScenario4EmissionAfterStartHeight() {
 
 	// Try to mint
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
-	distributedAmount, _ := emission.MintAndDistributeGns(cross)
+	distributedAmount, _ := emission.MintAndDistributeGns(cross(cur))
 	ufmt.Printf("[INFO] Distributed amount: %d\n", distributedAmount)
 	ufmt.Printf("[EXPECTED] Should be > 0 (distribution started)\n")
 
@@ -112,23 +114,23 @@ func testScenario4EmissionAfterStartHeight() {
 	ufmt.Println()
 }
 
-func testScenario5ReinitializeProtection() {
+func testScenario5ReinitializeProtection(cur realm) {
 	println("[SCENARIO] 5. Test Reinitialize Protection After Minting")
 
 	// Try to set a new distribution start height after minting has begun
 	expectedPanic := "distribution has already started, cannot change start timestamp"
 	futureTimestamp := time.Now().Unix() + 20000/defaultBlockTime
 
-	uassert.AbortsWithMessage(t, expectedPanic, func() {
+	uassert.AbortsWithMessage(t, cur, expectedPanic, func() {
 		testing.SetOriginCaller(adminAddr)
-		emission.SetDistributionStartTime(cross, futureTimestamp)
+		emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 	})
 
 	println("[EXPECTED] Should panic with 'distribution has already started, cannot change start block height'")
 	println()
 }
 
-func testScenario6VerifyTotalEmissionPeriod() {
+func testScenario6VerifyTotalEmissionPeriod(cur realm) {
 	println("[SCENARIO] 6. Verify Total Emission Period")
 
 	newStartHeight := gns.GetEmissionStartTimestamp()

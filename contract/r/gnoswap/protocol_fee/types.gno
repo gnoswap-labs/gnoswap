@@ -8,10 +8,15 @@ type IProtocolFee interface {
 }
 
 type IProtocolFeeManager interface {
-	DistributeProtocolFee()
-	SetDevOpsPct(pct int64)
-	SetGovStakerPct(pct int64)
-	AddToProtocolFee(tokenPath string, amount int64) error
+	// Mutating methods take `_ int, rlm realm` so the realm token is threaded
+	// from the proxy entry points down to the cross-realm token transfers and
+	// store writes performed inside each implementation. The `_ int` sentinel
+	// surfaces at every call site as a literal `0`, making the realm threading
+	// visible to readers.
+	DistributeProtocolFee(_ int, rlm realm)
+	SetDevOpsPct(_ int, rlm realm, pct int64)
+	SetGovStakerPct(_ int, rlm realm, pct int64)
+	AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
 }
 
 type IProtocolFeeGetter interface {
@@ -30,37 +35,37 @@ type IProtocolFeeGetter interface {
 
 type IProtocolFeeStore interface {
 	HasDevOpsPctStoreKey() bool
-	InitializeDevOpsPct() error
+	InitializeDevOpsPct(_ int, rlm realm) error
 	GetDevOpsPct() int64
-	SetDevOpsPct(pct int64) error
+	SetDevOpsPct(_ int, rlm realm, pct int64) error
 
 	HasAccuToGovStakerStoreKey() bool
-	InitializeAccuToGovStaker() error
+	InitializeAccuToGovStaker(_ int, rlm realm) error
 	GetAccuToGovStaker() *bptree.BPTree
 	GetAccuToGovStakerItem(tokenPath string) (int64, bool)
-	SetAccuToGovStakerItem(tokenPath string, amount int64) error
+	SetAccuToGovStakerItem(_ int, rlm realm, tokenPath string, amount int64) error
 
 	HasAccuToDevOpsStoreKey() bool
-	InitializeAccuToDevOps() error
+	InitializeAccuToDevOps(_ int, rlm realm) error
 	GetAccuToDevOps() *bptree.BPTree
 	GetAccuToDevOpsItem(tokenPath string) (int64, bool)
-	SetAccuToDevOpsItem(tokenPath string, amount int64) error
+	SetAccuToDevOpsItem(_ int, rlm realm, tokenPath string, amount int64) error
 
 	HasDistributedToGovStakerHistoryStoreKey() bool
-	InitializeDistributedToGovStakerHistory() error
+	InitializeDistributedToGovStakerHistory(_ int, rlm realm) error
 	GetDistributedToGovStakerHistory() *bptree.BPTree
 	GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool)
-	SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error
+	SetDistributedToGovStakerHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error
 
 	HasDistributedToDevOpsHistoryStoreKey() bool
-	InitializeDistributedToDevOpsHistory() error
+	InitializeDistributedToDevOpsHistory(_ int, rlm realm) error
 	GetDistributedToDevOpsHistory() *bptree.BPTree
 	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
-	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
+	SetDistributedToDevOpsHistoryItem(_ int, rlm realm, tokenPath string, amount int64) error
 
 	HasReservedTokensStoreKey() bool
-	InitializeReservedTokens() error
+	InitializeReservedTokens(_ int, rlm realm) error
 	GetReservedTokens() []string
-	SetReservedTokens(reservedTokens []string) error
-	AddReservedToken(tokenPath string) error
+	SetReservedTokens(_ int, rlm realm, reservedTokens []string) error
+	AddReservedToken(_ int, rlm realm, tokenPath string) error
 }

@@ -8,14 +8,14 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 )
 
-func TestMultiSwap(t *testing.T) {
+func TestMultiSwap(cur realm, t *testing.T) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	tests := []struct {
 		name            string
-		setupFn         func(*TestEnv)
 		params          SwapParams
 		numPools        int
 		swapPath        string
@@ -25,11 +25,6 @@ func TestMultiSwap(t *testing.T) {
 	}{
 		{
 			name: "single hop swap BAR -> BAZ",
-			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
-			},
 			params: NewSwapParams().
 				Recipient(alice).
 				TokenIn(barPath).
@@ -43,85 +38,33 @@ func TestMultiSwap(t *testing.T) {
 			expectedLastOut: "98",
 			expectError:     false,
 		},
-		// {
-		// 	name: "multi hop swap (BAR -> BAZ -> QUX)",
-		// 	setupFn: func(t *testing.T) {
-		// 		// BAR -> BAZ
-		// 		CreatePoolWithoutFee(t)
-		// 		MakeMintPositionWithoutFee(t)
-
-		// 		// BAZ -> QUX
-		// 		CreateSecondPoolWithoutFee(t)
-		// 		MakeSecondMintPositionWithoutFee(t)
-
-		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
-		// 	},
-		// 	params: SwapParams{
-		// 		recipient: alice,
-		// 		SingleSwapParams: SingleSwapParams{
-		// 			tokenIn:         barPath,
-		// 			tokenOut:        bazPath,
-		// 			fee:             3000,
-		// 			amountSpecified: i256.MustFromDecimal("100"),
-		// 		},
-		// 	},
-		// 	numPools:        2,
-		// 	swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-		// 	expectedFirstIn: "100",
-		// 	expectedLastOut: "96",
-		// 	expectError:     false,
-		// },
-		// {
-		// 	name: "multi hop swap with exact output",
-		// 	setupFn: func(t *testing.T) {
-		// 		// BAR -> BAZ -> QUX
-		// 		CreatePoolWithoutFee(t)
-		// 		MakeMintPositionWithoutFee(t)
-		// 		CreateSecondPoolWithoutFee(t)
-		// 		MakeSecondMintPositionWithoutFee(t)
-
-		// 		testing.SetRealm(user1Realm)
-		// 		bar.Approve(cross, routerAddr, maxApprove)
-		// 		baz.Approve(cross, routerAddr, maxApprove)
-		// 		qux.Approve(cross, routerAddr, maxApprove)
-		// 		TokenFaucet(t, barPath, user1Addr)
-		// 	},
-		// 	params: SwapParams{
-		// 		recipient: alice,
-		// 		SingleSwapParams: SingleSwapParams{
-		// 			tokenIn:         barPath,
-		// 			tokenOut:        bazPath,
-		// 			fee:             3000,
-		// 			amountSpecified: i256.MustFromDecimal("-96"),
-		// 		},
-		// 	},
-		// 	numPools:        2,
-		// 	swapPath:        "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
-		// 	expectedFirstIn: "98",
-		// 	expectedLastOut: "94",
-		// 	expectError:     false,
-		// },
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			env := NewTestEnv(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initPoolTest(cur, t)
+			initRouterTest(cur, t)
 
-			if tt.setupFn != nil {
-				tt.setupFn(env)
-			}
+			env := NewTestEnv(cur, t)
+			testing.SetRealm(adminRealm)
+			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
+				AndPositionMinted(cur)
+			testing.SetRealm(testing.NewUserRealm(user1Addr))
+			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
 			router := mockRouter()
+			multiSwapFn := func(cur realm) (int64, int64) {
+				return router.multiSwap(0, cur, tt.params, tt.numPools, tt.swapPath)
+			}
 
-			firstAmountIn, lastAmountOut := router.multiSwap(
-				tt.params,
-				tt.numPools,
-				tt.swapPath,
-			)
+			// Run the swap as the funded user so the swap callback's payer
+			// (cur.Previous()) resolves to user1 and the pool can pull the
+			// input token. Mirrors TestSingleSwap.
+			testing.SetRealm(testing.NewUserRealm(user1Addr))
+			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
+
+			firstAmountIn, lastAmountOut := multiSwapFn(cross(cur))
 
 			uassert.Equal(t, strconv.FormatInt(firstAmountIn, 10), tt.expectedFirstIn)
 			uassert.Equal(t, strconv.FormatInt(lastAmountOut, 10), tt.expectedLastOut)

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Emission explicit mint distribution test
 // Scenario: Test distribution by explicitly calling MintAndDistributeGns
 //
@@ -34,15 +36,15 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 )
 
-func main() {
-	testExplicitMintDistribution()
+func main(cur realm) {
+	testExplicitMintDistribution(cur)
 }
 
-func testExplicitMintDistribution() {
+func testExplicitMintDistribution(cur realm) {
 	println("[SCENARIO] 1. Setup initial 70/25/5/0 distribution ratio")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7000, // liquidityStakerPct
 		2500, // devOpsPct
 		500, // communityPoolPct
@@ -54,7 +56,7 @@ func testExplicitMintDistribution() {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
-	emission.SetDistributionStartTime(cross, distributionStartTime)
+	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: all recipients = 0")
 	println()
 
@@ -72,7 +74,7 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
-	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
+	getBalanceChanges(cur, func() { emission.MintAndDistributeGns(cross(cur)) })
 	period1Staker := emission.GetDistributedToStaker()
 	period1Devops := emission.GetDistributedToDevOps()
 	period1Pool := emission.GetDistributedToCommunityPool()
@@ -91,7 +93,7 @@ func testExplicitMintDistribution() {
 	println("[SCENARIO] 4. Change ratio to 0/50/0/50")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		0, // liquidityStakerPct
 		5000, // devOpsPct
 		0, // communityPoolPct
@@ -114,7 +116,7 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
-	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
+	getBalanceChanges(cur, func() { emission.MintAndDistributeGns(cross(cur)) })
 	totalStaker := emission.GetDistributedToStaker()
 	totalDevops := emission.GetDistributedToDevOps()
 	totalPool := emission.GetDistributedToCommunityPool()
@@ -138,7 +140,7 @@ func testExplicitMintDistribution() {
 	println("[SCENARIO] 6. Change ratio to 30/30/30/10")
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		3000, // liquidityStakerPct
 		3000, // devOpsPct
 		3000, // communityPoolPct
@@ -161,7 +163,7 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond3, elapsedSeconds3, expectedTotalEmission3))
 	println()
 
-	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
+	getBalanceChanges(cur, func() { emission.MintAndDistributeGns(cross(cur)) })
 
 	finalStaker := emission.GetDistributedToStaker()
 	finalDevops := emission.GetDistributedToDevOps()
@@ -187,7 +189,7 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
 }
 
-func getBalanceChanges(fn func()) {
+func getBalanceChanges(cur realm, fn func()) {
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	devopsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())

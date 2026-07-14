@@ -2,10 +2,11 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -40,50 +41,53 @@ import (
 //
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
-func (gs *govStakerV1) CollectReward() {
+func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
-	from := runtime.CurrentRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
+	from := rlm.Address()
 	currentTimestamp := time.Now().Unix()
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewards(caller.String(), currentTimestamp)
+	emissionReward, protocolFeeRewards, err := gs.claimRewards(0, rlm, caller.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
-
 	// Transfer emission rewards (GNS tokens) if any
 	if emissionReward > 0 {
-		gns.Transfer(cross, caller, emissionReward)
+		gns.Transfer(cross(rlm), caller, emissionReward)
 
 		chain.Emit(
 			"CollectEmissionReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
 			"from", from.String(),
 			"to", caller.String(),
-			"emissionRewardAmount", formatInt(emissionReward),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
 
 	// Transfer protocol fee rewards for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
-			err := transferToken(tokenPath, from, caller, amount)
+			err := transferToken(0, rlm, tokenPath, from, caller, amount)
 			if err != nil {
 				panic(err)
 			}
 
 			chain.Emit(
 				"CollectProtocolFeeReward",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
+				"prevAddr", prev.Address().String(),
+				"prevRealm", prev.PkgPath(),
 				"tokenPath", tokenPath,
 				"from", from.String(),
 				"to", caller.String(),
-				"collectedAmount", formatInt(amount),
+				"collectedAmount", utils.FormatInt(amount),
 			)
 		}
 	}
@@ -95,13 +99,18 @@ func (gs *govStakerV1) CollectReward() {
 //   - to: recipient address for rewards
 //
 // Only callable by launchpad contract.
-func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
+func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	access.AssertIsLaunchpad(caller)
 
-	from := runtime.CurrentRealm().Address()
+	from := rlm.Address()
 	currentTimestamp := time.Now().Unix()
 
 	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
@@ -113,43 +122,41 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 		))
 	}
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(to.String(), currentTimestamp)
+	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(0, rlm, to.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
-
 	// Transfer emission rewards (GNS tokens) to project wallet if any
 	if emissionReward > 0 {
-		gns.Transfer(cross, to, emissionReward)
+		gns.Transfer(cross(rlm), to, emissionReward)
 
 		chain.Emit(
 			"CollectEmissionFromLaunchPad",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
 			"from", from.String(),
 			"to", to.String(),
-			"emissionRewardAmount", formatInt(emissionReward),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
 
 	// Transfer protocol fee rewards to project wallet for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
-			err := transferToken(tokenPath, from, to, amount)
+			err := transferToken(0, rlm, tokenPath, from, to, amount)
 			if err != nil {
 				panic(err)
 			}
 
 			chain.Emit(
 				"CollectProtocolFeeFromLaunchPad",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
+				"prevAddr", prev.Address().String(),
+				"prevRealm", prev.PkgPath(),
 				"tokenPath", tokenPath,
 				"from", from.String(),
 				"to", to.String(),
-				"collectedAmount", formatInt(amount),
+				"collectedAmount", utils.FormatInt(amount),
 			)
 		}
 	}
@@ -167,14 +174,19 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 //   - if caller is not the launchpad contract
 //   - if system is halted for withdrawals
 //   - if access control operations fail
-func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add bool) {
+func (gs *govStakerV1) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	if add {
 		halt.AssertIsNotHaltedGovStaker()
 	} else {
 		halt.AssertIsNotHaltedWithdraw()
 	}
 
-	caller := runtime.PreviousRealm().Address()
+	prev := rlm.Previous()
+	caller := prev.Address()
 	currentTimestamp := time.Now().Unix()
 
 	access.AssertIsLaunchpad(caller)
@@ -183,32 +195,32 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
-		err := gs.addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := gs.addStakeFromLaunchpad(0, rlm, addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
 
-		xgns.Mint(cross, launchpadAddr, amount)
+		xgns.Mint(cross(rlm), launchpadAddr, amount)
 	} else {
 		// Remove stake for the project wallet and burn xGNS from launchpad
-		err := gs.removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := gs.removeStakeFromLaunchpad(0, rlm, addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
 
-		xgns.Burn(cross, launchpadAddr, amount)
+		xgns.Burn(cross(rlm), launchpadAddr, amount)
 	}
 }
 
 // claimRewards claims both emission and protocol fee rewards.
 // Coordinates claiming process for both reward types.
-func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
-	emissionReward, err := gs.claimRewardsEmissionReward(rewardID, currentTimestamp)
+func (gs *govStakerV1) claimRewards(_ int, rlm realm, rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
+	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
+	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(0, rlm, rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -218,15 +230,21 @@ func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (in
 
 // claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
 // Uses special reward ID format for launchpad integration.
-func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
+func (gs *govStakerV1) claimRewardsFromLaunchpad(_ int, rlm realm, address string, currentTimestamp int64) (int64, map[string]int64, error) {
 	launchpadRewardID := gs.makeLaunchpadRewardID(address)
 
-	return gs.claimRewards(launchpadRewardID, currentTimestamp)
+	return gs.claimRewards(0, rlm, launchpadRewardID, currentTimestamp)
 }
 
 // transferToken transfers tokens from the staker contract to a recipient address.
 // transferToken handles token transfers for reward distribution.
+//
+// Non-crossing helper: takes `_ int, rlm realm` so the realm token threaded
+// in by the public reward-collection entry points reaches the underlying
+// GRC-20 transfer without forcing each caller to recompute it.
 func transferToken(
+	_ int,
+	rlm realm,
 	tokenPath string,
 	from, to address,
 	amount int64,
@@ -258,7 +276,7 @@ func transferToken(
 		)
 	}
 
-	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
+	common.SafeGRC20Transfer(cross(rlm), tokenPath, to, amount)
 
 	return nil
 }

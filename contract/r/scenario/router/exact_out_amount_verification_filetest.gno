@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Comprehensive ExactOut amount verification across various routes, hops, and amounts.
 //
 // For every case, the core invariant is verified:
@@ -61,77 +63,77 @@ var (
 	max_approve int64 = 9223372036854775806
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Comprehensive ExactOut Amount Verification")
 	println()
 
 	println("[SCENARIO] 1. Setup pools")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 bar (baz→bar:3000)")
-	singleRouteSingleHop()
+	singleRouteSingleHop(cur)
 	println()
 
 	println("[SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 foo (bar→baz→foo)")
-	singleRoute2Hop()
+	singleRoute2Hop(cur)
 	println()
 
 	println("[SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 qux (bar→baz→foo→qux)")
-	singleRoute3Hop()
+	singleRoute3Hop(cur)
 	println()
 
 	println("[SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 bar (baz→bar:3000, baz→bar:500)")
-	twoRouteSplit()
+	twoRouteSplit(cur)
 	println()
 
 	println("[SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 bar")
-	singleHopMinimum()
+	singleHopMinimum(cur)
 	println()
 
 	println("[SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 bar")
-	singleHopLarge()
+	singleHopLarge(cur)
 	println()
 
 	println("[SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 bar")
-	singleHopLowFeePool()
+	singleHopLowFeePool(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
-	foo.Approve(cross, poolAddr, max_approve)
-	qux.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
+	qux.Approve(cross(cur), poolAddr, max_approve)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
-	qux.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
+	qux.Approve(cross(cur), routerAddr, max_approve)
 
 	sqrtPrice1to1 := "79228162514264337593543950336" // encodePriceSqrt(1, 1)
 
 	// Pool 1: bar:baz fee 3000 (0.3%)
-	pl.CreatePool(cross, barPath, bazPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick,
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, sqrtPrice1to1)
+	pn.Mint(cross(cur), barPath, bazPath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Pool 2: baz:foo fee 3000 (0.3%)
-	pl.CreatePool(cross, bazPath, fooPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick,
+	pl.CreatePool(cross(cur), bazPath, fooPath, 3000, sqrtPrice1to1)
+	pn.Mint(cross(cur), bazPath, fooPath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Pool 3: foo:qux fee 3000 (0.3%)
-	pl.CreatePool(cross, fooPath, quxPath, 3000, sqrtPrice1to1)
-	pn.Mint(cross, fooPath, quxPath, 3000, min_tick, max_tick,
+	pl.CreatePool(cross(cur), fooPath, quxPath, 3000, sqrtPrice1to1)
+	pn.Mint(cross(cur), fooPath, quxPath, 3000, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Pool 4: bar:baz fee 500 (0.05%) — second pool for split route
-	pl.CreatePool(cross, barPath, bazPath, 500, sqrtPrice1to1)
-	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick,
+	pl.CreatePool(cross(cur), barPath, bazPath, 500, sqrtPrice1to1)
+	pn.Mint(cross(cur), barPath, bazPath, 500, min_tick, max_tick,
 		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] created 4 pools: bar:baz:3000, baz:foo:3000, foo:qux:3000, bar:baz:500")
@@ -139,7 +141,7 @@ func setup() {
 }
 
 // Case 2: standard 1-route 1-hop
-func singleRouteSingleHop() {
+func singleRouteSingleHop(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := bar.BalanceOf(adminAddr)
@@ -147,7 +149,7 @@ func singleRouteSingleHop() {
 	poolBefore := bar.BalanceOf(poolAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
+		cross(cur), bazPath, barPath, "1000000",
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -162,14 +164,14 @@ func singleRouteSingleHop() {
 }
 
 // Case 3: 1-route 2-hop (bar → baz → foo)
-func singleRoute2Hop() {
+func singleRoute2Hop(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := foo.BalanceOf(adminAddr)
 	feeBefore := foo.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, barPath, fooPath, "1000000",
+		cross(cur), barPath, fooPath, "1000000",
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -183,14 +185,14 @@ func singleRoute2Hop() {
 }
 
 // Case 4: 1-route 3-hop (bar → baz → foo → qux)
-func singleRoute3Hop() {
+func singleRoute3Hop(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := qux.BalanceOf(adminAddr)
 	feeBefore := qux.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, barPath, quxPath, "100000",
+		cross(cur), barPath, quxPath, "100000",
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -204,14 +206,14 @@ func singleRoute3Hop() {
 }
 
 // Case 5: 2-route split 50/50 (baz→bar via fee3000 and fee500)
-func twoRouteSplit() {
+func twoRouteSplit(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := bar.BalanceOf(adminAddr)
 	feeBefore := bar.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
+		cross(cur), bazPath, barPath, "1000000",
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000,gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
 		"50,50", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -225,14 +227,14 @@ func twoRouteSplit() {
 }
 
 // Case 6: minimum amount (1 token)
-func singleHopMinimum() {
+func singleHopMinimum(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := bar.BalanceOf(adminAddr)
 	feeBefore := bar.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1",
+		cross(cur), bazPath, barPath, "1",
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -246,7 +248,7 @@ func singleHopMinimum() {
 }
 
 // Case 7: large amount (9T)
-func singleHopLarge() {
+func singleHopLarge(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := bar.BalanceOf(adminAddr)
@@ -254,7 +256,7 @@ func singleHopLarge() {
 	poolBefore := bar.BalanceOf(poolAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "9000000000000",
+		cross(cur), bazPath, barPath, "9000000000000",
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
@@ -269,14 +271,14 @@ func singleHopLarge() {
 }
 
 // Case 8: low-fee pool (500 = 0.05%)
-func singleHopLowFeePool() {
+func singleHopLowFeePool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	userBefore := bar.BalanceOf(adminAddr)
 	feeBefore := bar.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross, bazPath, barPath, "1000000",
+		cross(cur), bazPath, barPath, "1000000",
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)

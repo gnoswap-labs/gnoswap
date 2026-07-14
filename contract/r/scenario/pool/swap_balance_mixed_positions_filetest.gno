@@ -51,12 +51,6 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-// turn protocol fee on
-func init() {
-	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocol(cross, 6, 6)
-}
-
 type BalanceSnapshot struct {
 	userBaz         int64
 	userQux         int64
@@ -66,32 +60,35 @@ type BalanceSnapshot struct {
 	protocolFeeQux  int64
 }
 
-func main() {
+func main(cur realm) {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross(cur), 6, 6)
+
 	println("[SCENARIO] Swap Balance Validation - Mixed Position Ranges")
 	println("[INFO] Purpose: Validate out-of-range positions don't affect swaps")
 	println()
 
 	println("[SCENARIO] 1. Setup Pool with Mixed Positions")
-	initial := setupPoolWithMixedPositions()
-	printBalanceSnapshot("After Pool Setup", initial)
+	initial := setupPoolWithMixedPositions(cur)
+	printBalanceSnapshot(cur, "After Pool Setup", initial)
 	println()
 
 	println("[SCENARIO] 2. ExactInput Swap with Mixed Positions")
-	afterExactIn := testExactInputWithMixedPositions(initial)
-	printBalanceSnapshot("After ExactInput Swap", afterExactIn)
-	validateBalanceChange(initial, afterExactIn, "ExactInput")
+	afterExactIn := testExactInputWithMixedPositions(cur, initial)
+	printBalanceSnapshot(cur, "After ExactInput Swap", afterExactIn)
+	validateBalanceChange(cur, initial, afterExactIn, "ExactInput")
 	println()
 
 	println("[SCENARIO] 3. ExactOutput Swap with Mixed Positions")
-	afterExactOut := testExactOutputWithMixedPositions(afterExactIn)
-	printBalanceSnapshot("After ExactOutput Swap", afterExactOut)
-	validateBalanceChange(afterExactIn, afterExactOut, "ExactOutput")
+	afterExactOut := testExactOutputWithMixedPositions(cur, afterExactIn)
+	printBalanceSnapshot(cur, "After ExactOutput Swap", afterExactOut)
+	validateBalanceChange(cur, afterExactIn, afterExactOut, "ExactOutput")
 	println()
 
 	println("[SCENARIO] Complete - All mixed position validations passed")
 }
 
-func getBalanceSnapshot() BalanceSnapshot {
+func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	return BalanceSnapshot{
 		userBaz:        baz.BalanceOf(adminAddr),
 		userQux:        qux.BalanceOf(adminAddr),
@@ -102,7 +99,7 @@ func getBalanceSnapshot() BalanceSnapshot {
 	}
 }
 
-func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+func printBalanceSnapshot(cur realm, step string, snapshot BalanceSnapshot) {
 	println("[INFO]", step)
 	println("[EXPECTED] User BAZ balance:", snapshot.userBaz)
 	println("[EXPECTED] User QUX balance:", snapshot.userQux)
@@ -112,18 +109,18 @@ func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
 	println("[EXPECTED] Protocol fee QUX balance:", snapshot.protocolFeeQux)
 }
 
-func setupPoolWithMixedPositions() BalanceSnapshot {
+func setupPoolWithMixedPositions(cur realm) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, bazPath, quxPath, fee500, "79228162514264337593543950336")
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
+	pool.CreatePool(cross(cur), bazPath, quxPath, fee500, "79228162514264337593543950336")
 
-	qux.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	qux.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(posRealm)
 	inRangeAmount0, inRangeAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		bazPath,
 		quxPath,
 		fee500,
@@ -134,7 +131,7 @@ func setupPoolWithMixedPositions() BalanceSnapshot {
 	)
 
 	outOfRangeAmount0, outOfRangeAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		bazPath,
 		quxPath,
 		fee500,
@@ -151,10 +148,10 @@ func setupPoolWithMixedPositions() BalanceSnapshot {
 	println("[INFO] Out-of-range position (2000 to 4000):", outOfRangeAmount0, outOfRangeAmount1)
 	println("[INFO] Active liquidity:", currentLiquidity)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
+func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
@@ -163,11 +160,11 @@ func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping 200000 BAZ -> QUX (exact input)")
 
-	baz.Approve(cross, poolAddr, 200000)
+	baz.Approve(cross(cur), poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		bazPath,
 		quxPath,
 		fee500,
@@ -177,7 +174,7 @@ func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(bazPath, quxPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -189,10 +186,10 @@ func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Tick:", tickBefore, "->", tickAfter)
 	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
+func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
@@ -201,11 +198,11 @@ func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Swapping QUX -> 80000 BAZ (exact output)")
 
-	qux.Approve(cross, poolAddr, 300000)
+	qux.Approve(cross(cur), poolAddr, 300000)
 
 	testing.SetRealm(routerRealm)
 	swapAmount0, swapAmount1 := pool.Swap(
-		cross,
+		cross(cur),
 		bazPath,
 		quxPath,
 		fee500,
@@ -215,7 +212,7 @@ func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(bazPath, quxPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -227,10 +224,10 @@ func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Tick:", tickBefore, "->", tickAfter)
 	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	return getBalanceSnapshot()
+	return getBalanceSnapshot(cur)
 }
 
-func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+func validateBalanceChange(cur realm, before, after BalanceSnapshot, swapType string) {
 	println("[INFO] Validating balance changes for", swapType)
 
 	userBazDiff := after.userBaz - before.userBaz
@@ -261,14 +258,14 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

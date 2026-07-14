@@ -7,6 +7,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 // validCallerRoles is a list of roles that are authorized to modify referral data.
 // This includes governance contracts, router, position manager, and staker contracts.
 var validCallerRoles = []string{

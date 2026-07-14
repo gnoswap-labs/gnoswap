@@ -7,7 +7,7 @@ import (
 )
 
 // TestNewDelegationWithdraw tests creating withdrawal with lockup period
-func TestNewDelegationWithdraw(t *testing.T) {
+func TestNewDelegationWithdraw(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		delegationID             int64
@@ -41,7 +41,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			withdraw := NewDelegationWithdraw(
 				tc.delegationID,
@@ -65,7 +65,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 }
 
 // TestNewDelegationWithdrawWithoutLockup tests creating withdrawal without lockup
-func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
+func TestNewDelegationWithdrawWithoutLockup(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		delegationID     int64
@@ -90,7 +90,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			withdraw := NewDelegationWithdrawWithoutLockup(
 				tc.delegationID,
@@ -113,7 +113,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 }
 
 // TestDelegationWithdraw_Setters tests setter methods
-func TestDelegationWithdraw_Setters(t *testing.T) {
+func TestDelegationWithdraw_Setters(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		initialAmount     int64
@@ -138,7 +138,7 @@ func TestDelegationWithdraw_Setters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			withdraw := NewDelegationWithdraw(1, tc.initialAmount, 100, 1000000, 86400)
 
@@ -156,7 +156,7 @@ func TestDelegationWithdraw_Setters(t *testing.T) {
 }
 
 // TestDelegationWithdraw_Getters tests all getter methods
-func TestDelegationWithdraw_Getters(t *testing.T) {
+func TestDelegationWithdraw_Getters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		delegationID             int64
@@ -176,7 +176,7 @@ func TestDelegationWithdraw_Getters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			withdraw := NewDelegationWithdraw(
 				tc.delegationID,

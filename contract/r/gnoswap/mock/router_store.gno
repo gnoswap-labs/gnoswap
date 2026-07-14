@@ -15,7 +15,7 @@ func (s *MockRouterStore) GetSwapFee() uint64 {
 }
 
 // SetSwapFee stores the swap fee.
-func (s *MockRouterStore) SetSwapFee(swapFee uint64) error {
+func (s *MockRouterStore) SetSwapFee(_ int, rlm realm, swapFee uint64) error {
 	s.swapFee = swapFee
 	return nil
 }
@@ -28,7 +28,7 @@ func (s *MockRouterStore) GetPendingProtocolFees() map[string]int64 {
 	return s.pendingProtocolFees
 }
 
-func (s *MockRouterStore) SetPendingProtocolFees(fees map[string]int64) error {
+func (s *MockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	s.pendingProtocolFees = fees
 	return nil
 }

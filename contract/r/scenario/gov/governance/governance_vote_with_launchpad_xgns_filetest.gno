@@ -38,20 +38,20 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Check Initial gns and xgns Supply")
-	checkInitialGnsAndXgns()
+	checkInitialGnsAndXgns(cur)
 	println()
 
 	println("[SCENARIO] 2. Launchpad Project Create and Deposit gns")
-	launchpadProjectCreateAndDeposit()
+	launchpadProjectCreateAndDeposit(cur)
 	println()
 
 	println("[SCENARIO] 3. Delegate gns to dummy")
-	delegateGnsToDummy()
+	delegateGnsToDummy(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip vote weight smoothing duration for create proposal")
@@ -60,7 +60,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Propose Text")
-	proposalId := proposeText()
+	proposalId := proposeText(cur)
 	println()
 
 	println("[SCENARIO] 6. Skip voting start delay for ready to vote")
@@ -69,37 +69,37 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Vote for the proposal with dummy")
-	voteProposalWithDummy(proposalId)
+	voteProposalWithDummy(cur, proposalId)
 	println()
 }
 
-func checkInitialGnsAndXgns() {
+func checkInitialGnsAndXgns(cur realm) {
 	ufmt.Printf("[INFO] gns total supply: %d, xgns total: %d\n", gns.TotalSupply(), xgns.TotalSupply())
 }
 
-func launchpadProjectCreateAndDeposit() {
+func launchpadProjectCreateAndDeposit(cur realm) {
 	ufmt.Printf("[INFO] launchpad project created and gns deposited\n")
 }
 
-func delegateGnsToDummy() {
+func delegateGnsToDummy(cur realm) {
 	delegatedAmount := int64(2_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 }
 
-func proposeText() int64 {
+func proposeText(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposalWithDummy(proposalId int64) {
+func voteProposalWithDummy(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }

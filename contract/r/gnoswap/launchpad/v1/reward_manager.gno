@@ -4,6 +4,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -97,9 +98,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 }
 
 func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
-	rewards := r.Rewards()
-	rewards.Set(deposit.ID(), rewardState)
-	r.SetRewards(rewards)
+	r.SetReward(deposit.ID(), rewardState)
 
 	return rewardState
 }
@@ -107,9 +106,7 @@ func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewa
 // removeRewardState removes a reward state from the reward manager when a deposit is withdrawn.
 // This improves iteration performance and ensures accurate pending reward calculations.
 func removeRewardState(r *launchpad.RewardManager, depositId string) {
-	rewards := r.Rewards()
-	rewards.Remove(depositId)
-	r.SetRewards(rewards)
+	r.RemoveReward(depositId)
 }
 
 func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
@@ -270,7 +267,7 @@ func calculateClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int6
 
 		// Calculate claimable reward for this deposit
 		claimable := calculateClaimableReward(rewardState, accumulatedReward)
-		totalClaimable = safeAddInt64(totalClaimable, claimable)
+		totalClaimable = gnsmath.SafeAddInt64(totalClaimable, claimable)
 
 		return false
 	})

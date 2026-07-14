@@ -44,6 +44,8 @@ type MockLaunchpad struct {
 }
 
 func (m *MockLaunchpad) CreateProject(
+	_ int,
+	rlm realm,
 	name string,
 	tokenPath string,
 	recipient address,
@@ -62,7 +64,7 @@ func (m *MockLaunchpad) CreateProject(
 	return res[0].(string)
 }
 
-func (m *MockLaunchpad) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
+func (m *MockLaunchpad) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
 	res, ok := m.Response.Get("TransferLeftFromProjectByAdmin")
 	if !ok {
 		return 0
@@ -70,11 +72,11 @@ func (m *MockLaunchpad) TransferLeftFromProjectByAdmin(projectID string, recipie
 	return res[0].(int64)
 }
 
-func (m *MockLaunchpad) CollectProtocolFee() {
+func (m *MockLaunchpad) CollectProtocolFee(_ int, rlm realm) {
 	m.Response.Get("CollectProtocolFee")
 }
 
-func (m *MockLaunchpad) DepositGns(targetProjectTierID string, depositAmount int64, referrer string) string {
+func (m *MockLaunchpad) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	res, ok := m.Response.Get("DepositGns")
 	if !ok {
 		return ""
@@ -82,7 +84,7 @@ func (m *MockLaunchpad) DepositGns(targetProjectTierID string, depositAmount int
 	return res[0].(string)
 }
 
-func (m *MockLaunchpad) CollectDepositGns(depositID string) (int64, error) {
+func (m *MockLaunchpad) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	res, ok := m.Response.Get("CollectDepositGns")
 	if !ok {
 		return 0, nil
@@ -96,7 +98,7 @@ func (m *MockLaunchpad) CollectDepositGns(depositID string) (int64, error) {
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) CollectRewardByDepositId(depositID string) int64 {
+func (m *MockLaunchpad) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
 	res, ok := m.Response.Get("CollectRewardByDepositId")
 	if !ok {
 		return 0

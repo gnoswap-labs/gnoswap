@@ -50,9 +50,9 @@ var (
 	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectId := "gno.land/r/onbloc/obl:123"
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	println("[INFO] Project tier 30 Total Distribute Amount: 100,000,000")
@@ -60,14 +60,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1")
-	depositGnsTo(aliceAddr, projectId, projectTier30Id, int64(1_000_000))
+	depositGnsTo(cur, aliceAddr, projectId, projectTier30Id, int64(1_000_000))
 	println("[INFO] Alice second distribute amount: 38.5802469136")
 	println()
 
 	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2")
 	println("[INFO] Alice second distribute amount: 19.2901234568")
 	println("[INFO] Bob second distribute amount: 19.2901234568")
-	depositGnsTo(bobAddr, projectId, projectTier30Id, int64(1_000_000))
+	depositGnsTo(cur, bobAddr, projectId, projectTier30Id, int64(1_000_000))
 	println()
 
 	println("[SCENARIO] 4. Skip blocks to pass collect wait duration")
@@ -76,22 +76,22 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward")
-	collectLaunchpadReward(aliceAddr, "1")
+	collectLaunchpadReward(cur, aliceAddr, "1")
 	println()
 
 	println("[SCENARIO] 6. Collect launchpad reward for second Deposit")
-	collectLaunchpadReward(bobAddr, "2")
+	collectLaunchpadReward(cur, bobAddr, "2")
 	println()
 
 	println("[SCENARIO] 7. Skip blocks after reward collection")
 	testing.SkipHeights(1)
-	collectLaunchpadReward(aliceAddr, "1")
-	collectLaunchpadReward(bobAddr, "2")
+	collectLaunchpadReward(cur, aliceAddr, "1")
+	collectLaunchpadReward(cur, bobAddr, "2")
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := testutils.TestAddress("project-owner")
@@ -107,9 +107,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -150,21 +150,21 @@ func createOBLProject() {
 }
 
 // Deposit GNS to OBL project tier 30
-func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmount int64) {
+func depositGnsTo(cur realm, toAddress address, projectId, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	println("[INFO] Depositing GNS to OBL project tier 30")
 
 	println("[INFO] Admin transferring GNS to depositor for deposit")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, toAddress, depositAmount) // to deposit
+	gns.Transfer(cross(cur), toAddress, depositAmount) // to deposit
 
 	// approve launchpad to spend GNS
 	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(toAddress))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -181,13 +181,13 @@ func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmo
 	testing.SkipHeights(1)
 }
 
-func collectLaunchpadReward(ownerAddress address, depositId string) {
+func collectLaunchpadReward(cur realm, ownerAddress address, depositId string) {
 	println("[INFO] Collecting launchpad reward for Deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddress))
 
 	beforeOblBalance := obl.BalanceOf(ownerAddress)
 
-	launchpad.CollectRewardByDepositId(cross, depositId)
+	launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddress)
 	println("[EXPECTED] Obl balance after collection:", afterOblBalance-beforeOblBalance)

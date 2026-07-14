@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance getter test
 
 package main
@@ -39,48 +41,48 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup test data")
-	proposalId := setupTestData()
+	proposalId := setupTestData(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Store Data Getters")
-	testStoreDataGetters()
+	testStoreDataGetters(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Config Getters")
-	testConfigGetters()
+	testConfigGetters(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Proposal Getters")
-	testProposalGetters(proposalId)
+	testProposalGetters(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 5. Test Vote Getters")
-	testVoteGetters(proposalId)
+	testVoteGetters(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 6. Test Proposal Data Getters")
-	testProposalDataGetters(proposalId)
+	testProposalDataGetters(cur, proposalId)
 	println()
 
 	println("[SCENARIO] 7. Test User Proposal Getters")
-	testUserProposalGetters()
+	testUserProposalGetters(cur)
 	println()
 
 	println("[SCENARIO] 8. Test Active Proposal and Voting Weight Getters")
-	testActiveProposalAndVotingWeight()
+	testActiveProposalAndVotingWeight(cur)
 	println()
 }
 
-func setupTestData() int64 {
+func setupTestData(cur realm) int64 {
 	println("[INFO] Setting up test data")
 
 	// Delegate GNS to admin
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, adminAddr, delegatedAmount, "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), adminAddr, delegatedAmount, "")
 	println("[INFO] GNS delegated to admin:", delegatedAmount)
 
 	// Skip smoothing period
@@ -90,20 +92,20 @@ func setupTestData() int64 {
 
 	// Create proposal: Community Pool Spend
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeCommunityPoolSpend(cross, "Community Pool Spend Proposal", "Spend 1000 GNS from community pool", adminAddr, "gno.land/r/gnoswap/gns", 1000)
+	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "Community Pool Spend Proposal", "Spend 1000 GNS from community pool", adminAddr, "gno.land/r/gnoswap/gns", 1000)
 	println("[EXPECTED] Created proposal (Community Pool Spend) ID:", proposalId)
 
 	// Vote on proposal
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	// Skip voting start delay
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	println("[EXPECTED] Admin voted YES on proposal")
 
 	return proposalId
 }
 
-func testStoreDataGetters() {
+func testStoreDataGetters(cur realm) {
 	println("[INFO] Testing store data getters")
 
 	// Set realm to governance for getter calls
@@ -122,7 +124,7 @@ func testStoreDataGetters() {
 	println("[EXPECTED] Max smoothing period:", maxSmoothingPeriod)
 }
 
-func testConfigGetters() {
+func testConfigGetters(cur realm) {
 	println("[INFO] Testing config getters")
 
 	// Set realm to governance for getter calls
@@ -148,7 +150,7 @@ func testConfigGetters() {
 	println("[EXPECTED] - Voting period:", config.VotingPeriod)
 }
 
-func testProposalGetters(proposalId int64) {
+func testProposalGetters(cur realm, proposalId int64) {
 	println("[INFO] Testing proposal getters")
 
 	// Set realm to governance for getter calls
@@ -262,7 +264,7 @@ func testProposalGetters(proposalId int64) {
 	println("[EXPECTED] Proposal 1 created height:", createdHeight)
 }
 
-func testVoteGetters(proposalId int64) {
+func testVoteGetters(cur realm, proposalId int64) {
 	println("[INFO] Testing vote getters")
 
 	// Set realm to governance for getter calls
@@ -326,7 +328,7 @@ func testVoteGetters(proposalId int64) {
 	println("[EXPECTED] Admin voted at:", votedAt)
 }
 
-func testProposalDataGetters(proposalId int64) {
+func testProposalDataGetters(cur realm, proposalId int64) {
 	println("[INFO] Testing proposal data getters")
 
 	// Set realm to governance for getter calls
@@ -351,7 +353,7 @@ func testProposalDataGetters(proposalId int64) {
 	}
 }
 
-func testUserProposalGetters() {
+func testUserProposalGetters(cur realm) {
 	println("[INFO] Testing user proposal getters")
 
 	// Set realm to governance for getter calls
@@ -369,7 +371,7 @@ func testUserProposalGetters() {
 	}
 }
 
-func testActiveProposalAndVotingWeight() {
+func testActiveProposalAndVotingWeight(cur realm) {
 	println("[INFO] Testing active proposal and voting weight getters")
 
 	// Set realm to governance for getter calls

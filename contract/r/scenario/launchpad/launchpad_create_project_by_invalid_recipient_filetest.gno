@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project by invalid recipient
 
 package main
@@ -29,22 +31,22 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] 1. Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] 2. Admin attempts to create project with invalid recipient
 	println("[SCENARIO] 2. Admin attempts to create project with invalid recipient")
-	createProjectByInvalidRecipient()
+	createProjectByInvalidRecipient(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Admin attempts to create project with invalid recipient
-func createProjectByInvalidRecipient() {
+func createProjectByInvalidRecipient(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
@@ -71,12 +73,12 @@ func createProjectByInvalidRecipient() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)"
-	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
+	uassert.AbortsWithMessage(t, cur, expectedPanicMessage, func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			projectName,
 			rewardTokenPath,
 			recipientAddr,

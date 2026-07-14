@@ -44,15 +44,15 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create launchpad project")
-	projectId := createOBLProject()
+	projectId := createOBLProject(cur)
 	projectTier30 := projectId + ":30"
 	println()
 
 	println("[SCENARIO] 2. Deposit GNS in project tier30 with skip 3 days")
 	testing.SkipHeights(60 * 60 * 24 * 3 / blockTime) // 3 days
-	depositGns(projectTier30, 1_000_000)
+	depositGns(cur, projectTier30, 1_000_000)
 	println()
 
 	println("[SCENARIO] 3. Skip blocks to end project (27 days)")
@@ -61,12 +61,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Withdraw GNS")
-	collectDepositGns("1")
+	collectDepositGns(cur, "1")
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() string {
+func createOBLProject(cur realm) string {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -83,9 +83,9 @@ func createOBLProject() string {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -105,25 +105,25 @@ func createOBLProject() string {
 	return projectId
 }
 
-func depositGns(projectTierId string, depositAmount int64) {
+func depositGns(cur realm, projectTierId string, depositAmount int64) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, userAddr, depositAmount)
+	gns.Transfer(cross(cur), userAddr, depositAmount)
 
 	// Deposit GNS
 	testing.SetRealm(userRealm)
-	gns.Approve(cross, launchpadAddr, depositAmount)
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 
 	ufmt.Printf("[EXPECTED] Deposit GNS in project tier %s (ID: %s)\n", projectTierId, depositId)
 }
 
-func collectDepositGns(depositId string) {
+func collectDepositGns(cur realm, depositId string) {
 	testing.SetRealm(userRealm)
 
 	beforeOblBalance := obl.BalanceOf(userAddr)
 	beforeGnsBalance := gns.BalanceOf(userAddr)
-	launchpad.CollectRewardByDepositId(cross, depositId)
-	launchpad.CollectDepositGns(cross, depositId)
+	launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	launchpad.CollectDepositGns(cross(cur), depositId)
 	afterOblBalance := obl.BalanceOf(userAddr)
 	afterGnsBalance := gns.BalanceOf(userAddr)
 

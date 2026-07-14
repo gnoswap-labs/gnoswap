@@ -17,11 +17,11 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestExactOutSwapOperation(t *testing.T) {
+func TestExactOutSwapOperation(cur realm, t *testing.T) {
 	testing.SetRealm(routerRealm)
-	setupTestPool(t)
+	setupTestPool(cur, t)
 
-	t.Run("validate exact out params", func(t *testing.T) {
+	t.Run("validate exact out params", func(cur realm, t *testing.T) {
 		router := mockRouter()
 
 		op := NewExactOutSwapOperation(router, ExactOutParams{
@@ -54,11 +54,11 @@ func TestExactOutSwapOperation(t *testing.T) {
 		uassert.NotEqual(t, err, nil)
 	})
 
-	t.Run("exact out swap with invalid route", func(t *testing.T) {
+	t.Run("exact out swap with invalid route", func(cur realm, t *testing.T) {
 		router := mockRouter()
 
-		uassert.PanicsContains(t, "invalid fee: format", func() {
-			router.ExactOutSwapRoute(
+		uassert.PanicsContains(t, cur, "invalid fee: format", func() {
+			router.ExactOutSwapRoute(0, cur, 
 				barPath,
 				fooPath,
 				"3",
@@ -71,11 +71,11 @@ func TestExactOutSwapOperation(t *testing.T) {
 		})
 	})
 
-	t.Run("exact out swap with expired deadline", func(t *testing.T) {
+	t.Run("exact out swap with expired deadline", func(cur realm, t *testing.T) {
 		router := mockRouter()
 
-		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
-			router.ExactOutSwapRoute(
+		uassert.PanicsContains(t, cur, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+			router.ExactOutSwapRoute(0, cur, 
 				fooPath,
 				barPath,
 				"3",
@@ -89,23 +89,23 @@ func TestExactOutSwapOperation(t *testing.T) {
 	})
 }
 
-func TestExactOutSwapBoundary(t *testing.T) {
+func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 	t.Skip("run this test separately")
 	testing.SetRealm(routerRealm)
-	setupTestPool(t)
+	setupTestPool(cur, t)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	TokenFaucet2(t, fooPath, routerAddr)
-	TokenFaucet2(t, barPath, routerAddr)
+	TokenFaucet2(cur, t, fooPath, routerAddr)
+	TokenFaucet2(cur, t, barPath, routerAddr)
 
 	testing.SetRealm(testing.NewUserRealm(routerAddr))
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// create position
 	// a. Position 1: (-50%+50%)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -122,7 +122,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// b. Position 2: (-10%+10%)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -139,7 +139,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// c. Position 3: (full range)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -156,7 +156,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// d. Position 4: (lower out-range)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -173,7 +173,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 
 	// e. Position 5: (upper out-range)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -188,10 +188,10 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"",
 	)
 
-	t.Run("successful exact out swap at boundary", func(t *testing.T) {
+	t.Run("successful exact out swap at boundary", func(cur realm, t *testing.T) {
 		router := mockRouter()
 
-		amountIn, amountOut := router.ExactOutSwapRoute(
+		amountIn, amountOut := router.ExactOutSwapRoute(0, cur, 
 			barPath,
 			fooPath,
 			"1000000",
@@ -206,7 +206,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		uassert.NotEqual(t, amountOut, "0")
 	})
 
-	t.Run("failed exact out swap at boundary", func(t *testing.T) {
+	t.Run("failed exact out swap at boundary", func(cur realm, t *testing.T) {
 		poolPath := pl.GetPoolPath(barPath, fooPath, 3000)
 		balance0 := pl.GetBalanceToken0(poolPath)
 		balance1 := pl.GetBalanceToken1(poolPath)
@@ -228,7 +228,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		// request amount that slightly exceeds the pool balance
 		router := mockRouter()
 
-		router.ExactOutSwapRoute(
+		router.ExactOutSwapRoute(0, cur, 
 			barPath,
 			fooPath,
 			overflowAmount,
@@ -241,18 +241,18 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	})
 }
 
-func setupTestPool(t *testing.T) {
+func setupTestPool(cur realm, t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross(cur), barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	_, _, _, _ = pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		3000,
@@ -271,7 +271,7 @@ func setupTestPool(t *testing.T) {
 	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")
 }
 
-func TestExactOutAmountValidation(t *testing.T) {
+func TestExactOutAmountValidation(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -338,7 +338,7 @@ func TestExactOutAmountValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
 
 			if tt.shouldFail {
@@ -355,7 +355,7 @@ func TestExactOutAmountValidation(t *testing.T) {
 }
 
 // TestExactOutAmountValidationEdgeCases tests edge cases for the validation
-func TestExactOutAmountValidationEdgeCases(t *testing.T) {
+func TestExactOutAmountValidationEdgeCases(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
 
 	tests := []struct {
@@ -403,7 +403,7 @@ func TestExactOutAmountValidationEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
 
 			if tt.shouldFail {

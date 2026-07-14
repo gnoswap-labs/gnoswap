@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Pool contract upgrade scenario test
 package main
 
@@ -27,28 +29,28 @@ const (
 	poolTestPath = "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize pool contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade pool contract to test version")
-	testPoolUpgrade()
+	testPoolUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := pool.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != poolV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		pool.UpgradeImpl(cross, poolV1Path)
+		pool.UpgradeImpl(cross(cur), poolV1Path)
 		currentVersion = pool.GetImplementationPackagePath()
 	}
 
@@ -58,7 +60,7 @@ func initializeV1() {
 	}
 }
 
-func testPoolUpgrade() {
+func testPoolUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := pool.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -69,7 +71,7 @@ func testPoolUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading pool contract to test version")
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross, poolTestPath)
+	pool.UpgradeImpl(cross(cur), poolTestPath)
 
 	currentVersion = pool.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Pool upgraded to: %s\n", currentVersion)
@@ -78,7 +80,7 @@ func testPoolUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := pool.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -89,40 +91,40 @@ func verifyTestImplementation() {
 	// Test CreatePool - should panic with test implementation message
 	ufmt.Println("[INFO] Testing CreatePool function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: CreatePool not supported", func() {
-		pool.CreatePool(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, "79228162514264337593543950336")
+	uassert.AbortsWithMessage(t, cur, "test implementation: CreatePool not supported", func() {
+		pool.CreatePool(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, "79228162514264337593543950336")
 	})
 	ufmt.Println("[EXPECTED] CreatePool panics correctly")
 
 	// Test SetPoolCreationFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetPoolCreationFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetPoolCreationFee not supported", func() {
-		pool.SetPoolCreationFee(cross, 100)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetPoolCreationFee not supported", func() {
+		pool.SetPoolCreationFee(cross(cur), 100)
 	})
 	ufmt.Println("[EXPECTED] SetPoolCreationFee panics correctly")
 
 	// Test SetFeeProtocol - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetFeeProtocol function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetFeeProtocol not supported", func() {
-		pool.SetFeeProtocol(cross, 6, 6)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetFeeProtocol not supported", func() {
+		pool.SetFeeProtocol(cross(cur), 6, 6)
 	})
 	ufmt.Println("[EXPECTED] SetFeeProtocol panics correctly")
 
 	// Test SetWithdrawalFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetWithdrawalFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetWithdrawalFee not supported", func() {
-		pool.SetWithdrawalFee(cross, 100)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetWithdrawalFee not supported", func() {
+		pool.SetWithdrawalFee(cross(cur), 100)
 	})
 	ufmt.Println("[EXPECTED] SetWithdrawalFee panics correctly")
 
 	// Test CollectProtocol - should panic with test implementation message
 	ufmt.Println("[INFO] Testing CollectProtocol function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: CollectProtocol not supported", func() {
-		pool.CollectProtocol(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, adminAddr, "100", "100")
+	uassert.AbortsWithMessage(t, cur, "test implementation: CollectProtocol not supported", func() {
+		pool.CollectProtocol(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, adminAddr, "100", "100")
 	})
 	ufmt.Println("[EXPECTED] CollectProtocol panics correctly")
 }

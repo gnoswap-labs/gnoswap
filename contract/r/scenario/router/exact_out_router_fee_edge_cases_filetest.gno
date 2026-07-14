@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Verifies ExactOut router fee edge cases:
 // 1. Very small amount (rounding boundary: fee truncates to 0)
 // 2. Large amount (near pool liquidity limit)
@@ -46,42 +48,42 @@ var (
 	max_approve int64 = 9223372036854775806
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] ExactOut Router Fee Edge Cases")
 	println()
 
 	println("[SCENARIO] 1. Initialize pool")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. ExactOut very small amount (1 token)")
-	exactOutSmallAmount()
+	exactOutSmallAmount(cur)
 	println()
 
 	println("[SCENARIO] 3. ExactOut large amount (9,000,000,000,000 tokens)")
-	exactOutLargeAmount()
+	exactOutLargeAmount(cur)
 	println()
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
-	baz.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
+	baz.Approve(cross(cur), poolAddr, max_approve)
 
 	// Create pool at 1:1 with very deep liquidity for large amount tests
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "50000000000000", "50000000000000", "0", "0", max_timeout, adminAddr, "")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950336")
+	pn.Mint(cross(cur), barPath, bazPath, 3000, min_tick, max_tick, "50000000000000", "50000000000000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] created bar:baz:3000 pool with 50T liquidity")
 }
 
-func exactOutSmallAmount() {
+func exactOutSmallAmount(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	userBarBefore := bar.BalanceOf(adminAddr)
 	feeBarBefore := bar.BalanceOf(protocolFeeAddr)
@@ -90,7 +92,7 @@ func exactOutSmallAmount() {
 	// At 0.15%: grossUp = 1 * 10000 / 9985 = 1.0015 → truncated to 1
 	// fee = 1 * 15 / 10000 = 0 → user gets 1, no fee
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		bazPath,
 		barPath,
 		"1", // 1 token
@@ -118,11 +120,11 @@ func exactOutSmallAmount() {
 	ufmt.Printf("[EXPECTED] protocol fee is 0 (truncated): %d\n", protocolFee)
 }
 
-func exactOutLargeAmount() {
+func exactOutLargeAmount(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	baz.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	baz.Approve(cross(cur), routerAddr, max_approve)
 
 	userBarBefore := bar.BalanceOf(adminAddr)
 	feeBarBefore := bar.BalanceOf(protocolFeeAddr)
@@ -130,7 +132,7 @@ func exactOutLargeAmount() {
 
 	// Request 9T tokens
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		bazPath,
 		barPath,
 		"9000000000000", // 9,000,000,000,000 tokens

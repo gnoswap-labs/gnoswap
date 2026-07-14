@@ -46,39 +46,39 @@ var (
 	poolPath        = barPath + ":" + fooPath + ":500"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool at tick 10000")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint Position A (tickLower=9000, tickUpper=13000)")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint Position B (tickLower=9000, tickUpper=13000)")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Check tick 9000 state (lower tick role)")
-	checkTick9000AsLower()
+	checkTick9000AsLower(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Reposition to new range (5000~9000)")
-	repositionToNewRange()
+	repositionToNewRange(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Check tick 9000 state (upper tick role)")
-	checkTick9000AsUpper()
+	checkTick9000AsUpper(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick 10000")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -90,14 +90,14 @@ func initPool() {
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", p.Liquidity().ToString())
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting Position with range [9000, 13000]")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -118,7 +118,7 @@ func mintPosition() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func checkTick9000AsLower() {
+func checkTick9000AsLower(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking tick 9000 state as lower boundary")
@@ -132,14 +132,14 @@ func checkTick9000AsLower() {
 	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
-func repositionToNewRange() {
+func repositionToNewRange(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Decreasing liquidity to clear position")
 	_, _, _, _, amount0Decreased, amount1Decreased, _ := position.DecreaseLiquidity(
-		cross,
+		cross(cur),
 		1,
 		"1183668969", // full liquidity
 		"0",
@@ -149,11 +149,11 @@ func repositionToNewRange() {
 	ufmt.Printf("[EXPECTED] Decreased amount0: %s\n", amount0Decreased)
 	ufmt.Printf("[EXPECTED] Decreased amount1: %s\n", amount1Decreased)
 
-	executeSwap()
+	executeSwap(cur)
 
 	ufmt.Println("[INFO] Repositioning to new range [5000, 9000]")
 	_, liquidity, tickLower, tickUpper, amount0, amount1 := position.Reposition(
-		cross,
+		cross(cur),
 		1,
 		5000,
 		9000,
@@ -170,9 +170,9 @@ func repositionToNewRange() {
 	ufmt.Printf("[EXPECTED] Amount1: %s\n", amount1)
 }
 
-func executeSwap() {
+func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	p, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[INFO] Pool tick before swap: %d\n", p.Slot0Tick())
@@ -180,7 +180,7 @@ func executeSwap() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -190,7 +190,7 @@ func executeSwap() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -201,7 +201,7 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Pool tick after swap: %d\n", p.Slot0Tick())
 }
 
-func checkTick9000AsUpper() {
+func checkTick9000AsUpper(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking tick 9000 state as upper boundary")
@@ -215,13 +215,13 @@ func checkTick9000AsUpper() {
 	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

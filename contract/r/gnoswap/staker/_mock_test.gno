@@ -41,17 +41,17 @@ type MockStaker struct {
 	Response *MockResponse
 }
 
-func (m *MockStaker) StakeToken(positionId uint64, referrer string) string {
+func (m *MockStaker) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
 	m.Response.Get("StakeToken")
 	return "staked"
 }
 
-func (m *MockStaker) UnStakeToken(positionId uint64) string {
+func (m *MockStaker) UnStakeToken(_ int, rlm realm, positionId uint64) string {
 	m.Response.Get("UnStakeToken")
 	return "unstaked"
 }
 
-func (m *MockStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
+func (m *MockStaker) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	res, ok := m.Response.Get("CollectReward")
 	if !ok {
 		return "pool", "100", make(map[string]int64), make(map[string]int64)
@@ -60,19 +60,25 @@ func (m *MockStaker) CollectReward(positionId uint64) (string, string, map[strin
 	return res[0].(string), res[1].(string), res[2].(map[string]int64), res[3].(map[string]int64)
 }
 
-func (m *MockStaker) SetPoolTier(poolPath string, tier uint64) {
+func (m *MockStaker) EmissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
+	m.Response.Get("EmissionCacheUpdateHook")
+}
+
+func (m *MockStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	m.Response.Get("SetPoolTier")
 }
 
-func (m *MockStaker) ChangePoolTier(poolPath string, tier uint64) {
+func (m *MockStaker) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	m.Response.Get("ChangePoolTier")
 }
 
-func (m *MockStaker) RemovePoolTier(poolPath string) {
+func (m *MockStaker) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	m.Response.Get("RemovePoolTier")
 }
 
 func (m *MockStaker) CreateExternalIncentive(
+	_ int,
+	rlm realm,
 	targetPoolPath string,
 	rewardToken string,
 	rewardAmount int64,
@@ -82,40 +88,40 @@ func (m *MockStaker) CreateExternalIncentive(
 	m.Response.Get("CreateExternalIncentive")
 }
 
-func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+func (m *MockStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
 	m.Response.Get("EndExternalIncentive")
 }
 
-func (m *MockStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+func (m *MockStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	m.Response.Get("CollectExternalIncentivePenalty")
 	return 0
 }
 
-func (m *MockStaker) AddToken(tokenPath string) {
+func (m *MockStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	m.Response.Get("AddToken")
 }
 
-func (m *MockStaker) RemoveToken(tokenPath string) {
+func (m *MockStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	m.Response.Get("RemoveToken")
 }
 
-func (m *MockStaker) SetWarmUp(pct, timeDuration int64) {
+func (m *MockStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	m.Response.Get("SetWarmUp")
 }
 
-func (m *MockStaker) SetDepositGnsAmount(amount int64) {
+func (m *MockStaker) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 	m.Response.Get("SetDepositGnsAmount")
 }
 
-func (m *MockStaker) SetMinimumRewardAmount(amount int64) {
+func (m *MockStaker) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	m.Response.Get("SetMinimumRewardAmount")
 }
 
-func (m *MockStaker) SetTokenMinimumRewardAmount(paramsStr string) {
+func (m *MockStaker) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
 	m.Response.Get("SetTokenMinimumRewardAmount")
 }
 
-func (m *MockStaker) SetUnStakingFee(fee uint64) {
+func (m *MockStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetUnStakingFee")
 }
 

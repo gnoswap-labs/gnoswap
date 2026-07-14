@@ -14,23 +14,23 @@ import (
 
 const blockPerSecond = int64(5)
 
-func Setup(t *testing.T) *canonicalRewardState {
-	initStakerTest(t)
+func Setup(cur realm, t *testing.T) *canonicalRewardState {
+	initStakerTest(cur, t)
 	pools := getMockInstance().getPools()
 	deposits := getMockInstance().getDeposits()
-	tickCrossHook := getMockInstance().tickCrossHook
 	poolTier := getMockInstance().getPoolTier()
 
-	return NewCanonicalRewardState(t, poolTier, pools, deposits, tickCrossHook)
+	return NewCanonicalRewardState(poolTier, pools, deposits)
 }
 
-func TestCanonicalSimple(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalSimple(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := test_gnousdc
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -45,16 +45,16 @@ func TestCanonicalSimple(t *testing.T) {
 	canonical.NextBlock()
 
 	// gnousdc takes the entire emission
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
 }
 
 // To check precision error
-func TestCanonicalLargeStakedLiquidity(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalLargeStakedLiquidity(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := test_gnousdc
 	canonical.CreatePool(gnousdc, 1, 150)
@@ -62,6 +62,7 @@ func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 	// use uint128 max instead of q128(=2^128) to stay within uint128 range
 	uint128Max := u256.MustFromDecimal("340282366920938463463374607431768211455")
 	canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -72,16 +73,16 @@ func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
 }
 
 // To check precision error
-func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalLargeStakedLiquidity_2(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := test_gnousdc
 	canonical.CreatePool(gnousdc, 1, 150)
@@ -94,6 +95,7 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 	canonical.SetEmissionUpdate(10000000000000)
 
 	canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -103,6 +105,7 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 	)
 
 	canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -113,24 +116,25 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
 	expected := canonical.PerSecondEmission / 100 * 30
-	canonical.AssertEmulatedRewardOf(0, expected/9)
-	canonical.AssertCanonicalRewardOf(0, expected/9)
+	canonical.AssertEmulatedRewardOf(t, 0, expected/9)
+	canonical.AssertCanonicalRewardOf(t, 0, expected/9)
 
-	canonical.AssertEmulatedRewardOf(1, expected/9*8)
-	canonical.AssertCanonicalRewardOf(1, expected/9*8)
+	canonical.AssertEmulatedRewardOf(t, 1, expected/9*8)
+	canonical.AssertCanonicalRewardOf(t, 1, expected/9*8)
 }
 
 // Tests simple case with tick crossing
-func TestCanonicalTickCross_0(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_0(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -143,71 +147,72 @@ func TestCanonicalTickCross_0(t *testing.T) {
 	}
 
 	// The position remains inrange, no change in reward.
-	canonical.MoveTick(gnousdc, 120)
+	canonical.MoveTick(cur, t, gnousdc, 120)
 
 	canonical.NextBlock()
 
 	// gnousdc takes the entire emission
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
 
 	// The position is now outrange. The reward must be reduced.
-	canonical.MoveTick(gnousdc, 90)
+	canonical.MoveTick(cur, t, gnousdc, 90)
 
 	canonical.NextBlock()
 
 	// gnousdc still takes the entire emission, independent from position inrangeness
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
-	canonical.AssertEmulatedRewardOf(0, 0)
-	canonical.AssertCanonicalRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
 
 	// The position remains outrange.
-	canonical.MoveTick(gnousdc, 80)
+	canonical.MoveTick(cur, t, gnousdc, 80)
 
 	canonical.NextBlock()
 
 	// gnousdc still takes the entire emission, independent from position inrangeness
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
-	canonical.AssertEmulatedRewardOf(0, 0)
-	canonical.AssertCanonicalRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
 
 	// The tick passes through the positions range, remains outrange.
-	canonical.MoveTick(gnousdc, 220)
+	canonical.MoveTick(cur, t, gnousdc, 220)
 
 	canonical.NextBlock()
 
 	// gnousdc still takes the entire emission, independent from position inrangeness
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
-	canonical.AssertEmulatedRewardOf(0, 0)
-	canonical.AssertCanonicalRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
 
 	// The tick goes back to the range.
-	canonical.MoveTick(gnousdc, 180)
+	canonical.MoveTick(cur, t, gnousdc, 180)
 
 	canonical.NextBlock()
 
 	// gnousdc still takes the entire emission, independent from position inrangeness
-	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, int64(canonical.PerSecondEmission))
+	canonical.AssertCanonicalInternalRewardPerPool(t, gnousdc, int64(canonical.PerSecondEmission))
 
 	// The position is now inrange, so it takes the entire emission
-	canonical.AssertEmulatedRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
 }
 
 // Tests tick crossing with lazy evaluation of position reward
-func TestCanonicalTickCross_1(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_1(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -220,44 +225,45 @@ func TestCanonicalTickCross_1(t *testing.T) {
 	}
 
 	// The position remains inrange, no change in reward.
-	canonical.MoveTick(gnousdc, 120)
+	canonical.MoveTick(cur, t, gnousdc, 120)
 
 	canonical.NextBlockNoCanonical()
 
 	// The position is now outrange. The reward must be reduced.
-	canonical.MoveTick(gnousdc, 90)
+	canonical.MoveTick(cur, t, gnousdc, 90)
 
 	canonical.NextBlockNoCanonical()
 
 	// The position remains outrange.
-	canonical.MoveTick(gnousdc, 80)
+	canonical.MoveTick(cur, t, gnousdc, 80)
 
 	canonical.NextBlockNoCanonical()
 
 	// The tick passes through the positions range, remains outrange.
-	canonical.MoveTick(gnousdc, 220)
+	canonical.MoveTick(cur, t, gnousdc, 220)
 
 	canonical.NextBlockNoCanonical()
 
 	// The tick goes back to the range.
-	canonical.MoveTick(gnousdc, 180)
+	canonical.MoveTick(cur, t, gnousdc, 180)
 
 	canonical.NextBlockNoCanonical()
 
 	// We check that emulated reward is lazy evaluated when we finally calculate it.
 	// It takes the two block's emission into account.
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected*2)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*2)
 }
 
 // Test tick crossing with multiple positions with same tick, same liquidity
-func TestCanonicalTickCross_2(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_2(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -270,6 +276,7 @@ func TestCanonicalTickCross_2(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -282,42 +289,43 @@ func TestCanonicalTickCross_2(t *testing.T) {
 	}
 
 	// eligible
-	canonical.MoveTick(gnousdc, 120)
+	canonical.MoveTick(cur, t, gnousdc, 120)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 90)
+	canonical.MoveTick(cur, t, gnousdc, 90)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 80)
+	canonical.MoveTick(cur, t, gnousdc, 80)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 220)
+	canonical.MoveTick(cur, t, gnousdc, 220)
 	canonical.NextBlockNoCanonical()
 
 	// eligible
-	canonical.MoveTick(gnousdc, 180)
+	canonical.MoveTick(cur, t, gnousdc, 180)
 	canonical.NextBlockNoCanonical()
 
 	// eligible
-	canonical.MoveTick(gnousdc, 120)
+	canonical.MoveTick(cur, t, gnousdc, 120)
 	canonical.NextBlockNoCanonical()
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected*3/2)
-	canonical.AssertEmulatedRewardOf(1, expected*3/2)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*3/2)
+	canonical.AssertEmulatedRewardOf(t, 1, expected*3/2)
 }
 
 // Test tick crossing with multiple positions with same tick, different liquidity
-func TestCanonicalTickCross_3(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_3(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -330,6 +338,7 @@ func TestCanonicalTickCross_3(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -342,42 +351,43 @@ func TestCanonicalTickCross_3(t *testing.T) {
 	}
 
 	// eligible
-	canonical.MoveTick(gnousdc, 120)
+	canonical.MoveTick(cur, t, gnousdc, 120)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 90)
+	canonical.MoveTick(cur, t, gnousdc, 90)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 80)
+	canonical.MoveTick(cur, t, gnousdc, 80)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 220)
+	canonical.MoveTick(cur, t, gnousdc, 220)
 	canonical.NextBlockNoCanonical()
 
 	// eligible
-	canonical.MoveTick(gnousdc, 180)
+	canonical.MoveTick(cur, t, gnousdc, 180)
 	canonical.NextBlockNoCanonical()
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 80)
+	canonical.MoveTick(cur, t, gnousdc, 80)
 	canonical.NextBlockNoCanonical()
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected*2*1/4)
-	canonical.AssertEmulatedRewardOf(1, expected*2*3/4)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*2*1/4)
+	canonical.AssertEmulatedRewardOf(t, 1, expected*2*3/4)
 }
 
 // Test tick crossing with multiple positions with different tick, same liquidity
-func TestCanonicalTickCross_4(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_4(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -390,6 +400,7 @@ func TestCanonicalTickCross_4(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -404,49 +415,50 @@ func TestCanonicalTickCross_4(t *testing.T) {
 	expected := canonical.PerSecondEmission * 30 / 100
 
 	// 0 eligible, 1 not eligible (100:0)
-	canonical.MoveTick(gnousdc, 101)
+	canonical.MoveTick(cur, t, gnousdc, 101)
 	canonical.NextBlock()
-	canonical.AssertCanonicalRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(1, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 1, 0)
 	// 0 eligible, 1 not eligible (100:0)
-	canonical.MoveTick(gnousdc, 101)
+	canonical.MoveTick(cur, t, gnousdc, 101)
 	canonical.NextBlock()
-	canonical.AssertCanonicalRewardOf(0, expected)
-	canonical.AssertCanonicalRewardOf(1, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
+	canonical.AssertCanonicalRewardOf(t, 1, 0)
 
 	// 0 eligible, 1 eligible (50:50)
-	canonical.MoveTick(gnousdc, 201)
+	canonical.MoveTick(cur, t, gnousdc, 201)
 	canonical.NextBlock()
-	canonical.AssertCanonicalRewardOf(0, expected/2)
-	canonical.AssertCanonicalRewardOf(1, expected/2)
+	canonical.AssertCanonicalRewardOf(t, 0, expected/2)
+	canonical.AssertCanonicalRewardOf(t, 1, expected/2)
 
 	// 0 not eligible, 1 not eligible (0:0)
-	canonical.MoveTick(gnousdc, 401)
+	canonical.MoveTick(cur, t, gnousdc, 401)
 	canonical.NextBlock()
-	canonical.AssertCanonicalRewardOf(0, 0)
-	canonical.AssertCanonicalRewardOf(1, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 1, 0)
 
 	// 0 not eligible, 1 eligible (0:100)
-	canonical.MoveTick(gnousdc, 301)
+	canonical.MoveTick(cur, t, gnousdc, 301)
 	canonical.NextBlock()
-	canonical.AssertCanonicalRewardOf(0, 0)
-	canonical.AssertCanonicalRewardOf(1, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertCanonicalRewardOf(t, 1, expected)
 
 	// 0 total ratio: 250
 	// 1 total ratio: 150
 
-	canonical.AssertEmulatedRewardOf(0, expected*4*250/400)
-	canonical.AssertEmulatedRewardOf(1, expected*4*150/400)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*4*250/400)
+	canonical.AssertEmulatedRewardOf(t, 1, expected*4*150/400)
 }
 
 // Test tick crossing at tick boundaries, forward direction
-func TestCanonicalTickCross_5(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_5(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -462,60 +474,61 @@ func TestCanonicalTickCross_5(t *testing.T) {
 
 	// not eligible
 	// block 1
-	canonical.MoveTick(gnousdc, 99)
+	canonical.MoveTick(cur, t, gnousdc, 99)
 	canonical.NextBlock()
 
 	// block 2
-	canonical.AssertCanonicalRewardOf(0, 0)
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 
 	// eligible
 	// entered range
-	canonical.MoveTick(gnousdc, 100)
+	canonical.MoveTick(cur, t, gnousdc, 100)
 	canonical.NextBlock()
 
 	// block 3
-	canonical.AssertCanonicalRewardOf(0, expected)
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// eligible
-	canonical.MoveTick(gnousdc, 101)
+	canonical.MoveTick(cur, t, gnousdc, 101)
 	canonical.NextBlock()
 
 	// block 4
-	canonical.AssertCanonicalRewardOf(0, expected)
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// eligible
-	canonical.MoveTick(gnousdc, 299)
+	canonical.MoveTick(cur, t, gnousdc, 299)
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalRewardOf(0, expected)
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertCanonicalRewardOf(t, 0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 300)
+	canonical.MoveTick(cur, t, gnousdc, 300)
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalRewardOf(0, 0)
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 301)
+	canonical.MoveTick(cur, t, gnousdc, 301)
 	canonical.NextBlock()
 
-	canonical.AssertCanonicalRewardOf(0, 0)
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertCanonicalRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 }
 
 // Test tick crossing at tick boundaries, backward direction
-func TestCanonicalTickCross_6(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_6(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -530,44 +543,44 @@ func TestCanonicalTickCross_6(t *testing.T) {
 	expected := canonical.PerSecondEmission * 30 / 100
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 301)
+	canonical.MoveTick(cur, t, gnousdc, 301)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 300)
+	canonical.MoveTick(cur, t, gnousdc, 300)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 
 	// eligible
-	canonical.MoveTick(gnousdc, 299)
+	canonical.MoveTick(cur, t, gnousdc, 299)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// eligible
-	canonical.MoveTick(gnousdc, 101)
+	canonical.MoveTick(cur, t, gnousdc, 101)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// eligible
-	canonical.MoveTick(gnousdc, 100)
+	canonical.MoveTick(cur, t, gnousdc, 100)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertEmulatedRewardOf(t, 0, expected)
 
 	// not eligible
-	canonical.MoveTick(gnousdc, 99)
+	canonical.MoveTick(cur, t, gnousdc, 99)
 	canonical.NextBlockNoCanonical()
 
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
 }
 
-func TestCanonicalExternalReward_1(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalExternalReward_1(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
@@ -585,6 +598,7 @@ func TestCanonicalExternalReward_1(t *testing.T) {
 	)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
@@ -607,11 +621,11 @@ func TestCanonicalExternalReward_1(t *testing.T) {
 	// With 30% warmup: 25000000 * 30 / 100 = 7500000
 	expected := uint64(25000000) * 30 / 100
 
-	canonical.AssertEmulatedExternalRewardOf(uint64(0), incentiveId, expected)
+	canonical.AssertEmulatedExternalRewardOf(t, uint64(0), incentiveId, expected)
 }
 
-func TestCanonicalExternalReward_2(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalExternalReward_2(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
@@ -634,6 +648,7 @@ func TestCanonicalExternalReward_2(t *testing.T) {
 	// Incentive has been already started
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
@@ -651,11 +666,11 @@ func TestCanonicalExternalReward_2(t *testing.T) {
 	// Same calculation as test 1: 25000000 * 30 / 100
 	expected := uint64(25000000) * 30 / 100
 
-	canonical.AssertEmulatedExternalRewardOf(uint64(0), incentiveId, expected)
+	canonical.AssertEmulatedExternalRewardOf(t, uint64(0), incentiveId, expected)
 }
 
-func TestCanonicalExternalReward_3(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalExternalReward_3(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
@@ -673,6 +688,7 @@ func TestCanonicalExternalReward_3(t *testing.T) {
 	)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
@@ -695,7 +711,7 @@ func TestCanonicalExternalReward_3(t *testing.T) {
 
 	// not eligible
 
-	canonical.MoveTick(gnousdc, 400)
+	canonical.MoveTick(cur, t, gnousdc, 400)
 
 	// not eligible
 
@@ -706,15 +722,15 @@ func TestCanonicalExternalReward_3(t *testing.T) {
 	// With 30% warmup: 50000000 * 30 / 100 = 15000000
 	expected := uint64(50000000) * 30 / 100
 
-	canonical.AssertEmulatedExternalRewardOf(uint64(0), incentiveId, expected)
+	canonical.AssertEmulatedExternalRewardOf(t, uint64(0), incentiveId, expected)
 
 	if canonical.UnclaimableExternalRewardOf(uint64(0), incentiveId) != int64(50000000) {
 		t.Errorf("UnclaimableExternalRewardOf(uint64(0), incentiveId) = %d; want %d", canonical.UnclaimableExternalRewardOf(uint64(0), incentiveId), int64(50000000))
 	}
 }
 
-func TestCanonicalMultiplePool_1(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalMultiplePool_1(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	gnousdc2 := GetPoolPath(wugnotPath, gnsPath, 10000)
@@ -722,6 +738,7 @@ func TestCanonicalMultiplePool_1(t *testing.T) {
 	canonical.CreatePool(gnousdc2, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -734,6 +751,7 @@ func TestCanonicalMultiplePool_1(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc2,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -749,33 +767,33 @@ func TestCanonicalMultiplePool_1(t *testing.T) {
 
 	expected := canonical.PerSecondEmission * 30 / 100
 
-	canonical.AssertEmulatedRewardOf(0, expected/2)
-	canonical.AssertEmulatedRewardOf(1, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 0, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 1, expected/2)
 
-	canonical.MoveTick(gnousdc, 100)
+	canonical.MoveTick(cur, t, gnousdc, 100)
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected/2)
-	canonical.AssertEmulatedRewardOf(1, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 0, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 1, expected/2)
 
-	canonical.MoveTick(gnousdc2, 100)
+	canonical.MoveTick(cur, t, gnousdc2, 100)
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected/2)
-	canonical.AssertEmulatedRewardOf(1, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 1, 0)
 
-	canonical.MoveTick(gnousdc, 100)
+	canonical.MoveTick(cur, t, gnousdc, 100)
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected/2)
-	canonical.AssertEmulatedRewardOf(1, 0)
+	canonical.AssertEmulatedRewardOf(t, 0, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 1, 0)
 
-	canonical.MoveTick(gnousdc, 300)
-	canonical.MoveTick(gnousdc2, 300)
+	canonical.MoveTick(cur, t, gnousdc, 300)
+	canonical.MoveTick(cur, t, gnousdc2, 300)
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, 0)
-	canonical.AssertEmulatedRewardOf(1, expected/2)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 1, expected/2)
 }
 
-func TestCanonicalMultiplePool_2(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalMultiplePool_2(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	gnousdc2 := GetPoolPath(wugnotPath, gnsPath, 10000)
@@ -785,6 +803,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	canonical.CreatePool(gnousdc3, 3, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -797,6 +816,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc2,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -809,6 +829,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		2,
 		gnousdc3,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
@@ -823,44 +844,45 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	expected := canonical.PerBlockEmission * 30 / 100
 
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*50/100)
-	canonical.AssertEmulatedRewardOf(1, expected*30/100)
-	canonical.AssertEmulatedRewardOf(2, 0)
-	canonical.MoveTick(gnousdc, 100)
-	canonical.MoveTick(gnousdc2, 100)
-	canonical.MoveTick(gnousdc3, 100)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*50/100)
+	canonical.AssertEmulatedRewardOf(t, 1, expected*30/100)
+	canonical.AssertEmulatedRewardOf(t, 2, 0)
+	canonical.MoveTick(cur, t, gnousdc, 100)
+	canonical.MoveTick(cur, t, gnousdc2, 100)
+	canonical.MoveTick(cur, t, gnousdc3, 100)
 
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*50/100)
-	canonical.AssertEmulatedRewardOf(1, 0)
-	canonical.AssertEmulatedRewardOf(2, 0)
-	canonical.MoveTick(gnousdc, 400)
-	canonical.MoveTick(gnousdc2, 400)
-	canonical.MoveTick(gnousdc3, 400)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*50/100)
+	canonical.AssertEmulatedRewardOf(t, 1, 0)
+	canonical.AssertEmulatedRewardOf(t, 2, 0)
+	canonical.MoveTick(cur, t, gnousdc, 400)
+	canonical.MoveTick(cur, t, gnousdc2, 400)
+	canonical.MoveTick(cur, t, gnousdc3, 400)
 
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, 0)
-	canonical.AssertEmulatedRewardOf(1, 0)
-	canonical.AssertEmulatedRewardOf(2, expected*20/100)
+	canonical.AssertEmulatedRewardOf(t, 0, 0)
+	canonical.AssertEmulatedRewardOf(t, 1, 0)
+	canonical.AssertEmulatedRewardOf(t, 2, expected*20/100)
 	canonical.ChangePoolTier(gnousdc2, 1)
-	canonical.MoveTick(gnousdc, 200)
-	canonical.MoveTick(gnousdc2, 300)
-	canonical.MoveTick(gnousdc3, 400)
+	canonical.MoveTick(cur, t, gnousdc, 200)
+	canonical.MoveTick(cur, t, gnousdc2, 300)
+	canonical.MoveTick(cur, t, gnousdc3, 400)
 
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*40/100)
-	canonical.AssertEmulatedRewardOf(1, expected*40/100)
-	canonical.AssertEmulatedRewardOf(2, expected*20/100)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*40/100)
+	canonical.AssertEmulatedRewardOf(t, 1, expected*40/100)
+	canonical.AssertEmulatedRewardOf(t, 2, expected*20/100)
 }
 
 // Large number of seconds passed
-func TestCanonicalLargeSecondsPassed(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalLargeSecondsPassed(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -878,7 +900,7 @@ func TestCanonicalLargeSecondsPassed(t *testing.T) {
 	}
 
 	expected := canonical.PerSecondEmission * 30 / 100
-	canonical.AssertEmulatedRewardOf(0, expected*10000)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*10000)
 }
 
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
@@ -888,18 +910,19 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
 }
 
-func TestCanonicalWarmup_1(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalWarmup_1(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 	warmupTemplate := getMockInstance().store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, 0, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 1, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 2, 10*blockPerSecond)
-	getMockInstance().store.SetWarmupTemplate(warmupTemplate)
+	getMockInstance().store.SetWarmupTemplate(0, cur, warmupTemplate)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -923,7 +946,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*10)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*10)
 
 	expected = canonical.PerBlockEmission * 50 / 100
 
@@ -937,7 +960,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*10)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*10)
 
 	expected = canonical.PerBlockEmission * 70 / 100
 
@@ -951,7 +974,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*10)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*10)
 
 	expected = canonical.PerBlockEmission * 100 / 100
 
@@ -965,21 +988,22 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, expected*10)
+	canonical.AssertEmulatedRewardOf(t, 0, expected*10)
 }
 
-func TestCanonicalWarmup_2(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalWarmup_2(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 	warmupTemplate := getMockInstance().store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, 0, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 1, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 2, 10*blockPerSecond)
-	getMockInstance().store.SetWarmupTemplate(warmupTemplate)
+	getMockInstance().store.SetWarmupTemplate(0, cur, warmupTemplate)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1043,21 +1067,22 @@ func TestCanonicalWarmup_2(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 
-	canonical.AssertEmulatedRewardOf(0, expected0*10+expected1*10+expected2*10+expected3*10)
+	canonical.AssertEmulatedRewardOf(t, 0, expected0*10+expected1*10+expected2*10+expected3*10)
 }
 
 // ================
 // randomized
 
 // Test tick crossing at tick boundaries, random direction
-func TestCanonicalTickCross_7(t *testing.T) {
+func TestCanonicalTickCross_7(cur realm, t *testing.T) {
 	t.Skip("gets affect by previous")
-	canonical := Setup(t)
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1086,21 +1111,22 @@ func TestCanonicalTickCross_7(t *testing.T) {
 	index := 0
 	for i := 0; i < 100; i++ {
 		index = (index + 10007) % len(tcs)
-		canonical.MoveTick(gnousdc, tcs[index].tick)
+		canonical.MoveTick(cur, t, gnousdc, tcs[index].tick)
 		canonical.NextBlockNoCanonical()
-		canonical.AssertEmulatedRewardOf(0, tcs[index].expected)
+		canonical.AssertEmulatedRewardOf(t, 0, tcs[index].expected)
 	}
 }
 
 // Test tick crossing with multiple positions with different tick, different liquidity
 // Equivalence test
-func TestCanonicalTickCross_8(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_8(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1113,6 +1139,7 @@ func TestCanonicalTickCross_8(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -1125,6 +1152,7 @@ func TestCanonicalTickCross_8(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		2,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
@@ -1140,23 +1168,24 @@ func TestCanonicalTickCross_8(t *testing.T) {
 
 	for i := 0; i < 500; i++ {
 		tick = (tick + 10007) % 700
-		canonical.MoveTick(gnousdc, tick)
+		canonical.MoveTick(cur, t, gnousdc, tick)
 		canonical.NextBlock()
-		canonical.AssertEquivalence(0)
-		canonical.AssertEquivalence(1)
-		canonical.AssertEquivalence(2)
+		canonical.AssertEquivalence(t, 0)
+		canonical.AssertEquivalence(t, 1)
+		canonical.AssertEquivalence(t, 2)
 	}
 }
 
 // Test tick crossing with multiple positions with different tick, different liquidity, emulated reward flushed for every 100 blocks
 // Equivalence test
-func TestCanonicalTickCross_9(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_9(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1169,6 +1198,7 @@ func TestCanonicalTickCross_9(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -1181,6 +1211,7 @@ func TestCanonicalTickCross_9(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		2,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
@@ -1197,25 +1228,26 @@ func TestCanonicalTickCross_9(t *testing.T) {
 		canonicalRewardMap := make(map[uint64]int64)
 		for j := 0; j < 20; j++ {
 			tick = (tick + 10007) % 700
-			canonical.MoveTick(gnousdc, tick)
+			canonical.MoveTick(cur, t, gnousdc, tick)
 			canonical.NextBlock()
 			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).Internal
 			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).Internal
 			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).Internal
 		}
-		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
+		canonical.AssertEmulatedRewardMap(t, canonicalRewardMap)
 	}
 }
 
 // Test tick crossing with multiple positions with different tick, different liquidity, emulated reward flushed for every 100 blocks
 // Equivalence test
-func TestCanonicalTickCross_10(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalTickCross_10(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, -200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1228,6 +1260,7 @@ func TestCanonicalTickCross_10(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		1,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
@@ -1240,6 +1273,7 @@ func TestCanonicalTickCross_10(t *testing.T) {
 	}
 
 	err = canonical.StakeToken(
+		cur,
 		2,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
@@ -1256,23 +1290,24 @@ func TestCanonicalTickCross_10(t *testing.T) {
 		canonicalRewardMap := make(map[uint64]int64)
 		for j := 0; j < 20; j++ {
 			tick = (tick + 10007) % 700
-			canonical.MoveTick(gnousdc, -tick)
+			canonical.MoveTick(cur, t, gnousdc, -tick)
 			canonical.NextBlock()
 			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).Internal
 			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).Internal
 			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).Internal
 		}
-		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
+		canonical.AssertEmulatedRewardMap(t, canonicalRewardMap)
 	}
 }
 
-func TestCanonicalEmissionChange_0(t *testing.T) {
-	canonical := Setup(t)
+func TestCanonicalEmissionChange_0(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
 	err := canonical.StakeToken(
+		cur,
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
@@ -1298,7 +1333,7 @@ func TestCanonicalEmissionChange_0(t *testing.T) {
 
 	t.Logf("expected1: %d", expected1)
 
-	canonical.AssertEmulatedRewardOf(0, expected0+expected1)
+	canonical.AssertEmulatedRewardOf(t, 0, expected0+expected1)
 }
 
 type TestEventCreatePool struct {
@@ -1307,7 +1342,7 @@ type TestEventCreatePool struct {
 	initialTick int32
 }
 
-func (event *TestEventCreatePool) Apply(canonical *canonicalRewardState) {
+func (event *TestEventCreatePool) Apply(cur realm, t *testing.T, canonical *canonicalRewardState) {
 	canonical.CreatePool(event.poolPath, event.initialTier, event.initialTick)
 }
 
@@ -1330,7 +1365,7 @@ func (event *TestEventChangeTier) IsValid(canonical *canonicalRewardState) bool 
 	return ok
 }
 
-func (event *TestEventChangeTier) Apply(canonical *canonicalRewardState) {
+func (event *TestEventChangeTier) Apply(cur realm, t *testing.T, canonical *canonicalRewardState) {
 	canonical.ChangePoolTier(event.poolPath, event.targetTier)
 }
 
@@ -1347,15 +1382,15 @@ type TestEventStakeToken struct {
 	tickUpper  int32
 }
 
-func (event *TestEventStakeToken) Apply(canonical *canonicalRewardState) {
+func (event *TestEventStakeToken) Apply(cur realm, t *testing.T, canonical *canonicalRewardState) {
 	if canonical.global.deposits.Has(event.positionId) {
 		if canonical.global.deposits.get(event.positionId).Liquidity().IsZero() {
-			canonical.StakeToken(event.positionId, event.poolPath, event.address, event.tickLower, event.tickUpper, event.liquidity)
+			canonical.StakeToken(cur, event.positionId, event.poolPath, event.address, event.tickLower, event.tickUpper, event.liquidity)
 		} else {
 			canonical.UnstakeToken(event.positionId)
 		}
 	} else {
-		canonical.StakeToken(event.positionId, event.poolPath, event.address, event.tickLower, event.tickUpper, event.liquidity)
+		canonical.StakeToken(cur, event.positionId, event.poolPath, event.address, event.tickLower, event.tickUpper, event.liquidity)
 	}
 }
 
@@ -1373,8 +1408,8 @@ type TestEventMoveTick struct {
 	tick     int32
 }
 
-func (event *TestEventMoveTick) Apply(canonical *canonicalRewardState) {
-	canonical.MoveTick(event.poolPath, event.tick)
+func (event *TestEventMoveTick) Apply(cur realm, t *testing.T, canonical *canonicalRewardState) {
+	canonical.MoveTick(cur, t, event.poolPath, event.tick)
 }
 
 func (event *TestEventMoveTick) IsValid(canonical *canonicalRewardState) bool {
@@ -1390,7 +1425,7 @@ type TestEventSetEmissionUpdate struct {
 	emission uint64
 }
 
-func (event *TestEventSetEmissionUpdate) Apply(canonical *canonicalRewardState) {
+func (event *TestEventSetEmissionUpdate) Apply(cur realm, t *testing.T, canonical *canonicalRewardState) {
 	canonical.SetEmissionUpdate(event.emission)
 }
 
@@ -1404,7 +1439,7 @@ func (event *TestEventSetEmissionUpdate) String() string {
 
 type SimulationEvent interface {
 	IsValid(canonical *canonicalRewardState) bool
-	Apply(canonical *canonicalRewardState)
+	Apply(cur realm, t *testing.T, canonical *canonicalRewardState)
 	String() string
 }
 
@@ -1458,7 +1493,7 @@ func events(
 	return result
 }
 
-func TestCanonicalSimulation_0(t *testing.T) {
+func TestCanonicalSimulation_0(cur realm, t *testing.T) {
 	t.Skip("PASS: need to run manually")
 	wugnotgns := events(
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
@@ -1514,7 +1549,7 @@ func TestCanonicalSimulation_0(t *testing.T) {
 	events = append(events, bazquux...)
 	events = append(events, quuxgns...)
 
-	canonical := Setup(t)
+	canonical := Setup(cur, t)
 
 	// required to match with the default tier 1
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
@@ -1533,7 +1568,7 @@ func TestCanonicalSimulation_0(t *testing.T) {
 					break
 				}
 			}
-			event.Apply(canonical)
+			event.Apply(cur, t, canonical)
 			canonical.NextBlock()
 			for i := 0; i < 12; i++ {
 				reward, ok := canonical.SafeCanonicalRewardOf(uint64(i))
@@ -1544,7 +1579,7 @@ func TestCanonicalSimulation_0(t *testing.T) {
 			}
 		}
 
-		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
+		canonical.AssertEmulatedRewardMap(t, canonicalRewardMap)
 	}
 }
 

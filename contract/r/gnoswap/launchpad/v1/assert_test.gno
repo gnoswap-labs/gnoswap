@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestAssert_assertIsValidAmount(t *testing.T) {
+func TestAssert_assertIsValidAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		amount        int64
@@ -61,9 +61,9 @@ func TestAssert_assertIsValidAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.expectedPanic {
-				uassert.PanicsContains(t, tt.expectedError, func() {
+				uassert.PanicsContains(t, cur, tt.expectedError, func() {
 					assertIsValidAmount(tt.amount)
 				})
 				return
@@ -74,7 +74,7 @@ func TestAssert_assertIsValidAmount(t *testing.T) {
 	}
 }
 
-func TestAssert_assertIsDepositOwner(t *testing.T) {
+func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 	ownerAddr := testutils.TestAddress("owner")
 	otherAddr := testutils.TestAddress("other")
 
@@ -153,7 +153,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			resetTestStore()
 			lp := getTestImplementation()
@@ -161,7 +161,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 
 			// when & then
 			if tt.expectedPanic {
-				uassert.PanicsContains(t, tt.expectedError, func() {
+				uassert.PanicsContains(t, cur, tt.expectedError, func() {
 					lp.assertIsDepositOwner(depositID, tt.caller)
 				})
 				return
@@ -172,21 +172,21 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 	}
 }
 
-func TestAssert_assertHasProject(t *testing.T) {
+func TestAssert_assertHasProject(cur realm, t *testing.T) {
 	projectOwner := testutils.TestAddress("project_owner")
 	otherUser := testutils.TestAddress("other_user")
 	nonProjectOwner := testutils.TestAddress("non_project_owner")
 
 	tests := []struct {
 		name          string
-		setupProjects func(*launchpadV1)
+		setupProjects func(realm, *launchpadV1)
 		caller        address
 		expectedPanic bool
 		expectedError string
 	}{
 		{
 			name: "valid - caller owns at least one project",
-			setupProjects: func(lp *launchpadV1) {
+			setupProjects: func(cur realm, lp *launchpadV1) {
 				project := launchpad.NewProject(
 					"Test Project",
 					"gno.land/r/demo/token",
@@ -199,14 +199,14 @@ func TestAssert_assertHasProject(t *testing.T) {
 				projects.Set(project.ID(), project)
 				// Register project owner in gov/staker (call from launchpad realm)
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-				gov_staker.SetAmountByProjectWallet(cross, projectOwner, 1, true)
+				gov_staker.SetAmountByProjectWallet(cross(cur), projectOwner, 1, true)
 			},
 			caller:        projectOwner,
 			expectedPanic: false,
 		},
 		{
 			name: "panic when caller owns no project",
-			setupProjects: func(lp *launchpadV1) {
+			setupProjects: func(cur realm, lp *launchpadV1) {
 				project := launchpad.NewProject(
 					"Test Project",
 					"gno.land/r/demo/token",
@@ -224,7 +224,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		},
 		{
 			name: "panic when projects tree is empty",
-			setupProjects: func(lp *launchpadV1) {
+			setupProjects: func(cur realm, lp *launchpadV1) {
 				// Don't add any projects
 			},
 			caller:        otherUser,
@@ -233,7 +233,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		},
 		{
 			name: "valid - caller owns one of multiple projects",
-			setupProjects: func(lp *launchpadV1) {
+			setupProjects: func(cur realm, lp *launchpadV1) {
 				projects := lp.store.GetProjects()
 
 				// Add project owned by someone else
@@ -260,15 +260,15 @@ func TestAssert_assertHasProject(t *testing.T) {
 
 				// Register both project owners in gov/staker (call from launchpad realm)
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-				gov_staker.SetAmountByProjectWallet(cross, otherUser, 1, true)
-				gov_staker.SetAmountByProjectWallet(cross, projectOwner, 1, true)
+				gov_staker.SetAmountByProjectWallet(cross(cur), otherUser, 1, true)
+				gov_staker.SetAmountByProjectWallet(cross(cur), projectOwner, 1, true)
 			},
 			caller:        projectOwner,
 			expectedPanic: false,
 		},
 		{
 			name: "panic when multiple projects exist but caller owns none",
-			setupProjects: func(lp *launchpadV1) {
+			setupProjects: func(cur realm, lp *launchpadV1) {
 				projects := lp.store.GetProjects()
 
 				// Add multiple projects owned by others
@@ -291,15 +291,15 @@ func TestAssert_assertHasProject(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			resetTestStore()
 			lp := getTestImplementation()
-			tt.setupProjects(lp)
+			tt.setupProjects(cur, lp)
 
 			// when & then
 			if tt.expectedPanic {
-				uassert.PanicsContains(t, tt.expectedError, func() {
+				uassert.PanicsContains(t, cur, tt.expectedError, func() {
 					lp.assertHasProject(tt.caller)
 				})
 				return

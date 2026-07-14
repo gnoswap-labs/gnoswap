@@ -11,6 +11,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -28,7 +29,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -63,62 +63,62 @@ var (
 	positionId2 uint64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup pool and tier")
-	setup()
+	setup(cur)
 	println()
 
 	println("[SCENARIO] 2. Alice mints two identical positions")
-	mintTwoPositions()
+	mintTwoPositions(cur)
 	println()
 
 	println("[SCENARIO] 3. Alice transfers #2 to Bob in same block")
-	transferToBob()
+	transferToBob(cur)
 	println()
 
 	println("[SCENARIO] 4. Alice stakes #1; Bob stakes #2 in same block")
-	stakeBothInSameBlock()
+	stakeBothInSameBlock(cur)
 	println()
 
 	println("[SCENARIO] 5. Each owner collects their own reward")
-	aliceReward, bobReward := collectAndReport()
+	aliceReward, bobReward := collectAndReport(cur)
 	println()
 
 	println("[SCENARIO] 6. Verify rewards are equal")
-	verifyEqual(aliceReward, bobReward)
+	verifyEqual(cur, aliceReward, bobReward)
 }
 
-func setup() {
+func setup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	pool.SetPoolCreationFee(cross, 0)
-	staker.SetUnStakingFee(cross, 0)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	pool.SetPoolCreationFee(cross(cur), 0)
+	staker.SetUnStakingFee(cross(cur), 0)
 
-	bar.Transfer(cross, aliceAddr, int64(200000000))
-	foo.Transfer(cross, aliceAddr, int64(200000000))
+	bar.Transfer(cross(cur), aliceAddr, int64(200000000))
+	foo.Transfer(cross(cur), aliceAddr, int64(200000000))
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path, token1Path, fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	testing.SetRealm(adminRealm)
-	staker.SetPoolTier(cross, poolPath, 1)
+	staker.SetPoolTier(cross(cur), poolPath, 1)
 
 	println("[INFO] pool created and set to tier 1")
 }
 
-func mintTwoPositions() {
+func mintTwoPositions(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	id1, liq1, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -135,7 +135,7 @@ func mintTwoPositions() {
 	positionId1 = id1
 
 	id2, liq2, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -159,14 +159,14 @@ func mintTwoPositions() {
 	println("[EXPECTED] Liquidity equal:", liq1 == liq2)
 }
 
-func transferToBob() {
+func transferToBob(cur realm) {
 	testing.SetRealm(aliceRealm)
-	gnft.TransferFrom(cross, aliceAddr, bobAddr, tokenIdOf(positionId2))
-	bobOwns := gnft.MustOwnerOf(tokenIdOf(positionId2))
+	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId2))
+	bobOwns := gnft.MustOwnerOf(tokenIdOf(cur, positionId2))
 	println("[EXPECTED] Position 2 transferred to bob:", bobOwns == bobAddr)
 }
 
-func stakeBothInSameBlock() {
+func stakeBothInSameBlock(cur realm) {
 	// Both stake operations happen in the same block height. StakeToken
 	// records `time.Now().Unix()` as the deposit's stake time, so both
 	// deposits start accruing from the same timestamp — eliminating any
@@ -174,31 +174,31 @@ func stakeBothInSameBlock() {
 	testing.SetRealm(aliceRealm)
 
 	// Stake position 1 as Alice (no transfer).
-	gnft.Approve(cross, stakerAddr, tokenIdOf(positionId1))
-	staker.StakeToken(cross, positionId1, "")
+	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId1))
+	staker.StakeToken(cross(cur), positionId1, "")
 	owner1 := staker.GetDepositOwner(positionId1)
 	println("[EXPECTED] Deposit 1 owner is alice:", owner1 == aliceAddr)
 
 	// Bob stakes position 2 in the same block.
 	testing.SetRealm(bobRealm)
-	gnft.Approve(cross, stakerAddr, tokenIdOf(positionId2))
-	staker.StakeToken(cross, positionId2, "")
+	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId2))
+	staker.StakeToken(cross(cur), positionId2, "")
 	owner2 := staker.GetDepositOwner(positionId2)
 	println("[EXPECTED] Deposit 2 owner is bob:", owner2 == bobAddr)
 }
 
-func collectAndReport() (int64, int64) {
+func collectAndReport(cur realm) (int64, int64) {
 	// Alice collects her own deposit.
 	testing.SetRealm(aliceRealm)
 	aliceBefore := gns.BalanceOf(aliceAddr)
-	staker.CollectReward(cross, positionId1)
+	staker.CollectReward(cross(cur), positionId1)
 	aliceAfter := gns.BalanceOf(aliceAddr)
 	aliceReward := aliceAfter - aliceBefore
 
 	// Bob collects his own deposit.
 	testing.SetRealm(bobRealm)
 	bobBefore := gns.BalanceOf(bobAddr)
-	staker.CollectReward(cross, positionId2)
+	staker.CollectReward(cross(cur), positionId2)
 	bobAfter := gns.BalanceOf(bobAddr)
 	bobReward := bobAfter - bobBefore
 
@@ -208,12 +208,12 @@ func collectAndReport() (int64, int64) {
 	return aliceReward, bobReward
 }
 
-func verifyEqual(aliceReward, bobReward int64) {
+func verifyEqual(cur realm, aliceReward, bobReward int64) {
 	uassert.Equal(t, aliceReward, bobReward)
 	println("[EXPECTED] Alice reward == Bob reward:", aliceReward == bobReward)
 }
 
-func tokenIdOf(id uint64) grc721.TokenID {
+func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
 }
 

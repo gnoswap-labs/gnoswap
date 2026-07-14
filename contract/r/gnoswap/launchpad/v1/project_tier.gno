@@ -1,34 +1,37 @@
 package v1
 
 import (
+	"errors"
 	"gno.land/r/gnoswap/launchpad"
 
+	"gno.land/p/gnoswap/consts"
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func getTierCurrentDepositCount(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDepositCount(), t.TotalWithdrawCount())
+	return gnsmath.SafeSubInt64(t.TotalDepositCount(), t.TotalWithdrawCount())
 }
 
 func getTierCurrentDepositAmount(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDepositAmount(), t.TotalWithdrawAmount())
+	return gnsmath.SafeSubInt64(t.TotalDepositAmount(), t.TotalWithdrawAmount())
 }
 
 func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
+	return gnsmath.SafeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
 func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
-	totalDepositAmount := safeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
-	totalDepositCount := safeAddInt64(t.TotalDepositCount(), 1)
+	totalDepositAmount := gnsmath.SafeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
+	totalDepositCount := gnsmath.SafeAddInt64(t.TotalDepositCount(), 1)
 
 	t.SetTotalDepositAmount(totalDepositAmount)
 	t.SetTotalDepositCount(totalDepositCount)
 }
 
 func withdrawToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
-	totalWithdrawAmount := safeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
-	totalWithdrawCount := safeAddInt64(t.TotalWithdrawCount(), 1)
+	totalWithdrawAmount := gnsmath.SafeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
+	totalWithdrawCount := gnsmath.SafeAddInt64(t.TotalWithdrawCount(), 1)
 
 	t.SetTotalWithdrawAmount(totalWithdrawAmount)
 	t.SetTotalWithdrawCount(totalWithdrawCount)
@@ -41,9 +44,9 @@ func updateTierDistributeAmountPerSecond(t *launchpad.ProjectTier) {
 		return
 	}
 
-	totalDistributeAmountX128, overflow := u256.Zero().MulOverflow(u256.NewUintFromInt64(t.TotalDistributeAmount()), q128.Clone())
+	totalDistributeAmountX128, overflow := u256.Zero().MulOverflow(u256.NewUintFromInt64(t.TotalDistributeAmount()), consts.Q128())
 	if overflow {
-		panic(errOverflow)
+		panic(errors.New(errOverflow))
 	}
 
 	// Divide by time duration in seconds

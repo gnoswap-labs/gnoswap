@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -20,7 +21,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -48,68 +48,68 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Rounding Direction on Mint")
-	testRoundingOnMint()
+	testRoundingOnMint(cur)
 	println()
 
 	println("[SCENARIO] 3. Test Rounding Direction on Burn")
-	testRoundingOnBurn()
+	testRoundingOnBurn(cur)
 	println()
 
 	println("[SCENARIO] 4. Test Rounding Consistency Across Operations")
-	testRoundingConsistency()
+	testRoundingConsistency(cur)
 	println()
 
 	println("[SCENARIO] 5. Test Rounding in Edge Amount Cases")
-	testRoundingEdgeAmounts()
+	testRoundingEdgeAmounts(cur)
 	println()
 
 	println("[SCENARIO] 6. Test Protocol Fee Rounding")
-	testProtocolFeeRounding()
+	testProtocolFeeRounding(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(5_000_000_000) // 5 billion
-	bar.Transfer(cross, aliceAddr, testAmount)
-	baz.Transfer(cross, aliceAddr, testAmount)
-	bar.Transfer(cross, bobAddr, testAmount)
-	baz.Transfer(cross, bobAddr, testAmount)
+	bar.Transfer(cross(cur), aliceAddr, testAmount)
+	baz.Transfer(cross(cur), aliceAddr, testAmount)
+	bar.Transfer(cross(cur), bobAddr, testAmount)
+	baz.Transfer(cross(cur), bobAddr, testAmount)
 
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
 
 	testing.SetRealm(bobRealm)
-	bar.Approve(cross, poolAddr, testAmount)
-	baz.Approve(cross, poolAddr, testAmount)
-	bar.Approve(cross, positionAddr, testAmount)
-	baz.Approve(cross, positionAddr, testAmount)
+	bar.Approve(cross(cur), poolAddr, testAmount)
+	baz.Approve(cross(cur), poolAddr, testAmount)
+	bar.Approve(cross(cur), positionAddr, testAmount)
+	baz.Approve(cross(cur), positionAddr, testAmount)
 
 	println("[INFO] Setup completed with two test accounts")
 }
 
-func testRoundingOnMint() {
+func testRoundingOnMint(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -126,7 +126,7 @@ func testRoundingOnMint() {
 
 	for _, amount := range oddAmounts {
 		_, _, actualAmount0, actualAmount1 := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 100,
 			-100, 100,
 			amount, amount,
@@ -152,16 +152,16 @@ func testRoundingOnMint() {
 	}
 }
 
-func testRoundingOnBurn() {
+func testRoundingOnBurn(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		500,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -170,7 +170,7 @@ func testRoundingOnBurn() {
 
 	// First mint a position with smaller amount
 	posId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath, bazPath, 500,
 		-100, 100,
 		"100000000", "100000000", // Reduced from 1e9 to 1e8
@@ -192,7 +192,7 @@ func testRoundingOnBurn() {
 	for _, partialLiq := range partialLiquidities {
 		// Create new position for each test
 		posId, _, _, _ := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 500,
 			-200, 200,
 			"100000000", "100000000", // Reduced from 1e9 to 1e8
@@ -204,7 +204,7 @@ func testRoundingOnBurn() {
 
 		// Burn partial liquidity
 		_, _, _, _, returnAmount0, returnAmount1, _ := pn.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			posId,
 			partialLiq,
 			"0", "0",
@@ -220,16 +220,16 @@ func testRoundingOnBurn() {
 	}
 }
 
-func testRoundingConsistency() {
+func testRoundingConsistency(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -254,7 +254,7 @@ func testRoundingConsistency() {
 	for _, op := range operations {
 		if op.action == "mint" {
 			posId, liq, _, _ := pn.Mint(
-				cross,
+				cross(cur),
 				barPath, bazPath, 3000,
 				-180, 180,
 				op.amount, op.amount,
@@ -273,7 +273,7 @@ func testRoundingConsistency() {
 		pos, _ := pn.GetPosition(posId)
 
 		_, _, _, _, amt0, amt1, _ := pn.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			posId,
 			pos.Liquidity(),
 			"0", "0",
@@ -300,16 +300,16 @@ func testRoundingConsistency() {
 	}
 }
 
-func testRoundingEdgeAmounts() {
+func testRoundingEdgeAmounts(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Create pool
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		10000,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
 	testing.SetRealm(aliceRealm)
@@ -333,7 +333,7 @@ func testRoundingEdgeAmounts() {
 		ufmt.Printf("[TEST] %s: amount=%s\n", edge.desc, edge.amount)
 
 		_, liquidity, actualAmount0, actualAmount1 := pn.Mint(
-			cross,
+			cross(cur),
 			barPath, bazPath, 10000,
 			-200, 200,
 			edge.amount, edge.amount,
@@ -352,7 +352,7 @@ func testRoundingEdgeAmounts() {
 	}
 }
 
-func testProtocolFeeRounding() {
+func testProtocolFeeRounding(cur realm) {
 	// Skip actual minting since Alice has limited balance/allowance
 	// This test demonstrates that protocol fee rounding is handled correctly
 

@@ -2,10 +2,11 @@ package v1
 
 import (
 	"chain"
-	"chain/runtime"
 	"errors"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -18,24 +19,26 @@ func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
 func (s *stakerV1) handleStakingRewardFee(
+	_ int,
+	rlm realm,
 	tokenPath string,
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
-		s.addToProtocolFee()
+		s.addToProtocolFee(0, rlm)
 		return amount, 0, nil
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := safeMulDivInt64(amount, safeUint64ToInt64(unstakingFee), 10000)
+	feeAmount := gnsmath.SafeMulDivInt64(amount, gnsmath.SafeUint64ToInt64(unstakingFee), 10000)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}
 
 	if feeAmount == 0 {
-		s.addToProtocolFee()
+		s.addToProtocolFee(0, rlm)
 		return amount, 0, nil
 	}
 
@@ -43,13 +46,13 @@ func (s *stakerV1) handleStakingRewardFee(
 		tokenPath = GNS_PATH
 	}
 
-	s.addPendingProtocolFee(tokenPath, feeAmount)
-	s.addToProtocolFee()
+	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
+	s.addToProtocolFee(0, rlm)
 
-	return safeSubInt64(amount, feeAmount), feeAmount, nil
+	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
-func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
@@ -59,8 +62,8 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
-	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := s.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
@@ -69,7 +72,7 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 // It is best-effort: when protocol fee collection is halted, it keeps pending
 // storage unchanged; otherwise it rebuilds pending storage with only entries
 // that could not be added, removing successful and non-positive entries.
-func (s *stakerV1) addToProtocolFee() {
+func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
 	pendingProtocolFees := s.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
@@ -82,24 +85,28 @@ func (s *stakerV1) addToProtocolFee() {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
 			remainingProtocolFees[tokenPath] = amount
 			continue
 		}
 	}
 
-	if err := s.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+	if err := s.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
 		panic(err)
 	}
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetUnStakingFee(fee uint64) {
+func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedStaker()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -107,7 +114,7 @@ func (s *stakerV1) SetUnStakingFee(fee uint64) {
 
 	prevUnStakingFee := s.GetUnstakingFee()
 
-	err := s.setUnStakingFee(fee)
+	err := s.setUnStakingFee(0, rlm, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -116,12 +123,12 @@ func (s *stakerV1) SetUnStakingFee(fee uint64) {
 		"SetUnStakingFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevUnStakingFee),
-		"newFee", formatUint(fee),
+		"prevFee", utils.FormatUint(prevUnStakingFee),
+		"newFee", utils.FormatUint(fee),
 	)
 }
 
 // setUnStakingFee internally updates the unstaking fee.
-func (s *stakerV1) setUnStakingFee(fee uint64) error {
-	return s.store.SetUnstakingFee(fee)
+func (s *stakerV1) setUnStakingFee(_ int, rlm realm, fee uint64) error {
+	return s.store.SetUnstakingFee(0, rlm, fee)
 }

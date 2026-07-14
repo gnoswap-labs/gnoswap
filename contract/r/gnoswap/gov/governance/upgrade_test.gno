@@ -7,11 +7,11 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestUpgrade_RegisterInitializer(t *testing.T) {
+func TestUpgrade_RegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
-		initializer          func(governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance
+		setup                func(cur realm, t *testing.T)
+		initializer          func(_ int, rlm realm, governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -25,9 +25,9 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register multiple different initializers",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/new_version"),
 			initializer:     makeMockInitializer("new_version"),
@@ -35,9 +35,9 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"),
 			initializer:          makeMockInitializer("v1"),
@@ -54,21 +54,21 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			if tt.setup != nil {
-				tt.setup(t)
+				tt.setup(cur, t)
 			}
 
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-					RegisterInitializer(cross, tt.initializer)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+					RegisterInitializer(cross(cur), tt.initializer)
 				})
 			} else {
-				RegisterInitializer(cross, tt.initializer)
+				RegisterInitializer(cross(cur), tt.initializer)
 
 				impl := implementation.(*MockGovernance)
 				uassert.Equal(t, impl.Version, tt.expectedVersion)
@@ -77,10 +77,10 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 	}
 }
 
-func TestUpgrade_UpgradeImpl(t *testing.T) {
+func TestUpgrade_UpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		targetPackagePath    string
 		callerRealm          runtime.Realm
 		expectedPath         string
@@ -89,12 +89,12 @@ func TestUpgrade_UpgradeImpl(t *testing.T) {
 	}{
 		{
 			name: "upgrade from v1 to v2 by admin",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"))
-				RegisterInitializer(cross, makeMockInitializer("v2"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v2"))
 			},
 			targetPackagePath: "gno.land/r/gnoswap/gov/governance/v2",
 			callerRealm:       testing.NewUserRealm(adminAddr),
@@ -102,12 +102,12 @@ func TestUpgrade_UpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "fail - unauthorized caller",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"))
-				RegisterInitializer(cross, makeMockInitializer("v2"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v2"))
 			},
 			targetPackagePath:    "gno.land/r/gnoswap/gov/governance/v2",
 			callerRealm:          testing.NewUserRealm("g1unauthorized"),
@@ -116,9 +116,9 @@ func TestUpgrade_UpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "fail - target version not registered",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			targetPackagePath:    "gno.land/r/gnoswap/gov/governance/v999",
 			callerRealm:          testing.NewUserRealm(adminAddr),
@@ -128,27 +128,21 @@ func TestUpgrade_UpgradeImpl(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			if tt.setup != nil {
-				tt.setup(t)
+				tt.setup(cur, t)
 			}
 
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.expectedHasAbort {
-				uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-						UpgradeImpl(cur, tt.targetPackagePath)
-					}(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+					UpgradeImpl(cross(cur), tt.targetPackagePath)
 				})
 			} else {
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-					UpgradeImpl(cur, tt.targetPackagePath)
-				}(cross)
+				UpgradeImpl(cross(cur), tt.targetPackagePath)
 
 				path := GetImplementationPackagePath()
 				uassert.Equal(t, path, tt.expectedPath)
@@ -157,7 +151,7 @@ func TestUpgrade_UpgradeImpl(t *testing.T) {
 	}
 }
 
-func TestUpgrade_ProposeText(t *testing.T) {
+func TestUpgrade_ProposeText(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		title       string
@@ -171,15 +165,15 @@ func TestUpgrade_ProposeText(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			ProposeText(cross, tt.title, tt.description)
+			ProposeText(cross(cur), tt.title, tt.description)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -190,7 +184,7 @@ func TestUpgrade_ProposeText(t *testing.T) {
 	}
 }
 
-func TestUpgrade_ProposeCommunityPoolSpend(t *testing.T) {
+func TestUpgrade_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		title       string
@@ -210,15 +204,15 @@ func TestUpgrade_ProposeCommunityPoolSpend(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			ProposeCommunityPoolSpend(cross, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+			ProposeCommunityPoolSpend(cross(cur), tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -229,7 +223,7 @@ func TestUpgrade_ProposeCommunityPoolSpend(t *testing.T) {
 	}
 }
 
-func TestUpgrade_ProposeParameterChange(t *testing.T) {
+func TestUpgrade_ProposeParameterChange(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		title        string
@@ -247,15 +241,15 @@ func TestUpgrade_ProposeParameterChange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			ProposeParameterChange(cross, tt.title, tt.description, tt.numToExecute, tt.executions)
+			ProposeParameterChange(cross(cur), tt.title, tt.description, tt.numToExecute, tt.executions)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -266,7 +260,7 @@ func TestUpgrade_ProposeParameterChange(t *testing.T) {
 	}
 }
 
-func TestUpgrade_Vote(t *testing.T) {
+func TestUpgrade_Vote(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -285,15 +279,15 @@ func TestUpgrade_Vote(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			Vote(cross, tt.proposalId, tt.yes)
+			Vote(cross(cur), tt.proposalId, tt.yes)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -304,7 +298,7 @@ func TestUpgrade_Vote(t *testing.T) {
 	}
 }
 
-func TestUpgrade_Execute(t *testing.T) {
+func TestUpgrade_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -316,15 +310,15 @@ func TestUpgrade_Execute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			Execute(cross, tt.proposalId)
+			Execute(cross(cur), tt.proposalId)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -335,7 +329,7 @@ func TestUpgrade_Execute(t *testing.T) {
 	}
 }
 
-func TestUpgrade_Cancel(t *testing.T) {
+func TestUpgrade_Cancel(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -347,15 +341,15 @@ func TestUpgrade_Cancel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			Cancel(cross, tt.proposalId)
+			Cancel(cross(cur), tt.proposalId)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -366,7 +360,7 @@ func TestUpgrade_Cancel(t *testing.T) {
 	}
 }
 
-func TestUpgrade_Reconfigure(t *testing.T) {
+func TestUpgrade_Reconfigure(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		votingStartDelay              int64
@@ -390,15 +384,15 @@ func TestUpgrade_Reconfigure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			Reconfigure(cross, tt.votingStartDelay, tt.votingPeriod, tt.votingWeightSmoothingDuration, tt.quorum, tt.proposalCreationThreshold, tt.executionDelay, tt.executionWindow)
+			Reconfigure(cross(cur), tt.votingStartDelay, tt.votingPeriod, tt.votingWeightSmoothingDuration, tt.quorum, tt.proposalCreationThreshold, tt.executionDelay, tt.executionWindow)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
@@ -409,7 +403,7 @@ func TestUpgrade_Reconfigure(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposerByProposalId(t *testing.T) {
+func TestUpgrade_GetProposerByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -421,10 +415,10 @@ func TestUpgrade_GetProposerByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -440,7 +434,7 @@ func TestUpgrade_GetProposerByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalTypeByProposalId(t *testing.T) {
+func TestUpgrade_GetProposalTypeByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -452,10 +446,10 @@ func TestUpgrade_GetProposalTypeByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -471,7 +465,7 @@ func TestUpgrade_GetProposalTypeByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetYeaByProposalId(t *testing.T) {
+func TestUpgrade_GetYeaByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -483,10 +477,10 @@ func TestUpgrade_GetYeaByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -502,7 +496,7 @@ func TestUpgrade_GetYeaByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetNayByProposalId(t *testing.T) {
+func TestUpgrade_GetNayByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -514,10 +508,10 @@ func TestUpgrade_GetNayByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -533,7 +527,7 @@ func TestUpgrade_GetNayByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalCount(t *testing.T) {
+func TestUpgrade_GetProposalCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -543,10 +537,10 @@ func TestUpgrade_GetProposalCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -562,7 +556,7 @@ func TestUpgrade_GetProposalCount(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalIDs(t *testing.T) {
+func TestUpgrade_GetProposalIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		offset int
@@ -576,10 +570,10 @@ func TestUpgrade_GetProposalIDs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -595,7 +589,7 @@ func TestUpgrade_GetProposalIDs(t *testing.T) {
 	}
 }
 
-func TestUpgrade_ExistsProposal(t *testing.T) {
+func TestUpgrade_ExistsProposal(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -607,10 +601,10 @@ func TestUpgrade_ExistsProposal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -626,7 +620,7 @@ func TestUpgrade_ExistsProposal(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposal(t *testing.T) {
+func TestUpgrade_GetProposal(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -638,10 +632,10 @@ func TestUpgrade_GetProposal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -657,7 +651,7 @@ func TestUpgrade_GetProposal(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetVoteStatus(t *testing.T) {
+func TestUpgrade_GetVoteStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -669,10 +663,10 @@ func TestUpgrade_GetVoteStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -688,7 +682,7 @@ func TestUpgrade_GetVoteStatus(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetConfigVersionByProposalId(t *testing.T) {
+func TestUpgrade_GetConfigVersionByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -700,10 +694,10 @@ func TestUpgrade_GetConfigVersionByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -719,7 +713,7 @@ func TestUpgrade_GetConfigVersionByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetQuorumAmountByProposalId(t *testing.T) {
+func TestUpgrade_GetQuorumAmountByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -731,10 +725,10 @@ func TestUpgrade_GetQuorumAmountByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -750,7 +744,7 @@ func TestUpgrade_GetQuorumAmountByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetTitleByProposalId(t *testing.T) {
+func TestUpgrade_GetTitleByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -762,10 +756,10 @@ func TestUpgrade_GetTitleByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -781,7 +775,7 @@ func TestUpgrade_GetTitleByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetDescriptionByProposalId(t *testing.T) {
+func TestUpgrade_GetDescriptionByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -793,10 +787,10 @@ func TestUpgrade_GetDescriptionByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -812,7 +806,7 @@ func TestUpgrade_GetDescriptionByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalStatusByProposalId(t *testing.T) {
+func TestUpgrade_GetProposalStatusByProposalId(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -824,10 +818,10 @@ func TestUpgrade_GetProposalStatusByProposalId(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -843,7 +837,7 @@ func TestUpgrade_GetProposalStatusByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetLatestConfig(t *testing.T) {
+func TestUpgrade_GetLatestConfig(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -853,10 +847,10 @@ func TestUpgrade_GetLatestConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -872,7 +866,7 @@ func TestUpgrade_GetLatestConfig(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetConfig(t *testing.T) {
+func TestUpgrade_GetConfig(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		configVersion int64
@@ -884,10 +878,10 @@ func TestUpgrade_GetConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -903,7 +897,7 @@ func TestUpgrade_GetConfig(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetVoteWeight(t *testing.T) {
+func TestUpgrade_GetVoteWeight(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -917,10 +911,10 @@ func TestUpgrade_GetVoteWeight(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -936,7 +930,7 @@ func TestUpgrade_GetVoteWeight(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetVotedHeight(t *testing.T) {
+func TestUpgrade_GetVotedHeight(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -950,10 +944,10 @@ func TestUpgrade_GetVotedHeight(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -969,7 +963,7 @@ func TestUpgrade_GetVotedHeight(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetVotedAt(t *testing.T) {
+func TestUpgrade_GetVotedAt(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -983,10 +977,10 @@ func TestUpgrade_GetVotedAt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
@@ -1002,7 +996,7 @@ func TestUpgrade_GetVotedAt(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetImplementationPackagePath(t *testing.T) {
+func TestUpgrade_GetImplementationPackagePath(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		packagePath  string
@@ -1021,10 +1015,10 @@ func TestUpgrade_GetImplementationPackagePath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm(tt.packagePath))
-			RegisterInitializer(cross, makeMockInitializer(tt.packagePath))
+			RegisterInitializer(cross(cur), makeMockInitializer(tt.packagePath))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 

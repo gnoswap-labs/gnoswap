@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 
@@ -61,71 +61,71 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive")
-	createExternalIncentive()
+	createExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint and stake position 01")
-	mintAndStakePosition01()
+	mintAndStakePosition01(cur)
 	println()
 
 	println("[SCENARIO] 5. Mint and stake position 02")
-	mintAndStakePosition02()
+	mintAndStakePosition02(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect external rewards for both positions")
-	collectExternalRewardsBothPositions()
+	collectExternalRewardsBothPositions(cur)
 	println()
 
 	println("[SCENARIO] 7. Unstake position 02")
-	unstakePosition02()
+	unstakePosition02(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect external rewards after unstaking")
-	collectExternalRewardsAfterUnstaking()
+	collectExternalRewardsAfterUnstaking(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentive() {
+func createExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for external incentive")
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with bar token")
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		poolPath,
 		barPath,
 		90_000_000_000, // 90 billion bar tokens for 90 days
@@ -142,18 +142,18 @@ func createExternalIncentive() {
 	}
 }
 
-func mintAndStakePosition01() {
+func mintAndStakePosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -172,24 +172,24 @@ func mintAndStakePosition01() {
 	ufmt.Printf("[EXPECTED] amounts - bar: %s, baz: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	ufmt.Printf("[EXPECTED] position 01 staked\n")
 }
 
-func mintAndStakePosition02() {
+func mintAndStakePosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] mint position 02 (tick range: -100 ~ 100)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -208,25 +208,25 @@ func mintAndStakePosition02() {
 	ufmt.Printf("[EXPECTED] amounts - bar: %s, baz: %s\n", amount0, amount1)
 
 	println("[INFO] approve NFT to staker and stake position 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 	testing.SkipHeights(1)
 
 	ufmt.Printf("[EXPECTED] position 02 staked\n")
 }
 
-func collectExternalRewardsBothPositions() {
+func collectExternalRewardsBothPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] clear any accumulated rewards first")
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] collect external reward for position 01")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar := bar.BalanceOf(adminUser)
 	reward1 := afterBar - beforeBar
 
@@ -234,31 +234,31 @@ func collectExternalRewardsBothPositions() {
 
 	// Expected calculation: each position gets 50% of the external reward
 	expectedReward := uint64(500000000) // 1000000000 * 50%
-	if !isInErrorRange(uint64(reward1), expectedReward) {
+	if !isInErrorRange(cur, uint64(reward1), expectedReward) {
 		ufmt.Printf("[WARNING] expected around %d, got %d\n", expectedReward, reward1)
 	}
 
 	println("[INFO] collect external reward for position 02")
 	beforeBar = bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 2)
 	afterBar = bar.BalanceOf(adminUser)
 	reward2 := afterBar - beforeBar
 
 	ufmt.Printf("[EXPECTED] position 02 external reward: %d\n", reward2)
 
 	// Both positions should get equal rewards as they have same liquidity
-	if !isInErrorRange(uint64(reward2), expectedReward) {
+	if !isInErrorRange(cur, uint64(reward2), expectedReward) {
 		ufmt.Printf("[WARNING] expected around %d, got %d\n", expectedReward, reward2)
 	}
 }
 
-func unstakePosition02() {
+func unstakePosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 02")
-	sr.UnStakeToken(cross, 2)
+	sr.UnStakeToken(cross(cur), 2)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(2))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
 	if owner != adminAddr {
@@ -266,13 +266,13 @@ func unstakePosition02() {
 	}
 }
 
-func collectExternalRewardsAfterUnstaking() {
+func collectExternalRewardsAfterUnstaking(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect external reward for position 01 after position 02 unstaked")
 	beforeBar := bar.BalanceOf(adminUser)
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterBar := bar.BalanceOf(adminUser)
 	reward := afterBar - beforeBar
 
@@ -280,14 +280,14 @@ func collectExternalRewardsAfterUnstaking() {
 
 	// Now position 01 should get full external reward
 	expectedFullReward := uint64(1000000000) // 100% of external reward
-	if !isInErrorRange(uint64(reward), expectedFullReward) {
+	if !isInErrorRange(cur, uint64(reward), expectedFullReward) {
 		ufmt.Printf("[WARNING] expected around %d, got %d\n", expectedFullReward, reward)
 	}
 
 	println("[INFO] position 01 now receives full external rewards since position 02 is unstaked")
 }
 
-func isInErrorRange(actual, expected uint64) bool {
+func isInErrorRange(cur realm, actual, expected uint64) bool {
 	diff := uint64(0)
 	if actual > expected {
 		diff = actual - expected
@@ -304,7 +304,7 @@ func isInErrorRange(actual, expected uint64) bool {
 	return diff <= errorMargin
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

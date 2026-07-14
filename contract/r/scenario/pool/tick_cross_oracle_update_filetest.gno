@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -44,7 +45,7 @@ var (
 
 var fee500 = uint32(500)
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Tick Cross Oracle Field Update")
 	println("[INFO] Testing oracle field updates during tick crosses")
 	println()
@@ -54,17 +55,17 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 500, initial tick: 0)")
-	pool.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[INFO] Increasing observation cardinality to 100")
-	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 100)
+	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 100)
 	println()
 
 	// Add liquidity - wide range to allow crossing multiple times
@@ -72,7 +73,7 @@ func main() {
 	testing.SetRealm(posRealm)
 	println("[INFO] Minting position: tick range [-1000, 1000] for wide liquidity coverage")
 	amount0, amount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -112,29 +113,29 @@ func main() {
 	testing.SkipHeights(100)
 	println()
 
-	// Perform swap to cross testTick
+	// Perform swap to cross(cur) testTick
 	println("[SCENARIO] 5. Perform Swap to Cross Tick (Downward)")
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	ufmt.Printf("[INFO] Swapping zeroForOne to cross tick %d\n", testTick)
+	ufmt.Printf("[INFO] Swapping zeroForOne to cross(cur) tick %d\n", testTick)
 
 	// Need to approve tokens for swap
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Perform swap - zeroForOne (true) to decrease tick past testTick
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0Out, amount1Out := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
 		adminAddr,
 		true,       // zeroForOne - tick decreases (0 -> past testTick)
-		"10000000", // large amount to ensure we cross testTick
-		common.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
+		"10000000", // large amount to ensure we cross(cur) testTick
+		gnsmath.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 	println("[EXPECTED] Swap completed with amounts:", amount0Out, amount1Out)
@@ -147,7 +148,7 @@ func main() {
 	// Check tick state after swap (oracle fields should be updated)
 	println("[SCENARIO] 6. Check Tick State After Cross")
 	tickInfoAfter, _ := pool.GetTickInfo(poolPath, testTick)
-	ufmt.Printf("[INFO] Tick %d after cross:\n", testTick)
+	ufmt.Printf("[INFO] Tick %d after cross(cur):\n", testTick)
 	println("[INFO] Initialized:", tickInfoAfter.Initialized())
 	println("[EXPECTED] TickCumulativeOutside updated:", tickInfoAfter.TickCumulativeOutside())
 	println("[EXPECTED] SecondsOutside updated:", tickInfoAfter.SecondsOutside())
@@ -161,22 +162,22 @@ func main() {
 			println("[EXPECTED] Oracle field successfully updated (non-zero)")
 		}
 	} else {
-		println("[ERROR] SecondsPerLiquidityOutsideX128 still nil after tick cross")
+		println("[ERROR] SecondsPerLiquidityOutsideX128 still nil after tick cross(cur)")
 	}
 	println()
 
-	// Wait more time before second cross
+	// Wait more time before second cross(cur)
 	println("[SCENARIO] 7. Wait for More Time")
 	println("[INFO] Skipping another 100 blocks")
 	testing.SkipHeights(100)
 	println()
 
-	// Add more liquidity to allow second cross
+	// Add more liquidity to allow second cross(cur)
 	println("[SCENARIO] 7.5. Add Liquidity Outside Current Range")
 	testing.SetRealm(posRealm)
 	println("[INFO] Adding position [-2000, 2000] to provide liquidity for reverse swap")
 	pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
@@ -190,25 +191,25 @@ func main() {
 	// Cross tick again to verify oracle fields flip
 	println("[SCENARIO] 8. Cross Tick Again (Reverse Direction - Upward)")
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	ufmt.Printf("[INFO] Swapping oneForZero to cross back above tick %d\n", testTick)
+	ufmt.Printf("[INFO] Swapping oneForZero to cross(cur) back above tick %d\n", testTick)
 
 	// Approve foo tokens for reverse swap
 	testing.SetRealm(adminRealm)
-	foo.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0Out2, amount1Out2 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee500,
 		adminAddr,
 		false,      // oneForZero - tick increases (back above testTick)
 		"10000000", // large amount to ensure crossing back
-		common.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
+		gnsmath.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 	println("[EXPECTED] Reverse swap completed:", amount0Out2, amount1Out2)
@@ -218,19 +219,19 @@ func main() {
 	println("[INFO] Pool tick after reverse swap:", thisPool.Slot0Tick())
 	println()
 
-	// Check tick state after second cross
+	// Check tick state after second cross(cur)
 	println("[SCENARIO] 9. Verify Oracle Fields After Second Cross")
 	tickInfoFinal, _ := pool.GetTickInfo(poolPath, testTick)
-	ufmt.Printf("[INFO] Tick %d after second cross:\n", testTick)
+	ufmt.Printf("[INFO] Tick %d after second cross(cur):\n", testTick)
 	println("[EXPECTED] TickCumulativeOutside changed:", tickInfoFinal.TickCumulativeOutside())
 	println("[EXPECTED] SecondsOutside changed:", tickInfoFinal.SecondsOutside())
 
 	if tickInfoFinal.SecondsPerLiquidityOutsideX128() != "" {
 		println("[EXPECTED] SecondsPerLiquidityOutsideX128 updated again:", tickInfoFinal.SecondsPerLiquidityOutsideX128())
 
-		// Values should be different from first cross
+		// Values should be different from first cross(cur)
 		if tickInfoFinal.SecondsPerLiquidityOutsideX128() != tickInfoAfter.SecondsPerLiquidityOutsideX128() {
-			println("[EXPECTED] Oracle field values changed on second cross")
+			println("[EXPECTED] Oracle field values changed on second cross(cur)")
 		}
 	}
 	println()
@@ -238,14 +239,14 @@ func main() {
 	println("[SCENARIO] Test Complete - Oracle Fields Update on Tick Cross")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -278,12 +279,12 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Skipping 100 blocks to accumulate oracle values
 //
 // [SCENARIO] 5. Perform Swap to Cross Tick (Downward)
-// [INFO] Swapping zeroForOne to cross tick -1000
+// [INFO] Swapping zeroForOne to cross(cur) tick -1000
 // [EXPECTED] Swap completed with amounts: 512942 -487681
 // [INFO] Pool tick after swap: -1100
 //
 // [SCENARIO] 6. Check Tick State After Cross
-// [INFO] Tick -1000 after cross:
+// [INFO] Tick -1000 after cross(cur):
 // [INFO] Initialized: true
 // [EXPECTED] TickCumulativeOutside updated: -500
 // [EXPECTED] SecondsOutside updated: 1234568390
@@ -297,15 +298,15 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Adding position [-2000, 2000] to provide liquidity for reverse swap
 //
 // [SCENARIO] 8. Cross Tick Again (Reverse Direction - Upward)
-// [INFO] Swapping oneForZero to cross back above tick -1000
+// [INFO] Swapping oneForZero to cross(cur) back above tick -1000
 // [EXPECTED] Reverse swap completed: -2053424 2049200
 // [INFO] Pool tick after reverse swap: 1000
 //
 // [SCENARIO] 9. Verify Oracle Fields After Second Cross
-// [INFO] Tick -1000 after second cross:
+// [INFO] Tick -1000 after second cross(cur):
 // [EXPECTED] TickCumulativeOutside changed: -549500
 // [EXPECTED] SecondsOutside changed: 500
 // [EXPECTED] SecondsPerLiquidityOutsideX128 updated again: 170141183460469231731687303715884105728000
-// [EXPECTED] Oracle field values changed on second cross
+// [EXPECTED] Oracle field values changed on second cross(cur)
 //
 // [SCENARIO] Test Complete - Oracle Fields Update on Tick Cross

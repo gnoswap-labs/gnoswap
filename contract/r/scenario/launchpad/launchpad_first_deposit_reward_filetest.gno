@@ -40,14 +40,14 @@ var (
 	projectAddr = testutils.TestAddress("project-owner")
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
 	println()
 
 	println("[SCENARIO] 2. First deposit by Alice")
-	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
+	depositGns(cur, aliceAddr, projectTier30Id, int64(1_000_000))
 	println()
 
 	println("[SCENARIO] 3. Skip blocks for reward accumulation")
@@ -56,17 +56,17 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Alice collects first deposit reward")
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 
 	println("[SCENARIO] 5. Skip more blocks and collect again")
 	println("[INFO] Skipping 200 blocks (1000 seconds)")
 	testing.SkipHeights(200)
-	collectReward(aliceAddr, "1")
+	collectReward(cur, aliceAddr, "1")
 	println()
 }
 
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -82,9 +82,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -104,18 +104,18 @@ func createOBLProject() {
 	println("[INFO] Tier 30 reward amount: 100,000,000 (10% of 1,000,000,000)")
 }
 
-func depositGns(depositorAddr address, projectTierId string, depositAmount int64) {
+func depositGns(cur realm, depositorAddr address, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	println("[INFO] Admin transferring GNS to depositor")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, depositorAddr, depositAmount)
+	gns.Transfer(cross(cur), depositorAddr, depositAmount)
 
 	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(depositorAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
-		cross,
+		cross(cur),
 		projectTierId,
 		depositAmount,
 		"",
@@ -126,14 +126,14 @@ func depositGns(depositorAddr address, projectTierId string, depositAmount int64
 	testing.SkipHeights(1)
 }
 
-func collectReward(ownerAddr address, depositId string) {
+func collectReward(cur realm, ownerAddr address, depositId string) {
 	println("[INFO] Collecting reward for deposit ID:", depositId)
 	testing.SetRealm(testing.NewUserRealm(ownerAddr))
 
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before collection: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
+	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after collection: %d\n", afterOblBalance)

@@ -7,8 +7,6 @@
 package fuzz
 
 import (
-	"testing"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -17,6 +15,16 @@ const (
 	defaultChecks     = 1
 	invalidChecksMult = 10
 )
+
+// TestingT abstracts the subset of *testing.T used by the fuzz engine so the
+// package can be type-checked and deployed without importing the test-only
+// "testing" stdlib. *testing.T satisfies it structurally, so callers pass
+// their *testing.T unchanged.
+type TestingT interface {
+	Errorf(format string, args ...any)
+	Fatalf(format string, args ...any)
+	Logf(format string, args ...any)
+}
 
 func assert(ok bool) {
 	if !ok {
@@ -164,13 +172,13 @@ func (t *T) failOnError() {
 //	        }
 //	    })
 //	}
-func Check(t *testing.T, prop func(*T)) {
+func Check(t TestingT, prop func(*T)) {
 	CheckN(t, defaultChecks, prop)
 }
 
 // CheckN runs property-based tests with a specific number of checks.
 // It's like Check but allows you to specify how many random test cases to generate.
-func CheckN(t *testing.T, checks int, prop func(*T)) {
+func CheckN(t TestingT, checks int, prop func(*T)) {
 	seed := baseSeed()
 
 	valid := 0

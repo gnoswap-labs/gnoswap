@@ -31,64 +31,64 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveBarFromStaker(amount int64) {
+func fundAndApproveBarFromStaker(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerRealm.Address(), amount)
+	bar.Transfer(cross(cur), stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	bar.Approve(cross(cur), protocolFeeAddr, amount)
+	bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveQuxFromStaker(amount int64) {
+func fundAndApproveQuxFromStaker(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerRealm.Address(), amount)
+	qux.Transfer(cross(cur), stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	qux.Approve(cross(cur), protocolFeeAddr, amount)
+	qux.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup: Transfer tokens to protocol fee")
-	setupTokens()
+	setupTokens(cur)
 	println()
 
 	println("[SCENARIO] 2. Record protocol fees")
-	recordProtocolFees()
+	recordProtocolFees(cur)
 	println()
 
 	println("[SCENARIO] 3. Distribute protocol fees")
-	distributeProtocolFees()
+	distributeProtocolFees(cur)
 	println()
 }
 
-func setupTokens() {
+func setupTokens(cur realm) {
 	println("[INFO] Funding and approving bar tokens from staker")
-	fundAndApproveBarFromStaker(1000)
+	fundAndApproveBarFromStaker(cur, 1000)
 
 	println("[INFO] Funding and approving qux tokens from staker")
-	fundAndApproveQuxFromStaker(1000)
+	fundAndApproveQuxFromStaker(cur, 1000)
 
 	println("[EXPECTED] Bar balance of protocol_fee:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance of protocol_fee:", qux.BalanceOf(protocolFeeAddr))
 }
 
-func recordProtocolFees() {
+func recordProtocolFees(cur realm) {
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 1000)
+	bar.Approve(cross(cur), protocolFeeAddr, 1000)
+	qux.Approve(cross(cur), protocolFeeAddr, 1000)
 
 	println("[INFO] Recording bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", 1000)
 
 	println("[INFO] Recording qux protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", 1000)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", 1000)
 }
 
-func distributeProtocolFees() {
+func distributeProtocolFees(cur realm) {
 	testing.SetRealm(govStakerRealm)
 
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Bar balance of protocol_fee after distribution:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Bar balance of govStaker after distribution:", bar.BalanceOf(govStakerAddr))

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -13,15 +12,16 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-func TestGovernanceVote_Vote(t *testing.T) {
+func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
-		proposalID       int64
-		yes              bool
-		voter            address
-		setupProposal    *governance.Proposal
-		setupVotingInfos map[string]*governance.VotingInfo
+		proposalID        int64
+		yes               bool
+		voter             address
+		setupProposal     *governance.Proposal
+		setupVotingInfos  map[string]*governance.VotingInfo
+		requiresPriorVote bool
 		// then
 		expectedWeight   string
 		expectedHasAbort bool
@@ -141,7 +141,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			name:       "fail - already voted",
 			proposalID: 1,
 			yes:        true,
-			voter:      testutils.TestAddress("voter_already"),
+			voter:      testutils.TestAddress("voter"),
 			setupProposal: governance.NewProposal(
 				1,
 				NewProposalStatus(
@@ -158,63 +158,64 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter_already").String(): func() *governance.VotingInfo {
-					vi := governance.NewVotingInfo(5_000_000_000)
-					viResolver := NewVotingInfoResolver(vi)
-					viResolver.vote(true, 5_000_000_000, 100, time.Now().Unix()) // Already voted
-					return vi
-				}(),
+				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
-			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-004] cannot vote twice || user has already voted",
+			requiresPriorVote: true,
+			expectedHasAbort:  true,
+			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-004] cannot vote twice || user has already voted",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
 			if tt.setupProposal != nil {
-				setupTestProposal(t, gov, tt.setupProposal)
+				setupTestProposal(cur, t, gov, tt.setupProposal)
 
 				// Use the actual proposal ID from the setup proposal
 				if tt.setupVotingInfos != nil {
-					setupVoteTestUserVotesWithDelegation(t, gov, tt.setupProposal.ID(), tt.setupVotingInfos, 10_000_000_000)
+					setupVoteTestUserVotesWithDelegation(cur, t, gov, tt.setupProposal.ID(), tt.setupVotingInfos, 10_000_000_000)
 				}
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.voter))
 
 			// when
+			if tt.requiresPriorVote {
+				func(cur realm) {
+					mockVote(cur, gov, tt.proposalID, tt.yes)
+				}(cross(cur))
+			}
+
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMsg, func() {
 					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Vote(tt.proposalID, tt.yes)
-					}(cross)
+						mockVote(cur, gov, tt.proposalID, tt.yes)
+					}(cross(cur))
 				})
 				return
 			}
 
+			var weight string
 			func(cur realm) {
-				testing.SetRealm(govRealm)
-				weight := gov.Vote(tt.proposalID, tt.yes)
-				uassert.Equal(t, tt.expectedWeight, weight)
+				weight = mockVote(cur, gov, tt.proposalID, tt.yes)
+			}(cross(cur))
+			uassert.Equal(t, tt.expectedWeight, weight)
 
-				// Verify vote was recorded
-				proposal, _ := gov.getProposal(tt.proposalID)
-				if tt.yes {
-					uassert.Equal(t, tt.setupVotingInfos[tt.voter.String()].AvailableVoteWeight(), proposal.VotingYesWeight())
-				} else {
-					uassert.Equal(t, tt.setupVotingInfos[tt.voter.String()].AvailableVoteWeight(), proposal.VotingNoWeight())
-				}
-			}(cross)
+			// Verify vote was recorded
+			proposal, _ := gov.getProposal(tt.proposalID)
+			if tt.yes {
+				uassert.Equal(t, tt.setupVotingInfos[tt.voter.String()].AvailableVoteWeight(), proposal.VotingYesWeight())
+			} else {
+				uassert.Equal(t, tt.setupVotingInfos[tt.voter.String()].AvailableVoteWeight(), proposal.VotingNoWeight())
+			}
 		})
 	}
 }
 
-func TestGovernanceVote_VotePrivate(t *testing.T) {
+func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		// given
@@ -375,15 +376,15 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
 			if tt.setupProposal != nil {
-				setupTestProposal(t, gov, tt.setupProposal)
+				setupTestProposal(cur, t, gov, tt.setupProposal)
 			}
 			if tt.setupVotingInfo != nil {
-				setupTestVotingInfo(t, gov, tt.proposalID, tt.voterAddress.String(), tt.setupVotingInfo)
+				setupTestVotingInfo(cur, t, gov, tt.proposalID, tt.voterAddress.String(), tt.setupVotingInfo)
 			}
 			if tt.setVotingInfoErr != nil {
 				store, ok := gov.store.(*mockGovernanceStore)
@@ -393,6 +394,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 
 			// when
 			userVote, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
+				0, cur,
 				tt.proposalID,
 				tt.voterAddress,
 				tt.votedYes,
@@ -420,7 +422,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 }
 
 // Test Vote Validation including halt states, proposal statuses, and access validation
-func TestGovernanceVote_VoteValidation(t *testing.T) {
+func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalID    int64
@@ -530,39 +532,35 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
 			testing.SetRealm(adminRealm)
-			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			if tt.setupHalt {
-				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			}
-			defer func() {
-				testing.SetRealm(adminRealm)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			}()
 			if tt.setupProposal != nil {
-				setupTestProposal(t, gov, tt.setupProposal())
-				setupTestVotingInfo(t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000))
+				setupTestProposal(cur, t, gov, tt.setupProposal())
+				setupTestVotingInfo(cur, t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000))
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.voter))
 
 			// when & then
-			uassert.AbortsWithMessage(t, tt.expectedError, func() {
-				func(cur realm) {
-					testing.SetRealm(govRealm)
-					gov.Vote(tt.proposalID, tt.yes)
-				}(cross)
+			uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
+				mockVote(cross(cur), gov, tt.proposalID, tt.yes)
 			})
+
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 		})
 	}
 }
 
 // Test Vote Period timing validation
-func TestGovernanceVote_VotePeriod(t *testing.T) {
+func TestGovernanceVote_VotePeriod(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalTime  int64
@@ -605,7 +603,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -618,26 +616,20 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 				1,
 				tt.proposalTime-testConfig.VotingWeightSmoothingDuration,
 				100)
-			setupTestProposal(t, gov, proposal)
+			setupTestProposal(cur, t, gov, proposal)
 			voter := testutils.TestAddress("voter")
-			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(5_000_000_000))
+			setupTestVotingInfo(cur, t, gov, 1, voter.String(), governance.NewVotingInfo(5_000_000_000))
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 
 			// when & then
 			if tt.shouldPass {
-				func(cur realm) {
-					// Mock time to vote time for successful cases
-					testing.SetRealm(govRealm)
-					weight := gov.Vote(1, true)
-					uassert.Equal(t, "5000000000", weight)
-				}(cross)
+				// Mock time to vote time for successful cases
+				weight := mockVote(cross(cur), gov, 1, true)
+				uassert.Equal(t, "5000000000", weight)
 			} else {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func(cur realm) {
-						testing.SetRealm(govRealm)
-						gov.Vote(1, true)
-					}(cross)
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func(cur realm) {
+					mockVote(cross(cur), gov, 1, true)
 				})
 			}
 		})
@@ -645,7 +637,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 }
 
 // Test Vote Weight Calculation including delegation scenarios
-func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
+func TestGovernanceVote_VoteWeightCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		voterWeight     int64
@@ -687,7 +679,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
@@ -700,7 +692,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay,
 				100)
-			setupTestProposal(t, gov, proposal)
+			setupTestProposal(cur, t, gov, proposal)
 
 			voter := testutils.TestAddress("voter")
 			totalWeight := tt.voterWeight + tt.delegatedWeight
@@ -709,28 +701,25 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 				totalWeight = 0 // Simulate launchpad exclusion
 			}
 
-			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(totalWeight))
+			setupTestVotingInfo(cur, t, gov, 1, voter.String(), governance.NewVotingInfo(totalWeight))
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 
-			func(cur realm) {
-				testing.SetRealm(govRealm)
-				// when & then
-				if tt.shouldFail {
-					uassert.PanicsWithMessage(t, tt.expectedError, func() {
-						gov.Vote(1, true)
-					})
-				} else {
-					weight := gov.Vote(1, true)
-					uassert.Equal(t, tt.expectedWeight, weight)
-				}
-			}(cross)
+			// when & then
+			if tt.shouldFail {
+				uassert.AbortsContains(t, cur, tt.expectedError, func() {
+					mockVote(cross(cur), gov, 1, true)
+				})
+			} else {
+				weight := mockVote(cross(cur), gov, 1, true)
+				uassert.Equal(t, tt.expectedWeight, weight)
+			}
 		})
 	}
 }
 
 // Test Quorum Calculation with launchpad exclusion
-func TestGovernanceVote_QuorumCalculation(t *testing.T) {
+func TestGovernanceVote_QuorumCalculation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		totalVotingWeight       int64
@@ -767,14 +756,13 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
 			eligibleWeight := tt.totalVotingWeight - tt.launchpadWeight
 
-			customConfig := testConfig
-			customConfig.Quorum = tt.quorumPercent
+			customConfig := governance.NewConfig(86400, 604800, 86400, tt.quorumPercent, 1_000_000_000, 86400, 2592000)
 
 			proposal := governance.NewProposal(
 				1,
@@ -795,7 +783,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 				resolver.vote(false, tt.noVotes)
 			}
 
-			setupTestProposal(t, gov, proposal)
+			setupTestProposal(cur, t, gov, proposal)
 
 			// then
 			statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -805,16 +793,16 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 	}
 }
 
-func setupTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(proposal)
+func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
+	gov.addProposal(0, cur, proposal)
 
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {
-		gov.store.SetProposalVotingInfos(proposal.ID(), bptree.NewBPTreeN(16))
+		gov.store.SetProposalVotingInfos(0, cur, proposal.ID(), governance.NewVotingInfoTree())
 	}
 }
 
-func setupVoteTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, proposalID int64, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
+func setupVoteTestUserVotesWithDelegation(cur realm, t *testing.T, gov *governanceV1, proposalID int64, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
 	// Set up mock accessor to return the expected delegation amounts
 	mockAccessor := &mockGovStakerAccessor{
 		totalDelegation: maxVotingWeight,
@@ -824,23 +812,23 @@ func setupVoteTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, propo
 	// Set up user delegations from votingInfo
 	for voter, votingInfo := range userVotes {
 		mockAccessor.userDelegations[voter] = votingInfo.AvailableVoteWeight()
-		setupTestVotingInfo(t, gov, proposalID, voter, votingInfo)
+		setupTestVotingInfo(cur, t, gov, proposalID, voter, votingInfo)
 	}
 
 	gov.stakerAccessor = mockAccessor
 }
 
-func setupTestVotingInfo(t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo *governance.VotingInfo) {
+func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo *governance.VotingInfo) {
 	// Get existing voting infos or create new ones
 	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
 
 	if !exists {
-		votingInfos = bptree.NewBPTreeN(16)
+		votingInfos = governance.NewVotingInfoTree()
 	}
 	votingInfos.Set(voter, votingInfo)
 
 	// Set the voting info for the voter
-	gov.store.SetProposalVotingInfos(proposalID, votingInfos)
+	gov.store.SetProposalVotingInfos(0, cur, proposalID, votingInfos)
 
 	// Set up mock accessor to return the expected delegation amounts for this voter
 	mockAccessor, ok := gov.stakerAccessor.(*mockGovStakerAccessor)

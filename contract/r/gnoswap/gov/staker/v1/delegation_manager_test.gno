@@ -4,26 +4,26 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
+// newTestResolver returns a DelegationManagerResolver backed by the store-owned
+// DelegationManager so the nested-tree mutations run in the owning realm.
+func newTestResolver(gs *govStakerV1) *DelegationManagerResolver {
+	return NewDelegationManagerResolver(gs.store.GetDelegationManager())
+}
+
 // TestNewDelegationManagerResolver tests the creation of DelegationManagerResolver
-func TestNewDelegationManagerResolver(t *testing.T) {
-	t.Run("Create new delegation manager resolver", func(t *testing.T) {
-		// given
-		manager := staker.NewDelegationManager()
-
-		// when
-		resolver := NewDelegationManagerResolver(manager)
-
-		// then
+func TestNewDelegationManagerResolver(cur realm, t *testing.T) {
+	t.Run("Create new delegation manager resolver", func(cur realm, t *testing.T) {
+		gs := createTestGovStaker()
+		resolver := newTestResolver(gs)
 		uassert.NotNil(t, resolver)
 		uassert.NotNil(t, resolver.DelegationManager)
 	})
 }
 
 // TestDelegationManagerResolver_addDelegation tests adding delegations
-func TestDelegationManagerResolver_addDelegation(t *testing.T) {
+func TestDelegationManagerResolver_addDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setup            func(*DelegationManagerResolver)
@@ -81,10 +81,10 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			manager := staker.NewDelegationManager()
-			resolver := NewDelegationManagerResolver(manager)
+			gs := createTestGovStaker()
+			resolver := newTestResolver(gs)
 			tc.setup(resolver)
 
 			// when
@@ -98,7 +98,7 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 }
 
 // TestDelegationManagerResolver_removeDelegation tests removing delegations
-func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
+func TestDelegationManagerResolver_removeDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setup            func(*DelegationManagerResolver)
@@ -161,10 +161,10 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			manager := staker.NewDelegationManager()
-			resolver := NewDelegationManagerResolver(manager)
+			gs := createTestGovStaker()
+			resolver := newTestResolver(gs)
 			tc.setup(resolver)
 
 			// when
@@ -176,10 +176,10 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 		})
 	}
 
-	t.Run("Remove all delegations sequentially", func(t *testing.T) {
+	t.Run("Remove all delegations sequentially", func(cur realm, t *testing.T) {
 		// given
-		manager := staker.NewDelegationManager()
-		resolver := NewDelegationManagerResolver(manager)
+		gs := createTestGovStaker()
+		resolver := newTestResolver(gs)
 		delegator := address("g1delegator")
 		delegatee := address("g1delegatee")
 

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // delegate with emission reward distribution
 
 package main
@@ -37,35 +39,35 @@ var (
 	minAmount = int64(1_000_000)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Change GNS emission distribution ratio")
-	changeEmissionDistribution()
+	changeEmissionDistribution(cur)
 	println()
 
 	println("[SCENARIO] 2. Admin delegates GNS to dummyTo")
-	adminDelegateToDummyTo()
+	adminDelegateToDummyTo(cur)
 	println()
 
 	println("[SCENARIO] 3. Admin delegates GNS to dummy")
-	adminDelegateToDummy()
+	adminDelegateToDummy(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip blocks and distribute emission")
-	skipBlocksAndDistribute()
+	skipBlocksAndDistribute(cur)
 	println()
 
 	println("[SCENARIO] 5. Check and collect emission reward")
-	emissionRewardScenario()
+	emissionRewardScenario(cur)
 	println()
 }
 
 // Change emission distribution ratio
-func changeEmissionDistribution() {
+func changeEmissionDistribution(cur realm) {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	en.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7000, // liquidityStakerPct
 		2000, // devOpsPct
 		500,  // communityPoolPct
@@ -75,33 +77,33 @@ func changeEmissionDistribution() {
 }
 
 // Admin delegates GNS to dummyTo
-func adminDelegateToDummyTo() {
+func adminDelegateToDummyTo(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, govStakerAddr, minAmount)
-	staker.Delegate(cross, dummyToAddr, int64(minAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, minAmount)
+	staker.Delegate(cross(cur), dummyToAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummyTo\n", minAmount)
 }
 
 // Admin delegates GNS to dummy
-func adminDelegateToDummy() {
+func adminDelegateToDummy(cur realm) {
 	testing.SetRealm(adminRealm)
 	amount := 5 * minAmount
-	gns.Transfer(cross, dummyAddr, amount)
+	gns.Transfer(cross(cur), dummyAddr, amount)
 	testing.SetRealm(dummyRealm)
-	gns.Approve(cross, govStakerAddr, amount)
-	staker.Delegate(cross, dummyAddr, int64(amount), "")
+	gns.Approve(cross(cur), govStakerAddr, amount)
+	staker.Delegate(cross(cur), dummyAddr, int64(amount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", amount)
 }
 
 // Skip blocks and distribute emission
-func skipBlocksAndDistribute() {
+func skipBlocksAndDistribute(cur realm) {
 	// skip blocks and distribute emission
 	testing.SkipHeights(10)
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(cur))
 	println("[INFO] skipped 10 blocks and distributed emission")
 }
 
-func formatProtocolFees(fees map[string]int64) string {
+func formatProtocolFees(cur realm, fees map[string]int64) string {
 	if len(fees) == 0 {
 		return "map[]"
 	}
@@ -119,16 +121,16 @@ func formatProtocolFees(fees map[string]int64) string {
 }
 
 // check and collect emission reward for dummy
-func emissionRewardScenario() {
+func emissionRewardScenario(cur realm) {
 	testing.SetRealm(govStakerRealm)
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	protocol_fee.DistributeProtocolFee(cross(cur))
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(dummyAddr)
-	ufmt.Printf("[INFO] claimable reward (dummy): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
+	ufmt.Printf("[INFO] claimable reward (dummy): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(cur, protocolFees))
 
 	// Collect reward
 	testing.SetOriginCaller(dummyAddr)
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 	println("[INFO] collected emission reward for dummy")
 	after := gns.BalanceOf(dummyAddr)
 	ufmt.Printf("[EXPECTED] dummy GNS balance after collect: %d\n", after)

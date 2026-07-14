@@ -17,7 +17,7 @@ GnoSwap is a concentrated liquidity AMM (Uniswap V3 fork) running on GnoVM. Pool
 ```
 contract/
 ├── p/gnoswap/
-│   ├── gnsmath/         # AMM math: sqrt_price_math, swap_math
+│   ├── gnsmath/         # AMM math: tick, liquidity, sqrt price, swap
 │   ├── int256/          # 256-bit signed integers
 │   ├── uint256/         # 256-bit unsigned integers + MulDiv
 │   ├── rbac/            # Stateless RBAC infra
@@ -33,7 +33,7 @@ contract/
     ├── gns/             # GNS token contract
     ├── halt/            # Granular emergency pause
     ├── referral/        # Referral tracking
-    └── common/          # tick_math, coins
+    └── common/          # realm utilities: GRC20 helpers, native coins
 ```
 
 **Proxy pattern**: `User → Proxy (permanent) → Implementation v1 → Storage (KV, shared across versions)`
@@ -213,4 +213,3 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | KV store | `contract/p/gnoswap/store/kv_store.gno` |
 | Upgrade | `contract/p/gnoswap/version_manager/`, `*/upgrade.gno` |
 | Emergency pause | `contract/r/gnoswap/halt/` |
-| Tick math | `contract/r/gnoswap/common/tick_math.gno` |

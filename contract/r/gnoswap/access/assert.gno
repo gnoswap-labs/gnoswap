@@ -2,7 +2,7 @@ package access
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -127,9 +127,9 @@ func AssertIsValidAddress(addr address) {
 
 // AssertIsUser panics if the caller is not a user realm.
 // Used to ensure calls come from user accounts, not other contracts.
-func AssertIsUser(r runtime.Realm) {
-	if !r.IsUser() {
-		panic(errCallerNotUser)
+func AssertIsUser(_ int, rlm realm) {
+	if !rlm.IsUser() {
+		panic(errors.New(errCallerNotUser))
 	}
 }
 

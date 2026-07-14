@@ -15,8 +15,8 @@ func NewV2InvalidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IP
 	}
 }
 
-func init() {
-	protocolFee.RegisterInitializer(cross, func(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
+func init(cur realm) {
+	protocolFee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
 		return NewV2InvalidProtocolFee(store)
 	})
 }
@@ -37,32 +37,32 @@ func (t *TestProtocolFee) isActive(fnName string) bool {
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() {
+func (t *TestProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	if !t.isActive("DistributeProtocolFee") {
 		panic("test implementation: DistributeProtocolFee not supported")
 	}
-	t.instance.DistributeProtocolFee()
+	t.instance.DistributeProtocolFee(0, rlm)
 }
 
-func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
+func (t *TestProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	if !t.isActive("SetDevOpsPct") {
 		panic("test implementation: SetDevOpsPct not supported")
 	}
-	t.instance.SetDevOpsPct(pct)
+	t.instance.SetDevOpsPct(0, rlm, pct)
 }
 
-func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
+func (t *TestProtocolFee) SetGovStakerPct(_ int, rlm realm, pct int64) {
 	if !t.isActive("SetGovStakerPct") {
 		panic("test implementation: SetGovStakerPct not supported")
 	}
-	t.instance.SetGovStakerPct(pct)
+	t.instance.SetGovStakerPct(0, rlm, pct)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+func (t *TestProtocolFee) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !t.isActive("AddToProtocolFee") {
 		panic("test implementation: AddToProtocolFee not supported")
 	}
-	return t.instance.AddToProtocolFee(tokenPath, amount)
+	return t.instance.AddToProtocolFee(0, rlm, tokenPath, amount)
 }
 
 // IProtocolFeeGetter interface

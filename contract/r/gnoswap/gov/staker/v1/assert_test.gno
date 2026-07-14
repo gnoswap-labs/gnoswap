@@ -7,7 +7,7 @@ import (
 )
 
 // Test validateDelegateAmount function
-func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
+func TestStakerDelegate_validateDelegateAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
@@ -51,14 +51,14 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Then: Check result
 			if tt.expectError {
-				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
 					assertIsValidDelegateAmount(tt.amount)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertIsValidDelegateAmount(tt.amount)
 				})
 			}

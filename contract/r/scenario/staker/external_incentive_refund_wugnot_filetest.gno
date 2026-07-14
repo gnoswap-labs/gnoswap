@@ -59,69 +59,69 @@ var (
 	createdIncentiveID string // Store incentive ID for later use
 )
 
-func main() {
+func main(cur realm) {
 	println("[TEST] WUGNOT incentive -> WUGNOT refund test")
 	println()
 
 	println("[STEP 1] Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[STEP 2] Create pool")
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 5_000_000_000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[STEP 3] Mint position")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[STEP 4] Create external incentive with WUGNOT")
-	createExternalIncentiveWithWUGNOT()
+	createExternalIncentiveWithWUGNOT(cur)
 	println()
 
 	println("[STEP 5] End external incentive and verify WUGNOT refund")
-	endIncentiveAndVerifyWUGNOTRefund()
+	endIncentiveAndVerifyWUGNOTRefund(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] create wugnot:bar:100 pool")
-	pl.CreatePool(cross, wugnotPath, barPath, fee100, "79228162514264337593543950336") // sqrt(1) * 2^96
+	pl.CreatePool(cross(cur), wugnotPath, barPath, fee100, "79228162514264337593543950336") // sqrt(1) * 2^96
 
 	testing.SkipHeights(1)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	wugnot.Approve(cross, poolAddr, maxInt64)
-	bar.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross(cur), poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint position with liquidity")
 	tokenId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		wugnotPath,
 		barPath,
 		fee100,
@@ -142,14 +142,14 @@ func mintPosition() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentiveWithWUGNOT() {
+func createExternalIncentiveWithWUGNOT(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve WUGNOT and GNS for external incentive")
-	wugnot.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	wugnot.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
-	oldUgnotBal := ugnotBalanceOf(adminAddr)
+	oldUgnotBal := ugnotBalanceOf(cur, adminAddr)
 	oldWugnotBal := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[INFO] GNOT balance before creating incentive: %d\n", oldUgnotBal)
 	ufmt.Printf("[INFO] WUGNOT balance before creating incentive: %d\n", oldWugnotBal)
@@ -160,7 +160,7 @@ func createExternalIncentiveWithWUGNOT() {
 	ufmt.Printf("[INFO] current time: %d\n", currentTime)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
 		wugnotPath, // Use WUGNOT directly, not "ugnot"
 		1_000_000_000,
@@ -171,7 +171,7 @@ func createExternalIncentiveWithWUGNOT() {
 	createdIncentiveID = ufmt.Sprintf("%s:%d:1", adminAddr.String(), currentTime)
 	ufmt.Printf("[INFO] external incentive created successfully with ID: %s\n", createdIncentiveID)
 
-	newUgnotBal := ugnotBalanceOf(adminAddr)
+	newUgnotBal := ugnotBalanceOf(cur, adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[INFO] GNOT balance after creating incentive: %d\n", newUgnotBal)
 	ufmt.Printf("[INFO] WUGNOT balance after creating incentive: %d\n", newWugnotBal)
@@ -180,7 +180,7 @@ func createExternalIncentiveWithWUGNOT() {
 	testing.SkipHeights(1)
 }
 
-func endIncentiveAndVerifyWUGNOTRefund() {
+func endIncentiveAndVerifyWUGNOTRefund(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip time to after incentive end time")
@@ -188,7 +188,7 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 
 	println("[INFO] end external incentive and check WUGNOT refund")
 
-	oldUgnotBal := ugnotBalanceOf(adminAddr)
+	oldUgnotBal := ugnotBalanceOf(cur, adminAddr)
 	oldWugnotBal := wugnot.BalanceOf(adminAddr)
 
 	ufmt.Printf("[INFO] GNOT balance before ending: %d\n", oldUgnotBal)
@@ -196,13 +196,13 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 
 	ufmt.Printf("[INFO] ending incentive with ID: %s\n", createdIncentiveID)
 	sr.EndExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
 		createdIncentiveID,
 		adminUser,
 	)
 
-	newUgnotBal := ugnotBalanceOf(adminAddr)
+	newUgnotBal := ugnotBalanceOf(cur, adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
 
 	ufmt.Printf("[INFO] GNOT balance after ending: %d\n", newUgnotBal)
@@ -225,8 +225,8 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 	println("[PASS] WUGNOT incentive correctly refunded as WUGNOT")
 }
 
-func ugnotBalanceOf(addr address) uint64 {
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+func ugnotBalanceOf(cur realm, addr address) uint64 {
+	banker_ := banker.NewReadonlyBanker()
 	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }

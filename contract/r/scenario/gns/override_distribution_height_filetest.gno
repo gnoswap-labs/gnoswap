@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -15,7 +17,7 @@ import (
 
 var adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Test Override Distribution Start Height with Halving Year Recalculation")
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -34,7 +36,7 @@ func main() {
 	// Scenario 2: Set distribution start height to 5000
 	println("\n[SCENARIO 2] Set Distribution Start Height to 5000")
 	futureTimestamp := time.Now().Unix() + 5000/5
-	emission.SetDistributionStartTime(cross, futureTimestamp)
+	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	newEmissionStart1 := gns.GetEmissionStartTimestamp()
 	newYear1End1 := gns.GetHalvingYearEndTimestamp(1)
@@ -49,7 +51,7 @@ func main() {
 	// Scenario 3: Override to 10000
 	println("\n[SCENARIO 3] Override Distribution Start Height to 10000")
 	futureTimestamp = time.Now().Unix() + 10000/5
-	emission.SetDistributionStartTime(cross, futureTimestamp)
+	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	newEmissionStart2 := gns.GetEmissionStartTimestamp()
 	newYear1End2 := gns.GetHalvingYearEndTimestamp(1)

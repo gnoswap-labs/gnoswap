@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/gnft"
@@ -58,69 +58,69 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Set pool to tier 1 (enable rewards)")
-	setPoolToTier1()
+	setPoolToTier1(cur)
 	println()
 
 	println("[SCENARIO] 4. Check emission when no positions are staked")
-	checkEmissionWithNoPositions()
+	checkEmissionWithNoPositions(cur)
 	println()
 
 	println("[SCENARIO] 5. Mint position but don't stake")
-	mintPositionButDontStake()
+	mintPositionButDontStake(cur)
 	println()
 
 	println("[SCENARIO] 6. Check emission with position minted but not staked")
-	checkEmissionWithPositionNotStaked()
+	checkEmissionWithPositionNotStaked(cur)
 	println()
 
 	println("[SCENARIO] 7. Stake position and verify emission starts")
-	stakePositionAndVerifyEmission()
+	stakePositionAndVerifyEmission(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	testing.SkipHeights(1)
 }
 
-func setPoolToTier1() {
+func setPoolToTier1(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool to tier 1 to enable rewards")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	ufmt.Printf("[EXPECTED] pool tier set to 1\n")
 	testing.SkipHeights(1)
 }
 
-func checkEmissionWithNoPositions() {
+func checkEmissionWithNoPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check emission allocation when no positions are staked")
@@ -151,17 +151,17 @@ func checkEmissionWithNoPositions() {
 	}
 }
 
-func mintPositionButDontStake() {
+func mintPositionButDontStake(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 but don't stake it")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -180,7 +180,7 @@ func mintPositionButDontStake() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s (not staked)\n", owner)
 
 	if owner != adminAddr {
@@ -190,7 +190,7 @@ func mintPositionButDontStake() {
 	testing.SkipHeights(1)
 }
 
-func checkEmissionWithPositionNotStaked() {
+func checkEmissionWithPositionNotStaked(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check emission when position exists but is not staked")
@@ -224,14 +224,14 @@ func checkEmissionWithPositionNotStaked() {
 	println("[INFO] confirmed: emission continues but no rewards distributed to unstaked positions")
 }
 
-func stakePositionAndVerifyEmission() {
+func stakePositionAndVerifyEmission(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT to staker and stake position 01")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after staking: %s\n", ownerAfterStake)
 
 	if ownerAfterStake != stakerAddr {
@@ -243,7 +243,7 @@ func stakePositionAndVerifyEmission() {
 
 	println("[INFO] collect reward for staked position")
 	beforeAdminGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterAdminGns := gns.BalanceOf(adminUser)
 	reward := afterAdminGns - beforeAdminGns
 
@@ -257,7 +257,7 @@ func stakePositionAndVerifyEmission() {
 	println("[INFO] no position to give reward scenario test completed")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

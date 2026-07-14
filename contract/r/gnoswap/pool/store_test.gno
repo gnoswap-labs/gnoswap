@@ -9,20 +9,20 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestStoreInitialization(t *testing.T) {
+func TestStoreInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		verifyFn func(*testing.T)
+		verifyFn func(cur realm, t *testing.T)
 	}{
 		{
 			name: "kvStore should be initialized",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 			},
 		},
 		{
 			name: "domain address should not be empty",
-			verifyFn: func(t *testing.T) {
+			verifyFn: func(cur realm, t *testing.T) {
 				domainAddr := kvStore.GetDomainAddress()
 				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
 			},
@@ -30,14 +30,14 @@ func TestStoreInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
-			tt.verifyFn(t)
+			tt.verifyFn(cur, t)
 		})
 	}
 }
 
-func TestStore_AuthorizedCallers(t *testing.T) {
+func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		callerRealm                   runtime.Realm
@@ -99,26 +99,26 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			ps := NewPoolStore(kvStore)
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
 			if !ps.HasPoolCreationFee() {
-				ps.SetPoolCreationFee(100)
+				ps.SetPoolCreationFee(0, cur, 100)
 			}
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
-				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+				uassert.PanicsContains(t, cur, tc.expectedErrorMessageWithRead, func() {
 					ps.GetPoolCreationFee()
 				})
 			} else {
 				ps.GetPoolCreationFee()
 			}
 
-			err := ps.SetPoolCreationFee(200)
+			err := ps.SetPoolCreationFee(0, cur, 200)
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -128,22 +128,22 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetPools(t *testing.T) {
+func TestStoreSetAndGetPools(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pools successfully",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				pools := bptree.NewBPTreeN(32)
 				pools.Set("pool1", "data1")
-				ps.SetPools(pools)
+				ps.SetPools(0, cur, pools)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasPools(), "should have pools after setting")
 				retrievedPools := ps.GetPools()
 				uassert.NotEqual(t, nil, retrievedPools)
@@ -154,13 +154,13 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		},
 		{
 			name: "should not have pools initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasPools(), "should not have pools initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pools",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetPools()
 			},
 			shouldPanic:  true,
@@ -168,8 +168,8 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		},
 		{
 			name: "panic when setting nil pools",
-			testFn: func(t *testing.T, ps IPoolStore) {
-				ps.SetPools(nil)
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
+				ps.SetPools(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil pools",
@@ -177,12 +177,12 @@ func TestStoreSetAndGetPools(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -192,29 +192,29 @@ func TestStoreSetAndGetPools(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetFeeAmountTickSpacing(t *testing.T) {
+func TestStoreSetAndGetFeeAmountTickSpacing(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get fee amount tick spacing successfully",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				feeMap := map[uint32]int32{
 					500:  10,
 					3000: 60,
 				}
-				ps.SetFeeAmountTickSpacing(feeMap)
+				ps.SetFeeAmountTickSpacing(0, cur, feeMap)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasFeeAmountTickSpacing(), "should have fee amount tick spacing after setting")
 				retrieved := ps.GetFeeAmountTickSpacing()
 				uassert.NotEqual(t, nil, retrieved)
@@ -224,13 +224,13 @@ func TestStoreSetAndGetFeeAmountTickSpacing(t *testing.T) {
 		},
 		{
 			name: "should not have fee amount tick spacing initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasFeeAmountTickSpacing(), "should not have fee amount tick spacing initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized fee amount tick spacing",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetFeeAmountTickSpacing()
 			},
 			shouldPanic:  true,
@@ -238,8 +238,8 @@ func TestStoreSetAndGetFeeAmountTickSpacing(t *testing.T) {
 		},
 		{
 			name: "panic when setting nil fee amount tick spacing",
-			testFn: func(t *testing.T, ps IPoolStore) {
-				ps.SetFeeAmountTickSpacing(nil)
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
+				ps.SetFeeAmountTickSpacing(0, cur, nil)
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when setting nil fee amount tick spacing",
@@ -247,12 +247,12 @@ func TestStoreSetAndGetFeeAmountTickSpacing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -262,25 +262,25 @@ func TestStoreSetAndGetFeeAmountTickSpacing(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetSlot0FeeProtocol(t *testing.T) {
+func TestStoreSetAndGetSlot0FeeProtocol(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get slot0 fee protocol successfully",
-			setupFn: func(ps IPoolStore) {
-				ps.SetSlot0FeeProtocol(10)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetSlot0FeeProtocol(0, cur, 10)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasSlot0FeeProtocol(), "should have slot0 fee protocol after setting")
 				retrieved := ps.GetSlot0FeeProtocol()
 				uassert.Equal(t, uint8(10), retrieved)
@@ -288,13 +288,13 @@ func TestStoreSetAndGetSlot0FeeProtocol(t *testing.T) {
 		},
 		{
 			name: "should not have slot0 fee protocol initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasSlot0FeeProtocol(), "should not have slot0 fee protocol initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized slot0 fee protocol",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetSlot0FeeProtocol()
 			},
 			shouldPanic:  true,
@@ -303,12 +303,12 @@ func TestStoreSetAndGetSlot0FeeProtocol(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -318,25 +318,25 @@ func TestStoreSetAndGetSlot0FeeProtocol(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetPoolCreationFee(t *testing.T) {
+func TestStoreSetAndGetPoolCreationFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get pool creation fee successfully",
-			setupFn: func(ps IPoolStore) {
-				ps.SetPoolCreationFee(1000000)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetPoolCreationFee(0, cur, 1000000)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasPoolCreationFee(), "should have pool creation fee after setting")
 				retrieved := ps.GetPoolCreationFee()
 				uassert.Equal(t, int64(1000000), retrieved)
@@ -344,13 +344,13 @@ func TestStoreSetAndGetPoolCreationFee(t *testing.T) {
 		},
 		{
 			name: "should not have pool creation fee initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasPoolCreationFee(), "should not have pool creation fee initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized pool creation fee",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetPoolCreationFee()
 			},
 			shouldPanic:  true,
@@ -359,12 +359,12 @@ func TestStoreSetAndGetPoolCreationFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -374,25 +374,25 @@ func TestStoreSetAndGetPoolCreationFee(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetWithdrawalFeeBPS(t *testing.T) {
+func TestStoreSetAndGetWithdrawalFeeBPS(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get withdrawal fee BPS successfully",
-			setupFn: func(ps IPoolStore) {
-				ps.SetWithdrawalFeeBPS(50)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetWithdrawalFeeBPS(0, cur, 50)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasWithdrawalFeeBPS(), "should have withdrawal fee BPS after setting")
 				retrieved := ps.GetWithdrawalFeeBPS()
 				uassert.Equal(t, uint64(50), retrieved)
@@ -400,13 +400,13 @@ func TestStoreSetAndGetWithdrawalFeeBPS(t *testing.T) {
 		},
 		{
 			name: "should not have withdrawal fee BPS initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasWithdrawalFeeBPS(), "should not have withdrawal fee BPS initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized withdrawal fee BPS",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetWithdrawalFeeBPS()
 			},
 			shouldPanic:  true,
@@ -415,12 +415,12 @@ func TestStoreSetAndGetWithdrawalFeeBPS(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -430,48 +430,48 @@ func TestStoreSetAndGetWithdrawalFeeBPS(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetUnlocked(t *testing.T) {
+func TestStoreSetAndGetUnlocked(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get unlocked successfully",
-			setupFn: func(ps IPoolStore) {
-				ps.SetUnlocked(true)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetUnlocked(0, cur, true)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasUnlocked(), "should have unlocked after setting")
 				uassert.True(t, ps.GetUnlocked(), "unlocked should be true")
 			},
 		},
 		{
 			name: "set locked successfully",
-			setupFn: func(ps IPoolStore) {
-				ps.SetUnlocked(false)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetUnlocked(0, cur, false)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasUnlocked(), "should have unlocked after setting")
 				uassert.False(t, ps.GetUnlocked(), "unlocked should be false")
 			},
 		},
 		{
 			name: "should not have unlocked initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasUnlocked(), "should not have unlocked initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized unlocked",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetUnlocked()
 			},
 			shouldPanic:  true,
@@ -480,12 +480,12 @@ func TestStoreSetAndGetUnlocked(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -495,26 +495,26 @@ func TestStoreSetAndGetUnlocked(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetSwapStartHook(t *testing.T) {
+func TestStoreSetAndGetSwapStartHook(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get swap start hook successfully",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				hookFunc := func(cur realm, poolPath string, timestamp int64) {}
-				ps.SetSwapStartHook(hookFunc)
+				ps.SetSwapStartHook(0, cur, hookFunc)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasSwapStartHook(), "should have swap start hook after setting")
 				retrieved := ps.GetSwapStartHook()
 				uassert.NotEqual(t, nil, retrieved)
@@ -522,13 +522,13 @@ func TestStoreSetAndGetSwapStartHook(t *testing.T) {
 		},
 		{
 			name: "should not have swap start hook initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasSwapStartHook(), "should not have swap start hook initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized swap start hook",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetSwapStartHook()
 			},
 			shouldPanic:  true,
@@ -537,12 +537,12 @@ func TestStoreSetAndGetSwapStartHook(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -552,26 +552,26 @@ func TestStoreSetAndGetSwapStartHook(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetSwapEndHook(t *testing.T) {
+func TestStoreSetAndGetSwapEndHook(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get swap end hook successfully",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				hookFunc := func(cur realm, poolPath string) error { return nil }
-				ps.SetSwapEndHook(hookFunc)
+				ps.SetSwapEndHook(0, cur, hookFunc)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasSwapEndHook(), "should have swap end hook after setting")
 				retrieved := ps.GetSwapEndHook()
 				uassert.NotEqual(t, nil, retrieved)
@@ -579,13 +579,13 @@ func TestStoreSetAndGetSwapEndHook(t *testing.T) {
 		},
 		{
 			name: "should not have swap end hook initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasSwapEndHook(), "should not have swap end hook initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized swap end hook",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetSwapEndHook()
 			},
 			shouldPanic:  true,
@@ -594,12 +594,12 @@ func TestStoreSetAndGetSwapEndHook(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -609,26 +609,26 @@ func TestStoreSetAndGetSwapEndHook(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreSetAndGetTickCrossHook(t *testing.T) {
+func TestStoreSetAndGetTickCrossHook(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setupFn      func(IPoolStore)
-		testFn       func(*testing.T, IPoolStore)
+		setupFn      func(cur realm, ps IPoolStore)
+		testFn       func(cur realm, t *testing.T, ps IPoolStore)
 		shouldPanic  bool
 		panicMessage string
 	}{
 		{
 			name: "set and get tick cross hook successfully",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				hookFunc := func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {}
-				ps.SetTickCrossHook(hookFunc)
+				ps.SetTickCrossHook(0, cur, hookFunc)
 			},
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasTickCrossHook(), "should have tick cross hook after setting")
 				retrieved := ps.GetTickCrossHook()
 				uassert.NotEqual(t, nil, retrieved)
@@ -636,13 +636,13 @@ func TestStoreSetAndGetTickCrossHook(t *testing.T) {
 		},
 		{
 			name: "should not have tick cross hook initially",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.False(t, ps.HasTickCrossHook(), "should not have tick cross hook initially")
 			},
 		},
 		{
 			name: "panic when getting uninitialized tick cross hook",
-			testFn: func(t *testing.T, ps IPoolStore) {
+			testFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				ps.GetTickCrossHook()
 			},
 			shouldPanic:  true,
@@ -651,12 +651,12 @@ func TestStoreSetAndGetTickCrossHook(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
 			if tt.setupFn != nil {
-				tt.setupFn(ps)
+				tt.setupFn(cur, ps)
 			}
 
 			if tt.shouldPanic {
@@ -666,32 +666,32 @@ func TestStoreSetAndGetTickCrossHook(t *testing.T) {
 				}()
 			}
 
-			tt.testFn(t, ps)
+			tt.testFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreMultipleSetAndGet(t *testing.T) {
+func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(IPoolStore)
-		verifyFn func(*testing.T, IPoolStore)
+		setupFn  func(cur realm, ps IPoolStore)
+		verifyFn func(cur realm, t *testing.T, ps IPoolStore)
 	}{
 		{
 			name: "set and get all store values",
-			setupFn: func(ps IPoolStore) {
+			setupFn: func(cur realm, ps IPoolStore) {
 				pools := bptree.NewBPTreeN(32)
 				pools.Set("pool1", "data1")
-				ps.SetPools(pools)
+				ps.SetPools(0, cur, pools)
 
 				feeMap := map[uint32]int32{500: 10}
-				ps.SetFeeAmountTickSpacing(feeMap)
+				ps.SetFeeAmountTickSpacing(0, cur, feeMap)
 
-				ps.SetSlot0FeeProtocol(15)
-				ps.SetPoolCreationFee(5000000)
-				ps.SetWithdrawalFeeBPS(100)
+				ps.SetSlot0FeeProtocol(0, cur, 15)
+				ps.SetPoolCreationFee(0, cur, 5000000)
+				ps.SetWithdrawalFeeBPS(0, cur, 100)
 			},
-			verifyFn: func(t *testing.T, ps IPoolStore) {
+			verifyFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.True(t, ps.HasPools())
 				uassert.True(t, ps.HasFeeAmountTickSpacing())
 				uassert.True(t, ps.HasSlot0FeeProtocol())
@@ -713,82 +713,82 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 			ps := NewPoolStore(kvStore)
 
-			tt.setupFn(ps)
-			tt.verifyFn(t, ps)
+			tt.setupFn(cur, ps)
+			tt.verifyFn(cur, t, ps)
 		})
 	}
 }
 
-func TestStoreUpdateValues(t *testing.T) {
+func TestStoreUpdateValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn  func(IPoolStore)
-		updateFn func(IPoolStore)
-		verifyFn func(*testing.T, IPoolStore)
+		setupFn  func(cur realm, ps IPoolStore)
+		updateFn func(cur realm, ps IPoolStore)
+		verifyFn func(cur realm, t *testing.T, ps IPoolStore)
 	}{
 		{
 			name: "update pool creation fee twice",
-			setupFn: func(ps IPoolStore) {
-				ps.SetPoolCreationFee(1000)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetPoolCreationFee(0, cur, 1000)
 			},
-			updateFn: func(ps IPoolStore) {
-				ps.SetPoolCreationFee(2000)
+			updateFn: func(cur realm, ps IPoolStore) {
+				ps.SetPoolCreationFee(0, cur, 2000)
 			},
-			verifyFn: func(t *testing.T, ps IPoolStore) {
+			verifyFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.Equal(t, int64(2000), ps.GetPoolCreationFee())
 			},
 		},
 		{
 			name: "update withdrawal fee BPS from 50 to 100",
-			setupFn: func(ps IPoolStore) {
-				ps.SetWithdrawalFeeBPS(50)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetWithdrawalFeeBPS(0, cur, 50)
 			},
-			updateFn: func(ps IPoolStore) {
-				ps.SetWithdrawalFeeBPS(100)
+			updateFn: func(cur realm, ps IPoolStore) {
+				ps.SetWithdrawalFeeBPS(0, cur, 100)
 			},
-			verifyFn: func(t *testing.T, ps IPoolStore) {
+			verifyFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.Equal(t, uint64(100), ps.GetWithdrawalFeeBPS())
 			},
 		},
 		{
 			name: "update withdrawal fee BPS from 0 to 200",
-			setupFn: func(ps IPoolStore) {
-				ps.SetWithdrawalFeeBPS(0)
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetWithdrawalFeeBPS(0, cur, 0)
 			},
-			updateFn: func(ps IPoolStore) {
-				ps.SetWithdrawalFeeBPS(200)
+			updateFn: func(cur realm, ps IPoolStore) {
+				ps.SetWithdrawalFeeBPS(0, cur, 200)
 			},
-			verifyFn: func(t *testing.T, ps IPoolStore) {
+			verifyFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.Equal(t, uint64(200), ps.GetWithdrawalFeeBPS())
 			},
 		},
 		{
 			name: "update pool creation fee from max to min",
-			setupFn: func(ps IPoolStore) {
-				ps.SetPoolCreationFee(9223372036854775807) // int64 max
+			setupFn: func(cur realm, ps IPoolStore) {
+				ps.SetPoolCreationFee(0, cur, 9223372036854775807) // int64 max
 			},
-			updateFn: func(ps IPoolStore) {
-				ps.SetPoolCreationFee(0)
+			updateFn: func(cur realm, ps IPoolStore) {
+				ps.SetPoolCreationFee(0, cur, 0)
 			},
-			verifyFn: func(t *testing.T, ps IPoolStore) {
+			verifyFn: func(cur realm, t *testing.T, ps IPoolStore) {
 				uassert.Equal(t, int64(0), ps.GetPoolCreationFee())
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
 			ps := NewPoolStore(kvStore)
 
-			tt.setupFn(ps)
-			tt.updateFn(ps)
-			tt.verifyFn(t, ps)
+			tt.setupFn(cur, ps)
+			tt.updateFn(cur, ps)
+			tt.verifyFn(cur, t, ps)
 		})
 	}
 }

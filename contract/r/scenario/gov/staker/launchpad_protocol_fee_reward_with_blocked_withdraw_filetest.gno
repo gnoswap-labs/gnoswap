@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad protocol fee reward
 
 package main
@@ -55,52 +57,52 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func fundAndApproveProtocolFeeCallerBar(amount int64) {
+func fundAndApproveProtocolFeeCallerBar(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
+	bar.Transfer(cross(cur), stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	bar.Approve(cross(cur), protocolFeeAddr, amount)
+	bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func fundAndApproveProtocolFeeCallerQux(amount int64) {
+func fundAndApproveProtocolFeeCallerQux(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, stakerAddr, amount)
+	qux.Transfer(cross(cur), stakerAddr, amount)
 	testing.SetRealm(stakerRealm)
-	qux.Approve(cross, protocolFeeAddr, amount)
-	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	qux.Approve(cross(cur), protocolFeeAddr, amount)
+	qux.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create launchpad project and deposit")
-	createLaunchpadProject()
+	createLaunchpadProject(cur)
 	println()
 
 	println("[SCENARIO] 2. Setup protocol fee deposit (bar, qux)")
-	setupProtocolFeeDeposit()
+	setupProtocolFeeDeposit(cur)
 	println()
 
 	println("[SCENARIO] 3. Skip blocks and distribute protocol fee")
-	skipBlocksAndDistribute()
+	skipBlocksAndDistribute(cur)
 	println()
 
 	println("[SCENARIO] 4. Check and collect protocol fee reward for project recipient")
-	protocolFeeRewardProjectRecipient()
+	protocolFeeRewardProjectRecipient(cur)
 	println()
 
 	println("[SCENARIO] 5. Block withdraw and check claimable reward")
-	checkBlockedWithLaunchpadCollectDepositGns()
+	checkBlockedWithLaunchpadCollectDepositGns(cur)
 	println()
 }
 
-func createLaunchpadProject() {
+func createLaunchpadProject(cur realm) {
 	rewardAmount := int64(1_000_000_000)
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, launchpadAddr, rewardAmount)
+	bar.Approve(cross(cur), launchpadAddr, rewardAmount)
 	lp.CreateProject(
-		cross,
+		cross(cur),
 		"Bar Launchpad Project",
 		barPath,
 		projectAddr,
@@ -117,30 +119,30 @@ func createLaunchpadProject() {
 	ufmt.Printf("[INFO] skipped 120960 blocks\n")
 
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, launchpadAddr, rewardAmount)
-	depositID := lp.DepositGns(cross, "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
+	gns.Approve(cross(cur), launchpadAddr, rewardAmount)
+	depositID := lp.DepositGns(cross(cur), "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
 	ufmt.Printf("[INFO] deposited launchpad deposit: %s\n", depositID)
 }
 
-func setupProtocolFeeDeposit() {
+func setupProtocolFeeDeposit(cur realm) {
 	// mock protocol fee deposit (bar, qux)
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
+	fundAndApproveProtocolFeeCallerBar(cur, 1000)
+	fundAndApproveProtocolFeeCallerQux(cur, 2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
-	pf.AddToProtocolFee(cross, barPath, 1000)
-	pf.AddToProtocolFee(cross, quxPath, 2500)
+	bar.Approve(cross(cur), protocolFeeAddr, 1000)
+	qux.Approve(cross(cur), protocolFeeAddr, 2500)
+	pf.AddToProtocolFee(cross(cur), barPath, 1000)
+	pf.AddToProtocolFee(cross(cur), quxPath, 2500)
 
 	println("[INFO] protocol fee deposited: bar(1000), qux(2500)")
 }
 
-func skipBlocksAndDistribute() {
+func skipBlocksAndDistribute(cur realm) {
 	testing.SkipHeights(10)
 	println("[INFO] skipped 10 blocks")
 }
 
-func formatProtocolFees(fees map[string]int64) string {
+func formatProtocolFees(cur realm, fees map[string]int64) string {
 	if len(fees) == 0 {
 		return "map[]"
 	}
@@ -157,18 +159,18 @@ func formatProtocolFees(fees map[string]int64) string {
 	return result
 }
 
-func protocolFeeRewardProjectRecipient() {
+func protocolFeeRewardProjectRecipient(cur realm) {
 	testing.SetRealm(govStakerRealm)
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	protocol_fee.DistributeProtocolFee(cross(cur))
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
-	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
+	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(cur, protocolFees))
 
 	testing.SetRealm(projectRealm)
 	prevBarBalance := bar.BalanceOf(projectAddr)
 	prevQuxBalance := qux.BalanceOf(projectAddr)
 
-	lp.CollectProtocolFee(cross)
+	lp.CollectProtocolFee(cross(cur))
 
 	afterBarBalance := bar.BalanceOf(projectAddr)
 	afterQuxBalance := qux.BalanceOf(projectAddr)
@@ -178,10 +180,10 @@ func protocolFeeRewardProjectRecipient() {
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
-func checkBlockedWithLaunchpadCollectDepositGns() {
+func checkBlockedWithLaunchpadCollectDepositGns(cur realm) {
 	testing.SetRealm(adminRealm)
-	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-011] invalid reward state", func() {
-		lp.CollectDepositGns(cross, "1")
+	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-011] invalid reward state", func() {
+		lp.CollectDepositGns(cross(cur), "1")
 	})
 	println("[INFO] blocked launchpad collect deposit gns by not yet ended project")
 }

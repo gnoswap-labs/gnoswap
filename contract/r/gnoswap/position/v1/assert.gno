@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -110,6 +111,6 @@ func assertValidOperatorAddress(operator address) {
 func assertIsNotMintToStaker(mintTo address) {
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	if mintTo == stakerAddr {
-		panic(errCannotMintToStaker)
+		panic(errors.New(errCannotMintToStaker))
 	}
 }

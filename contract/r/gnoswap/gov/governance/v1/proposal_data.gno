@@ -3,7 +3,9 @@ package v1
 import (
 	"strings"
 
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -231,7 +233,7 @@ func NewProposalCommunityPoolSpendData(
 	executionInfoMessage := makeExecuteMessage(
 		communityPoolPackagePath,
 		"TransferToken",
-		[]string{tokenPath, to.String(), formatInt(amount)},
+		[]string{tokenPath, to.String(), utils.FormatInt(amount)},
 	)
 
 	return governance.NewProposalData(

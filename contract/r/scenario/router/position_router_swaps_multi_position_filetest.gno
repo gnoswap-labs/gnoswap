@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
@@ -54,68 +55,68 @@ var (
 	fee     = uint32(500)
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool")
-	initPool()
+	initPool(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position")
-	mintPosition(-6930, 6930, 1_000_000_000, 1_000_000_000)
-	mintPosition(-6930, 6930, 3_000_000_000, 3_000_000_000)
-	mintPosition(-1050, 950, 1_000_000_000, 1_000_000_000)
-	mintPosition(-887270, 887270, 5_000_000_000, 5_000_000_000)
-	mintPosition(-44260, -19070, 1_000_000_000, 1_000_000_000)
-	mintPosition(62160, 69060, 1_000_000_000, 1_000_000_000)
+	mintPosition(cur, -6930, 6930, 1_000_000_000, 1_000_000_000)
+	mintPosition(cur, -6930, 6930, 3_000_000_000, 3_000_000_000)
+	mintPosition(cur, -1050, 950, 1_000_000_000, 1_000_000_000)
+	mintPosition(cur, -887270, 887270, 5_000_000_000, 5_000_000_000)
+	mintPosition(cur, -44260, -19070, 1_000_000_000, 1_000_000_000)
+	mintPosition(cur, 62160, 69060, 1_000_000_000, 1_000_000_000)
 	println()
 
 	testing.SkipHeights(1)
 
 	ufmt.Println("[SCENARIO] 3. Execute exact in swap with almost all")
-	executeExactInRouterSwaps()
+	executeExactInRouterSwaps(cur)
 
 	ufmt.Println("[SCENARIO] 4. Execute exact out swap with almost all")
-	executeExactOutRouterSwaps()
+	executeExactOutRouterSwaps(cur)
 	println()
 }
 
-func initPool() {
+func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
 
 	defaultTokenAmount := int64(100_000_000_000_000)
 
 	ufmt.Println("[INFO] Distributing Bar tokens")
-	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
+	bar.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
 	ufmt.Println("[INFO] Distributing Foo tokens")
-	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
+	foo.Transfer(cross(cur), aliceAddr, defaultTokenAmount)
 
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
 
 	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 }
 
-func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) {
+func mintPosition(cur realm, tickLower, tickUpper int32, token0Amount, token1Amount int64) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee,
@@ -136,10 +137,10 @@ func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) 
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func executeExactInRouterSwaps() {
+func executeExactInRouterSwaps(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	foo.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	foo.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
@@ -148,7 +149,7 @@ func executeExactInRouterSwaps() {
 	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", pool.GetBalanceToken1(poolPath))
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,         // inputToken
 		barPath,         // outputToken
 		"1000000000000", // amountSpecified
@@ -163,30 +164,32 @@ func executeExactInRouterSwaps() {
 	ufmt.Printf("[EXPECTED] Swap amountOut should be %s\n", amountOut)
 }
 
-func executeExactOutRouterSwaps() {
+func executeExactOutRouterSwaps(cur realm) {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	foo.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
-	dryAmountIn, dryAmountOut, success := router.DrySwapRoute(
-		fooPath,
-		barPath,
-		"10983000000",
-		"EXACT_OUT",
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
-		"100",
-		"1",
-	)
+	dryAmountIn, dryAmountOut, success := func(cur realm) (string, string, bool) {
+		return router.DrySwapRoute(
+			fooPath,
+			barPath,
+			"10983000000",
+			"EXACT_OUT",
+			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100",
+			"1",
+		)
+	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] Dry swap amountIn should be %s\n", dryAmountIn)
 	ufmt.Printf("[EXPECTED] Dry swap amountOut should be %s\n", dryAmountOut)
 	ufmt.Printf("[EXPECTED] Dry swap success should be %T\n", success)
 
-	uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-020] overflow", func() {
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-POOL-020] overflow", func() {
 		router.ExactOutSwapRoute(
-			cross,
+			cross(cur),
 			fooPath,       // outputToken
 			barPath,       // inputToken
 			"10982000000", // amountSpecified

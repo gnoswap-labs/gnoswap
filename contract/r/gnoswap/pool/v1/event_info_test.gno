@@ -21,7 +21,7 @@ func makeTickInfo(liquidityGross, feeGrowth0, feeGrowth1, secondsPerLiquidity, l
 	return info
 }
 
-func TestTickEventInfo_ToString(t *testing.T) {
+func TestTickEventInfo_ToString(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		tickID   int32
@@ -50,7 +50,7 @@ func TestTickEventInfo_ToString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			eventInfo := NewTickEventInfo(tt.tickID, tt.tickInfo)
 			result := eventInfo.ToString()
 
@@ -63,7 +63,7 @@ func TestTickEventInfo_ToString(t *testing.T) {
 	}
 }
 
-func TestTickEventInfo_JSONFormat(t *testing.T) {
+func TestTickEventInfo_JSONFormat(cur realm, t *testing.T) {
 	tickInfo := makeTickInfo("1000", "100", "200", "50", "500", 10, 100, true)
 	eventInfo := NewTickEventInfo(42, tickInfo)
 	result := eventInfo.ToString()
@@ -77,7 +77,7 @@ func TestTickEventInfo_JSONFormat(t *testing.T) {
 	uassert.False(t, strings.Contains(result, ",}"))
 }
 
-func TestNewTickEventInfo(t *testing.T) {
+func TestNewTickEventInfo(cur realm, t *testing.T) {
 	tickID := int32(100)
 	tickInfo := makeTickInfo("1000", "100", "200", "50", "500", 10, 100, true)
 

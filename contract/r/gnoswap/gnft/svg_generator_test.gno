@@ -10,14 +10,14 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestSvgGenerator_genImageParamsString(t *testing.T) {
+func TestSvgGenerator_genImageParamsString(cur realm, t *testing.T) {
 	seed1 := uint64(time.Now().Unix())
 	seed2 := uint64(time.Now().UnixNano())
 	pcg := rand.NewPCG(seed1, seed2)
 	r := rand.New(pcg)
 
 	var params string
-	uassert.NotPanics(t, func() {
+	uassert.NotPanics(t, cur, func() {
 		params = genImageParamsString(r)
 	})
 
@@ -30,7 +30,7 @@ func TestSvgGenerator_genImageParamsString(t *testing.T) {
 	uassert.True(t, strings.HasPrefix(parts[5], "#"))
 }
 
-func TestSvgGenerator_generateImageURI(t *testing.T) {
+func TestSvgGenerator_generateImageURI(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -50,12 +50,12 @@ func TestSvgGenerator_generateImageURI(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			params, err := parseImageParams(tc.params)
 			uassert.NoError(t, err)
 
 			var uri string
-			uassert.NotPanics(t, func() {
+			uassert.NotPanics(t, cur, func() {
 				uri = params.generateImageURI()
 			})
 
@@ -77,7 +77,7 @@ func TestSvgGenerator_generateImageURI(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_generateSVG(t *testing.T) {
+func TestSvgGenerator_generateSVG(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -97,7 +97,7 @@ func TestSvgGenerator_generateSVG(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// Parse params first
 			p, err := parseImageParams(tc.params)
 			uassert.NoError(t, err)
@@ -115,7 +115,7 @@ func TestSvgGenerator_generateSVG(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_paramsToImageRaw_ColorFormat(t *testing.T) {
+func TestSvgGenerator_paramsToImageRaw_ColorFormat(cur realm, t *testing.T) {
 	params := "10,12,125,123,#AABBCC,#DDEEFF"
 	p, err := parseImageParams(params)
 	uassert.NoError(t, err)
@@ -144,7 +144,7 @@ func TestSvgGenerator_paramsToImageRaw_ColorFormat(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(t *testing.T) {
+func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -180,7 +180,7 @@ func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			p, err := parseImageParams(tc.params)
 			uassert.NoError(t, err)
 			svg := p.generateSVG()
@@ -199,7 +199,7 @@ func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_genImageParamsString_CoordinateRanges(t *testing.T) {
+func TestSvgGenerator_genImageParamsString_CoordinateRanges(cur realm, t *testing.T) {
 	tests := []struct {
 		name  string
 		seed1 uint64
@@ -218,7 +218,7 @@ func TestSvgGenerator_genImageParamsString_CoordinateRanges(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			pcg := rand.NewPCG(tc.seed1, tc.seed2)
 			r := rand.New(pcg)
 
@@ -247,7 +247,7 @@ func TestSvgGenerator_genImageParamsString_CoordinateRanges(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_roundTrip(t *testing.T) {
+func TestSvgGenerator_roundTrip(cur realm, t *testing.T) {
 	tests := []struct {
 		name  string
 		seed1 uint64
@@ -266,7 +266,7 @@ func TestSvgGenerator_roundTrip(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			pcg := rand.NewPCG(tc.seed1, tc.seed2)
 			r := rand.New(pcg)
 
@@ -294,7 +294,7 @@ func TestSvgGenerator_roundTrip(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_paramsToImageRaw_InvalidParams(t *testing.T) {
+func TestSvgGenerator_paramsToImageRaw_InvalidParams(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -326,15 +326,15 @@ func TestSvgGenerator_paramsToImageRaw_InvalidParams(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
-			uassert.Equal(t, errInvalidTokenParams.Error(), err.Error())
+			uassert.Equal(t, errInvalidTokenParams, err.Error())
 		})
 	}
 }
 
-func TestSvgGenerator_uniqueness(t *testing.T) {
+func TestSvgGenerator_uniqueness(cur realm, t *testing.T) {
 	paramsMap := make(map[string]bool)
 
 	for i := 0; i < 5; i++ {
@@ -354,7 +354,7 @@ func TestSvgGenerator_uniqueness(t *testing.T) {
 
 // TestSvgGenerator_outputConsistency verifies that the new param-based approach
 // produces identical SVG output as the old direct generation approach.
-func TestSvgGenerator_outputConsistency(t *testing.T) {
+func TestSvgGenerator_outputConsistency(cur realm, t *testing.T) {
 	tests := []struct {
 		name  string
 		seed1 uint64
@@ -383,7 +383,7 @@ func TestSvgGenerator_outputConsistency(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// Generate using old method (simulated)
 			pcg1 := rand.NewPCG(tc.seed1, tc.seed2)
 			r1 := rand.New(pcg1)
@@ -443,7 +443,7 @@ func itoa(n int) string {
 }
 
 // TestSvgGenerator_boundaryValues tests all boundary values for coordinates.
-func TestSvgGenerator_boundaryValues(t *testing.T) {
+func TestSvgGenerator_boundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -503,11 +503,11 @@ func TestSvgGenerator_boundaryValues(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.valid {
 				p, err := parseImageParams(tc.params)
 				uassert.NoError(t, err)
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					p.generateSVG()
 				})
 			}
@@ -516,7 +516,7 @@ func TestSvgGenerator_boundaryValues(t *testing.T) {
 }
 
 // TestSvgGenerator_outOfRangeValues tests coordinates outside valid ranges.
-func TestSvgGenerator_outOfRangeValues(t *testing.T) {
+func TestSvgGenerator_outOfRangeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -573,18 +573,18 @@ func TestSvgGenerator_outOfRangeValues(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
 			// Error now includes detailed coordinate info, check contains base error
-			uassert.True(t, strings.Contains(err.Error(), errInvalidTokenParamsRange.Error()))
+			uassert.True(t, strings.Contains(err.Error(), errInvalidTokenParamsRange))
 		})
 	}
 }
 
 // TestSvgGenerator_outOfRangeValues_DetailedErrors verifies that error messages
 // contain specific coordinate information for easier debugging.
-func TestSvgGenerator_outOfRangeValues_DetailedErrors(t *testing.T) {
+func TestSvgGenerator_outOfRangeValues_DetailedErrors(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		params            string
@@ -651,13 +651,13 @@ func TestSvgGenerator_outOfRangeValues_DetailedErrors(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
 
 			errMsg := err.Error()
 			// Verify error message contains base error
-			uassert.True(t, strings.Contains(errMsg, errInvalidTokenParamsRange.Error()))
+			uassert.True(t, strings.Contains(errMsg, errInvalidTokenParamsRange))
 			// Verify error message contains coordinate name
 			uassert.True(t, strings.Contains(errMsg, tc.expectedCoordName+"="))
 			// Verify error message contains the actual value
@@ -669,7 +669,7 @@ func TestSvgGenerator_outOfRangeValues_DetailedErrors(t *testing.T) {
 }
 
 // TestSvgGenerator_invalidColorFormat tests invalid color formats.
-func TestSvgGenerator_invalidColorFormat(t *testing.T) {
+func TestSvgGenerator_invalidColorFormat(cur realm, t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -717,16 +717,16 @@ func TestSvgGenerator_invalidColorFormat(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
-			uassert.Equal(t, errInvalidColorFormat.Error(), err.Error())
+			uassert.Equal(t, errInvalidColorFormat, err.Error())
 		})
 	}
 }
 
 // TestSvgGenerator_isValidHexColor tests the hex color validation function.
-func TestSvgGenerator_isValidHexColor(t *testing.T) {
+func TestSvgGenerator_isValidHexColor(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		color    string
@@ -751,7 +751,7 @@ func TestSvgGenerator_isValidHexColor(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			result := isValidHexColor(tc.color)
 			uassert.Equal(t, tc.expected, result)
 		})
@@ -760,7 +760,7 @@ func TestSvgGenerator_isValidHexColor(t *testing.T) {
 
 // TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput tests that genImageParamsString
 // always produces output that passes validation in paramsToImageRaw.
-func TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput(t *testing.T) {
+func TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput(cur realm, t *testing.T) {
 	// Test with many different seeds to ensure robustness
 	for i := 0; i < 100; i++ {
 		seed1 := uint64(i * 12345)
@@ -773,7 +773,7 @@ func TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput(t *testing.
 		uassert.NoError(t, err)
 
 		// Should never panic
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			svg := p.generateSVG()
 			// Verify basic SVG structure
 			uassert.True(t, strings.Contains(svg, "<svg"))
@@ -845,11 +845,11 @@ func extractIntValue(t *testing.T, text, prefix string) int {
 
 // TestSvgGenerator_parseImageParams tests the parseImageParams function
 // which validates and parses the expected parameter format.
-func TestSvgGenerator_parseImageParams(t *testing.T) {
+func TestSvgGenerator_parseImageParams(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		input         string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:  "valid params - standard format",
@@ -1009,18 +1009,18 @@ func TestSvgGenerator_parseImageParams(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			_, err := parseImageParams(tc.input)
-			if tc.expectedError == nil {
+			if tc.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
 				uassert.Error(t, err)
 				// For range validation errors, check if error contains base error message
 				// (detailed errors include coordinate info)
 				if tc.expectedError == errInvalidTokenParamsRange {
-					uassert.True(t, strings.Contains(err.Error(), tc.expectedError.Error()))
+					uassert.True(t, strings.Contains(err.Error(), tc.expectedError))
 				} else {
-					uassert.Equal(t, tc.expectedError.Error(), err.Error())
+					uassert.Equal(t, tc.expectedError, err.Error())
 				}
 			}
 		})

@@ -1,13 +1,15 @@
 package v1
 
 import (
-	"chain/runtime"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -35,6 +37,8 @@ import (
 //
 // Panics if any validation fails or if the transfer fails
 func (i *poolV1) safeTransfer(
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	to address,
 	tokenPath string,
@@ -43,13 +47,13 @@ func (i *poolV1) safeTransfer(
 ) {
 	token0 := p.BalanceToken0()
 	token1 := p.BalanceToken1()
-	amountInt64 := safeConvertToInt64(amount)
+	amountInt64 := gnsmath.SafeConvertToInt64(amount)
 
 	if err := validatePoolBalance(token0, token1, amountInt64, isToken0); err != nil {
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
+	common.SafeGRC20Transfer(cross(rlm), tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, amountInt64, isToken0)
 	if err != nil {
@@ -70,7 +74,7 @@ func (i *poolV1) safeTransfer(
 // safeTransferFrom securely transfers tokens into the pool while ensuring balance consistency.
 //
 // This function performs the following steps:
-// 1. Validates and converts the transfer amount to `int64` using `safeConvertToInt64`.
+// 1. Validates and converts the transfer amount to `int64` using `gnsmath.SafeConvertToInt64`.
 // 2. Executes the token transfer using `TransferFrom` via the token teller contract.
 // 3. Verifies that the destination balance reflects the correct amount after transfer.
 // 4. Updates the pool's internal balances (`token0` or `token1`) and validates the updated state.
@@ -94,21 +98,23 @@ func (i *poolV1) safeTransfer(
 // - The balance consistency check ensures that no tokens are lost or double-counted during the transfer.
 // - Pool balance updates are performed atomically to ensure internal consistency.
 func (i *poolV1) safeTransferFrom(
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	from, to address,
 	tokenPath string,
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	amountInt64 := safeConvertToInt64(amount)
+	amountInt64 := gnsmath.SafeConvertToInt64(amount)
 
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
-	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
+	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, from, to, amountInt64)
 
 	afterBalance := token.BalanceOf(to)
-	if safeAddInt64(beforeBalance, amountInt64) != afterBalance {
+	if gnsmath.SafeAddInt64(beforeBalance, amountInt64) != afterBalance {
 		panic(ufmt.Sprintf(
 			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
 			errTransferFailed, beforeBalance, amountInt64, afterBalance,
@@ -119,9 +125,9 @@ func (i *poolV1) safeTransferFrom(
 
 	// update pool balances
 	if isToken0 {
-		poolBalances.SetToken0(safeAddInt64(poolBalances.Token0(), amountInt64))
+		poolBalances.SetToken0(gnsmath.SafeAddInt64(poolBalances.Token0(), amountInt64))
 	} else {
-		poolBalances.SetToken1(safeAddInt64(poolBalances.Token1(), amountInt64))
+		poolBalances.SetToken1(gnsmath.SafeAddInt64(poolBalances.Token1(), amountInt64))
 	}
 
 	p.SetBalances(poolBalances)
@@ -184,6 +190,8 @@ func (i *poolV1) safeTransferFrom(
 //	    return nil
 //	}
 func (i *poolV1) safeSwapCallback(
+	_ int,
+	rlm realm,
 	p *pl.Pool,
 	tokenPath string,
 	amountInInt256 *i256.Int,
@@ -198,7 +206,7 @@ func (i *poolV1) safeSwapCallback(
 		))
 	}
 
-	currentAddress := runtime.CurrentRealm().Address()
+	currentAddress := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	amountIn := amountInInt256.Int64()
 	amountOut := amountOutInt256.Int64()
@@ -225,13 +233,15 @@ func (i *poolV1) safeSwapCallback(
 
 	// execute swap callback
 	// CallbackMarker is created by the pool module to enforce type-system level validation.
-	err := swapCallback(cross, amount0Delta, amount1Delta, &pl.CallbackMarker{})
+	// Allocation goes through pl.NewCallbackMarker so the alloc happens in pool realm
+	// (interrealm v2 forbids /r/-declared types being constructed outside their owner).
+	err := swapCallback(cross(rlm), amount0Delta, amount1Delta, pl.NewCallbackMarker())
 	if err != nil {
 		panic(err)
 	}
 
 	balanceAfter := common.BalanceOf(tokenPath, currentAddress)
-	balanceIncrease := safeSubInt64(balanceAfter, balanceBefore)
+	balanceIncrease := gnsmath.SafeSubInt64(balanceAfter, balanceBefore)
 
 	// check insufficient payment by swap callback
 	if balanceIncrease < amountIn {
@@ -242,7 +252,7 @@ func (i *poolV1) safeSwapCallback(
 	}
 
 	// check overflow update pool balance
-	resultTokenBalance := safeAddInt64(beforeTokenBalance, amountIn)
+	resultTokenBalance := gnsmath.SafeAddInt64(beforeTokenBalance, amountIn)
 
 	poolBalances := p.Balances()
 
@@ -297,7 +307,7 @@ func updatePoolBalance(
 				errBalanceUpdateFailed, token0, amount,
 			)
 		}
-		return safeSubInt64(token0, amount), nil
+		return gnsmath.SafeSubInt64(token0, amount), nil
 	}
 
 	if token1 < amount {
@@ -306,5 +316,5 @@ func updatePoolBalance(
 			errBalanceUpdateFailed, token1, amount,
 		)
 	}
-	return safeSubInt64(token1, amount), nil
+	return gnsmath.SafeSubInt64(token1, amount), nil
 }

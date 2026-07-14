@@ -58,74 +58,74 @@ var (
 	incentiveStartTime int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool without tier")
-	createPoolNoTier()
+	createPoolNoTier(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive")
-	createExternalIncentive()
+	createExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint and stake positions")
-	mintAndStakePositions()
+	mintAndStakePositions(cur)
 	println()
 
 	println("[SCENARIO] 5. Verify rewards accumulate with external incentive")
-	verifyExternalRewards()
+	verifyExternalRewards(cur)
 	println()
 
 	println("[SCENARIO] 6. Wait for external incentive to expire")
-	waitForIncentiveExpiry()
+	waitForIncentiveExpiry(cur)
 	println()
 
 	println("[SCENARIO] 7. Verify pool has no incentives")
-	verifyNoIncentives()
+	verifyNoIncentives(cur)
 	println()
 
 	println("[SCENARIO] 8. Unstake positions after incentive ended")
-	unstakeAfterIncentiveEnd()
+	unstakeAfterIncentiveEnd(cur)
 	println()
 
 	println("[SCENARIO] 9. Verify positions recovered successfully")
-	verifyPositionsRecovered()
+	verifyPositionsRecovered(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, maxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	// set pool creation fee to 0
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	// mint and distribute initial GNS
-	en.MintAndDistributeGns(cross)
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(cur))
+	en.MintAndDistributeGns(cross(cur))
 
 	ufmt.Printf("[EXPECTED] initialized with short warm-up periods\n")
 	testing.SkipHeights(1)
 }
 
-func createPoolNoTier() {
+func createPoolNoTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
 	// Create pool without setting any tier
-	pl.CreatePool(cross, barPath, fooPath, fee3000, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), barPath, fooPath, fee3000, "79228162514264337593543950337")
 
 	// Verify pool has no tier
 	// Pool should not be in tier system
@@ -133,17 +133,17 @@ func createPoolNoTier() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentive() {
+func createExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Add external reward token
-	sr.AddToken(cross, "gno.land/r/onbloc/obl")
+	sr.AddToken(cross(cur), "gno.land/r/onbloc/obl")
 
 	// Approve GNS for deposit
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	// Approve reward tokens
-	bar.Approve(cross, stakerAddr, externalRewardAmount)
+	bar.Approve(cross(cur), stakerAddr, externalRewardAmount)
 
 	// Create external incentive
 	// Start time must be at least 1 day in the future AND must be midnight
@@ -154,7 +154,7 @@ func createExternalIncentive() {
 	endTime := incentiveStartTime + TIMESTAMP_90DAYS
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000", // targetPoolPath
 		barPath,              // rewardToken
 		externalRewardAmount, // rewardAmount
@@ -166,16 +166,16 @@ func createExternalIncentive() {
 	testing.SkipHeights(1)
 }
 
-func mintAndStakePositions() {
+func mintAndStakePositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxInt64)
-	foo.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	foo.Approve(cross(cur), poolAddr, maxInt64)
 
 	// Mint position 1
 	positionId1, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee3000,
@@ -192,7 +192,7 @@ func mintAndStakePositions() {
 
 	// Mint position 2
 	positionId2, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee3000,
@@ -208,24 +208,24 @@ func mintAndStakePositions() {
 	)
 
 	// Stake both positions
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId1))
-	sr.StakeToken(cross, positionId1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId1))
+	sr.StakeToken(cross(cur), positionId1, "")
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId2))
-	sr.StakeToken(cross, positionId2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId2))
+	sr.StakeToken(cross(cur), positionId2, "")
 
 	ufmt.Printf("[EXPECTED] minted and staked positions: %d and %d\n", positionId1, positionId2)
 	testing.SkipHeights(1)
 }
 
-func verifyExternalRewards() {
+func verifyExternalRewards(cur realm) {
 	// Skip to when external incentive is active (need to skip more than 1 day)
 	testing.SkipHeights(200000) // Skip enough blocks to pass the start time
 
 	testing.SetRealm(adminRealm)
 
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1) // Collect rewards from external incentive
+	sr.CollectReward(cross(cur), 1) // Collect rewards from external incentive
 	afterBar := bar.BalanceOf(adminUser)
 	diff := afterBar - beforeBar
 
@@ -237,21 +237,21 @@ func verifyExternalRewards() {
 	testing.SkipHeights(1)
 }
 
-func waitForIncentiveExpiry() {
+func waitForIncentiveExpiry(cur realm) {
 	// Skip blocks to go past the end time of external incentive
 	testing.SkipHeights(10000)
 
 	ufmt.Printf("[EXPECTED] waited for external incentive to expire\n")
 }
 
-func verifyNoIncentives() {
+func verifyNoIncentives(cur realm) {
 	// Try to collect rewards - should be minimal or none
 	testing.SetRealm(adminRealm)
 
 	beforeBar := bar.BalanceOf(adminUser)
 	beforeGns := gns.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 
 	afterBar := bar.BalanceOf(adminUser)
 	afterGns := gns.BalanceOf(adminUser)
@@ -266,25 +266,25 @@ func verifyNoIncentives() {
 	ufmt.Printf("[EXPECTED] pool has no tier and external incentive ended\n")
 }
 
-func unstakeAfterIncentiveEnd() {
+func unstakeAfterIncentiveEnd(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// This is the critical test - unstaking should succeed even though:
 	// 1. Pool has no tier (no internal incentives)
 	// 2. External incentive has ended (no external incentives)
 
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 1 after incentive ended\n")
 
-	sr.UnStakeToken(cross, 2)
+	sr.UnStakeToken(cross(cur), 2)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 2 after incentive ended\n")
 
 	testing.SkipHeights(1)
 }
 
-func verifyPositionsRecovered() {
+func verifyPositionsRecovered(cur realm) {
 	// Verify NFT ownership returned to original owners
-	owner1, err1 := gnft.OwnerOf(positionIdFrom(1))
+	owner1, err1 := gnft.OwnerOf(positionIdFrom(cur, 1))
 	if err1 != nil {
 		panic("error checking ownership of position 1: " + err1.Error())
 	}
@@ -292,7 +292,7 @@ func verifyPositionsRecovered() {
 		panic(ufmt.Sprintf("NFT 1 should be owned by admin after unstaking, got %s", owner1))
 	}
 
-	owner2, err2 := gnft.OwnerOf(positionIdFrom(2))
+	owner2, err2 := gnft.OwnerOf(positionIdFrom(cur, 2))
 	if err2 != nil {
 		panic("error checking ownership of position 2: " + err2.Error())
 	}
@@ -317,7 +317,7 @@ func verifyPositionsRecovered() {
 	ufmt.Printf("[EXPECTED] position 2 still accessible - liquidity: %s\n", position2.Liquidity())
 }
 
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

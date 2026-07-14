@@ -57,79 +57,79 @@ var (
 	MUST_EXISTS_IN_TIER_1       = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position 01 on bar:qux:100")
-	mintBarQux100_1()
+	mintBarQux100_1(cur)
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with BAR")
-	createExternalIncentiveBar()
+	createExternalIncentiveBar(cur)
 	println()
 
 	println("[SCENARIO] 5. Create external incentive with GNS")
-	createExternalIncentiveGns()
+	createExternalIncentiveGns(cur)
 	println()
 
 	println("[SCENARIO] 6. Stake position 01")
-	stakeToken_1()
+	stakeToken_1(cur)
 	println()
 
 	println("[SCENARIO] 7. Wait for incentives to become active")
-	afterActive()
+	afterActive(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect reward for single block")
-	collectRewardSingleBlock()
+	collectRewardSingleBlock(cur)
 	println()
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, maxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	testing.SetRealm(stakerRealm)
 	testing.SkipHeights(1)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	pl.CreatePool(cross(cur), barPath, quxPath, 100, "79228162514264337593543950337")
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
 
-	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950337")
 
 	ufmt.Printf("[EXPECTED] pools created and bar:qux:100 set to tier 1\n")
 	testing.SkipHeights(1)
 }
 
-func mintBarQux100_1() {
+func mintBarQux100_1(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -148,7 +148,7 @@ func mintBarQux100_1() {
 		panic("expected position id 1")
 	}
 
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := gnft.OwnerOf(positionIdFrom(cur, positionId))
 	if err != nil || owner != adminUser {
 		panic("unexpected owner")
 	}
@@ -157,14 +157,14 @@ func mintBarQux100_1() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentiveBar() {
+func createExternalIncentiveBar(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, depositGnsAmount)
+	bar.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
 		2_000_000_000,
@@ -176,13 +176,13 @@ func createExternalIncentiveBar() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentiveGns() {
+func createExternalIncentiveGns(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	sr.CreateExternalIncentive(
-		cross,
+		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		"gno.land/r/gnoswap/gns",
 		5_000_000_000,
@@ -194,17 +194,17 @@ func createExternalIncentiveGns() {
 	testing.SkipHeights(1)
 }
 
-func stakeToken_1() {
+func stakeToken_1(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	ufmt.Printf("[EXPECTED] position 01 staked\n")
 	testing.SkipHeights(1)
 }
 
-func afterActive() {
+func afterActive(cur realm) {
 	testing.SkipHeights(978 - runtime.ChainHeight() - 1) // in active
 	testing.SkipHeights(1)                               // active // but no block passed since active
 	testing.SkipHeights(50)                              // skip 50 more block
@@ -213,18 +213,18 @@ func afterActive() {
 
 	// clear reward
 	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] incentives are now active, initial rewards cleared\n")
 }
 
-func collectRewardSingleBlock() {
+func collectRewardSingleBlock(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	oldBar := bar.BalanceOf(adminUser)
 	oldGns := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	// 1 block passed
 	// position warmup is 70%
 
@@ -238,7 +238,7 @@ func collectRewardSingleBlock() {
 	ufmt.Printf("[EXPECTED] GNS reward (internal + external): %d\n", gnsReward)
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	switch positionId := positionId.(type) {
 	case string:
 		return grc721.TokenID(positionId)

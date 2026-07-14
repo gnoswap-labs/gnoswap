@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // mint gns during all halving years
 package main
 
@@ -32,13 +34,13 @@ const (
 	defaultBlockTime = 5
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize emission")
-	initEmission()
+	initEmission(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint GNS when initialized")
-	mintGNS()
+	mintGNS(cur)
 	println()
 
 	blocksOfYear := yearMs / defaultBlockTime
@@ -51,20 +53,20 @@ func main() {
 		println()
 
 		ufmt.Printf("[SCENARIO] %d. Mint GNS when %d year end\n", scenarioIndex+1, year)
-		mintGNS()
+		mintGNS(cur)
 		println()
 	}
 }
 
-func initEmission() {
+func initEmission(cur realm) {
 	testing.SetOriginCaller(adminAddr)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 }
 
-func mintGNS() {
+func mintGNS(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
-	mintedAmount := gns.MintGns(cross, user01Addr)
+	mintedAmount := gns.MintGns(cross(cur), user01Addr)
 	totalMintedAmount := gns.MintedEmissionAmount()
 
 	ufmt.Printf("[EXPECTED] minted amount should be %d\n", mintedAmount)

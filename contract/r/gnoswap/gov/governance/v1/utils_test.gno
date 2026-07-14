@@ -3,111 +3,12 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-// TestUtils_formatBool tests boolean formatting
-func TestUtils_formatBool(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    bool
-		expected string
-	}{
-		{
-			name:     "format true",
-			input:    true,
-			expected: "true",
-		},
-		{
-			name:     "format false",
-			input:    false,
-			expected: "false",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := formatBool(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
-// TestUtils_formatInt tests integer formatting
-func TestUtils_formatInt(t *testing.T) {
-	tests := []struct {
-		name          string
-		input         interface{}
-		expected      string
-		expectedPanic bool
-	}{
-		{
-			name:     "format int64",
-			input:    int64(123),
-			expected: "123",
-		},
-		{
-			name:     "format int32",
-			input:    int32(456),
-			expected: "456",
-		},
-		{
-			name:     "format int8",
-			input:    int8(-12),
-			expected: "-12",
-		},
-		{
-			name:     "format zero",
-			input:    int64(0),
-			expected: "0",
-		},
-		{
-			name:     "format negative int64",
-			input:    int64(-9223372036854775808),
-			expected: "-9223372036854775808",
-		},
-		{
-			name:     "format max int64",
-			input:    int64(9223372036854775807),
-			expected: "9223372036854775807",
-		},
-		{
-			name:          "invalid type string",
-			input:         "invalid",
-			expectedPanic: true,
-		},
-		{
-			name:          "invalid type float",
-			input:         float64(123.45),
-			expectedPanic: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.expectedPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("expected panic but did not panic")
-					}
-				}()
-				formatInt(tc.input)
-			} else {
-				// when
-				result := formatInt(tc.input)
-
-				// then
-				uassert.Equal(t, result, tc.expected)
-			}
-		})
-	}
-}
-
 // TestUtils_parseInt tests int parsing with overflow checking
-func TestUtils_parseInt(t *testing.T) {
+func TestUtils_parseInt(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -157,9 +58,9 @@ func TestUtils_parseInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseInt(tc.input)
 				})
 			} else {
@@ -174,7 +75,7 @@ func TestUtils_parseInt(t *testing.T) {
 }
 
 // TestUtils_parseInt64 tests int64 parsing
-func TestUtils_parseInt64(t *testing.T) {
+func TestUtils_parseInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -234,9 +135,9 @@ func TestUtils_parseInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseInt64(tc.input)
 				})
 			} else {
@@ -251,7 +152,7 @@ func TestUtils_parseInt64(t *testing.T) {
 }
 
 // TestUtils_parseUint64 tests uint64 parsing
-func TestUtils_parseUint64(t *testing.T) {
+func TestUtils_parseUint64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
@@ -307,9 +208,9 @@ func TestUtils_parseUint64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					parseUint64(tc.input)
 				})
 			} else {
@@ -324,7 +225,7 @@ func TestUtils_parseUint64(t *testing.T) {
 }
 
 // TestUtils_SafeAddInt64 tests safe addition with overflow/underflow detection
-func TestUtils_SafeAddInt64(t *testing.T) {
+func TestUtils_SafeAddInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -439,13 +340,13 @@ func TestUtils_SafeAddInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
-					safeAddInt64(tc.a, tc.b)
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
+					gnsmath.SafeAddInt64(tc.a, tc.b)
 				})
 			} else {
-				result := safeAddInt64(tc.a, tc.b)
+				result := gnsmath.SafeAddInt64(tc.a, tc.b)
 				uassert.Equal(t, tc.expected, result)
 			}
 		})
@@ -453,7 +354,7 @@ func TestUtils_SafeAddInt64(t *testing.T) {
 }
 
 // TestUtils_SafeSubInt64 tests safe subtraction with overflow/underflow detection
-func TestUtils_SafeSubInt64(t *testing.T) {
+func TestUtils_SafeSubInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		description      string
@@ -575,191 +476,13 @@ func TestUtils_SafeSubInt64(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
-					safeSubInt64(tc.a, tc.b)
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
+					gnsmath.SafeSubInt64(tc.a, tc.b)
 				})
 			} else {
-				result := safeSubInt64(tc.a, tc.b)
-				uassert.Equal(t, tc.expected, result)
-			}
-		})
-	}
-}
-
-// TestUtils_SafeMulDiv tests safe multiplication and division
-func TestUtils_SafeMulDiv(t *testing.T) {
-	tests := []struct {
-		name             string
-		description      string
-		a                int64
-		b                int64
-		c                int64
-		expected         int64
-		expectedPanic    bool
-		expectedPanicMsg string
-	}{
-		{
-			name:        "normal calculation: (10 * 50) / 100",
-			description: "standard percentage calculation",
-			a:           10,
-			b:           50,
-			c:           100,
-			expected:    5,
-		},
-		{
-			name:        "quorum calculation: (1000 * 60) / 100",
-			description: "typical quorum calculation",
-			a:           1000,
-			b:           60,
-			c:           100,
-			expected:    600,
-		},
-		{
-			name:        "large values within bounds",
-			description: "large but safe values",
-			a:           1000000000,
-			b:           100,
-			c:           100,
-			expected:    1000000000,
-		},
-		{
-			name:        "zero numerator: (0 * 100) / 50",
-			description: "zero in first operand",
-			a:           0,
-			b:           100,
-			c:           50,
-			expected:    0,
-		},
-		{
-			name:        "zero multiplier: (100 * 0) / 50",
-			description: "zero in second operand",
-			a:           100,
-			b:           0,
-			c:           50,
-			expected:    0,
-		},
-		{
-			name:        "negative first operand: (-100 * 50) / 100",
-			description: "negative value handling",
-			a:           -100,
-			b:           50,
-			c:           100,
-			expected:    -50,
-		},
-		{
-			name:        "negative second operand: (100 * -50) / 100",
-			description: "negative multiplier",
-			a:           100,
-			b:           -50,
-			c:           100,
-			expected:    -50,
-		},
-		{
-			name:        "both negative: (-100 * -50) / 100",
-			description: "two negatives make positive",
-			a:           -100,
-			b:           -50,
-			c:           100,
-			expected:    50,
-		},
-		{
-			name:        "negative divisor: (100 * 50) / -100",
-			description: "negative divisor",
-			a:           100,
-			b:           50,
-			c:           -100,
-			expected:    -50,
-		},
-		{
-			name:        "integer truncation: (10 * 3) / 7",
-			description: "result truncates towards zero",
-			a:           10,
-			b:           3,
-			c:           7,
-			expected:    4, // 30 / 7 = 4.28... -> 4
-		},
-		{
-			name:        "realistic voting weight with 50% quorum",
-			description: "realistic governance scenario with safe values",
-			a:           100000000000000000, // 1e17 (safe for multiplication)
-			b:           50,
-			c:           100,
-			expected:    50000000000000000, // 5e16
-		},
-		{
-			name:             "division by zero",
-			description:      "should panic on division by zero",
-			a:                100,
-			b:                50,
-			c:                0,
-			expectedPanic:    true,
-			expectedPanicMsg: "division by zero in safeMulDiv",
-		},
-		{
-			name:             "overflow: max int64 * 2",
-			description:      "multiplication overflow",
-			a:                9223372036854775807,
-			b:                2,
-			c:                1,
-			expectedPanic:    true,
-			expectedPanicMsg: "int64 multiplication overflow in safeMulDiv",
-		},
-		{
-			name:             "overflow: large positive * large positive",
-			description:      "large values causing overflow",
-			a:                3000000000000000000,
-			b:                4,
-			c:                1,
-			expectedPanic:    true,
-			expectedPanicMsg: "int64 multiplication overflow in safeMulDiv",
-		},
-		{
-			name:             "underflow: max int64 * -2",
-			description:      "multiplication underflow with negative",
-			a:                9223372036854775807,
-			b:                -2,
-			c:                1,
-			expectedPanic:    true,
-			expectedPanicMsg: "int64 multiplication underflow in safeMulDiv",
-		},
-		{
-			name:             "underflow: negative * large positive",
-			description:      "large negative multiplication",
-			a:                -3000000000000000000,
-			b:                4,
-			c:                1,
-			expectedPanic:    true,
-			expectedPanicMsg: "int64 multiplication underflow in safeMulDiv",
-		},
-		{
-			name:             "overflow: two large negatives",
-			description:      "two negatives causing overflow",
-			a:                -3000000000000000000,
-			b:                -4,
-			c:                1,
-			expectedPanic:    true,
-			expectedPanicMsg: "int64 multiplication overflow in safeMulDiv",
-		},
-		{
-			name:        "boundary safe: max / 2 * 2",
-			description: "boundary case that doesn't overflow",
-			a:           4611686018427387903,
-			b:           2,
-			c:           1,
-			expected:    9223372036854775806,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
-					safeMulDiv(tc.a, tc.b, tc.c)
-				})
-			} else {
-				result := safeMulDiv(tc.a, tc.b, tc.c)
+				result := gnsmath.SafeSubInt64(tc.a, tc.b)
 				uassert.Equal(t, tc.expected, result)
 			}
 		})

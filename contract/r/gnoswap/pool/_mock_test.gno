@@ -49,6 +49,8 @@ type MockPool struct {
 }
 
 func (m *MockPool) CreatePool(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -58,11 +60,13 @@ func (m *MockPool) CreatePool(
 }
 
 // SetPoolCreationFee sets the pool creation fee.
-func (m *MockPool) SetPoolCreationFee(fee int64) {
+func (m *MockPool) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 	m.Response.Get("SetPoolCreationFee")
 }
 
 func (m *MockPool) IncreaseObservationCardinalityNext(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -72,6 +76,8 @@ func (m *MockPool) IncreaseObservationCardinalityNext(
 }
 
 func (m *MockPool) Mint(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -90,6 +96,8 @@ func (m *MockPool) Mint(
 
 // Burn removes liquidity from a position.
 func (m *MockPool) Burn(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -108,6 +116,8 @@ func (m *MockPool) Burn(
 
 // Collect transfers owed tokens from a position to recipient.
 func (m *MockPool) Collect(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -125,11 +135,13 @@ func (m *MockPool) Collect(
 	return res[0].(string), res[1].(string)
 }
 
-func (m *MockPool) SetWithdrawalFee(fee uint64) {
+func (m *MockPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetWithdrawalFee")
 }
 
 func (m *MockPool) HandleWithdrawalFee(
+	_ int,
+	rlm realm,
 	token0Path string,
 	amount0 string,
 	token1Path string,
@@ -145,6 +157,8 @@ func (m *MockPool) HandleWithdrawalFee(
 }
 
 func (m *MockPool) Swap(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -163,19 +177,21 @@ func (m *MockPool) Swap(
 	return res[0].(string), res[1].(string)
 }
 
-func (m *MockPool) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
+func (m *MockPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	m.Response.Get("SetSwapEndHook")
 }
 
-func (m *MockPool) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
+func (m *MockPool) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	m.Response.Get("SetSwapStartHook")
 }
 
-func (m *MockPool) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (m *MockPool) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	m.Response.Get("SetTickCrossHook")
 }
 
 func (m *MockPool) CollectProtocol(
+	_ int,
+	rlm realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -191,7 +207,7 @@ func (m *MockPool) CollectProtocol(
 	return res[0].(string), res[1].(string)
 }
 
-func (m *MockPool) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
+func (m *MockPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
 	m.Response.Get("SetFeeProtocol")
 }
 

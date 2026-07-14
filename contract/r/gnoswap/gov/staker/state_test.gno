@@ -8,13 +8,13 @@ import (
 )
 
 // TestState_initializeDomainStore tests the private initializeDomainStore function
-func TestState_initializeDomainStore(t *testing.T) {
-	t.Run("initialize domain store", func(t *testing.T) {
+func TestState_initializeDomainStore(cur realm, t *testing.T) {
+	t.Run("initialize domain store", func(cur realm, t *testing.T) {
 		// given
 		testKvStore := store.NewKVStore(currentAddress)
 
 		// when
-		result := initializeDomainStore(testKvStore)
+		result := initializeDomainStore(0, cur, testKvStore)
 
 		// then
 		uassert.NotNil(t, result)
@@ -24,8 +24,8 @@ func TestState_initializeDomainStore(t *testing.T) {
 }
 
 // TestState_getImplementation tests the private getImplementation function
-func TestState_getImplementation(t *testing.T) {
-	t.Run("panic when implementation is nil", func(t *testing.T) {
+func TestState_getImplementation(cur realm, t *testing.T) {
+	t.Run("panic when implementation is nil", func(cur realm, t *testing.T) {
 		// given - save original implementation
 		originalImpl := implementation
 		implementation = nil
@@ -36,18 +36,18 @@ func TestState_getImplementation(t *testing.T) {
 			implementation = originalImpl
 		}()
 
-		uassert.PanicsWithMessage(t, "implementation is not initialized", func() {
+		uassert.PanicsWithMessage(t, cur, "implementation is not initialized", func() {
 			getImplementation()
 		})
 	})
 
-	t.Run("return implementation when set", func(t *testing.T) {
+	t.Run("return implementation when set", func(cur realm, t *testing.T) {
 		// given - ensure implementation is set
 		if implementation == nil {
 			// Initialize if needed
 			resetTestState(t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 		}
 
 		// when
@@ -59,8 +59,8 @@ func TestState_getImplementation(t *testing.T) {
 }
 
 // TestState_updateImplementation tests the private updateImplementation function
-func TestState_updateImplementation(t *testing.T) {
-	t.Run("error when no implementation in version manager", func(t *testing.T) {
+func TestState_updateImplementation(cur realm, t *testing.T) {
+	t.Run("error when no implementation in version manager", func(cur realm, t *testing.T) {
 		// given - reset state
 		resetTestState(t)
 
@@ -72,11 +72,11 @@ func TestState_updateImplementation(t *testing.T) {
 		uassert.Equal(t, err.Error(), "implementation is not initialized")
 	})
 
-	t.Run("success when implementation exists", func(t *testing.T) {
+	t.Run("success when implementation exists", func(cur realm, t *testing.T) {
 		// given
 		resetTestState(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-		RegisterInitializer(cross, makeMockInitializer("v1"))
+		RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 		// when
 		err := updateImplementation()

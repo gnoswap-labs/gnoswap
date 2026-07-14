@@ -104,7 +104,7 @@ package swap_wrapper
 
 import (
 	"chain"
-	"chain/runtime"
+	"chain/runtime/unsafe"
 	"errors"
 
 	"gno.land/r/gnoswap/common"
@@ -120,26 +120,27 @@ func PrepareSwapCallback(
 	payer address,
 ) func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 	return func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-		return HandleSwapCallbackWithContext(token0Path, token1Path, payer, amount0Delta, amount1Delta)
+		return HandleSwapCallbackWithContext(cur, token0Path, token1Path, payer, amount0Delta, amount1Delta)
 	}
 }
 
 func HandleSwapCallbackWithContext(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	payer address,
 	amount0Delta int64,
 	amount1Delta int64,
 ) error {
-	if runtime.PreviousRealm().Address() != poolAddr {
+	if unsafe.PreviousRealm().Address() != poolAddr {
 		return errors.New("unauthorized caller")
 	}
 
 	switch {
 	case amount0Delta > 0:
-		common.SafeGRC20TransferFrom(cross, token0Path, payer, poolAddr, amount0Delta)
+		common.SafeGRC20TransferFrom(cross(cur), token0Path, payer, poolAddr, amount0Delta)
 	case amount1Delta > 0:
-		common.SafeGRC20TransferFrom(cross, token1Path, payer, poolAddr, amount1Delta)
+		common.SafeGRC20TransferFrom(cross(cur), token1Path, payer, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -149,21 +150,21 @@ func HandleSwapCallbackWithContext(
 package main
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/swap_wrapper"
 )
 
-func main() {
+func main(cur realm) {
 	token0Path := "gno.land/r/gnoland/wugnot"
 	token1Path := "gno.land/r/gnoswap/gns"
-	userAddr := runtime.PreviousRealm().Address()
+	userAddr := unsafe.PreviousRealm().Address()
 
-	callbackFn := swap_wrapper.PrepareSwapCallback(cross, token0Path, token1Path, userAddr)
+	callbackFn := swap_wrapper.PrepareSwapCallback(cross(cur), token0Path, token1Path, userAddr)
 
 	pool.Swap(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		3000,
@@ -180,19 +181,19 @@ func main() {
 package main
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/swap_wrapper"
 )
 
-func main() {
+func main(cur realm) {
 	token0Path := "gno.land/r/gnoland/wugnot"
 	token1Path := "gno.land/r/gnoswap/gns"
-	userAddr := runtime.PreviousRealm().Address()
+	userAddr := unsafe.PreviousRealm().Address()
 
 	pool.Swap(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		3000,
@@ -203,6 +204,7 @@ func main() {
 		userAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return swap_wrapper.HandleSwapCallbackWithContext(
+				cur,
 				token0Path,
 				token1Path,
 				userAddr,

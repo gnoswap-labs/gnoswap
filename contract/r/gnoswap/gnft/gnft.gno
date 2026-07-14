@@ -2,7 +2,7 @@ package gnft
 
 import (
 	"chain"
-	"chain/runtime"
+	"errors"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -12,7 +12,11 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-var nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+var nft *grc721.BasicNFT
+
+func init(cur realm) {
+	nft = grc721.NewBasicNFT(0, cur, "GNOSWAP NFT", "GNFT")
+}
 
 // Name returns the NFT collection name.
 func Name() string {
@@ -73,12 +77,12 @@ func MustOwnerOf(tid grc721.TokenID) address {
 //
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	assertIsValidTokenURI(tid)
 
-	checkErr(setTokenURI(tid, tURI))
+	checkErr(setTokenURI(0, cur, tid, tURI))
 
 	return true, nil
 }
@@ -101,10 +105,11 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
-	assertIsAllowedTransfer(tid)
+	caller := cur.Previous().Address()
+	assertIsAllowedTransfer(caller, tid)
 
-	err := nft.SafeTransferFrom(from, to, tid)
-	checkTransferErr(err, from, to, tid)
+	err := nft.SafeTransferFrom(caller, from, to, tid)
+	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
 
@@ -126,10 +131,11 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
-	assertIsAllowedTransfer(tid)
+	caller := cur.Previous().Address()
+	assertIsAllowedTransfer(caller, tid)
 
-	err := nft.TransferFrom(from, to, tid)
-	checkTransferErr(err, from, to, tid)
+	err := nft.TransferFrom(caller, from, to, tid)
+	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
 
@@ -140,12 +146,12 @@ func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 //   - tid: token ID to approve for transfer
 //
 // Returns error if approval fails.
-// Only callable when not halted.
 func Approve(cur realm, approved address, tid grc721.TokenID) error {
 	assertIsValidAddress(approved)
 
-	err := nft.Approve(approved, tid)
-	checkApproveErr(err, approved, tid)
+	caller := cur.Previous().Address()
+	err := nft.Approve(caller, approved, tid)
+	checkApproveErr(err, caller, approved, tid)
 	return nil
 }
 
@@ -156,11 +162,10 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 //   - approved: true to approve, false to revoke
 //
 // Returns error if operation fails.
-// Only callable when not halted.
 func SetApprovalForAll(cur realm, operator address, approved bool) error {
 	assertIsValidAddress(operator)
 
-	checkErr(nft.SetApprovalForAll(operator, approved))
+	checkErr(nft.SetApprovalForAll(cur.Previous().Address(), operator, approved))
 	return nil
 }
 
@@ -194,7 +199,7 @@ func IsApprovedForAll(owner, operator address) bool {
 // Returns minted token ID.
 // Only callable by position contract.
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
@@ -203,9 +208,9 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
 	// Parameters are converted to full SVG on read via TokenURI().
 	imageParams := genImageParamsString(generateRandInstance())
-	checkErr(setTokenURI(tid, grc721.TokenURI(imageParams)))
+	checkErr(setTokenURI(0, cur, tid, grc721.TokenURI(imageParams)))
 
-	checkErr(nft.TransferFrom(positionAddr, to, tid))
+	checkErr(nft.TransferFrom(positionAddr, positionAddr, to, tid))
 
 	return tid
 }
@@ -223,7 +228,7 @@ func Exists(tid grc721.TokenID) bool {
 //
 // Only callable by position.
 func Burn(cur realm, tid grc721.TokenID) {
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
 	checkErr(nft.Burn(tid))
@@ -238,16 +243,22 @@ func Render(path string) string {
 }
 
 // setTokenURI sets the metadata URI for a specific token ID.
-func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
-	_, err := nft.SetTokenURI(tid, tURI)
-	if err != nil {
-		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
+func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
+	previousAddr := previousRealm.Address()
+
+	_, err := nft.SetTokenURI(previousAddr, tid, tURI)
+	if err != nil {
+		return makeErrorWithDetails(err.Error(), ufmt.Sprintf("token id (%s)", tid))
+	}
+
 	chain.Emit(
 		"SetTokenURI",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", previousAddr.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenId", string(tid),
 	)

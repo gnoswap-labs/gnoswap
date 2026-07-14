@@ -39,12 +39,12 @@ var (
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
-func main() {
-	testInvalidTickRangeBurn()
+func main(cur realm) {
+	testInvalidTickRangeBurn(cur)
 }
 
 // testInvalidTickRangeBurn tests burning with invalid tick range (should abort)
-func testInvalidTickRangeBurn() {
+func testInvalidTickRangeBurn(cur realm) {
 	// Given: Pool exists with minted position
 	barTokenPath := "gno.land/r/onbloc/bar"
 	bazTokenPath := "gno.land/r/onbloc/baz"
@@ -59,9 +59,9 @@ func testInvalidTickRangeBurn() {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -69,13 +69,13 @@ func testInvalidTickRangeBurn() {
 	)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	pool.Mint(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -100,9 +100,9 @@ func testInvalidTickRangeBurn() {
 	println("[EXPECTED] Should abort with message:", expectedAbortMsg)
 
 	testing.SetRealm(posRealm)
-	uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
+	uassert.AbortsWithMessage(t, cur, expectedAbortMsg, func() {
 		pool.Burn(
-			cross,
+			cross(cur),
 			barTokenPath,
 			bazTokenPath,
 			fee,

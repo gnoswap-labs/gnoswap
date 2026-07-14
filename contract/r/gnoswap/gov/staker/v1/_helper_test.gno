@@ -9,6 +9,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // contract Paths
@@ -66,3 +67,30 @@ func makeFakeAddress(name string) address {
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
 }
+
+// callStakerDelegate crosses into gov/staker.Delegate after SetRealm(caller).
+func callStakerDelegate(cur realm, to address, amount int64, referrer string) int64 {
+	return staker.Delegate(cross(cur), to, amount, referrer)
+}
+
+// callStakerUndelegate crosses into gov/staker.Undelegate after SetRealm(caller).
+func callStakerUndelegate(cur realm, from address, amount int64) int64 {
+	return staker.Undelegate(cross(cur), from, amount)
+}
+
+// callStakerRedelegate crosses into gov/staker.Redelegate after SetRealm(caller).
+func callStakerRedelegate(cur realm, delegator, delegatee address, amount int64) int64 {
+	return staker.Redelegate(cross(cur), delegator, delegatee, amount)
+}
+
+// callStakerCollectUndelegatedGns crosses into gov/staker.CollectUndelegatedGns.
+func callStakerCollectUndelegatedGns(cur realm) int64 {
+	return staker.CollectUndelegatedGns(cross(cur))
+}
+
+// callStakerCollectReward crosses into gov/staker.CollectReward after SetRealm(caller).
+func callStakerCollectReward(cur realm) {
+	staker.CollectReward(cross(cur))
+}
+
+

@@ -17,70 +17,76 @@ import (
 )
 
 // TestFuzzExactInSwapRoute_ValidParams_Stateless fuzzes the ExactInSwapRoute function.
-func TestFuzzExactInSwapRoute_ValidParams_Stateless(t *testing.T) {
+func TestFuzzExactInSwapRoute_ValidParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewValidExactInSwapRouteParams(ft)
 
 		// initialize randomized environment
 		for i := 0; i < 10; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
+			setupRouterMintPositionByRoutePath(cur, ft, params.routeArr)
 		}
+
+		params.updateDrySwapResult(cur)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
 		// run the test swap route
-		runTestExactInSwapRoute(ft, params)
+		runTestExactInSwapRoute(cur, ft, params)
 	})
 }
 
 // TestFuzzExactInSwapRoute_RandomizedParams_Stateless fuzzes the ExactInSwapRoute function.
-func TestFuzzExactInSwapRoute_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzExactInSwapRoute_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewRandomizedExactInSwapRouteParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
 		for i := 0; i < setupIterations; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
+			setupRouterMintPositionByRoutePath(cur, ft, params.routeArr)
 		}
+
+		params.updateDrySwapResult(cur)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
 		// run the test swap route
-		runTestExactInSwapRoute(ft, params)
+		runTestExactInSwapRoute(cur, ft, params)
 	})
 }
 
 // TestFuzzExactInSwapRoute_RandomizedParams_Stateful fuzzes the ExactInSwapRoute function.
-func TestFuzzExactInSwapRoute_RandomizedParams_Stateful(t *testing.T) {
+func TestFuzzExactInSwapRoute_RandomizedParams_Stateful(cur realm, t *testing.T) {
 	// initialize the states for the stateful fuzz test
-	initStates(t)
+	initStates(cur, t)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedExactInSwapRouteParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
 		for i := 0; i < setupIterations; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
+			setupRouterMintPositionByRoutePath(cur, ft, params.routeArr)
 		}
+
+		params.updateDrySwapResult(cur)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
 		// run the test swap route
-		runTestExactInSwapRoute(ft, params)
+		runTestExactInSwapRoute(cur, ft, params)
 	})
 }
 
 // runTestExactInSwapRoute runs the test swap route.
-func runTestExactInSwapRoute(ft *fuzz.T, params *exactInSwapRouteParams) {
+func runTestExactInSwapRoute(cur realm, ft *fuzz.T, params *exactInSwapRouteParams) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	// mint test tokens for the input token
@@ -89,14 +95,14 @@ func runTestExactInSwapRoute(ft *fuzz.T, params *exactInSwapRouteParams) {
 		mintedAmount = 0
 	}
 
-	mintTestToken(params.inputToken, mintedAmount)
+	mintTestToken(cur, params.inputToken, mintedAmount)
 
 	// exact in swap route
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(cross, params.inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), params.inputToken, routerAddr, math.MaxInt64)
 
 	router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		params.inputToken,
 		params.outputToken,
 		params.amountIn,

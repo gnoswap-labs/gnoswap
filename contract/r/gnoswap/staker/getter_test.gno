@@ -3,6 +3,7 @@ package staker
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -66,7 +67,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				incentive := m.Response.data["GetIncentive"][0].(*ExternalIncentive)
 				uassert.Equal(t, "reward-token", incentive.RewardToken())
 				uassert.Equal(t, int64(1000), incentive.RewardAmount())
-				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), q128)
+				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), consts.Q128())
 				uassert.Equal(t, expectedRPSX128.ToString(), incentive.RewardPerSecondX128().ToString())
 				uassert.Equal(t, int64(0), incentive.DistributedRewardAmount())
 				uassert.Equal(t, false, incentive.Refunded())
@@ -163,7 +164,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				values := m.Response.data["GetExternalIncentiveByPoolPath"][0].([]ExternalIncentive)
 				uassert.Equal(t, "reward-token", values[0].RewardToken())
 				uassert.Equal(t, int64(1000), values[0].RewardAmount())
-				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), q128)
+				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), consts.Q128())
 				uassert.Equal(t, expectedRPSX128.ToString(), values[0].RewardPerSecondX128().ToString())
 				uassert.Equal(t, int64(0), values[0].DistributedRewardAmount())
 				uassert.Equal(t, false, values[0].Refunded())
@@ -328,7 +329,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 	}
 }
 
-func TestCollectRewardIsolation(t *testing.T) {
+func TestCollectRewardIsolation(cur realm, t *testing.T) {
 	resetTestState(t)
 	mockStaker := newMockStaker("v1")
 	implementation = mockStaker
@@ -336,7 +337,7 @@ func TestCollectRewardIsolation(t *testing.T) {
 	storedExternalRewards := map[string]int64{"bonus": 20}
 	mockStaker.Response.Set("CollectReward", "pool", "100", storedInternalRewards, storedExternalRewards)
 
-	poolPath, stakingDetails, internalRewards, externalRewards := CollectReward(cross, 1)
+	poolPath, stakingDetails, internalRewards, externalRewards := CollectReward(cross(cur), 1)
 
 	uassert.Equal(t, "pool", poolPath)
 	uassert.Equal(t, "100", stakingDetails)

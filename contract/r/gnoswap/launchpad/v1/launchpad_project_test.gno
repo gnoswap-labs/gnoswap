@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"
@@ -22,7 +23,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
+func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	oblPath := "gno.land/r/onbloc/obl"
@@ -80,16 +81,16 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			initLaunchpadProjectTestAvgBlockTime(t, tt.averageBlockTimeMs)
 			testing.SetOriginCaller(tt.callerAddress)
 
-			obl.Approve(cross, launchpadAddr, int64(tt.depositAmount))
+			obl.Approve(cross(cur), launchpadAddr, int64(tt.depositAmount))
 
 			createProjectFn := func() {
 				launchpad.CreateProject(
-					cross,
+					cross(cur),
 					tt.projectName,
 					tt.tokenPath,
 					tt.recipient,
@@ -104,7 +105,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			}
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, createProjectFn)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMessage, createProjectFn)
 				return
 			}
 
@@ -121,7 +122,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
+func TestLaunchpadProject_CreateProjectUnauthorized(cur realm, t *testing.T) {
 	initLaunchpadProjectTest(t)
 
 	userAddr := testutils.TestAddress("nonAdminUser")
@@ -130,9 +131,9 @@ func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
 
 	testing.SetRealm(userRealm)
 
-	uassert.AbortsContains(t, "not admin or governance", func() {
+	uassert.AbortsContains(t, cur, "not admin or governance", func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			"Unauthorized Project",
 			"gno.land/r/onbloc/obl",
 			testutils.TestAddress("projectAddr"),
@@ -147,7 +148,7 @@ func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
 	})
 }
 
-func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
+func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -298,14 +299,14 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			lp := getTestImplementation()
 			testing.SetOriginCaller(projectAddr)
 
-			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
+			obl.Approve(cross(cur), launchpadAddr, int64(tt.params.depositAmount))
 
-			projectId, err := lp.createProject(tt.params)
+			projectId, err := lp.createProject(0, cur, tt.params)
 
 			if tt.expectedHasError {
 				uassert.ErrorContains(t, err, tt.expectedErrorMessage)
@@ -317,7 +318,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
+func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -377,16 +378,16 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			lp := getTestImplementation()
 			for _, projectID := range tt.setupProjectIds {
 				setupLaunchpadProjectTestEmptyProject(t, projectID)
 			}
 
-			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
+			obl.Approve(cross(cur), launchpadAddr, int64(tt.params.depositAmount))
 
-			projectId, err := lp.createProject(tt.params)
+			projectId, err := lp.createProject(0, cur, tt.params)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, err.Error(), tt.expectedErrorMessage)
@@ -398,16 +399,16 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidatName(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidatName(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		projectName   string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "project name is valid",
 			projectName:   "Obl Protocol",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "project name is empty",
@@ -422,32 +423,32 @@ func TestLaunchpadProject_CreateProjectParamsValidatName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				name: test.projectName,
 			}
 
 			err := params.validateName()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "token path is valid",
 			tokenPath:     "gno.land/r/onbloc/obl",
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "token path is empty",
@@ -462,32 +463,32 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				tokenPath: test.tokenPath,
 			}
 
 			err := params.validateTokenPath()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateRecipient(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRecipient(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		recipient     address
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "recipient is valid",
 			recipient:     testutils.TestAddress("projectAddr"),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "recipient is invalid",
@@ -497,32 +498,32 @@ func TestLaunchpadProject_CreateProjectParamsValidateRecipient(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				recipient: test.recipient,
 			}
 
 			err := params.validateRecipient()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		depositAmount int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "deposit amount is valid",
 			depositAmount: 1_000_000_000,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "deposit amount is zero",
@@ -537,36 +538,36 @@ func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(t *testing.T)
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				depositAmount: test.depositAmount,
 			}
 
 			err := params.validateDepositAmount()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRatio(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tier30Ratio   int64
 		tier90Ratio   int64
 		tier180Ratio  int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "ratio is valid by sum is 100",
 			tier30Ratio:   10,
 			tier90Ratio:   20,
 			tier180Ratio:  70,
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "ratio is invalid by sum is not 100",
@@ -599,7 +600,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				tier30Ratio:  test.tier30Ratio,
 				tier90Ratio:  test.tier90Ratio,
@@ -608,27 +609,27 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 
 			err := params.validateRatio()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *testing.T) {
 	minimumStartDelayTime := projectMinimumStartDelayTime
 
 	tests := []struct {
 		name          string
 		startTime     int64
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "start time is valid",
 			startTime:     int64(time.Now().Unix() + minimumStartDelayTime),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "start time is invalid by in the past",
@@ -648,23 +649,23 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				startTime: test.startTime,
 			}
 
 			err := params.validateStartTime(int64(time.Now().Unix()), minimumStartDelayTime)
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
 }
 
-func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *testing.T) {
 	conditionTokensOverMax := strings.Repeat("gno.land/r/onbloc/obl*PAD*", maxProjectConditionCount) + "gno.land/r/onbloc/obl"
 	conditionAmountsOverMax := strings.Repeat("1000*PAD*", maxProjectConditionCount) + "1000"
 
@@ -672,13 +673,13 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 		name             string
 		conditionTokens  string
 		conditionAmounts string
-		expectedError    error
+		expectedError    string
 	}{
 		{
 			name:             "conditions are valid",
 			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
 			conditionAmounts: "1000*PAD*2000",
-			expectedError:    nil,
+			expectedError:    "",
 		},
 		{
 			name:             "conditions are invalid by not registered token path",
@@ -713,7 +714,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(cur realm, t *testing.T) {
 			params := &createProjectParams{
 				conditionTokens:  test.conditionTokens,
 				conditionAmounts: test.conditionAmounts,
@@ -721,10 +722,10 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 
 			err := params.validateConditions()
 
-			if test.expectedError == nil {
+			if test.expectedError == "" {
 				uassert.NoError(t, err)
 			} else {
-				uassert.ErrorContains(t, err, test.expectedError.Error())
+				uassert.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
@@ -734,8 +735,8 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 func initLaunchpadProjectTest(t *testing.T) {
 	testing.SetHeight(123)
 	resetTestStore()
-	setTestProjects(bptree.NewBPTreeN(16))
-	setTestProjectTierRewardManagers(bptree.NewBPTreeN(16))
+	setTestProjects(launchpad.NewBPTreeN(16))
+	setTestProjectTierRewardManagers(launchpad.NewBPTreeN(16))
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
@@ -754,7 +755,7 @@ func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	setTestProjects(projects)
 }
 
-func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
+func TestLaunchpadProject_isGovernanceToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tokenPath      string
@@ -783,14 +784,14 @@ func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := isGovernanceToken(tt.tokenPath)
 			uassert.Equal(t, result, tt.expectedResult)
 		})
 	}
 }
 
-func TestLaunchpadProject_validateRefundProject(t *testing.T) {
+func TestLaunchpadProject_validateRefundProject(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("recipient")
 
 	tests := []struct {
@@ -861,7 +862,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Create a project with tier
 			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
 			tier.SetID("test:180")
@@ -884,7 +885,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		})
 	}
 
-	t.Run("panic on addition overflow - multiple tiers with large remaining amounts", func(t *testing.T) {
+	t.Run("panic on addition overflow - multiple tiers with large remaining amounts", func(cur realm, t *testing.T) {
 		// Create multiple tiers with large remaining amounts that will overflow when summed
 		tier30 := launchpad.NewProjectTier("test", 30, MAX_INT64/2+1, 1000, 2000)
 		tier30.SetID("test:30")
@@ -903,12 +904,12 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		project.SetTiers(tiers)
 
 		// getProjectRemainingAmount will panic when summing large remaining amounts
-		uassert.PanicsContains(t, "int64 addition overflow", func() {
+		uassert.PanicsContains(t, cur, "int64 addition overflow", func() {
 			getProjectRemainingAmount(project)
 		})
 	})
 
-	t.Run("panic on subtraction underflow - extreme values", func(t *testing.T) {
+	t.Run("panic on subtraction underflow - extreme values", func(cur realm, t *testing.T) {
 		// Create a tier where subtraction causes underflow
 		// totalDistributeAmount - totalCollectedAmount underflows
 		tier := launchpad.NewProjectTier("test", 180, MIN_INT64/2, 1000, 2000)
@@ -923,7 +924,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		project.SetTiers(tiers)
 
 		// getProjectRemainingAmount will panic due to subtraction underflow
-		uassert.PanicsContains(t, "int64 subtraction underflow", func() {
+		uassert.PanicsContains(t, cur, "int64 subtraction underflow", func() {
 			getProjectRemainingAmount(project)
 		})
 	})
@@ -931,22 +932,22 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 
 // TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits tests that claimable rewards
 // are correctly calculated for active deposits.
-func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.T) {
-	t.Run("calculate claimable rewards with active deposits", func(t *testing.T) {
+func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, t *testing.T) {
+	t.Run("calculate claimable rewards with active deposits", func(cur realm, t *testing.T) {
 		// Create reward manager with accumulated rewards
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Add reward state for deposit with priceDebt = 0.5
 		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, // deposit amount
 			1000,    // start time
 			2000,    // end time
 			1100,    // claimable time
 		)
-		rm.Rewards().Set("deposit1", rewardState)
+		rm.SetReward("deposit1", rewardState)
 
 		// Calculate claimable rewards
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
@@ -956,9 +957,9 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 		uassert.Equal(t, int64(50_000), claimableRewards)
 	})
 
-	t.Run("no active deposits returns zero", func(t *testing.T) {
+	t.Run("no active deposits returns zero", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		// No reward states added
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
@@ -966,23 +967,23 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 		uassert.Equal(t, int64(0), claimableRewards)
 	})
 
-	t.Run("multiple deposits with different claimable rewards", func(t *testing.T) {
+	t.Run("multiple deposits with different claimable rewards", func(cur realm, t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
 
 		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
 		rewardState1 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit1", rewardState1)
+		rm.SetReward("deposit1", rewardState1)
 
 		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
 		rewardState2 := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
+			u256.Zero().Div(consts.Q128(), u256.NewUint(4)), // priceDebt = 0.25
 			200_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit2", rewardState2)
+		rm.SetReward("deposit2", rewardState2)
 
 		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
 
@@ -993,8 +994,8 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 
 // TestLaunchpadProject_applyTierRewardGrowthWithRewards tests that tier claimable rewards
 // are correctly calculated.
-func TestLaunchpadProject_applyTierRewardGrowthWithRewards(t *testing.T) {
-	t.Run("calculate tier claimable rewards", func(t *testing.T) {
+func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing.T) {
+	t.Run("calculate tier claimable rewards", func(cur realm, t *testing.T) {
 		initLaunchpadProjectTest(t)
 		lp := getTestImplementation()
 
@@ -1008,15 +1009,15 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(t *testing.T) {
 		// Setup reward manager with claimable rewards
 		projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 
 		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
+			u256.Zero().Div(consts.Q128(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
-		rm.Rewards().Set("deposit1", rewardState)
+		rm.SetReward("deposit1", rewardState)
 		projectTierRewardManagers.Set(tierID, rm)
-		lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+		lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
 		// Calculate claimable rewards
 		claimableRewards, err := lp.applyTierRewardGrowthWithRewards(tier, int64(2001))
@@ -1025,7 +1026,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(t *testing.T) {
 	})
 }
 
-func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.T) {
+func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(cur realm, t *testing.T) {
 	initLaunchpadProjectTest(t)
 
 	userAddr := testutils.TestAddress("nonAdminUser")
@@ -1033,15 +1034,15 @@ func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.
 
 	testing.SetRealm(userRealm)
 
-	uassert.AbortsContains(t, "is not admin", func() {
-		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
+	uassert.AbortsContains(t, cur, "is not admin", func() {
+		launchpad.TransferLeftFromProjectByAdmin(cross(cur), "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
 	})
 }
 
 // TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals tests that
 // TransferLeftFromProjectByAdmin works correctly when users have pending withdrawals.
 // The refundable amount should exclude claimable rewards for remaining depositors.
-func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testing.T) {
+func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		totalDistributeAmount  int64
@@ -1101,7 +1102,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			lp := getTestImplementation()
 
@@ -1128,33 +1129,33 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 
 			projects := lp.store.GetProjects()
 			projects.Set(projectID, project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 
 			// Setup reward manager with pending claimable rewards
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
 
 			// Set accumulated reward: Q128 / accumulatedRewardRatio
-			accumulatedReward := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
+			accumulatedReward := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
 			rm.SetAccumulatedRewardPerDepositX128(accumulatedReward)
 
 			// Set price debt: Q128 / priceDebtRatio
-			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
+			priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
-			rm.Rewards().Set("deposit1", rewardState)
+			rm.SetReward("deposit1", rewardState)
 
 			projectTierRewardManagers.Set(tierID, rm)
-			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+			lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
 			// Transfer OBL tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1181,7 +1182,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 
 // TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits tests
 // TransferLeftFromProjectByAdmin with multiple users having pending withdrawals.
-func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *testing.T) {
+func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
@@ -1222,7 +1223,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			lp := getTestImplementation()
 
@@ -1249,30 +1250,30 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			projects := lp.store.GetProjects()
 			projects.Set(projectID, project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 
 			// Setup reward manager with multiple deposits
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 accumulated
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 accumulated
 
 			for i, dep := range tt.deposits {
-				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
+				priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
-				rm.Rewards().Set("deposit"+formatInt(int64(i)), rewardState)
+				rm.SetReward("deposit"+utils.FormatInt(int64(i)), rewardState)
 			}
 
 			projectTierRewardManagers.Set(tierID, rm)
-			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+			lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
 			// Transfer OBL tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1288,7 +1289,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 // TestLaunchpadProject_TransferLeftFromProjectNoDepositors tests that
 // TransferLeftFromProjectByAdmin returns full remaining amount when no depositors exist.
-func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
+func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
@@ -1313,7 +1314,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initLaunchpadProjectTest(t)
 			lp := getTestImplementation()
 
@@ -1340,25 +1341,25 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 
 			projects := lp.store.GetProjects()
 			projects.Set(projectID, project)
-			lp.store.SetProjects(projects)
+			lp.store.SetProjects(0, cur, projects)
 
 			// Setup empty reward manager
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0)
-			rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+			rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
 			// No reward states added
 
 			projectTierRewardManagers.Set(tierID, rm)
-			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+			lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
 			// Transfer OBL tokens from admin to launchpad for refund
 			adminRealm := testing.NewUserRealm(adminAddr)
 			testing.SetRealm(adminRealm)
-			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)

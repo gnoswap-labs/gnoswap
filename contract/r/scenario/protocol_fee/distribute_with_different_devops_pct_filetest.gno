@@ -30,149 +30,149 @@ var (
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
 
-func fundAndApproveBarFromStaker(amount int64) {
+func fundAndApproveBarFromStaker(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerRealm.Address(), amount)
+	bar.Transfer(cross(cur), stakerRealm.Address(), amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
-	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+	bar.Approve(cross(cur), protocolFeeAddr, amount)
+	bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 }
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Testing protocol fee distribution with different DevOps percentages")
 	println()
 
 	println("[TEST CASE 1] 0% to DevOps (default)")
-	testCase0Percent()
+	testCase0Percent(cur)
 	println()
 
 	println("[TEST CASE 2] 25% to DevOps")
-	testCase25Percent()
+	testCase25Percent(cur)
 	println()
 
 	println("[TEST CASE 3] 50% to DevOps")
-	testCase50Percent()
+	testCase50Percent(cur)
 	println()
 
 	println("[TEST CASE 4] 100% to DevOps")
-	testCase100Percent()
+	testCase100Percent(cur)
 	println()
 
 	println("[TEST CASE 5] 33.33% to DevOps")
-	testCase3333Percent()
+	testCase3333Percent(cur)
 	println()
 }
 
-func prepareRecordedProtocolFee(amount int64) {
-	fundAndApproveBarFromStaker(amount)
+func prepareRecordedProtocolFee(cur realm, amount int64) {
+	fundAndApproveBarFromStaker(cur, amount)
 	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", amount)
 }
 
-func testCase0Percent() {
-	resetBalances()
+func testCase0Percent(cur realm) {
+	resetBalances(cur)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 0%")
-	pf.SetDevOpsPct(cross, 0)
+	pf.SetDevOpsPct(cross(cur), 0)
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func testCase25Percent() {
-	resetBalances()
+func testCase25Percent(cur realm) {
+	resetBalances(cur)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 25%")
-	pf.SetDevOpsPct(cross, 2500)
+	pf.SetDevOpsPct(cross(cur), 2500)
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func testCase50Percent() {
-	resetBalances()
+func testCase50Percent(cur realm) {
+	resetBalances(cur)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 50%")
-	pf.SetDevOpsPct(cross, 5000)
+	pf.SetDevOpsPct(cross(cur), 5000)
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func testCase100Percent() {
-	resetBalances()
+func testCase100Percent(cur realm) {
+	resetBalances(cur)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 100%")
-	pf.SetDevOpsPct(cross, 10000)
+	pf.SetDevOpsPct(cross(cur), 10000)
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func testCase3333Percent() {
-	resetBalances()
+func testCase3333Percent(cur realm) {
+	resetBalances(cur)
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 33.33%")
-	pf.SetDevOpsPct(cross, 3333)
+	pf.SetDevOpsPct(cross(cur), 3333)
 	println("[INFO] Recording 1000 bar protocol fee")
-	prepareRecordedProtocolFee(1000)
+	prepareRecordedProtocolFee(cur, 1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
 	testing.SetRealm(govStakerRealm)
 	println("[INFO] Distributing protocol fees")
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	println("[EXPECTED] Final balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 }
 
-func resetBalances() {
+func resetBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	if balance := bar.BalanceOf(protocolFeeAddr); balance > 0 {
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 	}
 	if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(devOpsAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 		testing.SetRealm(adminRealm)
 	}
 	if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
 		testing.SetRealm(testing.NewUserRealm(govStakerAddr))
-		bar.Transfer(cross, adminAddr, balance)
+		bar.Transfer(cross(cur), adminAddr, balance)
 		testing.SetRealm(adminRealm)
 	}
 }

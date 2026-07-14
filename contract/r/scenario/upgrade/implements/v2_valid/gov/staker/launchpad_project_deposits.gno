@@ -1,0 +1,1 @@
+../../../../../../gnoswap/gov/staker/v1/launchpad_project_deposits.gno

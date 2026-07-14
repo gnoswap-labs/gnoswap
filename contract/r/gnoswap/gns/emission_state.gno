@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -117,7 +118,7 @@ func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64
 	}
 
 	accumulatedAmount := e.halvingData.getAccumAmount(year)
-	accumulatedAmount = safeAddInt64(accumulatedAmount, amount)
+	accumulatedAmount = gnsmath.SafeAddInt64(accumulatedAmount, amount)
 
 	return e.halvingData.setAccumAmount(year, accumulatedAmount)
 }
@@ -130,7 +131,7 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	}
 
 	leftAmount := e.halvingData.getLeftAmount(year)
-	leftAmount = safeSubInt64(leftAmount, amount)
+	leftAmount = gnsmath.SafeSubInt64(leftAmount, amount)
 
 	return e.halvingData.setLeftAmount(year, leftAmount)
 }
@@ -147,7 +148,7 @@ func (e *EmissionState) Clone() *EmissionState {
 // NewEmissionState creates a new EmissionState with specified start height and timestamp.
 // Calculates emission end time based on 12-year schedule and initializes halving data.
 func NewEmissionState(createdHeight int64, startTimestamp int64) *EmissionState {
-	emissionEndTime := safeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
+	emissionEndTime := gnsmath.SafeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
 
 	return &EmissionState{
 		createdHeight:  createdHeight,

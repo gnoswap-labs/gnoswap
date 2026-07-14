@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Position contract upgrade scenario test
 package main
 
@@ -27,28 +29,28 @@ const (
 	positionTestPath = "gno.land/r/gnoswap/position/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize position contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade position contract to test version")
-	testPositionUpgrade()
+	testPositionUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := position.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != positionV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		position.UpgradeImpl(cross, positionV1Path)
+		position.UpgradeImpl(cross(cur), positionV1Path)
 		currentVersion = position.GetImplementationPackagePath()
 	}
 
@@ -58,7 +60,7 @@ func initializeV1() {
 	}
 }
 
-func testPositionUpgrade() {
+func testPositionUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := position.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -69,7 +71,7 @@ func testPositionUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading position contract to test version")
 	testing.SetRealm(adminRealm)
-	position.UpgradeImpl(cross, positionTestPath)
+	position.UpgradeImpl(cross(cur), positionTestPath)
 
 	currentVersion = position.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Position upgraded to: %s\n", currentVersion)
@@ -78,7 +80,7 @@ func testPositionUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := position.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -89,48 +91,48 @@ func verifyTestImplementation() {
 	// Test Mint - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Mint function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Mint not supported", func() {
-		position.Mint(cross, "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, -1000, 1000, "1000", "1000", "0", "0", 9999999999, adminAddr, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: Mint not supported", func() {
+		position.Mint(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, -1000, 1000, "1000", "1000", "0", "0", 9999999999, adminAddr, "")
 	})
 	ufmt.Println("[EXPECTED] Mint panics correctly")
 
 	// Test IncreaseLiquidity - should panic with test implementation message
 	ufmt.Println("[INFO] Testing IncreaseLiquidity function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: IncreaseLiquidity not supported", func() {
-		position.IncreaseLiquidity(cross, 1, "1000", "1000", "0", "0", 9999999999)
+	uassert.AbortsWithMessage(t, cur, "test implementation: IncreaseLiquidity not supported", func() {
+		position.IncreaseLiquidity(cross(cur), 1, "1000", "1000", "0", "0", 9999999999)
 	})
 	ufmt.Println("[EXPECTED] IncreaseLiquidity panics correctly")
 
 	// Test SetPositionOperator - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetPositionOperator function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetPositionOperator not supported", func() {
-		position.SetPositionOperator(cross, 1, adminAddr)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetPositionOperator not supported", func() {
+		position.SetPositionOperator(cross(cur), 1, adminAddr)
 	})
 	ufmt.Println("[EXPECTED] SetPositionOperator panics correctly")
 
 	// Test DecreaseLiquidity - should panic with test implementation message
 	ufmt.Println("[INFO] Testing DecreaseLiquidity function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: DecreaseLiquidity not supported", func() {
-		position.DecreaseLiquidity(cross, 1, "1000", "0", "0", 9999999999)
+	uassert.AbortsWithMessage(t, cur, "test implementation: DecreaseLiquidity not supported", func() {
+		position.DecreaseLiquidity(cross(cur), 1, "1000", "0", "0", 9999999999)
 	})
 	ufmt.Println("[EXPECTED] DecreaseLiquidity panics correctly")
 
 	// Test Reposition - should panic with test implementation message
 	ufmt.Println("[INFO] Testing Reposition function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: Reposition not supported", func() {
-		position.Reposition(cross, 1, -2000, 2000, "1000", "1000", "0", "0", 9999999999)
+	uassert.AbortsWithMessage(t, cur, "test implementation: Reposition not supported", func() {
+		position.Reposition(cross(cur), 1, -2000, 2000, "1000", "1000", "0", "0", 9999999999)
 	})
 	ufmt.Println("[EXPECTED] Reposition panics correctly")
 
 	// Test CollectFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing CollectFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: CollectFee not supported", func() {
-		position.CollectFee(cross, 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: CollectFee not supported", func() {
+		position.CollectFee(cross(cur), 1)
 	})
 	ufmt.Println("[EXPECTED] CollectFee panics correctly")
 }

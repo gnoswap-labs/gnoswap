@@ -16,8 +16,8 @@ func NewV2InvalidStaker(store staker.IStakerStore, poolAccessor staker.PoolAcces
 	}
 }
 
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+func init(cur realm) {
+	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
 		return NewV2InvalidStaker(store, poolAccessor, emissionAccessor, nftAccessor)
 	})
 }
@@ -38,116 +38,116 @@ func (t *TestStaker) isActive(fnName string) bool {
 }
 
 // IStakerManager interface
-func (t *TestStaker) StakeToken(positionId uint64, referrer string) string {
+func (t *TestStaker) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
 	if !t.isActive("StakeToken") {
 		panic("test implementation: StakeToken not supported")
 	}
-	return t.instance.StakeToken(positionId, referrer)
+	return t.instance.StakeToken(0, rlm, positionId, referrer)
 }
 
-func (t *TestStaker) UnStakeToken(positionId uint64) string {
+func (t *TestStaker) UnStakeToken(_ int, rlm realm, positionId uint64) string {
 	if !t.isActive("UnStakeToken") {
 		panic("test implementation: UnStakeToken not supported")
 	}
-	return t.instance.UnStakeToken(positionId)
+	return t.instance.UnStakeToken(0, rlm, positionId)
 }
 
-func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
+func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	if !t.isActive("CollectReward") {
 		panic("test implementation: CollectReward not supported")
 	}
-	return t.instance.CollectReward(positionId)
+	return t.instance.CollectReward(0, rlm, positionId)
 }
 
-func (t *TestStaker) SetPoolTier(poolPath string, tier uint64) {
+func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !t.isActive("SetPoolTier") {
 		panic("test implementation: SetPoolTier not supported")
 	}
-	t.instance.SetPoolTier(poolPath, tier)
+	t.instance.SetPoolTier(0, rlm, poolPath, tier)
 }
 
-func (t *TestStaker) ChangePoolTier(poolPath string, tier uint64) {
+func (t *TestStaker) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !t.isActive("ChangePoolTier") {
 		panic("test implementation: ChangePoolTier not supported")
 	}
-	t.instance.ChangePoolTier(poolPath, tier)
+	t.instance.ChangePoolTier(0, rlm, poolPath, tier)
 }
 
-func (t *TestStaker) RemovePoolTier(poolPath string) {
+func (t *TestStaker) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	if !t.isActive("RemovePoolTier") {
 		panic("test implementation: RemovePoolTier not supported")
 	}
-	t.instance.RemovePoolTier(poolPath)
+	t.instance.RemovePoolTier(0, rlm, poolPath)
 }
 
-func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
+func (t *TestStaker) CreateExternalIncentive(_ int, rlm realm, targetPoolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
 	if !t.isActive("CreateExternalIncentive") {
 		panic("test implementation: CreateExternalIncentive not supported")
 	}
-	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
+	t.instance.CreateExternalIncentive(0, rlm, targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
 	if !t.isActive("EndExternalIncentive") {
 		panic("test implementation: EndExternalIncentive not supported")
 	}
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
+	t.instance.EndExternalIncentive(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
-func (t *TestStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	if !t.isActive("CollectExternalIncentivePenalty") {
 		panic("test implementation: CollectExternalIncentivePenalty not supported")
 	}
-	return t.instance.CollectExternalIncentivePenalty(targetPoolPath, incentiveId, refundAddress)
+	return t.instance.CollectExternalIncentivePenalty(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
-func (t *TestStaker) AddToken(tokenPath string) {
+func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	if !t.isActive("AddToken") {
 		panic("test implementation: AddToken not supported")
 	}
-	t.instance.AddToken(tokenPath)
+	t.instance.AddToken(0, rlm, tokenPath)
 }
 
-func (t *TestStaker) RemoveToken(tokenPath string) {
+func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	if !t.isActive("RemoveToken") {
 		panic("test implementation: RemoveToken not supported")
 	}
-	t.instance.RemoveToken(tokenPath)
+	t.instance.RemoveToken(0, rlm, tokenPath)
 }
 
-func (t *TestStaker) SetWarmUp(pct, timeDuration int64) {
+func (t *TestStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	if !t.isActive("SetWarmUp") {
 		panic("test implementation: SetWarmUp not supported")
 	}
-	t.instance.SetWarmUp(pct, timeDuration)
+	t.instance.SetWarmUp(0, rlm, pct, timeDuration)
 }
 
-func (t *TestStaker) SetDepositGnsAmount(amount int64) {
+func (t *TestStaker) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 	if !t.isActive("SetDepositGnsAmount") {
 		panic("test implementation: SetDepositGnsAmount not supported")
 	}
-	t.instance.SetDepositGnsAmount(amount)
+	t.instance.SetDepositGnsAmount(0, rlm, amount)
 }
 
-func (t *TestStaker) SetMinimumRewardAmount(amount int64) {
+func (t *TestStaker) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	if !t.isActive("SetMinimumRewardAmount") {
 		panic("test implementation: SetMinimumRewardAmount not supported")
 	}
-	t.instance.SetMinimumRewardAmount(amount)
+	t.instance.SetMinimumRewardAmount(0, rlm, amount)
 }
 
-func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
+func (t *TestStaker) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
 	if !t.isActive("SetTokenMinimumRewardAmount") {
 		panic("test implementation: SetTokenMinimumRewardAmount not supported")
 	}
-	t.instance.SetTokenMinimumRewardAmount(paramsStr)
+	t.instance.SetTokenMinimumRewardAmount(0, rlm, paramsStr)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee uint64) {
+func (t *TestStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	if !t.isActive("SetUnStakingFee") {
 		panic("test implementation: SetUnStakingFee not supported")
 	}
-	t.instance.SetUnStakingFee(fee)
+	t.instance.SetUnStakingFee(0, rlm, fee)
 }
 
 // IStakerGetter interface

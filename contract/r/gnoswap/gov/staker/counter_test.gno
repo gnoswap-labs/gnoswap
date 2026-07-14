@@ -7,7 +7,7 @@ import (
 )
 
 // TestCounter_NewCounter tests the Counter constructor
-func TestCounter_NewCounter(t *testing.T) {
+func TestCounter_NewCounter(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		expectedID  int64
@@ -19,7 +19,7 @@ func TestCounter_NewCounter(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			counter := NewCounter()
 
@@ -31,7 +31,7 @@ func TestCounter_NewCounter(t *testing.T) {
 }
 
 // TestCounter_Next tests incrementing counter
-func TestCounter_Next(t *testing.T) {
+func TestCounter_Next(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		callCount     int
@@ -55,7 +55,7 @@ func TestCounter_Next(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			counter := NewCounter()
 
@@ -73,7 +73,7 @@ func TestCounter_Next(t *testing.T) {
 }
 
 // TestCounter_Get tests getting counter value
-func TestCounter_Get(t *testing.T) {
+func TestCounter_Get(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func(*Counter)
@@ -98,7 +98,7 @@ func TestCounter_Get(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			counter := NewCounter()
 			tc.setup(counter)

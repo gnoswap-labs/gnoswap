@@ -13,8 +13,8 @@ func NewV3ValidGovStaker(store staker.IGovStakerStore) staker.IGovStaker {
 	}
 }
 
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IGovStakerStore) staker.IGovStaker {
+func init(cur realm) {
+	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IGovStakerStore) staker.IGovStaker {
 		return NewV3ValidGovStaker(store)
 	})
 }
@@ -25,33 +25,33 @@ type TestGovStaker struct {
 }
 
 // IGovStakerDelegation interface
-func (t *TestGovStaker) Delegate(to address, amount int64, referrer string) int64 {
-	return t.instance.Delegate(to, amount, referrer)
+func (t *TestGovStaker) Delegate(_ int, rlm realm, to address, amount int64, referrer string) int64 {
+	return t.instance.Delegate(0, rlm, to, amount, referrer)
 }
 
-func (t *TestGovStaker) Undelegate(from address, amount int64) int64 {
-	return t.instance.Undelegate(from, amount)
+func (t *TestGovStaker) Undelegate(_ int, rlm realm, from address, amount int64) int64 {
+	return t.instance.Undelegate(0, rlm, from, amount)
 }
 
-func (t *TestGovStaker) Redelegate(delegatee, newDelegatee address, amount int64) int64 {
-	return t.instance.Redelegate(delegatee, newDelegatee, amount)
+func (t *TestGovStaker) Redelegate(_ int, rlm realm, delegatee, newDelegatee address, amount int64) int64 {
+	return t.instance.Redelegate(0, rlm, delegatee, newDelegatee, amount)
 }
 
-func (t *TestGovStaker) CollectUndelegatedGns() int64 {
-	return t.instance.CollectUndelegatedGns()
+func (t *TestGovStaker) CollectUndelegatedGns(_ int, rlm realm) int64 {
+	return t.instance.CollectUndelegatedGns(0, rlm)
 }
 
 // IGovStakerReward interface
-func (t *TestGovStaker) CollectReward() {
-	t.instance.CollectReward()
+func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
+	t.instance.CollectReward(0, rlm)
 }
 
-func (t *TestGovStaker) CollectRewardFromLaunchPad(to address) {
-	t.instance.CollectRewardFromLaunchPad(to)
+func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
+	t.instance.CollectRewardFromLaunchPad(0, rlm, to)
 }
 
-func (t *TestGovStaker) SetAmountByProjectWallet(addr address, amount int64, add bool) {
-	t.instance.SetAmountByProjectWallet(addr, amount, add)
+func (t *TestGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
+	t.instance.SetAmountByProjectWallet(0, rlm, addr, amount, add)
 }
 
 // IGovStakerGetter interface
@@ -88,12 +88,12 @@ func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, ma
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
-	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold, target)
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, threshold int64, target address) {
+	t.instance.CleanStakerDelegationSnapshotByAdmin(0, rlm, threshold, target)
 }
 
-func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
-	t.instance.SetUnDelegationLockupPeriodByAdmin(period)
+func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
+	t.instance.SetUnDelegationLockupPeriodByAdmin(0, rlm, period)
 }
 
 func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {

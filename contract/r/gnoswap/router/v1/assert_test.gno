@@ -8,7 +8,7 @@ import (
 )
 
 // Test assertIsNotExpired
-func TestAssertIsNotExpired(t *testing.T) {
+func TestAssertIsNotExpired(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		deadline    int64
@@ -62,9 +62,9 @@ func TestAssertIsNotExpired(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.errorMsg, func() {
 					assertIsNotExpired(tt.deadline)
 				})
 			} else {
@@ -75,7 +75,7 @@ func TestAssertIsNotExpired(t *testing.T) {
 }
 
 // Test assertIsValidSqrtPriceLimitX96
-func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
+func TestAssertIsValidSqrtPriceLimitX96(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -152,9 +152,9 @@ func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.errorMsg, func() {
 					assertIsValidSqrtPriceLimitX96(tt.input)
 				})
 			} else {
@@ -165,7 +165,7 @@ func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
 }
 
 // Test assertIsValidSingleSwapRouteArrPath
-func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
+func TestAssertIsValidSingleSwapRouteArrPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		routePaths  string
@@ -270,9 +270,9 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.errorMsg, func() {
 					assertIsValidSingleSwapRouteArrPath(tt.routePaths, tt.inputToken, tt.outputToken)
 				})
 			} else {
@@ -283,7 +283,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 }
 
 // Test assertIsValidRoutePaths
-func TestAssertIsValidRoutePaths(t *testing.T) {
+func TestAssertIsValidRoutePaths(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		routePaths  string
@@ -401,9 +401,9 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.errorMsg, func() {
 					assertIsValidRoutePaths(tt.routePaths, tt.inputToken, tt.outputToken)
 				})
 			} else {
@@ -414,7 +414,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 }
 
 // Test assertIsExistsPools
-func TestAssertIsExistsPools(t *testing.T) {
+func TestAssertIsExistsPools(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		routePathArr string
@@ -448,9 +448,9 @@ func TestAssertIsExistsPools(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
+				uassert.PanicsContains(t, cur, tt.errorMsg, func() {
 					assertIsExistsPools(tt.routePathArr)
 				})
 			} else {

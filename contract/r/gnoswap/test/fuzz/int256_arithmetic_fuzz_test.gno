@@ -11,7 +11,7 @@ import (
 // Arithmetic Identity Laws Tests
 
 // TestFuzzInt256Arithmetic_AdditionAssociativity tests (a + b) + c == a + (b + c)
-func TestFuzzInt256Arithmetic_AdditionAssociativity(t *testing.T) {
+func TestFuzzInt256Arithmetic_AdditionAssociativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use valid params to avoid overflow
 		params := NewValidInt256IdentityLawParams(ft)
@@ -39,7 +39,7 @@ func TestFuzzInt256Arithmetic_AdditionAssociativity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_AdditionCommutativity tests a + b == b + a
-func TestFuzzInt256Arithmetic_AdditionCommutativity(t *testing.T) {
+func TestFuzzInt256Arithmetic_AdditionCommutativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -61,7 +61,7 @@ func TestFuzzInt256Arithmetic_AdditionCommutativity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_MultiplicationAssociativity tests (a * b) * c == a * (b * c)
-func TestFuzzInt256Arithmetic_MultiplicationAssociativity(t *testing.T) {
+func TestFuzzInt256Arithmetic_MultiplicationAssociativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use small values to avoid overflow
 		params := NewValidInt256IdentityLawParams(ft)
@@ -89,7 +89,7 @@ func TestFuzzInt256Arithmetic_MultiplicationAssociativity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_MultiplicationCommutativity tests a * b == b * a
-func TestFuzzInt256Arithmetic_MultiplicationCommutativity(t *testing.T) {
+func TestFuzzInt256Arithmetic_MultiplicationCommutativity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -111,7 +111,7 @@ func TestFuzzInt256Arithmetic_MultiplicationCommutativity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_DistributiveLaw tests a * (b + c) == a*b + a*c
-func TestFuzzInt256Arithmetic_DistributiveLaw(t *testing.T) {
+func TestFuzzInt256Arithmetic_DistributiveLaw(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use small values to avoid overflow
 		params := NewValidInt256IdentityLawParams(ft)
@@ -140,7 +140,7 @@ func TestFuzzInt256Arithmetic_DistributiveLaw(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_AdditionIdentity tests a + 0 == a
-func TestFuzzInt256Arithmetic_AdditionIdentity(t *testing.T) {
+func TestFuzzInt256Arithmetic_AdditionIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -160,7 +160,7 @@ func TestFuzzInt256Arithmetic_AdditionIdentity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_MultiplicationIdentity tests a * 1 == a
-func TestFuzzInt256Arithmetic_MultiplicationIdentity(t *testing.T) {
+func TestFuzzInt256Arithmetic_MultiplicationIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -180,7 +180,7 @@ func TestFuzzInt256Arithmetic_MultiplicationIdentity(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_MultiplicationZero tests a * 0 == 0
-func TestFuzzInt256Arithmetic_MultiplicationZero(t *testing.T) {
+func TestFuzzInt256Arithmetic_MultiplicationZero(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -200,7 +200,7 @@ func TestFuzzInt256Arithmetic_MultiplicationZero(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_SubtractionInverse tests a - a == 0
-func TestFuzzInt256Arithmetic_SubtractionInverse(t *testing.T) {
+func TestFuzzInt256Arithmetic_SubtractionInverse(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -219,7 +219,7 @@ func TestFuzzInt256Arithmetic_SubtractionInverse(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_AdditionInverse tests a + (-a) == 0
-func TestFuzzInt256Arithmetic_AdditionInverse(t *testing.T) {
+func TestFuzzInt256Arithmetic_AdditionInverse(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -239,7 +239,7 @@ func TestFuzzInt256Arithmetic_AdditionInverse(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_DoubleNegation tests -(-a) == a
-func TestFuzzInt256Arithmetic_DoubleNegation(t *testing.T) {
+func TestFuzzInt256Arithmetic_DoubleNegation(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -259,7 +259,7 @@ func TestFuzzInt256Arithmetic_DoubleNegation(t *testing.T) {
 }
 
 // TestFuzzInt256Arithmetic_NegationMultiplication tests -a == a * (-1)
-func TestFuzzInt256Arithmetic_NegationMultiplication(t *testing.T) {
+func TestFuzzInt256Arithmetic_NegationMultiplication(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256IdentityLawParams(ft)
@@ -281,7 +281,7 @@ func TestFuzzInt256Arithmetic_NegationMultiplication(t *testing.T) {
 }
 
 // TestFuzzInt256Cmp_Antisymmetry tests if a.Cmp(b) == 1 then b.Cmp(a) == -1
-func TestFuzzInt256Cmp_Antisymmetry(t *testing.T) {
+func TestFuzzInt256Cmp_Antisymmetry(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256CmpParams(ft)
@@ -303,7 +303,7 @@ func TestFuzzInt256Cmp_Antisymmetry(t *testing.T) {
 }
 
 // TestFuzzInt256Cmp_Transitivity tests transitivity of comparison
-func TestFuzzInt256Cmp_Transitivity(t *testing.T) {
+func TestFuzzInt256Cmp_Transitivity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256IdentityLawParams(ft)
@@ -326,7 +326,7 @@ func TestFuzzInt256Cmp_Transitivity(t *testing.T) {
 }
 
 // TestFuzzInt256Cmp_EqConsistency tests Eq consistency with Cmp
-func TestFuzzInt256Cmp_EqConsistency(t *testing.T) {
+func TestFuzzInt256Cmp_EqConsistency(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256CmpParams(ft)
@@ -348,7 +348,7 @@ func TestFuzzInt256Cmp_EqConsistency(t *testing.T) {
 }
 
 // TestFuzzInt256Cmp_LtGtConsistency tests Lt/Gt consistency
-func TestFuzzInt256Cmp_LtGtConsistency(t *testing.T) {
+func TestFuzzInt256Cmp_LtGtConsistency(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256CmpParams(ft)
@@ -375,7 +375,7 @@ func TestFuzzInt256Cmp_LtGtConsistency(t *testing.T) {
 // Sign Tests
 
 // TestFuzzInt256Sign_Consistency tests sign consistency
-func TestFuzzInt256Sign_Consistency(t *testing.T) {
+func TestFuzzInt256Sign_Consistency(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256SignParams(ft)
@@ -407,7 +407,7 @@ func TestFuzzInt256Sign_Consistency(t *testing.T) {
 }
 
 // TestFuzzInt256Sign_NegConsistency tests sign consistency with negation
-func TestFuzzInt256Sign_NegConsistency(t *testing.T) {
+func TestFuzzInt256Sign_NegConsistency(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256SignParams(ft)
@@ -432,7 +432,7 @@ func TestFuzzInt256Sign_NegConsistency(t *testing.T) {
 // Clone Tests
 
 // TestFuzzInt256Clone_Equality tests clone produces equal value
-func TestFuzzInt256Clone_Equality(t *testing.T) {
+func TestFuzzInt256Clone_Equality(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256CloneParams(ft)
@@ -451,7 +451,7 @@ func TestFuzzInt256Clone_Equality(t *testing.T) {
 }
 
 // TestFuzzInt256Clone_Independence tests clone is independent
-func TestFuzzInt256Clone_Independence(t *testing.T) {
+func TestFuzzInt256Clone_Independence(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256CloneParams(ft)
@@ -477,7 +477,7 @@ func TestFuzzInt256Clone_Independence(t *testing.T) {
 // Conversion Tests
 
 // TestFuzzInt256Conversion_Int64RoundTrip tests Int64 round-trip for small values
-func TestFuzzInt256Conversion_Int64RoundTrip(t *testing.T) {
+func TestFuzzInt256Conversion_Int64RoundTrip(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		x := fuzz.Int64().Draw(ft, "x").(int64)
@@ -497,7 +497,7 @@ func TestFuzzInt256Conversion_Int64RoundTrip(t *testing.T) {
 }
 
 // TestFuzzInt256Conversion_SetStringRoundTrip tests SetString/ToString round-trip
-func TestFuzzInt256Conversion_SetStringRoundTrip(t *testing.T) {
+func TestFuzzInt256Conversion_SetStringRoundTrip(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256SetStringParams(ft)
@@ -528,7 +528,7 @@ func TestFuzzInt256Conversion_SetStringRoundTrip(t *testing.T) {
 // Boundary Tests
 
 // TestFuzzInt256Boundary_MaxMinRelation tests MaxInt256 > MinInt256
-func TestFuzzInt256Boundary_MaxMinRelation(t *testing.T) {
+func TestFuzzInt256Boundary_MaxMinRelation(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256BoundaryParams(ft)
@@ -555,7 +555,7 @@ func TestFuzzInt256Boundary_MaxMinRelation(t *testing.T) {
 }
 
 // TestFuzzInt256Boundary_ZeroIdentity tests zero boundary behavior
-func TestFuzzInt256Boundary_ZeroIdentity(t *testing.T) {
+func TestFuzzInt256Boundary_ZeroIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256BoundaryParams(ft)
@@ -581,7 +581,7 @@ func TestFuzzInt256Boundary_ZeroIdentity(t *testing.T) {
 }
 
 // TestFuzzInt256Boundary_OneIdentity tests one boundary behavior
-func TestFuzzInt256Boundary_OneIdentity(t *testing.T) {
+func TestFuzzInt256Boundary_OneIdentity(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256BoundaryParams(ft)

@@ -16,8 +16,8 @@ func NewV2InvalidGovStaker(store staker.IGovStakerStore) staker.IGovStaker {
 	}
 }
 
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IGovStakerStore) staker.IGovStaker {
+func init(cur realm) {
+	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IGovStakerStore) staker.IGovStaker {
 		return NewV2InvalidGovStaker(store)
 	})
 }
@@ -38,54 +38,54 @@ func (t *TestGovStaker) isActive(fnName string) bool {
 }
 
 // IGovStakerDelegation interface
-func (t *TestGovStaker) Delegate(to address, amount int64, referrer string) int64 {
+func (t *TestGovStaker) Delegate(_ int, rlm realm, to address, amount int64, referrer string) int64 {
 	if !t.isActive("Delegate") {
 		panic("test implementation: Delegate not supported")
 	}
-	return t.instance.Delegate(to, amount, referrer)
+	return t.instance.Delegate(0, rlm, to, amount, referrer)
 }
 
-func (t *TestGovStaker) Undelegate(from address, amount int64) int64 {
+func (t *TestGovStaker) Undelegate(_ int, rlm realm, from address, amount int64) int64 {
 	if !t.isActive("Undelegate") {
 		panic("test implementation: Undelegate not supported")
 	}
-	return t.instance.Undelegate(from, amount)
+	return t.instance.Undelegate(0, rlm, from, amount)
 }
 
-func (t *TestGovStaker) Redelegate(delegatee, newDelegatee address, amount int64) int64 {
+func (t *TestGovStaker) Redelegate(_ int, rlm realm, delegatee, newDelegatee address, amount int64) int64 {
 	if !t.isActive("Redelegate") {
 		panic("test implementation: Redelegate not supported")
 	}
-	return t.instance.Redelegate(delegatee, newDelegatee, amount)
+	return t.instance.Redelegate(0, rlm, delegatee, newDelegatee, amount)
 }
 
-func (t *TestGovStaker) CollectUndelegatedGns() int64 {
+func (t *TestGovStaker) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	if !t.isActive("CollectUndelegatedGns") {
 		panic("test implementation: CollectUndelegatedGns not supported")
 	}
-	return t.instance.CollectUndelegatedGns()
+	return t.instance.CollectUndelegatedGns(0, rlm)
 }
 
 // IGovStakerReward interface
-func (t *TestGovStaker) CollectReward() {
+func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
 	if !t.isActive("CollectReward") {
 		panic("test implementation: CollectReward not supported")
 	}
-	t.instance.CollectReward()
+	t.instance.CollectReward(0, rlm)
 }
 
-func (t *TestGovStaker) CollectRewardFromLaunchPad(to address) {
+func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	if !t.isActive("CollectRewardFromLaunchPad") {
 		panic("test implementation: CollectRewardFromLaunchPad not supported")
 	}
-	t.instance.CollectRewardFromLaunchPad(to)
+	t.instance.CollectRewardFromLaunchPad(0, rlm, to)
 }
 
-func (t *TestGovStaker) SetAmountByProjectWallet(addr address, amount int64, add bool) {
+func (t *TestGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
 	if !t.isActive("SetAmountByProjectWallet") {
 		panic("test implementation: SetAmountByProjectWallet not supported")
 	}
-	t.instance.SetAmountByProjectWallet(addr, amount, add)
+	t.instance.SetAmountByProjectWallet(0, rlm, addr, amount, add)
 }
 
 // IGovStakerGetter interface
@@ -286,16 +286,16 @@ func (t *TestGovStaker) GetEmissionAccumulatedTimestamp() int64 {
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, threshold int64, target address) {
 	if !t.isActive("CleanStakerDelegationSnapshotByAdmin") {
 		panic("test implementation: CleanStakerDelegationSnapshotByAdmin not supported")
 	}
-	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold, target)
+	t.instance.CleanStakerDelegationSnapshotByAdmin(0, rlm, threshold, target)
 }
 
-func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
+func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
 	if !t.isActive("SetUnDelegationLockupPeriodByAdmin") {
 		panic("test implementation: SetUnDelegationLockupPeriodByAdmin not supported")
 	}
-	t.instance.SetUnDelegationLockupPeriodByAdmin(period)
+	t.instance.SetUnDelegationLockupPeriodByAdmin(0, rlm, period)
 }

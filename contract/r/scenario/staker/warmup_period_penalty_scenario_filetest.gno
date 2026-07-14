@@ -57,84 +57,84 @@ var (
 	warmupPenaltyDurationSeconds int64 = 1800 + 3600 + 7200
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool and set tier")
-	createPoolAndSetTier()
+	createPoolAndSetTier(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint large position")
-	positionId := mintLargePosition()
+	positionId := mintLargePosition(cur)
 	println()
 
 	println("[SCENARIO] 4. Stake position and record time")
-	stakeTime := stakePosition(positionId)
+	stakeTime := stakePosition(cur, positionId)
 	println()
 
 	println("[SCENARIO] 5. Skip one hour within warmup period")
-	skipTimeWithinWarmup()
+	skipTimeWithinWarmup(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect rewards during warmup and verify penalty")
-	collectRewardsAndVerifyPenalty(positionId, stakeTime)
+	collectRewardsAndVerifyPenalty(cur, positionId, stakeTime)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set emission start time")
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 5%")
 	testing.SetRealm(testing.NewUserRealm(govAddr))
-	sr.SetUnStakingFee(cross, 500) // 5% fee
+	sr.SetUnStakingFee(cross(cur), 500) // 5% fee
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] mint and distribute initial GNS")
-	emission.MintAndDistributeGns(cross)
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(cur))
+	emission.MintAndDistributeGns(cross(cur))
 
 	ufmt.Printf("[EXPECTED] initialization completed\n")
 	testing.SkipHeights(1)
 }
 
-func createPoolAndSetTier() {
+func createPoolAndSetTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:3000 pool")
-	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
+	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950336")
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	println("[INFO] set warmup period tiers")
 	// Set up warmup tiers with the last one having MaxInt64
-	sr.SetWarmUp(cross, 30, 1800)                 // 30% reduction for 30 minutes
-	sr.SetWarmUp(cross, 50, 3600)                 // 50% reduction for 1 hour
-	sr.SetWarmUp(cross, 70, 7200)                 // 70% reduction for 2 hours
-	sr.SetWarmUp(cross, 100, 9223372036854775807) // 100% (no reduction) after 2 hours
+	sr.SetWarmUp(cross(cur), 30, 1800)                 // 30% reduction for 30 minutes
+	sr.SetWarmUp(cross(cur), 50, 3600)                 // 50% reduction for 1 hour
+	sr.SetWarmUp(cross(cur), 70, 7200)                 // 70% reduction for 2 hours
+	sr.SetWarmUp(cross(cur), 100, 9223372036854775807) // 100% (no reduction) after 2 hours
 
 	ufmt.Printf("[EXPECTED] pool created and configured with warmup period\n")
 	testing.SkipHeights(1)
 }
 
-func mintLargePosition() uint64 {
+func mintLargePosition(cur realm) uint64 {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint large position for meaningful rewards")
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,       // token0
 		bazPath,       // token1
 		fee3000,       // fee
@@ -152,7 +152,7 @@ func mintLargePosition() uint64 {
 	ufmt.Printf("[EXPECTED] position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 
 	// Verify ownership
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
@@ -161,14 +161,14 @@ func mintLargePosition() uint64 {
 	return positionId
 }
 
-func stakePosition(positionId uint64) int64 {
+func stakePosition(cur realm, positionId uint64) int64 {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve and stake position")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
 
 	stakeTime := time.Now().Unix()
-	sr.StakeToken(cross, positionId, "")
+	sr.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[EXPECTED] position staked at time: %d\n", stakeTime)
 	testing.SkipHeights(1)
@@ -176,7 +176,7 @@ func stakePosition(positionId uint64) int64 {
 	return stakeTime
 }
 
-func skipTimeWithinWarmup() {
+func skipTimeWithinWarmup(cur realm) {
 	blocksToSkip := int64(3600) / blockTimeSeconds
 	println("[INFO] skip 1 hour (720 blocks) - staying within warmup period")
 	testing.SkipHeights(blocksToSkip)
@@ -185,7 +185,7 @@ func skipTimeWithinWarmup() {
 	ufmt.Printf("[EXPECTED] current time advanced to: %d\n", currentTime)
 }
 
-func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
+func collectRewardsAndVerifyPenalty(cur realm, positionId uint64, stakeTime int64) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check time since stake")
@@ -206,9 +206,9 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	ufmt.Printf("[INFO] devOps GNS before: %d\n", devOpsGnsBefore)
 
 	println("[INFO] collect rewards during warmup period")
-	internalRewardToUserStr, internalWarmupPenaltyStr, _, _ := sr.CollectReward(cross, positionId)
-	internalRewardToUser := mustParseInt64(internalRewardToUserStr)
-	internalWarmupPenalty := mustParseInt64(internalWarmupPenaltyStr)
+	internalRewardToUserStr, internalWarmupPenaltyStr, _, _ := sr.CollectReward(cross(cur), positionId)
+	internalRewardToUser := mustParseInt64(cur, internalRewardToUserStr)
+	internalWarmupPenalty := mustParseInt64(cur, internalWarmupPenaltyStr)
 
 	println("[INFO] check balances after collection")
 	userGnsAfter := gns.BalanceOf(adminUser)
@@ -249,7 +249,7 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	println("[INFO] warmup period penalty test completed successfully")
 }
 
-func mustParseInt64(value string) int64 {
+func mustParseInt64(cur realm, value string) int64 {
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		panic(err)
@@ -257,7 +257,7 @@ func mustParseInt64(value string) int64 {
 	return parsed
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

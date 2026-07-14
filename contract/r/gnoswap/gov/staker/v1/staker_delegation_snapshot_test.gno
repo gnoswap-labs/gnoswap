@@ -10,7 +10,7 @@ import (
 )
 
 // Test CleanStakerDelegationSnapshotByAdmin function
-func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testing.T) {
+func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		caller        address
@@ -35,7 +35,7 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 			// Given: Setup test environment
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
@@ -44,49 +44,47 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+				uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
 					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
-					}(cross)
+						gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
+					}(cross(cur))
 				})
 			} else {
 				func(cur realm) {
 					// Should not panic for admin
-					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
-				}(cross)
+					gs.CleanStakerDelegationSnapshotByAdmin(0, cur, tt.threshold, target)
+				}(cross(cur))
 			}
 		})
 	}
 }
 
 // Test edge cases and integration scenarios
-func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
+func TestStakerDelegationSnapshot_EdgeCases(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
 	tests := []struct {
 		name         string
 		description  string
-		testFunction func(t *testing.T)
+		testFunction func(cur realm, t *testing.T)
 	}{
 		{
 			name:        "Multiple SetUnDelegationLockupPeriodByAdmin operations should work",
 			description: "Admin should be able to perform multiple SetUnDelegationLockupPeriodByAdmin operations in sequence",
-			testFunction: func(t *testing.T) {
+			testFunction: func(cur realm, t *testing.T) {
 				// Given: Admin context
 				testing.SetRealm(testing.NewUserRealm(admin))
 
 				func(cur realm) {
-					gs.SetUnDelegationLockupPeriodByAdmin(1000)
-					gs.SetUnDelegationLockupPeriodByAdmin(2000)
-					gs.SetUnDelegationLockupPeriodByAdmin(3000)
-				}(cross)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 1000)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 2000)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, 3000)
+				}(cross(cur))
 			},
 		},
 		{
 			name:        "Large height values should be handled",
 			description: "System should handle large block height values without issues",
-			testFunction: func(t *testing.T) {
+			testFunction: func(cur realm, t *testing.T) {
 				// Given: Admin context
 				testing.SetRealm(testing.NewUserRealm(admin))
 
@@ -95,23 +93,23 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 
 				// Then: Should not panic
 				func(cur realm) {
-					gs.SetUnDelegationLockupPeriodByAdmin(largeHeight)
-				}(cross)
+					gs.SetUnDelegationLockupPeriodByAdmin(0, cur, largeHeight)
+				}(cross(cur))
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Execute test function
-			tt.testFunction(t)
+			tt.testFunction(cur, t)
 		})
 	}
 }
 
 // Test boundary conditions for safe arithmetic in delegation snapshot cleanup
-func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
-	t.Run("CleanTotalDelegationHistory with MaxInt64 cutoff", func(t *testing.T) {
+func TestStakerDelegationSnapshot_BoundaryConditions(cur realm, t *testing.T) {
+	t.Run("CleanTotalDelegationHistory with MaxInt64 cutoff", func(cur realm, t *testing.T) {
 		// given: gov staker with delegation history
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
@@ -122,24 +120,24 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			history.Set(100, int64(1000))
 			history.Set(200, int64(2000))
 			history.Set(math.MaxInt64-1, int64(3000))
-			err := gs.store.SetTotalDelegationHistory(history)
+			err := gs.store.SetTotalDelegationHistory(0, cur, history)
 			if err != nil {
 				panic(err)
 			}
-		}(cross)
+		}(cross(cur))
 
 		// when: clean history with MaxInt64 cutoff (uses safeAddInt64 at line 93)
 		// This should NOT panic because the code checks cutoffTimestamp < math.MaxInt64
 		func(cur realm) {
-			gs.cleanTotalDelegationHistory(math.MaxInt64)
-		}(cross)
+			gs.cleanTotalDelegationHistory(0, cur, math.MaxInt64)
+		}(cross(cur))
 
 		// then: should succeed without overflow
 		history := gs.store.GetTotalDelegationHistory()
 		uassert.True(t, history.Size() > 0)
 	})
 
-	t.Run("CleanUserDelegationHistory with MaxInt64 cutoff", func(t *testing.T) {
+	t.Run("CleanUserDelegationHistory with MaxInt64 cutoff", func(cur realm, t *testing.T) {
 		// given: gov staker with user delegation history
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
@@ -154,23 +152,23 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			history.Set(makeUserHistoryKey(aliceAddr, 200), int64(2000))
 			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-1), int64(3000))
 
-			err := gs.store.SetUserDelegationHistory(history)
+			err := gs.store.SetUserDelegationHistory(0, cur, history)
 			if err != nil {
 				panic(err)
 			}
-		}(cross)
+		}(cross(cur))
 
 		// when: clean user history with MaxInt64 cutoff
 		func(cur realm) {
-			gs.cleanUserDelegationHistoryForAddress(alice, math.MaxInt64)
-		}(cross)
+			gs.cleanUserDelegationHistoryForAddress(0, cur, alice, math.MaxInt64)
+		}(cross(cur))
 
 		// then: should succeed without overflow
 		history := gs.store.GetUserDelegationHistory()
 		uassert.True(t, history.Size() > 0)
 	})
 
-	t.Run("CleanTotalDelegationHistory with near-max cutoff", func(t *testing.T) {
+	t.Run("CleanTotalDelegationHistory with near-max cutoff", func(cur realm, t *testing.T) {
 		// given: gov staker with delegation history
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
@@ -181,17 +179,17 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			history.Set(100, int64(1000))
 			history.Set(math.MaxInt64-1000, int64(2000))
 			history.Set(math.MaxInt64-500, int64(3000))
-			err := gs.store.SetTotalDelegationHistory(history)
+			err := gs.store.SetTotalDelegationHistory(0, cur, history)
 			if err != nil {
 				panic(err)
 			}
-		}(cross)
+		}(cross(cur))
 
 		// when: clean history with near-max cutoff (uses safeAddInt64)
 		cutoff := int64(math.MaxInt64 - 100)
 		func(cur realm) {
-			gs.cleanTotalDelegationHistory(cutoff)
-		}(cross)
+			gs.cleanTotalDelegationHistory(0, cur, cutoff)
+		}(cross(cur))
 
 		// then: should preserve continuity and clean old entries
 		history := gs.store.GetTotalDelegationHistory()
@@ -201,7 +199,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		_ = val
 	})
 
-	t.Run("CleanUserDelegationHistory with near-max cutoff", func(t *testing.T) {
+	t.Run("CleanUserDelegationHistory with near-max cutoff", func(cur realm, t *testing.T) {
 		// given: gov staker with user delegation history
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
@@ -216,17 +214,17 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-1000), int64(2000))
 			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-500), int64(3000))
 
-			err := gs.store.SetUserDelegationHistory(history)
+			err := gs.store.SetUserDelegationHistory(0, cur, history)
 			if err != nil {
 				panic(err)
 			}
-		}(cross)
+		}(cross(cur))
 
 		// when: clean user history with near-max cutoff
 		cutoff := int64(math.MaxInt64 - 100)
 		func(cur realm) {
-			gs.cleanUserDelegationHistoryForAddress(alice, cutoff)
-		}(cross)
+			gs.cleanUserDelegationHistoryForAddress(0, cur, alice, cutoff)
+		}(cross(cur))
 
 		// then: should preserve user history
 		history := gs.store.GetUserDelegationHistory()

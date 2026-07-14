@@ -19,18 +19,18 @@ import (
 )
 
 // TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless tests IncreaseLiquidity with valid parameters
-func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
+func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position first
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 		// Generate params for increase liquidity
 		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
@@ -42,16 +42,16 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 		// Mint tokens for increase liquidity
 		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
 		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
-		mintTestToken(token0Path, amount0Int64)
-		mintTestToken(token1Path, amount1Int64)
+		mintTestToken(cur, token0Path, amount0Int64)
+		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-			cross,
+			cross(cur),
 			increaseParams.positionId,
 			increaseParams.amount0Desired,
 			increaseParams.amount1Desired,
@@ -73,18 +73,18 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless tests IncreaseLiquidity with randomized parameters
-func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position first
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 		// Generate params for increase liquidity
 		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
@@ -96,16 +96,16 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 		// Mint tokens for increase liquidity
 		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
 		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
-		mintTestToken(token0Path, amount0Int64)
-		mintTestToken(token1Path, amount1Int64)
+		mintTestToken(cur, token0Path, amount0Int64)
+		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		position.IncreaseLiquidity(
-			cross,
+			cross(cur),
 			increaseParams.positionId,
 			increaseParams.amount0Desired,
 			increaseParams.amount1Desired,
@@ -116,8 +116,8 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 	})
 }
 
-func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
@@ -125,7 +125,7 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Create initial position once with high liquidity
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// Generate params for increase liquidity
@@ -138,19 +138,19 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 		// Mint tokens for increase liquidity
 		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
 		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
-		mintTestToken(token0Path, amount0Int64)
-		mintTestToken(token1Path, amount1Int64)
+		mintTestToken(cur, token0Path, amount0Int64)
+		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 		// Get current total liquidity before increase
 		prevTotalLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(tokenId))
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-			cross,
+			cross(cur),
 			increaseParams.positionId,
 			increaseParams.amount0Desired,
 			increaseParams.amount1Desired,
@@ -180,14 +180,14 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	})
 }
 
-func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// Generate params for increase liquidity
@@ -200,12 +200,12 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 		// Mint tokens for increase liquidity
 		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
 		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
-		mintTestToken(token0Path, amount0Int64)
-		mintTestToken(token1Path, amount1Int64)
+		mintTestToken(cur, token0Path, amount0Int64)
+		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		//
@@ -214,7 +214,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
-			cross,
+			cross(cur),
 			increaseParams.positionId,
 			increaseParams.amount0Desired,
 			increaseParams.amount1Desired,
@@ -243,7 +243,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 }
 
 // Helper function to create a test position
-func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
+func createTestPosition(cur realm, t *testing.T, adminAddr, poolAddr address) uint64 {
 	t.Helper()
 
 	config := getNextPositionTokenConfig()
@@ -254,9 +254,9 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 	// Create pool if not exists
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	if !pool.ExistsPoolPath(poolPath) {
-		pool.SetPoolCreationFee(cross, 0)
+		pool.SetPoolCreationFee(cross(cur), 0)
 		pool.CreatePool(
-			cross,
+			cross(cur),
 			token0Path,
 			token1Path,
 			fee,
@@ -265,17 +265,17 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 	}
 
 	// Approve tokens
-	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
 
 	amount0Int64, _ := strconv.ParseInt("10000000", 10, 64)
 	amount1Int64, _ := strconv.ParseInt("10000000", 10, 64)
-	mintTestToken(token0Path, amount0Int64)
-	mintTestToken(token1Path, amount1Int64)
+	mintTestToken(cur, token0Path, amount0Int64)
+	mintTestToken(cur, token1Path, amount1Int64)
 
 	// Mint initial position
 	tokenId, _, _, _ := position.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,

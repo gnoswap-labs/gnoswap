@@ -45,45 +45,45 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	projectId := createOBLProject()
+	projectId := createOBLProject(cur)
 	projectTier30Id := projectId + ":30"
 	projectTier90Id := projectId + ":90"
 	projectTier180Id := projectId + ":180"
 	println()
 
 	println("[SCENARIO] 2. Successful deposit with valid project and tier (30 days)")
-	depositGnsSuccessful(projectTier30Id, 1_000_000)
+	depositGnsSuccessful(cur, projectTier30Id, 1_000_000)
 	println()
 
 	println("[SCENARIO] 3. Successful deposit with referrer (90 days)")
-	depositGnsWithReferrer(projectTier90Id, 2_000_000)
+	depositGnsWithReferrer(cur, projectTier90Id, 2_000_000)
 	println()
 
 	println("[SCENARIO] 4. Successful deposit with 180 day tier")
-	depositGns180Days(projectTier180Id, 3_000_000)
+	depositGns180Days(cur, projectTier180Id, 3_000_000)
 	println()
 
 	println("[SCENARIO] 5. Fail with zero amount")
-	depositGnsFailZeroAmount(projectTier30Id)
+	depositGnsFailZeroAmount(cur, projectTier30Id)
 	println()
 
 	println("[SCENARIO] 6. Fail with negative amount")
-	depositGnsFailNegativeAmount(projectTier30Id)
+	depositGnsFailNegativeAmount(cur, projectTier30Id)
 	println()
 
 	println("[SCENARIO] 7. Fail with invalid project tier ID format")
-	depositGnsFailInvalidFormat()
+	depositGnsFailInvalidFormat(cur)
 	println()
 
 	println("[SCENARIO] 8. Fail with non-existent project")
-	depositGnsFailNonExistent()
+	depositGnsFailNonExistent(cur)
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() string {
+func createOBLProject(cur realm) string {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
@@ -99,9 +99,9 @@ func createOBLProject() string {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -122,52 +122,52 @@ func createOBLProject() string {
 }
 
 // Successful deposit with valid project and tier
-func depositGnsSuccessful(projectTierId string, depositAmount int64) {
+func depositGnsSuccessful(cur realm, projectTierId string, depositAmount int64) {
 	println("[INFO] Testing successful GNS deposit")
 
 	// Setup user with GNS tokens
 	println("[INFO] Admin transferring GNS to user1")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user1Addr, depositAmount*2)
+	gns.Transfer(cross(cur), user1Addr, depositAmount*2)
 
 	// User approves launchpad to spend GNS
 	println("[INFO] User1 approving launchpad to spend GNS")
 	testing.SetRealm(user1Realm)
-	gns.Approve(cross, launchpadAddr, depositAmount*2)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount*2)
 
 	// Deposit GNS
 	println("[INFO] User1 depositing GNS to project tier")
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 
 	println("[EXPECTED] Deposit successful with ID:", depositId)
 	println("[EXPECTED] User1 GNS balance after deposit:", gns.BalanceOf(user1Addr))
 }
 
 // Successful deposit with referrer
-func depositGnsWithReferrer(projectTierId string, depositAmount int64) {
+func depositGnsWithReferrer(cur realm, projectTierId string, depositAmount int64) {
 	println("[INFO] Testing GNS deposit with referrer")
 
 	// Setup user with GNS tokens
 	println("[INFO] Admin transferring GNS to user2")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user2Addr, depositAmount*2)
+	gns.Transfer(cross(cur), user2Addr, depositAmount*2)
 
 	// User approves launchpad to spend GNS
 	println("[INFO] User2 approving launchpad to spend GNS")
 	testing.SetRealm(user2Realm)
-	gns.Approve(cross, launchpadAddr, depositAmount*2)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount*2)
 
 	// Deposit GNS with referrer
 	referrerAddr := "g1referrer"
 	println("[INFO] User2 depositing GNS with referrer:", referrerAddr)
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, referrerAddr)
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, referrerAddr)
 
 	println("[EXPECTED] Deposit successful with ID:", depositId)
 	println("[EXPECTED] User2 GNS balance after deposit:", gns.BalanceOf(user2Addr))
 }
 
 // Deposit with 180 day tier
-func depositGns180Days(projectTierId string, depositAmount int64) {
+func depositGns180Days(cur realm, projectTierId string, depositAmount int64) {
 	println("[INFO] Testing GNS deposit to 180 day tier")
 
 	user3Addr := testutils.TestAddress("user3")
@@ -176,23 +176,23 @@ func depositGns180Days(projectTierId string, depositAmount int64) {
 	// Setup user with GNS tokens
 	println("[INFO] Admin transferring GNS to user3")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user3Addr, depositAmount*2)
+	gns.Transfer(cross(cur), user3Addr, depositAmount*2)
 
 	// User approves launchpad to spend GNS
 	println("[INFO] User3 approving launchpad to spend GNS")
 	testing.SetRealm(user3Realm)
-	gns.Approve(cross, launchpadAddr, depositAmount*2)
+	gns.Approve(cross(cur), launchpadAddr, depositAmount*2)
 
 	// Deposit GNS
 	println("[INFO] User3 depositing GNS to 180 day tier")
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 
 	println("[EXPECTED] Deposit successful with ID:", depositId)
 	println("[EXPECTED] User3 GNS balance after deposit:", gns.BalanceOf(user3Addr))
 }
 
 // Fail with zero amount
-func depositGnsFailZeroAmount(projectTierId string) {
+func depositGnsFailZeroAmount(cur realm, projectTierId string) {
 	println("[INFO] Testing deposit with zero amount (should fail)")
 
 	user4Addr := testutils.TestAddress("user4")
@@ -201,14 +201,14 @@ func depositGnsFailZeroAmount(projectTierId string) {
 	testing.SetRealm(user4Realm)
 
 	expectedPanicMessage := "amount(0) should greater than minimum deposit amount(1000000)"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
-		launchpad.DepositGns(cross, projectTierId, 0, "")
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
+		launchpad.DepositGns(cross(cur), projectTierId, 0, "")
 	})
 	println("[EXPECTED] Should abort with zero amount error:", expectedPanicMessage)
 }
 
 // Fail with negative amount
-func depositGnsFailNegativeAmount(projectTierId string) {
+func depositGnsFailNegativeAmount(cur realm, projectTierId string) {
 	println("[INFO] Testing deposit with negative amount (should fail)")
 
 	user5Addr := testutils.TestAddress("user5")
@@ -216,14 +216,14 @@ func depositGnsFailNegativeAmount(projectTierId string) {
 
 	testing.SetRealm(user5Realm)
 	expectedPanicMessage := "amount(-1000000) should greater than minimum deposit amount(1000000)"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
-		launchpad.DepositGns(cross, projectTierId, -1_000_000, "")
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
+		launchpad.DepositGns(cross(cur), projectTierId, -1_000_000, "")
 	})
 	println("[EXPECTED] Should abort with negative amount error:", expectedPanicMessage)
 }
 
 // Fail with invalid project tier ID format
-func depositGnsFailInvalidFormat() {
+func depositGnsFailInvalidFormat(cur realm) {
 	println("[INFO] Testing deposit with invalid tier ID format (should fail)")
 
 	user6Addr := testutils.TestAddress("user6")
@@ -231,14 +231,14 @@ func depositGnsFailInvalidFormat() {
 
 	testing.SetRealm(user6Realm)
 	expectedPanicMessage := "(invalid_format)"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
-		launchpad.DepositGns(cross, "invalid_format", 1_000_000, "")
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
+		launchpad.DepositGns(cross(cur), "invalid_format", 1_000_000, "")
 	})
 	println("[EXPECTED] Should abort with invalid format error:", expectedPanicMessage)
 }
 
 // Fail with non-existent project
-func depositGnsFailNonExistent() {
+func depositGnsFailNonExistent(cur realm) {
 	println("[INFO] Testing deposit to non-existent project (should fail)")
 
 	user7Addr := testutils.TestAddress("user7")
@@ -246,8 +246,8 @@ func depositGnsFailNonExistent() {
 
 	testing.SetRealm(user7Realm)
 	expectedPanicMessage := "(non_existent_project:30)"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
-		launchpad.DepositGns(cross, "non_existent_project:30", 1_000_000, "")
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
+		launchpad.DepositGns(cross(cur), "non_existent_project:30", 1_000_000, "")
 	})
 	println("[EXPECTED] Should abort with non-existent project error:", expectedPanicMessage)
 }

@@ -1,8 +1,11 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // staker protocol fee reward
 
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
@@ -47,62 +50,62 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Delegate GNS from alice to admin")
-	delegateWithMint(aliceAddr, adminAddr, 1_000_000)
+	delegateWithMint(cur, aliceAddr, adminAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 2. Create pool and mint position")
-	createPoolByAdmin(barPath, quxPath, 3000)
-	mintPositionByAdmin(barPath, quxPath, 3000)
+	createPoolByAdmin(cur, barPath, quxPath, 3000)
+	mintPositionByAdmin(cur, barPath, quxPath, 3000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3. Swap route by swap route fee")
-	exactInSingleSwapRouteByAdmin(barPath, quxPath, "10000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "10000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4. Check and collect protocol fee reward for alice")
-	checkBalanceFn(quxPath, aliceAddr, func() {
-		collectProtocolFee(aliceAddr)
+	checkBalanceFn(cur, quxPath, aliceAddr, func() {
+		collectProtocolFee(cur, aliceAddr)
 	})
 	println("[EXPECTED] remained protocol fee reward is", common.BalanceOf(quxPath, gnoStakerAddr))
 }
 
-func delegateWithMint(from, to address, amount int64) {
+func delegateWithMint(cur realm, from, to address, amount int64) {
 	// if from is not admin, transfer GNS from admin to from
 	if from != adminAddr {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, from, amount)
+		gns.Transfer(cross(cur), from, amount)
 	}
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, to, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), to, int64(amount), "")
 
 	ufmt.Printf("[INFO] delegated %d GNS from %s to %s\n", amount, from, to)
 }
 
-func createPoolByAdmin(token0, token1 string, fee int64) {
+func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	poolCreationFee := pool.GetPoolCreationFee()
-	pool.CreatePool(cross, token0, token1, uint32(fee), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), token0, token1, uint32(fee), gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	ufmt.Printf("[INFO] created %s:%s:%d pool (poolCreationFee: %d)\n", token0, token1, fee, poolCreationFee)
 }
 
-func mintPositionByAdmin(token0, token1 string, fee int64) {
+func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross, token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, token1, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token0, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0,
 		token1,
 		uint32(fee),
@@ -122,7 +125,7 @@ func mintPositionByAdmin(token0, token1 string, fee int64) {
 	ufmt.Printf("[EXPECTED] Amount0: %s, Amount1: %s\n", amount0, amount1)
 }
 
-func exactInSingleSwapRouteByAdmin(
+func exactInSingleSwapRouteByAdmin(cur realm,
 	inputToken string,
 	outputToken string,
 	specifiedAmount string,
@@ -132,17 +135,17 @@ func exactInSingleSwapRouteByAdmin(
 ) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross, inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, math.MaxInt64)
 
 	// expected output token amount is -9955 (not handled amount is -9969, router fee is 14)
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
-		cross,
+		cross(cur),
 		inputToken,
 		outputToken,
 		specifiedAmount,
 		routeQueryString,
 		minAmountOut,
-		common.TickMathGetSqrtRatioAtTick(-1000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-1000).ToString(),
 		int64(9999999999),
 		"",
 	)
@@ -152,14 +155,14 @@ func exactInSingleSwapRouteByAdmin(
 	ufmt.Printf("[EXPECTED] outputTokenAmount(%s): %s\n", outputToken, outputTokenAmount)
 }
 
-func collectProtocolFee(addr address) {
+func collectProtocolFee(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(addr))
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 
 	println("[INFO] collected protocol fee reward for", addr)
 }
 
-func checkBalanceFn(tokenPath string, addr address, fn func()) {
+func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 
 	balanceBefore := common.BalanceOf(tokenPath, addr)

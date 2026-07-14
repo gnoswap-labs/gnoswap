@@ -1,17 +1,13 @@
 package rbac
 
-import (
-	"errors"
-)
+const (
+	ErrNoPendingOwner      = "no pending owner"
+	ErrUnauthorized        = "caller is not owner"
+	ErrPendingUnauthorized = "caller is not pending owner"
+	ErrInvalidAddress      = "invalid address"
 
-var (
-	ErrNoPendingOwner      = errors.New("no pending owner")
-	ErrUnauthorized        = errors.New("caller is not owner")
-	ErrPendingUnauthorized = errors.New("caller is not pending owner")
-	ErrInvalidAddress      = errors.New("invalid address")
-
-	ErrInvalidRoleName        = errors.New("invalid role name")
-	ErrRoleDoesNotExist       = errors.New("role does not exist")
-	ErrRoleAlreadyExists      = errors.New("role already exists")
-	ErrCannotRemoveSystemRole = errors.New("cannot remove system role")
+	ErrInvalidRoleName        = "invalid role name"
+	ErrRoleDoesNotExist       = "role does not exist"
+	ErrRoleAlreadyExists      = "role already exists"
+	ErrCannotRemoveSystemRole = "cannot remove system role"
 )

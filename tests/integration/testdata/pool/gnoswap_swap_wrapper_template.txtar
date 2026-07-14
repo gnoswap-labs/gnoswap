@@ -73,7 +73,7 @@ func WrappedSwap(
     payer address,
 ) (string, string) {
     return pool.Swap(
-        cross,
+        cross(cur),
         token0Path,
         token1Path,
         fee,

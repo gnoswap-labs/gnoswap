@@ -2,7 +2,6 @@ package community_pool
 
 import (
 	"chain"
-	"chain/runtime"
 	"strconv"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -27,6 +26,7 @@ func GetBalanceOf(tokenPath string) int64 {
 // TransferToken transfers tokens from the community pool.
 //
 // Parameters:
+//   - cur: current realm
 //   - tokenPath: token contract path
 //   - to: recipient address
 //   - amount: transfer amount
@@ -35,11 +35,11 @@ func GetBalanceOf(tokenPath string) int64 {
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 
-	prevRealm := runtime.PreviousRealm()
+	prevRealm := cur.Previous()
 	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
+	common.SafeGRC20Transfer(cross(cur), tokenPath, to, amount)
 
 	chain.Emit(
 		"TransferToken",

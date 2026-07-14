@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -44,60 +46,60 @@ const (
 	FEE_MEDIUM uint32 = 3000
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000)")
-	createPool()
-	mintPosition()
+	createPool(cur)
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 3. Swap Route With Balance Check")
-	swapRouteWithBalanceCheck()
+	swapRouteWithBalanceCheck(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	println("[INFO] Starting scenario: Single pool ExactIn swap test")
 
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 }
 
-func createPool() {
+func createPool(cur realm) {
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross(cur), barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	println("[INFO] Minting position in bar-foo pool")
 	testing.SetRealm(adminRealm)
 
-	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	pn.Mint(cross(cur), barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }
 
-func swapRouteWithBalanceCheck() {
+func swapRouteWithBalanceCheck(cur realm) {
 	println("[INFO] Executing ExactIn swap")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	println("[INFO] Checking balances before swap")
 	poolToken0Before := bar.BalanceOf(poolAddr)
@@ -116,7 +118,7 @@ func swapRouteWithBalanceCheck() {
 
 	println("[INFO] Executing ExactIn swap")
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified

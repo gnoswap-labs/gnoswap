@@ -1,0 +1,1 @@
+../../../../../gnoswap/protocol_fee/v1/doc.gno

@@ -23,8 +23,8 @@ func (h *storeHolder) Get() pool.IPoolStore {
 
 var capturedStore = &storeHolder{}
 
-func init() {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+func init(cur realm) {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		capturedStore.Set(store)
 
 		// Reuse the stable v1 implementation for functionality so we do not need to duplicate logic.
@@ -35,7 +35,7 @@ func init() {
 // AttemptStoreWrite tries to update the pool creation fee directly through the captured store.
 // When this package no longer has write permissions the call must fail with a write-permission error.
 func AttemptStoreWrite(cur realm, newFee int64) int64 {
-	err := capturedStore.Get().SetPoolCreationFee(newFee)
+	err := capturedStore.Get().SetPoolCreationFee(0, cur, newFee)
 	if err != nil {
 		panic(err)
 	}

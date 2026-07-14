@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // governance proposal execute - launchpad UpgradeImpl via governance
 
 package main
@@ -40,12 +42,12 @@ const (
 	launchpadV3Path = "gno.land/r/gnoswap/launchpad/v3_valid"
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
@@ -54,11 +56,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Check current launchpad implementation version")
-	checkLaunchpadVersion()
+	checkLaunchpadVersion(cur)
 	println()
 
 	println("[SCENARIO] 4. Propose launchpad UpgradeImpl to v3_valid")
-	proposalID := proposeLaunchpadUpgrade()
+	proposalID := proposeLaunchpadUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 5. Skip voting start delay for ready to vote")
@@ -67,7 +69,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 6. Vote for the proposal")
-	vote(proposalID, true)
+	vote(cur, proposalID, true)
 	println()
 
 	println("[SCENARIO] 7. Skip voting period for ready to execute")
@@ -76,45 +78,45 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Execute the launchpad UpgradeImpl proposal")
-	executeProposal(proposalID)
+	executeProposal(cur, proposalID)
 	println()
 
 	println("[SCENARIO] 9. Check launchpad implementation version after execution")
-	checkLaunchpadVersion()
+	checkLaunchpadVersion(cur)
 	println()
 
 	println("[SCENARIO] 10. Propose launchpad rollback to v1")
-	rollbackProposalID := proposeLaunchpadRollback()
+	rollbackProposalID := proposeLaunchpadRollback(cur)
 	println()
 
 	println("[SCENARIO] 11. Vote and execute rollback")
-	voteAndExecute(rollbackProposalID, config)
+	voteAndExecute(cur, rollbackProposalID, config)
 	println()
 
 	println("[SCENARIO] 12. Check launchpad implementation version after rollback")
-	checkLaunchpadVersion()
+	checkLaunchpadVersion(cur)
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	govStaker.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func checkLaunchpadVersion() {
+func checkLaunchpadVersion(cur realm) {
 	version := launchpad.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Current launchpad implementation: %s\n", version)
 }
 
-func proposeLaunchpadUpgrade() int64 {
+func proposeLaunchpadUpgrade(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"launchpad",
 		"Upgrade launchpad implementation to v3_valid",
 		1,
@@ -125,10 +127,10 @@ func proposeLaunchpadUpgrade() int64 {
 	return proposalID
 }
 
-func proposeLaunchpadRollback() int64 {
+func proposeLaunchpadRollback(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
-		cross,
+		cross(cur),
 		"launchpad",
 		"Rollback launchpad implementation to v1",
 		1,
@@ -139,13 +141,13 @@ func proposeLaunchpadRollback() int64 {
 	return proposalID
 }
 
-func vote(proposalID int64, yea bool) {
+func vote(cur realm, proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
-	governance.Vote(cross, proposalID, yea)
+	governance.Vote(cross(cur), proposalID, yea)
 
 	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
 	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
@@ -153,15 +155,15 @@ func vote(proposalID int64, yea bool) {
 	ufmt.Printf("[INFO] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }
 
-func executeProposal(proposalID int64) {
+func executeProposal(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 
 	ufmt.Printf("[INFO] Proposal %d executed successfully\n", proposalID)
 }
 
-func voteAndExecute(proposalID int64, config governance.Config) {
+func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Skip to voting start
@@ -169,7 +171,7 @@ func voteAndExecute(proposalID int64, config governance.Config) {
 	ufmt.Printf("[INFO] current height after voting start delay: %d\n", runtime.ChainHeight())
 
 	// Vote
-	governance.Vote(cross, proposalID, true)
+	governance.Vote(cross(cur), proposalID, true)
 	ufmt.Printf("[INFO] Voted YES for proposal %d\n", proposalID)
 
 	// Skip to execution
@@ -177,7 +179,7 @@ func voteAndExecute(proposalID int64, config governance.Config) {
 	ufmt.Printf("[INFO] current height after voting period: %d\n", runtime.ChainHeight())
 
 	// Execute
-	governance.Execute(cross, proposalID)
+	governance.Execute(cross(cur), proposalID)
 	ufmt.Printf("[INFO] Proposal %d executed successfully\n", proposalID)
 }
 

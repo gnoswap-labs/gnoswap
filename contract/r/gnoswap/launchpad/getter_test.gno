@@ -55,7 +55,7 @@ func firstRewardState(t *testing.T, rewards *bptree.BPTree) *RewardState {
 	return rewardState
 }
 
-func TestMutableLaunchpadGetterIsolation(t *testing.T) {
+func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		setup     func(m *MockLaunchpad)
@@ -355,8 +355,8 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
 			mockLaunchpad := newMockLaunchpad("v1")
 			implementation = mockLaunchpad
 			tt.setup(mockLaunchpad)

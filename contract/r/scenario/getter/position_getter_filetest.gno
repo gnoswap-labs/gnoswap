@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 package main
 
 import (
@@ -48,137 +50,137 @@ const (
 	FEE_MEDIUM uint32 = 3000
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize")
 	println("[SCENARIO] 1.1. Initialize Setup")
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
 	println("[SCENARIO] 1.2. Create Pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 1.3. Mint Position")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 1.4 ExactIn Swap Route for fee accumulation")
-	exactInSwapRoute()
+	exactInSwapRoute(cur)
 	println()
 
 	println("[SCENARIO] 2. Position Getter Methods")
 
 	println("[SCENARIO] 2.1. GetPositionCount")
-	getPositionCount()
+	getPositionCount(cur)
 	println()
 
 	println("[SCENARIO] 2.2. GetPositionIDs")
-	getPositionIDs()
+	getPositionIDs(cur)
 	println()
 
 	println("[SCENARIO] 2.3. GetPosition")
-	getPosition()
+	getPosition(cur)
 	println()
 
 	println("[SCENARIO] 2.4. IsBurned")
-	isBurned()
+	isBurned(cur)
 	println()
 
 	println("[SCENARIO] 2.5. IsInRange")
-	isInRange()
+	isInRange(cur)
 	println()
 
 	println("[SCENARIO] 2.6. GetPositionTokenBalances")
-	getPositionTokenBalances()
+	getPositionTokenBalances(cur)
 	println()
 
 	println("[SCENARIO] 2.7. GetPositionToken0Balance")
-	getPositionToken0Balance()
+	getPositionToken0Balance(cur)
 	println()
 
 	println("[SCENARIO] 2.8. GetPositionToken1Balance")
-	getPositionToken1Balance()
+	getPositionToken1Balance(cur)
 	println()
 
 	println("[SCENARIO] 2.9. GetPositionFeeGrowthInside0LastX128")
-	getPositionFeeGrowthInside0LastX128()
+	getPositionFeeGrowthInside0LastX128(cur)
 	println()
 
 	println("[SCENARIO] 2.10. GetPositionFeeGrowthInside1LastX128")
-	getPositionFeeGrowthInside1LastX128()
+	getPositionFeeGrowthInside1LastX128(cur)
 	println()
 
 	println("[SCENARIO] 2.11. GetPositionFeeGrowthInsideLastX128")
-	getPositionFeeGrowthInsideLastX128()
+	getPositionFeeGrowthInsideLastX128(cur)
 	println()
 
 	println("[SCENARIO] 2.12. GetPositionLiquidity")
-	getPositionLiquidity()
+	getPositionLiquidity(cur)
 	println()
 
 	println("[SCENARIO] 2.13. GetPositionOperator")
-	getPositionOperator()
+	getPositionOperator(cur)
 	println()
 
 	println("[SCENARIO] 2.14. GetPositionPoolKey")
-	getPositionPoolKey()
+	getPositionPoolKey(cur)
 	println()
 
 	println("[SCENARIO] 2.15. GetPositionTickLower")
-	getPositionTickLower()
+	getPositionTickLower(cur)
 	println()
 
 	println("[SCENARIO] 2.16. GetPositionTickUpper")
-	getPositionTickUpper()
+	getPositionTickUpper(cur)
 	println()
 
 	println("[SCENARIO] 2.17. GetPositionTicks")
-	getPositionTicks()
+	getPositionTicks(cur)
 	println()
 
 	println("[SCENARIO] 2.18. GetPositionTokensOwed0")
-	getPositionTokensOwed0()
+	getPositionTokensOwed0(cur)
 	println()
 
 	println("[SCENARIO] 2.19. GetPositionTokensOwed1")
-	getPositionTokensOwed1()
+	getPositionTokensOwed1(cur)
 	println()
 
 	println("[SCENARIO] 2.20. GetPositionTokensOwed")
-	getPositionTokensOwed()
+	getPositionTokensOwed(cur)
 	println()
 
 	println("[SCENARIO] 2.21. GetUnclaimedFee")
-	getUnclaimedFee()
+	getUnclaimedFee(cur)
 	println()
 
 	println("[SCENARIO] 2.22. GetPositionOwner")
-	getPositionOwner()
+	getPositionOwner(cur)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 }
 
-func createPool() {
+func createPool(cur realm) {
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for pool operations")
-	foo.Approve(cross, poolAddr, max_approve)
-	bar.Approve(cross, poolAddr, max_approve)
+	foo.Approve(cross(cur), poolAddr, max_approve)
+	bar.Approve(cross(cur), poolAddr, max_approve)
 
 	println("[INFO] Creating bar-foo pool (fee: 3000)")
-	pl.CreatePool(cross, barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	pl.CreatePool(cross(cur), barPath, fooPath, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	println("[INFO] Minting position in bar-foo pool")
 	testing.SetRealm(adminRealm)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	tokenId, liquidity, amount0, amount1 := pn.Mint(cross(cur), barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	positionId = tokenId
 
@@ -188,12 +190,12 @@ func mintPosition() {
 	println("[EXPECTED] minted position amount1:", amount1)
 }
 
-func exactInSwapRoute() {
+func exactInSwapRoute(cur realm) {
 	println("[INFO] Executing ExactIn swap for fee accumulation")
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, routerAddr, max_approve)
-	foo.Approve(cross, routerAddr, max_approve)
+	bar.Approve(cross(cur), routerAddr, max_approve)
+	foo.Approve(cross(cur), routerAddr, max_approve)
 
 	poolToken0Before := bar.BalanceOf(poolAddr)
 	poolToken1Before := foo.BalanceOf(poolAddr)
@@ -203,7 +205,7 @@ func exactInSwapRoute() {
 	protocolFeeToken1Before := foo.BalanceOf(protocolFeeAddr)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		fooPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified
@@ -233,7 +235,7 @@ func exactInSwapRoute() {
 
 // Position Getter Methods Tests
 
-func getPositionCount() {
+func getPositionCount(cur realm) {
 	println("[INFO] Check GetPositionCount method")
 	testing.SetRealm(adminRealm)
 
@@ -241,7 +243,7 @@ func getPositionCount() {
 	ufmt.Printf("[EXPECTED] position count: %d\n", positionCount)
 }
 
-func getPositionIDs() {
+func getPositionIDs(cur realm) {
 	println("[INFO] Check GetPositionIDs method")
 	testing.SetRealm(adminRealm)
 
@@ -252,7 +254,7 @@ func getPositionIDs() {
 	}
 }
 
-func getPosition() {
+func getPosition(cur realm) {
 	println("[INFO] Check GetPosition method")
 	testing.SetRealm(adminRealm)
 
@@ -271,7 +273,7 @@ func getPosition() {
 	}
 }
 
-func isBurned() {
+func isBurned(cur realm) {
 	println("[INFO] Check IsBurned method")
 	testing.SetRealm(adminRealm)
 
@@ -279,7 +281,7 @@ func isBurned() {
 	ufmt.Printf("[EXPECTED] position %d is burned: %t\n", positionId, burned)
 }
 
-func isInRange() {
+func isInRange(cur realm) {
 	println("[INFO] Check IsInRange method")
 	testing.SetRealm(adminRealm)
 
@@ -287,7 +289,7 @@ func isInRange() {
 	ufmt.Printf("[EXPECTED] position %d is in range: %t\n", positionId, inRange)
 }
 
-func getPositionTokenBalances() {
+func getPositionTokenBalances(cur realm) {
 	println("[INFO] Check GetPositionTokenBalances method")
 	testing.SetRealm(adminRealm)
 
@@ -301,7 +303,7 @@ func getPositionTokenBalances() {
 	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
-func getPositionToken0Balance() {
+func getPositionToken0Balance(cur realm) {
 	println("[INFO] Check GetPositionToken0Balance method")
 	testing.SetRealm(adminRealm)
 
@@ -309,7 +311,7 @@ func getPositionToken0Balance() {
 	println("[EXPECTED] position token0 balance:", balance0)
 }
 
-func getPositionToken1Balance() {
+func getPositionToken1Balance(cur realm) {
 	println("[INFO] Check GetPositionToken1Balance method")
 	testing.SetRealm(adminRealm)
 
@@ -317,7 +319,7 @@ func getPositionToken1Balance() {
 	println("[EXPECTED] position token1 balance:", balance1)
 }
 
-func getPositionFeeGrowthInside0LastX128() {
+func getPositionFeeGrowthInside0LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside0LastX128 method")
 	testing.SetRealm(adminRealm)
 
@@ -325,7 +327,7 @@ func getPositionFeeGrowthInside0LastX128() {
 	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth)
 }
 
-func getPositionFeeGrowthInside1LastX128() {
+func getPositionFeeGrowthInside1LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside1LastX128 method")
 	testing.SetRealm(adminRealm)
 
@@ -333,7 +335,7 @@ func getPositionFeeGrowthInside1LastX128() {
 	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth)
 }
 
-func getPositionFeeGrowthInsideLastX128() {
+func getPositionFeeGrowthInsideLastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInsideLastX128 method")
 	testing.SetRealm(adminRealm)
 
@@ -342,7 +344,7 @@ func getPositionFeeGrowthInsideLastX128() {
 	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1)
 }
 
-func getPositionLiquidity() {
+func getPositionLiquidity(cur realm) {
 	println("[INFO] Check GetPositionLiquidity method")
 	testing.SetRealm(adminRealm)
 
@@ -350,7 +352,7 @@ func getPositionLiquidity() {
 	println("[EXPECTED] position liquidity:", liquidity)
 }
 
-func getPositionOperator() {
+func getPositionOperator(cur realm) {
 	println("[INFO] Check GetPositionOperator method")
 	testing.SetRealm(adminRealm)
 
@@ -358,7 +360,7 @@ func getPositionOperator() {
 	println("[EXPECTED] position operator:", operator.String())
 }
 
-func getPositionPoolKey() {
+func getPositionPoolKey(cur realm) {
 	println("[INFO] Check GetPositionPoolKey method")
 	testing.SetRealm(adminRealm)
 
@@ -366,7 +368,7 @@ func getPositionPoolKey() {
 	println("[EXPECTED] position poolKey:", poolKey)
 }
 
-func getPositionTickLower() {
+func getPositionTickLower(cur realm) {
 	println("[INFO] Check GetPositionTickLower method")
 	testing.SetRealm(adminRealm)
 
@@ -374,7 +376,7 @@ func getPositionTickLower() {
 	ufmt.Printf("[EXPECTED] position tickLower: %d\n", tickLower)
 }
 
-func getPositionTickUpper() {
+func getPositionTickUpper(cur realm) {
 	println("[INFO] Check GetPositionTickUpper method")
 	testing.SetRealm(adminRealm)
 
@@ -382,7 +384,7 @@ func getPositionTickUpper() {
 	ufmt.Printf("[EXPECTED] position tickUpper: %d\n", tickUpper)
 }
 
-func getPositionTicks() {
+func getPositionTicks(cur realm) {
 	println("[INFO] Check GetPositionTicks method")
 	testing.SetRealm(adminRealm)
 
@@ -391,7 +393,7 @@ func getPositionTicks() {
 	ufmt.Printf("[EXPECTED] position tickUpper: %d\n", tickUpper)
 }
 
-func getPositionTokensOwed0() {
+func getPositionTokensOwed0(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed0 method")
 	testing.SetRealm(adminRealm)
 
@@ -399,7 +401,7 @@ func getPositionTokensOwed0() {
 	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 }
 
-func getPositionTokensOwed1() {
+func getPositionTokensOwed1(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed1 method")
 	testing.SetRealm(adminRealm)
 
@@ -407,7 +409,7 @@ func getPositionTokensOwed1() {
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
-func getPositionTokensOwed() {
+func getPositionTokensOwed(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed method")
 	testing.SetRealm(adminRealm)
 
@@ -416,7 +418,7 @@ func getPositionTokensOwed() {
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
-func getUnclaimedFee() {
+func getUnclaimedFee(cur realm) {
 	println("[INFO] Check GetUnclaimedFee method")
 	testing.SetRealm(adminRealm)
 
@@ -425,7 +427,7 @@ func getUnclaimedFee() {
 	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
-func getPositionOwner() {
+func getPositionOwner(cur realm) {
 	println("[INFO] Check GetPositionOwner method")
 	testing.SetRealm(adminRealm)
 

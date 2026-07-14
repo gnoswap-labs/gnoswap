@@ -3,23 +3,22 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
 )
 
-func TestTierRatioFromCounts(t *testing.T) {
+func TestTierRatioFromCounts(cur realm, t *testing.T) {
 	tests := []struct {
 		tier1Count uint64
 		tier2Count uint64
 		tier3Count uint64
 		expected   sr.TierRatio
 	}{
-		{1, 0, 0, sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0}},
-		{1, 0, 1, sr.TierRatio{Tier1: 80, Tier2: 0, Tier3: 20}},
-		{1, 1, 0, sr.TierRatio{Tier1: 70, Tier2: 30, Tier3: 0}},
-		{1, 1, 1, sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20}},
+		{1, 0, 0, sr.NewTierRatio(100, 0, 0)},
+		{1, 0, 1, sr.NewTierRatio(80, 0, 20)},
+		{1, 1, 0, sr.NewTierRatio(70, 30, 0)},
+		{1, 1, 1, sr.NewTierRatio(50, 30, 20)},
 	}
 
 	for _, tt := range tests {
@@ -31,7 +30,7 @@ func TestTierRatioFromCounts(t *testing.T) {
 	}
 }
 
-func TestNewPoolTier(t *testing.T) {
+func TestNewPoolTier(cur realm, t *testing.T) {
 	currentTime := int64(100000) // Arbitrary time for testing
 	mustExistsInTier1 := "testPool"
 
@@ -54,7 +53,7 @@ func TestNewPoolTier(t *testing.T) {
 	}
 }
 
-func TestCacheReward(t *testing.T) {
+func TestCacheReward(cur realm, t *testing.T) {
 	currentTime := int64(250000)
 	// Simulate emission updates
 	pools := NewPools()
@@ -82,8 +81,8 @@ func SetupPoolTier(t *testing.T) *PoolTier {
 	return poolTier
 }
 
-func TestTierRatioGet(t *testing.T) {
-	ratio := sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20}
+func TestTierRatioGet(cur realm, t *testing.T) {
+	ratio := sr.NewTierRatio(50, 30, 20)
 
 	tests := []struct {
 		tier     uint64
@@ -106,7 +105,7 @@ func TestTierRatioGet(t *testing.T) {
 	ratio.Get(4)
 }
 
-func TestPoolTierChangeTier(t *testing.T) {
+func TestPoolTierChangeTier(cur realm, t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
 	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
@@ -141,7 +140,7 @@ func TestPoolTierChangeTier(t *testing.T) {
 	}
 }
 
-func TestCurrentAllTierCounts(t *testing.T) {
+func TestCurrentAllTierCounts(cur realm, t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
 	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
@@ -170,7 +169,7 @@ func TestCurrentAllTierCounts(t *testing.T) {
 	}
 }
 
-func TestIsInternallyIncentivizedPool(t *testing.T) {
+func TestIsInternallyIncentivizedPool(cur realm, t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
 	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
@@ -191,7 +190,7 @@ func TestIsInternallyIncentivizedPool(t *testing.T) {
 	}
 }
 
-func TestCurrentRewardPerPool(t *testing.T) {
+func TestCurrentRewardPerPool(cur realm, t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
 	emission := int64(1000000)
@@ -228,7 +227,7 @@ func TestCurrentRewardPerPool(t *testing.T) {
 }
 
 // Test CurrentReward for different tiers
-func TestCurrentReward(t *testing.T) {
+func TestCurrentReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tier           uint64
@@ -280,7 +279,7 @@ func TestCurrentReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolTier := &PoolTier{
 				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				counts:      tt.tierCounts,
@@ -299,7 +298,7 @@ func TestCurrentReward(t *testing.T) {
 }
 
 // Test NewPoolTierBy constructor
-func TestNewPoolTierBy(t *testing.T) {
+func TestNewPoolTierBy(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		tierCounts               [AllTierCount]uint64
@@ -321,9 +320,9 @@ func TestNewPoolTierBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolTier := NewPoolTierBy(
-				bptree.NewBPTreeN(16),
+				sr.NewBPTreeN(16),
 				TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				tt.tierCounts,
 				tt.lastRewardCacheTimestamp,
@@ -340,7 +339,7 @@ func TestNewPoolTierBy(t *testing.T) {
 }
 
 // Test CurrentCount edge cases
-func TestCurrentCountEdgeCases(t *testing.T) {
+func TestCurrentCountEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tier          uint64
@@ -368,7 +367,7 @@ func TestCurrentCountEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolTier := &PoolTier{
 				counts: tt.tierCounts,
 			}
@@ -380,7 +379,7 @@ func TestCurrentCountEdgeCases(t *testing.T) {
 }
 
 // Test applyCacheToAllPools behavior
-func TestApplyCacheToAllPools(t *testing.T) {
+func TestApplyCacheToAllPools(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		emissionInThisInterval int64
@@ -408,10 +407,10 @@ func TestApplyCacheToAllPools(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pools := NewPools()
 			poolTier := &PoolTier{
-				membership:  bptree.NewBPTreeN(16),
+				membership:  sr.NewBPTreeN(16),
 				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				counts:      tt.tierCounts,
 				getEmission: func() int64 { return tt.emissionInThisInterval },
@@ -440,7 +439,7 @@ func TestApplyCacheToAllPools(t *testing.T) {
 	}
 }
 
-func TestApplyCacheToPool(t *testing.T) {
+func TestApplyCacheToPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		tierRatio             sr.TierRatio
@@ -454,7 +453,7 @@ func TestApplyCacheToPool(t *testing.T) {
 			// case: tier has active members
 			// expect: reward cache updated with computed per-pool emission.
 			name:                  "tier with count caches reward",
-			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			tierRatio:             sr.NewTierRatio(100, 0, 0),
 			counts:                [AllTierCount]uint64{0, 1, 0, 0},
 			tierNum:               1,
 			currentTimestamp:      1010,
@@ -465,7 +464,7 @@ func TestApplyCacheToPool(t *testing.T) {
 			// case: requested tier has zero pool count
 			// expect: no reward cache write.
 			name:                  "tier without count is no-op",
-			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			tierRatio:             sr.NewTierRatio(100, 0, 0),
 			counts:                [AllTierCount]uint64{0, 1, 0, 0},
 			tierNum:               2,
 			currentTimestamp:      1020,
@@ -476,7 +475,7 @@ func TestApplyCacheToPool(t *testing.T) {
 			// case: emission is zero
 			// expect: cached reward becomes zero without panic.
 			name:                  "zero emission still caches zero",
-			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			tierRatio:             sr.NewTierRatio(100, 0, 0),
 			counts:                [AllTierCount]uint64{0, 1, 0, 0},
 			tierNum:               1,
 			currentTimestamp:      1030,
@@ -487,7 +486,7 @@ func TestApplyCacheToPool(t *testing.T) {
 			// case: non-trivial ratio/count on tier 3
 			// expect: reward follows ratio/count division.
 			name:                  "tier 3 reward uses tier ratio and count",
-			tierRatio:             sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20},
+			tierRatio:             sr.NewTierRatio(50, 30, 20),
 			counts:                [AllTierCount]uint64{0, 1, 1, 2},
 			tierNum:               3,
 			currentTimestamp:      1040,
@@ -497,7 +496,7 @@ func TestApplyCacheToPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := int64(1000)
 			poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
 			pool := sr.NewPool(poolPath, currentTime)
@@ -514,7 +513,7 @@ func TestApplyCacheToPool(t *testing.T) {
 	}
 }
 
-func TestCacheRewardForPool(t *testing.T) {
+func TestCacheRewardForPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		addPool            bool
@@ -606,7 +605,7 @@ func TestCacheRewardForPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			currentTime := int64(1000)
 			poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
 			pools := NewPools()
@@ -615,13 +614,13 @@ func TestCacheRewardForPool(t *testing.T) {
 				pool = sr.NewPool(poolPath, currentTime)
 				pools.set(poolPath, pool)
 				for _, ts := range tt.prewarmPoolCacheAt {
-					pool.RewardCache().Set(ts, int64(0))
+					pool.SetRewardCacheAt(ts, int64(0))
 				}
 			}
 
 			poolTier := NewPoolTierBy(
-				bptree.NewBPTreeN(16),
-				sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+				sr.NewBPTreeN(16),
+				sr.NewTierRatio(100, 0, 0),
 				[AllTierCount]uint64{0, 1, 0, 0},
 				tt.lastCacheTs,
 				tt.initialEmission,
@@ -659,7 +658,7 @@ func boolPtr(v bool) *bool {
 }
 
 // Test calculatePoolReward function with various edge cases
-func TestCalculatePoolReward(t *testing.T) {
+func TestCalculatePoolReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		emission    int64
@@ -850,9 +849,9 @@ func TestCalculatePoolReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, "unexpected calculation error", func() {
+				uassert.PanicsContains(t, cur, "unexpected calculation error", func() {
 					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
 				})
 			} else {
@@ -863,7 +862,7 @@ func TestCalculatePoolReward(t *testing.T) {
 	}
 }
 
-func TestCalculatePoolReward_Boundary(t *testing.T) {
+func TestCalculatePoolReward_Boundary(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		emission    int64
@@ -922,9 +921,9 @@ func TestCalculatePoolReward_Boundary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, "overflow", func() {
+				uassert.PanicsContains(t, cur, "overflow", func() {
 					result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
 					t.Logf("result: %d", result)
 				})
@@ -938,7 +937,7 @@ func TestCalculatePoolReward_Boundary(t *testing.T) {
 
 // Test calculatePoolReward with i256 overflow scenarios
 // These tests verify behavior when the intermediate i256 multiplication overflows
-func TestCalculatePoolReward_I256Overflow(t *testing.T) {
+func TestCalculatePoolReward_I256Overflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		emission    int64
@@ -957,9 +956,9 @@ func TestCalculatePoolReward_I256Overflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsContains(t, "overflow", func() {
+				uassert.PanicsContains(t, cur, "overflow", func() {
 					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
 				})
 			} else {

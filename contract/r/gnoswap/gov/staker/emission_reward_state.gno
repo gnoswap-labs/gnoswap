@@ -54,7 +54,7 @@ func (e *EmissionRewardState) GetStakedAmount() int64            { return e.stak
 
 /* Setters */
 func (e *EmissionRewardState) SetRewardDebtX128(rewardDebtX128 *u256.Uint) {
-	e.rewardDebtX128 = rewardDebtX128
+	e.rewardDebtX128 = u256.Zero().Set(rewardDebtX128)
 }
 
 func (e *EmissionRewardState) SetAccumulatedRewardAmount(accumulatedRewardAmount int64) {

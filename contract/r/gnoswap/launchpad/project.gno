@@ -93,9 +93,22 @@ func (p *Project) Conditions() map[string]*ProjectCondition {
 	return conditions
 }
 
-// SetConditions sets the conditions map of the project.
+// SetConditions sets the conditions map of the project. The map is rebuilt so
+// it is owned by this realm, allowing later in-domain mutations (e.g.
+// SetCondition) without hitting the readonly taint on a foreign map.
 func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
-	p.conditions = conditions
+	owned := make(map[string]*ProjectCondition, len(conditions))
+	for tokenPath, condition := range conditions {
+		owned[tokenPath] = condition
+	}
+	p.conditions = owned
+}
+
+// SetCondition sets a single condition by token path. Mutating the map inside
+// the domain method avoids the readonly taint that arises when a caller in
+// another realm round-trips Conditions()/SetConditions().
+func (p *Project) SetCondition(tokenPath string, condition *ProjectCondition) {
+	p.conditions[tokenPath] = condition
 }
 
 // GetTiers returns the tiers map of the project.
@@ -109,9 +122,15 @@ func (p *Project) Tiers() map[int64]*ProjectTier {
 	return tiers
 }
 
-// SetTiers sets the tiers map of the project.
+// SetTiers sets the tiers map of the project. The map is rebuilt so it is owned
+// by this realm, allowing later in-domain mutations (e.g. SetTier) without
+// hitting the readonly taint on a map passed in from another realm.
 func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
-	p.tiers = tiers
+	owned := make(map[int64]*ProjectTier, len(tiers))
+	for duration, tier := range tiers {
+		owned[duration] = tier
+	}
+	p.tiers = owned
 }
 
 // GetTiersRatios returns the tiers ratios map of the project.

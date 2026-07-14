@@ -9,7 +9,7 @@ import (
 // outside the authorized domain path. The version manager should reject
 // this call with a domain-path violation error.
 func TryRegister(cur realm) {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		return v1.NewPoolV1(store)
 	})
 }

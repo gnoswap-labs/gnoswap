@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad getter test
 
 package main
@@ -46,33 +48,33 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup test data")
-	projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id := setupTestData()
+	projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id := setupTestData(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Project Getters")
-	testProjectGetters(projectId)
+	testProjectGetters(cur, projectId)
 	println()
 
 	println("[SCENARIO] 3. Test ProjectTier Getters")
-	testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, projectTier180Id)
+	testProjectTierGetters(cur, projectId, projectTier30Id, projectTier90Id, projectTier180Id)
 	println()
 
 	println("[SCENARIO] 4. Test Deposit Getters")
-	testDepositGetters(depositId1, depositId2)
+	testDepositGetters(cur, depositId1, depositId2)
 	println()
 
 	println("[SCENARIO] 5. Test RewardManager Getters")
-	testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id)
+	testRewardManagerGetters(cur, projectTier30Id, projectTier90Id, projectTier180Id)
 	println()
 
 	println("[SCENARIO] 6. Test RewardState Getters")
-	testRewardStateGetters(projectTier30Id, depositId1)
+	testRewardStateGetters(cur, projectTier30Id, depositId1)
 	println()
 }
 
-func setupTestData() (string, string, string, string, string, string) {
+func setupTestData(cur realm) (string, string, string, string, string, string) {
 	println("[INFO] Setting up test data")
 
 	// Create project
@@ -89,9 +91,9 @@ func setupTestData() (string, string, string, string, string, string) {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -119,31 +121,31 @@ func setupTestData() (string, string, string, string, string, string) {
 	// Deposit 1 (30 days)
 	println("[INFO] Admin transferring GNS to user1")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user1Addr, 5_000_000)
+	gns.Transfer(cross(cur), user1Addr, 5_000_000)
 
 	println("[INFO] User1 approving and depositing to 30 day tier")
 	testing.SetRealm(user1Realm)
-	gns.Approve(cross, launchpadAddr, 5_000_000)
-	depositId1 := launchpad.DepositGns(cross, projectTier30Id, 2_000_000, "")
+	gns.Approve(cross(cur), launchpadAddr, 5_000_000)
+	depositId1 := launchpad.DepositGns(cross(cur), projectTier30Id, 2_000_000, "")
 
 	println("[EXPECTED] Deposit 1 ID:", depositId1)
 
 	// Deposit 2 (90 days)
 	println("[INFO] Admin transferring GNS to user2")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user2Addr, 5_000_000)
+	gns.Transfer(cross(cur), user2Addr, 5_000_000)
 
 	println("[INFO] User2 approving and depositing to 90 day tier")
 	testing.SetRealm(user2Realm)
-	gns.Approve(cross, launchpadAddr, 5_000_000)
-	depositId2 := launchpad.DepositGns(cross, projectTier90Id, 3_000_000, "")
+	gns.Approve(cross(cur), launchpadAddr, 5_000_000)
+	depositId2 := launchpad.DepositGns(cross(cur), projectTier90Id, 3_000_000, "")
 
 	println("[EXPECTED] Deposit 2 ID:", depositId2)
 
 	return projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id
 }
 
-func testProjectGetters(projectId string) {
+func testProjectGetters(cur realm, projectId string) {
 	println("[INFO] Testing project getters")
 
 	// Set realm to launchpad for getter calls
@@ -244,7 +246,7 @@ func testProjectGetters(projectId string) {
 	println("[EXPECTED] Project active status:", isActive)
 }
 
-func testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, projectTier180Id string) {
+func testProjectTierGetters(cur realm, projectId, projectTier30Id, projectTier90Id, projectTier180Id string) {
 	println("[INFO] Testing project tier getters")
 
 	// Set realm to launchpad for getter calls
@@ -336,7 +338,7 @@ func testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, project
 	}
 }
 
-func testDepositGetters(depositId1, depositId2 string) {
+func testDepositGetters(cur realm, depositId1, depositId2 string) {
 	println("[INFO] Testing deposit getters")
 
 	// Set realm to launchpad for getter calls
@@ -428,7 +430,7 @@ func testDepositGetters(depositId1, depositId2 string) {
 	println("[EXPECTED] Deposit 1 end time:", endTime1)
 }
 
-func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id string) {
+func testRewardManagerGetters(cur realm, projectTier30Id, projectTier90Id, projectTier180Id string) {
 	println("[INFO] Testing reward manager getters")
 
 	// Set realm to launchpad for getter calls
@@ -515,7 +517,7 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 	println("[EXPECTED] Reward claimable duration:", claimableDuration)
 }
 
-func testRewardStateGetters(projectTierId, depositId string) {
+func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 	println("[INFO] Testing reward state getters")
 
 	// Set realm to launchpad for getter calls

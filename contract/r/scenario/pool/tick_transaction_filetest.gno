@@ -8,7 +8,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	plp "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -66,7 +66,7 @@ var (
 	MIN_PRICE string = "4295128740"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] Tick Transaction Test")
 	println("[INFO] Starting scenario: Tick transaction and liquidity management tests")
 
@@ -74,12 +74,12 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving pool creation fee")
-	gns.Approve(cross, poolAddr, poolCreationFee)
+	gns.Approve(cross(cur), poolAddr, poolCreationFee)
 
 	println("[INFO] Creating bar-foo pool (fee: 100, tick: -24081)")
-	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
+	testSqrt := gnsmath.TickMathGetSqrtRatioAtTick(-24081)
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
-	pool.CreatePool(cross, barPath, fooPath, fee100, testSqrt.ToString())
+	pool.CreatePool(cross(cur), barPath, fooPath, fee100, testSqrt.ToString())
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
 
@@ -88,13 +88,13 @@ func main() {
 
 	println("[INFO] Setting up positions and liquidity")
 	liqToMint := "10000000000" // 10_000_000_000
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	println("[SCENARIO] 1. Minting position spanning current tick")
 	testing.SetRealm(posRealm)
 	pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -110,7 +110,7 @@ func main() {
 	println("[SCENARIO] 2. Minting position ending at current tick")
 	testing.SetRealm(posRealm)
 	pool.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -127,7 +127,7 @@ func main() {
 	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
 	{
 		println("[INFO] Computing swap step with sqrt price change")
-		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStep(
+		sqrtQ, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
 			testSqrt,
 			testSqrtSubOne,
 			u256.MustFromDecimal(liqToMint),
@@ -147,7 +147,7 @@ func main() {
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		fee100,
@@ -157,7 +157,7 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -170,14 +170,14 @@ func main() {
 	println("[INFO] Scenario completed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

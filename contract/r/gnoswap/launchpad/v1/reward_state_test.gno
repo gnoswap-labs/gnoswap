@@ -5,6 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/launchpad"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -15,7 +16,7 @@ func wrappedPriceDebtForCurrentAndDelta(currentAccumX128, deltaX128 *u256.Uint) 
 	return u256.Zero().Sub(currentAccumX128, deltaX128)
 }
 
-func TestRewardState_IsClaimable(t *testing.T) {
+func TestRewardState_IsClaimable(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		claimableTime       int64
@@ -48,7 +49,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			state := launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
 
@@ -61,7 +62,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}
 }
 
-func TestRewardState_CalculateReward(t *testing.T) {
+func TestRewardState_CalculateReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		priceDebt               *u256.Uint
@@ -126,7 +127,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			state := launchpad.NewRewardState(u256.Zero().Lsh(tt.priceDebt, 128), tt.depositAmount, 100, 200, 100)
 			state.SetClaimedAmount(tt.claimedAmount)
@@ -143,7 +144,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
-func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
+func TestRewardState_CalculateClaimableRewardWrappedAccumulator(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		currentAccumX128  *u256.Uint
@@ -155,8 +156,8 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	}{
 		{
 			name:              "zero current with unit wrapped delta returns 1 reward",
-			currentAccumX128:  q128.Clone(),
-			deltaX128:         q128.Clone(),
+			currentAccumX128:  consts.Q128(),
+			deltaX128:         consts.Q128(),
 			depositAmount:     1,
 			claimedAmount:     0,
 			expectedReward:    1,
@@ -165,7 +166,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 		{
 			name:              "zero current with 13q wrapped delta returns 13 reward",
 			currentAccumX128:  u256.Zero(),
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			deltaX128:         u256.Zero().Mul(consts.Q128(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     0,
 			expectedReward:    13,
@@ -173,8 +174,8 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 		},
 		{
 			name:              "non-zero current with wrapped delta returns 13 reward",
-			currentAccumX128:  u256.Zero().Mul(q128.Clone(), u256.NewUint(5)),
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			currentAccumX128:  u256.Zero().Mul(consts.Q128(), u256.NewUint(5)),
+			deltaX128:         u256.Zero().Mul(consts.Q128(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     0,
 			expectedReward:    13,
@@ -182,8 +183,8 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 		},
 		{
 			name:              "wrapped delta subtracts claimed amount with non-zero current",
-			currentAccumX128:  u256.Zero().Mul(q128.Clone(), u256.NewUint(5)),
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			currentAccumX128:  u256.Zero().Mul(consts.Q128(), u256.NewUint(5)),
+			deltaX128:         u256.Zero().Mul(consts.Q128(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     5,
 			expectedReward:    13,
@@ -192,16 +193,16 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 		{
 			name:              "zero current with 16q wrapped delta returns 16 reward",
 			currentAccumX128:  u256.Zero(),
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(16)),
+			deltaX128:         u256.Zero().Mul(consts.Q128(), u256.NewUint(16)),
 			depositAmount:     1,
 			claimedAmount:     0,
 			expectedReward:    16,
 			expectedClaimable: 16,
 		},
 		{
-			name:              "zero current with wrapped delta below q128 floors to zero reward",
+			name:              "zero current with wrapped delta below consts.Q128() floors to zero reward",
 			currentAccumX128:  u256.Zero(),
-			deltaX128:         u256.Zero().Sub(q128.Clone(), u256.One()),
+			deltaX128:         u256.Zero().Sub(consts.Q128(), u256.One()),
 			depositAmount:     1,
 			claimedAmount:     0,
 			expectedReward:    0,
@@ -210,7 +211,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 		{
 			name:              "zero current with wrapped delta equal to claimed amount yields zero claimable",
 			currentAccumX128:  u256.Zero(),
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			deltaX128:         u256.Zero().Mul(consts.Q128(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     13,
 			expectedReward:    13,
@@ -219,7 +220,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			state := launchpad.NewRewardState(
 				wrappedPriceDebtForCurrentAndDelta(tt.currentAccumX128, tt.deltaX128),
 				tt.depositAmount,
@@ -238,7 +239,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	}
 }
 
-func TestRewardState_newRewardState(t *testing.T) {
+func TestRewardState_newRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
 		priceDebt           *u256.Uint
@@ -261,7 +262,7 @@ func TestRewardState_newRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			accumulatedRewardPerDepositX128 := u256.Zero().Lsh(tt.priceDebt, 128)
 			// Execute

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 
 	"gno.land/r/gnoswap/access"
@@ -57,80 +57,80 @@ var (
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Create bar:baz:100 pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint position 01")
-	mintPosition01()
+	mintPosition01(cur)
 	println()
 
 	println("[SCENARIO] 4. First stake operation")
-	firstStakeOperation()
+	firstStakeOperation(cur)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards after first stake")
-	collectRewardsAfterFirstStake()
+	collectRewardsAfterFirstStake(cur)
 	println()
 
 	println("[SCENARIO] 6. Unstake operation")
-	unstakeOperation()
+	unstakeOperation(cur)
 	println()
 
 	println("[SCENARIO] 7. Restake operation")
-	restakeOperation()
+	restakeOperation(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect rewards after restake")
-	collectRewardsAfterRestake()
+	collectRewardsAfterRestake(cur)
 	println()
 
 	println("[SCENARIO] 9. Final unstake operation")
-	finalUnstakeOperation()
+	finalUnstakeOperation(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create bar:baz:100 pool")
-	pl.CreatePool(cross, barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), barPath, bazPath, 100, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross, poolPath, 1)
+	sr.SetPoolTier(cross(cur), poolPath, 1)
 
 	testing.SkipHeights(1)
 }
 
-func mintPosition01() {
+func mintPosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for minting")
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 	testing.SkipHeights(2)
 
 	println("[INFO] mint position 01 (tick range: -100 ~ 100)")
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee100,
@@ -149,22 +149,22 @@ func mintPosition01() {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
 }
 
-func firstStakeOperation() {
+func firstStakeOperation(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT to staker for first stake")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 
 	println("[INFO] stake position 01 for the first time")
-	sr.StakeToken(cross, 1, "")
+	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after first stake: %s\n", ownerAfterStake)
 
 	if ownerAfterStake != stakerAddr {
@@ -174,7 +174,7 @@ func firstStakeOperation() {
 	testing.SkipHeights(1)
 }
 
-func collectRewardsAfterFirstStake() {
+func collectRewardsAfterFirstStake(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards")
@@ -182,7 +182,7 @@ func collectRewardsAfterFirstStake() {
 
 	println("[INFO] collect reward after first stake")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 
@@ -193,13 +193,13 @@ func collectRewardsAfterFirstStake() {
 	}
 }
 
-func unstakeOperation() {
+func unstakeOperation(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 01")
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", ownerAfterUnstake)
 
 	if ownerAfterUnstake != adminAddr {
@@ -209,16 +209,16 @@ func unstakeOperation() {
 	println("[INFO] position successfully unstaked and returned to owner")
 }
 
-func restakeOperation() {
+func restakeOperation(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve NFT to staker for restake")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 
 	println("[INFO] restake position 01")
-	sr.StakeToken(cross, 1, "")
+	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterRestake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterRestake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after restake: %s\n", ownerAfterRestake)
 
 	if ownerAfterRestake != stakerAddr {
@@ -229,7 +229,7 @@ func restakeOperation() {
 	println("[INFO] position successfully restaked")
 }
 
-func collectRewardsAfterRestake() {
+func collectRewardsAfterRestake(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate more rewards")
@@ -237,7 +237,7 @@ func collectRewardsAfterRestake() {
 
 	println("[INFO] collect reward after restake")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 
@@ -250,13 +250,13 @@ func collectRewardsAfterRestake() {
 	println("[INFO] rewards accumulated successfully after restaking")
 }
 
-func finalUnstakeOperation() {
+func finalUnstakeOperation(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] final unstake operation")
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterFinalUnstake := gnft.MustOwnerOf(positionIdFrom(1))
+	ownerAfterFinalUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after final unstake: %s\n", ownerAfterFinalUnstake)
 
 	if ownerAfterFinalUnstake != adminAddr {
@@ -266,7 +266,7 @@ func finalUnstakeOperation() {
 	println("[INFO] stake-unstake-restake cycle completed successfully")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
+func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
 	}

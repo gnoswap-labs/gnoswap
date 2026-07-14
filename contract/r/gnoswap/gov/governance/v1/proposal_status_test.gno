@@ -4,21 +4,16 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalStatus_StatusType tests status type determination
-func TestProposalStatus_StatusType(t *testing.T) {
+func TestProposalStatus_StatusType(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 	tests := []struct {
 		name            string
@@ -154,7 +149,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
 			resolver := NewProposalStatusResolver(status)
@@ -185,7 +180,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 }
 
 // TestProposalStatus_VotingOperations tests voting operations
-func TestProposalStatus_VotingOperations(t *testing.T) {
+func TestProposalStatus_VotingOperations(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		maxVotingWeight int64
@@ -221,15 +216,9 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			config := governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           tc.quorum,
-			}
+			config := governance.NewConfig(100, 200, 0, tc.quorum, 0, 100, 200)
 			status := NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
 			resolver := NewProposalStatusResolver(status)
 
@@ -252,15 +241,9 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 }
 
 // TestProposalStatusResolver_PrivateMethods tests private methods of proposal status resolver
-func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
+func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 
 	tests := []struct {
 		name   string
@@ -352,7 +335,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(2000)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(2000, 60, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(2000, 60, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -370,7 +353,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(500)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(500, 40, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(500, 40, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -383,7 +366,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			resolver := tc.setup()
 
@@ -397,7 +380,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 }
 
 // TestProposalStatus_NewProposalStatus tests the NewProposalStatus constructor
-func TestProposalStatus_NewProposalStatus(t *testing.T) {
+func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		config          governance.Config
@@ -406,53 +389,29 @@ func TestProposalStatus_NewProposalStatus(t *testing.T) {
 		createdAt       int64
 	}{
 		{
-			name: "Create with standard config",
-			config: governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			},
+			name:            "Create with standard config",
+			config:          governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
 			maxVotingWeight: 10_000_000_000,
 			executable:      true,
 			createdAt:       1000,
 		},
 		{
-			name: "Create with zero delays",
-			config: governance.Config{
-				VotingStartDelay: 0,
-				VotingPeriod:     0,
-				ExecutionDelay:   0,
-				ExecutionWindow:  0,
-				Quorum:           0,
-			},
+			name:            "Create with zero delays",
+			config:          governance.NewConfig(0, 0, 0, 0, 0, 0, 0),
 			maxVotingWeight: 0,
 			executable:      false,
 			createdAt:       0,
 		},
 		{
-			name: "Create with negative delays",
-			config: governance.Config{
-				VotingStartDelay: -1,
-				VotingPeriod:     -1,
-				ExecutionDelay:   -1,
-				ExecutionWindow:  -1,
-				Quorum:           -1,
-			},
+			name:            "Create with negative delays",
+			config:          governance.NewConfig(-1, -1, 0, -1, 0, -1, -1),
 			maxVotingWeight: -1,
 			executable:      true,
 			createdAt:       -1,
 		},
 		{
-			name: "Create non-executable proposal",
-			config: governance.Config{
-				VotingStartDelay: 100,
-				VotingPeriod:     200,
-				ExecutionDelay:   100,
-				ExecutionWindow:  200,
-				Quorum:           50,
-			},
+			name:            "Create non-executable proposal",
+			config:          governance.NewConfig(100, 200, 0, 50, 0, 100, 200),
 			maxVotingWeight: 10_000_000_000,
 			executable:      false,
 			createdAt:       time.Now().Unix(),
@@ -460,7 +419,7 @@ func TestProposalStatus_NewProposalStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			status := NewProposalStatus(tc.config, tc.maxVotingWeight, tc.executable, tc.createdAt)
 

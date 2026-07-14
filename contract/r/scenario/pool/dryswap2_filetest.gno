@@ -3,6 +3,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -60,12 +61,12 @@ var (
 // DrySwap vs Actual Swap Comparison Test
 // Testing DrySwap prediction accuracy against actual Swap execution
 // Expected behavior: DrySwap should accurately predict actual swap amounts
-func main() {
-	testDrySwapVsActualSwap(t)
+func main(cur realm) {
+	testDrySwapVsActualSwap(cur, t)
 }
 
 // testDrySwapVsActualSwap tests DrySwap prediction against actual Swap execution
-func testDrySwapVsActualSwap(t *testing.T) {
+func testDrySwapVsActualSwap(cur realm, t *testing.T) {
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for comparison test")
 	println("[INFO] Token0:", barPath)
@@ -76,23 +77,23 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -129,14 +130,14 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	// Approve tokens for swapping
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, 16000)
+	bar.Approve(cross(cur), poolAddr, 16000)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
@@ -146,7 +147,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
@@ -167,14 +168,14 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	println("[INFO] DrySwap accurately predicted the actual swap amounts")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

@@ -16,7 +16,7 @@ package router
 //   - string: actual input amount
 //   - string: actual output amount
 func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
-	return getImplementation().ExactInSwapRoute(inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
+	return getImplementation().ExactInSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
 }
 
 // ExactInSingleSwapRoute executes a single-hop swap with exact input amount.
@@ -35,7 +35,7 @@ func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn
 //   - string: actual input amount
 //   - string: actual output amount
 func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, amountOutMin string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
-	return getImplementation().ExactInSingleSwapRoute(inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer)
+	return getImplementation().ExactInSingleSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer)
 }
 
 // ExactOutSwapRoute executes a multi-hop swap with exact output amount.
@@ -54,7 +54,7 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 //   - string: actual input amount
 //   - string: actual output amount
 func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
-	return getImplementation().ExactOutSwapRoute(inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer)
+	return getImplementation().ExactOutSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer)
 }
 
 // ExactOutSingleSwapRoute executes a single-hop swap with exact output amount.
@@ -73,7 +73,7 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 //   - string: actual input amount
 //   - string: actual output amount
 func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
-	return getImplementation().ExactOutSingleSwapRoute(inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
+	return getImplementation().ExactOutSingleSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
 
 // DrySwapRoute simulates a swap route without executing it.
@@ -98,16 +98,12 @@ func DrySwapRoute(
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
 ) (string, string, bool) {
-	return func(cur realm) (string, string, bool) {
-		return getImplementation().DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
-	}(cross)
+	return getImplementation().DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
 // SwapCallback is called by pools to transfer tokens during a swap.
-func SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
-	return func(cur realm) error {
-		return getImplementation().SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, payer)
-	}(cross)
+func SwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
+	return getImplementation().SwapCallback(0, cur, token0Path, token1Path, amount0Delta, amount1Delta, payer)
 }
 
 // GetSwapFee returns the current swap fee rate.
@@ -120,5 +116,5 @@ func GetSwapFee() uint64 {
 // Parameters:
 //   - fee: new swap fee in basis points
 func SetSwapFee(cur realm, fee uint64) {
-	getImplementation().SetSwapFee(fee)
+	getImplementation().SetSwapFee(0, cur, fee)
 }

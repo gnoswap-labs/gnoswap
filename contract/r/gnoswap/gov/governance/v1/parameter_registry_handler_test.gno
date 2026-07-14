@@ -8,7 +8,7 @@ import (
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
-func TestRegistryHandler_Execute(t *testing.T) {
+func TestRegistryHandler_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		params           []string
@@ -26,7 +26,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					2,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return nil
 					},
 				)
@@ -41,7 +41,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					2,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return errors.New("test error")
 					},
 				)
@@ -57,7 +57,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"test/pkg",
 					"testFunc",
 					1,
-					func([]string) error {
+					func(_ int, rlm realm, _ []string) error {
 						return errors.New("test error")
 					},
 				)
@@ -72,7 +72,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"gno.land/r/gnoswap/test",
 					"DoThing",
 					2,
-					func([]string) error { return nil },
+					func(_ int, rlm realm, _ []string) error { return nil },
 					func(string) error { return nil },
 				)
 			},
@@ -82,9 +82,9 @@ func TestRegistryHandler_Execute(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMsg, func() {
 					_ = tc.handlerFactory()
 				})
 				return
@@ -94,7 +94,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 			handler := tc.handlerFactory()
 
 			// when
-			err := handler.Execute(tc.params)
+			err := handler.Execute(0, cur, tc.params)
 
 			// then
 			if tc.expectedError {
@@ -108,7 +108,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 }
 
 // TestParameterRegistryHandler_registerHandlers tests the private registerHandlers function
-func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
+func TestParameterRegistryHandler_registerHandlers(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupHandlers func() ([]*ParameterHandlerOptions, []string)
@@ -122,13 +122,13 @@ func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
 						"gno.land/r/test/package1",
 						"TestFunction1",
 						2,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 					NewParameterHandlerOptions(
 						"gno.land/r/test/package2",
 						"TestFunction2",
 						1,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 				}
 				keys := []string{
@@ -147,7 +147,7 @@ func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
 						"gno.land/r/test/package",
 						"TestFunction",
 						0,
-						func(args []string) error { return nil },
+						func(_ int, rlm realm, args []string) error { return nil },
 					).(*ParameterHandlerOptions),
 				}
 				keys := []string{
@@ -167,7 +167,7 @@ func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			registry := NewParameterRegistry()
 			handlers, keys := tt.setupHandlers()

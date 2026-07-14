@@ -8,7 +8,7 @@ import (
 )
 
 // TestProposalActionStatus_CancelAndExecute tests cancel and execute operations
-func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
+func TestProposalActionStatus_CancelAndExecute(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		executable      bool
@@ -73,7 +73,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := governance.NewProposalActionStatus(tc.executable)
 			resolver := NewProposalActionStatusResolver(status)
@@ -106,7 +106,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 }
 
 // TestNewProposalActionStatus tests the creation of new action status
-func TestNewProposalActionStatus(t *testing.T) {
+func TestNewProposalActionStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		executable bool
@@ -122,7 +122,7 @@ func TestNewProposalActionStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			status := governance.NewProposalActionStatus(tc.executable)
 			resolver := NewProposalActionStatusResolver(status)

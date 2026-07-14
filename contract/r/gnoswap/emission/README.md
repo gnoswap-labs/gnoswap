@@ -88,18 +88,19 @@ halvingCount = floor(timeSinceStart / halvingPeriod)
 ## Usage
 
 ```go
-// Set emission start (one-time by admin)
-SetDistributionStartTime(1704067200) // Jan 1, 2024
+// Set emission start (one-time by admin/governance)
+SetDistributionStartTime(cross(cur), 1704067200) // Jan 1, 2024
 
-// Trigger emission (called automatically)
-amount, ok := MintAndDistributeGns()
+// Trigger emission (called automatically by protocol flows)
+amount, ok := MintAndDistributeGns(cross(cur))
 
 // Update distribution ratios
 ChangeDistributionPct(
-    1, 7000,  // 70% to liquidity stakers
-    2, 2000,  // 20% to devops
-    3, 1000,  // 10% to community pool
-    4, 0      // 0% to governance stakers
+    cross(cur),
+    7000, // 70% to liquidity stakers
+    2000, // 20% to devops
+    1000, // 10% to community pool
+    0,    // 0% to governance stakers
 )
 
 // Query distribution info

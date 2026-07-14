@@ -8,6 +8,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -16,7 +17,7 @@ import (
 
 // Test getInitialCollectTime
 
-func TestGetInitialCollectTime(t *testing.T) {
+func TestGetInitialCollectTime(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		depositStakeTime        int64
@@ -56,11 +57,11 @@ func TestGetInitialCollectTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			deposit := &sr.Deposit{}
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := &sr.ExternalIncentive{}
+			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
 			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
 
 			result := getInitialCollectTime(deposit, incentive)
@@ -71,7 +72,7 @@ func TestGetInitialCollectTime(t *testing.T) {
 
 // Test Reward struct initialization
 
-func TestRewardStructInitialization(t *testing.T) {
+func TestRewardStructInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		internal        int64
@@ -110,7 +111,7 @@ func TestRewardStructInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			reward := Reward{
 				Internal:        tt.internal,
 				InternalPenalty: tt.internalPenalty,
@@ -140,7 +141,7 @@ func TestRewardStructInitialization(t *testing.T) {
 
 // Test CalcPositionRewardParam struct
 
-func TestCalcPositionRewardParamStructure(t *testing.T) {
+func TestCalcPositionRewardParamStructure(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	currentHeight := int64(1000)
 	positionId := uint64(123)
@@ -161,7 +162,7 @@ func TestCalcPositionRewardParamStructure(t *testing.T) {
 
 // Edge case tests
 
-func TestGetInitialCollectTime_BoundaryValues(t *testing.T) {
+func TestGetInitialCollectTime_BoundaryValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		depositStakeTime        int64
@@ -201,11 +202,11 @@ func TestGetInitialCollectTime_BoundaryValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			deposit := &sr.Deposit{}
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := &sr.ExternalIncentive{}
+			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
 			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
 
 			result := getInitialCollectTime(deposit, incentive)
@@ -214,7 +215,7 @@ func TestGetInitialCollectTime_BoundaryValues(t *testing.T) {
 	}
 }
 
-func TestReward_NilMaps(t *testing.T) {
+func TestReward_NilMaps(cur realm, t *testing.T) {
 	reward := Reward{
 		Internal:        1000,
 		InternalPenalty: 100,
@@ -226,7 +227,7 @@ func TestReward_NilMaps(t *testing.T) {
 	uassert.Equal(t, int64(100), reward.InternalPenalty)
 }
 
-func TestReward_EmptyMaps(t *testing.T) {
+func TestReward_EmptyMaps(cur realm, t *testing.T) {
 	reward := Reward{
 		Internal:        500,
 		InternalPenalty: 50,
@@ -240,7 +241,7 @@ func TestReward_EmptyMaps(t *testing.T) {
 	uassert.Equal(t, 0, len(reward.ExternalPenalty))
 }
 
-func TestReward_SingleIncentive(t *testing.T) {
+func TestReward_SingleIncentive(cur realm, t *testing.T) {
 	incentiveId := "test-incentive-1"
 	rewardAmount := int64(1000000)
 	penaltyAmount := int64(50000)
@@ -263,7 +264,7 @@ func TestReward_SingleIncentive(t *testing.T) {
 	uassert.Equal(t, penaltyAmount, externalPenalty)
 }
 
-func TestReward_MultipleIncentives(t *testing.T) {
+func TestReward_MultipleIncentives(cur realm, t *testing.T) {
 	reward := Reward{
 		Internal:        1000000,
 		InternalPenalty: 50000,
@@ -294,39 +295,39 @@ func TestReward_MultipleIncentives(t *testing.T) {
 	uassert.Equal(t, int64(60000), totalPenalty)
 }
 
-func TestGetInitialCollectTime_RealisticScenarios(t *testing.T) {
+func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 	// Scenario 1: Position staked Jan 1, incentive starts Jan 15
 	jan1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
 	jan15 := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	deposit1 := &sr.Deposit{}
+	deposit1 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit1.SetStakeTime(jan1)
-	incentive1 := &sr.ExternalIncentive{}
+	incentive1 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
 	incentive1.SetStartTimestamp(jan15)
 
 	result1 := getInitialCollectTime(deposit1, incentive1)
 	uassert.Equal(t, jan15, result1)
 
 	// Scenario 2: Incentive started Jan 1, position staked Jan 15
-	deposit2 := &sr.Deposit{}
+	deposit2 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit2.SetStakeTime(jan15)
-	incentive2 := &sr.ExternalIncentive{}
+	incentive2 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
 	incentive2.SetStartTimestamp(jan1)
 
 	result2 := getInitialCollectTime(deposit2, incentive2)
 	uassert.Equal(t, jan15, result2)
 
 	// Scenario 3: Both start at the same time
-	deposit3 := &sr.Deposit{}
+	deposit3 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit3.SetStakeTime(jan1)
-	incentive3 := &sr.ExternalIncentive{}
+	incentive3 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
 	incentive3.SetStartTimestamp(jan1)
 
 	result3 := getInitialCollectTime(deposit3, incentive3)
 	uassert.Equal(t, jan1, result3)
 }
 
-func TestCalcPositionRewardParam_AllFields(t *testing.T) {
+func TestCalcPositionRewardParam_AllFields(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	currentHeight := int64(5000)
 	positionId := uint64(999)
@@ -352,7 +353,7 @@ func TestCalcPositionRewardParam_AllFields(t *testing.T) {
 	uassert.Equal(t, positionId, param.PositionId)
 }
 
-func TestReward_ZeroInternalWithExternalRewards(t *testing.T) {
+func TestReward_ZeroInternalWithExternalRewards(cur realm, t *testing.T) {
 	reward := Reward{
 		Internal:        0,
 		InternalPenalty: 0,
@@ -368,7 +369,7 @@ func TestReward_ZeroInternalWithExternalRewards(t *testing.T) {
 	uassert.Equal(t, int64(500000), externalReward)
 }
 
-func TestReward_InternalOnlyNoExternal(t *testing.T) {
+func TestReward_InternalOnlyNoExternal(cur realm, t *testing.T) {
 	reward := Reward{
 		Internal:        1000000,
 		InternalPenalty: 50000,
@@ -382,15 +383,21 @@ func TestReward_InternalOnlyNoExternal(t *testing.T) {
 	uassert.Equal(t, 0, len(reward.ExternalPenalty))
 }
 
-func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(t *testing.T) {
-	canonical := Setup(t)
+func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(cur realm, t *testing.T) {
+	canonical := Setup(cur, t)
 
 	// Make the first warmup emit 0% reward so only penalties accumulate
 	originalWarmups := append([]sr.Warmup(nil), getMockInstance().store.GetWarmupTemplate()...)
-	modifiedWarmups := append([]sr.Warmup(nil), originalWarmups...)
-	modifiedWarmups[0].WarmupRatio = 0
-	getMockInstance().store.SetWarmupTemplate(modifiedWarmups)
-	defer getMockInstance().store.SetWarmupTemplate(originalWarmups)
+	modifiedWarmups := make([]sr.Warmup, len(originalWarmups))
+	for i, w := range originalWarmups {
+		ratio := w.WarmupRatio
+		if i == 0 {
+			ratio = 0
+		}
+		modifiedWarmups[i] = sr.NewWarmup(w.TimeDuration, w.NextWarmupTime, ratio)
+	}
+	getMockInstance().store.SetWarmupTemplate(0, cur, modifiedWarmups)
+	defer getMockInstance().store.SetWarmupTemplate(0, cur, originalWarmups)
 
 	poolPath := "gno.land/r/gnoswap/pool/external-penalty-only-2"
 	canonical.CreatePool(poolPath, 1, 0)
@@ -413,7 +420,7 @@ func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(t *testing.T) {
 	owner := testutils.TestAddress("extPenaltyOwner")
 	liquidity := u256.NewUint(1)
 
-	err := canonical.StakeToken(positionId, poolPath, owner, -10, 10, liquidity)
+	err := canonical.StakeToken(cur, positionId, poolPath, owner, -10, 10, liquidity)
 	if err != nil {
 		t.Fatalf("failed to stake token: %v", err)
 	}
@@ -433,7 +440,7 @@ func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(t *testing.T) {
 
 // TestCalcPositionReward tests the calcPositionReward function
 // using a table-driven approach to verify various edge cases for internal and external rewards.
-func TestCalcPositionReward(t *testing.T) {
+func TestCalcPositionReward(cur realm, t *testing.T) {
 	baseTime := time.Now().Unix()
 	baseHeight := int64(100)
 
@@ -480,9 +487,9 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -524,10 +531,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(baseTime, int64(1000000)) // 1M reward per second
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000)) // 1M reward per second
 
 				return positionId, poolPath
 			},
@@ -580,10 +587,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
-				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
-				poolResolver.StakedLiquidity().Set(stakeTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(stakeTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(stakeTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(stakeTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(stakeTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -652,9 +659,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-100, "0")
-				poolResolver.HistoricalTick().Set(baseTime-100, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime-100, u256.NewUint(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime-100, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime-100, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -721,9 +728,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-100, "0")
-				poolResolver.HistoricalTick().Set(baseTime-100, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime-100, u256.NewUint(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime-100, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime-100, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -775,10 +782,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state with tick at 500 (out of range)
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(500))   // Out of range
-				poolResolver.StakedLiquidity().Set(baseTime, u256.Zero()) // No in-range liquidity
-				poolResolver.RewardCache().Set(baseTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(500))   // Out of range
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.Zero()) // No in-range liquidity
+				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -820,10 +827,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(baseTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -882,9 +889,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -942,9 +949,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-2000, "0")
-				poolResolver.HistoricalTick().Set(baseTime-2000, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime-2000, u256.NewUint(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime-2000, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime-2000, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime-2000, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -1008,10 +1015,10 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-100, "0")
-				poolResolver.HistoricalTick().Set(baseTime-100, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime-100, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(baseTime-100, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime-100, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime-100, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(baseTime-100, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1058,10 +1065,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
-				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
-				poolResolver.StakedLiquidity().Set(stakeTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(stakeTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(stakeTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(stakeTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(stakeTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1111,10 +1118,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
-				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
-				poolResolver.StakedLiquidity().Set(stakeTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(stakeTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(stakeTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(stakeTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(stakeTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1162,10 +1169,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(baseTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1208,10 +1215,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-				poolResolver.HistoricalTick().Set(baseTime, int32(0))
-				poolResolver.StakedLiquidity().Set(baseTime, largeLiquidity)
-				poolResolver.RewardCache().Set(baseTime, int64(1000000))
+				poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+				poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, largeLiquidity)
+				poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1227,9 +1234,9 @@ func TestCalcPositionReward(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Reset mock instance for each test
-			initStakerTest(t)
+			initStakerTest(cur, t)
 			s := getMockInstance()
 
 			// Setup test data
@@ -1303,7 +1310,7 @@ func TestCalcPositionReward(t *testing.T) {
 }
 
 // TestCalcPositionReward_BoundaryConditions tests edge cases at boundaries.
-func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
+func TestCalcPositionReward_BoundaryConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tickLower     int32
@@ -1349,8 +1356,8 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
 			s := getMockInstance()
 
 			baseTime := time.Now().Unix()
@@ -1381,14 +1388,14 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 
 			// Initialize pool state with specified current tick
 			poolResolver := NewPoolResolver(pool)
-			poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-			poolResolver.HistoricalTick().Set(baseTime, tt.currentTick)
+			poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+			poolResolver.Pool.SetHistoricalTickAt(baseTime, tt.currentTick)
 			if tt.expectInRange {
-				poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
 			} else {
-				poolResolver.StakedLiquidity().Set(baseTime, u256.Zero())
+				poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.Zero())
 			}
-			poolResolver.RewardCache().Set(baseTime, int64(1000000))
+			poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 			// Execute
 			reward := s.calcPositionReward(baseHeight+10, baseTime+100, positionId)
@@ -1407,8 +1414,8 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 }
 
 // TestCalcPositionReward_RewardAggregation tests that rewards from multiple warmup periods
-func TestCalcPositionReward_RewardAggregation(t *testing.T) {
-	initStakerTest(t)
+func TestCalcPositionReward_RewardAggregation(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	baseTime := time.Now().Unix()
@@ -1439,10 +1446,10 @@ func TestCalcPositionReward_RewardAggregation(t *testing.T) {
 
 	// Initialize pool state
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
-	poolResolver.HistoricalTick().Set(baseTime, int32(0))
-	poolResolver.StakedLiquidity().Set(baseTime, u256.NewUint(1000000))
-	poolResolver.RewardCache().Set(baseTime, int64(1000000))
+	poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime, "0")
+	poolResolver.Pool.SetHistoricalTickAt(baseTime, int32(0))
+	poolResolver.Pool.SetStakedLiquidityAt(baseTime, u256.NewUint(1000000))
+	poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 	// Execute at different time points and verify aggregation
 	times := []int64{
@@ -1464,8 +1471,8 @@ func TestCalcPositionReward_RewardAggregation(t *testing.T) {
 }
 
 // TestCalcPositionReward_ExternalRewardMapIntegrity tests that external reward maps
-func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
-	initStakerTest(t)
+func TestCalcPositionReward_ExternalRewardMapIntegrity(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
 	s := getMockInstance()
 
 	baseTime := time.Now().Unix()
@@ -1509,9 +1516,9 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 	s.getDeposits().set(positionId, deposit)
 
 	// Initialize pool state
-	poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-100, "0")
-	poolResolver.HistoricalTick().Set(baseTime-100, int32(0))
-	poolResolver.StakedLiquidity().Set(baseTime-100, u256.NewUint(1000000))
+	poolResolver.Pool.SetGlobalRewardRatioAccumulationAt(baseTime-100, "0")
+	poolResolver.Pool.SetHistoricalTickAt(baseTime-100, int32(0))
+	poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
 
 	// Get first reward
 	reward1 := s.calcPositionReward(baseHeight+10, baseTime+10, positionId)
@@ -1532,8 +1539,8 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 }
 
 // TestDepositRemoveExternalIncentiveId tests the RemoveExternalIncentiveId method
-func TestDepositRemoveExternalIncentiveId(t *testing.T) {
-	t.Run("remove existing incentive id", func(t *testing.T) {
+func TestDepositRemoveExternalIncentiveId(cur realm, t *testing.T) {
+	t.Run("remove existing incentive id", func(cur realm, t *testing.T) {
 		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
 		deposit := sr.NewDeposit(
 			testutils.TestAddress("owner"),
@@ -1564,7 +1571,7 @@ func TestDepositRemoveExternalIncentiveId(t *testing.T) {
 		uassert.True(t, deposit.HasExternalIncentiveId("incentive3"))
 	})
 
-	t.Run("remove non-existing incentive id", func(t *testing.T) {
+	t.Run("remove non-existing incentive id", func(cur realm, t *testing.T) {
 		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
 		deposit := sr.NewDeposit(
 			testutils.TestAddress("owner"),
@@ -1585,7 +1592,7 @@ func TestDepositRemoveExternalIncentiveId(t *testing.T) {
 		uassert.True(t, deposit.HasExternalIncentiveId("incentive1"))
 	})
 
-	t.Run("remove from nil tree", func(t *testing.T) {
+	t.Run("remove from nil tree", func(cur realm, t *testing.T) {
 		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
 		deposit := sr.NewDeposit(
 			testutils.TestAddress("owner"),
@@ -1607,7 +1614,7 @@ func TestDepositRemoveExternalIncentiveId(t *testing.T) {
 
 // TestCollectReward_LazyRemoval tests that incentives are removed from
 // deposit's list after they end and user collects rewards.
-func TestCollectReward_LazyRemoval(t *testing.T) {
+func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1760,7 +1767,7 @@ func TestCollectReward_LazyRemoval(t *testing.T) {
 
 // TestCollectReward_LazyRemovalBeforeEnd tests that incentives are NOT removed
 // if user hasn't collected after the end time.
-func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
+func TestCollectReward_LazyRemovalBeforeEnd(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1824,7 +1831,7 @@ func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
 
 // TestCollectReward_LazySync_IterationBounds tests that lazy sync
 // uses correct iteration bounds (lastUpdate, currentTime).
-func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
+func TestCollectReward_LazySync_IterationBounds(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := int64(1000)
@@ -1853,11 +1860,11 @@ func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
 	}
 
 	// Verify iteration bounds are correct
-	expectedStart := formatAnyInt(lastUpdate)
-	expectedEnd := formatAnyInt(currentTime)
+	expectedStart := utils.FormatInt(lastUpdate)
+	expectedEnd := utils.FormatInt(currentTime)
 
 	// This simulates the Iterate call in calculatePositionReward
-	// Iterate(formatInt(lastUpdate), formatInt(currentTime), ...)
+	// Iterate(utils.FormatInt(lastUpdate), utils.FormatInt(currentTime), ...)
 	if expectedStart >= expectedEnd {
 		t.Errorf("Invalid iteration range: [%s, %s]", expectedStart, expectedEnd)
 	}
@@ -1878,7 +1885,7 @@ func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
 
 // TestLazyRemoval_DeletedIncentive tests that deleted/refunded incentives
 // are properly removed from deposit's incentive list.
-func TestLazyRemoval_DeletedIncentive(t *testing.T) {
+func TestLazyRemoval_DeletedIncentive(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1937,7 +1944,7 @@ func TestLazyRemoval_DeletedIncentive(t *testing.T) {
 
 // TestLazySync_NotStartedIncentive tests that not-yet-started incentives
 // are added to deposit but don't yield rewards until they start.
-func TestLazySync_NotStartedIncentive(t *testing.T) {
+func TestLazySync_NotStartedIncentive(cur realm, t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	staker := testutils.TestAddress("staker1")
 	creator := testutils.TestAddress("creator")

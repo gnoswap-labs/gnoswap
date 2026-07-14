@@ -13,6 +13,8 @@ type ILaunchpad interface {
 
 type ILaunchpadProject interface {
 	CreateProject(
+		_ int,
+		rlm realm,
 		name string,
 		tokenPath string,
 		recipient address,
@@ -24,14 +26,14 @@ type ILaunchpadProject interface {
 		tier180Ratio int64,
 		startTime int64,
 	) string
-	TransferLeftFromProjectByAdmin(projectID string, recipient address) int64
-	CollectProtocolFee()
+	TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64
+	CollectProtocolFee(_ int, rlm realm)
 }
 
 type ILaunchpadDeposit interface {
-	DepositGns(targetProjectTierID string, depositAmount int64, referrer string) string
-	CollectDepositGns(depositID string) (int64, error)
-	CollectRewardByDepositId(depositID string) int64
+	DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string
+	CollectDepositGns(_ int, rlm realm, depositID string) (int64, error)
+	CollectRewardByDepositId(_ int, rlm realm, depositID string) int64
 }
 
 type ILaunchpadGetter interface {
@@ -93,19 +95,19 @@ type ILaunchpadGetter interface {
 type ILaunchpadStore interface {
 	HasProjectsKey() bool
 	GetProjects() *bptree.BPTree
-	SetProjects(projects *bptree.BPTree) error
+	SetProjects(_ int, rlm realm, projects *bptree.BPTree) error
 
 	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *bptree.BPTree
-	SetProjectTierRewardManagers(managers *bptree.BPTree) error
+	SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error
 
 	// DepositCounter
 	HasDepositCounterStoreKey() bool
 	GetDepositCounter() *Counter
-	SetDepositCounter(counter *Counter) error
+	SetDepositCounter(_ int, rlm realm, counter *Counter) error
 	NextDepositID() string
 
 	HasDepositsKey() bool
 	GetDeposits() *bptree.BPTree
-	SetDeposits(deposits *bptree.BPTree) error
+	SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error
 }

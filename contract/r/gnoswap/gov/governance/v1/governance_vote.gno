@@ -3,7 +3,11 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -34,7 +38,11 @@ import (
 //   - Voting period typically 7 days
 //
 // Returns voting weight used as string.
-func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
+func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedGovernance()
 
 	// Get current blockchain state and caller information
@@ -42,14 +50,15 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	currentAt := time.Now()
 
 	// Mint and distribute GNS tokens as part of the voting process
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Extract voter address from realm context
-	voterRealm := runtime.PreviousRealm()
+	voterRealm := rlm.Previous()
 	voter := voterRealm.Address()
 
 	// Process the vote and get updated vote tallies
 	userVote, totalYesVoteWeight, totalNoVoteWeight, err := gv.vote(
+		0, rlm,
 		proposalID,
 		voter,
 		yes,
@@ -61,20 +70,19 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	}
 
 	// Emit voting event for tracking and transparency
-	// previousRealm := runtime.PreviousRealm()
-	userVoteWeight := formatInt(userVote.VotedWeight())
+	userVoteWeight := utils.FormatInt(userVote.VotedWeight())
 	voterStr := voter.String()
 
 	chain.Emit(
 		"Vote",
 		"prevAddr", voterStr,
 		"prevPkgPath", voterRealm.PkgPath(),
-		"proposalId", formatInt(proposalID),
+		"proposalId", utils.FormatInt(proposalID),
 		"voter", voterStr,
 		"yes", userVote.VotingType(),
 		"voteWeight", userVoteWeight,
-		"voteYes", formatInt(totalYesVoteWeight),
-		"voteNo", formatInt(totalNoVoteWeight),
+		"voteYes", utils.FormatInt(totalYesVoteWeight),
+		"voteNo", utils.FormatInt(totalNoVoteWeight),
 	)
 
 	return userVoteWeight
@@ -82,6 +90,7 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 
 // vote handles core voting logic.
 func (gv *governanceV1) vote(
+	_ int, rlm realm,
 	proposalID int64,
 	voterAddress address,
 	votedYes bool,
@@ -121,7 +130,7 @@ func (gv *governanceV1) vote(
 		weightAtCreated = 0
 	}
 
-	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
+	votingWeight := gnsmath.SafeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")
@@ -147,7 +156,7 @@ func (gv *governanceV1) vote(
 	}
 
 	votingInfosTree.Set(voterAddress.String(), userVote)
-	err = gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	err = gv.store.SetProposalVotingInfos(0, rlm, proposalID, votingInfosTree)
 	if err != nil {
 		return nil, 0, 0, err
 	}

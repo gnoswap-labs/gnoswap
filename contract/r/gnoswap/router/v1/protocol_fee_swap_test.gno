@@ -9,7 +9,7 @@ import (
 	"gno.land/r/onbloc/bar"
 )
 
-func TestHandleSwapFee(t *testing.T) {
+func TestHandleSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		amount         int64
@@ -43,30 +43,30 @@ func TestHandleSwapFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
-				router.SetSwapFee(tt.swapFeeValue)
-			}(cross)
+				router.SetSwapFee(0, cur, tt.swapFeeValue)
+			}(cross(cur))
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			bar.Transfer(cross, routerAddr, tt.amount)
+			bar.Transfer(cross(cur), routerAddr, tt.amount)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				result := router.handleSwapFee(barPath, tt.amount)
+				result := router.handleSwapFee(0, cur, barPath, tt.amount)
 
 				if result != tt.expectedAmount {
 					t.Errorf("handleSwapFee() = %d, want %d", result, tt.expectedAmount)
 				}
-			}(cross)
+			}(cross(cur))
 		})
 	}
 }
 
-func TestSetSwapFee_Success(t *testing.T) {
+func TestSetSwapFee_Success(cur realm, t *testing.T) {
 	router := mockRouter()
 
 	tests := []struct {
@@ -81,14 +81,14 @@ func TestSetSwapFee_Success(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Set realm to admin
 			testing.SetRealm(adminRealm)
 
 			// Execute
 			func(cur realm) {
-				router.SetSwapFee(tt.fee)
-			}(cross)
+				router.SetSwapFee(0, cur, tt.fee)
+			}(cross(cur))
 
 			// Verify
 			actualFee := router.GetSwapFee()
@@ -105,14 +105,14 @@ func TestSetSwapFee_Success(t *testing.T) {
 // - Access module tests (for authorization)
 // - SetSwapFee input validation in the router implementation
 
-func TestProtocolFeeSwap_GetSwapFee(t *testing.T) {
+func TestProtocolFeeSwap_GetSwapFee(cur realm, t *testing.T) {
 	router := mockRouter()
 
 	// Set initial fee
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		router.SetSwapFee(15)
-	}(cross)
+		router.SetSwapFee(0, cur, 15)
+	}(cross(cur))
 
 	// Get fee (no special realm needed)
 	fee := router.GetSwapFee()
@@ -123,13 +123,13 @@ func TestProtocolFeeSwap_GetSwapFee(t *testing.T) {
 	}
 }
 
-func TestAddPendingProtocolFee(t *testing.T) {
+func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 	router := mockRouter()
 
-	router.addPendingProtocolFee(barPath, 100)
-	router.addPendingProtocolFee(barPath, 50)
-	router.addPendingProtocolFee(gnsPath, 25)
-	router.addPendingProtocolFee(fooPath, 0)
+	router.addPendingProtocolFee(0, cur, barPath, 100)
+	router.addPendingProtocolFee(0, cur, barPath, 50)
+	router.addPendingProtocolFee(0, cur, gnsPath, 25)
+	router.addPendingProtocolFee(0, cur, fooPath, 0)
 
 	pendingProtocolFees := router.store.GetPendingProtocolFees()
 	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
@@ -137,22 +137,22 @@ func TestAddPendingProtocolFee(t *testing.T) {
 	uassert.Equal(t, len(pendingProtocolFees), 2)
 }
 
-func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
+func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	router := mockRouter()
 	originalPendingProtocolFees := map[string]int64{
 		barPath: 0,
 		gnsPath: -10,
 	}
-	router.store.SetPendingProtocolFees(originalPendingProtocolFees)
+	router.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	router.addToProtocolFee()
+	router.addToProtocolFee(0, cur)
 
 	pendingProtocolFees := router.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
 	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
-func TestSetSwapFee_MultipleChanges(t *testing.T) {
+func TestSetSwapFee_MultipleChanges(cur realm, t *testing.T) {
 	router := mockRouter()
 
 	fees := []uint64{0, 15, 100, 500, 1000, 250}
@@ -161,8 +161,8 @@ func TestSetSwapFee_MultipleChanges(t *testing.T) {
 
 	for _, expectedFee := range fees {
 		func(cur realm) {
-			router.SetSwapFee(expectedFee)
-		}(cross)
+			router.SetSwapFee(0, cur, expectedFee)
+		}(cross(cur))
 
 		actualFee := router.GetSwapFee()
 		if actualFee != expectedFee {
@@ -178,7 +178,7 @@ func TestSetSwapFee_MultipleChanges(t *testing.T) {
 //
 //	poolAmount → calculateRouterFee → feeAmount
 //	poolAmount - feeAmount == userAmount (must hold)
-func TestExactOutRoundTrip(t *testing.T) {
+func TestExactOutRoundTrip(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		userAmount int64
@@ -201,7 +201,7 @@ func TestExactOutRoundTrip(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
 			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
 			userReceives := poolAmount - feeAmount
@@ -218,7 +218,7 @@ func TestExactOutRoundTrip(t *testing.T) {
 // 1. poolAmount > userAmount (pool provides more than user gets)
 // 2. feeAmount == poolAmount - userAmount (fee is the exact difference)
 // 3. protocolFee == poolAmount * feeRate / 10000 (fee formula is correct)
-func TestExactOutFeeAccounting(t *testing.T) {
+func TestExactOutFeeAccounting(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		userAmount   int64
@@ -250,7 +250,7 @@ func TestExactOutFeeAccounting(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
 			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
 
@@ -266,7 +266,7 @@ func TestExactOutFeeAccounting(t *testing.T) {
 
 // TestExactOutSmallAmountRounding verifies rounding behavior at boundaries
 // where the fee truncates to zero, meaning user gets the same amount as pool.
-func TestExactOutSmallAmountRounding(t *testing.T) {
+func TestExactOutSmallAmountRounding(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		userAmount int64
@@ -285,7 +285,7 @@ func TestExactOutSmallAmountRounding(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
 			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
 			userReceives := poolAmount - feeAmount
@@ -303,7 +303,7 @@ func TestExactOutSmallAmountRounding(t *testing.T) {
 	}
 }
 
-func TestCalculateRouterFee_WithSetSwapFee(t *testing.T) {
+func TestCalculateRouterFee_WithSetSwapFee(cur realm, t *testing.T) {
 	router := mockRouter()
 
 	tests := []struct {
@@ -344,13 +344,13 @@ func TestCalculateRouterFee_WithSetSwapFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
 
 			// Set swap fee
 			func(cur realm) {
-				router.SetSwapFee(tt.swapFee)
-			}(cross)
+				router.SetSwapFee(0, cur, tt.swapFee)
+			}(cross(cur))
 
 			// Calculate fee
 			feeAmount := calculateRouterFee(tt.amount, tt.swapFee)

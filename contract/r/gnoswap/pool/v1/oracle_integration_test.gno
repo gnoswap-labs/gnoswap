@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -11,7 +12,7 @@ import (
 )
 
 // TestOracle_SwapScenarios tests oracle behavior during various swap scenarios
-func TestOracle_SwapScenarios(t *testing.T) {
+func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 	// Use a fixed base time for consistent testing
 	baseTime := int64(1700000000) // Fixed timestamp for testing
 
@@ -99,7 +100,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := createTestPoolWithLiquidity()
 
 			// Gradually increase cardinality as needed
@@ -131,7 +132,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 }
 
 // Query with secondsAgo=0 immediately after initialization should return valid virtual observation
-func TestObservationState_InitializeAndQuerySecondsAgoZero(t *testing.T) {
+func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	// Create new observation state
@@ -173,10 +174,10 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(t *testing.T) {
 }
 
 // Verify before/after observations are accurate when target is at boundaries (<, =, >) with cardinality 1 and N
-func TestObservationState_BoundaryConditions(t *testing.T) {
+func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
-	t.Run("Cardinality=1", func(t *testing.T) {
+	t.Run("Cardinality=1", func(cur realm, t *testing.T) {
 		os := pl.NewObservationState(currentTime)
 
 		// Test target < observation timestamp (should error with OLD)
@@ -226,7 +227,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 		uassert.Equal(t, currentTime+50, afterOrAt3.BlockTimestamp(), "After should be virtual observation at target")
 	})
 
-	t.Run("Cardinality=N", func(t *testing.T) {
+	t.Run("Cardinality=N", func(cur realm, t *testing.T) {
 		os := pl.NewObservationState(currentTime)
 
 		// Grow to cardinality 5
@@ -262,7 +263,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 }
 
 // After grow, all slots in [currentCardinality, nextCardinality) should exist but have initialized==false
-func TestObservationState_GrowInvariants(t *testing.T) {
+func TestObservationState_GrowInvariants(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 
@@ -304,7 +305,7 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 }
 
 // Binary search and interpolation should work correctly after index wrapping
-func TestObservationState_IndexWrapping(t *testing.T) {
+func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 
@@ -364,11 +365,11 @@ func TestObservationState_IndexWrapping(t *testing.T) {
 }
 
 // Reject cardinalityNext > max, allow cardinalityNext == max
-func TestObservationState_CardinalityNexts(t *testing.T) {
+func TestObservationState_CardinalityNexts(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 
-	t.Run("Reject cardinalityNext > max", func(t *testing.T) {
+	t.Run("Reject cardinalityNext > max", func(cur realm, t *testing.T) {
 		// Since maxObservationCardinality is 65535 (max uint16),
 		// we can't add 1 to it without overflow.
 		// Instead, we test the logic by passing max value to ensure it's checked
@@ -387,7 +388,7 @@ func TestObservationState_CardinalityNexts(t *testing.T) {
 		// We've already added that check in the implementation
 	})
 
-	t.Run("Allow cardinalityNext == max", func(t *testing.T) {
+	t.Run("Allow cardinalityNext == max", func(cur realm, t *testing.T) {
 		// This would be expensive in real test, so we test the logic
 		// by checking if maxObservationCardinality is accepted
 		if maxObservationCardinality <= 100 { // Only test if max is reasonable
@@ -401,7 +402,7 @@ func TestObservationState_CardinalityNexts(t *testing.T) {
 		}
 	})
 
-	t.Run("Reject invalid grow operations", func(t *testing.T) {
+	t.Run("Reject invalid grow operations", func(cur realm, t *testing.T) {
 		// Test grow with current > next
 		_, err := grow(os, 10, 5)
 		uassert.NoError(t, err, "Should return current when next <= current")
@@ -413,23 +414,23 @@ func TestObservationState_CardinalityNexts(t *testing.T) {
 }
 
 // ObservationAt with various states
-func TestObservationState_ObservationAt(t *testing.T) {
+func TestObservationState_ObservationAt(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 
-	t.Run("Valid observation", func(t *testing.T) {
+	t.Run("Valid observation", func(cur realm, t *testing.T) {
 		obs, err := observationAt(os, 0)
 		uassert.NoError(t, err, "Should return observation at index 0")
 		uassert.NotNil(t, obs, "Observation should not be nil")
 		uassert.True(t, obs.Initialized(), "Observation should be initialized")
 	})
 
-	t.Run("Non-existent index", func(t *testing.T) {
+	t.Run("Non-existent index", func(cur realm, t *testing.T) {
 		_, err := observationAt(os, 999)
 		uassert.Error(t, err, "Should error for non-existent index")
 	})
 
-	t.Run("Uninitialized observation", func(t *testing.T) {
+	t.Run("Uninitialized observation", func(cur realm, t *testing.T) {
 		// Grow to create slots (new slots are created with initialized=false)
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
@@ -443,30 +444,30 @@ func TestObservationState_ObservationAt(t *testing.T) {
 }
 
 // Transform edge cases
-func TestObservationState_Transform(t *testing.T) {
+func TestObservationState_Transform(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 	lastObs, _ := lastObservation(os)
 
-	t.Run("Transform with same time", func(t *testing.T) {
+	t.Run("Transform with same time", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))
 		uassert.NoError(t, err, "Should not error for same time")
 		uassert.NotNil(t, obs, "Should return observation")
 		uassert.Equal(t, currentTime, obs.BlockTimestamp(), "Should return last observation for same time")
 	})
 
-	t.Run("Transform with negative time delta", func(t *testing.T) {
+	t.Run("Transform with negative time delta", func(cur realm, t *testing.T) {
 		_, err := transform(lastObs, currentTime-100, 100, u256.MustFromDecimal("1000000"))
 		uassert.Error(t, err, "Should error for negative time delta")
 	})
 
-	t.Run("Transform with zero liquidity", func(t *testing.T) {
+	t.Run("Transform with zero liquidity", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime+100, 100, u256.Zero())
 		uassert.NoError(t, err, "Should handle zero liquidity")
 		uassert.NotNil(t, obs, "Should return observation")
 		// With zero liquidity, use max(1, liquidity) = 1
 		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
-		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
+		expected := u256.MulDiv(u256.NewUint(100), consts.Q128(), u256.One())
 		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128(), "Should handle zero liquidity correctly")
 	})
 }

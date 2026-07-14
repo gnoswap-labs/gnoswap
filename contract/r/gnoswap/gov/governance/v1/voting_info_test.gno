@@ -8,7 +8,7 @@ import (
 )
 
 // TestVotingInfo_NewVotingInfo tests the creation of new VotingInfo instances
-func TestVotingInfo_NewVotingInfo(t *testing.T) {
+func TestVotingInfo_NewVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		availableWeight    int64
@@ -27,7 +27,7 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := governance.NewVotingInfo(tc.availableWeight)
 
@@ -43,7 +43,7 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 }
 
 // TestVotingInfo_VoteExecution tests the voting execution functionality
-func TestVotingInfo_VoteExecution(t *testing.T) {
+func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
 	tests := []struct {
 		name            string
 		votingInfo      *governance.VotingInfo
@@ -51,7 +51,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 		weight          int64
 		height          int64
 		timestamp       int64
-		expectedError   error
+		expectedError   string
 		expectedVoted   bool
 		expectedVoteYes bool
 	}{
@@ -62,7 +62,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			weight:          50,
 			height:          1000,
 			timestamp:       1234567890,
-			expectedError:   nil,
+			expectedError:   "",
 			expectedVoted:   true,
 			expectedVoteYes: true,
 		},
@@ -73,13 +73,13 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			weight:          50,
 			height:          1000,
 			timestamp:       1234567890,
-			expectedError:   nil,
+			expectedError:   "",
 			expectedVoted:   true,
 			expectedVoteYes: false,
 		},
 		{
 			name:            "Cannot vote twice",
-			votingInfo:      governance.NewVotingInfo(100),
+			votingInfo:      newVotedInfo(100, false, 50, 1000, 1234567890),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
@@ -91,27 +91,37 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			resolver := NewVotingInfoResolver(tc.votingInfo)
 			err := resolver.vote(tc.voteYes, tc.weight, tc.height, tc.timestamp)
 
 			// then
-			if tc.expectedError == nil {
+			if tc.expectedError == "" {
 				uassert.Equal(t, tc.votingInfo.IsVoted(), tc.expectedVoted)
 				uassert.Equal(t, tc.votingInfo.VotedYes(), tc.expectedVoteYes)
 				uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.weight)
 				uassert.Equal(t, tc.votingInfo.VotedHeight(), tc.height)
 				uassert.Equal(t, tc.votingInfo.VotedAt(), tc.timestamp)
 			} else {
-				uassert.ErrorIs(t, err, tc.expectedError)
+				uassert.ErrorContains(t, err, tc.expectedError)
 			}
 		})
 	}
 }
 
+func newVotedInfo(availableWeight int64, votedYes bool, votedWeight int64, votedHeight int64, votedAt int64) *governance.VotingInfo {
+	votingInfo := governance.NewVotingInfo(availableWeight)
+	votingInfo.SetVotedWeight(votedWeight)
+	votingInfo.SetVotedHeight(votedHeight)
+	votingInfo.SetVotedAt(votedAt)
+	votingInfo.SetVoted(true)
+	votingInfo.SetVotedYes(votedYes)
+	return votingInfo
+}
+
 // TestVotingInfo_VotingTypeAndStatus tests the voting type and status getters
-func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
+func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		votingInfo         func() *governance.VotingInfo
@@ -160,7 +170,7 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when & then
 			uassert.Equal(t, tc.votingInfo().VotingType(), tc.expectedVotingType)
 			uassert.Equal(t, tc.votingInfo().IsVoted(), tc.expectedIsVoted)
@@ -171,7 +181,7 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 }
 
 // TestVotingInfo_VoteWeights tests the vote weight getters
-func TestVotingInfo_VoteWeights(t *testing.T) {
+func TestVotingInfo_VoteWeights(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
 		votingInfo              func() *governance.VotingInfo
@@ -210,7 +220,7 @@ func TestVotingInfo_VoteWeights(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when & then
 			uassert.Equal(t, tc.votingInfo().AvailableVoteWeight(), tc.expectedAvailableWeight)
 			uassert.Equal(t, tc.votingInfo().VotedWeight(), tc.expectedVotedWeight)

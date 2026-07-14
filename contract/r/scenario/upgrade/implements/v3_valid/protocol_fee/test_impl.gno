@@ -12,8 +12,8 @@ func NewV3ValidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IPro
 	}
 }
 
-func init() {
-	protocolFee.RegisterInitializer(cross, func(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
+func init(cur realm) {
+	protocolFee.RegisterInitializer(cross(cur), func(_ int, rlm realm, store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
 		return NewV3ValidProtocolFee(store)
 	})
 }
@@ -24,20 +24,20 @@ type TestProtocolFee struct {
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() {
-	t.instance.DistributeProtocolFee()
+func (t *TestProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
+	t.instance.DistributeProtocolFee(0, rlm)
 }
 
-func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
-	t.instance.SetDevOpsPct(pct)
+func (t *TestProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
+	t.instance.SetDevOpsPct(0, rlm, pct)
 }
 
-func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
-	t.instance.SetGovStakerPct(pct)
+func (t *TestProtocolFee) SetGovStakerPct(_ int, rlm realm, pct int64) {
+	t.instance.SetGovStakerPct(0, rlm, pct)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
-	return t.instance.AddToProtocolFee(tokenPath, amount)
+func (t *TestProtocolFee) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	return t.instance.AddToProtocolFee(0, rlm, tokenPath, amount)
 }
 
 // IProtocolFeeGetter interface

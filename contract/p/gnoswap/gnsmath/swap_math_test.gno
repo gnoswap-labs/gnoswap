@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
+func TestSwapMath_SwapMathComputeSwapStep(cur realm, t *testing.T) {
 	tests := []struct {
 		name                           string
 		currentX96, targetX96          *u256.Uint
@@ -133,14 +133,14 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 		// Edge cases - extreme prices
 		{
 			name:            "extreme_low_price_with_fee",
-			currentX96:      MIN_SQRT_RATIO,
-			targetX96:       new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1000)),
+			currentX96:      MIN_SQRT_RATIO(),
+			targetX96:       new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1000)),
 			liquidity:       u256.MustFromDecimal("1"),
 			amountRemaining: i256.MustFromDecimal("1000000"),
 			feePips:         1,
-			sqrtNextX96:     MIN_SQRT_RATIO,
+			sqrtNextX96:     MIN_SQRT_RATIO(),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Gte(MIN_SQRT_RATIO))
+				uassert.True(t, sqrtRatioNextX96.Gte(MIN_SQRT_RATIO()))
 			},
 			amountIn:  "1",
 			amountOut: "4294643428317",
@@ -180,25 +180,25 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			feeAmount: "999999",
 		},
 		{
-			name:             "fee_pips_equals_denominator_should_panic",
-			currentX96:       encodePriceSqrtTest(t, "1", "1"),
-			targetX96:        encodePriceSqrtTest(t, "2", "1"),
-			liquidity:        u256.MustFromDecimal("1000000000000000000"),
-			amountRemaining:  i256.MustFromDecimal("1000000"),
-			feePips:          1000000,
-			shouldPanic:      true,
-			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than 1000000",
+			name:            "fee_pips_equals_denominator_should_panic",
+			currentX96:      encodePriceSqrtTest(t, "1", "1"),
+			targetX96:       encodePriceSqrtTest(t, "2", "1"),
+			liquidity:       u256.MustFromDecimal("1000000000000000000"),
+			amountRemaining: i256.MustFromDecimal("1000000"),
+			feePips:         1000000,
+			shouldPanic:     true,
+			panicMsg:        "SwapMathComputeSwapStep: feePips must be less than 1000000",
 		},
 		{
 			name:            "rounding_to_zero_after_fee",
-			currentX96:      Q96,
-			targetX96:       new(u256.Uint).Lsh(Q96, 1),
+			currentX96:      u256.MustFromDecimal(Q96),
+			targetX96:       new(u256.Uint).Lsh(u256.MustFromDecimal(Q96), 1),
 			liquidity:       u256.MustFromDecimal("1000000"),
 			amountRemaining: i256.MustFromDecimal("1"),
 			feePips:         999999,
-			sqrtNextX96:     Q96,
+			sqrtNextX96:     u256.MustFromDecimal(Q96),
 			chkSqrtNextX96: func(sqrt, target *u256.Uint) {
-				uassert.True(t, sqrt.Eq(Q96))
+				uassert.True(t, sqrt.Eq(u256.MustFromDecimal(Q96)))
 			},
 			amountIn:  "0",
 			amountOut: "0",
@@ -238,51 +238,51 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 		// Target price uses partial input amount (removed problematic test case)
 		// Fail cases
 		{
-			name:             "nil_inputs",
-			currentX96:       nil,
-			targetX96:        nil,
-			liquidity:        nil,
-			amountRemaining:  nil,
-			feePips:          600,
-			shouldPanic:      true,
-			panicMsg:         "SwapMathComputeSwapStep: input parameters cannot be nil",
+			name:            "nil_inputs",
+			currentX96:      nil,
+			targetX96:       nil,
+			liquidity:       nil,
+			amountRemaining: nil,
+			feePips:         600,
+			shouldPanic:     true,
+			panicMsg:        "SwapMathComputeSwapStep: input parameters cannot be nil",
 		},
 		{
-			name:             "fee_pips_exceeds_maximum",
-			currentX96:       encodePriceSqrtTest(t, "1", "1"),
-			targetX96:        encodePriceSqrtTest(t, "101", "100"),
-			liquidity:        u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
-			feePips:          1000001,
-			shouldPanic:      true,
-			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than 1000000",
+			name:            "fee_pips_exceeds_maximum",
+			currentX96:      encodePriceSqrtTest(t, "1", "1"),
+			targetX96:       encodePriceSqrtTest(t, "101", "100"),
+			liquidity:       u256.MustFromDecimal("2000000000000000000"),
+			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
+			feePips:         1000001,
+			shouldPanic:     true,
+			panicMsg:        "SwapMathComputeSwapStep: feePips must be less than 1000000",
 		},
 		{
-			name:             "sqrt_price_below_minimum",
-			currentX96:       u256.MustFromDecimal("2"),
-			targetX96:        u256.MustFromDecimal("1"),
-			liquidity:        u256.MustFromDecimal("1"),
-			amountRemaining:  i256.MustFromDecimal("100"),
-			feePips:          1,
-			shouldPanic:      true,
-			panicMsg:         errInvalidPoolSqrtPrice.Error(),
+			name:            "sqrt_price_below_minimum",
+			currentX96:      u256.MustFromDecimal("2"),
+			targetX96:       u256.MustFromDecimal("1"),
+			liquidity:       u256.MustFromDecimal("1"),
+			amountRemaining: i256.MustFromDecimal("100"),
+			feePips:         1,
+			shouldPanic:     true,
+			panicMsg:        errInvalidPoolSqrtPrice,
 		},
 		{
-			name:             "sqrt_price_above_maximum",
-			currentX96:       MAX_SQRT_RATIO,
-			targetX96:        new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
-			liquidity:        u256.MustFromDecimal("1"),
-			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
-			feePips:          1,
-			shouldPanic:      true,
-			panicMsg:         errInvalidPoolSqrtPrice.Error(),
+			name:            "sqrt_price_above_maximum",
+			currentX96:      MAX_SQRT_RATIO(),
+			targetX96:       new(u256.Uint).Add(MAX_SQRT_RATIO(), u256.One()),
+			liquidity:       u256.MustFromDecimal("1"),
+			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
+			feePips:         1,
+			shouldPanic:     true,
+			panicMsg:        errInvalidPoolSqrtPrice,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.shouldPanic {
-				uassert.PanicsWithMessage(t, test.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, test.panicMsg, func() {
 					SwapMathComputeSwapStep(
 						test.currentX96, test.targetX96, test.liquidity, test.amountRemaining, test.feePips,
 					)
@@ -521,8 +521,8 @@ func TestSwapMath_Boundaries(t *testing.T) {
 	}{
 		{
 			name:              "min_boundary_one_for_zero",
-			current_x96:       MIN_SQRT_RATIO,
-			target_x96:        new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(10000)),
+			current_x96:       MIN_SQRT_RATIO(),
+			target_x96:        new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(10000)),
 			liquidity:         u256.MustFromDecimal("1000000000000000000"),
 			amount_remaining:  i256.MustFromDecimal("1000000000000000"),
 			fee_pips:          3000,
@@ -531,8 +531,8 @@ func TestSwapMath_Boundaries(t *testing.T) {
 		},
 		{
 			name:              "max_boundary_zero_for_one",
-			current_x96:       MAX_SQRT_RATIO,
-			target_x96:        new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(10000)),
+			current_x96:       MAX_SQRT_RATIO(),
+			target_x96:        new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(10000)),
 			liquidity:         u256.MustFromDecimal("1000000000000000000"),
 			amount_remaining:  i256.MustFromDecimal("1000000000000000"),
 			fee_pips:          3000,
@@ -642,8 +642,8 @@ func TestSwapMath_HighPrecision(t *testing.T) {
 		},
 		{
 			name:      "precision_near_price_boundaries",
-			current:   new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1)),
-			target:    new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(1000)),
+			current:   new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1)),
+			target:    new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(1000)),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
 			amount:    i256.MustFromDecimal("1000000"),
 			fee_pips:  3000,
@@ -662,8 +662,8 @@ func TestSwapMath_HighPrecision(t *testing.T) {
 			amountOutNum := amountOut
 			feeAmountNum := feeAmount
 
-			uassert.True(t, sqrtNextNum.Gte(MIN_SQRT_RATIO), "sqrt price should be >= MIN_SQRT_RATIO")
-			uassert.True(t, sqrtNextNum.Lte(MAX_SQRT_RATIO), "sqrt price should be <= MAX_SQRT_RATIO")
+			uassert.True(t, sqrtNextNum.Gte(MIN_SQRT_RATIO()), "sqrt price should be >= MIN_SQRT_RATIO()")
+			uassert.True(t, sqrtNextNum.Lte(MAX_SQRT_RATIO()), "sqrt price should be <= MAX_SQRT_RATIO()")
 			uassert.True(t, amountInNum.Gte(u256.Zero()), "amountIn should be >= 0")
 			uassert.True(t, amountOutNum.Gte(u256.Zero()), "amountOut should be >= 0")
 			uassert.True(t, feeAmountNum.Gte(u256.Zero()), "feeAmount should be >= 0")
@@ -824,15 +824,15 @@ func TestSwapMath_ConsistencyChecks(t *testing.T) {
 
 func TestSwapMath_handleExactIn(t *testing.T) {
 	tests := []struct {
-		name                   string
-		zeroForOne             bool
-		currentX96             *u256.Uint
-		targetX96              *u256.Uint
-		liquidity              *u256.Uint
-		amountRemainingAbs     *u256.Uint
-		withoutFeeRateInPips   *u256.Uint
-		expectedSqrtNext       *u256.Uint
-		expectedAmountIn       *u256.Uint
+		name                 string
+		zeroForOne           bool
+		currentX96           *u256.Uint
+		targetX96            *u256.Uint
+		liquidity            *u256.Uint
+		amountRemainingAbs   *u256.Uint
+		withoutFeeRateInPips *u256.Uint
+		expectedSqrtNext     *u256.Uint
+		expectedAmountIn     *u256.Uint
 	}{
 		{
 			name:                 "amount_becomes_zero_after_fee_one_for_zero",
@@ -840,8 +840,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			currentX96:           encodePriceSqrtTest(t, "1", "1"),
 			targetX96:            encodePriceSqrtTest(t, "121", "100"),
 			liquidity:            u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs:   u256.One(), // 1 unit
-			withoutFeeRateInPips: u256.NewUint(1000000 - 3000), // 99.7%: 1 * 997000 / 1000000 = 0
+			amountRemainingAbs:   u256.One(),                       // 1 unit
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),     // 99.7%: 1 * 997000 / 1000000 = 0
 			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // no price move
 			expectedAmountIn:     u256.Zero(),
 		},
@@ -887,7 +887,7 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			amountRemainingAbs:   u256.MustFromDecimal("100000000000000000"), // not enough
 			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
 			expectedSqrtNext:     u256.MustFromDecimal("83187193795102126543093341534"), // partial move
-			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"), // amount to reach target
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),            // amount to reach target
 		},
 		{
 			name:                 "insufficient_amount_partial_move_zero_for_one",
@@ -925,8 +925,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		{
 			name:                 "near_min_sqrt_ratio",
 			zeroForOne:           false,
-			currentX96:           MIN_SQRT_RATIO,
-			targetX96:            new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:           MIN_SQRT_RATIO(),
+			targetX96:            new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:            u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
@@ -936,8 +936,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		{
 			name:                 "near_max_sqrt_ratio",
 			zeroForOne:           true,
-			currentX96:           MAX_SQRT_RATIO,
-			targetX96:            new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:           MAX_SQRT_RATIO(),
+			targetX96:            new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:            u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
@@ -983,7 +983,7 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			targetX96:          encodePriceSqrtTest(t, "121", "100"),
 			liquidity:          u256.MustFromDecimal("2000000000000000000"),
 			amountRemainingAbs: u256.MustFromDecimal("500000000000000000"), // large enough
-			expectedSqrtNext:   encodePriceSqrtTest(t, "121", "100"), // hit target
+			expectedSqrtNext:   encodePriceSqrtTest(t, "121", "100"),       // hit target
 			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),
 		},
 		{
@@ -1002,9 +1002,9 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			currentX96:         encodePriceSqrtTest(t, "1", "1"),
 			targetX96:          encodePriceSqrtTest(t, "121", "100"),
 			liquidity:          u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs: u256.MustFromDecimal("50000000000000000"), // not enough
+			amountRemainingAbs: u256.MustFromDecimal("50000000000000000"),             // not enough
 			expectedSqrtNext:   u256.MustFromDecimal("81259653860783935993378410602"), // partial move
-			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"), // amount to reach target
+			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),            // amount to reach target
 		},
 		{
 			name:               "insufficient_output_partial_move_zero_for_one",
@@ -1039,8 +1039,8 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		{
 			name:               "near_min_sqrt_ratio",
 			zeroForOne:         false,
-			currentX96:         MIN_SQRT_RATIO,
-			targetX96:          new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:         MIN_SQRT_RATIO(),
+			targetX96:          new(u256.Uint).Add(MIN_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:          u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
 			expectedSqrtNext:   u256.MustFromDecimal("4295128740"),
@@ -1049,11 +1049,11 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		{
 			name:               "near_max_sqrt_ratio",
 			zeroForOne:         true,
-			currentX96:         MAX_SQRT_RATIO,
-			targetX96:          new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			currentX96:         MAX_SQRT_RATIO(),
+			targetX96:          new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			liquidity:          u256.MustFromDecimal("1000000000000000000"),
 			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
-			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO(), u256.NewUint(100000)),
 			expectedAmountOut:  u256.Zero(),
 		},
 		{
@@ -1062,7 +1062,7 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			currentX96:         encodePriceSqrtTest(t, "1", "1"),
 			targetX96:          encodePriceSqrtTest(t, "121", "100"),
 			liquidity:          u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs: u256.One(), // 1 unit
+			amountRemainingAbs: u256.One(),                                            // 1 unit
 			expectedSqrtNext:   u256.MustFromDecimal("79228162514264337633158031594"), // minimal partial move
 			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),
 		},

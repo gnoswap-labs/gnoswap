@@ -9,7 +9,7 @@ import (
 // logic. Calling this once should succeed, but a second call from the same
 // package path must panic with a duplicate-initializer error.
 func RegisterVersion(cur realm) {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		return v1.NewPoolV1(store)
 	})
 }

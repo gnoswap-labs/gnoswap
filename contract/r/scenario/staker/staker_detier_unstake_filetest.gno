@@ -51,70 +51,70 @@ var (
 	maxInt64   int64 = 9223372036854775807
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize and setup")
-	initAndSetup()
+	initAndSetup(cur)
 	println()
 
 	println("[SCENARIO] 2. Mint and distribute GNS")
-	mintGNS()
+	mintGNS(cur)
 	println()
 
 	println("[SCENARIO] 3. Create pool and set tier")
-	createPoolWithTier()
+	createPoolWithTier(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint position on incentivized pool")
-	mintPosition()
+	mintPosition(cur)
 	println()
 
 	println("[SCENARIO] 5. Stake position while pool has tier")
-	stakePosition()
+	stakePosition(cur)
 	println()
 
 	println("[SCENARIO] 6. Verify rewards accumulate normally")
-	verifyRewards()
+	verifyRewards(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect all rewards before tier removal")
-	collectBeforeRemoval()
+	collectBeforeRemoval(cur)
 	println()
 
 	println("[SCENARIO] 8. Remove pool tier (de-tier the pool)")
-	removePoolTier()
+	removePoolTier(cur)
 	println()
 
 	println("[SCENARIO] 9. Verify pool has no incentives")
-	verifyNoIncentives()
+	verifyNoIncentives(cur)
 	println()
 
 	println("[SCENARIO] 10. Unstake position from de-tiered pool")
-	unstakeFromDetiredPool()
+	unstakeFromDetiredPool(cur)
 	println()
 
 	println("[SCENARIO] 11. Verify position ownership after unstake")
-	verifyOwnership()
+	verifyOwnership(cur)
 }
 
-func initAndSetup() {
+func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
-	sr.SetWarmUp(cross, 30, 150)
-	sr.SetWarmUp(cross, 50, 300)
-	sr.SetWarmUp(cross, 70, 900)
-	sr.SetWarmUp(cross, 100, maxInt64)
+	sr.SetWarmUp(cross(cur), 30, 150)
+	sr.SetWarmUp(cross(cur), 50, 300)
+	sr.SetWarmUp(cross(cur), 70, 900)
+	sr.SetWarmUp(cross(cur), 100, maxInt64)
 
 	// set unstaking fee to 0
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 
 	// set pool creation fee to 0
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
 	// set community pool distribution to 0%
 	en.ChangeDistributionPct(
-		cross,
+		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
 		0,    // communityPoolPct
@@ -125,38 +125,38 @@ func initAndSetup() {
 	testing.SkipHeights(1)
 }
 
-func mintGNS() {
+func mintGNS(cur realm) {
 	testing.SetRealm(adminRealm)
-	en.MintAndDistributeGns(cross)
-	en.MintAndDistributeGns(cross)
+	en.MintAndDistributeGns(cross(cur))
+	en.MintAndDistributeGns(cross(cur))
 
 	ufmt.Printf("[EXPECTED] GNS minted and distributed\n")
 	testing.SkipHeights(1)
 }
 
-func createPoolWithTier() {
+func createPoolWithTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
 	// Create pool
-	pl.CreatePool(cross, barPath, bazPath, fee500, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), barPath, bazPath, fee500, "79228162514264337593543950337")
 
 	// Set pool to tier 2
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
 
 	ufmt.Printf("[EXPECTED] pool created: bar:baz:500 with tier 2\n")
 	testing.SkipHeights(1)
 }
 
-func mintPosition() {
+func mintPosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	bar.Approve(cross, poolAddr, maxInt64)
-	baz.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	baz.Approve(cross(cur), poolAddr, maxInt64)
 
 	positionId, _, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		fee500,
@@ -175,7 +175,7 @@ func mintPosition() {
 		panic("expected position id 1")
 	}
 
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := gnft.OwnerOf(positionIdFrom(cur, positionId))
 	if err != nil || owner != adminUser {
 		panic("unexpected owner")
 	}
@@ -184,14 +184,14 @@ func mintPosition() {
 	testing.SkipHeights(1)
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 
 	// Verify NFT ownership transferred to staker
-	owner, err := gnft.OwnerOf(positionIdFrom(1))
+	owner, err := gnft.OwnerOf(positionIdFrom(cur, 1))
 	if err != nil || owner != stakerAddr {
 		panic("NFT should be owned by staker after staking")
 	}
@@ -200,13 +200,13 @@ func stakePosition() {
 	testing.SkipHeights(1)
 }
 
-func verifyRewards() {
+func verifyRewards(cur realm) {
 	testing.SkipHeights(100) // Let rewards accumulate
 
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1) // Collect rewards
+	sr.CollectReward(cross(cur), 1) // Collect rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -218,12 +218,12 @@ func verifyRewards() {
 	// No skip heights here - collect right before tier removal
 }
 
-func collectBeforeRemoval() {
+func collectBeforeRemoval(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Collect all pending rewards right before tier removal
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1) // Collect any remaining rewards
+	sr.CollectReward(cross(cur), 1) // Collect any remaining rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -231,24 +231,24 @@ func collectBeforeRemoval() {
 	// No skip heights - immediately remove tier
 }
 
-func removePoolTier() {
+func removePoolTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Remove the pool from tier system
-	sr.RemovePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
+	sr.RemovePoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
 
 	ufmt.Printf("[EXPECTED] pool tier removed - pool is now de-tiered\n")
 	testing.SkipHeights(1)
 }
 
-func verifyNoIncentives() {
+func verifyNoIncentives(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Skip some blocks to ensure no new rewards accumulate
 	testing.SkipHeights(50)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1) // Try to collect rewards
+	sr.CollectReward(cross(cur), 1) // Try to collect rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -260,19 +260,19 @@ func verifyNoIncentives() {
 	ufmt.Printf("[EXPECTED] pool has been removed from tier system and has no external incentives\n")
 }
 
-func unstakeFromDetiredPool() {
+func unstakeFromDetiredPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// This is the critical test - unstaking should succeed even though the pool has no incentives
-	sr.UnStakeToken(cross, 1)
+	sr.UnStakeToken(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] successfully unstaked position from de-tiered pool\n")
 	testing.SkipHeights(1)
 }
 
-func verifyOwnership() {
+func verifyOwnership(cur realm) {
 	// Verify NFT ownership returned to original owner
-	owner, err := gnft.OwnerOf(positionIdFrom(1))
+	owner, err := gnft.OwnerOf(positionIdFrom(cur, 1))
 	if err != nil {
 		panic("error checking ownership: " + err.Error())
 	}
@@ -291,7 +291,7 @@ func verifyOwnership() {
 	ufmt.Printf("[EXPECTED] position still accessible - liquidity: %s\n", position.Liquidity())
 }
 
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 

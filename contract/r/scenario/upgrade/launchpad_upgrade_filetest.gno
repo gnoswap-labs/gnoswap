@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad contract upgrade scenario test
 package main
 
@@ -28,37 +30,37 @@ const (
 	launchpadTestPath = "gno.land/r/gnoswap/launchpad/v3_valid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize launchpad contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Create project with v1")
-	projectId := createProject()
+	projectId := createProject(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify project info with v1")
-	verifyProjectInfo(projectId)
+	verifyProjectInfo(cur, projectId)
 	println()
 
 	println("[SCENARIO] 4. Upgrade launchpad contract to test version")
-	testLaunchpadUpgrade()
+	testLaunchpadUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 5. Verify project info with v3 valid")
-	verifyProjectInfo(projectId)
+	verifyProjectInfo(cur, projectId)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	ufmt.Println("[INFO] Setting implementation to v1")
 	testing.SetRealm(adminRealm)
-	launchpad.UpgradeImpl(cross, launchpadV1Path)
+	launchpad.UpgradeImpl(cross(cur), launchpadV1Path)
 
 	ufmt.Printf("[EXPECTED] launchpad upgraded to: %s\n", launchpadV1Path)
 }
 
-func createProject() string {
+func createProject(cur realm) string {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Creating OBL launchpad project")
@@ -77,9 +79,9 @@ func createProject() string {
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -97,15 +99,15 @@ func createProject() string {
 	return projectId
 }
 
-func testLaunchpadUpgrade() {
+func testLaunchpadUpgrade(cur realm) {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading launchpad contract to test version")
 	testing.SetRealm(adminRealm)
-	launchpad.UpgradeImpl(cross, launchpadTestPath)
+	launchpad.UpgradeImpl(cross(cur), launchpadTestPath)
 	ufmt.Printf("[EXPECTED] launchpad upgraded to: %s\n", launchpadTestPath)
 }
 
-func verifyProjectInfo(projectId string) {
+func verifyProjectInfo(cur realm, projectId string) {
 	testing.SetRealm(adminRealm)
 	projectInfo, _ := launchpad.GetProject(projectId)
 	ufmt.Printf("[EXPECTED] Project ID: %s\n", projectInfo.ID())

@@ -52,43 +52,43 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize pool and users")
-	initPoolAndUsers()
+	initPoolAndUsers(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position for user1")
-	mintUser1Position()
+	mintUser1Position(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Mint position for user2")
-	mintUser2Position()
+	mintUser2Position(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Execute swaps to generate fees")
-	executeSwaps()
+	executeSwaps(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Check and collect fees for user1")
-	collectUser1Fees()
+	collectUser1Fees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Check and collect fees for user2")
-	collectUser2Fees()
+	collectUser2Fees(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 7. Compare collected fees between users")
-	compareCollectedFees()
+	compareCollectedFees(cur)
 	println()
 }
 
-func initPoolAndUsers() {
+func initPoolAndUsers(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	ufmt.Println("[INFO] Creating pool at tick -23028")
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -96,22 +96,22 @@ func initPoolAndUsers() {
 	)
 
 	ufmt.Println("[INFO] Transfer initial tokens to users")
-	bar.Transfer(cross, user1Addr, 100_000_000)
-	baz.Transfer(cross, user1Addr, 100_000_000)
-	bar.Transfer(cross, user2Addr, 100_000_000)
-	baz.Transfer(cross, user2Addr, 100_000_000)
+	bar.Transfer(cross(cur), user1Addr, 100_000_000)
+	baz.Transfer(cross(cur), user1Addr, 100_000_000)
+	bar.Transfer(cross(cur), user2Addr, 100_000_000)
+	baz.Transfer(cross(cur), user2Addr, 100_000_000)
 }
 
-func mintUser1Position() {
+func mintUser1Position(cur realm) {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	baz.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user1")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -132,16 +132,16 @@ func mintUser1Position() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func mintUser2Position() {
+func mintUser2Position(cur realm) {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	baz.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for user2")
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -162,19 +162,19 @@ func mintUser2Position() {
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
 }
 
-func executeSwaps() {
+func executeSwaps(cur realm) {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
-	bar.Approve(cross, routerAddr, INT64_MAX)
-	baz.Approve(cross, routerAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), routerAddr, INT64_MAX)
+	baz.Approve(cross(cur), routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 	ufmt.Println("[INFO] Executing swap BAR -> BAZ")
 	amount0, amount1 := pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -184,7 +184,7 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, true)
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta, true)
 		},
 	)
 	ufmt.Printf("[EXPECTED] Swap1 amount0 should be %s\n", amount0)
@@ -192,7 +192,7 @@ func executeSwaps() {
 
 	ufmt.Println("[INFO] Executing swap BAZ -> BAR")
 	amount0, amount1 = pool.Swap(
-		cross,
+		cross(cur),
 		barPath,
 		bazPath,
 		3000,
@@ -202,36 +202,36 @@ func executeSwaps() {
 		MAX_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
-			return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta, false)
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta, false)
 		},
 	)
 	ufmt.Printf("[EXPECTED] Swap2 amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap2 amount1 should be %s\n", amount1)
 }
 
-func collectUser1Fees() {
+func collectUser1Fees(cur realm) {
 	testing.SetRealm(user1Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 1)
 	ufmt.Printf("[EXPECTED] User1 collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] User1 collected fee1 should be %s\n", fee1)
 }
 
-func collectUser2Fees() {
+func collectUser2Fees(cur realm) {
 	testing.SetRealm(user2Realm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	baz.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross(cur), poolAddr, INT64_MAX)
+	baz.Approve(cross(cur), poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user2")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 2)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross(cur), 2)
 	ufmt.Printf("[EXPECTED] User2 collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] User2 collected fee1 should be %s\n", fee1)
 }
 
-func compareCollectedFees() {
+func compareCollectedFees(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing collected fees between users")
@@ -247,15 +247,15 @@ func compareCollectedFees() {
 	ufmt.Printf("[EXPECTED] Users should have equal fee distribution\n")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
+func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

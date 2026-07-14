@@ -24,6 +24,7 @@ var (
 	errInvalidTime         = errors.New("[GNOSWAP-LAUNCHPAD-015] invalid time")
 	errNotYetEndedProject  = errors.New("[GNOSWAP-LAUNCHPAD-016] project lock period is not over yet")
 	errOverflow            = errors.New("[GNOSWAP-LAUNCHPAD-017] overflow")
+	errSpoofedRealm        = errors.New("[GNOSWAP-LAUNCHPAD-018] rlm does not match the current crossing frame")
 )
 
 // makeErrorWithDetails creates an error with additional context.

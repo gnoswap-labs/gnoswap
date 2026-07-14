@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"gno.land/p/gnoswap/utils"
+
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -21,15 +23,15 @@ type tickEventInfo struct {
 // - so: seconds outside
 // - i: initialized
 func (t *tickEventInfo) ToString() string {
-	return "{\"t\":" + formatInt(t.tickID) +
+	return "{\"t\":" + utils.FormatInt(t.tickID) +
 		",\"lg\":\"" + t.tickInfo.LiquidityGross() + "\"" +
 		",\"ln\":\"" + t.tickInfo.LiquidityNet() + "\"" +
 		",\"fg0\":\"" + t.tickInfo.FeeGrowthOutside0X128() + "\"" +
 		",\"fg1\":\"" + t.tickInfo.FeeGrowthOutside1X128() + "\"" +
-		",\"tco\":\"" + formatInt(t.tickInfo.TickCumulativeOutside()) + "\"" +
+		",\"tco\":\"" + utils.FormatInt(t.tickInfo.TickCumulativeOutside()) + "\"" +
 		",\"spl\":\"" + t.tickInfo.SecondsPerLiquidityOutsideX128() + "\"" +
-		",\"so\":\"" + formatUint(t.tickInfo.SecondsOutside()) + "\"" +
-		",\"i\":\"" + formatBool(t.tickInfo.Initialized()) + "\"}"
+		",\"so\":\"" + utils.FormatUint(t.tickInfo.SecondsOutside()) + "\"" +
+		",\"i\":\"" + utils.FormatBool(t.tickInfo.Initialized()) + "\"}"
 }
 
 func NewTickEventInfo(tickID int32, tickInfo pl.TickInfo) *tickEventInfo {

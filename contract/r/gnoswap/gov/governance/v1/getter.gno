@@ -1,13 +1,13 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
-
 
 // GetLatestConfigVersion returns the current config version.
 func (gv *governanceV1) GetLatestConfigVersion() int64 {
@@ -24,13 +24,12 @@ func (gv *governanceV1) GetMaxSmoothingPeriod() int64 {
 	return maxSmoothingPeriod
 }
 
-
 // GetLatestConfig returns the latest governance configuration.
 func (gv *governanceV1) GetLatestConfig() governance.Config {
 	currentVersion := gv.getCurrentConfigVersion()
 	config, ok := gv.getConfig(currentVersion)
 	if !ok {
-		panic(errDataNotFound)
+		panic(errors.New(errDataNotFound))
 	}
 
 	return config
@@ -40,12 +39,13 @@ func (gv *governanceV1) GetLatestConfig() governance.Config {
 func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error) {
 	config, ok := gv.getConfig(configVersion)
 	if !ok {
-		return governance.Config{}, ufmt.Errorf("config version %d not found", configVersion)
+		// Construct the zero Config via the domain constructor so it is
+		// allocated inside the governance domain realm (realm allocation check).
+		return governance.NewConfig(0, 0, 0, 0, 0, 0, 0), ufmt.Errorf("config version %d not found", configVersion)
 	}
 
 	return config, nil
 }
-
 
 // GetProposalCount returns the total number of proposals.
 func (gv *governanceV1) GetProposalCount() int {
@@ -173,7 +173,6 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
-
 // GetVoteStatus returns the vote status of a proposal.
 //
 // Returns:
@@ -267,7 +266,6 @@ func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error
 	return votingInfo.VotedAt(), nil
 }
 
-
 // GetUserProposalCount returns the number of proposals created by a user.
 func (gv *governanceV1) GetUserProposalCount(user address) int {
 	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
@@ -296,7 +294,6 @@ func (gv *governanceV1) GetUserProposalIDs(user address, offset, count int) []in
 
 	return proposalIDs[offset:end]
 }
-
 
 // GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
 // This is used by gov/staker to prevent cleanup of delegation history that is still needed
@@ -329,7 +326,6 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 
 	return oldestSnapshotTime, hasActiveProposal
 }
-
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
 func (gv *governanceV1) GetCurrentVotingWeightSnapshot() (int64, int64, error) {

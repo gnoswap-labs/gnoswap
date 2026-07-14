@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Staker contract upgrade scenario test
 package main
 
@@ -27,28 +29,28 @@ const (
 	stakerTestPath = "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize staker contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Upgrade staker contract to test version")
-	testStakerUpgrade()
+	testStakerUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify test implementation panics correctly")
-	verifyTestImplementation()
+	verifyTestImplementation(cur)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != stakerV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		staker.UpgradeImpl(cross, stakerV1Path)
+		staker.UpgradeImpl(cross(cur), stakerV1Path)
 		currentVersion = staker.GetImplementationPackagePath()
 	}
 
@@ -58,7 +60,7 @@ func initializeV1() {
 	}
 }
 
-func testStakerUpgrade() {
+func testStakerUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -69,7 +71,7 @@ func testStakerUpgrade() {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading staker contract to test version")
 	testing.SetRealm(adminRealm)
-	staker.UpgradeImpl(cross, stakerTestPath)
+	staker.UpgradeImpl(cross(cur), stakerTestPath)
 
 	currentVersion = staker.GetImplementationPackagePath()
 	ufmt.Printf("[EXPECTED] Staker upgraded to: %s\n", currentVersion)
@@ -78,7 +80,7 @@ func testStakerUpgrade() {
 	}
 }
 
-func verifyTestImplementation() {
+func verifyTestImplementation(cur realm) {
 	// Verify current version is test version
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -89,72 +91,72 @@ func verifyTestImplementation() {
 	// Test StakeToken - should panic with test implementation message
 	ufmt.Println("[INFO] Testing StakeToken function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: StakeToken not supported", func() {
-		staker.StakeToken(cross, 1, "")
+	uassert.AbortsWithMessage(t, cur, "test implementation: StakeToken not supported", func() {
+		staker.StakeToken(cross(cur), 1, "")
 	})
 	ufmt.Println("[EXPECTED] StakeToken panics correctly")
 
 	// Test SetPoolTier - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetPoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetPoolTier not supported", func() {
-		staker.SetPoolTier(cross, "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetPoolTier not supported", func() {
+		staker.SetPoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 1)
 	})
 	ufmt.Println("[EXPECTED] SetPoolTier panics correctly")
 
 	// Test AddToken - should panic with test implementation message
 	ufmt.Println("[INFO] Testing AddToken function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: AddToken not supported", func() {
-		staker.AddToken(cross, "gno.land/r/onbloc/foo")
+	uassert.AbortsWithMessage(t, cur, "test implementation: AddToken not supported", func() {
+		staker.AddToken(cross(cur), "gno.land/r/onbloc/foo")
 	})
 	ufmt.Println("[EXPECTED] AddToken panics correctly")
 
 	// Test UnStakeToken - should panic with test implementation message
 	ufmt.Println("[INFO] Testing UnStakeToken function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: UnStakeToken not supported", func() {
-		staker.UnStakeToken(cross, 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: UnStakeToken not supported", func() {
+		staker.UnStakeToken(cross(cur), 1)
 	})
 	ufmt.Println("[EXPECTED] UnStakeToken panics correctly")
 
 	// Test CollectReward - should panic with test implementation message
 	ufmt.Println("[INFO] Testing CollectReward function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: CollectReward not supported", func() {
-		staker.CollectReward(cross, 1)
+	uassert.AbortsWithMessage(t, cur, "test implementation: CollectReward not supported", func() {
+		staker.CollectReward(cross(cur), 1)
 	})
 	ufmt.Println("[EXPECTED] CollectReward panics correctly")
 
 	// Test ChangePoolTier - should panic with test implementation message
 	ufmt.Println("[INFO] Testing ChangePoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ChangePoolTier not supported", func() {
-		staker.ChangePoolTier(cross, "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 2)
+	uassert.AbortsWithMessage(t, cur, "test implementation: ChangePoolTier not supported", func() {
+		staker.ChangePoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 2)
 	})
 	ufmt.Println("[EXPECTED] ChangePoolTier panics correctly")
 
 	// Test RemovePoolTier - should panic with test implementation message
 	ufmt.Println("[INFO] Testing RemovePoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: RemovePoolTier not supported", func() {
-		staker.RemovePoolTier(cross, "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500")
+	uassert.AbortsWithMessage(t, cur, "test implementation: RemovePoolTier not supported", func() {
+		staker.RemovePoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500")
 	})
 	ufmt.Println("[EXPECTED] RemovePoolTier panics correctly")
 
 	// Test RemoveToken - should panic with test implementation message
 	ufmt.Println("[INFO] Testing RemoveToken function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: RemoveToken not supported", func() {
-		staker.RemoveToken(cross, "gno.land/r/onbloc/foo")
+	uassert.AbortsWithMessage(t, cur, "test implementation: RemoveToken not supported", func() {
+		staker.RemoveToken(cross(cur), "gno.land/r/onbloc/foo")
 	})
 	ufmt.Println("[EXPECTED] RemoveToken panics correctly")
 
 	// Test SetUnStakingFee - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetUnStakingFee function panics correctly")
 	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: SetUnStakingFee not supported", func() {
-		staker.SetUnStakingFee(cross, 100)
+	uassert.AbortsWithMessage(t, cur, "test implementation: SetUnStakingFee not supported", func() {
+		staker.SetUnStakingFee(cross(cur), 100)
 	})
 	ufmt.Println("[EXPECTED] SetUnStakingFee panics correctly")
 }

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // staker protocol fee reward - new token introduced after delegation
 
 package main
@@ -42,64 +44,64 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Alice delegates before any protocol fee token exists")
-	delegateWithMint(aliceAddr, 1_000_000)
+	delegateWithMint(cur, aliceAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 2. Deposit bar before bob delegation")
-	depositProtocolFee(barPath, 1000)
+	depositProtocolFee(cur, barPath, 1000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3. Bob delegates after bar already exists")
-	delegateWithMint(bobAddr, 1_000_000)
+	delegateWithMint(cur, bobAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4. Deposit qux after both delegations exist")
-	depositProtocolFee(quxPath, 500)
+	depositProtocolFee(cur, quxPath, 500)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 5. Distribute protocol fee and check claimable rewards")
-	checkClaimableRewards()
+	checkClaimableRewards(cur)
 	println()
 
 	println("[SCENARIO] 6. Collect protocol fee reward for alice")
-	collectAndCheck(aliceAddr, 999, 249)
+	collectAndCheck(cur, aliceAddr, 999, 249)
 	println()
 
 	println("[SCENARIO] 7. Collect protocol fee reward for bob")
-	collectAndCheck(bobAddr, 0, 249)
+	collectAndCheck(cur, bobAddr, 0, 249)
 	println()
 
 	println("[SCENARIO] 8. Check remaining gov/staker balances")
-	checkRemainingRewards()
+	checkRemainingRewards(cur)
 	println()
 }
 
-func delegateWithMint(user address, amount int64) {
+func delegateWithMint(cur realm, user address, amount int64) {
 	if user != adminAddr {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, user, amount)
+		gns.Transfer(cross(cur), user, amount)
 	}
 
 	testing.SetRealm(testing.NewUserRealm(user))
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, user, amount, "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), user, amount, "")
 
 	ufmt.Printf("[INFO] delegated %d GNS from %s to %s\n", amount, user, user)
 }
 
-func depositProtocolFee(tokenPath string, amount int64) {
+func depositProtocolFee(cur realm, tokenPath string, amount int64) {
 	testing.SetRealm(adminRealm)
 	switch tokenPath {
 	case barPath:
-		bar.Transfer(cross, stakerAddr, amount)
+		bar.Transfer(cross(cur), stakerAddr, amount)
 	case quxPath:
-		qux.Transfer(cross, stakerAddr, amount)
+		qux.Transfer(cross(cur), stakerAddr, amount)
 	default:
 		panic("unsupported token path")
 	}
@@ -107,28 +109,28 @@ func depositProtocolFee(tokenPath string, amount int64) {
 	testing.SetRealm(stakerRealm)
 	switch tokenPath {
 	case barPath:
-		bar.Approve(cross, protocolFeeAddr, amount)
+		bar.Approve(cross(cur), protocolFeeAddr, amount)
 	case quxPath:
-		qux.Approve(cross, protocolFeeAddr, amount)
+		qux.Approve(cross(cur), protocolFeeAddr, amount)
 	}
-	pf.AddToProtocolFee(cross, tokenPath, amount)
+	pf.AddToProtocolFee(cross(cur), tokenPath, amount)
 
 	ufmt.Printf("[INFO] protocol fee deposited: %s(%d)\n", tokenPath, amount)
 }
 
-func checkClaimableRewards() {
+func checkClaimableRewards(cur realm) {
 	testing.SetRealm(gnoStakerRealm)
-	pf.DistributeProtocolFee(cross)
+	pf.DistributeProtocolFee(cross(cur))
 
 	aliceEmission, aliceProtocolFees, _ := staker.GetClaimableRewardByAddress(aliceAddr)
 	bobEmission, bobProtocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
 
-	assertInt64Equal(aliceEmission, 0, "alice emission reward")
-	assertInt64Equal(bobEmission, 0, "bob emission reward")
-	assertInt64Equal(aliceProtocolFees[barPath], 999, "alice claimable bar")
-	assertInt64Equal(aliceProtocolFees[quxPath], 249, "alice claimable qux")
-	assertInt64Equal(bobProtocolFees[barPath], 0, "bob claimable bar")
-	assertInt64Equal(bobProtocolFees[quxPath], 249, "bob claimable qux")
+	assertInt64Equal(cur, aliceEmission, 0, "alice emission reward")
+	assertInt64Equal(cur, bobEmission, 0, "bob emission reward")
+	assertInt64Equal(cur, aliceProtocolFees[barPath], 999, "alice claimable bar")
+	assertInt64Equal(cur, aliceProtocolFees[quxPath], 249, "alice claimable qux")
+	assertInt64Equal(cur, bobProtocolFees[barPath], 0, "bob claimable bar")
+	assertInt64Equal(cur, bobProtocolFees[quxPath], 249, "bob claimable qux")
 
 	ufmt.Printf("[EXPECTED] alice claimable bar: %d\n", aliceProtocolFees[barPath])
 	ufmt.Printf("[EXPECTED] alice claimable qux: %d\n", aliceProtocolFees[quxPath])
@@ -136,35 +138,35 @@ func checkClaimableRewards() {
 	ufmt.Printf("[EXPECTED] bob claimable qux: %d\n", bobProtocolFees[quxPath])
 }
 
-func collectAndCheck(user address, expectedBar, expectedQux int64) {
+func collectAndCheck(cur realm, user address, expectedBar, expectedQux int64) {
 	testing.SetRealm(testing.NewUserRealm(user))
 	barBefore := common.BalanceOf(barPath, user)
 	quxBefore := common.BalanceOf(quxPath, user)
 
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 
 	barCollected := common.BalanceOf(barPath, user) - barBefore
 	quxCollected := common.BalanceOf(quxPath, user) - quxBefore
 
-	assertInt64Equal(barCollected, expectedBar, user.String()+" collected bar")
-	assertInt64Equal(quxCollected, expectedQux, user.String()+" collected qux")
+	assertInt64Equal(cur, barCollected, expectedBar, user.String()+" collected bar")
+	assertInt64Equal(cur, quxCollected, expectedQux, user.String()+" collected qux")
 
 	ufmt.Printf("[EXPECTED] %s collected bar: %d\n", user, barCollected)
 	ufmt.Printf("[EXPECTED] %s collected qux: %d\n", user, quxCollected)
 }
 
-func checkRemainingRewards() {
+func checkRemainingRewards(cur realm) {
 	remainingBar := common.BalanceOf(barPath, gnoStakerAddr)
 	remainingQux := common.BalanceOf(quxPath, gnoStakerAddr)
 
-	assertInt64Equal(remainingBar, 1, "remaining bar reward")
-	assertInt64Equal(remainingQux, 2, "remaining qux reward")
+	assertInt64Equal(cur, remainingBar, 1, "remaining bar reward")
+	assertInt64Equal(cur, remainingQux, 2, "remaining qux reward")
 
 	ufmt.Printf("[EXPECTED] remaining bar reward: %d\n", remainingBar)
 	ufmt.Printf("[EXPECTED] remaining qux reward: %d\n", remainingQux)
 }
 
-func assertInt64Equal(actual, expected int64, label string) {
+func assertInt64Equal(cur realm, actual, expected int64, label string) {
 	if actual != expected {
 		panic(ufmt.Sprintf("%s mismatch: expected %d, got %d", label, expected, actual))
 	}

@@ -4,13 +4,12 @@ Core AMM. All pools live in a single singleton realm.
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `swap.gno` | Swap execution, reentrancy lock, oracle |
-| `pool.gno` | Pool data structures, Slot0 |
-| `position.gno` | Per-pool position tracking |
-| `manager.gno` | Pool creation |
-| `liquidity_math.gno` | Liquidity calculations |
+| File           | Purpose                                      |
+| -------------- | -------------------------------------------- |
+| `swap.gno`     | Swap execution, reentrancy lock, oracle      |
+| `pool.gno`     | Pool data structures, Slot0                  |
+| `position.gno` | Per-pool position tracking                   |
+| `manager.gno`  | Pool creation                                |
 | `transfer.gno` | Token transfer helpers (`SafeGRC20Transfer`) |
 
 ## Rules
@@ -32,7 +31,7 @@ Find next tick → `ComputeSwapStep` → accumulate fees → cross tick (update 
 Pool sends output → SwapCallback on router → router sends input to pool
 ```
 
-Both checks required: `access.AssertIsPool(caller)` + `assertIsRouterV1()`.
+Both checks required: `access.AssertIsPool(caller)` + `assertIsRouterImplementation()`.
 
 ## Reentrancy
 
@@ -40,12 +39,12 @@ Both checks required: `access.AssertIsPool(caller)` + `assertIsRouterV1()`.
 
 ## AMM Primitives
 
-| Primitive | Format | Detail |
-|-----------|--------|--------|
-| sqrtPriceX96 | Q64.96 | √price × 2^96 |
-| feeGrowthGlobal | Q128.128 | Cumulative fee per unit liquidity |
-| Tick range | int | `[-887272, 887272]` |
-| Fee tiers | fixed | 0.01% / 0.05% / 0.3% / 1% — no new tiers post-deploy |
+| Primitive       | Format   | Detail                                               |
+| --------------- | -------- | ---------------------------------------------------- |
+| sqrtPriceX96    | Q64.96   | √price × 2^96                                        |
+| feeGrowthGlobal | Q128.128 | Cumulative fee per unit liquidity                    |
+| Tick range      | int      | `[-887272, 887272]`                                  |
+| Fee tiers       | fixed    | 0.01% / 0.05% / 0.3% / 1% — no new tiers post-deploy |
 
 ## Pitfalls
 

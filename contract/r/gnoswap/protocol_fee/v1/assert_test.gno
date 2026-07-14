@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestAssertIsAdminOrGovStaker(t *testing.T) {
+func TestAssertIsAdminOrGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func() address
@@ -53,7 +53,7 @@ func TestAssertIsAdminOrGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			caller := tt.setupFn()
 
 			if tt.shouldPanic {
@@ -84,7 +84,7 @@ func TestAssertIsAdminOrGovStaker(t *testing.T) {
 	}
 }
 
-func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
+func TestAssertIsPoolOrPositionOrRouterOrStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func() address
@@ -143,7 +143,7 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			caller := tt.setupFn()
 
 			if tt.shouldPanic {
@@ -174,7 +174,7 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
 	}
 }
 
-func TestAssertIsValidPercent(t *testing.T) {
+func TestAssertIsValidPercent(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		pct         int64
@@ -217,7 +217,7 @@ func TestAssertIsValidPercent(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				defer func() {
 					r := recover()

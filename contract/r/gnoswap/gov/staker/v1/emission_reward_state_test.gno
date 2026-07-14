@@ -9,7 +9,7 @@ import (
 )
 
 // Test EmissionRewardState creation
-func TestNewEmissionRewardState(t *testing.T) {
+func TestNewEmissionRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                            string
 		accumulatedRewardX128PerStake   *u256.Uint
@@ -37,7 +37,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// When: Create new emission reward state
 			state := staker.NewEmissionRewardState(tt.accumulatedRewardX128PerStake)
 			resolver := NewEmissionRewardStateResolver(state)
@@ -53,7 +53,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 }
 
 // Test IsClaimable
-func TestEmissionRewardState_IsClaimable(t *testing.T) {
+func TestEmissionRewardState_IsClaimable(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		claimedHeight int64
@@ -87,7 +87,7 @@ func TestEmissionRewardState_IsClaimable(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state with claimed height
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -103,7 +103,7 @@ func TestEmissionRewardState_IsClaimable(t *testing.T) {
 }
 
 // Test GetClaimableRewardAmount
-func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
+func TestEmissionRewardState_GetClaimableRewardAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -173,7 +173,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -189,7 +189,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 }
 
 // Test calculateClaimableRewards
-func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
+func TestEmissionRewardState_calculateClaimableRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -243,7 +243,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -259,7 +259,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 }
 
 // Test addStake
-func TestEmissionRewardState_addStake(t *testing.T) {
+func TestEmissionRewardState_addStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialStake  int64
@@ -281,7 +281,7 @@ func TestEmissionRewardState_addStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state with initial stake
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -297,7 +297,7 @@ func TestEmissionRewardState_addStake(t *testing.T) {
 }
 
 // Test removeStake
-func TestEmissionRewardState_removeStake(t *testing.T) {
+func TestEmissionRewardState_removeStake(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		initialStake  int64
@@ -319,7 +319,7 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state with initial stake
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -335,7 +335,7 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 }
 
 // Test claimRewards including idempotent no-op cases.
-func TestEmissionRewardState_claimRewards(t *testing.T) {
+func TestEmissionRewardState_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name                         string
 		setupState                   func(*EmissionRewardStateResolver)
@@ -436,7 +436,7 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -463,7 +463,7 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 // Test that consecutive claimRewards calls within the same Unix second
 // are idempotent. The first call captures the full delta; subsequent
 // calls must return 0, leave state untouched, and never error.
-func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T) {
+func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t *testing.T) {
 	state := staker.NewEmissionRewardState(u256.NewUint(0))
 	resolver := NewEmissionRewardStateResolver(state)
 
@@ -501,7 +501,7 @@ func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T) {
 }
 
 // Test updateRewardDebtX128
-func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
+func TestEmissionRewardState_updateRewardDebtX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -537,7 +537,7 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -555,7 +555,7 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 }
 
 // Test addStakeWithUpdateRewardDebtX128
-func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
+func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -578,7 +578,7 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -600,7 +600,7 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 }
 
 // Test removeStakeWithUpdateRewardDebtX128
-func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
+func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -623,7 +623,7 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
@@ -645,7 +645,7 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 }
 
 // Test claimRewardsWithUpdateRewardDebtX128
-func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) {
+func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(cur realm, t *testing.T) {
 	tests := []struct {
 		name                          string
 		setupState                    func(*EmissionRewardStateResolver)
@@ -684,7 +684,7 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Given: Emission reward state setup
 			state := staker.NewEmissionRewardState(u256.NewUint(0))
 			resolver := NewEmissionRewardStateResolver(state)
