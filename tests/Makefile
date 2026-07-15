@@ -95,7 +95,6 @@ envs:
 .PHONY: remove-test
 remove-test:
 	@echo "$(YELLOW)Removing all *_test.gno and testutils.gno files from project...$(NC)"
-	@chmod +x scripts/remove-test.sh
 	@bash scripts/remove-test.sh
 
 .PHONY: patch-admin-address
@@ -111,6 +110,8 @@ faucet-admin:
 # Deployment targets
 .PHONY: deploy
 deploy:
+	@echo "$(YELLOW)Removing test files before deployment...$(NC)"
+	@REMOVE_TESTS_CONFIRM=yes bash scripts/remove-test.sh
 	@echo "$(GREEN)Deploying to $(ENV) environment...$(NC)"
 	@$(MAKE) -f scripts/deploy.mk init ENV=$(ENV)
 
