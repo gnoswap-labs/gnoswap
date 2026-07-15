@@ -5,6 +5,7 @@ GNO_PATH := $(TMP_PATH)/gno
 GNOSWAP_PATH := $(TMP_PATH)/gnoswap
 SCRIPT := $(PROJECT_ROOT)/scripts/test.sh
 GNO_REPO ?= $(HOME)/gno-core
+GNO_MAX_GAS ?= 10000000000
 
 include $(PROJECT_ROOT)/scripts/test_values.mk
 
@@ -96,6 +97,7 @@ integration-test-build:
 gnodev:
 	$(MAKE) -C "$(GNO_REPO)/contribs/gnodev" build
 	"$(GNO_REPO)/contribs/gnodev/build/gnodev" local -chain-id dev \
+		-log-format json -max-gas $(GNO_MAX_GAS) \
 		-add-account test1=1000000000000000ugnot \
 		-add-account gnoswap_admin=1000000000000000ugnot \
 		-paths gno.land/p/nt/bptree/v0,gno.land/p/nt/ufmt/v0,gno.land/p/onbloc/json,gno.land/p/nt/ownable/v0,gno.land/p/demo/tokens/grc20,gno.land/p/demo/tokens/grc721,gno.land/r/demo/defi/foo20,gno.land/r/sys/users,gno.land/r/gnoland/wugnot,gno.land/r/demo/defi/grc20reg
