@@ -82,7 +82,7 @@ done
 
 python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/all-blocks.jsonl"
 jq -c --argjson start "$START_HEIGHT" \
-  'select(.height > $start and .execution.Node.block_txs == 1 and .execution.Node.invalid_txs == 0)' \
+  'select(.height > $start and .execution.Node.block_txs == 1 and .execution.Node.valid_txs == 1 and .execution.Node.invalid_txs == 0)' \
   "$RUN_DIR/all-blocks.jsonl" | awk -v blocks="$BLOCKS" 'NR <= blocks' > "$RUN_DIR/workload-blocks.jsonl"
 jq -r .height "$RUN_DIR/workload-blocks.jsonl" > "$RUN_DIR/heights.txt"
 [[ $(wc -l < "$RUN_DIR/heights.txt" | tr -d ' ') == "$BLOCKS" ]] || {

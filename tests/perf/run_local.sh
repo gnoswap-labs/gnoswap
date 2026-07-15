@@ -87,7 +87,7 @@ cleanup() {
     EXPECTED_BLOCKS=$(jq -r .blocks "$RUN_DIR/measurement.json")
     ACTUAL_BLOCKS=$(wc -l < "$RUN_DIR/blocks.jsonl" | tr -d ' ')
     INVALID_BLOCKS=$(jq -s \
-      '[.[] | select(.execution.Node.block_txs != 1 or .execution.Node.invalid_txs != 0)] | length' \
+      '[.[] | select(.execution.Node.block_txs != 1 or .execution.Node.valid_txs != 1 or .execution.Node.invalid_txs != 0)] | length' \
       "$RUN_DIR/blocks.jsonl")
     if ((ACTUAL_BLOCKS != EXPECTED_BLOCKS || INVALID_BLOCKS != 0)); then
       printf 'expected %d consecutive workload blocks; got %d (%d invalid)\n' \
