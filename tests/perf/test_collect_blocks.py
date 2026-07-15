@@ -12,7 +12,10 @@ class CollectBlocksTest(unittest.TestCase):
             {"msg": "Committed state", "Node": {"height": 2, "mempool_txs_after": 0}},
             {"msg": "noise", "height": 2},
             {"msg": "Executed block", "Node": {"height": 1, "block_txs": 1}},
-            {"msg": "Updated block gas price", "Node": {"height": 1, "gas_used": 42, "new_price_amount": 3}},
+            {
+                "msg": "Updated block gas price",
+                "Node": {"height": 1, "gas_used": 42, "new_price_amount": 3, "new_price_gas": 1000},
+            },
             {"msg": "Committed state", "Node": {"height": 1, "commit_total_us": 9}},
         ]
         with tempfile.TemporaryDirectory() as tmp:
@@ -24,13 +27,41 @@ class CollectBlocksTest(unittest.TestCase):
                 [
                     {
                         "height": 1,
+                        "execute_block_us": None,
+                        "commit_total_us": 9,
+                        "gas_used": 42,
+                        "max_gas": None,
+                        "gas_price_ratio": 3.0,
                         "execution": events[2],
                         "commit": events[4],
                         "gas_price": events[3],
                     },
-                    {"height": 2, "commit": events[0]},
+                    {
+                        "height": 2,
+                        "execute_block_us": None,
+                        "commit_total_us": None,
+                        "gas_used": None,
+                        "max_gas": None,
+                        "gas_price_ratio": None,
+                        "commit": events[0],
+                    },
                 ],
             )
+
+    def test_extracts_execution_and_commit_times(self):
+        events = [
+            {"msg": "Executed block", "Node": {"height": 7, "execute_block_us": 1200}},
+            {"msg": "Committed state", "Node": {"height": 7, "commit_total_us": 300}},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "node.jsonl"
+            source.write_text("\n".join(json.dumps(event) for event in events))
+
+            self.assertEqual(collect_blocks(source)[0]["execute_block_us"], 1200)
+            self.assertEqual(collect_blocks(source)[0]["commit_total_us"], 300)
+
+            self.assertEqual(collect_blocks(source, min_height=8), [])
+            self.assertEqual(collect_blocks(source, heights={7})[0]["height"], 7)
 
 
 if __name__ == "__main__":

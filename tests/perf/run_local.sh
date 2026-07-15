@@ -4,8 +4,31 @@ set -euo pipefail
 PERF_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_ROOT=$(cd "$PERF_DIR/../.." && pwd)
 GNO_REPO=${GNO_REPO:-"$HOME/gno-core"}
-MAX_GAS=${MAX_GAS:-10000000000}
-WORKLOAD=gnoswap-transactions
+MODE=benchmark
+LOAD=
+BLOCKS=100
+CALIBRATION=
+
+while (($#)); do
+  case "$1" in
+    --calibrate) MODE=calibration; shift ;;
+    --load) MODE=load; LOAD=$2; shift 2 ;;
+    --blocks) BLOCKS=$2; shift 2 ;;
+    --calibration) CALIBRATION=$2; shift 2 ;;
+    *) printf 'unknown argument: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
+if [[ "$MODE" == calibration ]]; then
+  MAX_GAS=${MAX_GAS:-10000000000}
+  WORKLOAD=representative-mix-calibration
+elif [[ "$MODE" == load ]]; then
+  MAX_GAS=${MAX_GAS:-3000000000}
+  WORKLOAD="representative-mix-${LOAD}-percent"
+else
+  MAX_GAS=${MAX_GAS:-10000000000}
+  WORKLOAD=gnoswap-transactions
+fi
 RUN_ID=$(date -u +%Y%m%d_%H%M%S)
 RUN_DIR=${RUN_DIR:-"$PERF_DIR/results/$RUN_ID"}
 GNODEV="$GNO_REPO/contribs/gnodev/build/gnodev"
@@ -51,7 +74,19 @@ cleanup() {
   fi
   FINISHED_AT="\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""
   write_metadata
-  python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/blocks.jsonl" || status=$?
+  COLLECT_ARGS=()
+  if [[ -f "$RUN_DIR/measurement.json" ]]; then
+    COLLECT_ARGS+=(--heights-file "$RUN_DIR/measurement.json")
+  fi
+  if ((${#COLLECT_ARGS[@]})); then
+    python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/blocks.jsonl" "${COLLECT_ARGS[@]}" || status=$?
+  else
+    python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/blocks.jsonl" || status=$?
+  fi
+  python3 "$PERF_DIR/analyze_results.py" "$RUN_DIR/blocks.jsonl" "$RUN_DIR/analysis.json" || status=$?
+  if [[ "$MODE" == calibration ]]; then
+    python3 "$PERF_DIR/calibrate_workload.py" "$RUN_DIR/blocks.jsonl" "$RUN_DIR/calibration.json" || status=$?
+  fi
   printf 'Results: %s\n' "$RUN_DIR"
   exit "$status"
 }
@@ -98,5 +133,26 @@ gnokey query vm/qfile -remote 127.0.0.1:26657 \
   -data gno.land/r/gnoswap/test_token/test_usdc > "$RUN_DIR/qfile.txt"
 gnokey query vm/qeval -remote 127.0.0.1:26657 \
   -data "gno.land/r/gnoswap/test_token/test_usdc.BalanceOf(\"$ADMIN_ADDRESS\")" > "$RUN_DIR/qeval.txt"
-ADDR_ADMIN="$ADMIN_ADDRESS" RESULTS_DIR="$RUN_DIR" RESULT_FILE="$RUN_DIR/transactions.json" \
-  "$PERF_DIR/run_benchmark.sh"
+if [[ "$MODE" == benchmark ]]; then
+  ADDR_ADMIN="$ADMIN_ADDRESS" RESULTS_DIR="$RUN_DIR" RESULT_FILE="$RUN_DIR/transactions.json" \
+    "$PERF_DIR/run_benchmark.sh"
+else
+  make -C "$PROJECT_ROOT/tests" -f scripts/test.mk pool-create-gns-wugnot-default mint-gns-ugnot \
+    ENV=default "ADDR_ADMIN=$ADMIN_ADDRESS"
+  printf '\n' | gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit \
+    -send 1000000000000ugnot -insecure-password-stdin=true -remote 127.0.0.1:26657 \
+    -broadcast=true -chainid dev -gas-fee 10000000000ugnot -gas-wanted 1000000000 gnoswap_admin
+  for token in gno.land/r/gnoswap/gns gno.land/r/gnoland/wugnot; do
+    for spender in g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp; do
+      printf '\n' | gnokey maketx call -pkgpath "$token" -func Approve -args "$spender" \
+        -args 9223372036854775806 -insecure-password-stdin=true -remote 127.0.0.1:26657 \
+        -broadcast=true -chainid dev -gas-fee 10000000000ugnot -gas-wanted 1000000000 gnoswap_admin
+    done
+  done
+  if [[ "$MODE" == calibration ]]; then
+    RUN_DIR="$RUN_DIR" MAX_GAS="$MAX_GAS" "$PERF_DIR/run_workload.sh" --calibrate
+  else
+    RUN_DIR="$RUN_DIR" MAX_GAS="$MAX_GAS" "$PERF_DIR/run_workload.sh" \
+      --load "$LOAD" --blocks "$BLOCKS" --calibration "$CALIBRATION"
+  fi
+fi
