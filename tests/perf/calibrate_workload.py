@@ -26,12 +26,14 @@ def calibrate(points, max_gas):
 def main():
     parser = argparse.ArgumentParser(description="Calibrate representative operations per block")
     parser.add_argument("source", type=Path)
+    parser.add_argument("measurement", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--max-gas", type=int, default=3_000_000_000)
     args = parser.parse_args()
     blocks = [json.loads(line) for line in args.source.read_text().splitlines() if line.strip()]
+    operations = json.loads(args.measurement.read_text())["operations"]
     gas_used = [block["gas_used"] for block in blocks if block.get("gas_used")]
-    args.output.write_text(json.dumps(calibrate(list(zip((20, 80), gas_used)), args.max_gas), indent=2) + "\n")
+    args.output.write_text(json.dumps(calibrate(list(zip(operations, gas_used)), args.max_gas), indent=2) + "\n")
 
 
 if __name__ == "__main__":

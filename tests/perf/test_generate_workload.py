@@ -22,6 +22,15 @@ class GenerateWorkloadTest(unittest.TestCase):
         self.assertEqual(combined.count("DecreaseLiquidity"), 2)
         self.assertEqual(combined.count("CollectFee"), 1)
 
+    def test_preserves_swap_direction_across_split_generation(self):
+        continuous_last = [
+            line for line in generate(start=0, count=5).splitlines()
+            if "ExactInSingleSwapRoute" in line
+        ][-1]
+        split = generate(start=4, count=1)
+
+        self.assertIn(continuous_last, split)
+
 
 if __name__ == "__main__":
     unittest.main()

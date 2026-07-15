@@ -3,15 +3,20 @@ import argparse
 from pathlib import Path
 
 
-MIX = "SSSLSSRSSCLSSRSSSLSS"
+MIX = (
+    "swap", "swap", "swap", "add_liquidity", "swap",
+    "swap", "remove_liquidity", "swap", "swap", "collect",
+    "add_liquidity", "swap", "swap", "remove_liquidity", "swap",
+    "swap", "swap", "add_liquidity", "swap", "swap",
+)
 
 
 def generate(start, count):
     calls = []
-    swap_index = 0
+    swap_index = sum(MIX[index % len(MIX)] == "swap" for index in range(start))
     for index in range(start, start + count):
         operation = MIX[index % len(MIX)]
-        if operation == "S":
+        if operation == "swap":
             reverse = swap_index % 2
             token_in, token_out = (
                 ("gno.land/r/gnoland/wugnot", "gno.land/r/gnoswap/gns")
@@ -25,13 +30,13 @@ def generate(start, count):
                 '"0", "0", 9999999999, "")'
             )
             swap_index += 1
-        elif operation == "L":
+        elif operation == "add_liquidity":
             calls.append(
                 '\tposition.IncreaseLiquidity(cross(cur), 1, "100000", "100000", "0", "0", 9999999999)'
             )
-        elif operation == "R":
+        elif operation == "remove_liquidity":
             calls.append('\tposition.DecreaseLiquidity(cross(cur), 1, "1000", "0", "0", 9999999999)')
-        else:
+        elif operation == "collect":
             calls.append("\tposition.CollectFee(cross(cur), 1)")
     return (
         'package main\n\nimport (\n\t"gno.land/r/gnoswap/position"\n'

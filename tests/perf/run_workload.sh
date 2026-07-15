@@ -3,6 +3,7 @@ set -euo pipefail
 
 PERF_DIR=$(cd "$(dirname "$0")" && pwd)
 RUN_DIR=${RUN_DIR:?RUN_DIR is required}
+ADMIN_ADDRESS=${ADMIN_ADDRESS:?ADMIN_ADDRESS is required}
 MAX_GAS=${MAX_GAS:-3000000000}
 BLOCKS=100
 LOAD=
@@ -29,23 +30,73 @@ else
   OPERATIONS=$(jq -er --arg load "$LOAD" '.operations_per_block[$load]' "$CALIBRATION")
 fi
 
-printf '' > "$RUN_DIR/transactions.jsonl"
-printf '' > "$RUN_DIR/heights.txt"
+account_field() {
+  gnokey query "auth/accounts/$ADMIN_ADDRESS" -remote 127.0.0.1:26657 |
+    sed -n "s/.*\"$1\": *\"\([^\"]*\)\".*/\1/p"
+}
+
+ACCOUNT_NUMBER=$(account_field account_number)
+START_SEQUENCE=$(account_field sequence)
+printf '' > "$RUN_DIR/operations.txt"
 for ((block = 0; block < BLOCKS; block++)); do
   CURRENT_OPERATIONS=$OPERATIONS
   if [[ "$CALIBRATE" == true && "$block" == 1 ]]; then
     CURRENT_OPERATIONS=80
   fi
-  SOURCE="$RUN_DIR/workload.gno"
-  RAW="$RUN_DIR/workload-$((block + 1)).txt"
+  SOURCE="$RUN_DIR/workload-$((block + 1)).gno"
+  TX="$RUN_DIR/workload-$((block + 1)).tx"
   python3 "$PERF_DIR/generate_workload.py" --start "$((block * OPERATIONS))" --count "$CURRENT_OPERATIONS" "$SOURCE"
-  printf '\n' | gnokey maketx run \
-    -insecure-password-stdin=true -remote 127.0.0.1:26657 -broadcast=true \
-    -chainid dev -simulate skip -gas-fee 10000000000ugnot -gas-wanted "$MAX_GAS" \
-    gnoswap_admin "$SOURCE" > "$RAW"
-  python3 "$PERF_DIR/collect_metrics.py" "workload-$((block + 1))" "$RAW" >> "$RUN_DIR/transactions.jsonl"
-  awk '$1 == "HEIGHT:" { height = $2 } END { print height }' "$RAW" >> "$RUN_DIR/heights.txt"
+  gnokey maketx run -broadcast=false -gas-fee 10000000000ugnot -gas-wanted "$MAX_GAS" \
+    "$ADMIN_ADDRESS" "$SOURCE" > "$TX"
+  printf '\n' | gnokey sign -insecure-password-stdin=true -chainid dev \
+    -account-number "$ACCOUNT_NUMBER" -account-sequence "$((START_SEQUENCE + block))" \
+    -tx-path "$TX" gnoswap_admin >/dev/null
+  printf '%d\n' "$CURRENT_OPERATIONS" >> "$RUN_DIR/operations.txt"
 done
+
+START_HEIGHT=$(curl -fsS http://127.0.0.1:26657/status | jq -r '.result.sync_info.latest_block_height | tonumber')
+PIDS=()
+for ((block = 0; block < BLOCKS; block++)); do
+  gnokey broadcast -remote 127.0.0.1:26657 "$RUN_DIR/workload-$((block + 1)).tx" \
+    > "$RUN_DIR/workload-$((block + 1)).txt" 2>&1 &
+  PIDS+=("$!")
+  sleep 0.1
+done
+for pid in "${PIDS[@]}"; do
+  wait "$pid" || true
+done
+for raw in "$RUN_DIR"/workload-*.txt; do
+  if rg -q '^--= Error =--' "$raw" && ! rg -q 'request timeout' "$raw"; then
+    printf 'workload transaction failed: %s\n' "$raw" >&2
+    exit 1
+  fi
+done
+
+TARGET_SEQUENCE=$((START_SEQUENCE + BLOCKS))
+for _ in {1..600}; do
+  CURRENT_SEQUENCE=$(account_field sequence)
+  ((CURRENT_SEQUENCE >= TARGET_SEQUENCE)) && break
+  sleep 1
+done
+((CURRENT_SEQUENCE >= TARGET_SEQUENCE)) || { printf 'workload transactions did not all commit\n' >&2; exit 1; }
+
+python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/all-blocks.jsonl"
+jq -c --argjson start "$START_HEIGHT" \
+  'select(.height > $start and .execution.Node.block_txs == 1 and .execution.Node.invalid_txs == 0)' \
+  "$RUN_DIR/all-blocks.jsonl" | awk -v blocks="$BLOCKS" 'NR <= blocks' > "$RUN_DIR/workload-blocks.jsonl"
+jq -r .height "$RUN_DIR/workload-blocks.jsonl" > "$RUN_DIR/heights.txt"
+[[ $(wc -l < "$RUN_DIR/heights.txt" | tr -d ' ') == "$BLOCKS" ]] || {
+  printf 'could not identify all workload blocks\n' >&2
+  exit 1
+}
+awk 'NR > 1 && $1 != previous + 1 { exit 1 } { previous = $1 }' "$RUN_DIR/heights.txt" || {
+  printf 'workload blocks are not consecutive\n' >&2
+  exit 1
+}
+jq -cs 'to_entries[] | {test_name: "workload-\(.key + 1)", height: .value.height, metrics: {gas_used: .value.gas_used}}' \
+  "$RUN_DIR/workload-blocks.jsonl" > "$RUN_DIR/transactions.jsonl"
+
+OPERATIONS_JSON=$(jq -Rs 'split("\n") | map(select(length > 0) | tonumber)' "$RUN_DIR/operations.txt")
 HEIGHTS=$(jq -Rs 'split("\n") | map(select(length > 0) | tonumber)' "$RUN_DIR/heights.txt")
-printf '{"load":"%s","operations_per_block":%d,"blocks":%d,"heights":%s}\n' \
-  "$LOAD" "$OPERATIONS" "$BLOCKS" "$HEIGHTS" > "$RUN_DIR/measurement.json"
+printf '{"load":"%s","operations_per_block":%d,"blocks":%d,"operations":%s,"heights":%s}\n' \
+  "$LOAD" "$OPERATIONS" "$BLOCKS" "$OPERATIONS_JSON" "$HEIGHTS" > "$RUN_DIR/measurement.json"

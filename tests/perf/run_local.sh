@@ -83,9 +83,22 @@ cleanup() {
   else
     python3 "$PERF_DIR/collect_blocks.py" "$RUN_DIR/node.jsonl" "$RUN_DIR/blocks.jsonl" || status=$?
   fi
+  if [[ -f "$RUN_DIR/measurement.json" ]]; then
+    EXPECTED_BLOCKS=$(jq -r .blocks "$RUN_DIR/measurement.json")
+    ACTUAL_BLOCKS=$(wc -l < "$RUN_DIR/blocks.jsonl" | tr -d ' ')
+    INVALID_BLOCKS=$(jq -s \
+      '[.[] | select(.execution.Node.block_txs != 1 or .execution.Node.invalid_txs != 0)] | length' \
+      "$RUN_DIR/blocks.jsonl")
+    if ((ACTUAL_BLOCKS != EXPECTED_BLOCKS || INVALID_BLOCKS != 0)); then
+      printf 'expected %d consecutive workload blocks; got %d (%d invalid)\n' \
+        "$EXPECTED_BLOCKS" "$ACTUAL_BLOCKS" "$INVALID_BLOCKS" >&2
+      status=1
+    fi
+  fi
   python3 "$PERF_DIR/analyze_results.py" "$RUN_DIR/blocks.jsonl" "$RUN_DIR/analysis.json" || status=$?
   if [[ "$MODE" == calibration ]]; then
-    python3 "$PERF_DIR/calibrate_workload.py" "$RUN_DIR/blocks.jsonl" "$RUN_DIR/calibration.json" || status=$?
+    python3 "$PERF_DIR/calibrate_workload.py" "$RUN_DIR/blocks.jsonl" \
+      "$RUN_DIR/measurement.json" "$RUN_DIR/calibration.json" || status=$?
   fi
   printf 'Results: %s\n' "$RUN_DIR"
   exit "$status"
@@ -150,9 +163,11 @@ else
     done
   done
   if [[ "$MODE" == calibration ]]; then
-    RUN_DIR="$RUN_DIR" MAX_GAS="$MAX_GAS" "$PERF_DIR/run_workload.sh" --calibrate
+    RUN_DIR="$RUN_DIR" ADMIN_ADDRESS="$ADMIN_ADDRESS" MAX_GAS="$MAX_GAS" \
+      "$PERF_DIR/run_workload.sh" --calibrate
   else
-    RUN_DIR="$RUN_DIR" MAX_GAS="$MAX_GAS" "$PERF_DIR/run_workload.sh" \
+    RUN_DIR="$RUN_DIR" ADMIN_ADDRESS="$ADMIN_ADDRESS" MAX_GAS="$MAX_GAS" \
+      "$PERF_DIR/run_workload.sh" \
       --load "$LOAD" --blocks "$BLOCKS" --calibration "$CALIBRATION"
   fi
 fi
