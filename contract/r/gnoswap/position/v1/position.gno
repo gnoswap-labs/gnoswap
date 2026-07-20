@@ -213,6 +213,8 @@ func (p *positionV1) IncreaseLiquidity(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
+		"tickLower", utils.FormatInt(position.TickLower()),
+		"tickUpper", utils.FormatInt(position.TickUpper()),
 		"caller", caller.String(),
 		"lpPositionId", utils.FormatUint(positionId),
 		"liquidityDelta", liquidity.ToString(),
@@ -287,6 +289,10 @@ func (p *positionV1) DecreaseLiquidity(
 		caller:     caller,
 	}
 
+	position := p.mustGetPosition(positionId)
+	tickLower := position.TickLower()
+	tickUpper := position.TickUpper()
+
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := p.decreaseLiquidity(0, rlm, decreaseLiquidityParams)
 	if err != nil {
 		panic(err)
@@ -300,6 +306,8 @@ func (p *positionV1) DecreaseLiquidity(
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", utils.FormatUint(positionId),
 		"poolPath", poolPath,
+		"tickLower", utils.FormatInt(tickLower),
+		"tickUpper", utils.FormatInt(tickUpper),
 		"liquidityDelta", liquidity,
 		"feeAmount0", fee0,
 		"feeAmount1", fee1,
