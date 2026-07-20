@@ -18,7 +18,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	"gno.land/r/gnoswap/position"
-	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"

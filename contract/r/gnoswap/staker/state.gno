@@ -56,6 +56,14 @@ func getImplementation() IStaker {
 	return implementation
 }
 
+// IsInitialized reports whether the staker implementation has been
+// registered. Callers that may run before staker is deployed (e.g. position
+// flows exercised without staking) should check this before calling into
+// the proxy to avoid panicking on an unset implementation.
+func IsInitialized() bool {
+	return implementation != nil
+}
+
 func updateImplementation() error {
 	result := versionManager.GetCurrentImplementation()
 	if result == nil {
