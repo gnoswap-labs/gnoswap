@@ -15,6 +15,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pos "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/staker"
 )
 
 // Mint creates a new liquidity position NFT.
@@ -413,6 +414,9 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		caller,
 	)
 
+	poolPath := position.PoolKey()
+	poolTier := staker.GetPoolTier(poolPath)
+
 	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CollectSwapFee",
@@ -421,7 +425,8 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"lpPositionId", utils.FormatUint(positionId),
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
-		"poolPath", position.PoolKey(),
+		"poolPath", poolPath,
+		"poolTier", utils.FormatUint(poolTier),
 		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128(),
 		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128(),
 	)
@@ -431,7 +436,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpTokenId", utils.FormatUint(positionId),
-		"poolPath", position.PoolKey(),
+		"poolPath", poolPath,
 		"feeAmount0", fee0Str,
 		"feeAmount1", fee1Str,
 		"amount0WithoutFee", amount0WithoutFeeStr,
