@@ -2800,13 +2800,13 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 	}
 }
 
-func TestCreateExternalIncentive_UserBlocked(cur realm, t *testing.T) {
+func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.AbortsContains(t, cur, "is not admin or governance", func() {
+	uassert.AbortsContains(t, cur, "is not admin", func() {
 		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	})
 }

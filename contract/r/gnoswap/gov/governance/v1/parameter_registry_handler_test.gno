@@ -188,29 +188,3 @@ func TestParameterRegistryHandler_registerHandlers(cur realm, t *testing.T) {
 		})
 	}
 }
-
-func TestParameterRegistryHandler_CreateExternalIncentiveRegistered(cur realm, t *testing.T) {
-	registry := CreateParameterHandlers()
-	handler, err := registry.Handler(makeHandlerKey(STAKER_PATH, "CreateExternalIncentive"))
-	uassert.Nil(t, err)
-	uassert.NotNil(t, handler)
-
-	handlerOptions := handler.(*ParameterHandlerOptions)
-	uassert.Nil(t, handlerOptions.ValidateParams([]string{
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-		"gno.land/r/onbloc/bar",
-		"1000000000",
-		"2773180800",
-		"2780956800",
-	}))
-
-	err = handlerOptions.ValidateParams([]string{
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-		"gno.land/r/onbloc/bar",
-		"not-a-number",
-		"2773180800",
-		"2780956800",
-	})
-	uassert.NotNil(t, err)
-	uassert.ErrorContains(t, err, "param[2]")
-}
