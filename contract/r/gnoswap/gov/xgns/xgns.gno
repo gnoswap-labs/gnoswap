@@ -15,6 +15,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
+const tokenID = 0
+
 var (
 	admin = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
 
@@ -23,7 +25,7 @@ var (
 )
 
 func init(cur realm) {
-	token, ledger = grc20.NewToken(0, cur, "XGNS", "xGNS", 6)
+	token, ledger = grc20.NewToken("XGNS", "xGNS", 6, tokenID, cur)
 }
 
 // TotalSupply returns the total supply of xGNS tokens.

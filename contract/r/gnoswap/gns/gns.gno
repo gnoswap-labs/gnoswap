@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	tokenID             = 0
 	MAXIMUM_SUPPLY      = int64(1_000_000_000_000_000)
 	INITIAL_MINT_AMOUNT = int64(100_000_000_000_000)
 	MAX_EMISSION_AMOUNT = int64(900_000_000_000_000) // MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT
@@ -34,7 +35,7 @@ var (
 )
 
 func init(cur realm) {
-	token, privateLedger = grc20.NewToken(0, cur, "Gnoswap", "GNS", 6)
+	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
 	userTeller = token.CallerTeller()
 
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
