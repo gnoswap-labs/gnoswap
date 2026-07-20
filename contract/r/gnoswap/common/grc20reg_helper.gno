@@ -15,6 +15,9 @@ import (
 //
 // Panics if the token is not registered in grc20reg.
 func GetToken(path string) *grc20.Token {
+	if token := getRegisteredToken(path); token != nil {
+		return token
+	}
 	return grc20reg.MustGet(path)
 }
 
@@ -38,11 +41,29 @@ func GetTokenTeller(path string) grc20.Teller {
 //
 // Returns nil if the token is registered, or an error describing the issue.
 func IsRegistered(path string) error {
-	getter := grc20reg.Get(path)
-	if getter == nil {
+	if getRegisteredToken(path) == nil {
 		return ufmt.Errorf("token(%s) is not registered to grc20reg", path)
 	}
 	return nil
+}
+
+// getRegisteredToken accepts either a registry key or a single-token realm path.
+func getRegisteredToken(path string) *grc20.Token {
+	if token := grc20reg.Get(path); token != nil {
+		return token
+	}
+
+	var token *grc20.Token
+	prefix := path + "."
+	grc20reg.GetRegistry().Iterate(prefix, prefix+"~", func(_ string, value any) bool {
+		if token != nil {
+			token = nil
+			return true
+		}
+		token = value.(*grc20.Token)
+		return false
+	})
+	return token
 }
 
 // MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
