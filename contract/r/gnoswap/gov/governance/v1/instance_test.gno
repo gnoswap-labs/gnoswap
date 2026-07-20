@@ -62,7 +62,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, false, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
@@ -80,7 +83,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, false, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
@@ -98,7 +104,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, false, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
@@ -117,7 +126,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				// Expired proposal
 				oldProposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, false, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Old Title", "Old Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
@@ -129,7 +141,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				newCreatedAt := expiredTime + 50
 				newProposal := governance.NewProposal(
 					2,
-					NewProposalStatus(config, 1000, false, newCreatedAt),
+					NewProposalStatus(
+						config, 1000, false, newCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("New Title", "New Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, newCreatedAt,
@@ -147,7 +162,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, true, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, true, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
@@ -169,7 +187,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			setup: func(cur realm, gv *governanceV1) {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(config, 1000, true, baseCreatedAt),
+					NewProposalStatus(
+						config, 1000, true, baseCreatedAt,
+						1000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns",
@@ -197,7 +218,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				for i := int64(1); i <= 3; i++ {
 					proposal := governance.NewProposal(
 						i,
-						NewProposalStatus(config, 1000, false, baseCreatedAt),
+						NewProposalStatus(
+							config, 1000, false, baseCreatedAt,
+							1000,
+						),
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,
@@ -217,7 +241,10 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				for i := int64(1); i <= 3; i++ {
 					proposal := governance.NewProposal(
 						i,
-						NewProposalStatus(config, 1000, false, baseCreatedAt),
+						NewProposalStatus(
+							config, 1000, false, baseCreatedAt,
+							1000,
+						),
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,

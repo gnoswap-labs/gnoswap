@@ -225,18 +225,7 @@ func NewProposalStatus(
 	maxVotingWeight int64,
 	executable bool,
 	createdAt int64,
-) *governance.ProposalStatus {
-	return NewProposalStatusWithQuorumBase(config, maxVotingWeight, maxVotingWeight, executable, createdAt)
-}
-
-// NewProposalStatusWithQuorumBase creates a new proposal status with separate voting and quorum bases.
-// maxVotingWeight is the smoothed voting-power cap; quorumBaseWeight is the current xGNS supply.
-func NewProposalStatusWithQuorumBase(
-	config governance.Config,
-	maxVotingWeight int64,
-	quorumBaseWeight int64,
-	executable bool,
-	createdAt int64,
+	quorumWeight int64,
 ) *governance.ProposalStatus {
 	schedule := NewProposalScheduleStatus(
 		config.VotingStartDelay,
@@ -248,7 +237,7 @@ func NewProposalStatusWithQuorumBase(
 	actionStatus := governance.NewProposalActionStatus(executable)
 
 	// Calculate the quorum amount from the current xGNS supply, not the smoothed voting weight.
-	quorumAmount := gnsmath.SafeMulDivInt64(quorumBaseWeight, config.Quorum, 100)
+	quorumAmount := gnsmath.SafeMulDivInt64(quorumWeight, config.Quorum, 100)
 	voteStatus := governance.NewProposalVoteStatus(maxVotingWeight, quorumAmount)
 
 	return governance.NewProposalStatusBy(schedule, actionStatus, voteStatus)

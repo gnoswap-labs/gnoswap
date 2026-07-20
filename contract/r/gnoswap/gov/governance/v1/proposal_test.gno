@@ -87,7 +87,10 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
+				NewProposalStatus(
+					config, 1000, governance.Text.IsExecutable(), baseTime,
+					1000,
+				),
 				tc.metadata,
 				tc.data,
 				address("g1proposer"),
@@ -148,7 +151,10 @@ func TestProposal_StatusOperations(cur realm, t *testing.T) {
 			// given
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
+				NewProposalStatus(
+					config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix(),
+					1000,
+				),
 				governance.NewProposalMetadata("Test", "Test"),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
@@ -456,7 +462,10 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(config, tc.maxVotingWeight, tc.proposalType.IsExecutable(), baseTime),
+				NewProposalStatus(
+					config, tc.maxVotingWeight, tc.proposalType.IsExecutable(), baseTime,
+					tc.maxVotingWeight,
+				),
 				governance.NewProposalMetadata("Test Title", "Test Description"),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
@@ -517,7 +526,10 @@ func TestNewProposal(cur realm, t *testing.T) {
 			// when
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
+				NewProposalStatus(
+					config, 1000, tc.proposalType.IsExecutable(), baseTime,
+					1000,
+				),
 				governance.NewProposalMetadata(tc.title, tc.description),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				tc.proposer,
