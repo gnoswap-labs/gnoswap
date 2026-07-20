@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
@@ -44,6 +45,8 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 		panic(err.Error())
 	}
 
+	beforeTotalGNSStakedAmount := lp.store.GetTotalGNSStakedAmount()
+
 	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := lp.depositGns(
 		0,
 		rlm,
@@ -53,6 +56,11 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 		caller,
 	)
 	if err != nil {
+		panic(err.Error())
+	}
+
+	afterTotalGNSStakedAmount := gnsmath.SafeAddInt64(beforeTotalGNSStakedAmount, depositAmount)
+	if err := lp.store.SetTotalGNSStakedAmount(0, rlm, afterTotalGNSStakedAmount); err != nil {
 		panic(err.Error())
 	}
 
@@ -80,6 +88,9 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 		"depositId", deposit.ID(),
 		"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 		"referrer", actualReferrer,
+		"beforeTotalGNSStakedAmount", utils.FormatInt(beforeTotalGNSStakedAmount),
+		"afterTotalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+		"recipient", project.Recipient().String(),
 	)
 
 	launchpadAddress := rlm.Address()

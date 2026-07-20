@@ -319,6 +319,7 @@ func initTestStore() {
 		projectTierRewardManagers: launchpad.NewBPTreeN(16),
 		depositCounter:            launchpad.NewCounter(),
 		deposits:                  launchpad.NewBPTreeN(16),
+		totalGNSStakedAmount:      0,
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -336,6 +337,7 @@ type testLaunchpadStore struct {
 	projectTierRewardManagers *bptree.BPTree
 	depositCounter            *launchpad.Counter
 	deposits                  *bptree.BPTree
+	totalGNSStakedAmount      int64
 }
 
 func (s *testLaunchpadStore) HasProjectsKey() bool {
@@ -400,6 +402,19 @@ func (s *testLaunchpadStore) GetDeposits() *bptree.BPTree {
 
 func (s *testLaunchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
 	s.deposits = deposits
+	return nil
+}
+
+func (s *testLaunchpadStore) HasTotalGNSStakedAmountKey() bool {
+	return true // Always available in mock
+}
+
+func (s *testLaunchpadStore) GetTotalGNSStakedAmount() int64 {
+	return s.totalGNSStakedAmount
+}
+
+func (s *testLaunchpadStore) SetTotalGNSStakedAmount(_ int, rlm realm, amount int64) error {
+	s.totalGNSStakedAmount = amount
 	return nil
 }
 

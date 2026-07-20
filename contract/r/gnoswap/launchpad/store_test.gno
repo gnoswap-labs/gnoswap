@@ -351,6 +351,61 @@ func TestStoreSetAndGetDeposits(cur realm, t *testing.T) {
 	}
 }
 
+func TestStoreSetAndGetTotalGNSStakedAmount(cur realm, t *testing.T) {
+	tests := []struct {
+		name         string
+		setupFn      func(cur realm, ls ILaunchpadStore)
+		testFn       func(cur realm, t *testing.T, ls ILaunchpadStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get total GNS staked amount successfully",
+			setupFn: func(cur realm, ls ILaunchpadStore) {
+				ls.SetTotalGNSStakedAmount(0, cur, 1000)
+			},
+			testFn: func(cur realm, t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasTotalGNSStakedAmountKey(), "should have total GNS staked amount after setting")
+				uassert.Equal(t, int64(1000), ls.GetTotalGNSStakedAmount())
+			},
+		},
+		{
+			name: "should not have total GNS staked amount initially",
+			testFn: func(cur realm, t *testing.T, ls ILaunchpadStore) {
+				uassert.False(t, ls.HasTotalGNSStakedAmountKey(), "should not have total GNS staked amount initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized total GNS staked amount",
+			testFn: func(cur realm, t *testing.T, ls ILaunchpadStore) {
+				ls.GetTotalGNSStakedAmount()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized total GNS staked amount",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			ls := NewLaunchpadStore(kvStore)
+
+			if tt.setupFn != nil {
+				tt.setupFn(cur, ls)
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
+
+			tt.testFn(cur, t, ls)
+		})
+	}
+}
+
 func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
@@ -374,12 +429,15 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				deposits := bptree.NewBPTreeN(16)
 				deposits.Set("deposit1", "ddata1")
 				ls.SetDeposits(0, cur, deposits)
+
+				ls.SetTotalGNSStakedAmount(0, cur, 1000)
 			},
 			verifyFn: func(cur realm, t *testing.T, ls ILaunchpadStore) {
 				uassert.True(t, ls.HasProjectsKey())
 				uassert.True(t, ls.HasProjectTierRewardManagersKey())
 				uassert.True(t, ls.HasDepositCounterStoreKey())
 				uassert.True(t, ls.HasDepositsKey())
+				uassert.True(t, ls.HasTotalGNSStakedAmountKey())
 
 				retrievedProjects := ls.GetProjects()
 				val := retrievedProjects.Get("project1")
@@ -397,6 +455,8 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 				val = retrievedDeposits.Get("deposit1")
 				uassert.NotNil(t, val, "deposit1 should not be nil")
 				uassert.Equal(t, "ddata1", val)
+
+				uassert.Equal(t, int64(1000), ls.GetTotalGNSStakedAmount())
 			},
 		},
 	}

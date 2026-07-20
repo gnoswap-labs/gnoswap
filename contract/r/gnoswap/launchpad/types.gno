@@ -110,4 +110,8 @@ type ILaunchpadStore interface {
 	HasDepositsKey() bool
 	GetDeposits() *bptree.BPTree
 	SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error
+
+	HasTotalGNSStakedAmountKey() bool
+	GetTotalGNSStakedAmount() int64
+	SetTotalGNSStakedAmount(_ int, rlm realm, amount int64) error
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -48,8 +49,15 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		panic(err)
 	}
 
+	beforeTotalGNSStakedAmount := lp.store.GetTotalGNSStakedAmount()
+
 	recipient, withdrawalAmount, err := lp.withdrawDeposit(0, rlm, deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
+		panic(err.Error())
+	}
+
+	afterTotalGNSStakedAmount := gnsmath.SafeSubInt64(beforeTotalGNSStakedAmount, withdrawalAmount)
+	if err := lp.store.SetTotalGNSStakedAmount(0, rlm, afterTotalGNSStakedAmount); err != nil {
 		panic(err.Error())
 	}
 
@@ -78,6 +86,9 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", utils.FormatInt(withdrawalAmount),
+		"beforeTotalGNSStakedAmount", utils.FormatInt(beforeTotalGNSStakedAmount),
+		"afterTotalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+		"recipient", recipient.String(),
 	)
 
 	return withdrawalAmount, nil
