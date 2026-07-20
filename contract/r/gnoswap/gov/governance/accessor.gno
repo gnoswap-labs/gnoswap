@@ -14,6 +14,10 @@ func (g *govStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, 
 	return staker.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
+func (g *govStakerAccessor) GetTotalxGnsSupply() int64 {
+	return staker.GetTotalxGnsSupply()
+}
+
 func newGovStakerAccessor() GovStakerAccessor {
 	return &govStakerAccessor{}
 }

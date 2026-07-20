@@ -421,6 +421,7 @@ func newMockGovernance(version string) *MockGovernance {
 
 type mockGovStakerAccessor struct {
 	totalDelegation int64
+	totalXGnsSupply int64
 	userDelegations map[string]int64
 }
 
@@ -432,9 +433,14 @@ func (m *mockGovStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr addre
 	return m.userDelegations[userAddr.String()], true
 }
 
+func (m *mockGovStakerAccessor) GetTotalxGnsSupply() int64 {
+	return m.totalXGnsSupply
+}
+
 func newMockGovStakerAccessor() *mockGovStakerAccessor {
 	return &mockGovStakerAccessor{
 		totalDelegation: 0,
+		totalXGnsSupply: 0,
 		userDelegations: make(map[string]int64),
 	}
 }

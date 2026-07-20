@@ -1296,6 +1296,7 @@ func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes
 	// Set up mock accessor to return the expected delegation amounts
 	mockAccessor := &mockGovStakerAccessor{
 		totalDelegation: maxVotingWeight,
+		totalXGnsSupply: maxVotingWeight,
 		userDelegations: make(map[string]int64),
 	}
 

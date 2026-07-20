@@ -158,4 +158,7 @@ type GovStakerAccessor interface {
 
 	// GetUserDelegationAmountAtSnapshot returns the user delegation amount at a specific snapshot time.
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
+
+	// GetTotalxGnsSupply returns the total xGNS supply used as the quorum base.
+	GetTotalxGnsSupply() int64
 }

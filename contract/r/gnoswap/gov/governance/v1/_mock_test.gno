@@ -236,6 +236,7 @@ func newMockGovernanceStore() *mockGovernanceStore {
 // mockGovStakerAccessor provides a mock implementation of GovStakerAccessor for testing.
 type mockGovStakerAccessor struct {
 	totalDelegation int64
+	totalXGnsSupply int64
 	userDelegations map[string]int64
 }
 
@@ -257,9 +258,17 @@ func (m *mockGovStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr addre
 	return amount, true
 }
 
+func (m *mockGovStakerAccessor) GetTotalxGnsSupply() int64 {
+	return m.totalXGnsSupply
+}
+
 // SetTotalDelegation sets the total delegation amount for the mock
 func (m *mockGovStakerAccessor) SetTotalDelegation(amount int64) {
 	m.totalDelegation = amount
+}
+
+func (m *mockGovStakerAccessor) SetTotalxGnsSupply(amount int64) {
+	m.totalXGnsSupply = amount
 }
 
 // SetUserDelegation sets the delegation amount for a specific user
@@ -273,6 +282,7 @@ func (m *mockGovStakerAccessor) SetUserDelegation(userAddr address, amount int64
 func newMockGovStakerAccessor() *mockGovStakerAccessor {
 	return &mockGovStakerAccessor{
 		totalDelegation: 0,
+		totalXGnsSupply: 0,
 		userDelegations: make(map[string]int64),
 	}
 }

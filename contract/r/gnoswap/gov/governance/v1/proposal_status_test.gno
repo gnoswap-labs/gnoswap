@@ -452,3 +452,12 @@ func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestNewProposalStatusWithQuorumBase_UsesCurrentXGnsSupplyForQuorum(cur realm, t *testing.T) {
+	// Regression for GSW-2813: quorum must be based on total xGNS supply, not the smoothed voting weight.
+	config := governance.NewConfig(100, 200, 86400, 50, 0, 100, 200)
+	status := NewProposalStatusWithQuorumBase(config, 500000, 1000000, true, time.Now().Unix())
+
+	uassert.Equal(t, int64(500000), status.VoteStatus().MaxVotingWeight())
+	uassert.Equal(t, int64(500000), status.VoteStatus().QuorumAmount())
+}
