@@ -15,11 +15,7 @@ import (
 //
 // Panics if the token is not registered in grc20reg.
 func GetToken(path string) *grc20.Token {
-	token := getRegisteredToken(path)
-	if token == nil {
-		return grc20reg.MustGet(path)
-	}
-	return token
+	return grc20reg.MustGet(path)
 }
 
 // GetTokenTeller returns a CallerTeller for the specified path, panicking if not registered.
