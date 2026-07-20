@@ -294,7 +294,7 @@ func verifyVotingResults(cur realm, proposalId int64) {
 //   - Voter2: weight=2000000000, xGNS=0, match=false
 //   - Voter3: weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Proposal voting summary:
-//   - Quorum amount: 3000000000
+//   - Quorum amount: 7500000000
 //   - Yea weight: 3000000000
 //   - Nay weight: 3000000000
 // [EXPECTED] Yea (3000000000) = voter1 + voter2 (3000000000): true

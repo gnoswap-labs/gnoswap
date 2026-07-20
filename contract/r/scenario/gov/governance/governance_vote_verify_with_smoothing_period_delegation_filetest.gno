@@ -282,7 +282,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 6. Propose Text - ProposalID: 1 (voter2 has no voting weight)
 // [INFO] Created proposal ID: 1
 // [INFO] Snapshot captures current delegation state
-// [EXPECTED] Quorum weight: 5500000000, quorum amount: 2750000000
+// [EXPECTED] Quorum weight: 6000000000, quorum amount: 3000000000
 //
 // [SCENARIO] 7. Skip 1 block to apply mid delegation voting weight snapshot
 // [INFO] current height: 17503
@@ -290,7 +290,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 8. Propose Text - ProposalID: 2 (voter2 has voting weight)
 // [INFO] Created proposal ID: 2
 // [INFO] Snapshot captures current delegation state
-// [EXPECTED] Quorum weight: 6000000000, quorum amount: 3000000000
+// [EXPECTED] Quorum weight: 7000000000, quorum amount: 3500000000
 //
 // [SCENARIO] 9. Skip 1 block to apply after delegation voting weight snapshot
 // [INFO] current height: 17504
@@ -298,7 +298,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 10. Propose Text - ProposalID: 3 (voter2 has voting weight)
 // [INFO] Created proposal ID: 3
 // [INFO] Snapshot captures current delegation state
-// [EXPECTED] Quorum weight: 6500000000, quorum amount: 3250000000
+// [EXPECTED] Quorum weight: 8000000000, quorum amount: 4000000000
 // [SCENARIO] 11. Skip voting start delay
 // [INFO] current height: 34784
 //
@@ -310,7 +310,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 13. Verify voting weights - ProposalID: 1
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=1000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2750000000 (xGNS supply 5500000000 * quorum 50%)
+// [EXPECTED] Quorum amount: 3000000000 (xGNS supply 6000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 1000000000 (voter2)
 //
@@ -322,7 +322,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 15. Verify voting weights - ProposalID: 2
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 3000000000 (xGNS supply 6000000000 * quorum 50%)
+// [EXPECTED] Quorum amount: 3500000000 (xGNS supply 7000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)
 //
@@ -334,6 +334,6 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 17. Verify voting weights - ProposalID: 3
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 3250000000 (xGNS supply 6500000000 * quorum 50%)
+// [EXPECTED] Quorum amount: 4000000000 (xGNS supply 8000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)

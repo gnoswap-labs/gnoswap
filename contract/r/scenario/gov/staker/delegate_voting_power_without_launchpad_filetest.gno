@@ -276,7 +276,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [INFO] voted for proposal ID: 2
 //
 // [SCENARIO] 5.4. Check quorum amount and voting power (without launchpad)
-// [EXPECTED] Proposal 2's quorum amount: 500000000
+// [EXPECTED] Proposal 2's quorum amount: 500500000
 // [EXPECTED] Proposal 2's alice voting power: 1000000000
 // [EXPECTED] Proposal 2's yea weight: 1000000000, nay weight: 0
 //
