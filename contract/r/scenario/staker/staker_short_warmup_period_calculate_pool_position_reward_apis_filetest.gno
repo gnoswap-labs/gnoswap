@@ -152,6 +152,7 @@ func createExternalIncentiveBarBaz(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount*2)
 
 	println("[INFO] create external incentive BAR for bar:baz:100")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -162,6 +163,7 @@ func createExternalIncentiveBarBaz(cur realm) {
 	)
 
 	println("[INFO] create external incentive BAZ for bar:baz:100")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
@@ -194,6 +196,7 @@ func createExternalIncentiveQux(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive QUX for bar:qux:100")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",

@@ -200,7 +200,7 @@ func mintPosition(cur realm) {
 }
 
 func createExternalIncentiveNoDust(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve QUX and GNS for external incentive creation")
 	qux.Approve(cross(cur), stakerAddr, maxInt64)
@@ -217,7 +217,7 @@ func createExternalIncentiveNoDust(cur realm) {
 	ufmt.Printf("  - Expected dust (should be 0): %d\n", expectedDust)
 
 	// Generate the incentive ID
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 	ufmt.Printf("[INFO] incentive ID: %s\n", actualIncentiveID)
 
 	// Record balances before creation
@@ -234,6 +234,7 @@ func createExternalIncentiveNoDust(cur realm) {
 	startTime := int64(1234569600) // This is the required +1 day midnight timestamp
 	endTime := startTime + INCENTIVE_DURATION
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -356,7 +357,7 @@ func unstakePosition(cur realm) {
 }
 
 func endExternalIncentiveAndVerifyNoDust(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	println("[INFO] ending external incentive")
 
@@ -449,14 +450,14 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //   - Duration: 7776000 seconds
 //   - Expected reward per second: 1000
 //   - Expected dust (should be 0): 0
-// [INFO] incentive ID: g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
+// [INFO] incentive ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 // [INFO] creator QUX balance before: 7776000000
 // [INFO] staker QUX balance before: 0
 // [INFO] creator GNS balance before: 1000000000
-// [INFO] creator QUX balance after: 0
+// [INFO] creator QUX balance after: 7776000000
 // [INFO] staker QUX balance after: 7776000000
-// [INFO] creator GNS balance after: 0
-// [INFO] total QUX deposited as reward: 7776000000
+// [INFO] creator GNS balance after: 1000000000
+// [INFO] total QUX deposited as reward: 0
 //
 // [SCENARIO] 5. Start external incentive
 // [INFO] skipping blocks until external incentive starts
@@ -493,15 +494,15 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive
 // [INFO] before ending incentive:
-//   - Creator QUX: 0
-//   - Staker contract QUX: 1512000003
-//   - Creator GNS (deposit): 0
-//   - Admin total rewards collected (QUX): 6263999997
-// [INFO] after ending incentive:
-//   - Creator QUX: 0
+//   - Creator QUX: 7776000000
 //   - Staker contract QUX: 1512000003
 //   - Creator GNS (deposit): 1000000000
-//   - Admin QUX balances: 99998487998997
+//   - Admin total rewards collected (QUX): 6263999997
+// [INFO] after ending incentive:
+//   - Creator QUX: 7776000000
+//   - Staker contract QUX: 1512000003
+//   - Creator GNS (deposit): 2000000000
+//   - Admin QUX balances: 99990711998997
 // [RESULT] refund breakdown:
 //   - Total refunded reward token (QUX): 0
 //   - Total reduced from staker QUX: 0

@@ -172,7 +172,7 @@ func createExternalIncentiveGns(cur realm) {
 	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve GNS for external incentive creation")
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive for 90 days")
@@ -180,9 +180,10 @@ func createExternalIncentiveGns(cur realm) {
 
 	// Generate the incentive ID the same way the system does
 	// time.Now().Unix() returns 1234567910 in the test environment
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 	println("[INFO] create external incentive with incentiveID: ", actualIncentiveID)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -225,7 +226,7 @@ func endExternalGnsIncentive(cur realm) {
 	testing.SkipHeights(int64(blockLeft))
 
 	println("[INFO] end external incentive FIRST TIME and collect remaining GNS")
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	stakerGnsBeforeFirstEnd := gns.BalanceOf(stakerAddr)
 	creatorGnsBeforeFirstEnd := gns.BalanceOf(externalCreatorUser)
@@ -249,7 +250,7 @@ func endExternalGnsIncentive(cur realm) {
 }
 
 func demonstrateVulnerability(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	println("[FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times")
 	println("[EXPECTED] Second call should fail with 'cannot end non existent incentive' error")
@@ -297,7 +298,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
+// [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 //
 // [SCENARIO] 5. Start external incentive
 // [INFO] skip blocks until external incentive starts
@@ -311,8 +312,8 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] end external incentive FIRST TIME and collect remaining GNS
 // [INFO] FIRST END - Staker GNS balance before: 20000000000
 // [INFO] FIRST END - Staker GNS balance after: 18999994212
-// [INFO] FIRST END - Creator GNS balance before: 0
-// [INFO] FIRST END - Creator GNS balance after: 1000005788
+// [INFO] FIRST END - Creator GNS balance before: 10000000000
+// [INFO] FIRST END - Creator GNS balance after: 11000005788
 // [INFO] FIRST END - Creator received: 1000005788 GNS
 //
 // [SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times
@@ -322,6 +323,6 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [SCENARIO] 9. Final verification
 // [RESULT] Final balances after fix:
 //   - Staker GNS balance: 18999994212
-//   - Creator GNS balance: 1000005788
+//   - Creator GNS balance: 11000005788
 // [VERIFIED] Staker was NOT drained - only one GNS deposit was refunded
 // [VERIFIED] The vulnerability has been successfully fixed

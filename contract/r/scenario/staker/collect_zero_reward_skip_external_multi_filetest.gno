@@ -165,7 +165,7 @@ func createPool(cur realm) {
 }
 
 func createTwoExternalIncentives(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	qux.Approve(cross(cur), stakerAddr, maxInt64)
@@ -175,6 +175,7 @@ func createTwoExternalIncentives(cur realm) {
 	endTime := startTime + INCENTIVE_DURATION
 
 	// Incentive A: bar token (~128 bar/sec) — small reward rate
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -185,6 +186,7 @@ func createTwoExternalIncentives(cur realm) {
 	)
 
 	// Incentive B: qux token (~1,286 qux/sec) — 10x of bar
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

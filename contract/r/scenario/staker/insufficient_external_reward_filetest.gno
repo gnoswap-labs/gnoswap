@@ -123,6 +123,7 @@ func createShortDurationIncentive(cur realm) {
 
 	// Create incentive with minimum rewards and shorter duration for higher reward rate
 	println("[INFO] create external incentive with SHORT duration (90 days)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

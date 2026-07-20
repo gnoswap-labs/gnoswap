@@ -159,6 +159,7 @@ func createExternalIncentiveWithWUGNOT(cur realm) {
 	currentTime := time.Now().Unix()
 	ufmt.Printf("[INFO] current time: %d\n", currentTime)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",

@@ -203,6 +203,7 @@ func testInitialTierExternalRewards(cur realm) {
 	incentiveEndTime := nextDayMidnight + incentiveDuration
 
 	incentiveRewardAmount := int64(1_000_000_000)
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath2,

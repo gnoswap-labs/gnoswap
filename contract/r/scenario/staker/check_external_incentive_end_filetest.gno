@@ -151,7 +151,7 @@ func createPoolAndSetTier(cur realm) {
 }
 
 func createAndStartIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
@@ -161,8 +161,9 @@ func createAndStartIncentive(cur realm) {
 	startTime := ((createTimestamp / 86400) + 1) * 86400
 	endTime := startTime + INCENTIVE_DURATION
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, createTimestamp, 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -220,7 +221,7 @@ func skipUntilAfterEnd(cur realm) {
 }
 
 func endExternalIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	sr.EndExternalIncentive(
 		cross(cur),
@@ -272,7 +273,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] user staked position 1
 //
 // [SCENARIO] 3. Create external incentive and start
-// [INFO] created external incentive g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
+// [INFO] created external incentive g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 //
 // [SCENARIO] 4. User mints and stakes position
 // [INFO] user staked position 2
