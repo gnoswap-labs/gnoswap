@@ -234,6 +234,18 @@ func TokenApprove(cur realm, t *testing.T, tokenPath string, owner, spender addr
 	}
 }
 
+func CreateExternalIncentiveAsAdmin(cur realm, t *testing.T, poolPath, rewardToken string, rewardAmount, startTimestamp, endTimestamp int64) {
+	t.Helper()
+
+	TokenApprove(cur, t, rewardToken, adminAddr, stakerAddr, maxApprove)
+	if rewardToken != gnsPath {
+		TokenApprove(cur, t, gnsPath, adminAddr, stakerAddr, maxApprove)
+	}
+
+	testing.SetRealm(adminRealm)
+	sr.CreateExternalIncentive(cross(cur), poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
+}
+
 func MintPosition(
 	cur realm,
 	t *testing.T,

@@ -3,11 +3,15 @@ package governance
 import (
 	"strings"
 
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -586,6 +590,48 @@ func CreateParameterHandlers() *ParameterRegistry {
 				percent := parseInt64(params[0])
 				block := parseNumber(params[1], kindInt64).(int64)
 				sr.SetWarmUp(cross(rlm), percent, block)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "CreateExternalIncentive",
+			paramCount: 5,
+			paramValidators: []paramValidator{
+				stringValidator,            // targetPoolPath
+				stringValidator,            // rewardToken
+				numberValidator(kindInt64), // rewardAmount
+				numberValidator(kindInt64), // startTimestamp
+				numberValidator(kindInt64), // endTimestamp
+			},
+			handlerFunc: func(_ int, rlm realm, params []string) error {
+				// Governance must already hold the reward tokens and required GNS deposit.
+				// Approve staker from the governance realm before creating the incentive,
+				// because staker pulls both amounts with TransferFrom.
+				targetPoolPath := params[0]
+				rewardToken := params[1]
+				rewardAmount := parseInt64(params[2])
+				startTimestamp := parseInt64(params[3])
+				endTimestamp := parseInt64(params[4])
+				depositGnsAmount := sr.GetDepositGnsAmount()
+				stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+
+				if rewardToken == GNS_PATH {
+					gns.Approve(cross(rlm), stakerAddr, gnsmath.SafeAddInt64(rewardAmount, depositGnsAmount))
+				} else {
+					common.SafeGRC20Approve(cross(rlm), rewardToken, stakerAddr, rewardAmount)
+					gns.Approve(cross(rlm), stakerAddr, depositGnsAmount)
+				}
+
+				sr.CreateExternalIncentive(
+					cross(rlm),
+					targetPoolPath,
+					rewardToken,
+					rewardAmount,
+					startTimestamp,
+					endTimestamp,
+				)
 
 				return nil
 			},
