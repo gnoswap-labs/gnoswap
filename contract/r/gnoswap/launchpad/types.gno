@@ -75,6 +75,7 @@ type ILaunchpadGetter interface {
 	GetDepositCreatedHeight(depositId string) (int64, error)
 	GetDepositCreatedAt(depositId string) (int64, error)
 	GetDepositEndTime(depositId string) (int64, error)
+	GetTotalGNSStakedAmount() int64
 
 	GetProjectTierRewardManagerCount() int
 	GetProjectTierRewardManager(projectTierId string) (*RewardManager, error)
