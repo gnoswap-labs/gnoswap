@@ -86,8 +86,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", utils.FormatInt(withdrawalAmount),
-		"beforeTotalGNSStakedAmount", utils.FormatInt(beforeTotalGNSStakedAmount),
-		"afterTotalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+		"totalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
 		"recipient", recipient.String(),
 	)
 
