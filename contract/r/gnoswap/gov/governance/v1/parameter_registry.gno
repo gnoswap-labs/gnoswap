@@ -32,7 +32,7 @@ func init() {
 
 // Package paths
 const (
-	GNS_PATH            = "gno.land/r/gnoswap/gns"
+	GNS_PATH            = "gno.land/r/gnoswap/gns.GNS"
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
 	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"

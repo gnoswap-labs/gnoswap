@@ -151,7 +151,7 @@ func TestHandleWithdrawalFee(cur realm, t *testing.T) {
 			name: "Panic if caller is not position contract",
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("unauthorized")))
-				mockInstanceHandleWithdrawalFee(0, cur, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", adminAddr)
+				mockInstanceHandleWithdrawalFee(0, cur, "gno.land/r/onbloc/foo.FOO", "0", "gno.land/r/onbloc/foo.FOO", "0", adminAddr)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",

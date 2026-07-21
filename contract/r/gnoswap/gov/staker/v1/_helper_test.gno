@@ -14,7 +14,7 @@ import (
 
 // contract Paths
 const (
-	GNS_PATH            string = "gno.land/r/gnoswap/gns"
+	GNS_PATH            string = "gno.land/r/gnoswap/gns.GNS"
 	GOV_STAKER_PKG_PATH        = "gno.land/r/gnoswap/gov/staker"
 )
 
@@ -31,12 +31,12 @@ var (
 
 	devOpsAddr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
-	fooPath  string = "gno.land/r/onbloc/foo"
-	barPath  string = "gno.land/r/onbloc/bar"
-	bazPath  string = "gno.land/r/onbloc/baz"
-	quxPath  string = "gno.land/r/onbloc/qux"
-	oblPath  string = "gno.land/r/onbloc/obl"
-	usdcPath string = "gno.land/r/gnoswap/test_token/test_usdc"
+	fooPath  string = "gno.land/r/onbloc/foo.FOO"
+	barPath  string = "gno.land/r/onbloc/bar.BAR"
+	bazPath  string = "gno.land/r/onbloc/baz.BAZ"
+	quxPath  string = "gno.land/r/onbloc/qux.QUX"
+	oblPath  string = "gno.land/r/onbloc/obl.OBL"
+	usdcPath string = "gno.land/r/gnoswap/test_token/test_usdc.USDC"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -92,5 +92,4 @@ func callStakerCollectUndelegatedGns(cur realm) int64 {
 func callStakerCollectReward(cur realm) {
 	staker.CollectReward(cross(cur))
 }
-
 

@@ -143,7 +143,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				OutputToken(bazPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
@@ -158,7 +158,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				OutputToken(barPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100").
+				Route("gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "2726",
@@ -173,7 +173,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
@@ -188,7 +188,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("5").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				TokenAmountLimit("10000").
 				Build(),
 			// Multi-hop ExactOut: requested 5, got 3 (diff=2, swapCount=2 -> within tolerance)
@@ -204,7 +204,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				TokenAmountLimit("10000").
 				Build(),
 			expectedAmountIn:  "138",
@@ -287,7 +287,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				Quote("50,50").
 				TokenAmountLimit("10000").
 				Build(),
@@ -303,7 +303,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100").
 				Quote("33,34,33").
 				TokenAmountLimit("10000").
 				Build(),
@@ -319,7 +319,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				Quote("70,30").
 				TokenAmountLimit("1").
 				Build(),
@@ -638,7 +638,7 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 				OutputToken(bazPath).
 				SpecifiedAmount(maxUint256).
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -655,7 +655,7 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 				OutputToken(barPath).
 				SpecifiedAmount(maxUint256).
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100").
+				Route("gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -716,40 +716,40 @@ func TestSwapCountCalculation(cur realm, t *testing.T) {
 	}{
 		{
 			name:          "Single route - 1 hop",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"},
+			routes:        []string{"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"},
 			expectedCount: 1,
 		},
 		{
 			name:          "Single route - 2 hops",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100"},
+			routes:        []string{"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100"},
 			expectedCount: 2,
 		},
 		{
 			name:          "Single route - 3 hops",
-			routes:        []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:100"},
+			routes:        []string{"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/foo.FOO:100"},
 			expectedCount: 3,
 		},
 		{
 			name: "Two routes - 1 hop each (total 2)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 			},
 			expectedCount: 2,
 		},
 		{
 			name: "Two routes - 2 hops each (total 4)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100",
 			},
 			expectedCount: 4,
 		},
 		{
 			name: "Mixed routes - 1 hop + 3 hops (total 4)",
 			routes: []string{
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/foo.FOO:100",
 			},
 			expectedCount: 4,
 		},
@@ -779,7 +779,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				OutputToken(bazPath).
 				SpecifiedAmount("0").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -796,7 +796,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				OutputToken(barPath).
 				SpecifiedAmount("0").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100").
+				Route("gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -812,7 +812,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				OutputToken(bazPath).
 				SpecifiedAmount("-100").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100").
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "0",
@@ -829,7 +829,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				OutputToken(barPath).
 				SpecifiedAmount("-100").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100").
+				Route("gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100").
 				TokenAmountLimit("100000").
 				Build(),
 			expectedAmountIn:  "0",
@@ -899,7 +899,7 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 				OutputToken(quxPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:100").
 				TokenAmountLimit("10000").
 				Build(),
 			description: "DrySwap returns success=false due to tolerance exceeded",
@@ -912,7 +912,7 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 				OutputToken(bazPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100").
+				Route("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100").
 				TokenAmountLimit("9999999").
 				Build(),
 			description: "DrySwap returns success=false due to slippage",

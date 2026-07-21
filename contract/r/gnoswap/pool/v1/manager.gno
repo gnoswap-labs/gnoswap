@@ -17,7 +17,7 @@ import (
 	en "gno.land/r/gnoswap/emission"
 )
 
-const GNS_PATH string = "gno.land/r/gnoswap/gns"
+const GNS_PATH string = "gno.land/r/gnoswap/gns.GNS"
 
 // CreatePool creates a new concentrated liquidity pool.
 //

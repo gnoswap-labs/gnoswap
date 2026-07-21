@@ -6,78 +6,56 @@ import (
 	"gno.land/r/demo/defi/grc20reg"
 )
 
-// GetToken returns a grc20.Token instance for the specified path, panicking if not registered.
+// GetToken returns a grc20.Token instance for the specified tokenKey, panicking if not registered.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //
 // Returns a pointer to the grc20.Token instance.
 //
 // Panics if the token is not registered in grc20reg.
-func GetToken(path string) *grc20.Token {
-	if token := getRegisteredToken(path); token != nil {
-		return token
-	}
-	return grc20reg.MustGet(path)
+func GetToken(tokenKey string) *grc20.Token {
+	return grc20reg.MustGet(tokenKey)
 }
 
-// GetTokenTeller returns a CallerTeller for the specified path, panicking if not registered.
+// GetTokenTeller returns a CallerTeller for the specified tokenKey, panicking if not registered.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //
 // Returns a grc20.Teller whose write methods derive the actor from the caller
 // realm.
 //
 // Panics if the token is not registered in grc20reg.
-func GetTokenTeller(path string) grc20.Teller {
-	return GetToken(path).CallerTeller()
+func GetTokenTeller(tokenKey string) grc20.Teller {
+	return GetToken(tokenKey).CallerTeller()
 }
 
 // IsRegistered checks if a token is registered in grc20reg, returning nil if registered or error if not.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //
 // Returns nil if the token is registered, or an error describing the issue.
-func IsRegistered(path string) error {
-	if getRegisteredToken(path) == nil {
-		return ufmt.Errorf("token(%s) is not registered to grc20reg", path)
+func IsRegistered(tokenKey string) error {
+	if grc20reg.Get(tokenKey) == nil {
+		return ufmt.Errorf("token(%s) is not registered to grc20reg", tokenKey)
 	}
 	return nil
-}
-
-// getRegisteredToken accepts either a registry key or a single-token realm path.
-func getRegisteredToken(path string) *grc20.Token {
-	if token := grc20reg.Get(path); token != nil {
-		return token
-	}
-
-	var token *grc20.Token
-	prefix := path + "."
-	grc20reg.GetRegistry().Iterate(prefix, prefix+"~", func(_ string, value any) bool {
-		if token != nil {
-			token = nil
-			return true
-		}
-		token = value.(*grc20.Token)
-		return false
-	})
-	return token
 }
 
 // MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
 //
 // Parameters:
-//   - paths: variable number of GRC20 token paths to check
+//   - tokenKeys: variable number of GRC20 registry keys to check
 //
 // Panics if any of the provided tokens is not registered in grc20reg.
-func MustRegistered(paths ...string) {
-	for _, path := range paths {
-		if err := IsRegistered(path); err != nil {
+func MustRegistered(tokenKeys ...string) {
+	for _, tokenKey := range tokenKeys {
+		if err := IsRegistered(tokenKey); err != nil {
 			panic(newErrorWithDetail(
 				errNotRegistered,
-				ufmt.Sprintf("token(%s)", path),
+				ufmt.Sprintf("token(%s)", tokenKey),
 			))
 		}
 	}
@@ -86,34 +64,34 @@ func MustRegistered(paths ...string) {
 // TotalSupply returns the total supply of the specified token.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //
 // Returns the total supply of the token as int64.
-func TotalSupply(path string) int64 {
-	return GetToken(path).TotalSupply()
+func TotalSupply(tokenKey string) int64 {
+	return GetToken(tokenKey).TotalSupply()
 }
 
 // BalanceOf returns the token balance for the specified address.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - addr: address to query the balance for
 //
 // Returns the token balance as int64.
-func BalanceOf(path string, addr address) int64 {
-	return GetToken(path).BalanceOf(addr)
+func BalanceOf(tokenKey string, addr address) int64 {
+	return GetToken(tokenKey).BalanceOf(addr)
 }
 
 // Allowance returns the token allowance from owner to spender.
 //
 // Parameters:
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - owner: address of the token owner
 //   - spender: address of the spender
 //
 // Returns the allowance amount as int64.
-func Allowance(path string, owner, spender address) int64 {
-	return GetToken(path).Allowance(owner, spender)
+func Allowance(tokenKey string, owner, spender address) int64 {
+	return GetToken(tokenKey).Allowance(owner, spender)
 }
 
 // Transfer crosses into common before forwarding to grc20.Teller.Transfer.
@@ -122,13 +100,13 @@ func Allowance(path string, owner, spender address) int64 {
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - to: recipient address
 //   - amount: amount of tokens to transfer
 //
 // Returns an error if the transfer fails, nil otherwise.
-func Transfer(cur realm, path string, to address, amount int64) error {
-	return GetTokenTeller(path).Transfer(0, cur, to, amount)
+func Transfer(cur realm, tokenKey string, to address, amount int64) error {
+	return GetTokenTeller(tokenKey).Transfer(0, cur, to, amount)
 }
 
 // TransferFrom crosses into common before forwarding to grc20.Teller.TransferFrom.
@@ -137,14 +115,14 @@ func Transfer(cur realm, path string, to address, amount int64) error {
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - from: sender address
 //   - to: recipient address
 //   - amount: amount of tokens to transfer
 //
 // Returns an error if the transfer fails, nil otherwise.
-func TransferFrom(cur realm, path string, from, to address, amount int64) error {
-	return GetTokenTeller(path).TransferFrom(0, cur, from, to, amount)
+func TransferFrom(cur realm, tokenKey string, from, to address, amount int64) error {
+	return GetTokenTeller(tokenKey).TransferFrom(0, cur, from, to, amount)
 }
 
 // Approve crosses into common before forwarding to grc20.Teller.Approve.
@@ -153,13 +131,13 @@ func TransferFrom(cur realm, path string, from, to address, amount int64) error 
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - spender: address allowed to spend the tokens
 //   - amount: amount of tokens to approve
 //
 // Returns an error if the approval fails, nil otherwise.
-func Approve(cur realm, path string, spender address, amount int64) error {
-	return GetTokenTeller(path).Approve(0, cur, spender, amount)
+func Approve(cur realm, tokenKey string, spender address, amount int64) error {
+	return GetTokenTeller(tokenKey).Approve(0, cur, spender, amount)
 }
 
 // SafeGRC20Transfer crosses into common, transfers tokens, and panics if it fails.
@@ -168,13 +146,13 @@ func Approve(cur realm, path string, spender address, amount int64) error {
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - to: recipient address
 //   - amount: amount of tokens to transfer
 //
 // Panics if the transfer fails.
-func SafeGRC20Transfer(cur realm, path string, to address, amount int64) {
-	if err := GetTokenTeller(path).Transfer(0, cur, to, amount); err != nil {
+func SafeGRC20Transfer(cur realm, tokenKey string, to address, amount int64) {
+	if err := GetTokenTeller(tokenKey).Transfer(0, cur, to, amount); err != nil {
 		panic(err)
 	}
 }
@@ -185,14 +163,14 @@ func SafeGRC20Transfer(cur realm, path string, to address, amount int64) {
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - from: sender address
 //   - to: recipient address
 //   - amount: amount of tokens to transfer
 //
 // Panics if the transfer fails.
-func SafeGRC20TransferFrom(cur realm, path string, from, to address, amount int64) {
-	if err := GetTokenTeller(path).TransferFrom(0, cur, from, to, amount); err != nil {
+func SafeGRC20TransferFrom(cur realm, tokenKey string, from, to address, amount int64) {
+	if err := GetTokenTeller(tokenKey).TransferFrom(0, cur, from, to, amount); err != nil {
 		panic(err)
 	}
 }
@@ -203,13 +181,13 @@ func SafeGRC20TransferFrom(cur realm, path string, from, to address, amount int6
 //
 // Parameters:
 //   - cur: current realm
-//   - path: GRC20 token path
+//   - tokenKey: GRC20 registry key
 //   - spender: address allowed to spend the tokens
 //   - amount: amount of tokens to approve
 //
 // Panics if the approval fails.
-func SafeGRC20Approve(cur realm, path string, spender address, amount int64) {
-	if err := GetTokenTeller(path).Approve(0, cur, spender, amount); err != nil {
+func SafeGRC20Approve(cur realm, tokenKey string, spender address, amount int64) {
+	if err := GetTokenTeller(tokenKey).Approve(0, cur, spender, amount); err != nil {
 		panic(err)
 	}
 }

@@ -83,7 +83,7 @@ func TestSetPoolTier(cur realm, t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -146,7 +146,7 @@ func TestChangePoolTier(cur realm, t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -202,7 +202,7 @@ func TestRemovePoolTier(cur realm, t *testing.T) {
 	instance := getMockInstance()
 
 	// Create a test pool
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
@@ -327,7 +327,7 @@ func TestNotEmissionTargetTier(cur realm, t *testing.T) {
 
 // Test ChangePoolTier with permission
 func TestChangePoolTierWithPermission(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 
 	tests := []struct {
 		name             string
@@ -443,7 +443,7 @@ func TestSetWarmUpWithPermission(cur realm, t *testing.T) {
 
 // Test RemovePoolTier with permission
 func TestRemovePoolTierWithPermission(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 
 	tests := []struct {
 		name             string

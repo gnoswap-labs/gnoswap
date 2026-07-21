@@ -819,7 +819,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 // TestStakeToken_EmptyIncentiveList tests that after staking,
 // the deposit's external incentive list is empty (lazy sync optimization).
 func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	currentTime := time.Now().Unix()
 
@@ -878,8 +878,8 @@ func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	poolPath1 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	poolPath2 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
+	poolPath1 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	poolPath2 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
 
 	// Test SetExternalIncentivesByCreationTime with 2-level structure
 	tree := sr.NewUintTree()

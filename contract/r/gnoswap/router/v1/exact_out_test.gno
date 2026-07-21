@@ -28,7 +28,7 @@ func TestExactOutSwapOperation(cur realm, t *testing.T) {
 			BaseSwapParams: BaseSwapParams{
 				InputToken:  barPath,
 				OutputToken: fooPath,
-				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				RouteArr:    "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000",
 				QuoteArr:    "100",
 			},
 			AmountOut:   100,
@@ -43,7 +43,7 @@ func TestExactOutSwapOperation(cur realm, t *testing.T) {
 			BaseSwapParams: BaseSwapParams{
 				InputToken:  barPath,
 				OutputToken: fooPath,
-				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				RouteArr:    "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000",
 				QuoteArr:    "100",
 			},
 			AmountOut:   -100, // negative amount
@@ -79,7 +79,7 @@ func TestExactOutSwapOperation(cur realm, t *testing.T) {
 				fooPath,
 				barPath,
 				"3",
-				"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+				"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000",
 				"100",
 				"5",
 				time.Now().Add(-time.Hour).Unix(), // expired deadline
@@ -195,7 +195,7 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 			barPath,
 			fooPath,
 			"1000000",
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+			"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000",
 			"100",
 			"1100000",
 			time.Now().Add(time.Hour).Unix(),
@@ -232,7 +232,7 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 			barPath,
 			fooPath,
 			overflowAmount,
-			"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
+			"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000",
 			"100",
 			"50101690",
 			time.Now().Add(time.Hour).Unix(),
