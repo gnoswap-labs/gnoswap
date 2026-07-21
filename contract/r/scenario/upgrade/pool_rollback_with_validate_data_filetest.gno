@@ -30,12 +30,12 @@ var (
 
 	poolAddr, _ = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 	fee3000 = uint32(3000)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
 )
 
@@ -193,7 +193,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
@@ -202,11 +202,11 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Amount0: 50000000
 // [EXPECTED] Amount1: 50000000
 //
-// [SCENARIO] 4. Check pool data by v1 version: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 4. Check pool data by v1 version: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [EXPECTED] Token0 path: gno.land/r/onbloc/bar
-// [EXPECTED] Token1 path: gno.land/r/onbloc/foo
+// [EXPECTED] Pool data: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
+// [EXPECTED] Token0 path: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] Token1 path: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] Fee: 500
 // [EXPECTED] Slot0 sqrt price X96: 79228162514264337593543950336
 // [EXPECTED] Slot0 tick: 0
@@ -215,7 +215,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 5. Check position data by v1 version: 1
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] TickLower: -960
 // [EXPECTED] TickUpper: 960
@@ -228,14 +228,14 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [INFO] Mint position
 // [EXPECTED] Mint position panics correctly with v2_invalid
 //
-// [SCENARIO] 8. Check pool data with v2_invalid (should panic): gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 8. Check pool data with v2_invalid (should panic): gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [INFO] Check pool data
 // [EXPECTED] Check pool data panics correctly with v2_invalid
 //
 // [SCENARIO] 9. Check position data with v2_invalid: 1
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] TickLower: -960
 // [EXPECTED] TickUpper: 960
@@ -244,11 +244,11 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [INFO] Rollback pool contract to v1
 // [EXPECTED] Rolled back pool contract to v1: gno.land/r/gnoswap/pool/v1
 //
-// [SCENARIO] 11. Check pool data by v1 version after rollback: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 11. Check pool data by v1 version after rollback: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [EXPECTED] Token0 path: gno.land/r/onbloc/bar
-// [EXPECTED] Token1 path: gno.land/r/onbloc/foo
+// [EXPECTED] Pool data: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
+// [EXPECTED] Token0 path: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] Token1 path: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] Fee: 500
 // [EXPECTED] Slot0 sqrt price X96: 79228162514264337593543950336
 // [EXPECTED] Slot0 tick: 0
@@ -257,7 +257,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 12. Check position data by v1 version after rollback: 1
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] TickLower: -960
 // [EXPECTED] TickUpper: 960

@@ -45,10 +45,10 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -61,7 +61,7 @@ var (
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func main(cur realm) {
@@ -127,7 +127,7 @@ func createPoolBarFoo100(cur realm) {
 
 	println("[INFO] create bar:foo:100 pool")
 	pl.CreatePool(cross(cur), barPath, fooPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
@@ -154,7 +154,7 @@ func createExternalIncentiveBarBaz(cur realm) {
 	println("[INFO] create external incentive BAR for bar:baz:100")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		barPath,
 		9000000000,
 		1234569600,
@@ -164,7 +164,7 @@ func createExternalIncentiveBarBaz(cur realm) {
 	println("[INFO] create external incentive BAZ for bar:baz:100")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		bazPath,
 		1800000000,
 		1234569600,
@@ -180,7 +180,7 @@ func createPoolBarQux100(cur realm) {
 
 	println("[INFO] create bar:qux:100 pool for internal tier #1 and external")
 	pl.CreatePool(cross(cur), barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 
 	ufmt.Printf("[EXPECTED] pool created and set to tier 1\n")
 	testing.SkipHeights(1)
@@ -196,7 +196,7 @@ func createExternalIncentiveQux(cur realm) {
 	println("[INFO] create external incentive QUX for bar:qux:100")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		9000000000,
 		1234569600,

@@ -42,8 +42,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee3000 uint32 = 3000
 
@@ -101,9 +101,9 @@ func createPoolAndSetTier(cur realm) {
 	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950337")
 
 	// Set pool to tier 2
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000", 2)
 
-	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	tier := sr.GetPoolTier("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000")
 	ufmt.Printf("[INFO] Pool created and set to tier %d\n", tier)
 
 	testing.SkipHeights(1)
@@ -160,9 +160,9 @@ func removePoolTier(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("Removing pool from tier system...")
-	sr.RemovePoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	sr.RemovePoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000")
 
-	tier := sr.GetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+	tier := sr.GetPoolTier("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000")
 	ufmt.Printf("[INFO] Pool tier after removal: %d (0 means no tier)\n", tier)
 
 	if tier != 0 {
@@ -248,7 +248,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] Pool tier after removal: 0 (0 means no tier)
 // [STEP 6] Attempt to unstake position after tier removal
 // Attempting to unstake position from de-tiered pool...
-// [INFO] poolPath:  gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000
+// [INFO] poolPath:  gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000
 //
 // === BUG FIXED ===
 // Users CAN NOW unstake positions from pools that have been removed from the tier system.

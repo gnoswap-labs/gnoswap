@@ -40,8 +40,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 var (
@@ -185,7 +185,7 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 //
 // [INFO] Setting protocol fee to 10/10
 // [INFO] Creating pool with fee tier 500
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [INFO] Initial protocol fees - token0: 0 token1: 0
 //
 // [SCENARIO] 1. Mint liquidity position

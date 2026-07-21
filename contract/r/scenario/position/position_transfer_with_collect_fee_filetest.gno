@@ -52,8 +52,8 @@ var (
 	user2Addr  = testutils.TestAddress("user2")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee     = uint32(3000)
 )
 

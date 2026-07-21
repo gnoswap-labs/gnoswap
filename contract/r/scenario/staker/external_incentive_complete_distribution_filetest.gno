@@ -63,8 +63,8 @@ var (
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath        = "gno.land/r/onbloc/bar"
-	quxPath        = "gno.land/r/onbloc/qux"
+	barPath        = "gno.land/r/onbloc/bar.BAR"
+	quxPath        = "gno.land/r/onbloc/qux.QUX"
 	fee100  uint32 = 100
 
 	maxTimeout int64 = 9999999999
@@ -167,7 +167,7 @@ func createPool(cur realm) {
 	)
 
 	println("[INFO] set pool tier")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 }
 
 func mintPosition(cur realm) {
@@ -236,7 +236,7 @@ func createExternalIncentiveNoDust(cur realm) {
 
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		REWARD_AMOUNT,
 		startTime,
@@ -374,7 +374,7 @@ func endExternalIncentiveAndVerifyNoDust(cur realm) {
 	// End the external incentive
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)

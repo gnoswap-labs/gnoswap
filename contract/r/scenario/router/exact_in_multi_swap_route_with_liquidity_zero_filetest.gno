@@ -39,9 +39,9 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	barPath    = "gno.land/r/onbloc/bar"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	barPath    = "gno.land/r/onbloc/bar.BAR"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -55,12 +55,12 @@ func main(cur realm) {
 	initializeSetup(cur)
 	println()
 
-	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500) with unbalance position balance")
 	createPool(cur, wugnotPath, gnsPath, 500, 0)
 	mintPosition(cur, wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity")
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500) with zero liquidity")
 	createPool(cur, barPath, gnsPath, 500, 0)
 	println()
 
@@ -69,7 +69,7 @@ func main(cur realm) {
 		wugnotPath,
 		barPath,
 		"10000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:500",
 		"100",
 		"1",
 	)
@@ -81,7 +81,7 @@ func initializeSetup(cur realm) {
 	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm("gno.land/r/gnoland/wugnot").Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -175,23 +175,23 @@ func exactInSwapRouteByWithPanic(cur realm,
 // [INFO] GNS Balance of admin: 100000000000000
 // [INFO] WUGNOT Balance of admin: 100000000000000
 //
-// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500) with unbalance position balance
+// [EXPECTED] created gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity
-// [EXPECTED] created gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500) with zero liquidity
+// [EXPECTED] created gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500 pool at tick 0
 //
 // [SCENARIO] 4. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/gnoland/wugnot
-// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/gnoland/wugnot.wugnot
+// [INFO] outputToken: gno.land/r/onbloc/bar.BAR
 // [INFO] specifiedAmount: 10000000
-// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] swap aborted: zero liquidity pool causes slippage failure

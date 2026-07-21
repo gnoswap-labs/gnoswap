@@ -71,7 +71,7 @@ func createOBLProject(cur realm) string {
 
 	recipientAddr := projectAddr
 	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -135,10 +135,10 @@ func collectDepositGns(cur realm, depositId string) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 //
 // [SCENARIO] 2. Deposit GNS in project tier30 with skip 3 days
-// [EXPECTED] Deposit GNS in project tier gno.land/r/onbloc/obl:123:30 (ID: 1)
+// [EXPECTED] Deposit GNS in project tier gno.land/r/onbloc/obl.OBL:123:30 (ID: 1)
 //
 // [SCENARIO] 3. Skip blocks to end project (27 days)
 //

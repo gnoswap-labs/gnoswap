@@ -45,11 +45,11 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee100 uint32 = 100
 
@@ -168,7 +168,7 @@ func createExternalIncentiveWithGNOT(cur realm) {
 
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		wugnotPath,
 		1_000_000_000,
 		1234569600,
@@ -202,7 +202,7 @@ func endIncentiveAndVerifyGNOTRefund(cur realm) {
 	ufmt.Printf("[INFO] ending incentive with ID: %s\n", createdIncentiveID)
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		createdIncentiveID,
 		adminUser,
 	)

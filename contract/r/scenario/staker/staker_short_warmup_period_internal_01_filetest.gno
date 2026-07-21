@@ -46,9 +46,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -56,7 +56,7 @@ var (
 	max_timeout int64 = 9999999999
 	maxInt64    int64 = 9223372036854775807
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func main(cur realm) {
@@ -139,7 +139,7 @@ func createPools(cur realm) {
 
 	println("[INFO] create bar:qux:100 pool (current tier 1)")
 	pl.CreatePool(cross(cur), barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 
 	println("[INFO] create bar:baz:3000 pool (will be tier 2)")
 	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950337")
@@ -251,7 +251,7 @@ func setPoolTier2(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set bar:baz:3000 pool to tier 2")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000", 2)
 
 	ufmt.Printf("[EXPECTED] pool tier set to 2\n")
 	testing.SkipHeights(1)

@@ -51,7 +51,7 @@ func createProjectByNonAdmin(cur realm) {
 	testing.SetOriginCaller(nonAdminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -102,7 +102,7 @@ func createProjectByNonAdmin(cur realm) {
 // [SCENARIO] 2. Non-admin user attempts to create project
 // [INFO] non-admin attempting to create project
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

@@ -54,11 +54,11 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee500 uint32 = 500
 
@@ -178,15 +178,15 @@ func createPools(cur realm) {
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot",
-		"gno.land/r/gnoswap/gns",
+		"gno.land/r/gnoland/wugnot.wugnot",
+		"gno.land/r/gnoswap/gns.GNS",
 		500,
 		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] set pool tiers")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTier(cross(cur), "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", 2)
 
 	testing.SkipHeights(18)
 }
@@ -304,7 +304,7 @@ func createExternalIncentiveNativePre(cur realm) {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
 
 	println("[INFO] add token and approve gns")
-	sr.AddToken(cross(cur), "gno.land/r/onbloc/obl")
+	sr.AddToken(cross(cur), "gno.land/r/onbloc/obl.OBL")
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with native coin")
@@ -320,7 +320,7 @@ func createExternalIncentiveNativePost(cur realm) {
 
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
@@ -446,7 +446,7 @@ func endExternalIncentive(cur realm) {
 	incentiveID := "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234568025:1"
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500",
 		incentiveID,
 		adminUser,
 	)

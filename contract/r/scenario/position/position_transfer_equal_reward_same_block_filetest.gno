@@ -53,8 +53,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/onbloc/bar"
-	token1Path = "gno.land/r/onbloc/foo"
+	token0Path = "gno.land/r/onbloc/bar.BAR"
+	token1Path = "gno.land/r/onbloc/foo.FOO"
 	fee        = uint32(3000)
 
 	maxInt64    int64 = 9223372036854775807

@@ -40,8 +40,8 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	fee500 uint32 = 500
 
@@ -195,7 +195,7 @@ func performLargeSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500",
 		"100",
 		"1", // minimal output requirement
 		time.Now().Add(time.Hour).Unix(),
@@ -224,7 +224,7 @@ func performReverseSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500",
 		"100",
 		ufmt.Sprintf("%d", max_approve), // allow max slippage
 		time.Now().Add(time.Hour).Unix(),
@@ -252,7 +252,7 @@ func performSmallSwap(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		fooPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),

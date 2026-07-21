@@ -34,7 +34,7 @@ var t *testing.T
 
 var (
 	to               = testutils.TestAddress("to")
-	tokenPath        = "gno.land/r/gnoswap/gns"
+	tokenPath        = "gno.land/r/gnoswap/gns.GNS"
 	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	proposalID       = int64(1)

@@ -42,8 +42,8 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
 
 	fee500 uint32 = 500
 
@@ -241,7 +241,7 @@ func performSwaps(cur realm) BalanceSnapshot {
 		wugnotPath,
 		gnsPath,
 		"10000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500",
 		"100",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
@@ -259,7 +259,7 @@ func performSwaps(cur realm) BalanceSnapshot {
 		gnsPath,
 		wugnotPath,
 		"5000000",
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
+		"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500",
 		"100",
 		"10000000",
 		time.Now().Add(time.Hour).Unix(),
@@ -300,7 +300,7 @@ func removeLiquidityToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -343,7 +343,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -358,7 +358,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 		max_timeout,
 	)
 
-	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
+	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	println("[INFO] Final liquidity removed:", remainingLiquidity)
 	println("[INFO] Final GNS returned:", amount0)

@@ -34,12 +34,12 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
-	wrappedWugnot = "gno.land/r/gnoland/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot.wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -144,7 +144,7 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 			barPath,    // outputToken
 			"1000",     // amountSpecified
 			"EXACT_IN", // swapType
-			"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+			"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:100*POOL*gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/bar.BAR:100", // strRouteArr
 			"100", // quoteArr
 			"1",
 		)
@@ -167,7 +167,7 @@ func testSwapRouteGnsBarExactIn(cur realm) {
 		gnsPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:100*POOL*gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/bar.BAR:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

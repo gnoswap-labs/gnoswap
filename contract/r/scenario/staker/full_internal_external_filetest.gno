@@ -62,13 +62,13 @@ var (
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -202,8 +202,8 @@ func createExternalIncentiveGns(cur realm) {
 	println("[INFO] create external incentive")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
-		"gno.land/r/gnoswap/gns",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
+		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
@@ -249,7 +249,7 @@ func createBarBaz500Tier02(cur realm) {
 	pl.CreatePool(cross(cur), barPath, bazPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] set pool tier to 2")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 2)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500", 2)
 
 	testing.SkipHeights(1)
 }
@@ -354,7 +354,7 @@ func performSwaps(cur realm) {
 		wugnotPath,
 		gnsPath,
 		"500",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
 		"100",
 		"0",
 		maxTimeout,
@@ -382,7 +382,7 @@ func createPoolBarFoo100Tier03(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[INFO] set pool tier to 3")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100", 3)
 	testing.SkipHeights(1)
 }
 
@@ -393,7 +393,7 @@ func mintAndStakePos07OutRange(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"))
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -465,7 +465,7 @@ func createPoolExternalOnly(cur realm) {
 
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:3000",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:3000",
 		bazPath,
 		2_000_000_000,
 		startTime,

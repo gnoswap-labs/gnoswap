@@ -92,7 +92,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ExactInSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ExactInSwapRoute not supported", func() {
-		router.ExactInSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "0", 9999999999, "")
+		router.ExactInSwapRoute(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", "1000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "500", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactInSwapRoute panics correctly")
 
@@ -108,7 +108,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ExactInSingleSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ExactInSingleSwapRoute not supported", func() {
-		router.ExactInSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "0", "0", 9999999999, "")
+		router.ExactInSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", "1000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "0", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactInSingleSwapRoute panics correctly")
 
@@ -116,7 +116,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ExactOutSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ExactOutSwapRoute not supported", func() {
-		router.ExactOutSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "500", "10000", 9999999999, "")
+		router.ExactOutSwapRoute(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", "1000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "500", "10000", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactOutSwapRoute panics correctly")
 
@@ -124,7 +124,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ExactOutSingleSwapRoute function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ExactOutSingleSwapRoute not supported", func() {
-		router.ExactOutSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "1000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "10000", "0", 9999999999, "")
+		router.ExactOutSingleSwapRoute(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", "1000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "10000", "0", 9999999999, "")
 	})
 	ufmt.Println("[EXPECTED] ExactOutSingleSwapRoute panics correctly")
 }

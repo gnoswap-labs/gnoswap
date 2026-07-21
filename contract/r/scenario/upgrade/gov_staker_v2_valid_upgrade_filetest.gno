@@ -75,11 +75,11 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 	bobAddr   = testutils.TestAddress("bob")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
-	barFoo3000PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	barFoo3000PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 )
 
 const (
@@ -252,9 +252,9 @@ func upgradeToV2Valid(cur realm) {
 // Output:
 // [SCENARIO] 1. Initialize gov/staker with v1, GNS and emission
 // [EXPECTED] Gov/Staker initialized with v1: gno.land/r/gnoswap/gov/staker/v1
-// [EXPECTED] Created pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] Minted position ID: 1 liquidity: 21338374
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 pool tier is 1
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 pool tier is 1
 // [EXPECTED] Staked position ID: 1
 //
 // [SCENARIO] 2. Create v1 data: delegate alice -> admin

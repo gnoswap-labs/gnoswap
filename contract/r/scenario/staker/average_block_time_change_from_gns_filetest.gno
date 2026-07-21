@@ -49,15 +49,15 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee3000 uint32 = 3000
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	poolPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func main(cur realm) {
@@ -121,7 +121,7 @@ func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
 
-	println("[INFO] create pool gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0")
+	println("[INFO] create pool gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000 at tick 0")
 	pl.CreatePool(
 		cross(cur),
 		wugnotPath,
@@ -214,7 +214,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 2. Create pool
 // [INFO] set unstaking fee to 0
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0
+// [INFO] create pool gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000 at tick 0
 //
 // [SCENARIO] 3. Mint wugnot gns position 01
 // [INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)

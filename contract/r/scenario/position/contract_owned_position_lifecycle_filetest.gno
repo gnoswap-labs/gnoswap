@@ -51,8 +51,8 @@ var (
 	vaultRealm = testing.NewCodeRealm(vaultPath)
 	vaultAddr  = vaultRealm.Address()
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee     = uint32(3000)
 
 	positionID uint64
@@ -413,7 +413,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 
 // Output:
 // [SCENARIO] 1. Setup pool and fund vault contract
-// [EXPECTED] pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] pool tier after setup: 1
 // [EXPECTED] vault bar balance after funding: 150000000
 // [EXPECTED] vault foo balance after funding: 150000000
@@ -459,13 +459,13 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [EXPECTED] owner after reposition: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v
 //
 // [SCENARIO] 9. Vault contract stakes the position
-// [EXPECTED] staked pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] staked pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] position owner after stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [EXPECTED] staker contract address: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [EXPECTED] deposit owner after stake: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v
 //
 // [SCENARIO] 10. Vault contract collects fees while staked
-// [EXPECTED] staked collect fee pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] staked collect fee pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
 // [SCENARIO] 11. Vault contract collects staking rewards
 // [EXPECTED] staking reward to user: 0
@@ -474,5 +474,5 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [EXPECTED] staking external penalty entries: 0
 //
 // [SCENARIO] 12. Vault contract unstakes the position
-// [EXPECTED] unstaked pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] unstaked pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] position owner after unstake: g10s2vtg08cmqe4rdu37zm2ar4lmqh2q9w9j2a2v

@@ -35,12 +35,12 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
-	wrappedWugnot = "gno.land/r/gnoland/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot.wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -103,7 +103,7 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 			quxPath,    // outputToken
 			"1000",     // amountSpecified
 			"EXACT_IN", // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 			"50,50", // quoteArr
 			"1",
 		)
@@ -127,7 +127,7 @@ func testSwapRouteBarQuxExactIn(cur realm) {
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 		"50,50", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -149,7 +149,7 @@ func testSwapRouteBarQuxExactOut(cur realm) {
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 		"50,50", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -171,7 +171,7 @@ func testSwapRouteQuxBarExactIn(cur realm) {
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -197,7 +197,7 @@ func testwapRouteQuxBarExactOut(cur realm) {
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 		"30,70", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

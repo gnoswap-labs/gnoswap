@@ -53,8 +53,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm   = testing.NewUserRealm(stakerAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 
 	positionId    = uint64(1)
@@ -151,7 +151,7 @@ func swapV1(cur realm) {
 	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
 	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1", int64(9999999999), "")
+	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1", int64(9999999999), "")
 	ufmt.Printf("[EXPECTED] v1 swap in=%s out=%s\n", in, out)
 }
 
@@ -262,12 +262,12 @@ func printNewPositionData(cur realm) {
 // [EXPECTED] Position implementation: gno.land/r/gnoswap/position/v1
 //
 // [SCENARIO] 2. Create v1 data: pool + position + swap
-// [EXPECTED] Created pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
 // [EXPECTED] v1 swap in=1000000 out=-997067
 //
 // [SCENARIO] 3. Read v1-created position data via getters
-// [EXPECTED] position id=1 liquidity=1066918731 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] position id=1 liquidity=1066918731 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 4. Upgrade position implementation to v2_valid
 // [EXPECTED] Upgraded position implementation: gno.land/r/gnoswap/position/v2_valid
@@ -275,14 +275,14 @@ func printNewPositionData(cur realm) {
 // [SCENARIO] 5. Mutate v1 position through v2_valid (taint-prone RMW)
 // [EXPECTED] v2_valid increased position id=1 liquidity=209201802
 // [EXPECTED] v2_valid decreased position id=1 liquidity=5000000
-// [EXPECTED] v2_valid collected fee id=1 amount0=0 amount1=0 pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] v2_valid collected fee id=1 amount0=0 amount1=0 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 6. Read position data after v2_valid increase/decrease/collect
-// [EXPECTED] position id=1 liquidity=1271120533 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] position id=1 liquidity=1271120533 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 7. Mint a NEW position through v2_valid (BPTree insert post-upgrade)
 // [EXPECTED] v2_valid minted NEW position id=2 liquidity=418403604
-// [EXPECTED] position id=2 liquidity=418403604 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] position id=2 liquidity=418403604 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 8. SetPositionOperator on v1 position through v2_valid (RMW operator field)
 // [EXPECTED] v2_valid set operator id=1 operator=g1dacx2unpw3hhyh6lta047h6lta047h6l7tdt3w
@@ -293,5 +293,5 @@ func printNewPositionData(cur realm) {
 // [EXPECTED] v2_valid repositioned id=1 liquidity=592233260 tickLower=-1020 tickUpper=1020
 //
 // [SCENARIO] 10. Read final v1 position data after v2_valid reposition
-// [EXPECTED] position id=1 liquidity=592233260 tickLower=-1020 tickUpper=1020 pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] position id=1 liquidity=592233260 tickLower=-1020 tickUpper=1020 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //

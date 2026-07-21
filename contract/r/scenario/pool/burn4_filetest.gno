@@ -42,8 +42,8 @@ func main(cur realm) {
 // testPartialLiquidityBurn tests burning partial liquidity from a position
 func testPartialLiquidityBurn(cur realm) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier100
 	liquidityAmount := "10000000000"
 	tickLower := int32(-100)

@@ -43,8 +43,8 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
 
 	fee500 uint32 = 500
 
@@ -173,7 +173,7 @@ func testExecuteSwapsForFees(cur realm) {
 			gnsPath,
 			wugnotPath,
 			"10000000",
-			"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
+			"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500",
 			"100",
 			"0",
 			time.Now().Add(time.Hour).Unix(),

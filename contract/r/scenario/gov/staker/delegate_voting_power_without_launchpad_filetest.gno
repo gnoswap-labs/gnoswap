@@ -56,9 +56,9 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	blockTime = int64(5)
 )
@@ -191,7 +191,7 @@ func createLaunchpadProjectByAdmin(cur realm) string {
 	projectID := launchpad.CreateProject(
 		cross(cur),
 		"Test Project",
-		"gno.land/r/onbloc/bar",
+		"gno.land/r/onbloc/bar.BAR",
 		aliceAddr,
 		10000000,
 		"",
@@ -254,7 +254,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 //
 // [SCENARIO] 4. Create Launchpad project and deposit GNS to launchpad
 // [SCENARIO] 4.1. Create Launchpad project
-// [EXPECTED] Project created: gno.land/r/onbloc/bar:34684
+// [EXPECTED] Project created: gno.land/r/onbloc/bar.BAR:34684
 //
 // [SCENARIO] 4.2. Skip heights to activate project
 //

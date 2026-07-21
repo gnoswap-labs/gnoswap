@@ -94,7 +94,7 @@ func proposeMultiExecute(cur realm) int64 {
 		"test_title",
 		"test_description",
 		int64(2),
-		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5,905",
+		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
 	return proposalID

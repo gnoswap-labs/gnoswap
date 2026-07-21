@@ -62,8 +62,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee     = uint32(3000)
 
 	positionId uint64
@@ -130,7 +130,7 @@ func initPoolAndTokens(cur realm) {
 		fee,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
 }
 
 func mintPosition(cur realm) {
@@ -246,7 +246,7 @@ func testRouterSwapInSafeMode(cur realm) {
 		barPath,
 		fooPath,
 		"100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"0",
 		time.Now().Unix()+3600,
@@ -287,7 +287,7 @@ func disableSafeModeAndVerify(cur realm) {
 // [STEP 1] Initialize pool and tokens
 // [INFO] Alice BAR balance: 100000000
 // [INFO] Alice FOO balance: 100000000
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
 // [STEP 2] Mint position (before Safe Mode)
 // [INFO] Position minted with ID: 1

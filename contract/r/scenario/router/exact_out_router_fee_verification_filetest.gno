@@ -44,9 +44,9 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -122,7 +122,7 @@ func singleHopDefaultFee(cur realm) {
 		bazPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified (user wants exactly 1,000,000 bar)
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000",
 		"100",
 		"9223372036854775807", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -169,7 +169,7 @@ func singleHop1PercentFee(cur realm) {
 		bazPath,
 		barPath,
 		"1000000", // user wants exactly 1,000,000 bar
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000",
 		"100",
 		"9223372036854775807",
 		time.Now().Add(time.Hour).Unix(),
@@ -212,7 +212,7 @@ func multiHopDefaultFee(cur realm) {
 		barPath,  // inputToken
 		fooPath,  // outputToken
 		"1000",   // user wants exactly 1,000 foo
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"9223372036854775807",
 		time.Now().Add(time.Hour).Unix(),
@@ -253,7 +253,7 @@ func multiHop1PercentFee(cur realm) {
 		barPath,
 		fooPath,
 		"1000", // user wants exactly 1,000 foo
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"9223372036854775807",
 		time.Now().Add(time.Hour).Unix(),

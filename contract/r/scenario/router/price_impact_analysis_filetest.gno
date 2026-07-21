@@ -44,9 +44,9 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 	fee500  = uint32(500)
 	fee3000 = uint32(3000)
 )
@@ -135,10 +135,10 @@ func testPriceImpactSmall(cur realm) {
 
 	ufmt.Println("[INFO] Testing small trade (0.01% of liquidity)")
 	amount := "10000000" // Small amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	// Get initial price
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
@@ -166,9 +166,9 @@ func testPriceImpactMedium(cur realm) {
 
 	ufmt.Println("[INFO] Testing medium trade (1% of liquidity)")
 	amount := "1000000000" // Medium amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
@@ -191,9 +191,9 @@ func testPriceImpactLarge(cur realm) {
 
 	ufmt.Println("[INFO] Testing large trade (10% of liquidity)")
 	amount := "10000000000" // Large amount
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
@@ -217,13 +217,13 @@ func testPriceImpactFeeTiers(cur realm) {
 	ufmt.Println("[INFO] Comparing price impact across fee tiers")
 	amount := "1000000000"
 
-	barFoo500Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	barFoo3000Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	barFoo500Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
+	barFoo3000Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	initialPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
 	initialPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
 
 	// Test 0.05% fee pool
-	route500 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route500 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	_, amountOut500 := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, route500, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -231,7 +231,7 @@ func testPriceImpactFeeTiers(cur realm) {
 	ufmt.Printf("[EXPECTED] 0.05%% fee pool output: %s\n", amountOut500)
 
 	// Test 0.3% fee pool
-	route3000 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	route3000 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	_, amountOut3000 := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, route3000, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -258,7 +258,7 @@ func testMultiHopPriceImpact(cur realm) {
 	amount := "1000000000"
 
 	// Single hop: BAR -> FOO
-	routeSingle := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	routeSingle := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	_, outputSingle := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, routeSingle, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -277,7 +277,7 @@ func testTickBoundaryPriceImpact(cur realm) {
 
 	// Small swap within single tick
 	smallAmount := "1000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	_, outputSmall := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, smallAmount, route, "100", "1",

@@ -80,7 +80,7 @@ func setupTestData(cur realm) (string, string, string, string, string, string) {
 	// Create project
 	recipientAddr := projectAddr
 	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -203,12 +203,12 @@ func testProjectGetters(cur realm, projectId string) {
 	println("[EXPECTED] Project recipient:", recipient)
 
 	// GetProjectCondition (this project has no conditions)
-	condition, err := launchpad.GetProjectCondition(projectId, "gno.land/r/gnoswap/gns")
+	condition, err := launchpad.GetProjectCondition(projectId, "gno.land/r/gnoswap/gns.GNS")
 	if err != nil {
 		// Expected error when no condition exists
 		println("[EXPECTED] Project condition error (no condition set):", err.Error())
 	} else if condition == nil {
-		println("[EXPECTED] Project condition for gno.land/r/gnoswap/gns: nil")
+		println("[EXPECTED] Project condition for gno.land/r/gnoswap/gns.GNS: nil")
 	} else {
 		println("[EXPECTED] Project condition token path:", condition.TokenPath())
 		println("[EXPECTED] Project condition minimum amount:", condition.MinimumAmount())
@@ -544,7 +544,7 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 // [INFO] Setting up test data
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [INFO] Creating deposits for testing
 // [INFO] Admin transferring GNS to user1
 // [INFO] User1 approving and depositing to 30 day tier
@@ -557,18 +557,18 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 // [INFO] Testing project getters
 // [EXPECTED] Project count: 1
 // [EXPECTED] Project IDs (offset=0, limit=10): 1 projects
-// [EXPECTED] - Project 1: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project 1: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] - Name: Test OBL Project
-// [EXPECTED] - Token Path: gno.land/r/onbloc/obl
+// [EXPECTED] - Token Path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] - Recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
 // [EXPECTED] - Deposit Amount: 10000000
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
-// [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns) not found
+// [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns.GNS) not found
 // [EXPECTED] Project tiers ratios:
 // [EXPECTED] - Tier 30: 30
 // [EXPECTED] - Tier 90: 30
@@ -581,7 +581,7 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 // [INFO] Testing project tier getters
 // [INFO] Testing tier 30
 // [EXPECTED] Tier 30 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:30
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1237764690
 // [EXPECTED] Tier 30 distribute amount per second X128: 393845332084419517897424314157139133629
@@ -596,7 +596,7 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 //
 // [INFO] Testing tier 90
 // [EXPECTED] Tier 90 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:90
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:90
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1242948690
 // [EXPECTED] Tier 90 distribute amount per second X128: 131281777361473172632474771385713044543
@@ -611,7 +611,7 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 //
 // [INFO] Testing tier 180
 // [EXPECTED] Tier 180 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:180
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:180
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1250724690
 // [EXPECTED] Tier 180 distribute amount per second X128: 87521184907648781754983180923808696362
@@ -631,12 +631,12 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 // [INFO] Testing deposit 1 getters
 // [EXPECTED] Deposit 1 details:
 // [EXPECTED] - ID: 1
-// [EXPECTED] - Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] - Tier: 30
 // [EXPECTED] - Amount: 2000000
-// [EXPECTED] Deposit 1 project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Deposit 1 project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Deposit 1 tier: 30
-// [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl.OBL:123:30
 // [EXPECTED] Deposit 1 amount: 2000000
 // [EXPECTED] Deposit 1 withdrawn height: 0
 // [EXPECTED] Deposit 1 withdrawn time: 0

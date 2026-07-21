@@ -51,8 +51,8 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -109,7 +109,7 @@ func drySwapQuote(cur realm) {
 			bazPath,   // outputToken
 			"1000000", // specifiedAmount (user wants exactly 1000000 baz)
 			"EXACT_OUT",
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500",
 			"100",
 			"9223372036854775807", // no limit for dry swap
 		)
@@ -125,7 +125,7 @@ func drySwapQuote(cur realm) {
 			bazPath,   // outputToken
 			"1000000", // specifiedAmount (user wants exactly 1000000 baz)
 			"EXACT_OUT",
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500",
 			"100",
 			"9223372036854775807", // no limit for dry swap
 		)
@@ -159,7 +159,7 @@ func actualSwapFailure(cur realm) {
 			barPath,
 			bazPath,
 			"1000000", // want exactly 1000000 baz
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500",
 			"100",
 			"100000000000", // amountInMax = user's full balance
 			time.Now().Add(time.Hour).Unix(),
