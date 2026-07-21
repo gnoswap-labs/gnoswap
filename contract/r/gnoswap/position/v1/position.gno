@@ -423,10 +423,6 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 	)
 
 	poolPath := position.PoolKey()
-	var poolTier uint64
-	if staker.IsInitialized() {
-		poolTier = staker.GetPoolTier(poolPath)
-	}
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -437,7 +433,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", poolPath,
-		"poolTier", utils.FormatUint(poolTier),
+		"poolTier", utils.FormatUint(staker.GetPoolTier(poolPath)),
 		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128(),
 		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128(),
 	)
