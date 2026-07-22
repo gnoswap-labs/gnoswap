@@ -33,7 +33,8 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	assertIsValidPoolTier(tier)
 
 	// If the tier is already set, do nothing
-	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	poolTier := s.getPoolTier()
+	previousTier := poolTier.CurrentTier(poolPath)
 	if previousTier == tier {
 		return
 	}
@@ -52,9 +53,9 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
-		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
-		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
-		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
+		"tier1Count", utils.FormatUint(poolTier.counts[Tier1]),
+		"tier2Count", utils.FormatUint(poolTier.counts[Tier2]),
+		"tier3Count", utils.FormatUint(poolTier.counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -76,8 +77,10 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
 
+	poolTier := s.getPoolTier()
+
 	// If the tier is already set, do nothing
-	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	previousTier := poolTier.CurrentTier(poolPath)
 	if previousTier == tier {
 		return
 	}
@@ -96,9 +99,9 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
-		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
-		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
-		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
+		"tier1Count", utils.FormatUint(poolTier.counts[Tier1]),
+		"tier2Count", utils.FormatUint(poolTier.counts[Tier2]),
+		"tier3Count", utils.FormatUint(poolTier.counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -119,8 +122,10 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 
 	assertIsPoolExists(s, poolPath)
 
+	poolTier := s.getPoolTier()
+
 	// If the tier is already set, do nothing
-	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	previousTier := poolTier.CurrentTier(poolPath)
 	if previousTier == NOT_EMISSION_TARGET_TIER {
 		return
 	}
@@ -137,9 +142,9 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
-		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
-		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
-		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
+		"tier1Count", utils.FormatUint(poolTier.counts[Tier1]),
+		"tier2Count", utils.FormatUint(poolTier.counts[Tier2]),
+		"tier3Count", utils.FormatUint(poolTier.counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
