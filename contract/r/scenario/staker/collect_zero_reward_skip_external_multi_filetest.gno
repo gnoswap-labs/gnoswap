@@ -74,8 +74,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
@@ -88,7 +88,7 @@ var (
 	BAR_REWARD_AMOUNT  int64 = 1_000_000_000     // ~128 bar/sec (small)
 	QUX_REWARD_AMOUNT  int64 = 10_000_000_000    // ~1,286 qux/sec (10x of bar)
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100"
 )
 
 func main(cur realm) {
@@ -165,7 +165,7 @@ func createPool(cur realm) {
 }
 
 func createTwoExternalIncentives(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	qux.Approve(cross(cur), stakerAddr, maxInt64)
@@ -175,6 +175,7 @@ func createTwoExternalIncentives(cur realm) {
 	endTime := startTime + INCENTIVE_DURATION
 
 	// Incentive A: bar token (~128 bar/sec) — small reward rate
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -185,6 +186,7 @@ func createTwoExternalIncentives(cur realm) {
 	)
 
 	// Incentive B: qux token (~1,286 qux/sec) — 10x of bar
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

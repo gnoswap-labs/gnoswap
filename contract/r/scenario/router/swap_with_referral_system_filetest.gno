@@ -38,8 +38,8 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -165,7 +165,7 @@ func initializeSetup(cur realm) {
 	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm("gno.land/r/gnoland/wugnot").Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 
@@ -240,7 +240,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 		wugnotPath,
 		gnsPath,
 		"1000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500",
 		"100",
 		"0",
 		int64(9999999999),
@@ -262,7 +262,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [INFO] WUGNOT Balance of admin: 100000000000000
 //
 // [SCENARIO] 2. Create Pool And Mint Position (WUGNOT:GNS:500)
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [EXPECTED] created gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
 // [EXPECTED] liquidity: 340264708

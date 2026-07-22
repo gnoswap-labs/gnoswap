@@ -46,8 +46,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	token0Path = "gno.land/r/onbloc/bar"
-	token1Path = "gno.land/r/onbloc/foo"
+	token0Path = "gno.land/r/onbloc/bar.BAR"
+	token1Path = "gno.land/r/onbloc/foo.FOO"
 	fee        = uint32(3000)
 
 	maxInt64    int64 = 9223372036854775807
@@ -236,4 +236,4 @@ func positionIdToTokenId(cur realm, id uint64) grc721.TokenID {
 // [EXPECTED] CollectFee succeeded for staked position via operator
 // [EXPECTED] Fee0 collected: 0
 // [EXPECTED] Fee1 collected: 0
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] Pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000

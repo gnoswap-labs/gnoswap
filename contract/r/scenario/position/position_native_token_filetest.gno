@@ -32,8 +32,8 @@ import (
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	GNS_PATH    string = "gno.land/r/gnoswap/gns"
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+	GNS_PATH    string = "gno.land/r/gnoswap/gns.GNS"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot.wugnot"
 
 	MIN_PRICE string = "4295128740"
 )

@@ -42,9 +42,9 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -55,7 +55,7 @@ var (
 	depositGnsAmount int64 = 100000000000
 
 	TIMESTAMP_90DAYS = int64(7776000)
-	poolPath         = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath         = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100"
 )
 
 func main(cur realm) {
@@ -196,6 +196,7 @@ func createExternalIncentiveBar(cur realm) {
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -292,7 +293,7 @@ func makePosition1OutRange(cur realm) {
 		barPath,
 		quxPath,
 		"100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		"100",
 		"0",
 		max_timeout,

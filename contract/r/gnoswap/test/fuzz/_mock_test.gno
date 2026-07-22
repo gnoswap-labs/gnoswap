@@ -741,7 +741,7 @@ func newMockStakerStore() *MockStakerStore {
 		deposits:                    sr.NewBPTreeN(16),
 		externalIncentives:          sr.NewBPTreeN(16),
 		totalEmissionSent:           0,
-		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns", oblPath},
+		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns.GNS", oblPath},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: make(map[string]int64),
 		unstakingFee:                0,

@@ -26,7 +26,7 @@ import (
 func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	oblPath := "gno.land/r/onbloc/obl"
+	oblPath := "gno.land/r/onbloc/obl.OBL"
 	tests := []struct {
 		name                 string
 		projectName          string
@@ -52,7 +52,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {
 			tokenPath:            oblPath,
 			recipient:            testutils.TestAddress("projectAddr"),
 			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:      "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 			conditionAmounts:     "1000*PAD*2000",
 			tier30Ratio:          10,
 			tier90Ratio:          20,
@@ -68,7 +68,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {
 			tokenPath:            oblPath,
 			recipient:            testutils.TestAddress("projectAddr"),
 			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:      "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 			conditionAmounts:     "1000*PAD*2000",
 			tier30Ratio:          10,
 			tier90Ratio:          20,
@@ -135,7 +135,7 @@ func TestLaunchpadProject_CreateProjectUnauthorized(cur realm, t *testing.T) {
 		launchpad.CreateProject(
 			cross(cur),
 			"Unauthorized Project",
-			"gno.land/r/onbloc/obl",
+			"gno.land/r/onbloc/obl.OBL",
 			testutils.TestAddress("projectAddr"),
 			1_000_000,
 			"",
@@ -151,7 +151,7 @@ func TestLaunchpadProject_CreateProjectUnauthorized(cur realm, t *testing.T) {
 func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
-	oblPath := "gno.land/r/onbloc/obl"
+	oblPath := "gno.land/r/onbloc/obl.OBL"
 	tests := []struct {
 		name                 string
 		params               *createProjectParams
@@ -166,7 +166,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -175,7 +175,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/onbloc/obl.OBL:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
@@ -186,7 +186,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(30),
 				tier90Ratio:      int64(40),
@@ -195,7 +195,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/onbloc/obl.OBL:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
@@ -206,7 +206,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -225,7 +225,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -244,7 +244,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:        oblPath,
 				recipient:        address("abcdef"),
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -263,7 +263,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:             oblPath,
 				recipient:             projectAddr,
 				depositAmount:         1_000_000_000,
-				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:       "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts:      "1000*PAD*2000",
 				tier30Ratio:           int64(10),
 				tier90Ratio:           int64(20),
@@ -283,7 +283,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 				tokenPath:             "gno.land/r/test/token",
 				recipient:             projectAddr,
 				depositAmount:         1_000_000_000,
-				conditionTokens:       "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:       "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts:      "1000*PAD*2000",
 				tier30Ratio:           int64(10),
 				tier90Ratio:           int64(20),
@@ -321,7 +321,7 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
-	oblPath := "gno.land/r/onbloc/obl"
+	oblPath := "gno.land/r/onbloc/obl.OBL"
 	tests := []struct {
 		name                 string
 		setupProjectIds      []string
@@ -333,14 +333,14 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) 
 		{
 			name: "create project successfully",
 			setupProjectIds: []string{
-				"gno.land/r/onbloc/obl:1",
+				"gno.land/r/onbloc/obl.OBL:1",
 			},
 			params: &createProjectParams{
 				name:             "Obl Protocol",
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -349,21 +349,21 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) 
 				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
+			expectedProjectID:    "gno.land/r/onbloc/obl.OBL:123",
 			expectedHasError:     false,
 			expectedErrorMessage: "",
 		},
 		{
 			name: "create project failed by duplicate project id",
 			setupProjectIds: []string{
-				"gno.land/r/onbloc/obl:123",
+				"gno.land/r/onbloc/obl.OBL:123",
 			},
 			params: &createProjectParams{
 				name:             "Obl Protocol",
 				tokenPath:        oblPath,
 				recipient:        projectAddr,
 				depositAmount:    1_000_000_000,
-				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+				conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 				conditionAmounts: "1000*PAD*2000",
 				tier30Ratio:      int64(10),
 				tier90Ratio:      int64(20),
@@ -373,7 +373,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) 
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-006] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-006] cannot create same project in same block || project(gno.land/r/onbloc/obl.OBL:123) already exists",
 		},
 	}
 
@@ -447,7 +447,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(cur realm, t *tes
 	}{
 		{
 			name:          "token path is valid",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/onbloc/obl.OBL",
 			expectedError: "",
 		},
 		{
@@ -666,7 +666,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(cur realm, t *tes
 }
 
 func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *testing.T) {
-	conditionTokensOverMax := strings.Repeat("gno.land/r/onbloc/obl*PAD*", maxProjectConditionCount) + "gno.land/r/onbloc/obl"
+	conditionTokensOverMax := strings.Repeat("gno.land/r/onbloc/obl.OBL*PAD*", maxProjectConditionCount) + "gno.land/r/onbloc/obl.OBL"
 	conditionAmountsOverMax := strings.Repeat("1000*PAD*", maxProjectConditionCount) + "1000"
 
 	tests := []struct {
@@ -677,31 +677,31 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(cur realm, t *te
 	}{
 		{
 			name:             "conditions are valid",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/onbloc/obl.OBL*PAD*gno.land/r/onbloc/bar.BAR",
 			conditionAmounts: "1000*PAD*2000",
 			expectedError:    "",
 		},
 		{
 			name:             "conditions are invalid by not registered token path",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/test/token",
+			conditionTokens:  "gno.land/r/onbloc/obl.OBL*PAD*gno.land/r/test/token",
 			conditionAmounts: "1000*PAD*2000",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by zero amount",
-			conditionTokens:  "gno.land/r/onbloc/obl",
+			conditionTokens:  "gno.land/r/onbloc/obl.OBL",
 			conditionAmounts: "0",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by condition count mismatch",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/onbloc/obl.OBL*PAD*gno.land/r/onbloc/bar.BAR",
 			conditionAmounts: "1000*PAD*2000*PAD*3000",
 			expectedError:    errInvalidInput,
 		},
 		{
 			name:             "conditions are invalid by duplicated token path",
-			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar*PAD*gno.land/r/onbloc/obl",
+			conditionTokens:  "gno.land/r/onbloc/obl.OBL*PAD*gno.land/r/onbloc/bar.BAR*PAD*gno.land/r/onbloc/obl.OBL",
 			conditionAmounts: "1000*PAD*2000*PAD*3000",
 			expectedError:    errInvalidInput,
 		},
@@ -768,7 +768,7 @@ func TestLaunchpadProject_isGovernanceToken(cur realm, t *testing.T) {
 		},
 		{
 			name:           "returns false for gns token",
-			tokenPath:      GNS_PATH,
+			tokenPath:      GNS_TOKEN_KEY,
 			expectedResult: false,
 		},
 		{
@@ -999,7 +999,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 		initLaunchpadProjectTest(t)
 		lp := getTestImplementation()
 
-		projectID := "gno.land/r/onbloc/obl:123"
+		projectID := "gno.land/r/onbloc/obl.OBL:123"
 		tierID := projectID + ":30"
 
 		// Create tier
@@ -1035,7 +1035,7 @@ func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(cur realm, 
 	testing.SetRealm(userRealm)
 
 	uassert.AbortsContains(t, cur, "is not admin", func() {
-		launchpad.TransferLeftFromProjectByAdmin(cross(cur), "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
+		launchpad.TransferLeftFromProjectByAdmin(cross(cur), "gno.land/r/onbloc/obl.OBL:123", testutils.TestAddress("recipient"))
 	})
 }
 
@@ -1110,7 +1110,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/onbloc/obl.OBL:123"
 			tierID := projectID + ":180"
 
 			// Create project with single tier (180 days for simplicity)
@@ -1120,7 +1120,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			tier.SetTotalWithdrawCount(0)   // No withdrawals yet
 			tier.SetTotalCollectedAmount(0) // No rewards collected yet
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)
@@ -1231,7 +1231,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/onbloc/obl.OBL:123"
 			tierID := projectID + ":180"
 
 			// Create project with tier
@@ -1241,7 +1241,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			tier.SetTotalWithdrawCount(0)
 			tier.SetTotalCollectedAmount(0)
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)
@@ -1322,7 +1322,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 			recipient := testutils.TestAddress("recipient")
-			projectID := "gno.land/r/onbloc/obl:123"
+			projectID := "gno.land/r/onbloc/obl.OBL:123"
 			tierID := projectID + ":180"
 
 			// Create project with tier - no depositors
@@ -1332,7 +1332,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			tier.SetTotalWithdrawCount(0) // No withdrawals
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
 			tiers := make(map[int64]*launchpad.ProjectTier)

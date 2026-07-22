@@ -53,8 +53,8 @@ var (
 func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
 	createOBLProject(cur)
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	projectId := "gno.land/r/onbloc/obl.OBL:123"
+	projectTier30Id := "gno.land/r/onbloc/obl.OBL:123:30"
 	println("[INFO] Project tier 30 Total Distribute Amount: 100,000,000")
 	println("[INFO] Project tier 30 Distribute Amount Per Second: 38.5802469136")
 	println()
@@ -96,7 +96,7 @@ func createOBLProject(cur realm) {
 
 	recipientAddr := testutils.TestAddress("project-owner")
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -198,9 +198,9 @@ func collectLaunchpadReward(cur realm, ownerAddress address, depositId string) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20

@@ -57,9 +57,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -184,7 +184,7 @@ func createExternalIncentiveWithDust(cur realm) {
 	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve tokens for external incentive creation")
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
@@ -203,9 +203,10 @@ func createExternalIncentiveWithDust(cur realm) {
 	incentiveCreationTime = time.Now().Unix()
 	ufmt.Printf("[INFO] incentive creation time: %d\n", incentiveCreationTime)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		rewardAmount,
 		startTime,
@@ -245,7 +246,7 @@ func endExternalIncentiveAndVerifyDustRefund(cur realm) {
 
 	testing.SkipHeights(blocksToSkip)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	// Get balance before ending incentive
 	barBalanceBefore := bar.BalanceOf(externalCreatorUser)
@@ -255,12 +256,12 @@ func endExternalIncentiveAndVerifyDustRefund(cur realm) {
 	ufmt.Printf("[INFO] gns balance before ending: %d\n", gnsBalanceBefore)
 
 	// Use the exact incentive ID format with the stored creation time
-	incentiveID = ufmt.Sprintf("%s:%d:1", externalCreatorAddr, incentiveCreationTime)
+	incentiveID = ufmt.Sprintf("%s:%d:1", adminAddr, incentiveCreationTime)
 
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		incentiveID,
 		externalCreatorUser,
 	)
@@ -323,13 +324,13 @@ func collectRewardStakedPosition(cur realm) {
 }
 
 func collectExternalIncentivePenalty(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect external incentive penalty", incentiveID)
 	testing.SkipHeights(1)
 
 	beforeBarBalance := bar.BalanceOf(externalCreatorUser)
-	sr.CollectExternalIncentivePenalty(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
+	sr.CollectExternalIncentivePenalty(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", incentiveID, externalCreatorUser)
 	afterBarBalance := bar.BalanceOf(externalCreatorUser)
 
 	barPenalty := afterBarBalance - beforeBarBalance
@@ -375,11 +376,11 @@ func positionIdFrom(cur realm, tokenId uint64) grc721.TokenID {
 // [INFO] position staked successfully
 //
 // [SCENARIO] 7. Wait until incentive ends and verify dust refund
-// [INFO] bar balance before ending: 100000000
-// [INFO] gns balance before ending: 0
+// [INFO] bar balance before ending: 10100000007
+// [INFO] gns balance before ending: 1000000000
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100006431
-// [INFO] gns balance after ending: 1000000000
+// [INFO] bar balance after ending: 10100006438
+// [INFO] gns balance after ending: 2000000000
 // [RESULT] bar tokens refunded: 6431
 // [RESULT] gns tokens refunded: 1000000000
 // [SUCCESS] Q128 scaling reduced dust: legacy bound=64007, actual refund=6431 (9x smaller)
@@ -389,7 +390,7 @@ func positionIdFrom(cur realm, tokenId uint64) grc721.TokenID {
 // [EXPECTED] bar reward: 7974993637
 //
 // [SCENARIO] 9. Collect external incentive penalty
-// [INFO] collect external incentive penalty g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
+// [INFO] collect external incentive penalty g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 // [EXPECTED] bar penalty: 1944444446
 // [EXPECTED] staker bar balance: 2
 //

@@ -47,10 +47,10 @@ var (
 
 	minAmount = int64(1_000_000)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
-	wugnotPath         = "gno.land/r/gnoland/wugnot"
+	wugnotPath         = "gno.land/r/gnoland/wugnot.wugnot"
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())

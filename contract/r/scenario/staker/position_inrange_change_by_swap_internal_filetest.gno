@@ -49,15 +49,15 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 
 	t *testing.T
 )
@@ -228,7 +228,7 @@ func performSwapToMovePrice(cur realm) {
 		barPath,
 		bazPath,
 		swapAmount,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		"100",
 		"0",
 		maxTimeout,
@@ -251,7 +251,7 @@ func performSwapToMovePrice(cur realm) {
 			barPath,
 			bazPath,
 			swapAmount,
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 			"100",
 			"0",
 			maxTimeout,
@@ -305,7 +305,7 @@ func performReverseSwap(cur realm) {
 		bazPath,
 		barPath,
 		reverseSwapAmount,
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100",
 		"100",
 		"0",
 		maxTimeout,

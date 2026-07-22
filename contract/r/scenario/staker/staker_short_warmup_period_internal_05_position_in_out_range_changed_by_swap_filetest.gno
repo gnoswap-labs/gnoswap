@@ -44,16 +44,16 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath              string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
-	MUST_EXISTS_IN_TIER_1        = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	poolPath              string = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100"
+	MUST_EXISTS_IN_TIER_1        = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func main(cur realm) {
@@ -251,7 +251,7 @@ func makePosition1OutRange(cur realm) {
 		barPath,
 		quxPath,
 		"10000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		"100",
 		"0",
 		maxTimeout,

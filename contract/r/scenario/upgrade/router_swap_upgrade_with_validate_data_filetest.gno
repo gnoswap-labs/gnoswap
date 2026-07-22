@@ -32,11 +32,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
 )
 
@@ -59,7 +59,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Check pool data by v1 version")
@@ -75,7 +75,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 7. Perform swap to generate fees (check swap by v2_mock)")
-	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 8. Check pool data by v2_mock version")
@@ -178,7 +178,7 @@ func upgradeRouterContractToV2Mock(cur realm) {
 //
 // [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
@@ -194,12 +194,12 @@ func upgradeRouterContractToV2Mock(cur realm) {
 //
 // [SCENARIO] 5. Check pool data by v1 version
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool data: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 6. Check position data by v1 version
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Position key: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
@@ -216,12 +216,12 @@ func upgradeRouterContractToV2Mock(cur realm) {
 //
 // [SCENARIO] 8. Check pool data by v2_mock version
 // [INFO] Check pool data
-// [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool data: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 9. Check position data by v2_mock version
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
-// [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Position key: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960

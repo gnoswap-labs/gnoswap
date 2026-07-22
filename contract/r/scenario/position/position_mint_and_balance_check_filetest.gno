@@ -48,8 +48,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/gnoland/wugnot"
-	token1Path = "gno.land/r/gnoswap/gns"
+	token0Path = "gno.land/r/gnoland/wugnot.wugnot"
+	token1Path = "gno.land/r/gnoswap/gns.GNS"
 	fee        = uint32(3000)
 )
 
@@ -221,7 +221,7 @@ func comparePositionBalances(cur realm) {
 // [INFO] Initial GNS balance of Bob: 1000000000000
 // [INFO] Initial WUGNOT balance of Alice: 1000000000000
 // [INFO] Initial WUGNOT balance of Bob: 1000000000000
-// [INFO] Creating gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 pool (tick: 1)
+// [INFO] Creating gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000 pool (tick: 1)
 //
 // [SCENARIO] 2. Mint first position with Alice
 // [INFO] Minting position for Alice

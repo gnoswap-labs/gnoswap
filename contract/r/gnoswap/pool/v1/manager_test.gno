@@ -9,7 +9,7 @@ import (
 
 func TestGetPoolPath(cur realm, t *testing.T) {
 	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
-	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	expected := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	if path != expected {
 		t.Errorf("Expected path %s, got %s", expected, path)
 	}
@@ -72,7 +72,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar.BAR) != token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 		{
 			name:        "fail - same tokens (foo)",
@@ -81,7 +81,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/foo) != token1Path(gno.land/r/onbloc/foo)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/foo.FOO) != token1Path(gno.land/r/onbloc/foo.FOO)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
@@ -90,7 +90,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295343490",
 			shouldPanic: false,
-			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
+			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo.FOO) < token1Path(gno.land/r/onbloc/baz.BAZ)",
 			inOrder:     true,
 		},
 		{
@@ -100,7 +100,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000) not to exist",
 		},
 		{
 			name:        "fail - invalid fee amount",
@@ -240,7 +240,7 @@ func TestGetPool(cur realm, t *testing.T) {
 				mockInstanceSetPoolCreationFee(0, cur, 0)
 			},
 			shouldError: true,
-			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500) to exist",
 		},
 		{
 			name: "success - get pool (bar:foo:500)",

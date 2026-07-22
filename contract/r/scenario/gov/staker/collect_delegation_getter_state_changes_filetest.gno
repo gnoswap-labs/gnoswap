@@ -36,8 +36,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	delegateeAddr = testutils.TestAddress("delegatee1")
 
@@ -135,11 +135,11 @@ func collectReward(cur realm, addr address) {
 // [INFO] Alice delegated 1000000 GNS to delegatee
 //
 // [SCENARIO] 3. Create pool by protocol fee
-// [INFO] Created gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 pool
+// [INFO] Created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 pool
 //
 // [SCENARIO] 4. Check and collect claimable reward for alice
 // [EXPECTED] claimable reward: emissionReward=0
-// [EXPECTED] claimable protocol fee: gno.land/r/gnoswap/gns: 100000000
+// [EXPECTED] claimable protocol fee: gno.land/r/gnoswap/gns.GNS: 100000000
 // [EXPECTED] collected gov staker GNS balance: 0
 //
 // [SCENARIO] 5. Collect reward for alice

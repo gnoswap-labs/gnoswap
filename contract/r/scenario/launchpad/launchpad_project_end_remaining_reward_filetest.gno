@@ -47,8 +47,8 @@ var (
 func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
 	createOBLProject(cur)
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	projectId := "gno.land/r/onbloc/obl.OBL:123"
+	projectTier30Id := "gno.land/r/onbloc/obl.OBL:123:30"
 	println()
 
 	println("[SCENARIO] 2. Partial deposits - only tier 30 receives deposits")
@@ -117,7 +117,7 @@ func createOBLProject(cur realm) {
 
 	recipientAddr := projectAddr
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -230,7 +230,7 @@ func transferRemainingRewards(cur realm, projectId string) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [INFO] Total reward: 1,000,000,000 OBL
 // [INFO] Tier 30 reward: 100,000,000 OBL (10%)
 // [INFO] Tier 90 reward: 200,000,000 OBL (20%)

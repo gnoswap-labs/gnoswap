@@ -51,7 +51,7 @@ func createProjectByZeroRewardAmount(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(0)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -102,7 +102,7 @@ func createProjectByZeroRewardAmount(cur realm) {
 // [SCENARIO] 2. Admin attempts to create project with zero reward amount
 // [INFO] admin attempting to create project with zero reward amount
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 0
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

@@ -45,8 +45,8 @@ func main(cur realm) {
 // testZeroLiquidityBurn tests burning zero liquidity (should return zero amounts)
 func testZeroLiquidityBurn(cur realm) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier100
 	liquidityAmount := "10000000000"
 	tickLower := int32(-100)

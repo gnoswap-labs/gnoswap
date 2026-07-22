@@ -41,8 +41,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	fee3000 uint32 = 3000
 
@@ -137,7 +137,7 @@ func createExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Add external reward token
-	sr.AddToken(cross(cur), "gno.land/r/onbloc/obl")
+	sr.AddToken(cross(cur), "gno.land/r/onbloc/obl.OBL")
 
 	// Approve GNS for deposit
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
@@ -153,9 +153,10 @@ func createExternalIncentive(cur realm) {
 	incentiveStartTime = tomorrowMidnight + 86400 // Add one more day to ensure it's at least 1 day in future
 	endTime := incentiveStartTime + TIMESTAMP_90DAYS
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000", // targetPoolPath
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000", // targetPoolPath
 		barPath,              // rewardToken
 		externalRewardAmount, // rewardAmount
 		incentiveStartTime,   // startTimestamp

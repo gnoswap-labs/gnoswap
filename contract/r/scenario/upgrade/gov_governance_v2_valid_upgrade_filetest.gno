@@ -68,7 +68,7 @@ var (
 	currentBlockTime = int64(2)
 
 	// gns token path is registered, so it is a valid community-pool-spend token.
-	gnsPath = "gno.land/r/gnoswap/gns"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 )
 
 const (

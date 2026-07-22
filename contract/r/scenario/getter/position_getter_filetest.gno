@@ -35,8 +35,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -209,7 +209,7 @@ func exactInSwapRoute(cur realm) {
 		fooPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -474,7 +474,7 @@ func getPositionOwner(cur realm) {
 //
 // [SCENARIO] 2.3. GetPosition
 // [INFO] Check GetPosition method
-// [EXPECTED] position poolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] position poolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] position tickLower: -887220
 // [EXPECTED] position tickUpper: 887220
 // [EXPECTED] position liquidity: 100000000
@@ -531,7 +531,7 @@ func getPositionOwner(cur realm) {
 //
 // [SCENARIO] 2.14. GetPositionPoolKey
 // [INFO] Check GetPositionPoolKey method
-// [EXPECTED] position poolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] position poolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
 // [SCENARIO] 2.15. GetPositionTickLower
 // [INFO] Check GetPositionTickLower method

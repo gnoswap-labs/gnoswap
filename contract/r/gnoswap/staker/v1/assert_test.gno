@@ -68,19 +68,19 @@ func TestAssertIsValidRewardAmountFormat(cur realm, t *testing.T) {
 	}{
 		{
 			name:          "valid format",
-			rewardAmtStr:  "gno.land/r/gnoswap/gns:1000",
+			rewardAmtStr:  "gno.land/r/gnoswap/gns.GNS:1000",
 			expectPanic:   false,
 			expectedError: "",
 		},
 		{
 			name:          "valid format with large amount",
-			rewardAmtStr:  "gno.land/r/onbloc/bar:999999999",
+			rewardAmtStr:  "gno.land/r/onbloc/bar.BAR:999999999",
 			expectPanic:   false,
 			expectedError: "",
 		},
 		{
 			name:          "invalid format - missing colon",
-			rewardAmtStr:  "gno.land/r/gnoswap/gns1000",
+			rewardAmtStr:  "gno.land/r/gnoswap/gns.GNS1000",
 			expectPanic:   true,
 			expectedError: "invalid format",
 		},
@@ -98,7 +98,7 @@ func TestAssertIsValidRewardAmountFormat(cur realm, t *testing.T) {
 		},
 		{
 			name:          "invalid format - missing amount",
-			rewardAmtStr:  "gno.land/r/gnoswap/gns:",
+			rewardAmtStr:  "gno.land/r/gnoswap/gns.GNS:",
 			expectPanic:   false,
 			expectedError: "",
 		},
@@ -110,7 +110,7 @@ func TestAssertIsValidRewardAmountFormat(cur realm, t *testing.T) {
 		},
 		{
 			name:          "invalid format - multiple colons",
-			rewardAmtStr:  "gno.land/r/gnoswap/gns:1000:extra",
+			rewardAmtStr:  "gno.land/r/gnoswap/gns.GNS:1000:extra",
 			expectPanic:   false,
 			expectedError: "",
 		},

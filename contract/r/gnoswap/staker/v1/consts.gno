@@ -1,6 +1,6 @@
 package staker
 
 const (
-	GNS_PATH    string = "gno.land/r/gnoswap/gns"
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+	GNS_TOKEN_KEY    string = "gno.land/r/gnoswap/gns.GNS"
+	WUGNOT_TOKEN_KEY string = "gno.land/r/gnoland/wugnot.wugnot"
 )

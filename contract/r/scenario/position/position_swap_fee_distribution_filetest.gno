@@ -40,8 +40,8 @@ var (
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm   = testing.NewUserRealm(routerAddr)
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
+	barPath        = "gno.land/r/onbloc/bar.BAR"
+	fooPath        = "gno.land/r/onbloc/foo.FOO"
 	fee500  uint32 = 500
 )
 

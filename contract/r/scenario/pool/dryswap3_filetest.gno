@@ -43,8 +43,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 // Test variables
@@ -156,8 +156,8 @@ func testDrySwapFailureCases(cur realm, t *testing.T) {
 }
 
 // Output:
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/foo
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/foo.FOO
 // [INFO] Fee tier: 500
 // [INFO] Note: No liquidity will be minted to test failure case
 // [INFO] Pool created successfully without any liquidity

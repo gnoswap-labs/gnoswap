@@ -53,9 +53,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -169,7 +169,7 @@ func createPool(cur realm) {
 }
 
 func createAndStartIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
@@ -177,11 +177,12 @@ func createAndStartIncentive(cur realm) {
 	startTime := int64(1234569600) // +1 day midnight
 	endTime := startTime + INCENTIVE_DURATION
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath, // reward in bar tokens (not GNS)
 		REWARD_AMOUNT,
 		startTime,

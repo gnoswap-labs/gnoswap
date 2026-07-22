@@ -53,8 +53,8 @@ var (
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = testing.NewUserRealm(projectAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func fundAndApproveProtocolFeeCallerBar(cur realm, amount int64) {
@@ -120,7 +120,7 @@ func createLaunchpadProject(cur realm) {
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross(cur), launchpadAddr, rewardAmount)
-	depositID := lp.DepositGns(cross(cur), "gno.land/r/onbloc/bar:123:30", int64(rewardAmount), "")
+	depositID := lp.DepositGns(cross(cur), "gno.land/r/onbloc/bar.BAR:123:30", int64(rewardAmount), "")
 	ufmt.Printf("[INFO] deposited launchpad deposit: %s\n", depositID)
 }
 
@@ -200,7 +200,7 @@ func checkBlockedWithLaunchpadCollectDepositGns(cur realm) {
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:999 gno.land/r/onbloc/qux:2499]
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:999 gno.land/r/onbloc/qux.QUX:2499]
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999
 // [EXPECTED] collected qux amount: 2499

@@ -53,8 +53,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/gnoland/wugnot"
-	token1Path = "gno.land/r/gnoswap/gns"
+	token0Path = "gno.land/r/gnoland/wugnot.wugnot"
+	token1Path = "gno.land/r/gnoswap/gns.GNS"
 	fee        = uint32(3000)
 )
 
@@ -285,7 +285,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [INFO] Collecting fees and rewards
 // [EXPECTED] Collected fee0 should be 29700
 // [EXPECTED] Collected fee1 should be 0
-// [EXPECTED] Collected emission0 should be gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
+// [EXPECTED] Collected emission0 should be gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000
 // [EXPECTED] Collected emission1 should be 29999
 //
 // [SCENARIO] 7. Verify final balances

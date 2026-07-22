@@ -45,8 +45,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	token0Path = "gno.land/r/gnoland/wugnot"
-	token1Path = "gno.land/r/gnoswap/gns"
+	token0Path = "gno.land/r/gnoland/wugnot.wugnot"
+	token1Path = "gno.land/r/gnoswap/gns.GNS"
 	fee        = uint32(3000)
 )
 

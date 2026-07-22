@@ -67,7 +67,7 @@ func createProject(cur realm) string {
 
 	recipientAddr := adminAddr
 	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -127,12 +127,12 @@ func verifyProjectInfo(cur realm, projectId string) {
 // [SCENARIO] 2. Create project with v1
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 //
 // [SCENARIO] 3. Verify project info with v1
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123
@@ -143,9 +143,9 @@ func verifyProjectInfo(cur realm, projectId string) {
 // [EXPECTED] launchpad upgraded to: gno.land/r/gnoswap/launchpad/v3_valid
 //
 // [SCENARIO] 5. Verify project info with v3 valid
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123
