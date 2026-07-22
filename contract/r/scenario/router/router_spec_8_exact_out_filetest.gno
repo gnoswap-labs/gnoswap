@@ -33,9 +33,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -79,7 +79,7 @@ func main(cur realm) {
 		fooPath, // inputToken
 		barPath, // outputToken
 		"1",     // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000", // strRouteArr
 		"100", // quoteArr
 		"5",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

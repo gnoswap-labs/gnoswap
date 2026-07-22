@@ -17,7 +17,7 @@ import (
 	en "gno.land/r/gnoswap/emission"
 )
 
-const GNS_PATH string = "gno.land/r/gnoswap/gns"
+const GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 
 // CreatePool creates a new concentrated liquidity pool.
 //
@@ -117,14 +117,14 @@ func (i *poolV1) CreatePool(
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 		gns.TransferFrom(cross(rlm), previousRealmAddr, poolAddr, poolCreationFee)
-		i.addPendingProtocolFee(0, rlm, GNS_PATH, poolCreationFee)
+		i.addPendingProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
 			"prevAddr", previousRealmAddr.String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"poolPath", poolPath,
-			"feeTokenPath", GNS_PATH,
+			"feeTokenPath", GNS_TOKEN_KEY,
 			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}

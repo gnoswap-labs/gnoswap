@@ -105,7 +105,7 @@ func TestIsInOrder(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			poolPath := params.poolPath()
-			uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", "Pool path should match")
+			uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000", "Pool path should match")
 			uassert.Equal(t, params.isInOrder(), true, "Tokens order should match")
 		})
 	}

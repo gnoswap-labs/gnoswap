@@ -121,7 +121,7 @@ func createAndDepositLaunchpad(cur realm) string {
 	projectId := launchpad.CreateProject(
 		cross(cur),
 		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		projectAddr,
 		int64(10_000_000),
 		"",
@@ -214,7 +214,7 @@ func verifyVotingWeight(cur realm, proposalId int64, projectTierId string) {
 //
 // [SCENARIO] 3. Create Launchpad Project and Deposit GNS
 // [INFO] Creating launchpad project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [INFO] GNS deposited to launchpad (depositId: %!d(string=1), amount: 5000000000)
 // [INFO] Launchpad xGNS balance: 5000000000
 //

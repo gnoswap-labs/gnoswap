@@ -42,8 +42,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee500 uint32 = 500
 
@@ -113,7 +113,7 @@ func createPoolWithTier(cur realm) {
 	pl.CreatePool(cross(cur), barPath, bazPath, fee500, "79228162514264337593543950337")
 
 	// Set pool to tier 1
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500", 1)
 
 	ufmt.Printf("[EXPECTED] pool created: bar:baz:500 with tier 1\n")
 	testing.SkipHeights(1)

@@ -44,8 +44,8 @@ var (
 	bobAddr  = testutils.TestAddress("bob")
 	bobRealm = testing.NewUserRealm(bobAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 )
 
 func main(cur realm) {

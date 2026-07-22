@@ -39,8 +39,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -96,7 +96,7 @@ func exactOutSmallAmount(cur realm) {
 		bazPath,
 		barPath,
 		"1", // 1 token
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000",
 		"100",
 		"9223372036854775807",
 		time.Now().Add(time.Hour).Unix(),
@@ -136,7 +136,7 @@ func exactOutLargeAmount(cur realm) {
 		bazPath,
 		barPath,
 		"9000000000000", // 9,000,000,000,000 tokens
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000",
 		"100",
 		"9223372036854775807",
 		time.Now().Add(time.Hour).Unix(),

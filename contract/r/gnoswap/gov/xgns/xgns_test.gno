@@ -590,7 +590,7 @@ func getContractAddress(roleName string) address {
 
 func cleanup(cur realm, t *testing.T) {
 	admin = ownable.NewWithAddress(testutils.TestAddress("admin"))
-	token, ledger = grc20.NewToken(0, cur, "XGNS", "xGNS", 6)
+	token, ledger = grc20.NewToken("XGNS", "xGNS", 6, tokenID, cur)
 }
 
 func resetHalt(cur realm, t *testing.T) {

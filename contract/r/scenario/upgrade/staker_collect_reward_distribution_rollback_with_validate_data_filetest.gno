@@ -37,11 +37,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
 )
 
@@ -245,7 +245,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 3. Mint position
 // [INFO] Mint position
@@ -261,7 +261,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 5. Stake position
 // [INFO] Stake position
 // [EXPECTED] Staked position ID: 1
-// [EXPECTED] LP Token ID: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] LP Token ID: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 6. Wait 10 blocks for reward accumulation
 // [INFO] Waiting 10 blocks
@@ -273,7 +273,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 7. Check staking info before upgrade
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -291,7 +291,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 10. Check staking info with v2_mock (invalid logic)
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -302,7 +302,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 12. Check staking info after rollback to v1
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
@@ -315,6 +315,6 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 14. Check staking info after reward collection with v1
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
-// [EXPECTED] Target pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Target pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900

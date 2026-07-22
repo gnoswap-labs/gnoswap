@@ -42,10 +42,10 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee100 uint32 = 100
 
@@ -161,7 +161,7 @@ func createExternalIncentiveWithWUGNOT(cur realm) {
 
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/bar.BAR:100",
 		wugnotPath, // Use WUGNOT directly, not "ugnot"
 		1_000_000_000,
 		1234569600,
@@ -197,7 +197,7 @@ func endIncentiveAndVerifyWUGNOTRefund(cur realm) {
 	ufmt.Printf("[INFO] ending incentive with ID: %s\n", createdIncentiveID)
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/bar.BAR:100",
 		createdIncentiveID,
 		adminUser,
 	)

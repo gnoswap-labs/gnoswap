@@ -92,7 +92,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing CreatePool function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: CreatePool not supported", func() {
-		pool.CreatePool(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, "79228162514264337593543950336")
+		pool.CreatePool(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", 500, "79228162514264337593543950336")
 	})
 	ufmt.Println("[EXPECTED] CreatePool panics correctly")
 
@@ -124,7 +124,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing CollectProtocol function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: CollectProtocol not supported", func() {
-		pool.CollectProtocol(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, adminAddr, "100", "100")
+		pool.CollectProtocol(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", 500, adminAddr, "100", "100")
 	})
 	ufmt.Println("[EXPECTED] CollectProtocol panics correctly")
 }

@@ -33,8 +33,8 @@ var (
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
 	routerRealm     = testing.NewUserRealm(routerAddr)
 
-	wugnotPath        = "gno.land/r/gnoland/wugnot"
-	fooPath           = "gno.land/r/onbloc/foo"
+	wugnotPath        = "gno.land/r/gnoland/wugnot.wugnot"
+	fooPath           = "gno.land/r/onbloc/foo.FOO"
 	fee500     uint32 = 500
 )
 
@@ -199,12 +199,12 @@ func checkBalanceChanges(cur realm, callback func()) {
 // [SCENARIO] 1. Initialize pool with tick 100
 // [INFO] GNOT balance of admin 100000000
 // [INFO] Creating pool at tick 100
-// [INFO] Pool path gno.land/r/gnoland/wugnot:gno.land/r/onbloc/foo:500
+// [INFO] Pool path gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 2. Mint initial position (-12000~0)
 // [INFO] Minting initial position with native coin
-// [INFO] Input token0 path: gno.land/r/gnoland/wugnot
-// [INFO] Input token1 path: gno.land/r/onbloc/foo
+// [INFO] Input token0 path: gno.land/r/gnoland/wugnot.wugnot
+// [INFO] Input token1 path: gno.land/r/onbloc/foo.FOO
 // [INFO] Min tick: -12000
 // [INFO] Max tick: 0
 // [INFO] Amount0 desired: 0

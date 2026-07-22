@@ -36,8 +36,8 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	quxPath    = "gno.land/r/onbloc/qux"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	quxPath    = "gno.land/r/onbloc/qux.QUX"
 
 	maxInt64 int64 = 9223372036854775807
 )
@@ -48,7 +48,7 @@ func main(cur realm) {
 	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm("gno.land/r/gnoland/wugnot").Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	// Deposit wugnot for pool creation
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
@@ -94,7 +94,7 @@ func main(cur realm) {
 		"ugnot", // inputToken (native coin)
 		quxPath, // outputToken
 		"3",     // amountSpecified
-		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/qux.QUX:3000", // strRouteArr
 		"100",   // quoteArr
 		"12345", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

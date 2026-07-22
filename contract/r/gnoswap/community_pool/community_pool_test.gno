@@ -22,7 +22,7 @@ var (
 
 	communityPoolAddr = access.MustGetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	gnsPath  = "gno.land/r/gnoswap/gns"
+	gnsPath  = "gno.land/r/gnoswap/gns.GNS"
 	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance")
 
 	dummyCaller   = testing.NewUserRealm(testutils.TestAddress("dummyCaller"))

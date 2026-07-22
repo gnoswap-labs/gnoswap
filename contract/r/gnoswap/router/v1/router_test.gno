@@ -178,10 +178,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 
 	initRouterTest(cur, t)
 
-	const barTokenPath = "gno.land/r/onbloc/bar"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
+	const barTokenPath = "gno.land/r/onbloc/bar.BAR"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns.GNS"
 	const maxTimeout int64 = 9999999999
-	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
+	const barGnsPoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -377,10 +377,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 
 	initRouterTest(cur, t)
 
-	const barTokenPath = "gno.land/r/onbloc/bar"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
+	const barTokenPath = "gno.land/r/onbloc/bar.BAR"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns.GNS"
 	const maxTimeout int64 = 9999999999
-	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
+	const barGnsPoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -574,10 +574,10 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 
 	initRouterTest(cur, t)
 
-	const barTokenPath = "gno.land/r/onbloc/bar"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
+	const barTokenPath = "gno.land/r/onbloc/bar.BAR"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns.GNS"
 	const maxTimeout int64 = 9999999999
-	const gnsBarPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:10000"
+	const gnsBarPoolPath = "gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:10000"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -850,10 +850,10 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 	}{
 		{
 			name:              "ExactIn - 2 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/onbloc/bar.BAR",
+			outputToken:       "gno.land/r/onbloc/qux.QUX",
 			swapType:          ExactIn,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000",
 			numHops:           2,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "1000",
@@ -861,10 +861,10 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 		},
 		{
 			name:              "ExactOut - 2 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/onbloc/bar.BAR",
+			outputToken:       "gno.land/r/onbloc/qux.QUX",
 			swapType:          ExactOut,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000",
 			numHops:           2,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "374",
@@ -872,10 +872,10 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 		},
 		{
 			name:              "ExactIn - 3 hops",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
+			inputToken:        "gno.land/r/onbloc/bar.BAR",
+			outputToken:       "gno.land/r/onbloc/qux.QUX",
 			swapType:          ExactIn,
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/foo.FOO:10000",
 			numHops:           3,
 			amountSpecified:   "1000",
 			expectedAmountIn:  "1000",
@@ -883,10 +883,10 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 		},
 		{
 			name:            "Invalid SwapType",
-			inputToken:      "gno.land/r/onbloc/bar",
-			outputToken:     "gno.land/r/onbloc/qux",
+			inputToken:      "gno.land/r/onbloc/bar.BAR",
+			outputToken:     "gno.land/r/onbloc/qux.QUX",
 			swapType:        SwapType(99),
-			route:           "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000",
+			route:           "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000",
 			numHops:         2,
 			amountSpecified: "1000",
 			shouldPanic:     true,
@@ -948,7 +948,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 	}{
 		{
 			name:              "Single hop route - ExactIn",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -957,7 +957,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (2 hops) - ExactIn - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -966,7 +966,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (3 hops) - ExactIn - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/foo.FOO:10000",
 			toSwap:            "1000",
 			swapType:          ExactIn,
 			expectedAmountIn:  "1000",
@@ -975,7 +975,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 		},
 		{
 			name:              "Multi hop route (2 hops) - ExactOut - triggers default case",
-			route:             "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:10000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:10000",
+			route:             "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:10000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:10000",
 			toSwap:            "1000",
 			swapType:          ExactOut,
 			expectedAmountIn:  "375",

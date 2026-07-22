@@ -47,10 +47,10 @@ var (
 	emissionAddr, _      = access.GetAddress(prabc.ROLE_EMISSION.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -58,9 +58,9 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath1 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	poolPath2 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100"
-	poolPath3 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath1 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
+	poolPath2 = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:100"
+	poolPath3 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 )
 
 func main(cur realm) {

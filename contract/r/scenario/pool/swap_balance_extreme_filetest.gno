@@ -42,8 +42,8 @@ var (
 )
 
 var (
-	oblPath  = "gno.land/r/onbloc/obl"
-	usdcPath = "gno.land/r/gnoswap/test_token/test_usdc"
+	oblPath  = "gno.land/r/onbloc/obl.OBL"
+	usdcPath = "gno.land/r/gnoswap/test_token/test_usdc.USDC"
 )
 
 const (

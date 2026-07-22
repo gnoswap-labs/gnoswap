@@ -148,7 +148,7 @@ func createProjectV1(cur realm) string {
 	projectId := launchpad.CreateProject(
 		cross(cur),
 		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		projectAddr,
 		rewardAmount,
 		"",
@@ -224,7 +224,7 @@ func createProjectV2Valid(cur realm) string {
 	projectId := launchpad.CreateProject(
 		cross(cur),
 		"Second OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		projectAddr,
 		rewardAmount,
 		"",
@@ -323,11 +323,11 @@ func printProjectSummary(cur realm, projectId string) {
 // [EXPECTED] launchpad implementation: gno.land/r/gnoswap/launchpad/v1
 //
 // [SCENARIO] 2. Create project + first deposit with v1
-// [EXPECTED] project created: gno.land/r/onbloc/obl:123
+// [EXPECTED] project created: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] v1 deposit created: 1
 //
 // [SCENARIO] 3. Read v1-created data via getters
-// [EXPECTED] project=gno.land/r/onbloc/obl:123 name=Test OBL Project deposit=10000000
+// [EXPECTED] project=gno.land/r/onbloc/obl.OBL:123 name=Test OBL Project deposit=10000000
 // [EXPECTED] tier30 totalDeposit=1000000 depositCount=1
 // [EXPECTED] deposit id=1 amount=1000000 tier=30
 //
@@ -336,13 +336,13 @@ func printProjectSummary(cur realm, projectId string) {
 //
 // [SCENARIO] 5. DepositGns through v2_valid (taint-prone RMW)
 // [EXPECTED] v2_valid deposit created: 2
-// [EXPECTED] project=gno.land/r/onbloc/obl:123 name=Test OBL Project deposit=10000000
+// [EXPECTED] project=gno.land/r/onbloc/obl.OBL:123 name=Test OBL Project deposit=10000000
 // [EXPECTED] tier30 totalDeposit=3000000 depositCount=2
 // [EXPECTED] deposit id=2 amount=2000000 tier=30
 //
 // [SCENARIO] 6. CreateProject through v2_valid (projects BPTree insert)
-// [EXPECTED] v2_valid project created: gno.land/r/onbloc/obl:121083
-// [EXPECTED] project=gno.land/r/onbloc/obl:121083 name=Second OBL Project deposit=20000000
+// [EXPECTED] v2_valid project created: gno.land/r/onbloc/obl.OBL:121083
+// [EXPECTED] project=gno.land/r/onbloc/obl.OBL:121083 name=Second OBL Project deposit=20000000
 // [EXPECTED] tier distribute 30=4000000 90=6000000 180=10000000
 //
 // [SCENARIO] 7. CollectRewardByDepositId on v1 deposit through v2_valid
@@ -356,5 +356,5 @@ func printProjectSummary(cur realm, projectId string) {
 // [EXPECTED] tier30 after withdraw totalDeposit=3000000 depositCount=1
 //
 // [SCENARIO] 10. TransferLeftFromProjectByAdmin after project ends
-// [EXPECTED] transferred left reward (project gno.land/r/onbloc/obl:123): 7000002
+// [EXPECTED] transferred left reward (project gno.land/r/onbloc/obl.OBL:123): 7000002
 //

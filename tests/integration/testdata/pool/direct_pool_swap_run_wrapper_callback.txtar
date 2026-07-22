@@ -60,7 +60,7 @@ gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-pass
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot.wugnot" -args "gno.land/r/gnoswap/gns.GNS" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 'OK!'
 
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -75,7 +75,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexa
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns.GNS -args "gno.land/r/gnoland/wugnot.wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "50000000"
 
@@ -157,8 +157,8 @@ import (
 )
 
 func main(cur realm) {
-	token0Path := "gno.land/r/gnoland/wugnot"
-	token1Path := "gno.land/r/gnoswap/gns"
+	token0Path := "gno.land/r/gnoland/wugnot.wugnot"
+	token1Path := "gno.land/r/gnoswap/gns.GNS"
 	userAddr := unsafe.PreviousRealm().Address()
 
 	callbackFn := swap_wrapper.PrepareSwapCallback(cross(cur), token0Path, token1Path, userAddr)
@@ -188,8 +188,8 @@ import (
 )
 
 func main(cur realm) {
-	token0Path := "gno.land/r/gnoland/wugnot"
-	token1Path := "gno.land/r/gnoswap/gns"
+	token0Path := "gno.land/r/gnoland/wugnot.wugnot"
+	token1Path := "gno.land/r/gnoswap/gns.GNS"
 	userAddr := unsafe.PreviousRealm().Address()
 
 	pool.Swap(

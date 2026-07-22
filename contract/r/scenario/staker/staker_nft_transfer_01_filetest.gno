@@ -53,8 +53,8 @@ var (
 	dummyAddr  = testutils.TestAddress("dummy")
 	dummyRealm = testing.NewUserRealm(dummyAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee500 uint32 = 500
 
@@ -106,7 +106,7 @@ func createPool(cur realm) {
 	pl.CreatePool(cross(cur), barPath, quxPath, 500, gnsmath.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
 
 	println("[INFO] set pool to tier 1")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500", 1)
 
 	testing.SkipHeights(1)
 }

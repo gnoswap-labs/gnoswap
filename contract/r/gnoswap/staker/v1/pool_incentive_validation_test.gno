@@ -27,7 +27,7 @@ func TestStakeToken_WithEndedIncentives(cur realm, t *testing.T) {
 	endedIncentive := sr.NewExternalIncentive(
 		"ended_incentive",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1000,
 		currentTime-7200, // Started 2 hours ago
 		currentTime-3600, // Ended 1 hour ago
@@ -82,7 +82,7 @@ func TestExternalIncentiveResolver_IsActive(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"future_incentive",
 		"test_pool",
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1_000_000,
 		startTime,
 		endTime,
@@ -147,7 +147,7 @@ func TestExternalIncentiveResolver_IsEnded(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"test_incentive",
 		"test_pool",
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1_000_000,
 		startTime,
 		endTime,
@@ -244,7 +244,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				endedIncentive := sr.NewExternalIncentive(
 					"ended_only",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-7200, // Started 2 hours ago
 					currentTime-3600, // Ended 1 hour ago
@@ -271,7 +271,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				activeIncentive := sr.NewExternalIncentive(
 					"active_only",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-3600, // Started 1 hour ago
 					currentTime+3600, // Ends in 1 hour
@@ -305,7 +305,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				endedIncentive := sr.NewExternalIncentive(
 					"a_ended",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-7200, // Started 2 hours ago
 					currentTime-3600, // Ended 1 hour ago
@@ -320,7 +320,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				activeIncentive := sr.NewExternalIncentive(
 					"b_active",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-3600, // Started 1 hour ago
 					currentTime+3600, // Ends in 1 hour
@@ -349,7 +349,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 					ended := sr.NewExternalIncentive(
 						"a_ended_"+string(rune('0'+i)),
 						pool.PoolPath(),
-						GNS_PATH,
+						GNS_TOKEN_KEY,
 						1000,
 						currentTime-7200,
 						currentTime-3600,
@@ -365,7 +365,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				active := sr.NewExternalIncentive(
 					"z_active",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-3600,
 					currentTime+3600,
@@ -391,7 +391,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				futureIncentive := sr.NewExternalIncentive(
 					"future_only",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime+3600, // Starts in 1 hour
 					currentTime+7200, // Ends in 2 hours
@@ -420,7 +420,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				ended := sr.NewExternalIncentive(
 					"a_ended",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-7200,
 					currentTime-3600,
@@ -435,7 +435,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				future := sr.NewExternalIncentive(
 					"b_future",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime+3600,
 					currentTime+7200,
@@ -450,7 +450,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 				active := sr.NewExternalIncentive(
 					"c_active",
 					pool.PoolPath(),
-					GNS_PATH,
+					GNS_TOKEN_KEY,
 					1000,
 					currentTime-3600,
 					currentTime+3600,

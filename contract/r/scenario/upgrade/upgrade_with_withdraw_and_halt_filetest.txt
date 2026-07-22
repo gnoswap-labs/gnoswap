@@ -93,8 +93,8 @@ var (
 	devOpsV2Addr = testutils.TestAddress("devops2")
 
 	// paths
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 )
 
 func main() {
@@ -327,7 +327,7 @@ func swap() {
 		barPath,
 		fooPath,
 		"10000000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -354,7 +354,7 @@ func createLaunchpadProject() {
 	projectID := launchpad.CreateProject(
 		cross,
 		"Test Project",
-		"gno.land/r/onbloc/bar",
+		"gno.land/r/onbloc/bar.BAR",
 		aliceAddr,
 		10000000,
 		"",
@@ -371,7 +371,7 @@ func createLaunchpadProject() {
 func depositToLaunchpadProject() {
 	testing.SetRealm(aliceRealm)
 
-	projectPoolID := "gno.land/r/onbloc/bar:124:30"
+	projectPoolID := "gno.land/r/onbloc/bar.BAR:124:30"
 	gns.Approve(cross, launchpadAddr, 10000000)
 	depositID := launchpad.DepositGns(cross, projectPoolID, 10000000, "")
 
@@ -578,8 +578,8 @@ func collectLaunchpadDeposit() {
 //
 // [SCENARIO] 3. Mint position
 // [INFO] Creating pool
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
-// [INFO]  gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 pool tier set: Tier1
+// [INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
+// [INFO]  gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 pool tier set: Tier1
 // [INFO] Minting position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Liquidity should be 1066918731
@@ -595,12 +595,12 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] AmountOut should be -9862880
 //
 // [SCENARIO] 6. Create launchpad project
-// [EXPECTED] Project created: gno.land/r/onbloc/bar:124
+// [EXPECTED] Project created: gno.land/r/onbloc/bar.BAR:124
 //
 // [SCENARIO] 6.1. Skip 720 heights to start launchpad project
 //
 // [SCENARIO] 7. Deposit to launchpad project
-// [EXPECTED] Deposited to project pool: gno.land/r/onbloc/bar:124:30, Deposit ID: 1
+// [EXPECTED] Deposited to project pool: gno.land/r/onbloc/bar.BAR:124:30, Deposit ID: 1
 //
 // [SCENARIO] 6. Upgrade role addresses
 // [EXPECTED] community_pool should be changed g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 to g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w

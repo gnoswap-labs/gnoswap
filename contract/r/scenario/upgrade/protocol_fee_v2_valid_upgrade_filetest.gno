@@ -67,7 +67,7 @@ const (
 	protocolFeeV1Path      = "gno.land/r/gnoswap/protocol_fee/v1"
 	protocolFeeV2ValidPath = "gno.land/r/gnoswap/protocol_fee/v2_valid"
 
-	barPath = "gno.land/r/onbloc/bar"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 func main(cur realm) {

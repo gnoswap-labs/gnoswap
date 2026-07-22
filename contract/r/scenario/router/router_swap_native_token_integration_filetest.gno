@@ -46,11 +46,11 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	usdcPath   = "gno.land/r/gnoswap/test_token/test_usdc"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	usdcPath   = "gno.land/r/gnoswap/test_token/test_usdc.USDC"
 
-	gnotPath = "gno.land/r/gnoland/wugnot"
+	gnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee500 uint32 = 500
 
@@ -167,7 +167,7 @@ func testExactInGnotToGns(cur realm) {
 		gnotPath,  // input token (GNOT)
 		gnsPath,   // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // route
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -219,7 +219,7 @@ func testExactOutGnsToGnot(cur realm) {
 		gnsPath,   // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
@@ -269,7 +269,7 @@ func testMultiHopGnotToUsdc(cur realm) {
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/test_usdc:500", // route
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoswap/test_token/test_usdc.USDC:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -306,7 +306,7 @@ func testMultiHopUsdcToGnot(cur realm) {
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/test_token/test_usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/test_token/test_usdc.USDC:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),

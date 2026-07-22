@@ -74,8 +74,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
@@ -88,7 +88,7 @@ var (
 	BAR_REWARD_AMOUNT  int64 = 1_000_000_000     // ~128 bar/sec (small)
 	QUX_REWARD_AMOUNT  int64 = 10_000_000_000    // ~1,286 qux/sec (10x of bar)
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100"
 )
 
 func main(cur realm) {

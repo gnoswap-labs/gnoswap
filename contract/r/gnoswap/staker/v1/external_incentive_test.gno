@@ -35,7 +35,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 	endTime := startTime + (86400 * 7) // 7 days after start
 
 	// Define allowed tokens and test scenarios
-	allowedTokens := []string{GNS_PATH, WUGNOT_PATH, "token0_path", "token1_path"}
+	allowedTokens := []string{GNS_TOKEN_KEY, WUGNOT_TOKEN_KEY, "token0_path", "token1_path"}
 	accounts := []address{account1, account2}
 	amounts := []int64{1000, 2000, 1500, 2500, 3000, 3500}
 
@@ -190,7 +190,7 @@ func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 			incentiveId := "test-incentive-1"
 			incentive := sr.NewExternalIncentive(
 				incentiveId,
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 				barPath,
 				tt.depositRewardAmount,
 				tt.startTimestamp,
@@ -261,7 +261,7 @@ func TestEndExternalIncentive(cur realm, t *testing.T) {
 		},
 	}
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	rewardAmount := int64(10_000_000_000)
 	depositGnsAmount := int64(100_000_000)
 	incentiveId := "test-incentive-1"
@@ -384,7 +384,7 @@ func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 			initStakerTest(cur, t)
 			instance := getMockInstance()
 
-			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+			poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 			rewardAmount := int64(10_000_000_000)
 
 			// Create pool
@@ -396,7 +396,7 @@ func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				incentiveId,
 				poolPath,
-				WUGNOT_PATH,
+				WUGNOT_TOKEN_KEY,
 				rewardAmount,
 				startTime,
 				endTime,
@@ -470,7 +470,7 @@ func TestEndExternalIncentiveRefundAddressValidation(cur realm, t *testing.T) {
 // TestDoubleClaimPrevention tests that the "last collect time"
 // mechanism prevents double claiming even with finished incentives.
 func TestDoubleClaimPrevention(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker1 := testutils.TestAddress("staker1")
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10
@@ -778,7 +778,7 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	creator := testutils.TestAddress("creator")
 	currentTime := time.Now().Unix()
 
@@ -800,7 +800,7 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			int64((i+1)*1000000),
 			startTime,
 			endTime,
@@ -874,7 +874,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	creator := testutils.TestAddress("creator")
 	baseTime := time.Now().Unix()
 
@@ -899,7 +899,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			1000000,
 			ts+86400,
 			ts+86400*7,
@@ -1005,9 +1005,9 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	pool2Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
-	pool3Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"
+	pool1Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	pool2Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
+	pool3Path := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:3000"
 	creator := testutils.TestAddress("creator")
 	currentTime := time.Now().Unix()
 
@@ -1034,7 +1034,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			int64((i+1)*1000000),
 			startTime,
 			endTime,
@@ -1136,7 +1136,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 // TestLazySync_DuplicatePrevention tests that the same incentive
 // is not added multiple times to deposit even if lazy sync runs multiple times.
 func TestLazySync_DuplicatePrevention(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1185,7 +1185,7 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	creator := testutils.TestAddress("creator")
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1196,7 +1196,7 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 	poolResolver := NewPoolResolver(pool)
 
 	// Create 3 concurrent incentives with different tokens
-	tokens := []string{WUGNOT_PATH, GNS_PATH, "gno.land/r/onbloc/bar"}
+	tokens := []string{WUGNOT_TOKEN_KEY, GNS_TOKEN_KEY, "gno.land/r/onbloc/bar.BAR"}
 	incentiveIds := make([]string, 3)
 
 	for i := 0; i < 3; i++ {
@@ -1267,8 +1267,8 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 // TestLazySync_PoolFilteringPreventsWrongPool tests that incentives
 // from different pools are not added to deposit during lazy sync.
 func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
-	pool1Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	pool2Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
+	pool1Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	pool2Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
 	creator := testutils.TestAddress("creator")
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
@@ -1289,7 +1289,7 @@ func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
 	incentive1 := sr.NewExternalIncentive(
 		"pool1-incentive",
 		pool1Path, // Pool1
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		1000000,
 		baseTime,
 		baseTime+1000,
@@ -1302,7 +1302,7 @@ func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		"pool2-incentive",
 		pool2Path, // Pool2 (different)
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		1000000,
 		baseTime,
 		baseTime+1000,
@@ -1361,7 +1361,7 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1456,7 +1456,7 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(cur realm, t 
 	incentive := sr.NewExternalIncentive(
 		"test_incentive_tracking",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		rewardAmount,
 		startTime,
 		endTime,
@@ -1510,7 +1510,7 @@ func TestMultipleCollectionsBeforeUnstake(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1584,7 +1584,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(cur realm, t *test
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1650,7 +1650,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1717,7 +1717,7 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			name: "new time new pool - basic case",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "test-incentive-1",
 					creationTime: 1000,
 				},
@@ -1725,7 +1725,7 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 1000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"test-incentive-1"},
 				},
 			},
@@ -1734,17 +1734,17 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			name: "same time same pool - multiple incentives",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-a",
 					creationTime: 2000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-b",
 					creationTime: 2000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-c",
 					creationTime: 2000,
 				},
@@ -1752,7 +1752,7 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 2000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"incentive-a", "incentive-b", "incentive-c"},
 				},
 			},
@@ -1761,12 +1761,12 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			name: "same time different pools - pool isolation",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "pool1-incentive",
 					creationTime: 3000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500",
 					incentiveId:  "pool2-incentive",
 					creationTime: 3000,
 				},
@@ -1774,12 +1774,12 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"pool1-incentive"},
 				},
 				{
 					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500",
 					incentiveIds: []string{"pool2-incentive"},
 				},
 			},
@@ -1788,17 +1788,17 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			name: "different times same pool - time isolation",
 			inputs: []incentiveInput{
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-0",
 					creationTime: 4000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-1",
 					creationTime: 5000,
 				},
 				{
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveId:  "incentive-2",
 					creationTime: 6000,
 				},
@@ -1806,17 +1806,17 @@ func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
 			expected: []expectedResult{
 				{
 					creationTime: 4000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"incentive-0"},
 				},
 				{
 					creationTime: 5000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"incentive-1"},
 				},
 				{
 					creationTime: 6000,
-					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 					incentiveIds: []string{"incentive-2"},
 				},
 			},
@@ -2412,7 +2412,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 		},
 		{
 			name:             "incentive not found",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			incentiveId:      "nonexistent-id",
 			caller:           creator,
 			refundAddress:    creator,
@@ -2425,7 +2425,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 		},
 		{
 			name:             "incentive not ended yet (refunded=false)",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			incentiveId:      "test-id",
 			caller:           creator,
 			refundAddress:    creator,
@@ -2438,7 +2438,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 		},
 		{
 			name:             "caller is not creator",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:         "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			incentiveId:      "test-id",
 			caller:           stranger,
 			refundAddress:    stranger,
@@ -2451,7 +2451,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 		},
 		{
 			name:           "zero accumulated penalty returns 0",
-			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:       "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			incentiveId:    "test-id",
 			caller:         creator,
 			refundAddress:  creator,
@@ -2464,7 +2464,7 @@ func TestCollectExternalIncentivePenalty(cur realm, t *testing.T) {
 		},
 		{
 			name:           "successfully collect accumulated penalty",
-			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			poolPath:       "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			incentiveId:    "test-id",
 			caller:         creator,
 			refundAddress:  creator,
@@ -2624,7 +2624,7 @@ func TestCollectExternalIncentivePenaltyAccounting(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 
 			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, tt.totalRewardAmount,
+				"test-id", poolPath, WUGNOT_TOKEN_KEY, tt.totalRewardAmount,
 				currentTime-86400*30, currentTime-86400, creator, 100_000_000,
 				runtime.ChainHeight(), currentTime-86400*30-100,
 			)
@@ -2650,7 +2650,7 @@ func TestCollectExternalIncentivePenaltyAccounting(cur realm, t *testing.T) {
 func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
 	refundAddress := testutils.TestAddress("refundee")
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	incentiveId := "test-id"
 
 	setupPenaltyFixture := func(cur realm, t *testing.T) {
@@ -2767,7 +2767,7 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 			s.getPools().set(poolPath, pool)
 
 			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, totalRewardAmount,
+				"test-id", poolPath, WUGNOT_TOKEN_KEY, totalRewardAmount,
 				startTime, endTime, creator, 100_000_000,
 				runtime.ChainHeight(), startTime-100,
 			)

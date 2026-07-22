@@ -115,19 +115,19 @@ func TestUtils_buildConditionEventAttrs(cur realm, t *testing.T) {
 		},
 		{
 			name:             "single condition is encoded as one attr pair",
-			conditionTokens:  "gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/onbloc/bar.BAR",
 			conditionAmounts: "1000000",
 			expected: []string{
-				"conditionsTokens[0]", "gno.land/r/onbloc/bar*PAD*1000000",
+				"conditionsTokens[0]", "gno.land/r/onbloc/bar.BAR*PAD*1000000",
 			},
 		},
 		{
 			name:             "multiple conditions preserve index order",
-			conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionTokens:  "gno.land/r/onbloc/foo.FOO*PAD*gno.land/r/onbloc/bar.BAR",
 			conditionAmounts: "1000*PAD*2000",
 			expected: []string{
-				"conditionsTokens[0]", "gno.land/r/onbloc/foo*PAD*1000",
-				"conditionsTokens[1]", "gno.land/r/onbloc/bar*PAD*2000",
+				"conditionsTokens[0]", "gno.land/r/onbloc/foo.FOO*PAD*1000",
+				"conditionsTokens[1]", "gno.land/r/onbloc/bar.BAR*PAD*2000",
 			},
 		},
 	}

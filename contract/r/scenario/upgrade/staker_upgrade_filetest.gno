@@ -100,7 +100,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing SetPoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: SetPoolTier not supported", func() {
-		staker.SetPoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 1)
+		staker.SetPoolTier(cross(cur), "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", 1)
 	})
 	ufmt.Println("[EXPECTED] SetPoolTier panics correctly")
 
@@ -108,7 +108,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing AddToken function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: AddToken not supported", func() {
-		staker.AddToken(cross(cur), "gno.land/r/onbloc/foo")
+		staker.AddToken(cross(cur), "gno.land/r/onbloc/foo.FOO")
 	})
 	ufmt.Println("[EXPECTED] AddToken panics correctly")
 
@@ -132,7 +132,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ChangePoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ChangePoolTier not supported", func() {
-		staker.ChangePoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", 2)
+		staker.ChangePoolTier(cross(cur), "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", 2)
 	})
 	ufmt.Println("[EXPECTED] ChangePoolTier panics correctly")
 
@@ -140,7 +140,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing RemovePoolTier function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: RemovePoolTier not supported", func() {
-		staker.RemovePoolTier(cross(cur), "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500")
+		staker.RemovePoolTier(cross(cur), "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500")
 	})
 	ufmt.Println("[EXPECTED] RemovePoolTier panics correctly")
 
@@ -148,7 +148,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing RemoveToken function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: RemoveToken not supported", func() {
-		staker.RemoveToken(cross(cur), "gno.land/r/onbloc/foo")
+		staker.RemoveToken(cross(cur), "gno.land/r/onbloc/foo.FOO")
 	})
 	ufmt.Println("[EXPECTED] RemoveToken panics correctly")
 

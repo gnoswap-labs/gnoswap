@@ -33,8 +33,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -51,7 +51,7 @@ func main(cur realm) {
 	initializeSetup(cur)
 	println()
 
-	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000)")
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000)")
 	createPool(cur)
 	mintPosition(cur)
 	println()
@@ -122,7 +122,7 @@ func swapRouteWithBalanceCheck(cur realm) {
 		fooPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000", // strRouteArr
 		"100",                 // quoteArr
 		"9223372036854775807", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -151,7 +151,7 @@ func swapRouteWithBalanceCheck(cur realm) {
 // [INFO] Starting scenario: Single pool ExactIn swap test
 // [INFO] Approving pool creation fee
 //
-// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000)
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000)
 // [INFO] Creating bar-foo pool (fee: 3000)
 // [INFO] Approving tokens for pool operations
 // [INFO] Creating bar-foo pool (fee: 3000)

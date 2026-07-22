@@ -46,9 +46,9 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 )
 
 var (
@@ -62,7 +62,7 @@ var (
 	MIN_PRICE string = "4295128740"
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 
-	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot.wugnot"
 )
 
 func main(cur realm) {
@@ -217,7 +217,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 
 // Output:
 // [SCENARIO] 1. Mint LP and Get GNFT
-// [INFO] token0: gno.land/r/gnoland/wugnot token1: gno.land/r/onbloc/foo
+// [INFO] token0: gno.land/r/gnoland/wugnot.wugnot token1: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] amount0: 295802 expected: should be 295802
 // [EXPECTED] amount1: 804032 expected: should be 804032
 //

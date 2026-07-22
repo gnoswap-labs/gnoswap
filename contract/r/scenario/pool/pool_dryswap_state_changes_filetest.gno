@@ -43,8 +43,8 @@ var (
 
 // Token paths
 var (
-	fooPath  = "gno.land/r/onbloc/foo"
-	barPath  = "gno.land/r/onbloc/bar"
+	fooPath  = "gno.land/r/onbloc/foo.FOO"
+	barPath  = "gno.land/r/onbloc/bar.BAR"
 	poolPath = fmt.Sprintf("%s:%s:%d", barPath, fooPath, FeeTier500)
 )
 
@@ -272,8 +272,8 @@ func printChanges(cur realm, poolPath string, fn func()) {
 // Output:
 // [SCENARIO] 1. Create pool and mint position
 // [INFO] Creating pool
-// [EXPECTED] Token0: gno.land/r/onbloc/bar
-// [EXPECTED] Token1: gno.land/r/onbloc/foo
+// [EXPECTED] Token0: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] Token1: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] Fee tier: 500
 // [EXPECTED] Initial liquidity amount: 100000000000
 // [EXPECTED] Tick range: -10000 to 10000

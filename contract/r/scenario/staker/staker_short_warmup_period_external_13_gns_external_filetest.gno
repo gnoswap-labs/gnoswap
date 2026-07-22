@@ -45,9 +45,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -174,7 +174,7 @@ func createExternalIncentiveBar(cur realm) {
 	println("[INFO] create external incentive BAR for bar:qux:100")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		2_000_000_000,
 		1234569600,
@@ -194,8 +194,8 @@ func createExternalIncentiveGns(cur realm) {
 	println("[INFO] create external incentive GNS for bar:qux:100")
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		"gno.land/r/gnoswap/gns",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
+		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,

@@ -1481,7 +1481,7 @@ func events(
 			tick:     moveTicks[i],
 		})
 	}
-	if poolPath == "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" {
+	if poolPath == "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000" {
 		return result
 	}
 	for i := 0; i < 4; i++ {
@@ -1496,7 +1496,7 @@ func events(
 func TestCanonicalSimulation_0(cur realm, t *testing.T) {
 	t.Skip("PASS: need to run manually")
 	wugnotgns := events(
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
 		1,
 		200,
 		[]tokenStake{
@@ -1532,7 +1532,7 @@ func TestCanonicalSimulation_0(cur realm, t *testing.T) {
 	)
 
 	quuxgns := events(
-		"gno.land/r/demo/quux:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/demo/quux:gno.land/r/gnoswap/gns.GNS:3000",
 		0,
 		200,
 		[]tokenStake{

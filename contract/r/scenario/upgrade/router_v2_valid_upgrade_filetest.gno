@@ -63,12 +63,12 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 
 	// single-pool route string (input:output:fee) reused by all swap variants
-	fooBar500Route = "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	fooBar500Route = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 )
 
 const (
@@ -169,7 +169,7 @@ func swapV1(cur realm) {
 	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
 	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1", int64(9999999999), "")
+	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1", int64(9999999999), "")
 	ufmt.Printf("[EXPECTED] v1 swap in=%s out=%s\n", in, out)
 }
 
@@ -244,7 +244,7 @@ func setSwapFeeV2Valid(cur realm) {
 // [EXPECTED] Router implementation: gno.land/r/gnoswap/router/v1
 //
 // [SCENARIO] 2. Create v1 data: pool + position
-// [EXPECTED] Created pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
 // [EXPECTED] v1 minted wide position id=2 liquidity=771692266
 //

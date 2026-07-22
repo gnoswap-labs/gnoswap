@@ -45,8 +45,8 @@ var (
 	devOpsAddr, _    = access.GetAddress(prabc.ROLE_DEVOPS.String())
 	communityAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee3000 uint32 = 3000
 

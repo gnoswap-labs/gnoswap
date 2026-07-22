@@ -35,11 +35,11 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
-	wrappedWugnot = "gno.land/r/gnoland/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot.wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -120,7 +120,7 @@ func testDrySwapRouteQuxGnotExactIn(cur realm, t *testing.T) {
 			wrappedWugnot, // outputToken
 			"1000",        // amountSpecified
 			"EXACT_IN",    // swapType
-			"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"gno.land/r/onbloc/qux.QUX:gno.land/r/gnoland/wugnot.wugnot:500", // strRouteArr
 			"100", // quoteArr
 			"1",
 		)
@@ -140,7 +140,7 @@ func testDrySwapRouteQuxGnotExactOut(cur realm, t *testing.T) {
 			wrappedWugnot, // outputToken
 			"1000",        // amountSpecified
 			"EXACT_OUT",   // swapType
-			"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"gno.land/r/onbloc/qux.QUX:gno.land/r/gnoland/wugnot.wugnot:500", // strRouteArr
 			"100", // quoteArr
 			"100000",
 		)

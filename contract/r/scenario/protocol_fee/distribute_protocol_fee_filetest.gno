@@ -78,10 +78,10 @@ func recordProtocolFees(cur realm) {
 	qux.Approve(cross(cur), protocolFeeAddr, 1000)
 
 	println("[INFO] Recording bar protocol fee")
-	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", 1000)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", 1000)
 
 	println("[INFO] Recording qux protocol fee")
-	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", 1000)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", 1000)
 }
 
 func distributeProtocolFees(cur realm) {

@@ -43,7 +43,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if internal {
-		tokenPath = GNS_PATH
+		tokenPath = GNS_TOKEN_KEY
 	}
 
 	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)

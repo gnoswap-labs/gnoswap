@@ -333,8 +333,8 @@ func DefaultWarmupTemplate() []Warmup {
 }
 
 const (
-	GNS_PATH    string = "gno.land/r/gnoswap/gns"
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+	GNS_PATH    string = "gno.land/r/gnoswap/gns.GNS"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot.wugnot"
 )
 
 func DefaultAllowedTokens() []string {

@@ -45,8 +45,8 @@ var (
 	bobAddr   = testutils.TestAddress("bob")
 	bobRealm  = testing.NewUserRealm(bobAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func fundAndApproveProtocolFeeCallerBar(cur realm, amount int64) {
@@ -206,11 +206,11 @@ func protocolFeeRewardAdmin(cur realm) {
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for Bob
-// [INFO] claimable reward (bob): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:833 gno.land/r/onbloc/qux:2083]
+// [INFO] claimable reward (bob): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:833 gno.land/r/onbloc/qux.QUX:2083]
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 7. Check and collect protocol fee reward for Admin
-// [INFO] claimable reward (adminAddr): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1166 gno.land/r/onbloc/qux:2916]
+// [INFO] claimable reward (adminAddr): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:1166 gno.land/r/onbloc/qux.QUX:2916]
 // [INFO] collected protocol fee reward for adminAddr
 // [EXPECTED] collected bar amount: 1166
 // [EXPECTED] collected qux amount: 2916
