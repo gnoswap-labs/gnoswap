@@ -60,3 +60,7 @@ func (lp *launchpadV1) assertHasProject(caller address) {
 		))
 	}
 }
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
+}

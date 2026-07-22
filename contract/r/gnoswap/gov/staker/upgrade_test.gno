@@ -243,6 +243,68 @@ func TestCollectReward(cur realm, t *testing.T) {
 	}
 }
 
+// TestCollectEmissionReward tests the CollectEmissionReward proxy function
+func TestCollectEmissionReward(cur realm, t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "collect emission reward is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
+			CollectEmissionReward(cross(cur))
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectEmissionReward") != 1 {
+				t.Error("CollectEmissionReward was not called on the implementation")
+			}
+		})
+	}
+}
+
+// TestCollectProtocolFeeReward tests the CollectProtocolFeeReward proxy function
+func TestCollectProtocolFeeReward(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		tokenPath string
+	}{
+		{
+			name:      "collect protocol fee reward is success",
+			tokenPath: "gno.land/r/gnoswap/gns",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
+			CollectProtocolFeeReward(cross(cur), tt.tokenPath)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectProtocolFeeReward") != 1 {
+				t.Error("CollectProtocolFeeReward was not called on the implementation")
+			}
+		})
+	}
+}
+
 // TestCollectRewardFromLaunchPad tests the CollectRewardFromLaunchPad proxy function
 func TestCollectRewardFromLaunchPad(cur realm, t *testing.T) {
 	tests := []struct {
@@ -270,6 +332,64 @@ func TestCollectRewardFromLaunchPad(cur realm, t *testing.T) {
 			mockGovStaker := implementation.(*MockGovStaker)
 			if mockGovStaker.Response.CallCount("CollectRewardFromLaunchPad") != 1 {
 				t.Error("CollectRewardFromLaunchPad was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestCollectEmissionRewardFromLaunchPad(cur realm, t *testing.T) {
+	tests := []struct {
+		name string
+		to   address
+	}{
+		{
+			name: "collect emission reward from launchpad is success",
+			to:   adminAddr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+			CollectEmissionRewardFromLaunchPad(cross(cur), tt.to)
+
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectEmissionRewardFromLaunchPad") != 1 {
+				t.Error("CollectEmissionRewardFromLaunchPad was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestCollectProtocolFeeRewardFromLaunchPad(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		to        address
+		tokenPath string
+	}{
+		{
+			name:      "collect protocol fee reward from launchpad is success",
+			to:        adminAddr,
+			tokenPath: "gno.land/r/gnoswap/gns",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+			CollectProtocolFeeRewardFromLaunchPad(cross(cur), tt.to, tt.tokenPath)
+
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectProtocolFeeRewardFromLaunchPad") != 1 {
+				t.Error("CollectProtocolFeeRewardFromLaunchPad was not called on the implementation")
 			}
 		})
 	}

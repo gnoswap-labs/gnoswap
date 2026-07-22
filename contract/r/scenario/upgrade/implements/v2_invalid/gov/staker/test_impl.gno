@@ -74,11 +74,39 @@ func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
 	t.instance.CollectReward(0, rlm)
 }
 
+func (t *TestGovStaker) CollectEmissionReward(_ int, rlm realm) {
+	if !t.isActive("CollectEmissionReward") {
+		panic("test implementation: CollectEmissionReward not supported")
+	}
+	t.instance.CollectEmissionReward(0, rlm)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	if !t.isActive("CollectProtocolFeeReward") {
+		panic("test implementation: CollectProtocolFeeReward not supported")
+	}
+	t.instance.CollectProtocolFeeReward(0, rlm, tokenPath)
+}
+
 func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	if !t.isActive("CollectRewardFromLaunchPad") {
 		panic("test implementation: CollectRewardFromLaunchPad not supported")
 	}
 	t.instance.CollectRewardFromLaunchPad(0, rlm, to)
+}
+
+func (t *TestGovStaker) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	if !t.isActive("CollectEmissionRewardFromLaunchPad") {
+		panic("test implementation: CollectEmissionRewardFromLaunchPad not supported")
+	}
+	t.instance.CollectEmissionRewardFromLaunchPad(0, rlm, to)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	if !t.isActive("CollectProtocolFeeRewardFromLaunchPad") {
+		panic("test implementation: CollectProtocolFeeRewardFromLaunchPad not supported")
+	}
+	t.instance.CollectProtocolFeeRewardFromLaunchPad(0, rlm, to, tokenPath)
 }
 
 func (t *TestGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {

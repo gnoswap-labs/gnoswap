@@ -55,12 +55,39 @@ func CollectReward(cur realm) {
 	getImplementation().CollectReward(0, cur)
 }
 
+// CollectEmissionReward claims accumulated GNS emission rewards.
+func CollectEmissionReward(cur realm) {
+	getImplementation().CollectEmissionReward(0, cur)
+}
+
+// CollectProtocolFeeReward claims accumulated protocol fee rewards for the provided token path.
+func CollectProtocolFeeReward(cur realm, tokenPath string) {
+	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
+}
+
 // CollectRewardFromLaunchPad claims rewards from launchpad projects.
 //
 // Parameters:
 //   - to: address to collect rewards for
 func CollectRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectRewardFromLaunchPad(0, cur, to)
+}
+
+// CollectEmissionRewardFromLaunchPad claims accumulated launchpad emission rewards.
+//
+// Parameters:
+//   - to: address to collect rewards for
+func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
+	getImplementation().CollectEmissionRewardFromLaunchPad(0, cur, to)
+}
+
+// CollectProtocolFeeRewardFromLaunchPad claims accumulated launchpad protocol fee rewards for the provided token path.
+//
+// Parameters:
+//   - to: address to collect rewards for
+//   - tokenPath: token path to collect
+func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath string) {
+	getImplementation().CollectProtocolFeeRewardFromLaunchPad(0, cur, to, tokenPath)
 }
 
 // SetAmountByProjectWallet sets reward amount for a project wallet.

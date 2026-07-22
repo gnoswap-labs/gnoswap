@@ -5,6 +5,11 @@ func DistributeProtocolFee(cur realm) {
 	getImplementation().DistributeProtocolFee(0, cur)
 }
 
+// DistributeProtocolFeeByTokenPath distributes accumulated protocol fees for a single token path.
+func DistributeProtocolFeeByTokenPath(cur realm, tokenPath string) {
+	getImplementation().DistributeProtocolFeeByTokenPath(0, cur, tokenPath)
+}
+
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
 //
 // Parameters:

@@ -14,6 +14,7 @@ type IProtocolFeeManager interface {
 	// surfaces at every call site as a literal `0`, making the realm threading
 	// visible to readers.
 	DistributeProtocolFee(_ int, rlm realm)
+	DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string)
 	SetDevOpsPct(_ int, rlm realm, pct int64)
 	SetGovStakerPct(_ int, rlm realm, pct int64)
 	AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error

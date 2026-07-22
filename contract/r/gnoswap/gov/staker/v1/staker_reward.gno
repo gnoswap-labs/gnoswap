@@ -93,6 +93,16 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	}
 }
 
+// CollectEmissionReward collects accumulated GNS emission rewards only.
+func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
+	assertNotImplementYet()
+}
+
+// CollectProtocolFeeReward collects accumulated protocol fee rewards for the provided token path.
+func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	assertNotImplementYet()
+}
+
 // CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
 //
 // Parameters:
@@ -160,6 +170,16 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 			)
 		}
 	}
+}
+
+// CollectEmissionRewardFromLaunchPad collects emission rewards only for launchpad project wallets.
+func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	assertNotImplementYet()
+}
+
+// CollectProtocolFeeRewardFromLaunchPad collects one token path of protocol fee rewards for launchpad project wallets.
+func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	assertNotImplementYet()
 }
 
 // SetAmountByProjectWallet sets the amount of reward for the project wallet.

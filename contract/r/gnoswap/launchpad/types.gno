@@ -28,6 +28,8 @@ type ILaunchpadProject interface {
 	) string
 	TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64
 	CollectProtocolFee(_ int, rlm realm)
+	CollectEmissionReward(_ int, rlm realm)
+	CollectProtocolFeeReward(_ int, rlm realm, tokenPath string)
 }
 
 type ILaunchpadDeposit interface {

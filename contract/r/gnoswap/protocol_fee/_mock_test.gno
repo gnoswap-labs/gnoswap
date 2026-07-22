@@ -43,6 +43,10 @@ func (m *MockProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	m.Response.Get("DistributeProtocolFee")
 }
 
+func (m *MockProtocolFee) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	m.Response.Get("DistributeProtocolFeeByTokenPath")
+}
+
 func (m *MockProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	m.Response.Get("SetDevOpsPct")
 }

@@ -46,8 +46,24 @@ func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
 	t.instance.CollectReward(0, rlm)
 }
 
+func (t *TestGovStaker) CollectEmissionReward(_ int, rlm realm) {
+	t.instance.CollectEmissionReward(0, rlm)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	t.instance.CollectProtocolFeeReward(0, rlm, tokenPath)
+}
+
 func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	t.instance.CollectRewardFromLaunchPad(0, rlm, to)
+}
+
+func (t *TestGovStaker) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	t.instance.CollectEmissionRewardFromLaunchPad(0, rlm, to)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	t.instance.CollectProtocolFeeRewardFromLaunchPad(0, rlm, to, tokenPath)
 }
 
 func (t *TestGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {

@@ -84,11 +84,48 @@ func (t *TestGovStaker) CollectReward(_ int, rlm realm) {
 	)
 }
 
+func (t *TestGovStaker) CollectEmissionReward(_ int, rlm realm) {
+	t.ExecuteFn(
+		"CollectEmissionReward",
+		func(args ...any) any { t.instance.CollectEmissionReward(0, rlm); return nil },
+	)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	t.ExecuteFn(
+		"CollectProtocolFeeReward",
+		func(args ...any) any { t.instance.CollectProtocolFeeReward(0, rlm, args[0].(string)); return nil },
+		tokenPath,
+	)
+}
+
 func (t *TestGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	t.ExecuteFn(
 		"CollectRewardFromLaunchPad",
 		func(args ...any) any { t.instance.CollectRewardFromLaunchPad(0, rlm, args[0].(address)); return nil },
 		to,
+	)
+}
+
+func (t *TestGovStaker) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	t.ExecuteFn(
+		"CollectEmissionRewardFromLaunchPad",
+		func(args ...any) any {
+			t.instance.CollectEmissionRewardFromLaunchPad(0, rlm, args[0].(address))
+			return nil
+		},
+		to,
+	)
+}
+
+func (t *TestGovStaker) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	t.ExecuteFn(
+		"CollectProtocolFeeRewardFromLaunchPad",
+		func(args ...any) any {
+			t.instance.CollectProtocolFeeRewardFromLaunchPad(0, rlm, args[0].(address), args[1].(string))
+			return nil
+		},
+		to, tokenPath,
 	)
 }
 
@@ -198,7 +235,10 @@ func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, t
 func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, period int64) {
 	t.ExecuteFn(
 		"SetUnDelegationLockupPeriodByAdmin",
-		func(args ...any) any { t.instance.SetUnDelegationLockupPeriodByAdmin(0, rlm, args[0].(int64)); return nil },
+		func(args ...any) any {
+			t.instance.SetUnDelegationLockupPeriodByAdmin(0, rlm, args[0].(int64))
+			return nil
+		},
 		period,
 	)
 }
