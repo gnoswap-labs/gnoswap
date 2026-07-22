@@ -58,7 +58,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 			})
 		} else {
 			testing.SetRealm(tt.callerRealm)
-				RegisterInitializer(cross(cur), tt.initializer)
+			RegisterInitializer(cross(cur), tt.initializer)
 		}
 	}
 }
@@ -132,7 +132,7 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(tt.callerRealm)
-					UpgradeImpl(cross(cur), tt.packagePath)
+				UpgradeImpl(cross(cur), tt.packagePath)
 			}
 		})
 	}
@@ -173,7 +173,7 @@ func TestCreateProject(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
@@ -203,7 +203,7 @@ func TestTransferLeftFromProjectByAdmin(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
@@ -229,12 +229,74 @@ func TestCollectProtocolFee(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
 			testing.SetRealm(tt.callerRealm)
 			CollectProtocolFee(cross(cur))
+		})
+	}
+}
+
+func TestCollectEmissionReward(cur realm, t *testing.T) {
+	tests := []struct {
+		name        string
+		callerRealm runtime.Realm
+	}{
+		{
+			name:        "collect emission reward is not implemented",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
+
+			testing.SetRealm(tt.callerRealm)
+			CollectEmissionReward(cross(cur))
+
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("CollectEmissionReward") != 1 {
+				t.Error("CollectEmissionReward was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestCollectProtocolFeeReward(cur realm, t *testing.T) {
+	tests := []struct {
+		name        string
+		callerRealm runtime.Realm
+		tokenPath   string
+	}{
+		{
+			name:        "collect protocol fee reward is not implemented",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"),
+			tokenPath:   "gno.land/r/gnoswap/gns",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
+
+			testing.SetRealm(tt.callerRealm)
+			CollectProtocolFeeReward(cross(cur), tt.tokenPath)
+
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("CollectProtocolFeeReward") != 1 {
+				t.Error("CollectProtocolFeeReward was not called on the implementation")
+			}
 		})
 	}
 }
@@ -260,7 +322,7 @@ func TestDepositGns(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
@@ -288,7 +350,7 @@ func TestCollectDepositGns(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
@@ -315,7 +377,7 @@ func TestCollectRewardByDepositId(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
@@ -343,7 +405,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -372,7 +434,7 @@ func TestGetDepositCount(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -403,7 +465,7 @@ func TestGetProject(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -434,7 +496,7 @@ func TestGetDeposit(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -467,7 +529,7 @@ func TestGetProjectTier(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -498,7 +560,7 @@ func TestGetProjectActiveStatus(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -531,7 +593,7 @@ func TestGetProjectIDs(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -568,7 +630,7 @@ func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -597,7 +659,7 @@ func TestGetProjectTierRewardManagerCount(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -626,7 +688,7 @@ func TestGetCurrentDepositId(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -659,7 +721,7 @@ func TestGetProjectCondition(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -690,7 +752,7 @@ func TestGetProjectTierRewardManager(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -723,7 +785,7 @@ func TestGetRewardState(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -756,7 +818,7 @@ func TestGetImplementationPackagePath(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetTestState(cur, t)
 			testing.SetRealm(testing.NewCodeRealm(tt.packagePath))
-				RegisterInitializer(cross(cur), makeMockInitializer(tt.packagePath))
+			RegisterInitializer(cross(cur), makeMockInitializer(tt.packagePath))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 

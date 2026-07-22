@@ -48,6 +48,17 @@ func (t *TestProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	)
 }
 
+func (t *TestProtocolFee) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	t.ExecuteFn(
+		"DistributeProtocolFeeByTokenPath",
+		func(args ...any) any {
+			t.instance.DistributeProtocolFeeByTokenPath(0, rlm, args[0].(string))
+			return nil
+		},
+		tokenPath,
+	)
+}
+
 func (t *TestProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	t.ExecuteFn(
 		"SetDevOpsPct",

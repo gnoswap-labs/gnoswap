@@ -84,6 +84,11 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	)
 }
 
+// DistributeProtocolFeeByTokenPath is retained for ABI compatibility while token-path distribution is deferred.
+func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	assertNotImplementYet()
+}
+
 // SetDevOpsPct sets the devOpsPct.
 //
 // Parameters:

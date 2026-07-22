@@ -35,6 +35,16 @@ func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee(0, cur)
 }
 
+// CollectEmissionReward collects accumulated launchpad emission rewards.
+func CollectEmissionReward(cur realm) {
+	getImplementation().CollectEmissionReward(0, cur)
+}
+
+// CollectProtocolFeeReward collects accumulated launchpad protocol fee rewards for the provided token path.
+func CollectProtocolFeeReward(cur realm, tokenPath string) {
+	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
+}
+
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
 	return getImplementation().TransferLeftFromProjectByAdmin(0, cur, projectID, recipient)

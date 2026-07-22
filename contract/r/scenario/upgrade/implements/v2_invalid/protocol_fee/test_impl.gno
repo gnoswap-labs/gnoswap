@@ -44,6 +44,13 @@ func (t *TestProtocolFee) DistributeProtocolFee(_ int, rlm realm) {
 	t.instance.DistributeProtocolFee(0, rlm)
 }
 
+func (t *TestProtocolFee) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	if !t.isActive("DistributeProtocolFeeByTokenPath") {
+		panic("test implementation: DistributeProtocolFeeByTokenPath not supported")
+	}
+	t.instance.DistributeProtocolFeeByTokenPath(0, rlm, tokenPath)
+}
+
 func (t *TestProtocolFee) SetDevOpsPct(_ int, rlm realm, pct int64) {
 	if !t.isActive("SetDevOpsPct") {
 		panic("test implementation: SetDevOpsPct not supported")

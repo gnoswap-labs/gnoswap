@@ -134,6 +134,22 @@ func verifyTestImplementation(cur realm) {
 	})
 	ufmt.Println("[EXPECTED] CollectRewardFromLaunchPad panics correctly")
 
+	// Test CollectEmissionRewardFromLaunchPad - should panic with test implementation message
+	ufmt.Println("[INFO] Testing CollectEmissionRewardFromLaunchPad function panics correctly")
+	testing.SetRealm(adminRealm)
+	uassert.AbortsWithMessage(t, cur, "test implementation: CollectEmissionRewardFromLaunchPad not supported", func() {
+		govStaker.CollectEmissionRewardFromLaunchPad(cross(cur), adminAddr)
+	})
+	ufmt.Println("[EXPECTED] CollectEmissionRewardFromLaunchPad panics correctly")
+
+	// Test CollectProtocolFeeRewardFromLaunchPad - should panic with test implementation message
+	ufmt.Println("[INFO] Testing CollectProtocolFeeRewardFromLaunchPad function panics correctly")
+	testing.SetRealm(adminRealm)
+	uassert.AbortsWithMessage(t, cur, "test implementation: CollectProtocolFeeRewardFromLaunchPad not supported", func() {
+		govStaker.CollectProtocolFeeRewardFromLaunchPad(cross(cur), adminAddr, "gno.land/r/gnoswap/gns")
+	})
+	ufmt.Println("[EXPECTED] CollectProtocolFeeRewardFromLaunchPad panics correctly")
+
 	// Test SetAmountByProjectWallet - should panic with test implementation message
 	ufmt.Println("[INFO] Testing SetAmountByProjectWallet function panics correctly")
 	testing.SetRealm(adminRealm)
@@ -182,6 +198,10 @@ func verifyTestImplementation(cur realm) {
 // [EXPECTED] CollectUndelegatedGns panics correctly
 // [INFO] Testing CollectRewardFromLaunchPad function panics correctly
 // [EXPECTED] CollectRewardFromLaunchPad panics correctly
+// [INFO] Testing CollectEmissionRewardFromLaunchPad function panics correctly
+// [EXPECTED] CollectEmissionRewardFromLaunchPad panics correctly
+// [INFO] Testing CollectProtocolFeeRewardFromLaunchPad function panics correctly
+// [EXPECTED] CollectProtocolFeeRewardFromLaunchPad panics correctly
 // [INFO] Testing SetAmountByProjectWallet function panics correctly
 // [EXPECTED] SetAmountByProjectWallet panics correctly
 // [INFO] Testing CleanStakerDelegationSnapshotByAdmin function panics correctly

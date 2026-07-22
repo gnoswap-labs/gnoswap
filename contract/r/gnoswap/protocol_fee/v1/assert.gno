@@ -48,3 +48,7 @@ func assertIsValidPercent(pct int64) {
 		))
 	}
 }
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
+}

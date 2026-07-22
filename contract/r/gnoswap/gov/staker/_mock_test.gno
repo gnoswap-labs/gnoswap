@@ -79,8 +79,24 @@ func (m *MockGovStaker) CollectReward(_ int, rlm realm) {
 	m.Response.Get("CollectReward")
 }
 
+func (m *MockGovStaker) CollectEmissionReward(_ int, rlm realm) {
+	m.Response.Get("CollectEmissionReward")
+}
+
+func (m *MockGovStaker) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	m.Response.Get("CollectProtocolFeeReward")
+}
+
 func (m *MockGovStaker) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
 	m.Response.Get("CollectRewardFromLaunchPad")
+}
+
+func (m *MockGovStaker) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	m.Response.Get("CollectEmissionRewardFromLaunchPad")
+}
+
+func (m *MockGovStaker) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	m.Response.Get("CollectProtocolFeeRewardFromLaunchPad")
 }
 
 func (m *MockGovStaker) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {

@@ -77,3 +77,7 @@ func assertNoSameDelegatee(delegatee, newDelegatee address) {
 		panic(errors.New(errSameDelegatee))
 	}
 }
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
+}

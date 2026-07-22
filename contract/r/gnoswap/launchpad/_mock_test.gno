@@ -76,6 +76,14 @@ func (m *MockLaunchpad) CollectProtocolFee(_ int, rlm realm) {
 	m.Response.Get("CollectProtocolFee")
 }
 
+func (m *MockLaunchpad) CollectEmissionReward(_ int, rlm realm) {
+	m.Response.Get("CollectEmissionReward")
+}
+
+func (m *MockLaunchpad) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	m.Response.Get("CollectProtocolFeeReward")
+}
+
 func (m *MockLaunchpad) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	res, ok := m.Response.Get("DepositGns")
 	if !ok {

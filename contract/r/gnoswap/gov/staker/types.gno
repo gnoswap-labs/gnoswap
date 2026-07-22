@@ -32,7 +32,11 @@ type IGovStakerDelegation interface {
 type IGovStakerReward interface {
 	// Reward collection
 	CollectReward(_ int, rlm realm)
+	CollectEmissionReward(_ int, rlm realm)
+	CollectProtocolFeeReward(_ int, rlm realm, tokenPath string)
 	CollectRewardFromLaunchPad(_ int, rlm realm, to address)
+	CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address)
+	CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string)
 	SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool)
 }
 
