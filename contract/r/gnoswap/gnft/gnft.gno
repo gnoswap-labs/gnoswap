@@ -255,12 +255,17 @@ func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) err
 	if err != nil {
 		return makeErrorWithDetails(err.Error(), ufmt.Sprintf("token id (%s)", tid))
 	}
+	tokenURI, err := TokenURI(tid)
+	if err != nil {
+		return makeErrorWithDetails(err.Error(), ufmt.Sprintf("token id (%s)", tid))
+	}
 
 	chain.Emit(
 		"SetTokenURI",
 		"prevAddr", previousAddr.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenId", string(tid),
+		"tokenURI", tokenURI,
 	)
 
 	return nil

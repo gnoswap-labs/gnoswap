@@ -107,6 +107,7 @@ func (gs *govStakerV1) Delegate(
 		"from", resolver.delegation.DelegateFrom().String(),
 		"to", resolver.delegation.DelegateTo().String(),
 		"amount", utils.FormatInt(resolver.DelegatedAmount()),
+		"totalDelegatedAmount", utils.FormatInt(gs.store.GetTotalDelegatedAmount()),
 		"referrer", registeredReferrer,
 	)
 
@@ -181,6 +182,7 @@ func (gs *govStakerV1) Undelegate(
 		"from", caller.String(),
 		"to", from.String(),
 		"amount", utils.FormatInt(unDelegationAmount),
+		"totalDelegatedAmount", utils.FormatInt(gs.store.GetTotalDelegatedAmount()),
 	)
 
 	return unDelegationAmount
