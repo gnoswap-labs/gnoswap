@@ -81,8 +81,8 @@ var (
 	carolAddr2         = testutils.TestAddress("carol")
 	carolRealm2        = testing.NewUserRealm(carolAddr2)
 
-	barPath2 = "gno.land/r/onbloc/bar"
-	fooPath2 = "gno.land/r/onbloc/foo"
+	barPath2 = "gno.land/r/onbloc/bar.BAR"
+	fooPath2 = "gno.land/r/onbloc/foo.FOO"
 	fee2     = uint32(3000)
 
 	launchpadProjectID string
@@ -239,7 +239,7 @@ func setupCollectScenario(cur realm) {
 	staker.SetPoolTier(cross(cur), barPath2+":"+fooPath2+":3000", 1)
 	staker.AddToken(cross(cur), barPath2)
 	obl.Approve(cross(cur), launchpadAddr2, 1000000000)
-	launchpadProjectID = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl", projectAddr2, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)
+	launchpadProjectID = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl.OBL", projectAddr2, 1000000000, "gno.land/r/onbloc/bar.BAR", "1000000", 10, 20, 70, time.Now().Unix()+604800)
 	testing.SkipHeights(120960)
 	gns.Approve(cross(cur), launchpadAddr2, 1000000000)
 	launchpadDepositID = launchpad.DepositGns(cross(cur), launchpadProjectID+":30", 1000000000, "")

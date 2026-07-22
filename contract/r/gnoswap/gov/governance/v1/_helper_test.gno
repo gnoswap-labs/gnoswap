@@ -20,12 +20,12 @@ import (
 var (
 	admin, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	fooPath string = "gno.land/r/onbloc/foo"
-	barPath string = "gno.land/r/onbloc/bar"
-	bazPath string = "gno.land/r/onbloc/baz"
-	quxPath string = "gno.land/r/onbloc/qux"
+	fooPath string = "gno.land/r/onbloc/foo.FOO"
+	barPath string = "gno.land/r/onbloc/bar.BAR"
+	bazPath string = "gno.land/r/onbloc/baz.BAZ"
+	quxPath string = "gno.land/r/onbloc/qux.QUX"
 
-	oblPath string = "gno.land/r/onbloc/obl"
+	oblPath string = "gno.land/r/onbloc/obl.OBL"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

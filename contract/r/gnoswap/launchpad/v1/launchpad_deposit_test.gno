@@ -65,7 +65,7 @@ func createDepositTestProject(
 ) string {
 	project, err := lp.createProject(0, cur, &createProjectParams{
 		name:                  name,
-		tokenPath:             "gno.land/r/onbloc/obl",
+		tokenPath:             "gno.land/r/onbloc/obl.OBL",
 		recipient:             recipient,
 		depositAmount:         depositAmount,
 		tier30Ratio:           tier30Ratio,
@@ -264,9 +264,9 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 				userAddr := testutils.TestAddress("user5")
 
 				// Return a valid project tier ID format
-				return "gno.land/r/onbloc/obl:123:30", userAddr
+				return "gno.land/r/onbloc/obl.OBL:123:30", userAddr
 			},
-			targetProjectTierID:  "gno.land/r/onbloc/obl:123:30",
+			targetProjectTierID:  "gno.land/r/onbloc/obl.OBL:123:30",
 			depositAmount:        0,
 			referrer:             "",
 			expectedPanic:        true,
@@ -278,9 +278,9 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 				userAddr := testutils.TestAddress("user6")
 
 				// No need to set up project since validation fails early
-				return "gno.land/r/onbloc/obl:123:30", userAddr
+				return "gno.land/r/onbloc/obl.OBL:123:30", userAddr
 			},
-			targetProjectTierID:  "gno.land/r/onbloc/obl:123:30",
+			targetProjectTierID:  "gno.land/r/onbloc/obl.OBL:123:30",
 			depositAmount:        -1000000,
 			referrer:             "",
 			expectedPanic:        true,
@@ -398,7 +398,7 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl:123",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl.OBL:123",
 		},
 		{
 			name: "successful deposit when called from contract",
@@ -516,7 +516,7 @@ func TestLaunchpadDeposit_depositGns(cur realm, t *testing.T) {
 	}{
 		{
 			name:             "deposit gns successfully",
-			projectID:        "gno.land/r/onbloc/obl:123",
+			projectID:        "gno.land/r/onbloc/obl.OBL:123",
 			tierDuration:     30,
 			depositAmount:    1000,
 			callerAddress:    userAddr,
@@ -643,7 +643,7 @@ func initLaunchpadDepositTest(cur realm, t *testing.T) {
 	// Setup test project
 	project, _ := lp.createProject(0, cur, &createProjectParams{
 			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/onbloc/obl.OBL",
 			depositAmount: 1000000,
 			tier30Ratio:   30,
 			tier90Ratio:   30,

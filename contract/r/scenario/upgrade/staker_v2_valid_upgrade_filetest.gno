@@ -79,12 +79,12 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	// External incentive parameters (GNS is a default-allowed reward token).
 	incentiveDuration int64 = 90 * 24 * 60 * 60 // exactly 90 days (valid duration)
@@ -347,20 +347,20 @@ func upgradeToV2Valid(cur realm) {
 // Output:
 // [SCENARIO] 1. Initialize staker with v1, pool and positions
 // [EXPECTED] Initialized staker with v1: gno.land/r/gnoswap/staker/v1
-// [EXPECTED] Created pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Minted position ID: 1 liquidity: 1066918731
 // [EXPECTED] Minted position ID: 2 liquidity: 1066918731
 //
 // [SCENARIO] 2. Add token to allowed tokens list
-// [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
+// [EXPECTED] AddToken gno.land/r/onbloc/bar.BAR allowedCount: 3
 //
 // [SCENARIO] 3. Create v1 data: set tier + stake position 1
-// [EXPECTED] Pool tier set for: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [EXPECTED] Staked position ID: 1 lpToken: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool tier set for: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
+// [EXPECTED] Staked position ID: 1 lpToken: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 4. Accumulate rewards, then read v1 data
 // [EXPECTED] pos 1 isStaked: true
-// [EXPECTED] pos 1 targetPool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] pos 1 targetPool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] pos 1 liquidity: 1066918731
 // [EXPECTED] pos 1 stakeTime: 1234567900
 //
@@ -369,31 +369,31 @@ func upgradeToV2Valid(cur realm) {
 //
 // [SCENARIO] 6. Mutate v1-created data through v2_valid (RMW paths)
 // [EXPECTED] CollectReward pos 1 total: 133374323
-// [EXPECTED] Staked position ID: 2 lpToken: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Staked position ID: 2 lpToken: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] UnStaked position ID: 1 isStaked now: false
 //
 // [SCENARIO] 7. RMW v1-created pool-tier maps through v2_valid
-// [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 2
-// [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 1
+// [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 -> tier: 2
+// [EXPECTED] ChangePoolTier gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 -> tier: 1
 //
 // [SCENARIO] 8. Drive admin config setters through v2_valid
-// [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
-// [EXPECTED] RemoveToken gno.land/r/onbloc/bar allowedCount: 2
+// [EXPECTED] AddToken gno.land/r/onbloc/bar.BAR allowedCount: 3
+// [EXPECTED] RemoveToken gno.land/r/onbloc/bar.BAR allowedCount: 2
 // [EXPECTED] SetUnStakingFee -> 100
 // [EXPECTED] SetDepositGnsAmount -> 2000000000
 // [EXPECTED] SetMinimumRewardAmount -> 1000000000
 // [EXPECTED] SetTokenMinimumRewardAmount -> 12345 found: true
 // [EXPECTED] SetWarmUp warmupTiers: 4
-// [EXPECTED] AddToken gno.land/r/onbloc/bar allowedCount: 3
+// [EXPECTED] AddToken gno.land/r/onbloc/bar.BAR allowedCount: 3
 //
 // [SCENARIO] 9. Exercise external-incentive BPTrees through v2_valid
 // [EXPECTED] CreateExternalIncentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567950:1
-// [EXPECTED] incentive rewardToken: gno.land/r/gnoswap/gns
+// [EXPECTED] incentive rewardToken: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] incentive totalReward: 1500000000
 // [EXPECTED] EndExternalIncentive refunded: true
 // [EXPECTED] CollectExternalIncentivePenalty penalty: 0
 // [EXPECTED] UnStaked position ID: 2 isStaked now: false
-// [EXPECTED] RemovePoolTier gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 -> tier: 0
+// [EXPECTED] RemovePoolTier gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 -> tier: 0
 //
 // [SCENARIO] 10. Read final data through v2_valid
 // [EXPECTED] pos 1 isStaked: false

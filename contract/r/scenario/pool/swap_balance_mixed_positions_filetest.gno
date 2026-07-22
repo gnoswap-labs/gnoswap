@@ -42,8 +42,8 @@ var (
 )
 
 var (
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 const (

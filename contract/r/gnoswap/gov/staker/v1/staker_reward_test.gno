@@ -594,7 +594,7 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
 			shouldFail:    true,
-			expectedError: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
+			expectedError: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough gno.land/r/gnoswap/gns.GNS balance(0) to collect(100000000)",
 		},
 		{
 			name:        "success - GRC20 bar token transfer",

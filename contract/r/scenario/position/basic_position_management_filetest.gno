@@ -59,8 +59,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 // Pool setup flag to prevent duplicate creation
@@ -326,7 +326,7 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [INFO] Creating a new position for retrieval test
 // [INFO] Retrieving position details
 // [EXPECTED] Position created successfully with ID: 2
-// [EXPECTED] Position pool key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Position pool key: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Position tick lower: -5000
 // [EXPECTED] Position tick upper: 5000
 // [EXPECTED] Position liquidity: 226050

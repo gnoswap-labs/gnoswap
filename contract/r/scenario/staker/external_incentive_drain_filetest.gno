@@ -55,9 +55,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -128,7 +128,7 @@ func createPool(cur realm) {
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFee(cross(cur), 0)
 
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
+	println("[INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
 		cross(cur),
@@ -186,7 +186,7 @@ func createExternalIncentiveGns(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		gnsPath,
 		9000000000,
 		1234569600,
@@ -234,7 +234,7 @@ func endExternalGnsIncentive(cur realm) {
 	// Use the actual incentive ID that was created
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -258,7 +258,7 @@ func demonstrateVulnerability(cur realm) {
 	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-008]", func() {
 		sr.EndExternalIncentive(
 			cross(cur),
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 			actualIncentiveID,
 			externalCreatorUser,
 		)
@@ -288,7 +288,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0
+// [INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0
 //
 // [SCENARIO] 3. Mint bar qux position
 // [INFO] approve tokens for position

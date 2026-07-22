@@ -50,11 +50,11 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee100 uint32 = 100
 
@@ -171,7 +171,7 @@ func createExternalIncentiveWithNativeCoin(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp

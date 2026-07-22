@@ -92,7 +92,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing Mint function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: Mint not supported", func() {
-		position.Mint(cross(cur), "gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500, -1000, 1000, "1000", "1000", "0", "0", 9999999999, adminAddr, "")
+		position.Mint(cross(cur), "gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", 500, -1000, 1000, "1000", "1000", "0", "0", 9999999999, adminAddr, "")
 	})
 	ufmt.Println("[EXPECTED] Mint panics correctly")
 

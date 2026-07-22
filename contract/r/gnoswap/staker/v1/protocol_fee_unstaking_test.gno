@@ -359,11 +359,11 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 			expectError:  false,
 		},
 		{
-			name:         "internal reward uses GNS_PATH",
+			name:         "internal reward uses GNS_TOKEN_KEY",
 			tokenPath:    barPath,
 			amount:       10000,
 			unstakingFee: 100,
-			internal:     true, // Should convert to GNS_PATH
+			internal:     true, // Should convert to GNS_TOKEN_KEY
 			expectedNet:  9900,
 			expectedFee:  100,
 			expectError:  false,
@@ -385,7 +385,7 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 					testing.SetRealm(adminRealm)
 					_ = tt.tokenPath
 					if tt.internal {
-						_ = GNS_PATH
+						_ = GNS_TOKEN_KEY
 					}
 					gns.Transfer(cross(cur), stakerAddr, calculatedFee)
 				}

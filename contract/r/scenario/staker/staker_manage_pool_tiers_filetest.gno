@@ -37,8 +37,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -101,7 +101,7 @@ func createPools(cur realm) {
 func setPoolTierByAdmin(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	targetTier := uint64(2)
 
 	println("[INFO] set pool tier to 2")
@@ -119,7 +119,7 @@ func setPoolTierByAdmin(cur realm) {
 func changePoolTierByAdmin(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	newTier := uint64(3)
 
 	println("[INFO] change pool tier from 2 to 3")
@@ -137,7 +137,7 @@ func changePoolTierByAdmin(cur realm) {
 func setAnotherPoolTier3(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"
 	targetTier := uint64(3)
 
 	println("[INFO] set another pool (bar:foo:100) to tier 3")
@@ -155,7 +155,7 @@ func setAnotherPoolTier3(cur realm) {
 func removePoolTierByAdmin(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	println("[INFO] remove pool tier (set to 0)")
 	sr.RemovePoolTier(cross(cur), poolPath)
@@ -169,7 +169,7 @@ func removePoolTierByAdmin(cur realm) {
 	}
 
 	// Verify the other pool still has its tier
-	otherPoolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	otherPoolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"
 	otherTier := sr.GetPoolTier(otherPoolPath)
 	ufmt.Printf("[EXPECTED] other pool tier unchanged: %d\n", otherTier)
 

@@ -42,10 +42,10 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee500 uint32 = 500
 
@@ -213,7 +213,7 @@ func performSingleHopSwap(cur realm) BalanceSnapshot {
 		barPath,
 		fooPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -241,7 +241,7 @@ func performTwoHopSwap(cur realm) BalanceSnapshot {
 		barPath,
 		bazPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:500",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/baz.BAZ:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -270,7 +270,7 @@ func performThreeHopSwap(cur realm) BalanceSnapshot {
 		barPath,
 		quxPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),
@@ -299,7 +299,7 @@ func performReverseThreeHopSwap(cur realm) BalanceSnapshot {
 		quxPath,
 		barPath,
 		ufmt.Sprintf("%d", swapAmount),
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500",
 		"100",
 		"1",
 		time.Now().Add(time.Hour).Unix(),

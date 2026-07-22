@@ -56,8 +56,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 // Pool setup flag to prevent duplicate creation
@@ -508,7 +508,7 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [EXPECTED] New liquidity added: 16918749
 // [EXPECTED] Additional amount0: 500000
 // [EXPECTED] Additional amount1: 500000
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Total liquidity after addition: 50756248
 //
 // [SCENARIO] 2. Add Liquidity with Invalid Slippage

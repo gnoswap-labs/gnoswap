@@ -55,8 +55,8 @@ var (
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
@@ -128,7 +128,7 @@ func createPool(cur realm) {
 	println("[INFO] set pool creation fee to 0")
 	pl.SetPoolCreationFee(cross(cur), 0)
 
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
+	println("[INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
 		cross(cur),
@@ -210,7 +210,7 @@ func createExternalIncentiveQux(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		9000000000,
 		1234569600,
@@ -280,7 +280,7 @@ func endExternalQuxIncentive(cur realm) {
 	incentiveID := "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567910:1"
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		incentiveID,
 		externalCreatorUser,
 	)
@@ -327,7 +327,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0
+// [INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0
 //
 // [SCENARIO] 3. Mint bar qux position 01
 // [INFO] approve tokens for position 01

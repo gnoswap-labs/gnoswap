@@ -65,7 +65,7 @@ func delegateGnsToAdmin(cur realm) {
 
 func proposeCommunityPoolSpend(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/gns", 100)
+	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/gns.GNS", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }

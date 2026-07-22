@@ -53,7 +53,7 @@ func TestIncentivesCreate(t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				tt.incentiveId,
 				poolPath,
-				GNS_PATH,
+				GNS_TOKEN_KEY,
 				tt.rewardAmount,
 				currentTime,
 				currentTime+7200,
@@ -127,7 +127,7 @@ func TestIncentivesUpdate(t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				tt.incentiveId,
 				poolPath,
-				GNS_PATH,
+				GNS_TOKEN_KEY,
 				1000,
 				currentTime,
 				currentTime+3600,
@@ -280,7 +280,7 @@ func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"incentive_multiple_unclaimable",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		300,
 		currentTime,
 		currentTime+100,
@@ -416,7 +416,7 @@ func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"incentive_ongoing",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1000, // 10 tokens per second
 		currentTime,
 		currentTime+100,
@@ -459,7 +459,7 @@ func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"incentive_overlapping",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1000, // 10 tokens per second
 		currentTime,
 		currentTime+100,
@@ -507,7 +507,7 @@ func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"incentive_adjacent",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1000, // 10 tokens per second
 		currentTime,
 		currentTime+100,
@@ -555,7 +555,7 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		"incentive_outside",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		1000, // 10 tokens per second
 		currentTime+50,
 		currentTime+150,

@@ -78,7 +78,7 @@ func createOBLProject(cur realm) string {
 	projectId := launchpad.CreateProject(
 		cross(cur),
 		"Test OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		projectAddr,
 		rewardAmount,
 		"",
@@ -145,7 +145,7 @@ func collectRewardAndWithdrawFromContract(cur realm, depositId string) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 //
 // [SCENARIO] 2. Contract deposits GNS in project tier30
 // [EXPECTED] Contract deposit created with ID: 1

@@ -45,9 +45,9 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func main(cur realm) {
@@ -63,7 +63,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 3. Swap route by swap route fee")
-	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "10000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "10000", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
@@ -177,17 +177,17 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Create pool and mint position
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 0)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 0)
 // [EXPECTED] Position minted successfully with ID: 1
 // [EXPECTED] Liquidity: 213383746
 // [EXPECTED] Amount0: 10000000, Amount1: 10000000
 //
 // [SCENARIO] 3. Swap route by swap route fee
 // [EXPECTED] pool current tick: -1
-// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux): -9955
+// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9955
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/qux: 13
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/qux.QUX: 13
 // [EXPECTED] remained protocol fee reward is 1

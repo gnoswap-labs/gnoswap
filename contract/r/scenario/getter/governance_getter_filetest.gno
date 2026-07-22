@@ -92,7 +92,7 @@ func setupTestData(cur realm) int64 {
 
 	// Create proposal: Community Pool Spend
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "Community Pool Spend Proposal", "Spend 1000 GNS from community pool", adminAddr, "gno.land/r/gnoswap/gns", 1000)
+	proposalId := governance.ProposeCommunityPoolSpend(cross(cur), "Community Pool Spend Proposal", "Spend 1000 GNS from community pool", adminAddr, "gno.land/r/gnoswap/gns.GNS", 1000)
 	println("[EXPECTED] Created proposal (Community Pool Spend) ID:", proposalId)
 
 	// Vote on proposal
@@ -470,7 +470,7 @@ func testActiveProposalAndVotingWeight(cur realm) {
 // [INFO] Testing community pool spend info
 // [EXPECTED] Community pool spend info:
 // [EXPECTED] - To: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] - Token path: gno.land/r/gnoswap/gns
+// [EXPECTED] - Token path: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] - Amount: 1000
 // [INFO] Testing execution info (should fail for community pool spend)
 //

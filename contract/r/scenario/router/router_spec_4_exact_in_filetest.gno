@@ -34,9 +34,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -91,7 +91,7 @@ func main(cur realm) {
 		barPath, // inputToken
 		fooPath, // outputToken
 		"5",     // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000", // strRouteArr
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

@@ -38,9 +38,9 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func main(cur realm) {
@@ -122,19 +122,19 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. First pool creation (before alice delegation)
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 100000000)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 100000000)
 //
 // [SCENARIO] 3. Alice delegates in the middle
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. Second pool creation (after alice delegation)
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500 pool (poolCreationFee: 100000000)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500 pool (poolCreationFee: 100000000)
 //
 // [SCENARIO] 5. Check and collect protocol fee reward for admin
 // [INFO] collected protocol fee reward for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/gnoswap/gns: 150000000
+// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/gnoswap/gns.GNS: 150000000
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns: 50000000
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns.GNS: 50000000
 // [EXPECTED] remained protocol fee reward is 2000000

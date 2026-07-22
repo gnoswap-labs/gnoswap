@@ -46,9 +46,9 @@ const (
 )
 
 var (
-	fooTokenPath = "gno.land/r/onbloc/foo"
-	barTokenPath = "gno.land/r/onbloc/bar"
-	bazTokenPath = "gno.land/r/onbloc/baz"
+	fooTokenPath = "gno.land/r/onbloc/foo.FOO"
+	barTokenPath = "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath = "gno.land/r/onbloc/baz.BAZ"
 )
 
 type PoolTestScenario struct {

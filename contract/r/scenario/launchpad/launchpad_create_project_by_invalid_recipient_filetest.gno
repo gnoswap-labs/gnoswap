@@ -50,7 +50,7 @@ func createProjectByInvalidRecipient(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := address("invalidAddress")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -101,7 +101,7 @@ func createProjectByInvalidRecipient(cur realm) {
 // [SCENARIO] 2. Admin attempts to create project with invalid recipient
 // [INFO] admin attempting to create project with invalid recipient
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: invalidAddress
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

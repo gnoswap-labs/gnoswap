@@ -35,7 +35,7 @@ func TestFuzzCollectReward_InternalIncentive_Stateless(cur realm, t *testing.T) 
 
 		params := NewValidCollectRewardParams(ft, positionID, true, emissionStartTimestamp)
 		testing.SkipHeights(params.skipBlocks)
-		params.updatePreviousBalances("gno.land/r/gnoswap/gns")
+		params.updatePreviousBalances("gno.land/r/gnoswap/gns.GNS")
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)

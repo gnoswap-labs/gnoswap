@@ -33,8 +33,8 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -50,8 +50,8 @@ var (
 var t *testing.T
 
 const (
-	barbaz500 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
-	bazbar500 = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500"
+	barbaz500 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
+	bazbar500 = "gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500"
 )
 
 func main(cur realm) {

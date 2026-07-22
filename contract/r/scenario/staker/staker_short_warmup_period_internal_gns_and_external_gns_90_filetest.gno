@@ -42,9 +42,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
@@ -54,7 +54,7 @@ var (
 
 	depositGnsAmount      int64 = 100000000000
 	TIMESTAMP_90DAYS            = int64(7776000)
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1       = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func main(cur realm) {
@@ -114,7 +114,7 @@ func createPool(cur realm) {
 	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(cross(cur), barPath, quxPath, 100, "79228162514264337593543950337")
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 
 	pl.CreatePool(cross(cur), barPath, bazPath, 3000, "79228162514264337593543950337")
 
@@ -166,7 +166,7 @@ func createExternalIncentiveBar(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		2_000_000_000,
 		1234569600,
@@ -185,8 +185,8 @@ func createExternalIncentiveGns(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		"gno.land/r/gnoswap/gns",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
+		"gno.land/r/gnoswap/gns.GNS",
 		5_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,

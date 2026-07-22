@@ -60,7 +60,7 @@ func createOBLProject(cur realm) {
 
 	recipientAddr := projectAddr
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
@@ -115,7 +115,7 @@ func createOBLProject(cur realm) {
 
 // Refund ended project without deposit
 func refundEndedProjectWithoutDeposit(cur realm) {
-	projectId := "gno.land/r/onbloc/obl:123"
+	projectId := "gno.land/r/onbloc/obl.OBL:123"
 
 	testing.SetRealm(launchpadRealm)
 	println("[INFO] Checking project status before refund")
@@ -146,9 +146,9 @@ func refundEndedProjectWithoutDeposit(cur realm) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20

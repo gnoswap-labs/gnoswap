@@ -8,7 +8,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+var poolKey = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 func setupPositionGetter(cur realm, t *testing.T) {
 	t.Helper()
@@ -422,7 +422,7 @@ func TestGetPositionDetailsGetter(cur realm, t *testing.T) {
 			testFunc: func() any {
 				return mockInstance.GetPositionPoolKey(positionId)
 			},
-			expected: "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
+			expected: "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500",
 		},
 		{
 			name: "GetPositionTickLower returns correct tick lower",

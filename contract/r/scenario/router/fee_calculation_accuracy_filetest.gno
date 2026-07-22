@@ -42,8 +42,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	fee100   = uint32(100)   // 0.01%
 	fee500   = uint32(500)   // 0.05%
@@ -115,7 +115,7 @@ func testFeeCalculation100(cur realm) {
 
 	ufmt.Println("[INFO] Testing 0.01% fee tier")
 	amount := "1000000000" // 1 billion units
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"
 
 	bar.Approve(cross(cur), routerAddr, 1000000000)
 
@@ -137,7 +137,7 @@ func testFeeCalculation500(cur realm) {
 
 	ufmt.Println("[INFO] Testing 0.05% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	bar.Approve(cross(cur), routerAddr, 1000000000)
 
@@ -158,7 +158,7 @@ func testFeeCalculation3000(cur realm) {
 
 	ufmt.Println("[INFO] Testing 0.30% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 
 	bar.Approve(cross(cur), routerAddr, 1000000000)
 
@@ -179,7 +179,7 @@ func testFeeCalculation10000(cur realm) {
 
 	ufmt.Println("[INFO] Testing 1.00% fee tier")
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:10000"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:10000"
 
 	bar.Approve(cross(cur), routerAddr, 1000000000)
 
@@ -201,7 +201,7 @@ func testFeeAccumulation(cur realm) {
 	ufmt.Println("[INFO] Testing fee accumulation over multiple swaps")
 
 	amount := "100000000" // Smaller amount for multiple swaps
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	// Execute multiple swaps
 	for i := 0; i < 3; i++ {
@@ -223,7 +223,7 @@ func testSmallAmountFeePrecision(cur realm) {
 
 	// Test with amount that might cause rounding issues
 	smallAmount := "1337" // Prime number for edge case
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	bar.Approve(cross(cur), routerAddr, 1337)
 
@@ -245,7 +245,7 @@ func testExactOutFeeCalculation(cur realm) {
 	ufmt.Println("[INFO] Testing fee calculation in exact out swaps")
 
 	desiredOutput := "1000000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	foo.Approve(cross(cur), routerAddr, 1000000000)
 

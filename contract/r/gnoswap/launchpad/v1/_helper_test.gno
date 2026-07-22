@@ -22,7 +22,7 @@ import (
 
 const (
 	testLaunchpadPkgPath = "gno.land/r/gnoswap/launchpad"
-	testOblTokenPath     = "gno.land/r/onbloc/obl"
+	testOblTokenPath     = "gno.land/r/onbloc/obl.OBL"
 	testBlockTimeSeconds = int64(5)
 )
 

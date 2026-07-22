@@ -58,8 +58,8 @@ var (
 	emissionAddr, _    = access.GetAddress(prbac.ROLE_EMISSION.String())
 	routerRealm        = testing.NewUserRealm(routerAddr)
 
-	wugnotPath        = "gno.land/r/gnoland/wugnot"
-	gnsPath           = "gno.land/r/gnoswap/gns"
+	wugnotPath        = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath           = "gno.land/r/gnoswap/gns.GNS"
 	fee3000    uint32 = 3000
 
 	wugnotGnsPoolPath = ufmt.Sprintf("%s:%s:%d", wugnotPath, gnsPath, fee3000)
@@ -201,7 +201,7 @@ func checkEmissionDistributionChangesFn(cur realm, fn func()) {
 // Output:
 // [SCENARIO] 1. Initialize emission state and pool
 // [INFO] Initializing emission state
-// [INFO] Pool created: %s (tier: 1) gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
+// [INFO] Pool created: %s (tier: 1) gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000
 //
 // [SCENARIO] 2. Mint position and stake
 // [INFO] Minting and staking position

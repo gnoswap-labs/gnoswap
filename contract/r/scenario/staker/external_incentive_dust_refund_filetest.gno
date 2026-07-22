@@ -57,9 +57,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -206,7 +206,7 @@ func createExternalIncentiveWithDust(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		rewardAmount,
 		startTime,
@@ -261,7 +261,7 @@ func endExternalIncentiveAndVerifyDustRefund(cur realm) {
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		incentiveID,
 		externalCreatorUser,
 	)
@@ -330,7 +330,7 @@ func collectExternalIncentivePenalty(cur realm) {
 	testing.SkipHeights(1)
 
 	beforeBarBalance := bar.BalanceOf(externalCreatorUser)
-	sr.CollectExternalIncentivePenalty(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
+	sr.CollectExternalIncentivePenalty(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", incentiveID, externalCreatorUser)
 	afterBarBalance := bar.BalanceOf(externalCreatorUser)
 
 	barPenalty := afterBarBalance - beforeBarBalance

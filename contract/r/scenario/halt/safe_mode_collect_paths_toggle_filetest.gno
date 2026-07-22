@@ -70,8 +70,8 @@ var (
 	projectAddr3  = testutils.TestAddress("project-owner")
 	projectRealm3 = testing.NewUserRealm(projectAddr3)
 
-	barPath3 = "gno.land/r/onbloc/bar"
-	fooPath3 = "gno.land/r/onbloc/foo"
+	barPath3 = "gno.land/r/onbloc/bar.BAR"
+	fooPath3 = "gno.land/r/onbloc/foo.FOO"
 	fee3     = uint32(3000)
 
 	launchpadProjectID3 string
@@ -119,7 +119,7 @@ func setupSafeScenario(cur realm) {
 	pool.CreatePool(cross(cur), barPath3, fooPath3, fee3, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	staker.SetPoolTier(cross(cur), barPath3+":"+fooPath3+":3000", 1)
 	obl.Approve(cross(cur), launchpadAddr3, 1000000000)
-	launchpadProjectID3 = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl", projectAddr3, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)
+	launchpadProjectID3 = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl.OBL", projectAddr3, 1000000000, "gno.land/r/onbloc/bar.BAR", "1000000", 10, 20, 70, time.Now().Unix()+604800)
 	testing.SkipHeights(120960)
 	gns.Approve(cross(cur), launchpadAddr3, 1000000000)
 	launchpad.DepositGns(cross(cur), launchpadProjectID3+":30", 1000000000, "")

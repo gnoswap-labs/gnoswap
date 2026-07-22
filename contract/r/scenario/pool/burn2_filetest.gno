@@ -46,8 +46,8 @@ func main(cur realm) {
 // testInvalidTickRangeBurn tests burning with invalid tick range (should abort)
 func testInvalidTickRangeBurn(cur realm) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier100
 	liquidityAmount := "1000000"
 	tickLower := int32(-100)

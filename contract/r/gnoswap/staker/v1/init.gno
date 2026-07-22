@@ -207,7 +207,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 }
 
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
-	basicPoolPath := "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	basicPoolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 
 	pools := NewPools()
 	pl := NewPools().GetPoolOrNil(basicPoolPath)

@@ -62,9 +62,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -146,7 +146,7 @@ func createPoolAndSetTier(cur realm) {
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
@@ -166,7 +166,7 @@ func createAndStartIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		gnsPath,
 		REWARD_AMOUNT,
 		startTime,
@@ -225,7 +225,7 @@ func endExternalIncentive(cur realm) {
 
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -236,7 +236,7 @@ func endExternalIncentive(cur realm) {
 func checkCollectableExternalIncentive(cur realm, positionId uint64) {
 	testing.SetRealm(userRealm)
 
-	endTime := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	endTime := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 	currentTime := time.Now().Unix()
 	isEnded := currentTime > endTime
 	if !isEnded {

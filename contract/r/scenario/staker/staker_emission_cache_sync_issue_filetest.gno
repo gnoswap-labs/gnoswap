@@ -46,10 +46,10 @@ var (
 	user1Addr  = testutils.TestAddress("user1")
 	user1Realm = testing.NewUserRealm(user1Addr)
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	barPath    = "gno.land/r/onbloc/bar"
-	bazPath    = "gno.land/r/onbloc/baz"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	barPath    = "gno.land/r/onbloc/bar.BAR"
+	bazPath    = "gno.land/r/onbloc/baz.BAZ"
 
 	fee3000     uint32 = 3000
 	max_timeout int64  = 9999999999
@@ -129,7 +129,7 @@ func createPoolAndPosition(cur realm) {
 	pl.CreatePool(cross(cur), barPath, bazPath, fee3000, "79228162514264337593543950336")
 
 	// Set pool to tier 1
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000", 1)
 
 	// Approve tokens
 	bar.Approve(cross(cur), poolAddr, maxInt64)
