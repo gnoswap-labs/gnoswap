@@ -239,7 +239,7 @@ func verifyVotingWeight(cur realm, proposalId int64, projectTierId string) {
 // [EXPECTED] Total xGNS supply: 7000000000
 // [EXPECTED] Launchpad xGNS balance: 5000000000
 // [EXPECTED] Dummy xGNS balance: 0
-// [EXPECTED] Quorum amount (based on voting supply): 1000000000
+// [EXPECTED] Quorum amount (based on voting supply): 3500000000
 // [EXPECTED] Yea weight: 2000000000
 // [EXPECTED] Nay weight: 0
 // [EXPECTED] Dummy's vote weight: 2000000000

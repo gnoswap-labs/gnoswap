@@ -79,6 +79,7 @@ func (gv *governanceV1) ProposeText(
 	if err != nil {
 		panic(err)
 	}
+	quorumWeight := gv.stakerAccessor.GetTotalxGnsSupply()
 
 	// Create the text proposal with metadata
 	proposal, err := gv.createProposal(
@@ -86,6 +87,7 @@ func (gv *governanceV1) ProposeText(
 		governance.Text,
 		config,
 		maxVotingWeight,
+		quorumWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalTextData(),
@@ -192,6 +194,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	if err != nil {
 		panic(err)
 	}
+	quorumWeight := gv.stakerAccessor.GetTotalxGnsSupply()
 
 	// Create the community pool spend proposal with execution data
 	proposal, err := gv.createProposal(
@@ -199,6 +202,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		governance.CommunityPoolSpend,
 		config,
 		maxVotingWeight,
+		quorumWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
@@ -305,6 +309,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	if err != nil {
 		panic(err)
 	}
+	quorumWeight := gv.stakerAccessor.GetTotalxGnsSupply()
 
 	// Create the parameter change proposal with execution data
 	proposal, err := gv.createProposal(
@@ -312,6 +317,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		governance.ParameterChange,
 		config,
 		maxVotingWeight,
+		quorumWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalExecutionData(numToExecute, executions),
@@ -354,6 +360,7 @@ func (gv *governanceV1) createProposal(
 	proposalType governance.ProposalType,
 	config governance.Config,
 	maxVotingWeight int64,
+	quorumWeight int64,
 	snapshotTime int64,
 	proposalMetadata *governance.ProposalMetadata,
 	proposalData *governance.ProposalData,
@@ -390,6 +397,7 @@ func (gv *governanceV1) createProposal(
 		maxVotingWeight,
 		proposalType.IsExecutable(),
 		createdAt,
+		quorumWeight,
 	)
 
 	// Get current configuration version for tracking

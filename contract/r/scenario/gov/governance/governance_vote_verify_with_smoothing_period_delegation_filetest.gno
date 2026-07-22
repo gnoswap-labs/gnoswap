@@ -39,19 +39,21 @@ import (
 var (
 	t *testing.T
 
-	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	user1Addr        = testutils.TestAddress("user1")
-	user2Addr        = testutils.TestAddress("user2")
-	user3Addr        = testutils.TestAddress("user3")
-	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-	voter1Addr       = testutils.TestAddress("voter1")
-	voter2Addr       = testutils.TestAddress("voter2")
-	currentBlockTime = int64(5)
+	adminAddr             = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	user1Addr             = testutils.TestAddress("user1")
+	user2Addr             = testutils.TestAddress("user2")
+	user3Addr             = testutils.TestAddress("user3")
+	govStakerAddr         = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	voter1Addr            = testutils.TestAddress("voter1")
+	voter2Addr            = testutils.TestAddress("voter2")
+	currentBlockTime      = int64(5)
+	proposalQuorumWeights map[int64]int64
 )
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
+	proposalQuorumWeights = make(map[int64]int64)
 
 	// Calculate timing for delegation changes within smoothing period
 	smoothingPeriodBlocks := int64(config.VotingWeightSmoothingDuration) / currentBlockTime
@@ -185,8 +187,15 @@ func proposeText(cur realm, proposerAddr address) int64 {
 
 	testing.SetRealm(testing.NewUserRealm(proposerAddr))
 	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
+	quorumWeight := xgns.TotalSupply()
+	expectedQuorumAmount := quorumWeight * governance.GetLatestConfig().Quorum / 100
+	proposalQuorumWeights[proposalId] = quorumWeight
+
+	uassert.Equal(t, expectedQuorumAmount, quorumAmount)
 	ufmt.Printf("[INFO] Created proposal ID: %d\n", proposalId)
 	ufmt.Printf("[INFO] Snapshot captures current delegation state\n")
+	ufmt.Printf("[EXPECTED] Quorum weight: %d, quorum amount: %d\n", quorumWeight, quorumAmount)
 	return proposalId
 }
 
@@ -231,6 +240,9 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
 	nayWeight, _ := governance.GetNayByProposalId(proposalId)
 	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
+	quorumWeight := proposalQuorumWeights[proposalId]
+	expectedQuorumAmount := quorumWeight * governance.GetLatestConfig().Quorum / 100
+	uassert.Equal(t, expectedQuorumAmount, quorumAmount)
 
 	// Get xGNS balances
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
@@ -240,7 +252,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 		voter1Weight, voter1Xgns, voter1Weight == voter1Xgns)
 	ufmt.Printf("[EXPECTED] Voter2: vote weight=%d, xGNS=%d, match=%t\n",
 		voter2Weight, voter2Xgns, voter2Weight == voter2Xgns)
-	ufmt.Printf("[EXPECTED] Quorum amount: %d\n", quorumAmount)
+	ufmt.Printf("[EXPECTED] Quorum amount: %d (xGNS supply %d * quorum 50%%)\n", quorumAmount, quorumWeight)
 	ufmt.Printf("[EXPECTED] Yea weight: %d (voter1)\n", yeaWeight)
 	ufmt.Printf("[EXPECTED] Nay weight: %d (voter2)\n", nayWeight)
 }
@@ -270,6 +282,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 6. Propose Text - ProposalID: 1 (voter2 has no voting weight)
 // [INFO] Created proposal ID: 1
 // [INFO] Snapshot captures current delegation state
+// [EXPECTED] Quorum weight: 6000000000, quorum amount: 3000000000
 //
 // [SCENARIO] 7. Skip 1 block to apply mid delegation voting weight snapshot
 // [INFO] current height: 17503
@@ -277,6 +290,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 8. Propose Text - ProposalID: 2 (voter2 has voting weight)
 // [INFO] Created proposal ID: 2
 // [INFO] Snapshot captures current delegation state
+// [EXPECTED] Quorum weight: 7000000000, quorum amount: 3500000000
 //
 // [SCENARIO] 9. Skip 1 block to apply after delegation voting weight snapshot
 // [INFO] current height: 17504
@@ -284,6 +298,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 10. Propose Text - ProposalID: 3 (voter2 has voting weight)
 // [INFO] Created proposal ID: 3
 // [INFO] Snapshot captures current delegation state
+// [EXPECTED] Quorum weight: 8000000000, quorum amount: 4000000000
 // [SCENARIO] 11. Skip voting start delay
 // [INFO] current height: 34784
 //
@@ -295,7 +310,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 13. Verify voting weights - ProposalID: 1
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=1000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2250000000
+// [EXPECTED] Quorum amount: 3000000000 (xGNS supply 6000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 1000000000 (voter2)
 //
@@ -307,7 +322,7 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 15. Verify voting weights - ProposalID: 2
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 3000000000
+// [EXPECTED] Quorum amount: 3500000000 (xGNS supply 7000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)
 //
@@ -319,6 +334,6 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 // [SCENARIO] 17. Verify voting weights - ProposalID: 3
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=2000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 3250000000
+// [EXPECTED] Quorum amount: 4000000000 (xGNS supply 8000000000 * quorum 50%)
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 2000000000 (voter2)

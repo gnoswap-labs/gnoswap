@@ -236,7 +236,10 @@ func createTestProposal(id int64) *governance.Proposal {
 
 	return governance.NewProposal(
 		id,
-		NewProposalStatus(config, 10000, true, createdAt),
+		NewProposalStatus(
+			config, 10000, true, createdAt,
+			10000,
+		),
 		governance.NewProposalMetadata("Test", "Test proposal"),
 		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),

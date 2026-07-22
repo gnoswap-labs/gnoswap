@@ -38,6 +38,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(), // 10 days ago
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -66,6 +67,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
 					NewProposalCommunityPoolSpendData(
@@ -103,6 +105,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 					10_000_000_000,
 					false, // not executable
 					time.Now().Add(-time.Hour*24*10).Unix(),
+					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Text Proposal", "Text Only"),
 				NewProposalTextData(),
@@ -126,6 +129,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Unix(), // Just created
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -153,6 +157,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Second*86400).Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -228,6 +233,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -256,6 +262,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
 					NewProposalCommunityPoolSpendData(
@@ -297,6 +304,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 					10_000_000_000,
 					false,
 					time.Now().Unix(),
+					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Text Proposal", "Text Only"),
 				NewProposalTextData(),
@@ -322,6 +330,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Unix(), // Just created, not in execution period
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -400,6 +409,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 					10_000_000_000,
 					true,
 					time.Now().Unix()-executableDelay,
+					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Test Proposal", "Description"),
 				NewProposalCommunityPoolSpendData(
@@ -426,6 +436,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 					10_000_000_000,
 					true,
 					time.Now().Unix()-executableDelay,
+					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Test Proposal", "Description"),
 				NewProposalCommunityPoolSpendData(
@@ -461,6 +472,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
@@ -489,6 +501,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 						10_000_000_000,
 						true,
 						time.Now().Unix(),
+						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
 					NewProposalTextData(),
@@ -569,7 +582,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, false, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, false, time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Text Proposal", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -591,7 +607,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -609,7 +628,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -627,7 +649,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -648,7 +673,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -670,7 +698,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -692,7 +723,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -710,7 +744,10 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -813,7 +850,10 @@ func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
 			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(testConfig, 10_000_000_000, true, tt.proposalTime.Unix()),
+				NewProposalStatus(
+					testConfig, 10_000_000_000, true, tt.proposalTime.Unix(),
+					10_000_000_000,
+				),
 				governance.NewProposalMetadata("Parameter Change", "Description"),
 				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
 				testutils.TestAddress("proposer"),
@@ -910,7 +950,10 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
 			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+				NewProposalStatus(
+					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+					10_000_000_000,
+				),
 				governance.NewProposalMetadata("Community Pool Spend", "Description"),
 				NewProposalCommunityPoolSpendData(
 					tt.tokenPath,
@@ -1023,7 +1066,10 @@ func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
 			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+				NewProposalStatus(
+					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+					10_000_000_000,
+				),
 				governance.NewProposalMetadata("Parameter Change", "Description"),
 				NewProposalExecutionData(tt.numToExecute, tt.executions),
 				testutils.TestAddress("proposer"),
@@ -1136,7 +1182,10 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 			} else {
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, tt.cancellationTime.Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, tt.cancellationTime.Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
 					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
 					tt.proposer,
@@ -1178,7 +1227,10 @@ func TestGovernanceExecute_ReExecutionPrevention(cur realm, t *testing.T) {
 
 		proposal := governance.NewProposal(
 			1,
-			NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+				10_000_000_000,
+			),
 			governance.NewProposalMetadata("Parameter Change", "Description"),
 			NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"),
 			testutils.TestAddress("proposer"),
@@ -1227,7 +1279,10 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Community Pool Spend", "Test proposal"),
 					NewProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns.GNS",
@@ -1298,7 +1353,10 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"),
 					testutils.TestAddress("proposer"),
@@ -1320,7 +1378,10 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
 					NewProposalExecutionData(0, ""),
 					testutils.TestAddress("proposer"),
@@ -1342,7 +1403,10 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
 					NewProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
 					testutils.TestAddress("proposer"),
@@ -1365,7 +1429,10 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
 					governance.NewProposalData(
 						governance.ParameterChange,

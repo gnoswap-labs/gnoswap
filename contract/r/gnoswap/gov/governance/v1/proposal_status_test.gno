@@ -151,7 +151,10 @@ func TestProposalStatus_StatusType(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
+			status := NewProposalStatus(
+				config, tc.maxVotingWeight, tc.executable, baseTime.Unix(),
+				tc.maxVotingWeight,
+			)
 			resolver := NewProposalStatusResolver(status)
 
 			// Add votes if specified
@@ -219,7 +222,10 @@ func TestProposalStatus_VotingOperations(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			config := governance.NewConfig(100, 200, 0, tc.quorum, 0, 100, 200)
-			status := NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
+			status := NewProposalStatus(
+				config, tc.maxVotingWeight, true, time.Now().Unix(),
+				tc.maxVotingWeight,
+			)
 			resolver := NewProposalStatusResolver(status)
 
 			// when
@@ -254,7 +260,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "cancel - success",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -269,7 +278,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "execute - success",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -284,7 +296,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "vote - add yes vote",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -299,7 +314,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "vote - add no vote",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -314,7 +332,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "vote - multiple votes",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				resolver := NewProposalStatusResolver(status)
 				_ = resolver.vote(true, 300)
 				return resolver
@@ -330,7 +351,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "updateVoteStatus - increase max weight and quorum",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -348,7 +372,10 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		{
 			name: "updateVoteStatus - decrease max weight and quorum",
 			setup: func() *ProposalStatusResolver {
-				status := NewProposalStatus(config, 1000, true, baseTime.Unix())
+				status := NewProposalStatus(
+					config, 1000, true, baseTime.Unix(),
+					1000,
+				)
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
@@ -421,7 +448,10 @@ func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			status := NewProposalStatus(tc.config, tc.maxVotingWeight, tc.executable, tc.createdAt)
+			status := NewProposalStatus(
+				tc.config, tc.maxVotingWeight, tc.executable, tc.createdAt,
+				tc.maxVotingWeight,
+			)
 
 			// then
 			uassert.NotNil(t, status)
@@ -451,4 +481,13 @@ func TestProposalStatus_NewProposalStatus(cur realm, t *testing.T) {
 			uassert.Equal(t, voteStatus.NoWeight(), int64(0))
 		})
 	}
+}
+
+func TestNewProposalStatus_UsesCurrentXGnsSupplyForQuorum(cur realm, t *testing.T) {
+	// Regression for GSW-2813: quorum must be based on total xGNS supply, not the smoothed voting weight.
+	config := governance.NewConfig(100, 200, 86400, 50, 0, 100, 200)
+	status := NewProposalStatus(config, 500000, true, time.Now().Unix(), 1000000)
+
+	uassert.Equal(t, int64(500000), status.VoteStatus().MaxVotingWeight())
+	uassert.Equal(t, int64(500000), status.VoteStatus().QuorumAmount())
 }

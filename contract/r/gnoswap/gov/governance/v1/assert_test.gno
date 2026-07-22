@@ -26,7 +26,10 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
@@ -57,7 +60,10 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					2,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
@@ -79,7 +85,10 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 				proposer := testutils.TestAddress("proposer2")
 				proposal := governance.NewProposal(
 					3,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title 2", "Test Description 2"),
 					NewProposalTextData(),
 					proposer,

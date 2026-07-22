@@ -35,7 +35,10 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 
 	proposal := governance.NewProposal(
 		1,
-		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
+		NewProposalStatus(
+			config, 1000, governance.Text.IsExecutable(), baseTime,
+			1000,
+		),
 		governance.NewProposalMetadata("Test Proposal", "Test Description"),
 		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),

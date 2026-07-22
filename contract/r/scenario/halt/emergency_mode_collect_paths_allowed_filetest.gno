@@ -5,11 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -270,6 +271,7 @@ func setupCollectScenario(cur realm) {
 	gns.Approve(cross(cur), govStakerAddr2, 5000000)
 	govstaker.Delegate(cross(cur), bobAddr2, 5000000, "")
 	prepareGovernanceVoters(cur)
+	prepareGovernanceQuorumForEmergencyExecution(cur)
 	testing.SetRealm(adminRealm2)
 	govstaker.SetUnDelegationLockupPeriodByAdmin(cross(cur), 0)
 	testing.SetRealm(bobRealm2)
@@ -351,6 +353,12 @@ func setEmergencyModeForCollect(cur realm) {
 	ufmt.Printf("[INFO] GovStaker halted: %t\n", halt.IsHaltedGovStaker())
 	ufmt.Printf("[INFO] Launchpad halted: %t\n", halt.IsHaltedLaunchpad())
 	ufmt.Printf("[INFO] Withdraw halted: %t\n", halt.IsHaltedWithdraw())
+}
+
+func prepareGovernanceQuorumForEmergencyExecution(cur realm) {
+	config := governance.GetLatestConfig()
+	testing.SetRealm(adminRealm2)
+	governance.Reconfigure(cross(cur), config.VotingStartDelay, config.VotingPeriod, config.VotingWeightSmoothingDuration, 40, config.ProposalCreationThreshold, config.ExecutionDelay, config.ExecutionWindow)
 }
 
 func testPositionCollectAllowed(cur realm) {
@@ -589,7 +597,11 @@ func testGovernanceVoteAllowed(cur realm) {
 	aliceVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
 	testing.SetRealm(carolRealm2)
 	carolVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
-	ufmt.Printf("[EXPECTED] governance.Vote alice: %s, carol: %s\n", aliceVote, carolVote)
+	testing.SetRealm(projectRealm2)
+	projectVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
+	testing.SetRealm(bobRealm2)
+	bobVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
+	ufmt.Printf("[EXPECTED] governance.Vote alice: %s, carol: %s, project: %s, bob: %s\n", aliceVote, carolVote, projectVote, bobVote)
 	ufmt.Println("[EXPECTED] governance.Vote succeeded in emergency mode")
 }
 
@@ -743,7 +755,7 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] governance.ProposeParameterChange succeeded in emergency mode
 //
 // [SCENARIO] 28. governance.Vote remains allowed
-// [EXPECTED] governance.Vote alice: 1000000000, carol: 1000000000
+// [EXPECTED] governance.Vote alice: 1000000000, carol: 1000000000, project: 1000000000, bob: 1500000
 // [EXPECTED] governance.Vote succeeded in emergency mode
 //
 // [SCENARIO] 29. governance.Execute remains allowed
@@ -751,5 +763,5 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] governance.Execute succeeded in emergency mode
 //
 // [SCENARIO] 30. governance.Reconfigure remains allowed
-// [EXPECTED] governance.Reconfigure version: 3
+// [EXPECTED] governance.Reconfigure version: 4
 // [EXPECTED] governance.Reconfigure succeeded in emergency mode

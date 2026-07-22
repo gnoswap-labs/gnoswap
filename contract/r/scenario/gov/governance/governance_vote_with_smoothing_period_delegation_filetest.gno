@@ -218,6 +218,6 @@ func verifyVotingWeight(cur realm, proposalId int64) {
 // [SCENARIO] 9. Verify voting weights
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=1000000000, xGNS=0, match=false
-// [EXPECTED] Quorum amount: 2000000000
+// [EXPECTED] Quorum amount: 2500000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 1000000000 (voter2)
