@@ -43,21 +43,15 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	rewardPerSecond, tierRewards := s.setPoolTier(0, rlm, poolPath, tier, currentTime)
 
 	previousRealm := rlm.Previous()
-	chain.Emit(
-		"SetPoolTier",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"poolPath", poolPath,
-		"tier", utils.FormatUint(tier),
-		"rewardPerSecond", utils.FormatInt(rewardPerSecond),
-		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
-		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
-		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
-		"tier1Count", utils.FormatUint(poolTier.counts[Tier1]),
-		"tier2Count", utils.FormatUint(poolTier.counts[Tier2]),
-		"tier3Count", utils.FormatUint(poolTier.counts[Tier3]),
-		"currentTime", utils.FormatInt(currentTime),
-		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
+	emitSetPoolTier(
+		previousRealm.Address().String(),
+		previousRealm.PkgPath(),
+		poolPath,
+		tier,
+		rewardPerSecond,
+		tierRewards,
+		poolTier.counts,
+		currentTime,
 	)
 }
 

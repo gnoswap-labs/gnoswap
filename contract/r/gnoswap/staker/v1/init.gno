@@ -16,6 +16,8 @@ const (
 	// unstakingFee is the fee charged when unstaking positions.
 	// This parameter can be modified through governance.
 	defaultUnstakingFee = uint64(100) // 1%
+
+	defaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func init(cur realm) {
@@ -130,7 +132,8 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	initializedPoolTier, initializedPools := initializePoolTier(stakerStore)
+	shouldEmitInitialPoolTier := !stakerStore.HasPoolTierMembershipsStoreKey()
+	initializedPoolTier, initializedPools, initialPoolTierTime, initialTierRewards := initializePoolTier(stakerStore)
 
 	if !stakerStore.HasPoolsStoreKey() {
 		err := stakerStore.SetPools(0, rlm, initializedPools.tree)
@@ -203,26 +206,40 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
+	if shouldEmitInitialPoolTier {
+		previousRealm := rlm.Previous()
+		emitSetPoolTier(
+			previousRealm.Address().String(),
+			previousRealm.PkgPath(),
+			defaultInitialPoolTierPath,
+			uint64(Tier1),
+			initializedPoolTier.currentEmission,
+			initialTierRewards,
+			initializedPoolTier.counts,
+			initialPoolTierTime,
+		)
+	}
+
 	return nil
 }
 
-func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
-	basicPoolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
-
+func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools, int64, map[uint64]int64) {
 	pools := NewPools()
-	pl := NewPools().GetPoolOrNil(basicPoolPath)
+	currentTime := time.Now().Unix()
+
+	pl := NewPools().GetPoolOrNil(defaultInitialPoolTierPath)
 	if pl == nil {
-		pl = sr.NewPool(basicPoolPath, time.Now().Unix())
-		pools.set(basicPoolPath, pl)
+		pl = sr.NewPool(defaultInitialPoolTierPath, currentTime)
+		pools.set(defaultInitialPoolTierPath, pl)
 	}
 
 	poolTier := NewPoolTier(
 		pools,
-		time.Now().Unix(),
-		basicPoolPath,
+		currentTime,
+		defaultInitialPoolTierPath,
 		emission.GetStakerEmissionAmountPerSecond,
 		emission.GetStakerEmissionAmountPerSecondInRange,
 	)
 
-	return poolTier, pools
+	return poolTier, pools, currentTime, poolTier.computeTierRewards(poolTier.currentEmission)
 }
