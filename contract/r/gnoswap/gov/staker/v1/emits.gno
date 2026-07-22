@@ -23,7 +23,7 @@ func emitUpdateEmissionRewardAccumulation(manager *staker.EmissionRewardManager)
 		"UpdateEmissionRewardAccumulation",
 		"totalStakedAmount", utils.FormatInt(manager.GetTotalStakedAmount()),
 		"distributedAmount", utils.FormatInt(manager.GetDistributedAmount()),
-		"accumulatedRewardX128PerStake", manager.GetAccumulatedRewardX128PerStake().String(),
+		"accumulatedRewardX128PerStake", manager.GetAccumulatedRewardX128PerStake().ToString(),
 		"accumulatedTimestamp", utils.FormatInt(manager.GetAccumulatedTimestamp()),
 	)
 }
@@ -37,7 +37,7 @@ func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardMa
 	for tokenPath := range distributedAmounts {
 		accumulatedProtocolFeeX128PerStake := "0"
 		if acc := manager.GetAccumulatedProtocolFeeX128PerStake(tokenPath); acc != nil {
-			accumulatedProtocolFeeX128PerStake = acc.String()
+			accumulatedProtocolFeeX128PerStake = acc.ToString()
 		}
 
 		chain.Emit(
