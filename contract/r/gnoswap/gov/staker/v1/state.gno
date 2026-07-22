@@ -300,7 +300,15 @@ func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, a
 		return err
 	}
 
-	return g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
+	err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
+	if err != nil {
+		return err
+	}
+
+	// Emit the emission reward accumulation
+	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
+
+	return nil
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -324,7 +332,14 @@ func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string
 		return err
 	}
 
-	return g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
+	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
+		return err
+	}
+
+	// Emit the emission reward accumulation
+	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
+
+	return nil
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -355,6 +370,9 @@ func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address strin
 	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
 		return 0, err
 	}
+
+	// Emit the emission reward accumulation
+	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
 
 	return amount, nil
 }
@@ -394,7 +412,15 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 		return err
 	}
 
-	return g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
+	err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
+	if err != nil {
+		return err
+	}
+
+	// Emit the protocol fee reward accumulation
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+
+	return nil
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -420,7 +446,14 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 		return err
 	}
 
-	return g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
+		return err
+	}
+
+	// Emit the protocol fee reward accumulation
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+
+	return nil
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -453,6 +486,9 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return nil, err
 	}
+
+	// Emit the protocol fee reward accumulation
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
 
 	return rewards, nil
 }
