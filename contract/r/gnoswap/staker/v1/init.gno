@@ -132,8 +132,19 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	shouldEmitInitialPoolTier := !stakerStore.HasPoolTierMembershipsStoreKey()
 	initializedPoolTier, initializedPools, initialPoolTierTime, initialTierRewards := initializePoolTier(stakerStore)
+
+	previousRealm := rlm.Previous()
+	emitSetPoolTier(
+		previousRealm.Address().String(),
+		previousRealm.PkgPath(),
+		defaultInitialPoolTierPath,
+		uint64(Tier1),
+		initializedPoolTier.currentEmission,
+		initialTierRewards,
+		initializedPoolTier.counts,
+		initialPoolTierTime,
+	)
 
 	if !stakerStore.HasPoolsStoreKey() {
 		err := stakerStore.SetPools(0, rlm, initializedPools.tree)
@@ -204,20 +215,6 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		if err != nil {
 			return err
 		}
-	}
-
-	if shouldEmitInitialPoolTier {
-		previousRealm := rlm.Previous()
-		emitSetPoolTier(
-			previousRealm.Address().String(),
-			previousRealm.PkgPath(),
-			defaultInitialPoolTierPath,
-			uint64(Tier1),
-			initializedPoolTier.currentEmission,
-			initialTierRewards,
-			initializedPoolTier.counts,
-			initialPoolTierTime,
-		)
 	}
 
 	return nil
