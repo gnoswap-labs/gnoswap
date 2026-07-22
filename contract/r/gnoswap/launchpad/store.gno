@@ -31,6 +31,7 @@ const (
 	StoreKeyProjectTierRewardManagers StoreKey = "projectTierRewardManagers" // Project tier reward managers tree
 	StoreKeyDepositCounter            StoreKey = "depositCounter"            // Deposit counter
 	StoreKeyDeposits                  StoreKey = "deposits"                  // Deposits tree
+	StoreKeyTotalGNSStakedAmount      StoreKey = "totalGNSStakedAmount"      // Total active launchpad GNS stake
 )
 
 type launchpadStore struct {
@@ -157,6 +158,32 @@ func (s *launchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) 
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)
+}
+
+func (s *launchpadStore) HasTotalGNSStakedAmountKey() bool {
+	return s.kvStore.Has(StoreKeyTotalGNSStakedAmount.String())
+}
+
+func (s *launchpadStore) GetTotalGNSStakedAmount() int64 {
+	result, err := s.kvStore.Get(StoreKeyTotalGNSStakedAmount.String())
+	if err != nil {
+		panic(err)
+	}
+
+	amount, ok := result.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
+	}
+
+	return amount
+}
+
+func (s *launchpadStore) SetTotalGNSStakedAmount(_ int, rlm realm, amount int64) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyTotalGNSStakedAmount.String(), amount)
 }
 
 // NewLaunchpadStore creates a new launchpad store instance with the provided KV store.

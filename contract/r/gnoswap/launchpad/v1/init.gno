@@ -1,8 +1,6 @@
 package launchpad
 
-import (
-	"gno.land/r/gnoswap/launchpad"
-)
+import "gno.land/r/gnoswap/launchpad"
 
 func init(cur realm) {
 	registerLaunchpadV1(cur)
@@ -43,6 +41,13 @@ func initStoreData(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) e
 
 	if !launchpadStore.HasDepositsKey() {
 		err := launchpadStore.SetDeposits(0, rlm, launchpad.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
+	if !launchpadStore.HasTotalGNSStakedAmountKey() {
+		err := launchpadStore.SetTotalGNSStakedAmount(0, rlm, 0)
 		if err != nil {
 			return err
 		}

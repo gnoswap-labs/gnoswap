@@ -32,7 +32,6 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 	})
 
 	return projectIDs
-
 }
 
 // GetProject retrieves a project by its ID.
@@ -475,6 +474,11 @@ func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
 	}
 
 	return deposit.EndTime(), nil
+}
+
+// GetTotalGNSStakedAmount returns the total amount of GNS currently staked across all launchpad deposits.
+func (lp *launchpadV1) GetTotalGNSStakedAmount() int64 {
+	return lp.store.GetTotalGNSStakedAmount()
 }
 
 // GetProjectTierRewardManagerCount returns the total number of reward managers.
