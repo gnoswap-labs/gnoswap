@@ -57,8 +57,8 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee     = uint32(3000)
 )
 
@@ -108,7 +108,7 @@ func initPoolAndTokens(cur realm) {
 		fee,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
 }
 
 func mintPositionWithEmissionEnabled(cur realm) {
@@ -211,7 +211,7 @@ func resumeEmissionAndVerify(cur realm) {
 // [SCENARIO] 1. Initialize pool and tokens
 // [INFO] Alice BAR balance: 100000000
 // [INFO] Alice FOO balance: 100000000
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
 // [SCENARIO] 2. Mint position with emission enabled (normal case)
 // [INFO] Emission is ENABLED - minting position...

@@ -53,9 +53,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -142,12 +142,12 @@ func createPool(cur realm) {
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
 func createExternalIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	qux.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
@@ -157,11 +157,12 @@ func createExternalIncentive(cur realm) {
 	incentiveStartTime = startTime
 	incentiveEndTime = endTime
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, createTimestamp, 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		REWARD_AMOUNT,
 		startTime,
@@ -212,8 +213,8 @@ func collectRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CollectReward(cross(cur), 1)
 
-	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
-	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] after CollectReward:\n")
 	ufmt.Printf("  - accumulatedPenaltyAmount: %d\n", penaltyAfterCollect)
@@ -231,10 +232,10 @@ func endIncentive(cur realm) {
 	timeLeft := incentiveEndTime - nowTime
 	testing.SkipHeights(timeLeft / 5)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	sr.EndExternalIncentive(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -244,18 +245,18 @@ func endIncentive(cur realm) {
 
 func collectPenalty(cur realm) {
 	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
-	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
 
 	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
-	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] penalty before collection: %d\n", penaltyBefore)
 	ufmt.Printf("[INFO] penalty collected: %d\n", collected)
@@ -278,10 +279,10 @@ func collectPenalty(cur realm) {
 
 func collectPenaltyAgain(cur realm) {
 	testing.SkipHeights(1)
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
 		cross(cur),
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -310,7 +311,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create external incentive
-// [INFO] created external incentive: g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567900:1
+// [INFO] created external incentive: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 //
 // [SCENARIO] 4. Start incentive and stake position
 // [INFO] staked position 1
@@ -328,8 +329,8 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] penalty before collection: 1300000000
 // [INFO] penalty collected: 1300000000
 // [INFO] penalty remaining: 0
-// [INFO] creator QUX before: 5788
-// [INFO] creator QUX after: 1300005788
+// [INFO] creator QUX before: 9000005788
+// [INFO] creator QUX after: 10300005788
 // [INFO] creator QUX increase: 1300000000
 // [EXPECTED] penalty successfully collected to creator
 // [EXPECTED] accumulatedPenaltyAmount reset to 0

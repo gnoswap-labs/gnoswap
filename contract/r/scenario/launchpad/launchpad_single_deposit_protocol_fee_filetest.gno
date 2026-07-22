@@ -52,7 +52,7 @@ var (
 func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
 	createOBLProject(cur)
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	projectTier30Id := "gno.land/r/onbloc/obl.OBL:123:30"
 	println()
 
 	println("[SCENARIO] 2. Single deposit by Alice")
@@ -101,7 +101,7 @@ func createOBLProject(cur realm) {
 
 	recipientAddr := projectAddr
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -165,8 +165,8 @@ func simulateSwapFee(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Swap fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -182,8 +182,8 @@ func simulatePoolCreationFee(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Pool creation fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -199,8 +199,8 @@ func simulateWithdrawalFee(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Withdrawal fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -216,8 +216,8 @@ func simulateUnstakingFee(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Unstaking fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -279,7 +279,7 @@ func formatProtocolFees(cur realm, fees map[string]int64) string {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [INFO] Project created with ID: gno.land/r/onbloc/obl:123
+// [INFO] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 //
 // [SCENARIO] 2. Single deposit by Alice
 // [INFO] Admin transferring GNS to depositor
@@ -313,7 +313,7 @@ func formatProtocolFees(cur realm, fees map[string]int64) string {
 //
 // [SCENARIO] 8. Project recipient collects protocol fee
 // [INFO] Project recipient collecting protocol fee
-// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1099 gno.land/r/onbloc/qux:2199]
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:1099 gno.land/r/onbloc/qux.QUX:2199]
 // [INFO] BAR balance before: 0
 // [INFO] QUX balance before: 0
 // [INFO] BAR balance after: 1099
@@ -330,7 +330,7 @@ func formatProtocolFees(cur realm, fees map[string]int64) string {
 // [INFO] Distributing protocol fee to gov/staker
 // [INFO] Protocol fee distributed
 // [INFO] Project recipient collecting protocol fee
-// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1499 gno.land/r/onbloc/qux:2999]
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:1499 gno.land/r/onbloc/qux.QUX:2999]
 // [INFO] BAR balance before: 1099
 // [INFO] QUX balance before: 2199
 // [INFO] BAR balance after: 2598

@@ -193,7 +193,7 @@ func getBalanceChanges(cur realm, fn func()) {
 	devopsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 	govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-	gnsPath := "gno.land/r/gnoswap/gns"
+	gnsPath := "gno.land/r/gnoswap/gns.GNS"
 
 	beforeStakerBalance := common.BalanceOf(gnsPath, stakerAddr)
 	beforeDevopsBalance := common.BalanceOf(gnsPath, devopsAddr)

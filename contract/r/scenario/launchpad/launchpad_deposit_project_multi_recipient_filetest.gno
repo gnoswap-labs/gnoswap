@@ -56,8 +56,8 @@ var (
 func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
 	createOBLProject(cur)
-	projectId := "gno.land/r/onbloc/obl:123"
-	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	projectId := "gno.land/r/onbloc/obl.OBL:123"
+	projectTier30Id := "gno.land/r/onbloc/obl.OBL:123:30"
 	println()
 
 	// [SCENARIO] 2. Protocol fee setup
@@ -107,7 +107,7 @@ func createOBLProject(cur realm) {
 
 	recipientAddr := testutils.TestAddress("project-owner")
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
@@ -173,8 +173,8 @@ func setupProtocolFee(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 	testing.SkipHeights(1)
 
 	println("[INFO] Validating protocol fee balances")
@@ -273,9 +273,9 @@ func collectProtocolFeeForOBLProjectRecipient2(cur realm) {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20

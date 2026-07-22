@@ -114,7 +114,7 @@ func verifyTestImplementation(cur realm) {
 	ufmt.Println("[INFO] Testing ProposeCommunityPoolSpend function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, cur, "test implementation: ProposeCommunityPoolSpend not supported", func() {
-		govGovernance.ProposeCommunityPoolSpend(cross(cur), "Test Title", "Test Description", adminAddr, "gno.land/r/onbloc/foo", 1000)
+		govGovernance.ProposeCommunityPoolSpend(cross(cur), "Test Title", "Test Description", adminAddr, "gno.land/r/onbloc/foo.FOO", 1000)
 	})
 	ufmt.Println("[EXPECTED] ProposeCommunityPoolSpend panics correctly")
 

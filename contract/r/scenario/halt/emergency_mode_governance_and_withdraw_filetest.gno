@@ -88,8 +88,8 @@ var (
 
 	proposalCreationDelegateeAddr = testutils.TestAddress("prop-delegatee")
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee     = uint32(3000)
 
 	textProposalId            int64
@@ -221,7 +221,7 @@ func createPoolAndPosition(cur realm) {
 		fee,
 		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	ufmt.Println("[INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
 
 	// Mint position
 	testing.SetRealm(aliceRealm)
@@ -326,7 +326,7 @@ func testRouterSwapBlocked(cur realm) {
 			barPath,
 			fooPath,
 			"100000",
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
 			"100",
 			"0",
 			time.Now().Unix()+3600,
@@ -501,7 +501,7 @@ func verifyHaltStatusSummary(cur realm) {
 // [INFO] Governance and tokens initialized
 //
 // [STEP 2] Create pool and position before Emergency Mode
-// [INFO] Pool created: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [INFO] Pool created: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [INFO] Position minted with ID: 1, Liquidity: 213383746
 //
 // [STEP 3] Set halt level to Emergency Mode

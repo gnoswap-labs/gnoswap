@@ -35,7 +35,7 @@ var (
 	currentBlockTime = int64(2)
 )
 
-const testTokenPath = "gno.land/r/onbloc/obl"
+const testTokenPath = "gno.land/r/onbloc/obl.OBL"
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))

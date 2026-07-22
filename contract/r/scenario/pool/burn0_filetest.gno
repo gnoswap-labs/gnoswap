@@ -46,8 +46,8 @@ func main(cur realm) {
 // testSuccessfulBurn tests successful burning of all liquidity from a position
 func testSuccessfulBurn(cur realm, t *testing.T) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier100
 	liquidityAmount := "10000000000"
 	tickLower := int32(-100)
@@ -120,8 +120,8 @@ func testSuccessfulBurn(cur realm, t *testing.T) {
 
 // Output:
 // [INFO] Creating pool with fee tier: 100
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/baz
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/baz.BAZ
 // [INFO] Initial liquidity amount: 10000000000
 // [INFO] Tick range: -100 to 100
 // [INFO] Position minted successfully

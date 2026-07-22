@@ -50,9 +50,9 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func main(cur realm) {
@@ -110,8 +110,8 @@ func initEmission(cur realm) {
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
-	staker.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", 1)
-	ufmt.Printf("[EXPECTED] %s pool tier is 1\n", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000")
+	staker.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", 1)
+	ufmt.Printf("[EXPECTED] %s pool tier is 1\n", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000")
 }
 
 func delegateWithMint(cur realm, from, to address, amount int64) {
@@ -199,13 +199,13 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Create pool and mint position
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 0)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 0)
 // [EXPECTED] Position minted successfully with ID: 1
 // [EXPECTED] Liquidity: 21338374
 // [EXPECTED] Amount0: 1000000, Amount1: 1000000
 //
 // [SCENARIO] 3. Initialize emission and set pool tier
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool tier is 1
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool tier is 1
 //
 // [SCENARIO] 4. Stake position
 // [EXPECTED] Position staked successfully with ID: 1
@@ -221,9 +221,9 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 //
 // [SCENARIO] 8. Check and collect protocol fee reward for admin
 // [EXPECTED] Protocol fee reward collected successfully for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/gnoswap/gns: 80264
+// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/gnoswap/gns.GNS: 80264
 //
 // [SCENARIO] 9. Check and collect protocol fee reward for alice
 // [EXPECTED] Protocol fee reward collected successfully for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns: 40132
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns.GNS: 40132
 // [EXPECTED] remained unstaking fee reward(gns) is with delegate 2000001

@@ -40,8 +40,8 @@ var (
 	aliceAddr = testutils.TestAddress("alice")
 	bobAddr   = testutils.TestAddress("bob")
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func main(cur realm) {
@@ -177,13 +177,13 @@ func assertInt64Equal(cur realm, actual, expected int64, label string) {
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 //
 // [SCENARIO] 2. Deposit bar before bob delegation
-// [INFO] protocol fee deposited: gno.land/r/onbloc/bar(1000)
+// [INFO] protocol fee deposited: gno.land/r/onbloc/bar.BAR(1000)
 //
 // [SCENARIO] 3. Bob delegates after bar already exists
 // [INFO] delegated 1000000 GNS from g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu to g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
 //
 // [SCENARIO] 4. Deposit qux after both delegations exist
-// [INFO] protocol fee deposited: gno.land/r/onbloc/qux(500)
+// [INFO] protocol fee deposited: gno.land/r/onbloc/qux.QUX(500)
 //
 // [SCENARIO] 5. Distribute protocol fee and check claimable rewards
 // [EXPECTED] alice claimable bar: 999

@@ -58,8 +58,8 @@ type MintBuilder struct{ p MintParams }
 func MintParamsBuilder() *MintBuilder {
 	return &MintBuilder{
 		p: MintParams{
-			token0:         "gno.land/r/onbloc/bar",
-			token1:         "gno.land/r/onbloc/baz",
+			token0:         "gno.land/r/onbloc/bar.BAR",
+			token1:         "gno.land/r/onbloc/baz.BAZ",
 			fee:            3000,
 			tickLower:      -120,
 			tickUpper:      120,

@@ -844,14 +844,14 @@ func TestExactInSwapOperation_TokenTypes(cur realm, t *testing.T) {
 		},
 		{
 			name:        "input is WUGNOT",
-			inputToken:  "gno.land/r/gnoland/wugnot",
+			inputToken:  "gno.land/r/gnoland/wugnot.wugnot",
 			outputToken: "tokenB",
 			description: "WUGNOT input should not trigger wrapping",
 		},
 		{
 			name:        "output is WUGNOT",
 			inputToken:  "tokenA",
-			outputToken: "gno.land/r/gnoland/wugnot",
+			outputToken: "gno.land/r/gnoland/wugnot.wugnot",
 			description: "WUGNOT output should not trigger wrapping",
 		},
 	}
@@ -892,14 +892,14 @@ func TestExactOutSwapOperation_TokenTypes(cur realm, t *testing.T) {
 		},
 		{
 			name:        "input is WUGNOT",
-			inputToken:  "gno.land/r/gnoland/wugnot",
+			inputToken:  "gno.land/r/gnoland/wugnot.wugnot",
 			outputToken: "tokenB",
 			description: "WUGNOT input should not trigger wrapping",
 		},
 		{
 			name:        "output is WUGNOT",
 			inputToken:  "tokenA",
-			outputToken: "gno.land/r/gnoland/wugnot",
+			outputToken: "gno.land/r/gnoland/wugnot.wugnot",
 			description: "WUGNOT output should not trigger wrapping",
 		},
 	}

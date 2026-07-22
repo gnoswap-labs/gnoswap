@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	tokenPath     = "gno.land/r/demo/defi/foo20"
+	tokenPath     = "gno.land/r/demo/defi/foo20.FOO"
 	testRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/common")
 	alice         = testutils.TestAddress("alice")
 	bob           = testutils.TestAddress("bob")
@@ -29,6 +29,11 @@ func TestGrc20regHelper_GetToken(t *testing.T) {
 			name:        "get registered token",
 			path:        tokenPath,
 			shouldPanic: false,
+		},
+		{
+			name:        "reject token realm path",
+			path:        "gno.land/r/demo/defi/foo20",
+			shouldPanic: true,
 		},
 		{
 			name:        "get non registered token",

@@ -82,8 +82,8 @@ var (
 	carolAddr2         = testutils.TestAddress("carol")
 	carolRealm2        = testing.NewUserRealm(carolAddr2)
 
-	barPath2 = "gno.land/r/onbloc/bar"
-	fooPath2 = "gno.land/r/onbloc/foo"
+	barPath2 = "gno.land/r/onbloc/bar.BAR"
+	fooPath2 = "gno.land/r/onbloc/foo.FOO"
 	fee2     = uint32(3000)
 
 	launchpadProjectID string
@@ -240,7 +240,7 @@ func setupCollectScenario(cur realm) {
 	staker.SetPoolTier(cross(cur), barPath2+":"+fooPath2+":3000", 1)
 	staker.AddToken(cross(cur), barPath2)
 	obl.Approve(cross(cur), launchpadAddr2, 1000000000)
-	launchpadProjectID = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl", projectAddr2, 1000000000, "gno.land/r/onbloc/bar", "1000000", 10, 20, 70, time.Now().Unix()+604800)
+	launchpadProjectID = launchpad.CreateProject(cross(cur), "Bar Project", "gno.land/r/onbloc/obl.OBL", projectAddr2, 1000000000, "gno.land/r/onbloc/bar.BAR", "1000000", 10, 20, 70, time.Now().Unix()+604800)
 	testing.SkipHeights(120960)
 	gns.Approve(cross(cur), launchpadAddr2, 1000000000)
 	launchpadDepositID = launchpad.DepositGns(cross(cur), launchpadProjectID+":30", 1000000000, "")
@@ -260,6 +260,7 @@ func setupCollectScenario(cur realm) {
 	gns.Approve(cross(cur), stakerAddr2, collectInt64Max)
 	prepareDirectPoolPosition(cur)
 	prepareExternalIncentive(cur)
+	testing.SetRealm(aliceRealm2)
 	positionCollectID, _, _, _ = position.Mint(cross(cur), barPath2, fooPath2, fee2, -960, 960, "50000000", "50000000", "0", "0", 4102444800, aliceAddr2, "")
 	stakerPositionID, _, _, _ = position.Mint(cross(cur), barPath2, fooPath2, fee2, -60, 60, "5000000", "5000000", "1", "1", 4102444800, aliceAddr2, "")
 	gnft.Approve(cross(cur), stakerAddr2, positionIdFromCollect(cur, stakerPositionID))
@@ -321,11 +322,13 @@ func prepareDirectPoolPosition(cur realm) {
 }
 
 func prepareExternalIncentive(cur realm) {
-	testing.SetRealm(aliceRealm2)
+	testing.SetRealm(adminRealm2)
 	createdAt := time.Now().Unix()
 	startAt := createdAt - createdAt%86400 + 86400*2
 	endAt := startAt + 86400*90
-	externalIncentiveID = ufmt.Sprintf("%s:%d:1", aliceAddr2.String(), createdAt)
+	externalIncentiveID = ufmt.Sprintf("%s:%d:1", adminAddr2.String(), createdAt)
+	bar.Approve(cross(cur), stakerAddr2, collectInt64Max)
+	gns.Approve(cross(cur), stakerAddr2, collectInt64Max)
 	staker.CreateExternalIncentive(cross(cur), barPath2+":"+fooPath2+":3000", barPath2, 1000000000, startAt, endAt)
 	testing.SkipHeights(endAt - createdAt + 1)
 }
@@ -503,7 +506,7 @@ func testPoolCollectProtocolAllowed(cur realm) {
 }
 
 func testStakerEndExternalIncentiveAllowed(cur realm) {
-	testing.SetRealm(aliceRealm2)
+	testing.SetRealm(adminRealm2)
 	beforeBarBalance := bar.BalanceOf(aliceAddr2)
 	beforeGnsBalance := gns.BalanceOf(aliceAddr2)
 	staker.EndExternalIncentive(cross(cur), barPath2+":"+fooPath2+":3000", externalIncentiveID, aliceAddr2)
@@ -512,7 +515,7 @@ func testStakerEndExternalIncentiveAllowed(cur realm) {
 }
 
 func testStakerCollectExternalIncentivePenaltyAllowed(cur realm) {
-	testing.SetRealm(aliceRealm2)
+	testing.SetRealm(adminRealm2)
 	penaltyAmount := staker.CollectExternalIncentivePenalty(cross(cur), barPath2+":"+fooPath2+":3000", externalIncentiveID, aliceAddr2)
 	ufmt.Printf("[EXPECTED] staker.CollectExternalIncentivePenalty amount: %d\n", penaltyAmount)
 	ufmt.Println("[EXPECTED] staker.CollectExternalIncentivePenalty succeeded in emergency mode")

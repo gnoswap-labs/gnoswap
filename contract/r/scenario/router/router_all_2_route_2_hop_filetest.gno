@@ -33,9 +33,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	max_timeout int64 = 9999999999
 	maxApprove  int64 = 9223372036854775806
@@ -97,7 +97,7 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 			quxPath,    // outputToken
 			"1000",     // amountSpecified
 			"EXACT_IN", // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 			"100", // quoteArr
 			"100",
 		)
@@ -120,7 +120,7 @@ func testSwapRouteBarQuxExactIn(cur realm) {
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 		"50,50", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -143,7 +143,7 @@ func testDrySwapRouteBarQuxExactOut(cur realm) {
 			quxPath,     // outputToken
 			"1000",      // amountSpecified
 			"EXACT_OUT", // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 			"50,50", // quoteArr
 			"10000",
 		)
@@ -166,7 +166,7 @@ func testSwapRouteBarQuxExactOut(cur realm) {
 		barPath, // inputToken
 		quxPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500", // strRouteArr
 		"60,40", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -189,7 +189,7 @@ func TestDrySwapRouteQuxBarExactIn(cur realm) {
 			barPath,    // outputToken
 			"1000",     // amountSpecified
 			"EXACT_IN", // swapType
-			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 			"30,70", // quoteArr
 			"1",
 		)
@@ -212,7 +212,7 @@ func TestSwapRouteQuxBarExactIn(cur realm) {
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",     // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -235,7 +235,7 @@ func TestDrySwapRouteQuxBarExactOut(cur realm) {
 			barPath,     // outputToken
 			"1000",      // amountSpecified
 			"EXACT_OUT", // swapType
-			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 			"30,70", // quoteArr
 			"100000",
 		)
@@ -258,7 +258,7 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 		quxPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500,gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 		"30,70", // quoteArr
 		"99999", // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

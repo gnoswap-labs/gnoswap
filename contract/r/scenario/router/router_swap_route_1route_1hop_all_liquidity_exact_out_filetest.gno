@@ -37,9 +37,9 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -87,7 +87,7 @@ func main(cur realm) {
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
 	poolTick := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 

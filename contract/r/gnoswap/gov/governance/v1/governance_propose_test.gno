@@ -162,7 +162,7 @@ func TestGovernancePropose_ProposeText(cur realm, t *testing.T) {
 }
 
 func TestGovernancePropose_ProposeCommunityPoolSpend(cur realm, t *testing.T) {
-	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	gnsPath := "gno.land/r/gnoswap/gns.GNS" // registered in grc20 registry
 	invalidTokenPath := "gno.land/r/not/registered"
 
 	tests := []struct {
@@ -853,7 +853,7 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 
 // Test comprehensive community pool spend validation
 func TestGovernancePropose_CommunityPoolSpendValidation(cur realm, t *testing.T) {
-	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	gnsPath := "gno.land/r/gnoswap/gns.GNS" // registered in grc20 registry
 	invalidTokenPath := "gno.land/r/not/registered"
 
 	tests := []struct {
@@ -1050,28 +1050,28 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - community_pool TransferToken empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,,1000000",
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - pool CollectProtocol empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500,,100,100",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500,,100,100",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - pool CollectProtocol invalid amount0Requested",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
 			expectedError: "invalid int64 value: invalid",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - pool CollectProtocol negative amount1Requested",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
 			expectedError: "amount1Requested must be non-negative",
 			shouldFail:    true,
 		},
@@ -1113,7 +1113,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - launchpad CreateProject empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns,,1000000,,,10,20,70,1000",
+			executions:    "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns.GNS,,1000000,,,10,20,70,1000",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
@@ -1154,7 +1154,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 
 func TestGovernancePropose_ProposalCreationThresholdUsesXGnsBalance(cur realm, t *testing.T) {
 	threshold := int64(1_000_000_000)
-	gnsPath := "gno.land/r/gnoswap/gns"
+	gnsPath := "gno.land/r/gnoswap/gns.GNS"
 	parameterExecution := "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0"
 
 	t.Run("text proposal fails with GNS only", func(cur realm, t *testing.T) {

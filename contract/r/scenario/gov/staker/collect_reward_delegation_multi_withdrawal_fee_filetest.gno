@@ -45,9 +45,9 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
 func main(cur realm) {
@@ -63,7 +63,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 3. Swap to generate fees")
-	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "1000000000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "1000000000", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
@@ -78,7 +78,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 6. Second swap to generate more fees")
-	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "1000000000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "1000000000", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
@@ -207,15 +207,15 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Create pool and mint position
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 0)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 0)
 // [EXPECTED] Position minted successfully with ID: 1
 // [EXPECTED] Liquidity: 21338374629
 // [EXPECTED] Amount0: 1000000000, Amount1: 1000000000
 //
 // [SCENARIO] 3. Swap to generate fees
 // [EXPECTED] pool current tick: -914
-// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar): 1000000000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux): -951067458
+// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 1000000000
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -951067458
 //
 // [SCENARIO] 4. First withdrawal fee collection (before alice delegation)
 // [INFO] collected position fee for position 1
@@ -225,17 +225,17 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 //
 // [SCENARIO] 6. Second swap to generate more fees
 // [EXPECTED] pool current tick: -1000
-// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar): 52325114
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux): -47432542
+// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 52325114
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -47432542
 //
 // [SCENARIO] 7. Second withdrawal fee collection (after alice delegation)
 // [INFO] collected position fee for position 1
 //
 // [SCENARIO] 8. Check and collect protocol fee reward for admin
 // [INFO] collected protocol fee reward for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/onbloc/bar: 30783
+// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/onbloc/bar.BAR: 30783
 //
 // [SCENARIO] 9. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/bar: 784
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/bar.BAR: 784
 // [EXPECTED] remained withdrawal fee reward(bar) is 1

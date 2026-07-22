@@ -21,8 +21,8 @@ import (
 var errDummy = errors.New("dummy error")
 
 const (
-	foobar500 = "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
-	barbaz500 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+	foobar500 = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
+	barbaz500 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
 )
 
 type mockOperation struct {
@@ -733,7 +733,7 @@ func TestProcessRoutes_OverflowDetection(cur realm, t *testing.T) {
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
 				amountSpecified: 1000,
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+				routes:          []string{"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"},
 				quotes:          []string{"100"},
 			},
 			expectPanic: false,

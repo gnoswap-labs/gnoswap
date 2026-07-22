@@ -37,8 +37,8 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	max_timeout int64 = 9999999999
 
@@ -103,7 +103,7 @@ func testPositionMint(cur realm) {
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
 	poolTick := pl.GetSlot0Tick(poolPath)
 
 	println("[INFO] pool tick:", poolTick)
@@ -112,7 +112,7 @@ func testPositionMint(cur realm) {
 
 func testExactInputSinglePool(cur realm) {
 	println("[SCENARIO] Given: ExactIn swap preparation")
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
 
 	println("[INFO] Setting swap permission with user1 account")
 	user1Realm := testing.NewUserRealm(user1Addr)

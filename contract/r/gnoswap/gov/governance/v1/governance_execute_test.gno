@@ -71,7 +71,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 					),
 					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
 					NewProposalCommunityPoolSpendData(
-						"gno.land/r/gnoswap/gns",
+						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
 						"gno.land/r/gnoswap/community_pool",
@@ -266,7 +266,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 					),
 					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
 					NewProposalCommunityPoolSpendData(
-						"gno.land/r/gnoswap/gns",
+						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
 						"gno.land/r/gnoswap/community_pool",
@@ -413,7 +413,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 				),
 				governance.NewProposalMetadata("Test Proposal", "Description"),
 				NewProposalCommunityPoolSpendData(
-					"gno.land/r/gnoswap/gns",
+					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
 					"gno.land/r/gnoswap/community_pool",
@@ -440,7 +440,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 				),
 				governance.NewProposalMetadata("Test Proposal", "Description"),
 				NewProposalCommunityPoolSpendData(
-					"gno.land/r/gnoswap/gns",
+					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
 					"gno.land/r/gnoswap/community_pool",
@@ -855,7 +855,7 @@ func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Parameter Change", "Description"),
-				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
+				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime.Unix(),
@@ -898,7 +898,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 	}{
 		{
 			name:                 "success - sufficient balance",
-			tokenPath:            "gno.land/r/gnoswap/gns",
+			tokenPath:            "gno.land/r/gnoswap/gns.GNS",
 			amount:               1_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 5_000_000_000,
@@ -906,7 +906,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 		},
 		{
 			name:                 "success - exact balance",
-			tokenPath:            "gno.land/r/gnoswap/gns",
+			tokenPath:            "gno.land/r/gnoswap/gns.GNS",
 			amount:               1_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 1_000_000_000,
@@ -914,7 +914,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 		},
 		{
 			name:                 "fail - insufficient balance",
-			tokenPath:            "gno.land/r/gnoswap/gns",
+			tokenPath:            "gno.land/r/gnoswap/gns.GNS",
 			amount:               2_000_000_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 1_000_000_000,
@@ -923,7 +923,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 		},
 		{
 			name:                 "success - bar token transfer",
-			tokenPath:            "gno.land/r/onbloc/bar",
+			tokenPath:            "gno.land/r/onbloc/bar.BAR",
 			amount:               1_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 5_000_000_000,
@@ -932,7 +932,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 		},
 		{
 			name:                 "success - large amount transfer",
-			tokenPath:            "gno.land/r/gnoswap/gns",
+			tokenPath:            "gno.land/r/gnoswap/gns.GNS",
 			amount:               9223372036854775807, // MAX_INT64
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 9223372036854775807,
@@ -1187,7 +1187,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
+					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
 					tt.proposer,
 					1,
 					tt.cancellationTime.Unix(),
@@ -1285,7 +1285,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 					),
 					governance.NewProposalMetadata("Community Pool Spend", "Test proposal"),
 					NewProposalCommunityPoolSpendData(
-						"gno.land/r/gnoswap/gns",
+						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000,
 						"gno.land/r/gnoswap/community_pool",

@@ -45,9 +45,9 @@ var (
 	user2Addr  = testutils.TestAddress("user2")
 	user2Realm = testing.NewUserRealm(user2Addr)
 
-	barPath  = "gno.land/r/onbloc/bar"
-	bazPath  = "gno.land/r/onbloc/baz"
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	barPath  = "gno.land/r/onbloc/bar.BAR"
+	bazPath  = "gno.land/r/onbloc/baz.BAZ"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
 )
 
 func main(cur realm) {
