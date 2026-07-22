@@ -305,9 +305,6 @@ func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, a
 		return err
 	}
 
-	// Emit the emission reward accumulation
-	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
-
 	return nil
 }
 
@@ -335,9 +332,6 @@ func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string
 	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
 		return err
 	}
-
-	// Emit the emission reward accumulation
-	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
 
 	return nil
 }
@@ -370,9 +364,6 @@ func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address strin
 	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
 		return 0, err
 	}
-
-	// Emit the emission reward accumulation
-	emitUpdateEmissionRewardAccumulation(emissionRewardManager)
 
 	return amount, nil
 }
@@ -417,9 +408,6 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 		return err
 	}
 
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
-
 	return nil
 }
 
@@ -449,9 +437,6 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return err
 	}
-
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
 
 	return nil
 }
@@ -486,9 +471,6 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return nil, err
 	}
-
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
 
 	return rewards, nil
 }
