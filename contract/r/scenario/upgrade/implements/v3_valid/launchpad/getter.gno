@@ -265,6 +265,11 @@ func (lp *launchpadV1) GetDepositCount() int {
 	return deposits.Size()
 }
 
+// GetTotalGNSStakedAmount returns the total amount of GNS currently staked across all launchpad deposits.
+func (lp *launchpadV1) GetTotalGNSStakedAmount() int64 {
+	return lp.store.GetTotalGNSStakedAmount()
+}
+
 // GetCurrentDepositId returns the current deposit counter value.
 func (lp *launchpadV1) GetCurrentDepositId() int64 {
 	counter := lp.store.GetDepositCounter()
