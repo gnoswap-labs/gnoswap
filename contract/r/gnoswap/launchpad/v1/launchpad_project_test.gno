@@ -768,7 +768,7 @@ func TestLaunchpadProject_isGovernanceToken(cur realm, t *testing.T) {
 		},
 		{
 			name:           "returns false for gns token",
-			tokenPath:      GNS_PATH,
+			tokenPath:      GNS_TOKEN_KEY,
 			expectedResult: false,
 		},
 		{

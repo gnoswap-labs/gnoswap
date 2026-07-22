@@ -35,7 +35,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 	endTime := startTime + (86400 * 7) // 7 days after start
 
 	// Define allowed tokens and test scenarios
-	allowedTokens := []string{GNS_PATH, WUGNOT_PATH, "token0_path", "token1_path"}
+	allowedTokens := []string{GNS_TOKEN_KEY, WUGNOT_TOKEN_KEY, "token0_path", "token1_path"}
 	accounts := []address{account1, account2}
 	amounts := []int64{1000, 2000, 1500, 2500, 3000, 3500}
 
@@ -396,7 +396,7 @@ func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 			incentive := sr.NewExternalIncentive(
 				incentiveId,
 				poolPath,
-				WUGNOT_PATH,
+				WUGNOT_TOKEN_KEY,
 				rewardAmount,
 				startTime,
 				endTime,
@@ -800,7 +800,7 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			int64((i+1)*1000000),
 			startTime,
 			endTime,
@@ -899,7 +899,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			1000000,
 			ts+86400,
 			ts+86400*7,
@@ -1034,7 +1034,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testi
 		incentive := sr.NewExternalIncentive(
 			incentiveId,
 			poolPath,
-			WUGNOT_PATH,
+			WUGNOT_TOKEN_KEY,
 			int64((i+1)*1000000),
 			startTime,
 			endTime,
@@ -1196,7 +1196,7 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 	poolResolver := NewPoolResolver(pool)
 
 	// Create 3 concurrent incentives with different tokens
-	tokens := []string{WUGNOT_PATH, GNS_PATH, "gno.land/r/onbloc/bar.BAR"}
+	tokens := []string{WUGNOT_TOKEN_KEY, GNS_TOKEN_KEY, "gno.land/r/onbloc/bar.BAR"}
 	incentiveIds := make([]string, 3)
 
 	for i := 0; i < 3; i++ {
@@ -1289,7 +1289,7 @@ func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
 	incentive1 := sr.NewExternalIncentive(
 		"pool1-incentive",
 		pool1Path, // Pool1
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		1000000,
 		baseTime,
 		baseTime+1000,
@@ -1302,7 +1302,7 @@ func TestLazySync_PoolFilteringPreventsWrongPool(cur realm, t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		"pool2-incentive",
 		pool2Path, // Pool2 (different)
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		1000000,
 		baseTime,
 		baseTime+1000,
@@ -1361,7 +1361,7 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1456,7 +1456,7 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(cur realm, t 
 	incentive := sr.NewExternalIncentive(
 		"test_incentive_tracking",
 		poolPath,
-		GNS_PATH,
+		GNS_TOKEN_KEY,
 		rewardAmount,
 		startTime,
 		endTime,
@@ -1510,7 +1510,7 @@ func TestMultipleCollectionsBeforeUnstake(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1584,7 +1584,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(cur realm, t *test
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -1650,7 +1650,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		totalRewardAmount,
 		startTime,
 		endTime,
@@ -2624,7 +2624,7 @@ func TestCollectExternalIncentivePenaltyAccounting(cur realm, t *testing.T) {
 			currentTime := time.Now().Unix()
 
 			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, tt.totalRewardAmount,
+				"test-id", poolPath, WUGNOT_TOKEN_KEY, tt.totalRewardAmount,
 				currentTime-86400*30, currentTime-86400, creator, 100_000_000,
 				runtime.ChainHeight(), currentTime-86400*30-100,
 			)
@@ -2767,7 +2767,7 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 			s.getPools().set(poolPath, pool)
 
 			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, totalRewardAmount,
+				"test-id", poolPath, WUGNOT_TOKEN_KEY, totalRewardAmount,
 				startTime, endTime, creator, 100_000_000,
 				runtime.ChainHeight(), startTime-100,
 			)

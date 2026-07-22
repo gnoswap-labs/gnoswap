@@ -1641,7 +1641,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive1 := sr.NewExternalIncentive(
 		incentive1Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+1000,
@@ -1656,7 +1656,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		incentive2Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+2000,
@@ -1671,7 +1671,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive3 := sr.NewExternalIncentive(
 		incentive3Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+3000,
@@ -1792,7 +1792,7 @@ func TestCollectReward_LazyRemovalBeforeEnd(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+1000, // End time
@@ -1970,7 +1970,7 @@ func TestLazySync_NotStartedIncentive(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		futureStart, // Starts in future
 		futureEnd,

@@ -19,7 +19,7 @@ const (
 // contract paths
 const (
 	GOV_XGNS_PATH string = "gno.land/r/gnoswap/gov/xgns"
-	GNS_PATH      string = "gno.land/r/gnoswap/gns.GNS"
+	GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 )
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.

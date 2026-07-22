@@ -20,6 +20,6 @@ func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(cur realm, t *testing.
 
 	secondStoreAllowedTokens := secondStore.GetAllowedTokens()
 	uassert.Equal(t, len(secondStoreAllowedTokens), 2)
-	uassert.Equal(t, secondStoreAllowedTokens[0], GNS_PATH)
-	uassert.Equal(t, secondStoreAllowedTokens[1], WUGNOT_PATH)
+	uassert.Equal(t, secondStoreAllowedTokens[0], GNS_TOKEN_KEY)
+	uassert.Equal(t, secondStoreAllowedTokens[1], WUGNOT_TOKEN_KEY)
 }

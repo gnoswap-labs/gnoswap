@@ -834,7 +834,7 @@ func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		startTime,
 		endTime,
