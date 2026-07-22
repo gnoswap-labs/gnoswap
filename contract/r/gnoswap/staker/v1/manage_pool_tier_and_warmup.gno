@@ -33,7 +33,7 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
-	s.setPoolTier(0, rlm, poolPath, tier, currentTime)
+	rewardPerSecond, tierRewards := s.setPoolTier(0, rlm, poolPath, tier, currentTime)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -42,6 +42,10 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"tier", utils.FormatUint(tier),
+		"rewardPerSecond", utils.FormatInt(rewardPerSecond),
+		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
+		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
+		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -64,7 +68,7 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
-	previousTier, newTier := s.changePoolTier(0, rlm, poolPath, tier, currentTime)
+	previousTier, newTier, rewardPerSecond, tierRewards := s.changePoolTier(0, rlm, poolPath, tier, currentTime)
 
 	chain.Emit(
 		"ChangePoolTier",
@@ -73,6 +77,10 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 		"poolPath", poolPath,
 		"prevTier", utils.FormatUint(previousTier),
 		"newTier", utils.FormatUint(newTier),
+		"rewardPerSecond", utils.FormatInt(rewardPerSecond),
+		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
+		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
+		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -94,13 +102,17 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	assertIsPoolExists(s, poolPath)
 
 	currentTime := time.Now().Unix()
-	s.removePoolTier(0, rlm, poolPath, currentTime)
+	rewardPerSecond, tierRewards := s.removePoolTier(0, rlm, poolPath, currentTime)
 
 	chain.Emit(
 		"RemovePoolTier",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
+		"rewardPerSecond", utils.FormatInt(rewardPerSecond),
+		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
+		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
+		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -131,7 +143,7 @@ func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 }
 
 // setPoolTier internally sets the pool tier.
-func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) {
+func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
 	pool := s.getPools().GetPoolOrNil(poolPath)
@@ -140,29 +152,35 @@ func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, c
 		s.getPools().set(poolPath, pool)
 	}
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
+	tierRewards := poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
+
 	s.updatePoolTier(0, rlm, poolTier)
+
+	return poolTier.currentEmission, tierRewards
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
-func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
+func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (uint64, uint64, int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 	poolTier := s.getPoolTier()
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
+	tierRewards := poolTier.changeTier(currentTime, s.getPools(), poolPath, tier)
+
 	s.updatePoolTier(0, rlm, poolTier)
 
-	return previousTier, tier
+	return previousTier, tier, poolTier.currentEmission, tierRewards
 }
 
 // removePoolTier internally removes the pool from tier system.
-func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime int64) {
+func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime int64) (int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(currentTime, s.getPools(), poolPath, NOT_EMISSION_TARGET_TIER)
+	tierRewards := poolTier.changeTier(currentTime, s.getPools(), poolPath, NOT_EMISSION_TARGET_TIER)
 	s.updatePoolTier(0, rlm, poolTier)
+
+	return poolTier.currentEmission, tierRewards
 }
 
 // setWarmUp internally sets the warm-up parameters.
