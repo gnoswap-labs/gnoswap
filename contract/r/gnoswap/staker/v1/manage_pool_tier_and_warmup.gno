@@ -52,6 +52,9 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
+		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
+		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
+		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -93,6 +96,9 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
+		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
+		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
+		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -131,6 +137,9 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 		"tier1RewardPerSecond", utils.FormatInt(tierRewards[Tier1]),
 		"tier2RewardPerSecond", utils.FormatInt(tierRewards[Tier2]),
 		"tier3RewardPerSecond", utils.FormatInt(tierRewards[Tier3]),
+		"tier1Count", utils.FormatUint(s.getPoolTier().counts[Tier1]),
+		"tier2Count", utils.FormatUint(s.getPoolTier().counts[Tier2]),
+		"tier3Count", utils.FormatUint(s.getPoolTier().counts[Tier3]),
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
