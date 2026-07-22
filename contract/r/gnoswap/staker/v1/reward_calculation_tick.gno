@@ -249,10 +249,13 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 		)
 	}
 
-	// Emit event with staker-side tick cross information
 	previousRealm := rlm.Previous()
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(timestamp)
 
+	// Emit event with staker-side tick cross information.
+	// lastTick — the effective tick written to HistoricalTick by modifyDeposit above.
+	// Reward calculation (CalculateRawRewardForPosition) reads HistoricalTick for the feeGrowthInside branch,
+	// so off-chain indexers must use this same value (NOT the pool's Slot0 tick) to reproduce in-range status.
 	chain.Emit(
 		"BatchStakerTickCross",
 		"prevAddr", previousRealm.Address().String(),
@@ -261,6 +264,7 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 		"blockTimestamp", utils.FormatInt(timestamp),
 		"stakedLiquidity", stakedLiquidity.ToString(),
 		"globalRewardRatioAccX128", newAcc.ToString(),
+		"lastTick", utils.FormatInt(lastTick),
 	)
 
 	return nil
