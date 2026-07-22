@@ -122,6 +122,14 @@ func (m *MockLaunchpad) GetDepositCount() int {
 	return res[0].(int)
 }
 
+func (m *MockLaunchpad) GetTotalGNSStakedAmount() int64 {
+	res, ok := m.Response.Get("GetTotalGNSStakedAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockLaunchpad) GetProjectTierRewardManagerCount() int {
 	res, ok := m.Response.Get("GetProjectTierRewardManagerCount")
 	if !ok {
