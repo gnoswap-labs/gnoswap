@@ -76,6 +76,8 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 			"depositId", deposit.ID(),
 			"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 			"tierAmountPerSecondX128", distributeAmountPerSecondX128,
+			"totalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+			"recipient", project.Recipient().String(),
 		)
 	}
 
