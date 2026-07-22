@@ -34,6 +34,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 	lp.assertIsDepositOwner(depositID, caller)
 
 	deposit := lp.mustGetDeposit(depositID)
+	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -52,6 +53,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
+		"targetProjectTierId", targetProjectTierID,
 		"amount", utils.FormatInt(rewardAmount),
 	)
 

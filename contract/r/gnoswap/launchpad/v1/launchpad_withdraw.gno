@@ -39,6 +39,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	emission.MintAndDistributeGns(cross(rlm))
 
 	deposit := lp.mustGetDeposit(depositID)
+	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -65,6 +66,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 			"prevAddr", caller.String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"depositId", depositID,
+			"targetProjectTierId", targetProjectTierID,
 			"amount", utils.FormatInt(rewardAmount),
 		)
 	}
@@ -77,6 +79,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
+		"targetProjectTierId", targetProjectTierID,
 		"amount", utils.FormatInt(withdrawalAmount),
 	)
 

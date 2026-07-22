@@ -104,10 +104,12 @@ func ChangeDistributionPct(
 	// under previous ratio configurations.
 	MintAndDistributeGns(cur)
 
+	currentTimestamp := time.Now().Unix()
+	stakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
+	govStakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, govStakerPct)
+
 	if onDistributionPctChangeCallback != nil {
-		currentTimestamp := time.Now().Unix()
-		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
-		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), stakerRewardPerSecond)
 	}
 
 	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
@@ -121,6 +123,8 @@ func ChangeDistributionPct(
 		"devOpsPct", utils.FormatInt(devOpsPct),
 		"communityPoolPct", utils.FormatInt(communityPoolPct),
 		"govStakerPct", utils.FormatInt(govStakerPct),
+		"stakerRewardPerSecond", utils.FormatInt(stakerRewardPerSecond),
+		"govStakerRewardPerSecond", utils.FormatInt(govStakerRewardPerSecond),
 	)
 }
 

@@ -15,6 +15,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pos "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/staker"
 )
 
 // Mint creates a new liquidity position NFT.
@@ -212,6 +213,8 @@ func (p *positionV1) IncreaseLiquidity(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
+		"tickLower", utils.FormatInt(position.TickLower()),
+		"tickUpper", utils.FormatInt(position.TickUpper()),
 		"caller", caller.String(),
 		"lpPositionId", utils.FormatUint(positionId),
 		"liquidityDelta", liquidity.ToString(),
@@ -286,6 +289,10 @@ func (p *positionV1) DecreaseLiquidity(
 		caller:     caller,
 	}
 
+	position := p.mustGetPosition(positionId)
+	tickLower := position.TickLower()
+	tickUpper := position.TickUpper()
+
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := p.decreaseLiquidity(0, rlm, decreaseLiquidityParams)
 	if err != nil {
 		panic(err)
@@ -299,6 +306,8 @@ func (p *positionV1) DecreaseLiquidity(
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", utils.FormatUint(positionId),
 		"poolPath", poolPath,
+		"tickLower", utils.FormatInt(tickLower),
+		"tickUpper", utils.FormatInt(tickUpper),
 		"liquidityDelta", liquidity,
 		"feeAmount0", fee0,
 		"feeAmount1", fee1,
@@ -413,6 +422,8 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		caller,
 	)
 
+	poolPath := position.PoolKey()
+
 	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CollectSwapFee",
@@ -421,7 +432,8 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"lpPositionId", utils.FormatUint(positionId),
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
-		"poolPath", position.PoolKey(),
+		"poolPath", poolPath,
+		"poolTier", utils.FormatUint(staker.GetPoolTier(poolPath)),
 		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128(),
 		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128(),
 	)
@@ -431,7 +443,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpTokenId", utils.FormatUint(positionId),
-		"poolPath", position.PoolKey(),
+		"poolPath", poolPath,
 		"feeAmount0", fee0Str,
 		"feeAmount1", fee1Str,
 		"amount0WithoutFee", amount0WithoutFeeStr,
