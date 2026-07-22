@@ -153,6 +153,7 @@ func createExternalIncentive(cur realm) {
 	incentiveStartTime = tomorrowMidnight + 86400 // Add one more day to ensure it's at least 1 day in future
 	endTime := incentiveStartTime + TIMESTAMP_90DAYS
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000", // targetPoolPath

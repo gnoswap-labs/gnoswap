@@ -175,6 +175,7 @@ func createExternalIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive for bar:qux:100")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",

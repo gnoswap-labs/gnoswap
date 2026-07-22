@@ -126,6 +126,7 @@ func createExternalIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	println("[INFO] create external incentive with bar token")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

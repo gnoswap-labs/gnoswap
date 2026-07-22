@@ -140,6 +140,7 @@ func createMultipleIncentives(cur realm) {
 	endTime3 := startTime3 + TIMESTAMP_90DAYS
 
 	println("[INFO] Create external incentive #1: bar token (period 1)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -150,6 +151,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #2: bar token (period 2)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -160,6 +162,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #3: bar token (period 3)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -170,6 +173,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #4: baz token")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

@@ -169,7 +169,7 @@ func createPool(cur realm) {
 }
 
 func createAndStartIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
@@ -177,8 +177,9 @@ func createAndStartIncentive(cur realm) {
 	startTime := int64(1234569600) // +1 day midnight
 	endTime := startTime + INCENTIVE_DURATION
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",

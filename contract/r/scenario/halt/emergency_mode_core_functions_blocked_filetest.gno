@@ -399,6 +399,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "staker", "CreateExternalIncentive")
 	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		testing.SetRealm(adminRealm)
 		staker.CreateExternalIncentive(cross(cur), barPath+":"+fooPath+":3000", barPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
 	})
 	printBlockedExpected(cur, "staker", "CreateExternalIncentive", "staker")

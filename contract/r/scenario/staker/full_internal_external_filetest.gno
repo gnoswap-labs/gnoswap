@@ -200,6 +200,7 @@ func createExternalIncentiveGns(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
@@ -463,6 +464,7 @@ func createPoolExternalOnly(cur realm) {
 	startTime := int64(1244332800)
 	endTime := startTime + TIMESTAMP_90DAYS
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:3000",
@@ -558,4 +560,6 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
-// [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
+
+// Error:
+// insufficient allowance

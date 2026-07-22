@@ -160,7 +160,7 @@ func createPool(cur realm) {
 }
 
 func createExternalIncentive(cur realm) {
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	qux.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
@@ -170,8 +170,9 @@ func createExternalIncentive(cur realm) {
 	incentiveStartTime = startTime
 	incentiveEndTime = endTime
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, createTimestamp, 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
@@ -238,7 +239,7 @@ func endIncentive(cur realm) {
 	timeLeft := incentiveEndTime - nowTime
 	testing.SkipHeights(timeLeft / 5)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	sr.EndExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
@@ -253,7 +254,7 @@ func collectPenalty(cur realm) {
 	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
 	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
@@ -285,7 +286,7 @@ func collectPenalty(cur realm) {
 
 func collectPenaltyAgain(cur realm) {
 	testing.SkipHeights(1)
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
@@ -317,7 +318,7 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create external incentive
-// [INFO] created external incentive: g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567900:1
+// [INFO] created external incentive: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 //
 // [SCENARIO] 4. Start incentive and stake position
 // [INFO] staked position 1 (liquidity: 20026)
@@ -341,8 +342,8 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [INFO] penalty before collection: 866667826
 // [INFO] penalty collected: 866667826
 // [INFO] penalty remaining: 0
-// [INFO] creator QUX before: 5788
-// [INFO] creator QUX after: 866673614
+// [INFO] creator QUX before: 9000005788
+// [INFO] creator QUX after: 9866673614
 // [INFO] creator QUX increase: 866667826
 // [EXPECTED] penalty successfully collected to creator
 // [EXPECTED] accumulatedPenaltyAmount reset to 0

@@ -152,6 +152,7 @@ func createExternalIncentiveQux365(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
 	sr.AddToken(cross(cur), quxPath)
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000",
