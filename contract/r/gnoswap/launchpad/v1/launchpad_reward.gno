@@ -104,5 +104,7 @@ func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad
 		}
 	}
 
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
+
 	return project.TokenPath(), rewardAmount, nil
 }
