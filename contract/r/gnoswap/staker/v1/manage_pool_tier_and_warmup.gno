@@ -32,6 +32,12 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
 
+	// If the tier is already set, do nothing
+	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	if previousTier == tier {
+		return
+	}
+
 	currentTime := time.Now().Unix()
 	rewardPerSecond, tierRewards := s.setPoolTier(0, rlm, poolPath, tier, currentTime)
 
@@ -67,6 +73,12 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
 
+	// If the tier is already set, do nothing
+	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	if previousTier == tier {
+		return
+	}
+
 	currentTime := time.Now().Unix()
 	previousTier, newTier, rewardPerSecond, tierRewards := s.changePoolTier(0, rlm, poolPath, tier, currentTime)
 
@@ -100,6 +112,12 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(s, poolPath)
+
+	// If the tier is already set, do nothing
+	previousTier := s.getPoolTier().CurrentTier(poolPath)
+	if previousTier == NOT_EMISSION_TARGET_TIER {
+		return
+	}
 
 	currentTime := time.Now().Unix()
 	rewardPerSecond, tierRewards := s.removePoolTier(0, rlm, poolPath, currentTime)
