@@ -52,10 +52,10 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -150,7 +150,7 @@ func singleRouteSingleHop(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -172,7 +172,7 @@ func singleRoute2Hop(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), barPath, fooPath, "1000000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -193,7 +193,7 @@ func singleRoute3Hop(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), barPath, quxPath, "100000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:3000*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:3000",
 		"100", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -214,7 +214,7 @@ func twoRouteSplit(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000,gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000,gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500",
 		"50,50", "9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -235,7 +235,7 @@ func singleHopMinimum(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), bazPath, barPath, "1",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -257,7 +257,7 @@ func singleHopLarge(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), bazPath, barPath, "9000000000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", "100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:3000", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 
@@ -279,7 +279,7 @@ func singleHopLowFeePool(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur), bazPath, barPath, "1000000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", "100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", "100",
 		"9223372036854775807", time.Now().Add(time.Hour).Unix(), "",
 	)
 

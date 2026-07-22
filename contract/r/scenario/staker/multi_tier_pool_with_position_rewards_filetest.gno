@@ -55,8 +55,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -65,9 +65,9 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath1 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	poolPath2 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
-	poolPath3 = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	poolPath1 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
+	poolPath2 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
+	poolPath3 = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
 
 	position1 uint64
 	position2 uint64
@@ -111,7 +111,7 @@ func main(cur realm) {
 		barPath,
 		bazPath,
 		"2000",
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		"100",
 		"1",
 	)
@@ -129,7 +129,7 @@ func main(cur realm) {
 		bazPath,
 		barPath,
 		"2000",
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100",
 		"100",
 		"1",
 	)
@@ -459,10 +459,10 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/bar
-// [INFO] outputToken: gno.land/r/onbloc/baz
+// [INFO] inputToken: gno.land/r/onbloc/bar.BAR
+// [INFO] outputToken: gno.land/r/onbloc/baz.BAZ
 // [INFO] specifiedAmount: 2000
-// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100
+// [INFO] routeQueryString: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
@@ -477,10 +477,10 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/onbloc/baz
-// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] inputToken: gno.land/r/onbloc/baz.BAZ
+// [INFO] outputToken: gno.land/r/onbloc/bar.BAR
 // [INFO] specifiedAmount: 2000
-// [INFO] routeQueryString: gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100
+// [INFO] routeQueryString: gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000

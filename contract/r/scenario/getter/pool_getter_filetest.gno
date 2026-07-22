@@ -35,8 +35,8 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -345,7 +345,7 @@ func exactInSwapRoute(cur realm) {
 		fooPath,   // inputToken
 		barPath,   // outputToken
 		"1000000", // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),
@@ -903,7 +903,7 @@ func getObservationState(cur realm) {
 // [SCENARIO] 2.2. GetPoolPaths
 // [INFO] Check GetPoolPaths method
 // [EXPECTED] pool paths count: 1
-// [EXPECTED] pool path[0]: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000
+// [EXPECTED] pool path[0]: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
 // [SCENARIO] 2.3. ExistsPoolPath
 // [INFO] Check ExistsPoolPath method
@@ -1098,11 +1098,11 @@ func getObservationState(cur realm) {
 //
 // [SCENARIO] 2.47. GetToken0Path
 // [INFO] Check GetToken0Path method
-// [EXPECTED] token0 path: gno.land/r/onbloc/bar
+// [EXPECTED] token0 path: gno.land/r/onbloc/bar.BAR
 //
 // [SCENARIO] 2.48. GetToken1Path
 // [INFO] Check GetToken1Path method
-// [EXPECTED] token1 path: gno.land/r/onbloc/foo
+// [EXPECTED] token1 path: gno.land/r/onbloc/foo.FOO
 //
 // [SCENARIO] 2.49. GetWithdrawalFee
 // [INFO] Check GetWithdrawalFee method
@@ -1114,8 +1114,8 @@ func getObservationState(cur realm) {
 //
 // [SCENARIO] 2.51. GetPool
 // [INFO] Check GetPool method
-// [EXPECTED] pool token0Path: gno.land/r/onbloc/bar
-// [EXPECTED] pool token1Path: gno.land/r/onbloc/foo
+// [EXPECTED] pool token0Path: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] pool token1Path: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] pool fee: 3000
 // [EXPECTED] pool liquidity: 100000000
 //

@@ -1615,7 +1615,7 @@ func TestDepositRemoveExternalIncentiveId(cur realm, t *testing.T) {
 // TestCollectReward_LazyRemoval tests that incentives are removed from
 // deposit's list after they end and user collects rewards.
 func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1641,7 +1641,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive1 := sr.NewExternalIncentive(
 		incentive1Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+1000,
@@ -1656,7 +1656,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive2 := sr.NewExternalIncentive(
 		incentive2Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+2000,
@@ -1671,7 +1671,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 	incentive3 := sr.NewExternalIncentive(
 		incentive3Id,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+3000,
@@ -1768,7 +1768,7 @@ func TestCollectReward_LazyRemoval(cur realm, t *testing.T) {
 // TestCollectReward_LazyRemovalBeforeEnd tests that incentives are NOT removed
 // if user hasn't collected after the end time.
 func TestCollectReward_LazyRemovalBeforeEnd(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1792,7 +1792,7 @@ func TestCollectReward_LazyRemovalBeforeEnd(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		baseTime,
 		baseTime+1000, // End time
@@ -1832,7 +1832,7 @@ func TestCollectReward_LazyRemovalBeforeEnd(cur realm, t *testing.T) {
 // TestCollectReward_LazySync_IterationBounds tests that lazy sync
 // uses correct iteration bounds (lastUpdate, currentTime).
 func TestCollectReward_LazySync_IterationBounds(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := int64(1000)
 
@@ -1886,7 +1886,7 @@ func TestCollectReward_LazySync_IterationBounds(cur realm, t *testing.T) {
 // TestLazyRemoval_DeletedIncentive tests that deleted/refunded incentives
 // are properly removed from deposit's incentive list.
 func TestLazyRemoval_DeletedIncentive(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	baseTime := time.Now().Unix()
 
@@ -1945,7 +1945,7 @@ func TestLazyRemoval_DeletedIncentive(cur realm, t *testing.T) {
 // TestLazySync_NotStartedIncentive tests that not-yet-started incentives
 // are added to deposit but don't yield rewards until they start.
 func TestLazySync_NotStartedIncentive(cur realm, t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	staker := testutils.TestAddress("staker1")
 	creator := testutils.TestAddress("creator")
 	baseTime := time.Now().Unix()
@@ -1970,7 +1970,7 @@ func TestLazySync_NotStartedIncentive(cur realm, t *testing.T) {
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		poolPath,
-		WUGNOT_PATH,
+		WUGNOT_TOKEN_KEY,
 		10_000_000,
 		futureStart, // Starts in future
 		futureEnd,

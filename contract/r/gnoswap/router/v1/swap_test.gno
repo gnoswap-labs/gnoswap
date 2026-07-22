@@ -24,28 +24,28 @@ func TestSwapCallback_Token0Delta(cur realm, t *testing.T) {
 	}{
 		{
 			name:          "positive token0 delta",
-			token0Path:    "gno.land/r/onbloc/foo",
-			token1Path:    "gno.land/r/onbloc/bar",
+			token0Path:    "gno.land/r/onbloc/foo.FOO",
+			token1Path:    "gno.land/r/onbloc/bar.BAR",
 			amount0Delta:  "1000",
 			amount1Delta:  "-500",
 			payer:         routerAddr,
 			expectError:   false,
-			expectedToken: "gno.land/r/onbloc/foo",
+			expectedToken: "gno.land/r/onbloc/foo.FOO",
 		},
 		{
 			name:          "positive token1 delta",
-			token0Path:    "gno.land/r/onbloc/foo",
-			token1Path:    "gno.land/r/onbloc/bar",
+			token0Path:    "gno.land/r/onbloc/foo.FOO",
+			token1Path:    "gno.land/r/onbloc/bar.BAR",
 			amount0Delta:  "-500",
 			amount1Delta:  "1000",
 			payer:         routerAddr,
 			expectError:   false,
-			expectedToken: "gno.land/r/onbloc/bar",
+			expectedToken: "gno.land/r/onbloc/bar.BAR",
 		},
 		{
 			name:         "both deltas negative",
-			token0Path:   "gno.land/r/onbloc/foo",
-			token1Path:   "gno.land/r/onbloc/bar",
+			token0Path:   "gno.land/r/onbloc/foo.FOO",
+			token1Path:   "gno.land/r/onbloc/bar.BAR",
 			amount0Delta: "-500",
 			amount1Delta: "-1000",
 			payer:        routerAddr,
@@ -53,8 +53,8 @@ func TestSwapCallback_Token0Delta(cur realm, t *testing.T) {
 		},
 		{
 			name:         "both deltas zero",
-			token0Path:   "gno.land/r/onbloc/foo",
-			token1Path:   "gno.land/r/onbloc/bar",
+			token0Path:   "gno.land/r/onbloc/foo.FOO",
+			token1Path:   "gno.land/r/onbloc/bar.BAR",
 			amount0Delta: "0",
 			amount1Delta: "0",
 			payer:        routerAddr,
@@ -493,8 +493,8 @@ func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 	executor := &DrySwapExecutor{router: router}
 
 	params := &SingleSwapParams{
-		tokenIn:  "gno.land/r/onbloc/foo",
-		tokenOut: "gno.land/r/onbloc/foo", // Same token
+		tokenIn:  "gno.land/r/onbloc/foo.FOO",
+		tokenOut: "gno.land/r/onbloc/foo.FOO", // Same token
 		fee:      3000,
 	}
 
@@ -516,14 +516,14 @@ func TestExecuteSwap_DifferentTokens(cur realm, t *testing.T) {
 	}{
 		{
 			name:     "foo to bar",
-			tokenIn:  "gno.land/r/onbloc/foo",
-			tokenOut: "gno.land/r/onbloc/bar",
+			tokenIn:  "gno.land/r/onbloc/foo.FOO",
+			tokenOut: "gno.land/r/onbloc/bar.BAR",
 			fee:      3000,
 		},
 		{
 			name:     "bar to baz",
-			tokenIn:  "gno.land/r/onbloc/bar",
-			tokenOut: "gno.land/r/onbloc/baz",
+			tokenIn:  "gno.land/r/onbloc/bar.BAR",
+			tokenOut: "gno.land/r/onbloc/baz.BAZ",
 			fee:      500,
 		},
 	}
@@ -663,14 +663,14 @@ func TestSwapInner_ZeroForOneLogic(cur realm, t *testing.T) {
 	}{
 		{
 			name:       "tokenIn < tokenOut means zeroForOne",
-			tokenIn:    "gno.land/r/onbloc/bar",
-			tokenOut:   "gno.land/r/onbloc/foo",
+			tokenIn:    "gno.land/r/onbloc/bar.BAR",
+			tokenOut:   "gno.land/r/onbloc/foo.FOO",
 			zeroForOne: true,
 		},
 		{
 			name:       "tokenIn > tokenOut means !zeroForOne",
-			tokenIn:    "gno.land/r/onbloc/foo",
-			tokenOut:   "gno.land/r/onbloc/bar",
+			tokenIn:    "gno.land/r/onbloc/foo.FOO",
+			tokenOut:   "gno.land/r/onbloc/bar.BAR",
 			zeroForOne: false,
 		},
 	}

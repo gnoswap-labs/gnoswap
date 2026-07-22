@@ -10,6 +10,8 @@ import (
 	"gno.land/r/demo/defi/grc20reg"
 )
 
+const tokenID = 0
+
 var (
 	token         *grc20.Token
 	privateLedger *grc20.PrivateLedger
@@ -19,7 +21,7 @@ var (
 )
 
 func init(cur realm) {
-	token, privateLedger = grc20.NewToken(0, cur, "Baz", "BAZ", 6)
+	token, privateLedger = grc20.NewToken("Baz", "BAZ", 6, tokenID, cur)
 	userTeller = token.CallerTeller()
 
 	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)

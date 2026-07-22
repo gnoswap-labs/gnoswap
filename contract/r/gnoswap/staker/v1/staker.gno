@@ -565,7 +565,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	// internal reward to user
 	if !skipInternalUpdate {
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_PATH, reward.Internal, true)
+		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -581,7 +581,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"prevRealm", previousRealm.PkgPath(),
 			"fromPositionId", utils.FormatUint(positionId),
 			"fromPoolPath", deposit.TargetPoolPath(),
-			"feeTokenPath", GNS_PATH,
+			"feeTokenPath", GNS_TOKEN_KEY,
 			"feeAmount", utils.FormatInt(internalRewardToFee),
 			"currentTime", utils.FormatInt(currentTime),
 			"currentHeight", utils.FormatInt(blockHeight),
@@ -660,7 +660,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"positionId", utils.FormatUint(positionId),
 			"poolPath", depositResolver.TargetPoolPath(),
 			"recipient", depositResolver.Owner().String(),
-			"rewardToken", GNS_PATH,
+			"rewardToken", GNS_TOKEN_KEY,
 			"rewardAmount", utils.FormatInt(internalReward),
 			"rewardToUser", rewardToUser,
 			"rewardToFee", utils.FormatInt(internalRewardToFee),

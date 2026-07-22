@@ -62,7 +62,7 @@ func TestAssertIsNotEqualsTokens(cur realm, t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar.BAR) != token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestAssertIsNotExistsPoolPath(cur realm, t *testing.T) {
 			token1Path:  fooPath,
 			fee:         fee3000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000) not to exist",
 		},
 	}
 
@@ -207,14 +207,14 @@ func TestAssertIsValidTokenOrder(cur realm, t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar.BAR) < token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 		{
 			name:        "fail - tokens in reverse order",
 			token0Path:  fooPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo.FOO) < token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 	}
 

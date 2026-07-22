@@ -61,8 +61,8 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = testing.NewUserRealm(bobAddr)
 
-	barPath                    = "gno.land/r/onbloc/bar"
-	fooPath                    = "gno.land/r/onbloc/foo"
+	barPath                    = "gno.land/r/onbloc/bar.BAR"
+	fooPath                    = "gno.land/r/onbloc/foo.FOO"
 	fee                        = uint32(3000)
 	existingLaunchpadProjectID string
 )
@@ -90,7 +90,7 @@ func setupScenario(cur realm) {
 	pool.CreatePool(cross(cur), barPath, fooPath, fee, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	staker.SetPoolTier(cross(cur), barPath+":"+fooPath+":3000", 1)
 	obl.Approve(cross(cur), launchpadAddr, 10000)
-	existingLaunchpadProjectID = launchpad.CreateProject(cross(cur), "Existing Project", "gno.land/r/onbloc/obl", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
+	existingLaunchpadProjectID = launchpad.CreateProject(cross(cur), "Existing Project", "gno.land/r/onbloc/obl.OBL", bobAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross(cur), poolAddr, int64Max)
@@ -245,14 +245,14 @@ func testBlockedEntriesOneByOne(cur realm) {
 	printBlockedScenario(cur, "launchpad", "CreateProject")
 	uassert.AbortsContains(t, cur, "halted: launchpad", func() {
 		obl.Approve(cross(cur), launchpadAddr, 10000)
-		launchpad.CreateProject(cross(cur), "Blocked Project", "gno.land/r/onbloc/obl", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
+		launchpad.CreateProject(cross(cur), "Blocked Project", "gno.land/r/onbloc/obl.OBL", aliceAddr, 10000, "", "", 30, 30, 40, time.Now().Unix()+604800)
 	})
 	printBlockedExpected(cur, "launchpad", "CreateProject", "launchpad")
 
 	testing.SetRealm(bobRealm)
 	printBlockedScenario(cur, "launchpad", "DepositGns")
 	uassert.AbortsContains(t, cur, "halted: launchpad", func() {
-		launchpad.DepositGns(cross(cur), "gno.land/r/onbloc/obl:123:30", 1000000, "")
+		launchpad.DepositGns(cross(cur), "gno.land/r/onbloc/obl.OBL:123:30", 1000000, "")
 	})
 	printBlockedExpected(cur, "launchpad", "DepositGns", "launchpad")
 
@@ -399,6 +399,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "staker", "CreateExternalIncentive")
 	uassert.AbortsContains(t, cur, "halted: staker", func() {
+		testing.SetRealm(adminRealm)
 		staker.CreateExternalIncentive(cross(cur), barPath+":"+fooPath+":3000", barPath, 1000, time.Now().Unix()+1000, time.Now().Unix()+2000)
 	})
 	printBlockedExpected(cur, "staker", "CreateExternalIncentive", "staker")

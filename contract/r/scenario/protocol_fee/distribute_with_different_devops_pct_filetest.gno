@@ -66,7 +66,7 @@ func main(cur realm) {
 func prepareRecordedProtocolFee(cur realm, amount int64) {
 	fundAndApproveBarFromStaker(cur, amount)
 	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", amount)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", amount)
 }
 
 func testCase0Percent(cur realm) {

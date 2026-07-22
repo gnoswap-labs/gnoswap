@@ -31,13 +31,13 @@ import (
 
 const (
 	gnotDenom  string = "ugnot"
-	wugnotPath string = "gno.land/r/gnoland/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
+	wugnotPath string = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    string = "gno.land/r/gnoswap/gns.GNS"
+	barPath    string = "gno.land/r/onbloc/bar.BAR"
+	bazPath    string = "gno.land/r/onbloc/baz.BAZ"
+	fooPath    string = "gno.land/r/onbloc/foo.FOO"
+	oblPath    string = "gno.land/r/onbloc/obl.OBL"
+	quxPath    string = "gno.land/r/onbloc/qux.QUX"
 
 	fee100               uint32 = 100
 	fee500               uint32 = 500

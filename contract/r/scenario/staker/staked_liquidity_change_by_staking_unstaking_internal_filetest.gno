@@ -48,8 +48,8 @@ var (
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/gnoland/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee3000 uint32 = 3000
 

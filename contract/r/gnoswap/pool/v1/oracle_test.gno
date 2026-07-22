@@ -511,8 +511,8 @@ type writeOperation struct {
 // Helper function to create a test pool
 func createTestPool() *pl.Pool {
 	return pl.NewPool(
-		"gno.land/r/onbloc/foo",
-		"gno.land/r/onbloc/bar",
+		"gno.land/r/onbloc/foo.FOO",
+		"gno.land/r/onbloc/bar.BAR",
 		500,
 		u256.MustFromDecimal("79228162514264337593543950336"),
 		10, // tickSpacing

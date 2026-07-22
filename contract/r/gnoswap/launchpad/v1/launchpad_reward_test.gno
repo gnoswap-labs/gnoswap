@@ -76,7 +76,7 @@ func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 			// Setup project if needed
 			if tt.setupProject {
 				projects := getTestProjects()
-				project := launchpad.NewProject(tt.projectID, GNS_PATH, 1000000, testutils.TestAddress("recipient"), 100, 1000)
+				project := launchpad.NewProject(tt.projectID, GNS_TOKEN_KEY, 1000000, testutils.TestAddress("recipient"), 100, 1000)
 				project.SetID(tt.projectID)
 
 				projectTier := launchpad.NewProjectTier(tt.projectID, tt.tier, 1000000, 100, 200)
@@ -275,7 +275,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(cur realm, t *te
 				cur,
 				t,
 				"Test Project",
-				GNS_PATH,
+				GNS_TOKEN_KEY,
 				testutils.TestAddress("recipient"),
 				1000000,
 				33,

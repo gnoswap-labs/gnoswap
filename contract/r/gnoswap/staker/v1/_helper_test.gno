@@ -28,13 +28,13 @@ import (
 )
 
 const (
-	wugnotPath string = "gno.land/r/gnoland/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/gns"
-	barPath    string = "gno.land/r/onbloc/bar"
-	bazPath    string = "gno.land/r/onbloc/baz"
-	fooPath    string = "gno.land/r/onbloc/foo"
-	oblPath    string = "gno.land/r/onbloc/obl"
-	quxPath    string = "gno.land/r/onbloc/qux"
+	wugnotPath string = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    string = "gno.land/r/gnoswap/gns.GNS"
+	barPath    string = "gno.land/r/onbloc/bar.BAR"
+	bazPath    string = "gno.land/r/onbloc/baz.BAZ"
+	fooPath    string = "gno.land/r/onbloc/foo.FOO"
+	oblPath    string = "gno.land/r/onbloc/obl.OBL"
+	quxPath    string = "gno.land/r/onbloc/qux.QUX"
 
 	fee100      uint32 = 100
 	fee500      uint32 = 500
@@ -232,6 +232,18 @@ func TokenApprove(cur realm, t *testing.T, tokenPath string, owner, spender addr
 	default:
 		panic("token not found")
 	}
+}
+
+func CreateExternalIncentiveAsAdmin(cur realm, t *testing.T, poolPath, rewardToken string, rewardAmount, startTimestamp, endTimestamp int64) {
+	t.Helper()
+
+	TokenApprove(cur, t, rewardToken, adminAddr, stakerAddr, maxApprove)
+	if rewardToken != gnsPath {
+		TokenApprove(cur, t, gnsPath, adminAddr, stakerAddr, maxApprove)
+	}
+
+	testing.SetRealm(adminRealm)
+	sr.CreateExternalIncentive(cross(cur), poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
 func MintPosition(

@@ -80,7 +80,7 @@ func TestTierAllocationNoLeftover(cur realm, t *testing.T) {
 
 			project, err := lp.createProject(0, cur, &createProjectParams{
 					name:          "Test Project",
-					tokenPath:     "gno.land/r/onbloc/obl",
+					tokenPath:     "gno.land/r/onbloc/obl.OBL",
 					depositAmount: tt.depositAmount,
 					tier30Ratio:   tt.tier30Ratio,
 					tier90Ratio:   tt.tier90Ratio,
@@ -143,7 +143,7 @@ func TestTierAllocationRemainder(cur realm, t *testing.T) {
 
 	project, err := lp.createProject(0, cur, &createProjectParams{
 			name:          "Remainder Test",
-			tokenPath:     "gno.land/r/onbloc/obl",
+			tokenPath:     "gno.land/r/onbloc/obl.OBL",
 			depositAmount: depositAmount,
 			tier30Ratio:   33, // 1000 * 33 / 100 = 330
 			tier90Ratio:   33, // 1000 * 33 / 100 = 330

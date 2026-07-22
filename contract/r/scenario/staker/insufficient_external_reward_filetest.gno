@@ -45,8 +45,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee100 uint32 = 100
 
@@ -57,7 +57,7 @@ var (
 	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 )
 
 func main(cur realm) {
@@ -123,6 +123,7 @@ func createShortDurationIncentive(cur realm) {
 
 	// Create incentive with minimum rewards and shorter duration for higher reward rate
 	println("[INFO] create external incentive with SHORT duration (90 days)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

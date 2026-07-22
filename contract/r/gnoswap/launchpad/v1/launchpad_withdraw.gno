@@ -72,7 +72,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	}
 
 	// Transfer the original GNS deposit back to the depositor
-	common.SafeGRC20Transfer(cross(rlm), GNS_PATH, deposit.Depositor(), withdrawalAmount)
+	common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
 
 	chain.Emit(
 		"CollectDepositGns",

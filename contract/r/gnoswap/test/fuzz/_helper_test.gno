@@ -43,9 +43,9 @@ const (
 	MAX_TICK = int32(887272)
 
 	// Token paths
-	BAR_PATH = "gno.land/r/onbloc/bar"
-	FOO_PATH = "gno.land/r/onbloc/foo"
-	BAZ_PATH = "gno.land/r/onbloc/baz"
+	BAR_PATH = "gno.land/r/onbloc/bar.BAR"
+	FOO_PATH = "gno.land/r/onbloc/foo.FOO"
+	BAZ_PATH = "gno.land/r/onbloc/baz.BAZ"
 
 	MAX_TEST_MINT_AMOUNT = math.MaxInt64 / 1000
 )
@@ -68,11 +68,11 @@ var (
 	minPriceUint256 = u256.MustFromDecimal(MIN_SQRT_RATIO)
 	maxPriceUint256 = u256.MustFromDecimal(MAX_SQRT_RATIO)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
-	oblPath = "gno.land/r/onbloc/obl"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	oblPath = "gno.land/r/onbloc/obl.OBL"
 
 	defaultTokenPaths = map[string]bool{
 		barPath: true,

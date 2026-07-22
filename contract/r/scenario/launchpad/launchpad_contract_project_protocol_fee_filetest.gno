@@ -85,7 +85,7 @@ func createContractRecipientProject(cur realm) string {
 	projectId := launchpad.CreateProject(
 		cross(cur),
 		"Contract Recipient OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		contractProjectAddr,
 		rewardAmount,
 		"",
@@ -133,8 +133,8 @@ func addProtocolFeesForContractProject(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Protocol fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -194,7 +194,7 @@ func formatContractProjectProtocolFees(cur realm, fees map[string]int64) string 
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating project with contract recipient
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project recipient is contract: true
 //
 // [SCENARIO] 2. Alice deposits GNS into contract-owned project
@@ -206,6 +206,6 @@ func formatContractProjectProtocolFees(cur realm, fees map[string]int64) string 
 // [INFO] Protocol fee distributed
 //
 // [SCENARIO] 4. Contract project recipient collects protocol fee
-// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:499 gno.land/r/onbloc/qux:999]
+// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:499 gno.land/r/onbloc/qux.QUX:999]
 // [EXPECTED] Contract BAR balance delta: 499
 // [EXPECTED] Contract QUX balance delta: 999

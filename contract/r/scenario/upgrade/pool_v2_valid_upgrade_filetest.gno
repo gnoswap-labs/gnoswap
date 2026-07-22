@@ -65,13 +65,13 @@ var (
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm   = testing.NewUserRealm(stakerAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 	fee3000 = uint32(3000)
 
-	barFoo500PoolPath  = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	barFoo3000PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	barFoo500PoolPath  = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
+	barFoo3000PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 )
 
 const (
@@ -165,7 +165,7 @@ func swapV1(cur realm) {
 	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
 	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1", int64(9999999999), "")
+	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1", int64(9999999999), "")
 	ufmt.Printf("[EXPECTED] v1 swap in=%s out=%s\n", in, out)
 }
 
@@ -195,7 +195,7 @@ func swapV2Valid(cur realm) {
 	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
 	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
 
-	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1", int64(9999999999), "")
+	in, out := router.ExactInSwapRoute(cross(cur), fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1", int64(9999999999), "")
 	ufmt.Printf("[EXPECTED] v2_valid swap in=%s out=%s\n", in, out)
 }
 
@@ -287,12 +287,12 @@ func printPoolData(cur realm) {
 // [EXPECTED] Pool implementation: gno.land/r/gnoswap/pool/v1
 //
 // [SCENARIO] 2. Create v1 data: pool + position + swap
-// [EXPECTED] Created pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
 // [EXPECTED] v1 swap in=1000000 out=-997067
 //
 // [SCENARIO] 3. Read v1-created data via getters
-// [EXPECTED] pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 tick=18 liquidity=1066918731 positions=1
+// [EXPECTED] pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 tick=18 liquidity=1066918731 positions=1
 //
 // [SCENARIO] 4. Upgrade pool implementation to v2_valid
 // [EXPECTED] Upgraded pool implementation: gno.land/r/gnoswap/pool/v2_valid
@@ -303,7 +303,7 @@ func printPoolData(cur realm) {
 // [EXPECTED] v2_valid increased observation cardinality
 //
 // [SCENARIO] 6. CreatePool through v2_valid (pools BPTree RMW)
-// [EXPECTED] v2_valid created second pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000 (total pools=2)
+// [EXPECTED] v2_valid created second pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 (total pools=2)
 //
 // [SCENARIO] 7. Burn + Collect + HandleWithdrawalFee through v2_valid
 // [EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=100000000 poolLiq=1594524137
@@ -321,5 +321,5 @@ func printPoolData(cur realm) {
 // [EXPECTED] v2_valid set swap start/end/tick-cross hooks
 //
 // [SCENARIO] 11. Read final data via getters after v2_valid mutation
-// [EXPECTED] pool=gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500 tick=43 liquidity=1594524137 positions=1
+// [EXPECTED] pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 tick=43 liquidity=1594524137 positions=1
 //

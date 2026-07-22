@@ -172,7 +172,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					NewProposalStatus(config, 1000, true, baseCreatedAt),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalCommunityPoolSpendData(
-						"gno.land/r/gnoswap/gns",
+						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						100,
 						"gno.land/r/gnoswap/community_pool",

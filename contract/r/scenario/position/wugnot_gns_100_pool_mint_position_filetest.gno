@@ -35,8 +35,8 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
 )
 
 func main(cur realm) {
@@ -48,7 +48,7 @@ func main(cur realm) {
 	initializeSetup(cur)
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100)")
 	createPool(cur, wugnotPath, gnsPath, 100, 6960)
 	println()
 
@@ -133,8 +133,8 @@ func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, m
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100)
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100 pool at tick 6960
+// [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100)
+// [EXPECTED] created gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100 pool at tick 6960
 //
 // [SCENARIO] 3. Mint Position (6820 ~ 7020)
 // [INFO] Minting position

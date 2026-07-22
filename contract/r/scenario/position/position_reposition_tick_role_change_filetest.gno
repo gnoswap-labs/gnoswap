@@ -40,8 +40,8 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath         = "gno.land/r/onbloc/bar"
-	fooPath         = "gno.land/r/onbloc/foo"
+	barPath         = "gno.land/r/onbloc/bar.BAR"
+	fooPath         = "gno.land/r/onbloc/foo.FOO"
 	fee500   uint32 = 500
 	poolPath        = barPath + ":" + fooPath + ":500"
 )

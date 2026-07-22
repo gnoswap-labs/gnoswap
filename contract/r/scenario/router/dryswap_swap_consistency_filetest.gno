@@ -49,10 +49,10 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 	fee     = uint32(500)
 )
 
@@ -213,7 +213,7 @@ func testExactIn_Small(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "100000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	ufmt.Println("[INFO] Testing Exact In - Small amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
@@ -237,7 +237,7 @@ func testExactIn_Medium(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	ufmt.Println("[INFO] Testing Exact In - Medium amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
@@ -261,7 +261,7 @@ func testExactIn_Large(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	ufmt.Println("[INFO] Testing Exact In - Large amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
@@ -285,7 +285,7 @@ func testExactIn_AlmostAll(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "100000000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing Exact In - Almost all liquidity")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
@@ -311,7 +311,7 @@ func testExactOut_Small(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "100000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing Exact Out - Small amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -340,7 +340,7 @@ func testExactOut_Medium(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing Exact Out - Medium amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -369,7 +369,7 @@ func testExactOut_Large(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "1000000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing Exact Out - Large amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -398,7 +398,7 @@ func testExactOut_BugScenario(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10000000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing Bug Scenario - Large exact out")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -425,7 +425,7 @@ func testExactOut_JustBelowOverflow(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10983000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing overflow boundary - amount 10983000000")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -442,7 +442,7 @@ func testExactOut_JustAtOverflow(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10982000000"
-	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+	route := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500"
 
 	ufmt.Println("[INFO] Testing overflow trigger - amount 10982000000")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
@@ -478,7 +478,7 @@ func testZeroAmount(cur realm) {
 		func(cur realm) {
 			router.DrySwapRoute(
 				barPath, fooPath, "0", "EXACT_IN",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
 			)
 		}(cross(cur))
 	})
@@ -493,7 +493,7 @@ func testZeroAmount(cur realm) {
 		func(cur realm) {
 			router.DrySwapRoute(
 				barPath, fooPath, "0", "EXACT_OUT",
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999999999",
+				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999999999",
 			)
 		}(cross(cur))
 	})
@@ -514,12 +514,12 @@ func testReverseDirection(cur realm) {
 	// Forward: BAR -> FOO
 	dryInFwd, dryOutFwd, _ := func(cur realm) (string, string, bool) {
 		return router.DrySwapRoute(
-			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
+			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
 		)
 	}(cross(cur))
 	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000)
 	actualInFwd, actualOutFwd := router.ExactInSwapRoute(
-		cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
+		cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Forward swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out=%s\n",
@@ -528,13 +528,13 @@ func testReverseDirection(cur realm) {
 	// Reverse: FOO -> BAR
 	dryInRev, dryOutRev, _ := func(cur realm) (string, string, bool) {
 		return router.DrySwapRoute(
-			fooPath, barPath, amount, "EXACT_IN", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1",
+			fooPath, barPath, amount, "EXACT_IN", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1",
 		)
 	}(cross(cur))
 
 	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
 	actualInRev, actualOutRev := router.ExactInSwapRoute(
-		cross(cur), fooPath, barPath, amount, "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1",
+		cross(cur), fooPath, barPath, amount, "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Reverse swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out=%s\n",
@@ -551,7 +551,7 @@ func testMaxSlippage(cur realm) {
 	// Test with very tight slippage (should fail)
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
 		return router.DrySwapRoute(
-			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999",
+			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999",
 		)
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] Tight slippage - DrySwap returns in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
@@ -560,7 +560,7 @@ func testMaxSlippage(cur realm) {
 		// This means the swap would succeed, verify with actual swap
 		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000)
 		actualIn, actualOut := router.ExactInSwapRoute(
-			cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999",
+			cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999",
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[EXPECTED] Swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out(with fee)=%s\n",
@@ -654,7 +654,7 @@ func testMultiHop_TwoHop_ExactIn_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "100000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "100"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact In")
@@ -683,7 +683,7 @@ func testMultiHop_TwoHop_ExactOut_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "663"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "100"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Success")
@@ -711,7 +711,7 @@ func testMultiHop_TwoHop_ExactOut_Success(cur realm) {
 func testMultiHop_TwoHop_ExactOut_Fail(cur realm) {
 	testing.SetRealm(aliceRealm)
 
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	amountLimit := "999999999"
 	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,
 		barPath, fooPath, route, "100", amountLimit,
@@ -745,7 +745,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactIn(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "100000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "50,50"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact In")
@@ -773,7 +773,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "1000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "99,1"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Success")
@@ -801,7 +801,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Success(cur realm) {
 func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail(cur realm) {
 	testing.SetRealm(aliceRealm)
 
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "50,50"
 	amountLimit := "999999999"
 	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,
@@ -836,7 +836,7 @@ func testMultiHop_ThreeHop_ExactIn_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500*POOL*gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500*POOL*gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3")
 
@@ -863,7 +863,7 @@ func testMultiHop_ThreeHop_ExactOut_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "663"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Success")
 
@@ -891,7 +891,7 @@ func testMultiHop_ThreeHop_ExactOut_Fail(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Fail")
 
@@ -919,7 +919,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactIn(cur realm) {
 	testing.SetRealm(aliceRealm)
 
 	amount := "10000"
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500"
 	quote := "90,10"
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact In")
@@ -946,7 +946,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactIn(cur realm) {
 func testMultiHop_TwoRoute_ThreeHop_ExactOut_Success(cur realm) {
 	testing.SetRealm(aliceRealm)
 
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500"
 	quote := "50,50"
 	amount := "2"
 
@@ -975,7 +975,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Success(cur realm) {
 func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 	testing.SetRealm(aliceRealm)
 
-	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"
+	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500"
 	quote := "90,10"
 	amountLimit := "999999999"
 	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,

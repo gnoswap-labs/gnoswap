@@ -66,8 +66,8 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
@@ -161,7 +161,7 @@ func createPool(cur realm) {
 	)
 
 	// Set internal tier 1 → pool receives GNS emission
-	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 
 	println("[INFO] created pool with internal tier 1 (GNS emission enabled)")
 }

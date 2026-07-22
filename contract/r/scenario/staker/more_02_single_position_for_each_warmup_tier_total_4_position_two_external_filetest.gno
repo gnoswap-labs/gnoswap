@@ -46,8 +46,8 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
 
 	fee100 uint32 = 100
 
@@ -59,7 +59,7 @@ var (
 
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 )
 
 func main(cur realm) {
@@ -217,6 +217,7 @@ func createExternalIncentives(cur realm) {
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -232,6 +233,7 @@ func createExternalIncentives(cur realm) {
 	baz.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

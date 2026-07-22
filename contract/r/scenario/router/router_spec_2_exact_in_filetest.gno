@@ -33,8 +33,8 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 
 	min_tick    int32 = -887220
 	max_tick    int32 = 887220
@@ -55,7 +55,7 @@ func main(cur realm) {
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross(cur), poolAddr, pl.GetPoolCreationFee())
 
-	token0Path := "gno.land/r/onbloc/foo"
+	token0Path := "gno.land/r/onbloc/foo.FOO"
 
 	println("[INFO] Approving tokens for pool operations")
 	foo.Approve(cross(cur), poolAddr, max_approve)
@@ -92,7 +92,7 @@ func main(cur realm) {
 		fooPath, // inputToken
 		barPath, // outputToken
 		"3",     // amountSpecified
-		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:3000", // strRouteArr
 		"100", // quoteArr
 		"1",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

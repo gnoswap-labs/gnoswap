@@ -33,11 +33,11 @@ var (
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
 	fee500  = uint32(500)
 
-	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
 )
 
@@ -61,7 +61,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 4. Perform swap to generate fees")
-	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 5. Collect fee from position before upgrade")
@@ -74,7 +74,7 @@ func main(cur realm) {
 
 	println("[SCENARIO] 7. Perform swap to generate fees (should panic)")
 	withAbortsWithMessage(cur, func() {
-		exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+		exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	},
 		"[EXPECTED] Perform swap to generate fees panics correctly with v2_invalid",
 	)
@@ -92,7 +92,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 10. Perform swap to generate fees (should panic)")
-	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", "100", "1")
+	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	println()
 
 	println("[SCENARIO] 11. Collect fee from position:", positionId)
@@ -197,7 +197,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
-// [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Created pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 //
 // [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
@@ -215,7 +215,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Collected protocol fee amount0: 0
 // [EXPECTED] Collected protocol fee amount1: 412
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416
 //
@@ -242,6 +242,6 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Collected protocol fee amount0: 0
 // [EXPECTED] Collected protocol fee amount1: 412
-// [EXPECTED] Pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416

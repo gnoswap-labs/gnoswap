@@ -36,11 +36,11 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
-	wrappedWugnot = "gno.land/r/gnoland/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot.wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -173,7 +173,7 @@ func testDrySwapRouteBarGnotExactIn(cur realm, t *testing.T) {
 			wrappedWugnot, // outputToken
 			"1000",        // amountSpecified
 			"EXACT_IN",    // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/gnoland/wugnot.wugnot:500", // strRouteArr
 			"100", // quoteArr
 			"1",
 		)
@@ -193,7 +193,7 @@ func testDrySwapRouteBarGnotExactOut(cur realm, t *testing.T) {
 			wrappedWugnot, // outputToken
 			"20000",       // amountSpecified
 			"EXACT_OUT",   // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/qux.QUX:500*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/gnoland/wugnot.wugnot:500", // strRouteArr
 			"100", // quoteArr
 			"2000000",
 		)
@@ -213,7 +213,7 @@ func testDrySwapRouteGnotBarExactIn(cur realm, t *testing.T) {
 			barPath,       // outputToken
 			"5000",        // amountSpecified
 			"EXACT_IN",    // swapType
-			"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/qux.QUX:500*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 			"100", // quoteArr
 			"1",
 		)
@@ -233,7 +233,7 @@ func testDrySwapRouteGnotBarExactOut(cur realm, t *testing.T) {
 			barPath,       // outputToken
 			"100",         // amountSpecified
 			"EXACT_OUT",   // swapType
-			"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/onbloc/qux.QUX:500*POOL*gno.land/r/onbloc/qux.QUX:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:500", // strRouteArr
 			"100", // quoteArr
 			"100000",
 		)

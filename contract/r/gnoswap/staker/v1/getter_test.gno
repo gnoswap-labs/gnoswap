@@ -409,7 +409,7 @@ func TestGetterPoolsByTier(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
 	// Add another pool to tier 1
-	pool2Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
+	pool2Path := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500"
 	state.instance.setPoolTier(0, cur, pool2Path, 1, state.fixedTimestamp)
 
 	pools := state.instance.GetPoolsByTier(1)

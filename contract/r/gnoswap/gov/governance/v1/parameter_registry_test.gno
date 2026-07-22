@@ -276,7 +276,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - community_pool TransferToken",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
 		// emission
@@ -316,13 +316,13 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - pool CollectProtocol",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",1000000,1000000",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoland/wugnot.wugnot,3000," + testutils.TestAddress("recipient").String() + ",1000000,1000000",
 			expectedError: false,
 		},
 		{
 			name:          "Success - pool CollectProtocol one-sided zero request",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",0,1000000",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoland/wugnot.wugnot,3000," + testutils.TestAddress("recipient").String() + ",0,1000000",
 			expectedError: false,
 		},
 		{
@@ -392,19 +392,19 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - staker SetTokenMinimumRewardAmount",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetTokenMinimumRewardAmount*EXE*gno.land/r/gnoswap/gns:1000000",
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetTokenMinimumRewardAmount*EXE*gno.land/r/gnoswap/gns.GNS:1000000",
 			expectedError: false,
 		},
 		{
 			name:          "Success - staker SetPoolTier",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,1",
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000,1",
 			expectedError: false,
 		},
 		{
 			name:          "Success - staker ChangePoolTier",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*ChangePoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,2",
+			executions:    "gno.land/r/gnoswap/staker*EXE*ChangePoolTier*EXE*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000,2",
 			expectedError: false,
 		},
 		{
@@ -535,7 +535,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
 			expectedError:         true,
 			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
 		},
@@ -572,35 +572,35 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken empty address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken invalid address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,invalidAddress,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol empty recipient",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500,,100,100",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500,,100,100",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol invalid amount0Requested",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
 			expectedError:         true,
 			expectedErrorContains: "invalid int64 value: invalid",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol negative amount1Requested",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
 			expectedError:         true,
 			expectedErrorContains: "amount1Requested must be non-negative",
 		},
@@ -642,7 +642,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - launchpad CreateProject empty recipient",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns,,1000000,,,10,20,70,1000",
+			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns.GNS,,1000000,,,10,20,70,1000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},

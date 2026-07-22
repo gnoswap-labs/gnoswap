@@ -411,7 +411,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 
 	project, _ := lp.createProject(0, cur, &createProjectParams{
 		name:          "Test Project",
-		tokenPath:     "gno.land/r/onbloc/obl",
+		tokenPath:     "gno.land/r/onbloc/obl.OBL",
 		depositAmount: 1000000,
 		tier30Ratio:   30,
 		tier90Ratio:   30,
@@ -624,7 +624,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(cur realm, t *
 
 			project, _ := lp.createProject(0, cur, &createProjectParams{
 				name:          "Test Project",
-				tokenPath:     "gno.land/r/onbloc/obl",
+				tokenPath:     "gno.land/r/onbloc/obl.OBL",
 				depositAmount: 1000000,
 				tier30Ratio:   30,
 				tier90Ratio:   30,
@@ -1041,7 +1041,7 @@ func initLaunchpadWithdrawTestWithTier(cur realm, t *testing.T, depositor addres
 	// Setup test project with equal distribution across all tiers
 	project, _ := lp.createProject(0, cur, &createProjectParams{
 		name:          "Test Project",
-		tokenPath:     "gno.land/r/onbloc/obl",
+		tokenPath:     "gno.land/r/onbloc/obl.OBL",
 		depositAmount: 1000000,
 		tier30Ratio:   34,
 		tier90Ratio:   33,

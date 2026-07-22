@@ -51,11 +51,11 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	oblPath = "gno.land/r/onbloc/obl"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	oblPath = "gno.land/r/onbloc/obl.OBL"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -64,9 +64,9 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath  = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
-	pool2Path = "gno.land/r/onbloc/foo:gno.land/r/onbloc/obl:500"
-	pool3Path = "gno.land/r/onbloc/obl:gno.land/r/onbloc/qux:3000"
+	poolPath  = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
+	pool2Path = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/obl.OBL:500"
+	pool3Path = "gno.land/r/onbloc/obl.OBL:gno.land/r/onbloc/qux.QUX:3000"
 
 	// Variables to track rewards at each tier
 	rewardTier2 int64

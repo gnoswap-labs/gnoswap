@@ -53,10 +53,10 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
-	oblPath = "gno.land/r/onbloc/obl"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	oblPath = "gno.land/r/onbloc/obl.OBL"
 
 	fee100 uint32 = 100
 	fee500 uint32 = 500
@@ -64,7 +64,7 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	barBazPoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	barBazPoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 
 	// Variables to track rewards during each phase
 	firstTierRewards     int64
@@ -279,8 +279,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pools(Tier 1) and mint position
 // [INFO] create main test pool
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 0 -> 1
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 0 -> 2675513
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 0 -> 1
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 0 -> 2675513
 // [VERIFY] main pool initial tier: 1
 // [INFO] approve tokens for minting
 // [INFO] mint position (tick range: -200 ~ 200)
@@ -297,8 +297,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 4.1. Set pool tier to tier 1
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 1 -> 1
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 2675513 -> 2675513
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 1 -> 1
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 2675513 -> 2675513
 //
 // [SCENARIO] 4.2. Collect emission rewards in tier 1 with after 10 blocks
 // [INFO] pool tier: 1
@@ -309,8 +309,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 5. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 5.1. Remove pool tier from tier 1
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 1 -> 0
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 2675513 -> 0
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 1 -> 0
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 2675513 -> 0
 //
 // [SCENARIO] 5.2. Collect emission rewards in non-tier with after 10 blocks
 // [INFO] pool tier: 0
@@ -321,8 +321,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Check tier 2 reward (tier 1: 70%, tier 2: 30%, tier 3: 0%)
 // [SCENARIO] 6.1. Set pool tier to tier 2
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 0 -> 2
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 0 -> 1605308
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 0 -> 2
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 0 -> 1605308
 //
 // [SCENARIO] 6.2. Collect emission rewards in tier 2 with after 10 blocks
 // [INFO] pool tier: 2
@@ -336,14 +336,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 7.1. Remove pool tier from tier 2
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 2 -> 0
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 1605308 -> 0
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 2 -> 0
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 1605308 -> 0
 // [INFO] skip 10 blocks, current height: 2592169, current time: 1247528120
 //
 // [SCENARIO] 8. Check tier 3 reward (tier 1: 80%, tier 2: 0%, tier 3: 20%)
 // [SCENARIO] 8.1. Set pool tier to tier 3
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's tier changed: 0 -> 3
-// [EXPECTED] gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100 pool's emission reward changed: 0 -> 1070205
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's tier changed: 0 -> 3
+// [EXPECTED] gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100 pool's emission reward changed: 0 -> 1070205
 //
 // [SCENARIO] 8.2. Collect emission rewards in tier 3 with after 10 blocks and tier2 10 blocks
 // [INFO] pool tier: 3

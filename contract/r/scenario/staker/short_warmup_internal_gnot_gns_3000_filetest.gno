@@ -48,9 +48,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	gnsPath = "gno.land/r/gnoswap/gns"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
-	wugnotPath         = "gno.land/r/gnoland/wugnot"
+	wugnotPath         = "gno.land/r/gnoland/wugnot.wugnot"
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	fee3000 uint32 = 3000

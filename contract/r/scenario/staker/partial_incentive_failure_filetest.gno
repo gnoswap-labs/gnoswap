@@ -45,9 +45,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	bazPath = "gno.land/r/onbloc/baz.BAZ"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -58,7 +58,7 @@ var (
 	depositAmount    int64 = 10_000_000_000 // 10_000 tokens each
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 )
 
 func main(cur realm) {
@@ -140,6 +140,7 @@ func createMultipleIncentives(cur realm) {
 	endTime3 := startTime3 + TIMESTAMP_90DAYS
 
 	println("[INFO] Create external incentive #1: bar token (period 1)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -150,6 +151,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #2: bar token (period 2)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -160,6 +162,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #3: bar token (period 3)")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,
@@ -170,6 +173,7 @@ func createMultipleIncentives(cur realm) {
 	)
 
 	println("[INFO] Create external incentive #4: baz token")
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
 		poolPath,

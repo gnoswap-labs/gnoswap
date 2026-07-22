@@ -54,11 +54,11 @@ func transferTokenTo(cur realm, t *testing.T, tokenPath string, to address, amou
 	testing.SetRealm(adminRealm)
 
 	switch tokenPath {
-	case "gno.land/r/onbloc/bar":
+	case "gno.land/r/onbloc/bar.BAR":
 		bar.Transfer(cross(cur), to, amount)
-	case "gno.land/r/onbloc/obl":
+	case "gno.land/r/onbloc/obl.OBL":
 		obl.Transfer(cross(cur), to, amount)
-	case "gno.land/r/onbloc/qux":
+	case "gno.land/r/onbloc/qux.QUX":
 		qux.Transfer(cross(cur), to, amount)
 	default:
 		panic(ufmt.Sprintf("unsupported token path: %s", tokenPath))
@@ -72,13 +72,13 @@ func approveProtocolFeeSpender(cur realm, t *testing.T, ownerRealm runtime.Realm
 	protocolFeeV1Realm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 
 	switch tokenPath {
-	case "gno.land/r/onbloc/bar":
+	case "gno.land/r/onbloc/bar.BAR":
 		bar.Approve(cross(cur), protocolFeeAddr, amount)
 		bar.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
-	case "gno.land/r/onbloc/obl":
+	case "gno.land/r/onbloc/obl.OBL":
 		obl.Approve(cross(cur), protocolFeeAddr, amount)
 		obl.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
-	case "gno.land/r/onbloc/qux":
+	case "gno.land/r/onbloc/qux.QUX":
 		qux.Approve(cross(cur), protocolFeeAddr, amount)
 		qux.Approve(cross(cur), protocolFeeV1Realm.Address(), amount)
 	default:
@@ -199,48 +199,48 @@ func TestDistributeProtocolFee_WithDeposits(cur realm, t *testing.T) {
 			name:      "success - distribute protocol fee with 10% devOps",
 			devOpsPct: 1_000, // 10%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 100,
-				"gno.land/r/onbloc/qux": 200,
+				"gno.land/r/onbloc/bar.BAR": 100,
+				"gno.land/r/onbloc/qux.QUX": 200,
 			},
 			wantAccuDevOps: map[string]int64{
-				"gno.land/r/onbloc/bar": 10,
-				"gno.land/r/onbloc/qux": 20,
+				"gno.land/r/onbloc/bar.BAR": 10,
+				"gno.land/r/onbloc/qux.QUX": 20,
 			},
 			wantAccuGovStaker: map[string]int64{
-				"gno.land/r/onbloc/bar": 90,
-				"gno.land/r/onbloc/qux": 180,
+				"gno.land/r/onbloc/bar.BAR": 90,
+				"gno.land/r/onbloc/qux.QUX": 180,
 			},
 		},
 		{
 			name:      "success - distribute protocol fee with 50% devOps",
 			devOpsPct: 5_000, // 50%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 100,
-				"gno.land/r/onbloc/qux": 200,
+				"gno.land/r/onbloc/bar.BAR": 100,
+				"gno.land/r/onbloc/qux.QUX": 200,
 			},
 			wantAccuDevOps: map[string]int64{
-				"gno.land/r/onbloc/bar": 50,
-				"gno.land/r/onbloc/qux": 100,
+				"gno.land/r/onbloc/bar.BAR": 50,
+				"gno.land/r/onbloc/qux.QUX": 100,
 			},
 			wantAccuGovStaker: map[string]int64{
-				"gno.land/r/onbloc/bar": 50,
-				"gno.land/r/onbloc/qux": 100,
+				"gno.land/r/onbloc/bar.BAR": 50,
+				"gno.land/r/onbloc/qux.QUX": 100,
 			},
 		},
 		{
 			name:      "success - distribute protocol fee with tiny amount 50% devOps",
 			devOpsPct: 5_000, // 50%
 			depositedBalances: map[string]int64{
-				"gno.land/r/onbloc/bar": 1,
-				"gno.land/r/onbloc/qux": 3,
+				"gno.land/r/onbloc/bar.BAR": 1,
+				"gno.land/r/onbloc/qux.QUX": 3,
 			},
 			wantAccuDevOps: map[string]int64{
-				"gno.land/r/onbloc/bar": 0,
-				"gno.land/r/onbloc/qux": 1,
+				"gno.land/r/onbloc/bar.BAR": 0,
+				"gno.land/r/onbloc/qux.QUX": 1,
 			},
 			wantAccuGovStaker: map[string]int64{
-				"gno.land/r/onbloc/bar": 1,
-				"gno.land/r/onbloc/qux": 2,
+				"gno.land/r/onbloc/bar.BAR": 1,
+				"gno.land/r/onbloc/qux.QUX": 2,
 			},
 		},
 	}
@@ -301,19 +301,19 @@ func TestAddToProtocolFee(cur realm, t *testing.T) {
 	}{
 		{
 			name:                  "add bar to protocol fee",
-			tokenPath:             "gno.land/r/onbloc/bar",
+			tokenPath:             "gno.land/r/onbloc/bar.BAR",
 			amount:                100,
 			wantReservedGovStaker: 100,
 		},
 		{
 			name:                  "add qux to protocol fee",
-			tokenPath:             "gno.land/r/onbloc/qux",
+			tokenPath:             "gno.land/r/onbloc/qux.QUX",
 			amount:                50,
 			wantReservedGovStaker: 50,
 		},
 		{
 			name:                  "reserve more qux immediately",
-			tokenPath:             "gno.land/r/onbloc/qux",
+			tokenPath:             "gno.land/r/onbloc/qux.QUX",
 			initialAmount:         50,
 			amount:                10,
 			wantReservedGovStaker: 60,
@@ -360,31 +360,31 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(cur realm, t *testing.T) {
 	}{
 		{
 			name:        "error - negative amount",
-			tokenPath:   "gno.land/r/onbloc/bar",
+			tokenPath:   "gno.land/r/onbloc/bar.BAR",
 			amount:      -1,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid amount || amount(-1) should not be negative",
 		},
 		{
 			name:        "error - negative large amount",
-			tokenPath:   "gno.land/r/onbloc/bar",
+			tokenPath:   "gno.land/r/onbloc/bar.BAR",
 			amount:      -999999,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid amount || amount(-999999) should not be negative",
 		},
 		{
 			name:      "success - zero amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/onbloc/bar.BAR",
 			amount:    0,
 		},
 		{
 			name:      "success - minimum positive amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/onbloc/bar.BAR",
 			amount:    1,
 		},
 		{
 			name:      "success - large amount",
-			tokenPath: "gno.land/r/onbloc/bar",
+			tokenPath: "gno.land/r/onbloc/bar.BAR",
 			// Keep this within the test token supply now that AddToProtocolFee
 			// performs a real TransferFrom from the caller realm.
 			amount: 1_000_000,
@@ -432,7 +432,7 @@ func TestProtocolFee_AddToProtocolFee_Overflow(cur realm, t *testing.T) {
 	}{
 		{
 			name:         "error - overflow at boundary",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/onbloc/bar.BAR",
 			initialValue: 9223372036854775806, // MAX_INT64 - 1
 			addAmount:    2,
 			shouldPanic:  true,
@@ -440,7 +440,7 @@ func TestProtocolFee_AddToProtocolFee_Overflow(cur realm, t *testing.T) {
 		},
 		{
 			name:         "error - overflow with large values",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/onbloc/bar.BAR",
 			initialValue: 9223372036854775800,
 			addAmount:    10,
 			shouldPanic:  true,
@@ -448,14 +448,14 @@ func TestProtocolFee_AddToProtocolFee_Overflow(cur realm, t *testing.T) {
 		},
 		{
 			name:         "success - at exact boundary",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/onbloc/bar.BAR",
 			initialValue: 9223372036854775806, // MAX_INT64 - 1
 			addAmount:    1,
 			shouldPanic:  false,
 		},
 		{
 			name:         "success - normal addition",
-			tokenPath:    "gno.land/r/onbloc/bar",
+			tokenPath:    "gno.land/r/onbloc/bar.BAR",
 			initialValue: 1000,
 			addAmount:    500,
 			shouldPanic:  false,
@@ -539,7 +539,7 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(cur realm, t *testing.T
 			// Given
 			pf := createTestProtocolFee(t)
 			if !tt.shouldPanic {
-				fundRealmAndApproveProtocolFee(cross(cur), t, tt.prevRealm, "gno.land/r/onbloc/bar", 100)
+				fundRealmAndApproveProtocolFee(cross(cur), t, tt.prevRealm, "gno.land/r/onbloc/bar.BAR", 100)
 			}
 			testing.SetRealm(tt.prevRealm)
 
@@ -547,13 +547,13 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(cur realm, t *testing.T
 			if tt.shouldPanic {
 				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
 					func(cur realm) {
-						pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar", 100)
+						pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar.BAR", 100)
 					}(cross(cur))
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
 					func(cur realm) {
-						pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar", 100)
+						pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar.BAR", 100)
 					}(cross(cur))
 				})
 			}
@@ -989,10 +989,10 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 	// Given
 	pf := createTestProtocolFee(t)
 
-	if err := pf.getProtocolFeeState().addAccuToGovStaker(0, cur, "gno.land/r/onbloc/bar", 100); err != nil {
+	if err := pf.getProtocolFeeState().addAccuToGovStaker(0, cur, "gno.land/r/onbloc/bar.BAR", 100); err != nil {
 		panic(err)
 	}
-	if err := pf.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar"); err != nil {
+	if err := pf.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar.BAR"); err != nil {
 		panic(err)
 	}
 
@@ -1008,7 +1008,7 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 	}()
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Transfer(cross(cur), "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
+	common.SafeGRC20Transfer(cross(cur), "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
 
 	testing.SetRealm(govStakerRealm)
 
@@ -1020,10 +1020,10 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 		}(cross(cur))
 	})
 
-	uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
-	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+	uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
 	uassert.Equal(t, 1, len(pf.getProtocolFeeState().ReservedTokens()))
-	uassert.Equal(t, "gno.land/r/onbloc/bar", pf.getProtocolFeeState().ReservedTokens()[0])
+	uassert.Equal(t, "gno.land/r/onbloc/bar.BAR", pf.getProtocolFeeState().ReservedTokens()[0])
 }
 
 func TestDistributeProtocolFee_HaltScenario_Emergency(cur realm, t *testing.T) {
@@ -1050,8 +1050,8 @@ func TestDistributeProtocolFee_HaltScenario_Emergency(cur realm, t *testing.T) {
 
 	// State assertions: no reserves, no distribution recorded.
 	uassert.Equal(t, 0, len(pf.getProtocolFeeState().ReservedTokens()))
-	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
-	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar"))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar.BAR"))
 }
 
 func TestAddToProtocolFee_HaltScenario(cur realm, t *testing.T) {
@@ -1095,7 +1095,7 @@ func TestAddToProtocolFee_HaltScenario(cur realm, t *testing.T) {
 			}()
 
 			holderRealm := testing.NewCodeRealm(poolPath)
-			fundAndApproveProtocolFee(cross(cur), holderRealm, "gno.land/r/onbloc/bar", 100)
+			fundAndApproveProtocolFee(cross(cur), holderRealm, "gno.land/r/onbloc/bar.BAR", 100)
 			testing.SetRealm(holderRealm)
 
 			// When - Then
@@ -1108,7 +1108,7 @@ func TestAddToProtocolFee_HaltScenario(cur realm, t *testing.T) {
 			} else {
 				uassert.NotPanics(t, cur, func() {
 					func(cur realm) {
-						err := pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar", 100)
+						err := pf.AddToProtocolFee(0, cur, "gno.land/r/onbloc/bar.BAR", 100)
 						uassert.NotNil(t, err)
 					}(cross(cur))
 				})
