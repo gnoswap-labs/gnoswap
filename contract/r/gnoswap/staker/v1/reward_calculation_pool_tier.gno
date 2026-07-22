@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 
@@ -164,13 +165,13 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
-func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath string, nextTier uint64) {
+func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath string, nextTier uint64) map[uint64]int64 {
 	self.cacheReward(currentTime, pools)
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
 		// no change, return
-		return
+		return make(map[uint64]int64)
 	}
 
 	// decrement count from current tier if it exists
@@ -223,6 +224,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 	})
 
 	self.currentEmission = currentEmission
+
+	return tierRewards
 }
 
 // cacheReward MUST be called before calculating any position reward.

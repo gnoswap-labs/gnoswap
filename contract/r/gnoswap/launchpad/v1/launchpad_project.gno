@@ -378,6 +378,8 @@ func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectT
 		return 0, err
 	}
 
+	emitUpdateLaunchpadRewardAccumulation(tier.ID(), rewardManager, getTierCurrentDepositAmount(tier))
+
 	return calculateClaimableRewardsForActiveDeposits(rewardManager), nil
 }
 

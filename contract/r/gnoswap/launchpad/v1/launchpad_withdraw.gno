@@ -160,6 +160,8 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 		return "", 0, err
 	}
 
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
+
 	return project.Recipient(), withdrawalAmount, nil
 }
 

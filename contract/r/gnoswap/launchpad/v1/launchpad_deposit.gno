@@ -180,6 +180,8 @@ func (lp *launchpadV1) depositGns(
 		return nil, nil, false, "", err
 	}
 
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
+
 	return deposit,
 		rewardState,
 		isFirstDeposit,

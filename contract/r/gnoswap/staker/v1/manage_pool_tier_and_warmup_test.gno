@@ -183,7 +183,7 @@ func TestChangePoolTier(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			prevTier, newTier := instance.changePoolTier(0, cur, poolPath, tt.newTier, currentTime)
+			prevTier, newTier, _, _ := instance.changePoolTier(0, cur, poolPath, tt.newTier, currentTime)
 
 			uassert.Equal(t, tt.expectedPrev, prevTier)
 			uassert.Equal(t, tt.expectedNew, newTier)
