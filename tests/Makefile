@@ -108,6 +108,11 @@ faucet-admin:
 	@echo "$(GREEN)Faucet admin account to $(ENV) environment...$(NC)"
 	@$(MAKE) -f scripts/test.mk send-ugnot-must ENV=$(ENV)
 
+.PHONY: sign-cla
+sign-cla:
+	@echo "$(GREEN)Signing CLA on $(ENV) environment...$(NC)"
+	@$(MAKE) -f scripts/test.mk sign-cla ENV=$(ENV)
+
 # Deployment targets
 .PHONY: deploy
 deploy:

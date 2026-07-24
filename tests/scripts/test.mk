@@ -16,6 +16,12 @@ PHOTON_PATH ?= gno.land/r/gnoswap/test_token/test_photon
 TRX_PATH ?= gno.land/r/gnoswap/test_token/test_trx
 USDT_PATH ?= gno.land/r/gnoswap/test_token/test_usdt
 
+.PHONY: sign-cla
+sign-cla:
+	$(info ************ sign CLA ************)
+	@echo "" | gnokey maketx call -pkgpath "gno.land/r/sys/cla" -func "Sign" -args "de2f507e38e514eca3329f8515435e3418315c10d81f62767ac9bf8cd7c78fad" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000ugnot -gas-wanted 100_000_000 -send "" gnoswap_admin
+	@echo
+
 .PHONY: send-ugnot-must
 send-ugnot-must:
 	$(info ************ send ugnot to necessary accounts ************)
