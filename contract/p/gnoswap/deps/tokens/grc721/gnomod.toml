@@ -1,2 +1,2 @@
-module = "gno.land/p/gnoswap/deps/grc721"
+module = "gno.land/p/gnoswap/deps/tokens/grc721"
 gno = "0.9"
