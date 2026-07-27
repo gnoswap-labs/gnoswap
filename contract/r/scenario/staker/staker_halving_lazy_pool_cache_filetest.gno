@@ -29,7 +29,7 @@ import (
 
 const (
 	halvingCacheBlockTime int64  = 5
-	halvingCachePoolPath  string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	halvingCachePoolPath  string = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
 )
 
 var (
@@ -80,7 +80,7 @@ func initHalvingCacheScenario(cur realm) {
 	testing.SkipHeights(1)
 	emission.MintAndDistributeGns(cross(cur))
 
-	pl.CreatePool(cross(cur), "gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000, "79228162514264337593543950337")
+	pl.CreatePool(cross(cur), "gno.land/r/onbloc/bar.BAR", "gno.land/r/onbloc/baz.BAZ", 3000, "79228162514264337593543950337")
 	sr.SetPoolTier(cross(cur), halvingCachePoolPath, 1)
 }
 
@@ -91,8 +91,8 @@ func stakeHalvingCachePosition(cur realm) {
 
 	positionId, _, _, _ := pn.Mint(
 		cross(cur),
-		"gno.land/r/onbloc/bar",
-		"gno.land/r/onbloc/baz",
+		"gno.land/r/onbloc/bar.BAR",
+		"gno.land/r/onbloc/baz.BAZ",
 		3000,
 		int32(-1020),
 		int32(1020),
