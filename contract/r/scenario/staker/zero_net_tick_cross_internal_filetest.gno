@@ -43,9 +43,9 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+	barPath  = "gno.land/r/onbloc/bar.BAR"
+	bazPath  = "gno.land/r/onbloc/baz.BAZ"
+	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
 
 	fee100     uint32 = 100
 	maxTimeout int64  = 9999999999
