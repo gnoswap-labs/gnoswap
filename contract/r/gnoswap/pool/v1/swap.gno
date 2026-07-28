@@ -238,12 +238,11 @@ func (i *poolV1) Swap(
 		Cache:             cache,
 	}
 
-	var onTickCross tickCrossHookFn
 	var hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 	if i.store.HasTickCrossHook() {
 		hook = i.store.GetTickCrossHook()
 	}
-	onTickCross = func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64) {
+	onTickCross := func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64) {
 		chain.Emit(
 			"PoolTickCross",
 			"poolPath", pool.PoolPath(),
