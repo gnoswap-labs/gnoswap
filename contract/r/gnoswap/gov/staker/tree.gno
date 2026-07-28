@@ -13,9 +13,9 @@ import (
 //
 // Methods:
 // - Get: Retrieves a value associated with a uint64 key.
-// - set: Stores a value with a uint64 key.
+// - Set: Stores a value with a uint64 key.
 // - Has: Checks if a uint64 key exists in the tree.
-// - remove: Removes a uint64 key and its associated value.
+// - Remove: Removes a uint64 key and its associated value.
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
