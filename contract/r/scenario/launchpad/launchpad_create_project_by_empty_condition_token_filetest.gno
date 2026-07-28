@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project by empty condition token
 
 package main
@@ -30,26 +32,26 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] Admin attempts to create project with empty condition token
 	println("[SCENARIO] 2. Admin attempts to create project with empty condition token")
-	createProjectByEmptyConditionToken()
+	createProjectByEmptyConditionToken(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Admin attempts to create project with empty condition token
-func createProjectByEmptyConditionToken() {
+func createProjectByEmptyConditionToken(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
@@ -72,12 +74,12 @@ func createProjectByEmptyConditionToken() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath() not registered"
-	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
+	uassert.AbortsWithMessage(t, cur, expectedPanicMessage, func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			projectName,
 			rewardTokenPath,
 			recipientAddr,
@@ -100,7 +102,7 @@ func createProjectByEmptyConditionToken() {
 // [SCENARIO] 2. Admin attempts to create project with empty condition token
 // [INFO] non-admin attempting to create project
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token:

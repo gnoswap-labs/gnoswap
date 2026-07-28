@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	"testing"
@@ -9,11 +9,12 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // contract Paths
 const (
-	GNS_PATH            string = "gno.land/r/gnoswap/gns"
+	GNS_PATH            string = "gno.land/r/gnoswap/gns.GNS"
 	GOV_STAKER_PKG_PATH        = "gno.land/r/gnoswap/gov/staker"
 )
 
@@ -30,12 +31,12 @@ var (
 
 	devOpsAddr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
-	fooPath  string = "gno.land/r/onbloc/foo"
-	barPath  string = "gno.land/r/onbloc/bar"
-	bazPath  string = "gno.land/r/onbloc/baz"
-	quxPath  string = "gno.land/r/onbloc/qux"
-	oblPath  string = "gno.land/r/onbloc/obl"
-	usdcPath string = "gno.land/r/onbloc/usdc"
+	fooPath  string = "gno.land/r/onbloc/foo.FOO"
+	barPath  string = "gno.land/r/onbloc/bar.BAR"
+	bazPath  string = "gno.land/r/onbloc/baz.BAZ"
+	quxPath  string = "gno.land/r/onbloc/qux.QUX"
+	oblPath  string = "gno.land/r/onbloc/obl.OBL"
+	usdcPath string = "gno.land/r/gnoswap/test_token/test_usdc.USDC"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -66,3 +67,29 @@ func makeFakeAddress(name string) address {
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
 }
+
+// callStakerDelegate crosses into gov/staker.Delegate after SetRealm(caller).
+func callStakerDelegate(cur realm, to address, amount int64, referrer string) int64 {
+	return staker.Delegate(cross(cur), to, amount, referrer)
+}
+
+// callStakerUndelegate crosses into gov/staker.Undelegate after SetRealm(caller).
+func callStakerUndelegate(cur realm, from address, amount int64) int64 {
+	return staker.Undelegate(cross(cur), from, amount)
+}
+
+// callStakerRedelegate crosses into gov/staker.Redelegate after SetRealm(caller).
+func callStakerRedelegate(cur realm, delegator, delegatee address, amount int64) int64 {
+	return staker.Redelegate(cross(cur), delegator, delegatee, amount)
+}
+
+// callStakerCollectUndelegatedGns crosses into gov/staker.CollectUndelegatedGns.
+func callStakerCollectUndelegatedGns(cur realm) int64 {
+	return staker.CollectUndelegatedGns(cross(cur))
+}
+
+// callStakerCollectReward crosses into gov/staker.CollectReward after SetRealm(caller).
+func callStakerCollectReward(cur realm) {
+	staker.CollectReward(cross(cur))
+}
+

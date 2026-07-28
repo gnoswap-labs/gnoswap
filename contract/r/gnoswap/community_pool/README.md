@@ -29,6 +29,7 @@ Transfers tokens to specified address (governance only).
 ```go
 // Transfer via governance proposal
 TransferToken(
+    cross(cur),
     "gno.land/r/demo/usdc",
     recipientAddr,
     1000000,

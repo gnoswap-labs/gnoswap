@@ -2,7 +2,6 @@ package gns
 
 import (
 	"chain"
-	"chain/runtime"
 	"strings"
 	"time"
 
@@ -12,33 +11,40 @@ import (
 	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 )
 
 const (
+	tokenID             = 0
 	MAXIMUM_SUPPLY      = int64(1_000_000_000_000_000)
 	INITIAL_MINT_AMOUNT = int64(100_000_000_000_000)
 	MAX_EMISSION_AMOUNT = int64(900_000_000_000_000) // MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT
 )
 
 var (
-	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-	UserTeller           = token.CallerTeller()
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	userTeller    grc20.Teller
 
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
 )
 
-func init() {
+func init(cur realm) {
+	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
+	userTeller = token.CallerTeller()
+
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	grc20reg.Register(cross, token, "")
+	grc20reg.Register(cross(cur), token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
 	// leftEmissionAmount will decrease as tokens are minted.
@@ -110,7 +116,7 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // to allow graceful handling. This function assumes caller has already verified
 // halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := cur.Previous()
 	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
@@ -133,8 +139,8 @@ func MintGns(cur realm, address address) int64 {
 	}
 
 	setLastMintedTimestamp(currentTime)
-	setMintedEmissionAmount(safeAddInt64(MintedEmissionAmount(), amountToMint))
-	setLeftEmissionAmount(safeSubInt64(LeftEmissionAmount(), amountToMint))
+	setMintedEmissionAmount(gnsmath.SafeAddInt64(MintedEmissionAmount(), amountToMint))
+	setLeftEmissionAmount(gnsmath.SafeSubInt64(LeftEmissionAmount(), amountToMint))
 
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
@@ -145,10 +151,10 @@ func MintGns(cur realm, address address) int64 {
 		"MintGNS",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"mintedBlockTime", formatInt(currentTime),
-		"mintedGNSAmount", formatInt(amountToMint),
-		"accumMintedGNSAmount", formatInt(MintedEmissionAmount()),
-		"accumLeftMintGNSAmount", formatInt(LeftEmissionAmount()),
+		"mintedBlockTime", utils.FormatInt(currentTime),
+		"mintedGNSAmount", utils.FormatInt(amountToMint),
+		"accumMintedGNSAmount", utils.FormatInt(MintedEmissionAmount()),
+		"accumLeftMintGNSAmount", utils.FormatInt(LeftEmissionAmount()),
 	)
 
 	return amountToMint
@@ -160,8 +166,7 @@ func MintGns(cur realm, address address) int64 {
 //   - to: recipient address
 //   - amount: amount to transfer
 func Transfer(cur realm, to address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.Transfer(to, amount))
+	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
 
 // Approve allows spender to transfer GNS tokens from caller's account.
@@ -170,8 +175,7 @@ func Transfer(cur realm, to address, amount int64) {
 //   - spender: address authorized to spend
 //   - amount: maximum amount spender can transfer
 func Approve(cur realm, spender address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.Approve(spender, amount))
+	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
 
 // TransferFrom transfers GNS tokens on behalf of owner.
@@ -181,8 +185,7 @@ func Approve(cur realm, spender address, amount int64) {
 //   - to: recipient address
 //   - amount: amount to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
-	userTeller := token.CallerTeller()
-	checkErr(userTeller.TransferFrom(from, to, amount))
+	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
 // Render returns token information for web interface.
@@ -257,14 +260,14 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 		}
 
 		amountPerSecond := state.getHalvingYearAmountPerSecond(year)
-		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
+		yearAmountToMint := gnsmath.SafeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
-			leftover := safeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
-			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
+			leftover := gnsmath.SafeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
+			yearAmountToMint = gnsmath.SafeAddInt64(yearAmountToMint, leftover)
 		}
 
-		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
+		totalAmountToMint = gnsmath.SafeAddInt64(totalAmountToMint, yearAmountToMint)
 
 		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
 		if err != nil {

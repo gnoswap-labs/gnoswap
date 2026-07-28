@@ -8,11 +8,11 @@ import (
 	"gno.land/r/gnoswap/gns"
 )
 
-func TestLeftAmountFix(t *testing.T) {
+func TestLeftAmountFix(cur realm, t *testing.T) {
 	resetObject(t)
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, emissionAddr, 10000000) // 10M GNS tokens
+	gns.Transfer(cross(cur), emissionAddr, 10000000) // 10M GNS tokens
 
 	tests := []struct {
 		name               string
@@ -106,7 +106,7 @@ func TestLeftAmountFix(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			if tt.setupFunc != nil {
 				tt.setupFunc()
@@ -122,7 +122,8 @@ func TestLeftAmountFix(t *testing.T) {
 			totalSent := tt.distributionAmount - leftAmt
 			amountByAddress, err := applyDistribution(distributable)
 			uassert.NoError(t, err)
-			err = transferToTarget(amountByAddress)
+			testing.SetRealm(emissionRealm)
+			err = transferToTarget(0, cur, amountByAddress)
 
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMessage, err.Error())

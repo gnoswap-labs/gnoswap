@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"chain/runtime"
@@ -11,37 +11,34 @@ import (
 )
 
 // setupGetterTest creates a mock governance instance with test data
-func setupGetterTest(t *testing.T) *governanceV1 {
+func setupGetterTest(cur realm, t *testing.T) *governanceV1 {
 	t.Helper()
 
 	gv := newMockGovernance()
 
 	// Setup config
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           50,
-	}
-	gv.store.SetConfig(1, config)
+	config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
+	gv.store.SetConfig(0, cur, 1, config)
 	gv.store.GetConfigCounter().Next()
 
 	return gv
 }
 
 // setupGetterTestWithProposal creates a mock governance instance with a proposal
-func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
+func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 	t.Helper()
 
-	gv := setupGetterTest(t)
+	gv := setupGetterTest(cur, t)
 
 	baseTime := time.Now().Unix()
 	config, _ := gv.store.GetConfig(1)
 
 	proposal := governance.NewProposal(
 		1,
-		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
+		NewProposalStatus(
+			config, 1000, governance.Text.IsExecutable(), baseTime,
+			1000,
+		),
 		governance.NewProposalMetadata("Test Proposal", "Test Description"),
 		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),
@@ -50,9 +47,9 @@ func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(1, proposal)
+	gv.store.SetProposal(0, cur, 1, proposal)
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal("g1proposer", 1)
+	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
@@ -61,65 +58,65 @@ func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
 // Store Data Getter Tests
 // ==================================
 
-func TestGetLatestConfigVersion(t *testing.T) {
+func TestGetLatestConfigVersion(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T) *governanceV1
+		setup    func(cur realm, t *testing.T) *governanceV1
 		expected int64
 	}{
 		{
 			name: "returns config version 1",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			expected: 1,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			version := gv.GetLatestConfigVersion()
 			uassert.Equal(t, tc.expected, version)
 		})
 	}
 }
 
-func TestGetCurrentProposalID(t *testing.T) {
+func TestGetCurrentProposalID(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T) *governanceV1
+		setup    func(cur realm, t *testing.T) *governanceV1
 		expected int64
 	}{
 		{
 			name: "returns 0 when no proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			expected: 0,
 		},
 		{
 			name: "returns 1 when one proposal exists",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			expected: 1,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			id := gv.GetCurrentProposalID()
 			uassert.Equal(t, tc.expected, id)
 		})
 	}
 }
 
-func TestGetMaxSmoothingPeriod(t *testing.T) {
-	gv := setupGetterTest(t)
+func TestGetMaxSmoothingPeriod(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
 
-	t.Run("returns max smoothing period", func(t *testing.T) {
+	t.Run("returns max smoothing period", func(cur realm, t *testing.T) {
 		period := gv.GetMaxSmoothingPeriod()
 		uassert.Equal(t, int64(maxSmoothingPeriod), period)
 	})
@@ -129,10 +126,10 @@ func TestGetMaxSmoothingPeriod(t *testing.T) {
 // Config Getter Tests
 // ==================================
 
-func TestGetLatestConfig(t *testing.T) {
-	gv := setupGetterTest(t)
+func TestGetLatestConfig(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
 
-	t.Run("returns latest config", func(t *testing.T) {
+	t.Run("returns latest config", func(cur realm, t *testing.T) {
 		config := gv.GetLatestConfig()
 		uassert.Equal(t, int64(100), config.VotingStartDelay)
 		uassert.Equal(t, int64(200), config.VotingPeriod)
@@ -140,25 +137,25 @@ func TestGetLatestConfig(t *testing.T) {
 	})
 }
 
-func TestGetConfig(t *testing.T) {
+func TestGetConfig(cur realm, t *testing.T) {
 	testCases := []struct {
 		name          string
-		setup         func(t *testing.T) *governanceV1
+		setup         func(cur realm, t *testing.T) *governanceV1
 		configVersion int64
 		expectError   bool
 	}{
 		{
 			name: "returns config for valid version",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			configVersion: 1,
 			expectError:   false,
 		},
 		{
 			name: "returns error for invalid version",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			configVersion: 999,
 			expectError:   true,
@@ -166,8 +163,8 @@ func TestGetConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			config, err := gv.GetConfig(tc.configVersion)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -183,49 +180,49 @@ func TestGetConfig(t *testing.T) {
 // Proposal Getter Tests
 // ==================================
 
-func TestGetProposalCount(t *testing.T) {
+func TestGetProposalCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T) *governanceV1
+		setup    func(cur realm, t *testing.T) *governanceV1
 		expected int
 	}{
 		{
 			name: "returns 0 when no proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			expected: 0,
 		},
 		{
 			name: "returns 1 when one proposal exists",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			expected: 1,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			count := gv.GetProposalCount()
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetProposalIDs(t *testing.T) {
+func TestGetProposalIDs(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T) *governanceV1
+		setup          func(cur realm, t *testing.T) *governanceV1
 		offset         int
 		count          int
 		expectedLength int
 	}{
 		{
 			name: "returns empty when no proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -233,8 +230,8 @@ func TestGetProposalIDs(t *testing.T) {
 		},
 		{
 			name: "returns proposal IDs",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			offset:         0,
 			count:          10,
@@ -242,8 +239,8 @@ func TestGetProposalIDs(t *testing.T) {
 		},
 		{
 			name: "offset beyond range returns empty",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			offset:         100,
 			count:          10,
@@ -252,33 +249,33 @@ func TestGetProposalIDs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			ids := gv.GetProposalIDs(tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
 }
 
-func TestExistsProposal(t *testing.T) {
+func TestExistsProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T) *governanceV1
+		setup      func(cur realm, t *testing.T) *governanceV1
 		proposalID int64
 		expected   bool
 	}{
 		{
 			name: "returns true for existing proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID: 1,
 			expected:   true,
 		},
 		{
 			name: "returns false for non-existent proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID: 999,
 			expected:   false,
@@ -286,33 +283,33 @@ func TestExistsProposal(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			exists := gv.ExistsProposal(tc.proposalID)
 			uassert.Equal(t, tc.expected, exists)
 		})
 	}
 }
 
-func TestGetProposal(t *testing.T) {
+func TestGetProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expectError bool
 	}{
 		{
 			name: "returns proposal for valid ID",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expectError: false,
 		},
 		{
 			name: "returns error for invalid ID",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expectError: true,
@@ -320,8 +317,8 @@ func TestGetProposal(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			proposal, err := gv.GetProposal(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -333,18 +330,18 @@ func TestGetProposal(t *testing.T) {
 	}
 }
 
-func TestGetProposerByProposalId(t *testing.T) {
+func TestGetProposerByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    address
 		expectError bool
 	}{
 		{
 			name: "returns proposer for valid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    address("g1proposer"),
@@ -352,8 +349,8 @@ func TestGetProposerByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    address(""),
@@ -362,8 +359,8 @@ func TestGetProposerByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			proposer, err := gv.GetProposerByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -375,18 +372,18 @@ func TestGetProposerByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetProposalTypeByProposalId(t *testing.T) {
+func TestGetProposalTypeByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    governance.ProposalType
 		expectError bool
 	}{
 		{
 			name: "returns proposal type for valid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    governance.Text,
@@ -394,8 +391,8 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    governance.ProposalType(0),
@@ -404,8 +401,8 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			proposalType, err := gv.GetProposalTypeByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -417,18 +414,18 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetYeaByProposalId(t *testing.T) {
+func TestGetYeaByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    int64
 		expectError bool
 	}{
 		{
 			name: "returns 0 yes votes for new proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    0,
@@ -436,8 +433,8 @@ func TestGetYeaByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    0,
@@ -446,8 +443,8 @@ func TestGetYeaByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			yea, err := gv.GetYeaByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -459,18 +456,18 @@ func TestGetYeaByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetNayByProposalId(t *testing.T) {
+func TestGetNayByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    int64
 		expectError bool
 	}{
 		{
 			name: "returns 0 no votes for new proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    0,
@@ -478,8 +475,8 @@ func TestGetNayByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    0,
@@ -488,8 +485,8 @@ func TestGetNayByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			nay, err := gv.GetNayByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -501,18 +498,18 @@ func TestGetNayByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetTitleByProposalId(t *testing.T) {
+func TestGetTitleByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    string
 		expectError bool
 	}{
 		{
 			name: "returns title for valid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    "Test Proposal",
@@ -520,8 +517,8 @@ func TestGetTitleByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    "",
@@ -530,8 +527,8 @@ func TestGetTitleByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			title, err := gv.GetTitleByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -543,18 +540,18 @@ func TestGetTitleByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetDescriptionByProposalId(t *testing.T) {
+func TestGetDescriptionByProposalId(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expected    string
 		expectError bool
 	}{
 		{
 			name: "returns description for valid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expected:    "Test Description",
@@ -562,8 +559,8 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expected:    "",
@@ -572,8 +569,8 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			description, err := gv.GetDescriptionByProposalId(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -589,25 +586,25 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 // Vote Getter Tests
 // ==================================
 
-func TestGetVoteStatus(t *testing.T) {
+func TestGetVoteStatus(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		expectError bool
 	}{
 		{
 			name: "returns vote status for valid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			expectError: false,
 		},
 		{
 			name: "returns error for invalid proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  999,
 			expectError: true,
@@ -615,8 +612,8 @@ func TestGetVoteStatus(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			quorum, maxVotingWeight, yesWeight, noWeight, err := gv.GetVoteStatus(tc.proposalID)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -631,25 +628,25 @@ func TestGetVoteStatus(t *testing.T) {
 	}
 }
 
-func TestGetVotingInfoCount(t *testing.T) {
+func TestGetVotingInfoCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T) *governanceV1
+		setup      func(cur realm, t *testing.T) *governanceV1
 		proposalID int64
 		expected   int
 	}{
 		{
 			name: "returns 0 when no votes",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID: 1,
 			expected:   0,
 		},
 		{
 			name: "returns 0 for non-existent proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID: 999,
 			expected:   0,
@@ -657,18 +654,18 @@ func TestGetVotingInfoCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			count := gv.GetVotingInfoCount(tc.proposalID)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetVotingInfoAddresses(t *testing.T) {
+func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T) *governanceV1
+		setup          func(cur realm, t *testing.T) *governanceV1
 		proposalID     int64
 		offset         int
 		count          int
@@ -676,8 +673,8 @@ func TestGetVotingInfoAddresses(t *testing.T) {
 	}{
 		{
 			name: "returns empty when no votes",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:     1,
 			offset:         0,
@@ -686,8 +683,8 @@ func TestGetVotingInfoAddresses(t *testing.T) {
 		},
 		{
 			name: "returns empty for non-existent proposal",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:     999,
 			offset:         0,
@@ -697,26 +694,26 @@ func TestGetVotingInfoAddresses(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			addrs := gv.GetVotingInfoAddresses(tc.proposalID, tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(addrs))
 		})
 	}
 }
 
-func TestExistsVotingInfo(t *testing.T) {
+func TestExistsVotingInfo(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string
-		setup      func(t *testing.T) *governanceV1
+		setup      func(cur realm, t *testing.T) *governanceV1
 		proposalID int64
 		addr       address
 		expected   bool
 	}{
 		{
 			name: "returns false when no votes",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID: 1,
 			addr:       address("g1voter"),
@@ -725,26 +722,26 @@ func TestExistsVotingInfo(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			exists := gv.ExistsVotingInfo(tc.proposalID, tc.addr)
 			uassert.Equal(t, tc.expected, exists)
 		})
 	}
 }
 
-func TestGetVotingInfo(t *testing.T) {
+func TestGetVotingInfo(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		proposalID  int64
 		addr        address
 		expectError bool
 	}{
 		{
 			name: "returns error when vote does not exist",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			proposalID:  1,
 			addr:        address("g1voter"),
@@ -753,8 +750,8 @@ func TestGetVotingInfo(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			_, err := gv.GetVotingInfo(tc.proposalID, tc.addr)
 			if tc.expectError {
 				uassert.True(t, err != nil)
@@ -769,25 +766,25 @@ func TestGetVotingInfo(t *testing.T) {
 // User Proposal Getter Tests
 // ==================================
 
-func TestGetUserProposalCount(t *testing.T) {
+func TestGetUserProposalCount(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func(t *testing.T) *governanceV1
+		setup    func(cur realm, t *testing.T) *governanceV1
 		user     address
 		expected int
 	}{
 		{
 			name: "returns count for user with proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			user:     address("g1proposer"),
 			expected: 1,
 		},
 		{
 			name: "returns 0 for user without proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			user:     address("g1unknown"),
 			expected: 0,
@@ -795,18 +792,18 @@ func TestGetUserProposalCount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			count := gv.GetUserProposalCount(tc.user)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetUserProposalIDs(t *testing.T) {
+func TestGetUserProposalIDs(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func(t *testing.T) *governanceV1
+		setup          func(cur realm, t *testing.T) *governanceV1
 		user           address
 		offset         int
 		count          int
@@ -814,8 +811,8 @@ func TestGetUserProposalIDs(t *testing.T) {
 	}{
 		{
 			name: "returns proposal IDs for user",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1proposer"),
 			offset:         0,
@@ -824,8 +821,8 @@ func TestGetUserProposalIDs(t *testing.T) {
 		},
 		{
 			name: "returns empty for user without proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1unknown"),
 			offset:         0,
@@ -834,8 +831,8 @@ func TestGetUserProposalIDs(t *testing.T) {
 		},
 		{
 			name: "offset beyond range returns empty",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1proposer"),
 			offset:         100,
@@ -845,8 +842,8 @@ func TestGetUserProposalIDs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			ids := gv.GetUserProposalIDs(tc.user, tc.offset, tc.count)
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
@@ -857,31 +854,31 @@ func TestGetUserProposalIDs(t *testing.T) {
 // Active Proposal Query Tests
 // ==================================
 
-func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
+func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 	testCases := []struct {
 		name            string
-		setup           func(t *testing.T) *governanceV1
+		setup           func(cur realm, t *testing.T) *governanceV1
 		expectHasActive bool
 	}{
 		{
 			name: "returns false when no proposals",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTest(cur, t)
 			},
 			expectHasActive: false,
 		},
 		{
 			name: "returns true when active proposal exists",
-			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				return setupGetterTestWithProposal(cur, t)
 			},
 			expectHasActive: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
 			uassert.Equal(t, tc.expectHasActive, hasActive)
 			if hasActive {
@@ -895,16 +892,16 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 // Voting Weight Snapshot Getter Tests
 // ==================================
 
-func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
+func TestGetCurrentVotingWeightSnapshot(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(t *testing.T) *governanceV1
+		setup       func(cur realm, t *testing.T) *governanceV1
 		expectError bool
 	}{
 		{
 			name: "returns snapshot when config and voting weight exist",
-			setup: func(t *testing.T) *governanceV1 {
-				gv := setupGetterTest(t)
+			setup: func(cur realm, t *testing.T) *governanceV1 {
+				gv := setupGetterTest(cur, t)
 				// Set total delegation for voting weight to exist
 				accessor := gv.stakerAccessor.(*mockGovStakerAccessor)
 				accessor.totalDelegation = 1000
@@ -914,7 +911,7 @@ func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
 		},
 		{
 			name: "returns error when config does not exist",
-			setup: func(t *testing.T) *governanceV1 {
+			setup: func(cur realm, t *testing.T) *governanceV1 {
 				gv := newMockGovernance()
 				return gv
 			},
@@ -922,17 +919,17 @@ func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
 		},
 		{
 			name: "returns error when voting weight does not exist",
-			setup: func(t *testing.T) *governanceV1 {
+			setup: func(cur realm, t *testing.T) *governanceV1 {
 				// Config exists but no voting weight
-				return setupGetterTest(t)
+				return setupGetterTest(cur, t)
 			},
 			expectError: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gv := tc.setup(t)
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := tc.setup(cur, t)
 			_, _, err := gv.GetCurrentVotingWeightSnapshot()
 			if tc.expectError {
 				uassert.True(t, err != nil)

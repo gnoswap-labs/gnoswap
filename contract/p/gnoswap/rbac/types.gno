@@ -3,7 +3,7 @@ package rbac
 // SystemRole represents a predefined system role that cannot be removed.
 type SystemRole string
 
-var (
+const (
 	ROLE_ADMIN          SystemRole = "admin"
 	ROLE_DEVOPS         SystemRole = "devops"
 	ROLE_COMMUNITY_POOL SystemRole = "community_pool"
@@ -19,7 +19,9 @@ var (
 	ROLE_PROTOCOL_FEE   SystemRole = "protocol_fee"
 )
 
-var systemRoleNames = map[string]SystemRole{
+// MUST BE IMMUTABLE, DO NOT MODIFY.
+// _systemRoleNames is a map of system role names to SystemRole values by performance.
+var _systemRoleNames = map[string]SystemRole{
 	"admin":          ROLE_ADMIN,
 	"devops":         ROLE_DEVOPS,
 	"community_pool": ROLE_COMMUNITY_POOL,
@@ -39,7 +41,7 @@ var systemRoleNames = map[string]SystemRole{
 // Returns "Unknown" if the role is not a valid system role.
 func (r SystemRole) String() string {
 	roleName := string(r)
-	if _, ok := systemRoleNames[roleName]; !ok {
+	if _, ok := _systemRoleNames[roleName]; !ok {
 		return "Unknown"
 	}
 
@@ -48,7 +50,7 @@ func (r SystemRole) String() string {
 
 // IsSystemRole returns true if roleName is a system role.
 func IsSystemRole(roleName string) bool {
-	_, ok := systemRoleNames[roleName]
+	_, ok := _systemRoleNames[roleName]
 
 	return ok
 }

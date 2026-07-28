@@ -10,7 +10,7 @@ import (
 func castToInt64(result any) (int64, error) {
 	v, ok := result.(int64)
 	if !ok {
-		return 0, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to int64", result))
+		return 0, ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to int64", result))
 	}
 
 	return v, nil
@@ -21,7 +21,7 @@ func castToInt64(result any) (int64, error) {
 func castToUint64(result any) (uint64, error) {
 	v, ok := result.(uint64)
 	if !ok {
-		return 0, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to uint64", result))
+		return 0, ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to uint64", result))
 	}
 
 	return v, nil
@@ -32,7 +32,7 @@ func castToUint64(result any) (uint64, error) {
 func castToBool(result any) (bool, error) {
 	v, ok := result.(bool)
 	if !ok {
-		return false, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to bool", result))
+		return false, ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to bool", result))
 	}
 
 	return v, nil
@@ -43,7 +43,7 @@ func castToBool(result any) (bool, error) {
 func castToString(result any) (string, error) {
 	v, ok := result.(string)
 	if !ok {
-		return "", ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to string", result))
+		return "", ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to string", result))
 	}
 
 	return v, nil
@@ -54,7 +54,7 @@ func castToString(result any) (string, error) {
 func castToBPTree(result any) (*bptree.BPTree, error) {
 	tree, ok := result.(*bptree.BPTree)
 	if !ok {
-		return nil, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to *bptree.BPTree", result))
+		return nil, ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to *bptree.BPTree", result))
 	}
 
 	return tree, nil
@@ -65,7 +65,7 @@ func castToBPTree(result any) (*bptree.BPTree, error) {
 func castToAddress(result any) (address, error) {
 	v, ok := result.(address)
 	if !ok {
-		return address(""), ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to address", result))
+		return address(""), ufmt.Errorf("%s: %s", ErrFailedCast, ufmt.Sprintf("cast %T to address", result))
 	}
 
 	return v, nil

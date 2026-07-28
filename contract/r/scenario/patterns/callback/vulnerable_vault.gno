@@ -1,9 +1,5 @@
 package callback
 
-import (
-	"chain/runtime"
-)
-
 var adminAddr address = "g1admin0000000000000000000000000000000000"
 
 type VulnerableVault struct {
@@ -38,8 +34,8 @@ func (v *VulnerableVault) resetState() {
 }
 
 func AdminResetBalance(cur realm, amount int64) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	vulnerableVault.setLastCaller(caller)
 	vulnerableVault.setLastRealm(pkgPath)
@@ -50,8 +46,8 @@ func AdminResetBalance(cur realm, amount int64) (string, string, error) {
 }
 
 func LegitimateCallback(cur realm, amount int64) (string, string, error) {
-	caller := runtime.CurrentRealm().Address().String()
-	pkgPath := runtime.CurrentRealm().PkgPath()
+	caller := cur.Address().String()
+	pkgPath := cur.PkgPath()
 
 	vulnerableVault.setLastCaller(caller)
 	vulnerableVault.setLastRealm(pkgPath)
@@ -59,13 +55,13 @@ func LegitimateCallback(cur realm, amount int64) (string, string, error) {
 	return caller, pkgPath, nil
 }
 
-func VulnerableWithdraw(amount int64, callback VulnerableCallbackType) (string, string, error) {
+func VulnerableWithdraw(cur realm, amount int64, callback VulnerableCallbackType) (string, string, error) {
 	if amount > vulnerableVault.balance {
 		panic("insufficient balance")
 	}
 	vulnerableVault.deductBalance(amount)
 
-	return callback(cross, amount)
+	return callback(cross(cur), amount)
 }
 
 func (v *VulnerableVault) setBalance(balance int64) {

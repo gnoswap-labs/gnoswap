@@ -50,7 +50,6 @@ make faucet-admin ENV=local
 **What these commands do:**
 
 1. **`make remove-test`**: Removes all `*_test.gno` and `testutils.gno` files
-
    - Prevents test files from being deployed to the blockchain
    - Reduces deployment costs and contract size
    - Protects internal testing logic from exposure
@@ -110,7 +109,6 @@ cp scripts/config/local.mk scripts/config/production.mk
 ```
 
 2. Edit the new file to configure environment-specific settings:
-
    - `GNOLAND_RPC_URL`: RPC endpoint
    - `CHAINID`: Chain ID
    - `ADDR_*`: Contract and user addresses
@@ -126,16 +124,13 @@ make deploy ENV=production
 Each environment configuration file (`scripts/config/*.mk`) should configure:
 
 - **RPC and Chain Settings**
-
   - `GNOLAND_RPC_URL`: Gnoland RPC URL
   - `CHAINID`: Chain ID
 
 - **Contract Addresses** (update after deployment)
-
   - `ADDR_POOL`, `ADDR_POSITION`, `ADDR_ROUTER`, etc.
 
 - **User Addresses**
-
   - `ADDR_GNOSWAP`: Gnoswap administrator address
   - `ADDR_ADMIN`: Admin address
   - `ADDR_TEST`: Test account address
@@ -185,7 +180,7 @@ make faucet-admin ENV=local
 # Step 3: Deploy contracts
 make deploy ENV=local
 # Deploys all contracts in the following order:
-# 1. Test tokens (bar, baz, foo, obl, qux, usdc)
+# 1. Test tokens (atom, atone, btc, dai, eth, photon, sol, trx, usdc, usdt)
 # 2. Libraries (uint256, int256, rbac, gnsmath, store, version_manager)
 # 3. Base contracts (access, rbac-realm, halt, referral, gns, emission, etc.)
 # 4. Gnoswap realms (protocol_fee, pool, position, router, staker, governance, launchpad)
@@ -256,14 +251,12 @@ make deploy ENV=production.local
 ## Important Notes
 
 1. **Gnokey Account Setup (REQUIRED)**:
-
    - **MUST** have `gnoswap_admin` account registered in gnokey before deployment
    - Check: `gnokey list`
    - Add if missing: `gnokey add gnoswap_admin`
    - This account is used for all contract deployments
 
 2. **Pre-Deployment Steps (MANDATORY)**:
-
    - **Step 1**: Run `make remove-test` to remove all test files
    - **Step 2**: Run `make faucet-admin` for local/test environments
    - **Step 3**: Verify with `make info ENV=<env>` before deployment
@@ -271,12 +264,10 @@ make deploy ENV=production.local
 3. **Test Files**: Test files (`*_test.gno`, `testutils.gno`) should NEVER be deployed to the blockchain. They increase costs and may expose internal logic.
 
 4. **Account Requirements**:
-
    - Local/Dev: Use `make faucet-admin` to fund admin accounts
    - Staging/Production: Ensure accounts are pre-funded with sufficient GNOT
 
 5. **Deployment Order**: Contracts must be deployed in this specific order:
-
    - Test tokens → Libraries → Base contracts → Gnoswap realms → v1 implementations
 
 6. **Contract Addresses**: Update environment config files with deployed contract addresses after successful deployment.

@@ -1,7 +1,6 @@
 package gnft
 
 import (
-	"chain/runtime"
 	"math/rand"
 	"time"
 
@@ -26,12 +25,10 @@ func checkErr(err error) {
 }
 
 // checkTransferErr wraps transfer errors with more specific context.
-func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
+func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
-
-	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)
@@ -43,7 +40,7 @@ func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
 	case grc721.ErrCallerIsNotOwnerOrApproved:
 		// Check if caller is the owner
 		if caller == owner {
-			panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner, ufmt.Sprintf("owner mismatch - from: %s, actual owner: %s, token: %s", from, owner, string(tid))))
+			panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner.Error(), ufmt.Sprintf("owner mismatch - from: %s, actual owner: %s, token: %s", from, owner, string(tid))))
 		}
 
 		// Check if caller is approved for this specific token
@@ -51,18 +48,18 @@ func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
 		if approved != caller {
 			// Check if caller is approved for all tokens
 			if !nft.IsApprovedForAll(owner, caller) {
-				panic(makeErrorWithDetails(grc721.ErrCallerIsNotOwnerOrApproved, ufmt.Sprintf("caller %s is not owner %s or approved for token %s", caller, owner, string(tid))))
+				panic(makeErrorWithDetails(grc721.ErrCallerIsNotOwnerOrApproved.Error(), ufmt.Sprintf("caller %s is not owner %s or approved for token %s", caller, owner, string(tid))))
 			}
 		}
 
 	case grc721.ErrInvalidAddress:
-		panic(makeErrorWithDetails(grc721.ErrInvalidAddress, ufmt.Sprintf("to address (%s)", to)))
+		panic(makeErrorWithDetails(grc721.ErrInvalidAddress.Error(), ufmt.Sprintf("to address (%s)", to)))
 
 	case grc721.ErrTransferFromIncorrectOwner:
-		panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner, ufmt.Sprintf("from %s is not the owner %s of token %s", from, owner, string(tid))))
+		panic(makeErrorWithDetails(grc721.ErrTransferFromIncorrectOwner.Error(), ufmt.Sprintf("from %s is not the owner %s of token %s", from, owner, string(tid))))
 
 	case grc721.ErrInvalidTokenId:
-		panic(makeErrorWithDetails(grc721.ErrInvalidTokenId, ufmt.Sprintf("token %s", string(tid))))
+		panic(makeErrorWithDetails(grc721.ErrInvalidTokenId.Error(), ufmt.Sprintf("token %s", string(tid))))
 
 	default:
 		panic(err.Error())
@@ -70,13 +67,12 @@ func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
 }
 
 // checkApproveErr wraps approve errors with more specific context.
-func checkApproveErr(err error, approved address, tid grc721.TokenID) {
+func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
 
 	errMsg := err.Error()
-	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)

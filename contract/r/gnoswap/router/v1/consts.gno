@@ -1,7 +1,7 @@
-package v1
+package router
 
-import (
-	"chain"
-)
+var routerImplAddr address
 
-var routerV1Addr = chain.PackageAddress("gno.land/r/gnoswap/router/v1")
+func init(cur realm) {
+	routerImplAddr = cur.Address()
+}

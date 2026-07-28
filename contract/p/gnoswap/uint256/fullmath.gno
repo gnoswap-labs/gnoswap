@@ -18,12 +18,6 @@
 // If you need error-returning versions, wrap these functions with appropriate error handling.
 package uint256
 
-var MAX_UINT256_FROM_DECIMAL *Uint
-
-func init() {
-	MAX_UINT256_FROM_DECIMAL = MustFromDecimal(MAX_UINT256)
-}
-
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
 // Panics if denominator is zero or if the result overflows 256 bits.
 func MulDiv(a, b, denominator *Uint) *Uint {
@@ -80,7 +74,7 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	}
 
 	// Add 1 to round up, but check for overflow
-	if result.Eq(MAX_UINT256_FROM_DECIMAL) {
+	if result.Eq(MaxUint256()) {
 		panic("overflow: result(" + result.ToString() + ") + 1 would exceed MAX_UINT256")
 	}
 

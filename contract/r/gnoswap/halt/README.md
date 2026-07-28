@@ -45,16 +45,16 @@ Checks if operation is halted.
 
 ```go
 // Set system to safe mode (beta mainnet)
-SetHaltLevel(HaltLevelSafeMode)
+SetHaltLevel(cross(cur), HaltLevelSafeMode)
 
 // Enable emergency mode
-SetHaltLevel(HaltLevelEmergency)
+SetHaltLevel(cross(cur), HaltLevelEmergency)
 
 // Halt specific operation
-SetOperationStatus(OpTypeRouter, true)
+SetOperationStatus(cross(cur), OpTypeRouter, true)
 
 // Resume specific operation
-SetOperationStatus(OpTypeRouter, false)
+SetOperationStatus(cross(cur), OpTypeRouter, false)
 
 // Check before operation
 halted, err := IsHalted(OpTypeWithdraw)

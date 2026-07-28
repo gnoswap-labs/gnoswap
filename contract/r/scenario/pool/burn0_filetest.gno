@@ -39,15 +39,15 @@ var (
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
-func main() {
-	testSuccessfulBurn(t)
+func main(cur realm) {
+	testSuccessfulBurn(cur, t)
 }
 
 // testSuccessfulBurn tests successful burning of all liquidity from a position
-func testSuccessfulBurn(t *testing.T) {
+func testSuccessfulBurn(cur realm, t *testing.T) {
 	// Given: Pool exists with minted position
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier100
 	liquidityAmount := "10000000000"
 	tickLower := int32(-100)
@@ -61,9 +61,9 @@ func testSuccessfulBurn(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -71,13 +71,13 @@ func testSuccessfulBurn(t *testing.T) {
 	)
 
 	// Approve tokens for minting
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	baz.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -96,7 +96,7 @@ func testSuccessfulBurn(t *testing.T) {
 	println("[INFO] Burning liquidity amount:", burnAmount)
 
 	amount0, amount1 := pool.Burn(
-		cross,
+		cross(cur),
 		barTokenPath,
 		bazTokenPath,
 		fee,
@@ -120,8 +120,8 @@ func testSuccessfulBurn(t *testing.T) {
 
 // Output:
 // [INFO] Creating pool with fee tier: 100
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/baz
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/baz.BAZ
 // [INFO] Initial liquidity amount: 10000000000
 // [INFO] Tick range: -100 to 100
 // [INFO] Position minted successfully

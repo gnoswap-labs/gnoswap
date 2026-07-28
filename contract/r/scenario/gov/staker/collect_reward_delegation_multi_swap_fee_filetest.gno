@@ -1,8 +1,11 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // staker protocol fee reward - delegation added in the middle (swap fee)
 
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
@@ -42,82 +45,82 @@ var (
 
 	aliceAddr = testutils.TestAddress("alice")
 
-	gnsPath = "gno.land/r/gnoswap/gns"
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Admin delegates first")
-	delegateWithMint(adminAddr, adminAddr, 1_000_000)
+	delegateWithMint(cur, adminAddr, adminAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 2. Create pool and mint position")
-	createPoolByAdmin(barPath, quxPath, 3000)
-	mintPositionByAdmin(barPath, quxPath, 3000)
+	createPoolByAdmin(cur, barPath, quxPath, 3000)
+	mintPositionByAdmin(cur, barPath, quxPath, 3000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 3. First swap (before alice delegation)")
-	exactInSingleSwapRouteByAdmin(barPath, quxPath, "10000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "10000", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 4. Alice delegates in the middle")
-	delegateWithMint(aliceAddr, adminAddr, 1_000_000)
+	delegateWithMint(cur, aliceAddr, adminAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 5. Second swap (after alice delegation)")
-	exactInSingleSwapRouteByAdmin(barPath, quxPath, "10000", "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000", "", "1")
+	exactInSingleSwapRouteByAdmin(cur, barPath, quxPath, "10000", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000", "", "1")
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 6. Check and collect protocol fee reward for admin")
-	checkBalanceFn(quxPath, adminAddr, func() {
-		collectProtocolFee(adminAddr)
+	checkBalanceFn(cur, quxPath, adminAddr, func() {
+		collectProtocolFee(cur, adminAddr)
 	})
 	println()
 
 	println("[SCENARIO] 7. Check and collect protocol fee reward for alice")
-	checkBalanceFn(quxPath, aliceAddr, func() {
-		collectProtocolFee(aliceAddr)
+	checkBalanceFn(cur, quxPath, aliceAddr, func() {
+		collectProtocolFee(cur, aliceAddr)
 	})
 	println("[EXPECTED] remained protocol fee reward is", common.BalanceOf(quxPath, gnoStakerAddr))
 }
 
-func delegateWithMint(from, to address, amount int64) {
+func delegateWithMint(cur realm, from, to address, amount int64) {
 	if from != adminAddr {
 		testing.SetRealm(adminRealm)
-		gns.Transfer(cross, from, amount)
+		gns.Transfer(cross(cur), from, amount)
 	}
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	gns.Approve(cross, gnoStakerAddr, amount)
-	staker.Delegate(cross, to, int64(amount), "")
+	gns.Approve(cross(cur), gnoStakerAddr, amount)
+	staker.Delegate(cross(cur), to, int64(amount), "")
 
 	ufmt.Printf("[INFO] delegated %d GNS from %s to %s\n", amount, from, to)
 }
 
-func createPoolByAdmin(token0, token1 string, fee int64) {
+func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	poolCreationFee := pool.GetPoolCreationFee()
-	pool.CreatePool(cross, token0, token1, uint32(fee), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pool.CreatePool(cross(cur), token0, token1, uint32(fee), gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	ufmt.Printf("[INFO] created %s:%s:%d pool (poolCreationFee: %d)\n", token0, token1, fee, poolCreationFee)
 }
 
-func mintPositionByAdmin(token0, token1 string, fee int64) {
+func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross, token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross, token1, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token0, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
-		cross,
+		cross(cur),
 		token0,
 		token1,
 		uint32(fee),
@@ -137,7 +140,7 @@ func mintPositionByAdmin(token0, token1 string, fee int64) {
 	ufmt.Printf("[EXPECTED] Amount0: %s, Amount1: %s\n", amount0, amount1)
 }
 
-func exactInSingleSwapRouteByAdmin(
+func exactInSingleSwapRouteByAdmin(cur realm,
 	inputToken string,
 	outputToken string,
 	specifiedAmount string,
@@ -147,16 +150,16 @@ func exactInSingleSwapRouteByAdmin(
 ) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross, inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, math.MaxInt64)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
-		cross,
+		cross(cur),
 		inputToken,
 		outputToken,
 		specifiedAmount,
 		routeQueryString,
 		minAmountOut,
-		common.TickMathGetSqrtRatioAtTick(-1000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-1000).ToString(),
 		int64(9999999999),
 		"",
 	)
@@ -166,14 +169,14 @@ func exactInSingleSwapRouteByAdmin(
 	ufmt.Printf("[EXPECTED] outputTokenAmount(%s): %s\n", outputToken, outputTokenAmount)
 }
 
-func collectProtocolFee(addr address) {
+func collectProtocolFee(cur realm, addr address) {
 	testing.SetRealm(testing.NewUserRealm(addr))
-	staker.CollectReward(cross)
+	staker.CollectReward(cross(cur))
 
 	println("[INFO] collected protocol fee reward for", addr)
 }
 
-func checkBalanceFn(tokenPath string, addr address, fn func()) {
+func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 
 	balanceBefore := common.BalanceOf(tokenPath, addr)
@@ -188,29 +191,29 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 // [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 2. Create pool and mint position
-// [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000 pool (poolCreationFee: 0)
+// [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 0)
 // [EXPECTED] Position minted successfully with ID: 1
 // [EXPECTED] Liquidity: 213383746
 // [EXPECTED] Amount0: 10000000, Amount1: 10000000
 //
 // [SCENARIO] 3. First swap (before alice delegation)
 // [EXPECTED] pool current tick: -1
-// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux): -9955
+// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9955
 //
 // [SCENARIO] 4. Alice delegates in the middle
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 5. Second swap (after alice delegation)
 // [EXPECTED] pool current tick: -2
-// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux): -9954
+// [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9954
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for admin
 // [INFO] collected protocol fee reward for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/onbloc/qux: 20
+// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/onbloc/qux.QUX: 20
 //
 // [SCENARIO] 7. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/qux: 6
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/onbloc/qux.QUX: 6
 // [EXPECTED] remained protocol fee reward is 2

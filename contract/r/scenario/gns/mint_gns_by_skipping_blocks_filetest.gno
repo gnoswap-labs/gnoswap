@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // mint gns by skipping blocks
 package main
 
@@ -26,13 +28,13 @@ var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 )
 
-func main() {
+func main(cur realm) {
 	ufmt.Println("[SCENARIO] 1. Initialize emission callback")
-	initEmissionCallback()
+	initEmissionCallback(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint GNS when initialized")
-	mintGNS()
+	mintGNS(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 3. Skip 50 blocks")
@@ -40,19 +42,19 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Mint GNS when skipped 50 blocks")
-	mintGNS()
+	mintGNS(cur)
 }
 
-func initEmissionCallback() {
+func initEmissionCallback(cur realm) {
 	testing.SetOriginCaller(adminAddr)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 }
 
-func mintGNS() {
+func mintGNS(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
-	mintedAmount := gns.MintGns(cross, user01Addr)
+	mintedAmount := gns.MintGns(cross(cur), user01Addr)
 
 	ufmt.Printf("[EXPECTED] minted amount should be %d\n", mintedAmount)
 }

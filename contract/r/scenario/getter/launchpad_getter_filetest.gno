@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad getter test
 
 package main
@@ -46,39 +48,39 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Setup test data")
-	projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id := setupTestData()
+	projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id := setupTestData(cur)
 	println()
 
 	println("[SCENARIO] 2. Test Project Getters")
-	testProjectGetters(projectId)
+	testProjectGetters(cur, projectId)
 	println()
 
 	println("[SCENARIO] 3. Test ProjectTier Getters")
-	testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, projectTier180Id)
+	testProjectTierGetters(cur, projectId, projectTier30Id, projectTier90Id, projectTier180Id)
 	println()
 
 	println("[SCENARIO] 4. Test Deposit Getters")
-	testDepositGetters(depositId1, depositId2)
+	testDepositGetters(cur, depositId1, depositId2)
 	println()
 
 	println("[SCENARIO] 5. Test RewardManager Getters")
-	testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id)
+	testRewardManagerGetters(cur, projectTier30Id, projectTier90Id, projectTier180Id)
 	println()
 
 	println("[SCENARIO] 6. Test RewardState Getters")
-	testRewardStateGetters(projectTier30Id, depositId1)
+	testRewardStateGetters(cur, projectTier30Id, depositId1)
 	println()
 }
 
-func setupTestData() (string, string, string, string, string, string) {
+func setupTestData(cur realm) (string, string, string, string, string, string) {
 	println("[INFO] Setting up test data")
 
 	// Create project
 	recipientAddr := projectAddr
 	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -89,9 +91,9 @@ func setupTestData() (string, string, string, string, string, string) {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -119,31 +121,31 @@ func setupTestData() (string, string, string, string, string, string) {
 	// Deposit 1 (30 days)
 	println("[INFO] Admin transferring GNS to user1")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user1Addr, 5_000_000)
+	gns.Transfer(cross(cur), user1Addr, 5_000_000)
 
 	println("[INFO] User1 approving and depositing to 30 day tier")
 	testing.SetRealm(user1Realm)
-	gns.Approve(cross, launchpadAddr, 5_000_000)
-	depositId1 := launchpad.DepositGns(cross, projectTier30Id, 2_000_000, "")
+	gns.Approve(cross(cur), launchpadAddr, 5_000_000)
+	depositId1 := launchpad.DepositGns(cross(cur), projectTier30Id, 2_000_000, "")
 
 	println("[EXPECTED] Deposit 1 ID:", depositId1)
 
 	// Deposit 2 (90 days)
 	println("[INFO] Admin transferring GNS to user2")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, user2Addr, 5_000_000)
+	gns.Transfer(cross(cur), user2Addr, 5_000_000)
 
 	println("[INFO] User2 approving and depositing to 90 day tier")
 	testing.SetRealm(user2Realm)
-	gns.Approve(cross, launchpadAddr, 5_000_000)
-	depositId2 := launchpad.DepositGns(cross, projectTier90Id, 3_000_000, "")
+	gns.Approve(cross(cur), launchpadAddr, 5_000_000)
+	depositId2 := launchpad.DepositGns(cross(cur), projectTier90Id, 3_000_000, "")
 
 	println("[EXPECTED] Deposit 2 ID:", depositId2)
 
 	return projectId, depositId1, depositId2, projectTier30Id, projectTier90Id, projectTier180Id
 }
 
-func testProjectGetters(projectId string) {
+func testProjectGetters(cur realm, projectId string) {
 	println("[INFO] Testing project getters")
 
 	// Set realm to launchpad for getter calls
@@ -201,12 +203,12 @@ func testProjectGetters(projectId string) {
 	println("[EXPECTED] Project recipient:", recipient)
 
 	// GetProjectCondition (this project has no conditions)
-	condition, err := launchpad.GetProjectCondition(projectId, "gno.land/r/gnoswap/gns")
+	condition, err := launchpad.GetProjectCondition(projectId, "gno.land/r/gnoswap/gns.GNS")
 	if err != nil {
 		// Expected error when no condition exists
 		println("[EXPECTED] Project condition error (no condition set):", err.Error())
 	} else if condition == nil {
-		println("[EXPECTED] Project condition for gno.land/r/gnoswap/gns: nil")
+		println("[EXPECTED] Project condition for gno.land/r/gnoswap/gns.GNS: nil")
 	} else {
 		println("[EXPECTED] Project condition token path:", condition.TokenPath())
 		println("[EXPECTED] Project condition minimum amount:", condition.MinimumAmount())
@@ -244,7 +246,7 @@ func testProjectGetters(projectId string) {
 	println("[EXPECTED] Project active status:", isActive)
 }
 
-func testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, projectTier180Id string) {
+func testProjectTierGetters(cur realm, projectId, projectTier30Id, projectTier90Id, projectTier180Id string) {
 	println("[INFO] Testing project tier getters")
 
 	// Set realm to launchpad for getter calls
@@ -336,7 +338,7 @@ func testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, project
 	}
 }
 
-func testDepositGetters(depositId1, depositId2 string) {
+func testDepositGetters(cur realm, depositId1, depositId2 string) {
 	println("[INFO] Testing deposit getters")
 
 	// Set realm to launchpad for getter calls
@@ -428,7 +430,7 @@ func testDepositGetters(depositId1, depositId2 string) {
 	println("[EXPECTED] Deposit 1 end time:", endTime1)
 }
 
-func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id string) {
+func testRewardManagerGetters(cur realm, projectTier30Id, projectTier90Id, projectTier180Id string) {
 	println("[INFO] Testing reward manager getters")
 
 	// Set realm to launchpad for getter calls
@@ -515,7 +517,7 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 	println("[EXPECTED] Reward claimable duration:", claimableDuration)
 }
 
-func testRewardStateGetters(projectTierId, depositId string) {
+func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 	println("[INFO] Testing reward state getters")
 
 	// Set realm to launchpad for getter calls
@@ -542,7 +544,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Setting up test data
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [INFO] Creating deposits for testing
 // [INFO] Admin transferring GNS to user1
 // [INFO] User1 approving and depositing to 30 day tier
@@ -555,18 +557,18 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing project getters
 // [EXPECTED] Project count: 1
 // [EXPECTED] Project IDs (offset=0, limit=10): 1 projects
-// [EXPECTED] - Project 1: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project 1: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] - Name: Test OBL Project
-// [EXPECTED] - Token Path: gno.land/r/onbloc/obl
+// [EXPECTED] - Token Path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] - Recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
 // [EXPECTED] - Deposit Amount: 10000000
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
-// [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns) not found
+// [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns.GNS) not found
 // [EXPECTED] Project tiers ratios:
 // [EXPECTED] - Tier 30: 30
 // [EXPECTED] - Tier 90: 30
@@ -579,7 +581,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing project tier getters
 // [INFO] Testing tier 30
 // [EXPECTED] Tier 30 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:30
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1237764690
 // [EXPECTED] Tier 30 distribute amount per second X128: 393845332084419517897424314157139133629
@@ -594,7 +596,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 //
 // [INFO] Testing tier 90
 // [EXPECTED] Tier 90 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:90
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:90
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1242948690
 // [EXPECTED] Tier 90 distribute amount per second X128: 131281777361473172632474771385713044543
@@ -609,7 +611,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 //
 // [INFO] Testing tier 180
 // [EXPECTED] Tier 180 details:
-// [EXPECTED] - ID: gno.land/r/onbloc/obl:123:180
+// [EXPECTED] - ID: gno.land/r/onbloc/obl.OBL:123:180
 // [EXPECTED] - Start Time: 1235172690
 // [EXPECTED] - End Time: 1250724690
 // [EXPECTED] Tier 180 distribute amount per second X128: 87521184907648781754983180923808696362
@@ -629,12 +631,12 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [INFO] Testing deposit 1 getters
 // [EXPECTED] Deposit 1 details:
 // [EXPECTED] - ID: 1
-// [EXPECTED] - Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] - Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] - Tier: 30
 // [EXPECTED] - Amount: 2000000
-// [EXPECTED] Deposit 1 project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Deposit 1 project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Deposit 1 tier: 30
-// [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl:123:30
+// [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl.OBL:123:30
 // [EXPECTED] Deposit 1 amount: 2000000
 // [EXPECTED] Deposit 1 withdrawn height: 0
 // [EXPECTED] Deposit 1 withdrawn time: 0

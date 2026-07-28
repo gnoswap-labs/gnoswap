@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	"chain/runtime"
@@ -13,8 +13,8 @@ import (
 
 // getPoolByPoolPath retrieves the pool by its path.
 func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
-	result, ok := s.store.GetPools().Get(poolPath)
-	if !ok {
+	result := s.store.GetPools().Get(poolPath)
+	if result == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
 			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
@@ -57,8 +57,8 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 	pool := s.getPoolByPoolPath(poolPath)
 
 	incentives := pool.Incentives()
-	incentive, exist := incentives.IncentiveTrees().Get(incentiveId)
-	if !exist {
+	incentive := incentives.IncentiveTrees().Get(incentiveId)
+	if incentive == nil {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -181,11 +181,13 @@ func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId
 	return rewardAmount.ToString()
 }
 
-// GetIncentiveRewardPerSecond returns the reward per second of an incentive.
-func (s *stakerV1) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
+// GetIncentiveRewardPerSecondX128 returns the Q128-scaled reward per second of
+// an incentive (i.e. actual rate = value / 2^128). The Q128 form preserves
+// sub-second precision that would otherwise be lost to int64 truncation.
+func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
 	incentive := s.getIncentive(poolPath, incentiveId)
 
-	return incentive.RewardPerSecond()
+	return incentive.RewardPerSecondX128()
 }
 
 // GetIncentiveCreator returns the creator address of an incentive.

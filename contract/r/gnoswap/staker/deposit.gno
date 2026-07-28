@@ -43,7 +43,7 @@ func (d *Deposit) Liquidity() *u256.Uint {
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
-	d.liquidity = liquidity
+	d.liquidity = u256.Zero().Set(liquidity)
 }
 
 func (d *Deposit) StakeTime() int64 {
@@ -207,11 +207,11 @@ func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) 
 }
 
 func (d *Deposit) Warmups() []Warmup {
-	return d.warmups
+	return cloneWarmups(d.warmups)
 }
 
 func (d *Deposit) SetWarmups(warmups []Warmup) {
-	d.warmups = warmups
+	d.warmups = cloneWarmups(warmups)
 }
 
 func (d *Deposit) LastExternalIncentiveUpdatedAt() int64 {
@@ -276,6 +276,14 @@ type Warmup struct {
 	WarmupRatio    uint64
 }
 
+func NewWarmup(timeDuration, nextWarmupTime int64, warmupRatio uint64) Warmup {
+	return Warmup{
+		TimeDuration:   timeDuration,
+		NextWarmupTime: nextWarmupTime,
+		WarmupRatio:    warmupRatio,
+	}
+}
+
 func (w *Warmup) SetNextWarmupTime(nextWarmupTime int64) {
 	w.NextWarmupTime = nextWarmupTime
 }
@@ -322,4 +330,13 @@ func DefaultWarmupTemplate() []Warmup {
 			WarmupRatio: 100,
 		},
 	}
+}
+
+const (
+	GNS_PATH    string = "gno.land/r/gnoswap/gns.GNS"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot.wugnot"
+)
+
+func DefaultAllowedTokens() []string {
+	return []string{GNS_PATH, WUGNOT_PATH}
 }

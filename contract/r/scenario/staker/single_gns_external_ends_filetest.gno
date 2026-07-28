@@ -12,6 +12,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"fmt"
 	"strconv"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -46,7 +46,7 @@ var (
 	adminUser    = adminAddr
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
-	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
+	// g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
@@ -55,8 +55,8 @@ var (
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
 
 	fee100 uint32 = 100
 
@@ -71,85 +71,85 @@ var (
 	blockTime int64 = 2000
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize account and settings")
-	initAccountAndSettings()
+	initAccountAndSettings(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Mint bar qux position 01")
-	mintBarQuxPosition01()
+	mintBarQuxPosition01(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint bar qux position 02")
-	mintBarQuxPosition02()
+	mintBarQuxPosition02(cur)
 	println()
 
 	println("[SCENARIO] 5. Create external incentive QUX")
-	createExternalIncentiveQux()
+	createExternalIncentiveQux(cur)
 	println()
 
 	println("[SCENARIO] 6. Start external incentive")
-	startExternalIncentive()
+	startExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 7. Stake position 01")
-	stakePosition01()
+	stakePosition01(cur)
 	println()
 
 	println("[SCENARIO] 8. Stake position 02")
-	stakePosition02()
+	stakePosition02(cur)
 	println()
 
 	println("[SCENARIO] 9. Collect rewards for both positions")
-	collectRewardsForBothPositions()
+	collectRewardsForBothPositions(cur)
 	println()
 
 	println("[SCENARIO] 10. End external QUX incentive")
-	endExternalQuxIncentive()
+	endExternalQuxIncentive(cur)
 	println()
 
 	println("[SCENARIO] 11. Verify no rewards after external incentive ends")
-	collectRewardsAfterExternalEnds()
+	collectRewardsAfterExternalEnds(cur)
 }
 
-func initAccountAndSettings() {
+func initAccountAndSettings(cur realm) {
 	println("[INFO] set unstaking fee to 0")
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
+	println("[INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0")
 	testing.SkipHeights(1)
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
 	)
 }
 
-func mintBarQuxPosition01() {
+func mintBarQuxPosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 01")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 01 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -165,17 +165,17 @@ func mintBarQuxPosition01() {
 	)
 }
 
-func mintBarQuxPosition02() {
+func mintBarQuxPosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve tokens for position 02")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] mint in-range position 02 (tick range: -50 ~ 50, requested amount: 50, 50)")
 	testing.SkipHeights(1)
 	pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -191,25 +191,26 @@ func mintBarQuxPosition02() {
 	)
 }
 
-func createExternalIncentiveQux() {
+func createExternalIncentiveQux(cur realm) {
 	println("[INFO] transfer QUX reward and GNS deposit to external creator")
 	testing.SetRealm(adminRealm)
-	qux.Transfer(cross, externalCreatorUser, 9000000000)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	qux.Transfer(cross(cur), externalCreatorUser, 9000000000)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve QUX and GNS for external incentive creation")
-	testing.SetRealm(externalCreatorRealm) // creator
-	qux.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, maxInt64)
+	testing.SetRealm(adminRealm) // creator
+	qux.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
 
-	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
+	incentiveID := fmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 	println("[INFO] create external incentive with incentiveID: ", incentiveID)
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		9000000000,
 		1234569600,
@@ -217,7 +218,7 @@ func createExternalIncentiveQux() {
 	)
 }
 
-func startExternalIncentive() {
+func startExternalIncentive(cur realm) {
 	externalStartTime := int64(1234569600)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
@@ -229,38 +230,38 @@ func startExternalIncentive() {
 	ufmt.Printf("[INFO] external incentive started at timestamp: %d\n", externalStartTime)
 }
 
-func stakePosition01() {
+func stakePosition01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position 01")
 	testing.SkipHeights(1)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
-	sr.StakeToken(cross, 1, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
+	sr.StakeToken(cross(cur), 1, "")
 }
 
-func stakePosition02() {
+func stakePosition02(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] stake position 02")
 	testing.SkipHeights(1)
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
+	sr.StakeToken(cross(cur), 2, "")
 }
 
-func collectRewardsForBothPositions() {
+func collectRewardsForBothPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect rewards for both positions")
 	communityBefore := qux.BalanceOf(communityPoolAddr)
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
 	communityAfter := qux.BalanceOf(communityPoolAddr)
 	ufmt.Println("[INFO] rewards collected for both positions during external incentive period")
 	ufmt.Printf("[EXPECTED] community pool QUX unchanged on collect: %d -> %d\n", communityBefore, communityAfter)
 }
 
-func endExternalQuxIncentive() {
+func endExternalQuxIncentive(cur realm) {
 	externalEndTime := (1234569600 + TIMESTAMP_90DAYS)
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
@@ -271,15 +272,15 @@ func endExternalQuxIncentive() {
 	testing.SkipHeights(int64(blockLeft)) // skip until external gns ends
 
 	println("[INFO] end external incentive and collect remaining QUX")
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	quxBalanceBeforeEnds := qux.BalanceOf(externalCreatorUser)
 	stakerQuxBeforeEnds := qux.BalanceOf(stakerAddr)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 
-	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1"
+	incentiveID := "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567910:1"
 	sr.EndExternalIncentive(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		incentiveID,
 		externalCreatorUser,
 	)
@@ -297,15 +298,15 @@ func endExternalQuxIncentive() {
 	ufmt.Printf("[EXPECTED] creator receives fixed GNS deposit: %d\n", refundedGnsDeposit)
 }
 
-func collectRewardsAfterExternalEnds() {
+func collectRewardsAfterExternalEnds(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect rewards after external incentive ends")
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(1)
 
-	sr.CollectReward(cross, 1)
-	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross(cur), 1)
+	sr.CollectReward(cross(cur), 2)
 	after := gns.BalanceOf(adminUser)
 	diff := after - before
 
@@ -316,7 +317,7 @@ func collectRewardsAfterExternalEnds() {
 	ufmt.Println("[EXPECTED] no additional GNS rewards after external incentive ends")
 }
 
-func positionIdFrom(positionId int) grc721.TokenID {
+func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
@@ -326,7 +327,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pool
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0
+// [INFO] create pool gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100 at tick 0
 //
 // [SCENARIO] 3. Mint bar qux position 01
 // [INFO] approve tokens for position 01
@@ -340,7 +341,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] transfer QUX reward and GNS deposit to external creator
 // [INFO] approve QUX and GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1
+// [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567910:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts
@@ -360,15 +361,15 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [SCENARIO] 10. End external QUX incentive
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining QUX
-// [INFO] QUX balance before ending: 0
-// [INFO] QUX balance after ending: 3173785
-// [INFO] staker QUX before ending: 8999996530
-// [EXPECTED] creator receives remaining reward token: 3173785
+// [INFO] QUX balance before ending: 9000000000
+// [INFO] QUX balance after ending: 9000005788
+// [INFO] staker QUX before ending: 8999996529
+// [EXPECTED] creator receives remaining reward token: 5788
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
-// [INFO] GNS balance before collection: 99999000000000
-// [INFO] GNS balance after collection: 99999000000000
+// [INFO] GNS balance before collection: 99998000000000
+// [INFO] GNS balance after collection: 99998000000000
 // [INFO] total reward collected: 0
 // [EXPECTED] no additional GNS rewards after external incentive ends

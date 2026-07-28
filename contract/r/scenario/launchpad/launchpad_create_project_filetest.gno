@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project
 
 package main
@@ -29,26 +31,26 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] Admin attempts to create project
 	println("[SCENARIO] 2. Admin attempts to create project")
-	createProjectByAdmin()
+	createProjectByAdmin(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Admin attempts to create project
-func createProjectByAdmin() {
+func createProjectByAdmin(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -71,10 +73,10 @@ func createProjectByAdmin() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -96,7 +98,7 @@ func createProjectByAdmin() {
 // [SCENARIO] 2. Admin attempts to create project
 // [INFO] admin attempting to create project
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
@@ -105,4 +107,4 @@ func createProjectByAdmin() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1235172690
-// [EXPECTED] created project id: gno.land/r/onbloc/obl:123
+// [EXPECTED] created project id: gno.land/r/onbloc/obl.OBL:123

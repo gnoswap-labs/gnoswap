@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test_token/test_atom"
+gno = "0.9"

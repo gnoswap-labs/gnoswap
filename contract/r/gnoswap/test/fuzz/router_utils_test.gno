@@ -210,13 +210,13 @@ func generateRouteQuoteArr(f *fuzz.T, pathCount int) string {
 }
 
 // setupRouterMintPositionByRoutePath sets up a router pool and position for each route path.
-func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
+func setupRouterMintPositionByRoutePath(cur realm, ft *fuzz.T, routePathArr string) {
 	routePaths := strings.Split(routePathArr, ",")
 	for _, routePath := range routePaths {
 		for _, routePool := range strings.Split(routePath, "*POOL*") {
 			token0Path, token1Path, feeTier := parsePoolPathAlign(routePool)
 
-			setupCreatePool(ft, token0Path, token1Path, feeTier)
+			setupCreatePool(cur, ft, token0Path, token1Path, feeTier)
 
 			// generate parameters for position
 			poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
@@ -224,8 +224,7 @@ func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
 			amountDesired := int64(1_000_000_000_000)
 
 			// setup position
-			setupMintPosition(
-				ft,
+			setupMintPosition(cur, ft,
 				token0Path,
 				token1Path,
 				feeTier,

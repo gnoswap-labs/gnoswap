@@ -14,8 +14,8 @@ func NewV3ValidPool(store pool.IPoolStore) pool.IPool {
 	}
 }
 
-func init() {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+func init(cur realm) {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		return NewV3ValidPool(store)
 	})
 }
@@ -26,62 +26,62 @@ type TestPool struct {
 }
 
 // IPoolManager interface
-func (t *TestPool) CreatePool(token0Path string, token1Path string, fee uint32, sqrtPriceX96 string) {
-	t.instance.CreatePool(token0Path, token1Path, fee, sqrtPriceX96)
+func (t *TestPool) CreatePool(_ int, rlm realm, token0Path string, token1Path string, fee uint32, sqrtPriceX96 string) {
+	t.instance.CreatePool(0, rlm, token0Path, token1Path, fee, sqrtPriceX96)
 }
 
-func (t *TestPool) SetPoolCreationFee(fee int64) {
-	t.instance.SetPoolCreationFee(fee)
+func (t *TestPool) SetPoolCreationFee(_ int, rlm realm, fee int64) {
+	t.instance.SetPoolCreationFee(0, rlm, fee)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
-	t.instance.IncreaseObservationCardinalityNext(token0Path, token1Path, fee, cardinalityNext)
+func (t *TestPool) IncreaseObservationCardinalityNext(_ int, rlm realm, token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+	t.instance.IncreaseObservationCardinalityNext(0, rlm, token0Path, token1Path, fee, cardinalityNext)
 }
 
 // IPoolPosition interface
-func (t *TestPool) Mint(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	return t.instance.Mint(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+func (t *TestPool) Mint(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return t.instance.Mint(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func (t *TestPool) Burn(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
-	return t.instance.Burn(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return t.instance.Burn(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func (t *TestPool) Collect(token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
-	return t.instance.Collect(token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
+	return t.instance.Collect(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
 
-func (t *TestPool) SetWithdrawalFee(fee uint64) {
-	t.instance.SetWithdrawalFee(fee)
+func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
+	t.instance.SetWithdrawalFee(0, rlm, fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	return t.instance.HandleWithdrawalFee(token0Path, amount0, token1Path, amount1, positionCaller)
+func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
+	return t.instance.HandleWithdrawalFee(0, rlm, token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
 // IPoolSwap interface
-func (t *TestPool) Swap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
-	return t.instance.Swap(token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
 }
 
-func (t *TestPool) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
-	t.instance.SetSwapEndHook(hook)
+func (t *TestPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
+	t.instance.SetSwapEndHook(0, rlm, hook)
 }
 
-func (t *TestPool) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
-	t.instance.SetSwapStartHook(hook)
+func (t *TestPool) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
+	t.instance.SetSwapStartHook(0, rlm, hook)
 }
 
-func (t *TestPool) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	t.instance.SetTickCrossHook(hook)
+func (t *TestPool) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	t.instance.SetTickCrossHook(0, rlm, hook)
 }
 
-func (t *TestPool) CollectProtocol(token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
-	return t.instance.CollectProtocol(token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+func (t *TestPool) CollectProtocol(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
+	return t.instance.CollectProtocol(0, rlm, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
 }
 
-func (t *TestPool) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
-	t.instance.SetFeeProtocol(feeProtocol0, feeProtocol1)
+func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
+	t.instance.SetFeeProtocol(0, rlm, feeProtocol0, feeProtocol1)
 }
 
 // IPoolGetter interface

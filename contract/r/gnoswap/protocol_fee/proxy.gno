@@ -5,7 +5,12 @@ package protocol_fee
 // Parameters:
 //   - cur: Pass `cross` as argument.
 func DistributeProtocolFee(cur realm) {
-	getImplementation().DistributeProtocolFee()
+	getImplementation().DistributeProtocolFee(0, cur)
+}
+
+// DistributeProtocolFeeByTokenPath distributes accumulated protocol fees for a single token path.
+func DistributeProtocolFeeByTokenPath(cur realm, tokenPath string) {
+	getImplementation().DistributeProtocolFeeByTokenPath(0, cur, tokenPath)
 }
 
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
@@ -14,7 +19,7 @@ func DistributeProtocolFee(cur realm) {
 //   - cur: Pass `cross` as argument.
 //   - pct: percentage in basis points (0-10000)
 func SetDevOpsPct(cur realm, pct int64) {
-	getImplementation().SetDevOpsPct(pct)
+	getImplementation().SetDevOpsPct(0, cur, pct)
 }
 
 // SetGovStakerPct sets the percentage of protocol fees allocated to GovStaker.
@@ -23,7 +28,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 //   - cur: Pass `cross` as argument.
 //   - pct: percentage in basis points (0-10000)
 func SetGovStakerPct(cur realm, pct int64) {
-	getImplementation().SetGovStakerPct(pct)
+	getImplementation().SetGovStakerPct(0, cur, pct)
 }
 
 // AddToProtocolFee adds tokens to the protocol fee pool.
@@ -36,7 +41,7 @@ func SetGovStakerPct(cur realm, pct int64) {
 // Returns:
 //   - err: nil on success; errProtocolFeeHalted when protocol-fee collection is halted
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
-	return getImplementation().AddToProtocolFee(tokenPath, amount)
+	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }
 
 // GetDevOpsPct returns the DevOps fee percentage.

@@ -12,7 +12,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestIsOwner(t *testing.T) {
+func TestIsOwner(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -39,7 +39,7 @@ func TestIsOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := IsOwner(tt.addr)
 			if result != tt.expected {
 				t.Errorf("IsOwner(%s) = %v, want %v", tt.addr, result, tt.expected)
@@ -48,7 +48,7 @@ func TestIsOwner(t *testing.T) {
 	}
 }
 
-func TestIsPendingOwner(t *testing.T) {
+func TestIsPendingOwner(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupPending     bool
@@ -105,7 +105,7 @@ func TestIsPendingOwner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Reset manager for each test
 			manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -127,7 +127,7 @@ func TestIsPendingOwner(t *testing.T) {
 	}
 }
 
-func TestGetOwner(t *testing.T) {
+func TestGetOwner(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -137,7 +137,7 @@ func TestGetOwner(t *testing.T) {
 	}
 }
 
-func TestGetPendingOwner(t *testing.T) {
+func TestGetPendingOwner(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -160,7 +160,7 @@ func TestGetPendingOwner(t *testing.T) {
 	}
 }
 
-func TestTransferOwnership(t *testing.T) {
+func TestTransferOwnership(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		ownerAddr              address
@@ -228,7 +228,7 @@ func TestTransferOwnership(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// reset manager for test
 			manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -241,23 +241,23 @@ func TestTransferOwnership(t *testing.T) {
 			}()
 
 			if tt.expectedHasAborted {
-				uassert.AbortsContains(t, tt.expectedAbortedMessage, func() {
-					TransferOwnership(cross, tt.transferAddr)
+				uassert.AbortsContains(t, cur, tt.expectedAbortedMessage, func() {
+					TransferOwnership(cross(cur), tt.transferAddr)
 				})
 			} else {
-				TransferOwnership(cross, tt.transferAddr)
+				TransferOwnership(cross(cur), tt.transferAddr)
 			}
 		})
 	}
 }
 
-func TestOwnership_TransferOwnershipTwice(t *testing.T) {
+func TestOwnership_TransferOwnershipTwice(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	// First transfer
 	testing.SetOriginCaller(ADMIN)
-	TransferOwnership(cross, DEV_OPS)
+	TransferOwnership(cross(cur), DEV_OPS)
 
 	// Verify first pending owner
 	if GetPendingOwner() != DEV_OPS {
@@ -266,7 +266,7 @@ func TestOwnership_TransferOwnershipTwice(t *testing.T) {
 
 	// Second transfer to different address
 	testing.SetOriginCaller(ADMIN)
-	TransferOwnership(cross, COMMUNITY_POOL_ADDR)
+	TransferOwnership(cross(cur), COMMUNITY_POOL_ADDR)
 
 	// Verify pending owner updated
 	if GetPendingOwner() != COMMUNITY_POOL_ADDR {
@@ -279,7 +279,7 @@ func TestOwnership_TransferOwnershipTwice(t *testing.T) {
 	}
 }
 
-func TestAcceptOwnership(t *testing.T) {
+func TestAcceptOwnership(cur realm, t *testing.T) {
 	tests := []struct {
 		name                   string
 		ownerAddr              address
@@ -323,7 +323,7 @@ func TestAcceptOwnership(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// reset manager for test
 			manager = prbac.NewRBACWithAddress(tt.ownerAddr)
 			err := manager.RegisterRole(prbac.ROLE_ADMIN.String(), tt.ownerAddr)
@@ -333,7 +333,7 @@ func TestAcceptOwnership(t *testing.T) {
 
 			// setup transfer ownership
 			testing.SetOriginCaller(tt.ownerAddr)
-			TransferOwnership(cross, tt.transferAddr)
+			TransferOwnership(cross(cur), tt.transferAddr)
 
 			// setup current realm and origin caller
 			func() {
@@ -344,11 +344,11 @@ func TestAcceptOwnership(t *testing.T) {
 			}()
 
 			if tt.expectedHasAborted {
-				uassert.AbortsContains(t, tt.expectedAbortedMessage, func() {
-					AcceptOwnership(cross)
+				uassert.AbortsContains(t, cur, tt.expectedAbortedMessage, func() {
+					AcceptOwnership(cross(cur))
 				})
 			} else {
-				AcceptOwnership(cross)
+				AcceptOwnership(cross(cur))
 			}
 
 			if GetOwner() != tt.expectedOwner {
@@ -376,15 +376,15 @@ func TestAcceptOwnership(t *testing.T) {
 	}
 }
 
-func TestOwnership_AcceptOwnershipWithoutPendingOwner(t *testing.T) {
+func TestOwnership_AcceptOwnershipWithoutPendingOwner(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	// Try to accept ownership without setting pending owner
 	testing.SetOriginCaller(DEV_OPS)
 
-	uassert.AbortsContains(t, "caller is not pending owner", func() {
-		AcceptOwnership(cross)
+	uassert.AbortsContains(t, cur, "caller is not pending owner", func() {
+		AcceptOwnership(cross(cur))
 	})
 
 	// Owner should remain unchanged
@@ -398,7 +398,7 @@ func TestOwnership_AcceptOwnershipWithoutPendingOwner(t *testing.T) {
 	}
 }
 
-func TestOwnershipWorkflow(t *testing.T) {
+func TestOwnershipWorkflow(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 

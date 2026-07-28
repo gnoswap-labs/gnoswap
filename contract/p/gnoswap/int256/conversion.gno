@@ -13,7 +13,9 @@ const (
 	maxWords      = 256 / bits.UintSize
 )
 
-var multipliers = [5]*Int{
+// MUST BE IMMUTABLE, DO NOT MODIFY
+// multipliers is a table of multipliers for the decimal conversion.
+var _multipliers = [5]*Int{
 	nil,
 	{0x8ac7230489e80000, 0, 0, 0},
 	{0x98a224000000000, 0x4b3b4ca85a86c47a, 0, 0},
@@ -181,7 +183,7 @@ func (z *Int) fromDecimal(bs string) error {
 		return errors.New("EOF")
 	}
 
-	for i, mult := range multipliers {
+	for i, mult := range _multipliers {
 		if remaining <= 0 {
 			return nil
 		}

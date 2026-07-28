@@ -22,7 +22,7 @@ func setupTestDirectory(t *testing.T) string {
 		"contract/p/gnoswap/int256",
 		"contract/p/gnoswap/gnsmath",
 		"contract/r/gnoswap/test_token", // This should not be discovered as a package
-		"contract/r/gnoswap/test_token/usdc",
+		"contract/r/gnoswap/test_token/test_usdc",
 		"contract/r/gnoswap/test_token/foo",
 		"contract/r/gnoswap/gns",
 		"contract/r/gnoswap/gnft",
@@ -170,7 +170,7 @@ func TestTemplateGeneration(t *testing.T) {
 
 func TestPackageCategories(t *testing.T) {
 	packages := []Package{
-		{Name: "usdc", Path: "r/gnoswap/test_token/usdc", IsRealm: true},
+		{Name: "usdc", Path: "r/gnoswap/test_token/test_usdc", IsRealm: true},
 		{Name: "uint256", Path: "p/gnoswap/uint256", IsRealm: false},
 		{Name: "gns", Path: "r/gnoswap/gns", IsRealm: true},
 		{Name: "pool", Path: "r/gnoswap/pool", IsRealm: true},

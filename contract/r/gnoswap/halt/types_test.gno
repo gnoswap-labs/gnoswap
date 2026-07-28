@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestTypes_HaltLevelString(t *testing.T) {
+func TestTypes_HaltLevelString(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		level    HaltLevel
@@ -45,7 +45,7 @@ func TestTypes_HaltLevelString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.level.String()
 
@@ -55,7 +55,7 @@ func TestTypes_HaltLevelString(t *testing.T) {
 	}
 }
 
-func TestTypes_HaltLevelDescription(t *testing.T) {
+func TestTypes_HaltLevelDescription(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		level    HaltLevel
@@ -99,7 +99,7 @@ func TestTypes_HaltLevelDescription(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.level.Description()
 
@@ -109,7 +109,7 @@ func TestTypes_HaltLevelDescription(t *testing.T) {
 	}
 }
 
-func TestTypes_HaltLevelIsValid(t *testing.T) {
+func TestTypes_HaltLevelIsValid(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		level    HaltLevel
@@ -158,7 +158,7 @@ func TestTypes_HaltLevelIsValid(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.level.IsValid()
 
@@ -168,7 +168,7 @@ func TestTypes_HaltLevelIsValid(t *testing.T) {
 	}
 }
 
-func TestTypes_OpTypeString(t *testing.T) {
+func TestTypes_OpTypeString(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		op       OpType
@@ -247,7 +247,7 @@ func TestTypes_OpTypeString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.op.String()
 
@@ -257,7 +257,7 @@ func TestTypes_OpTypeString(t *testing.T) {
 	}
 }
 
-func TestTypes_OpTypeIsValid(t *testing.T) {
+func TestTypes_OpTypeIsValid(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		op       OpType
@@ -346,7 +346,7 @@ func TestTypes_OpTypeIsValid(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			result := tc.op.IsValid()
 

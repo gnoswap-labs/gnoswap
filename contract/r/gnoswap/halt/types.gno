@@ -24,13 +24,6 @@ const (
 	OpTypeWithdraw      OpType = "withdraw"
 )
 
-var haltLevelDescriptions = map[HaltLevel]string{
-	HaltLevelNone:      "All operations enabled",
-	HaltLevelSafeMode:  "All operations enabled except withdrawals",
-	HaltLevelEmergency: "Only governance and withdrawal operations enabled",
-	HaltLevelComplete:  "All operations disabled",
-}
-
 // HaltLevel represents current system halt state.
 type HaltLevel string
 
@@ -41,6 +34,13 @@ func (h HaltLevel) String() string {
 
 // Description returns a human-readable description of the halt level.
 func (h HaltLevel) Description() string {
+	var haltLevelDescriptions = map[HaltLevel]string{
+		HaltLevelNone:      "All operations enabled",
+		HaltLevelSafeMode:  "All operations enabled except withdrawals",
+		HaltLevelEmergency: "Only governance and withdrawal operations enabled",
+		HaltLevelComplete:  "All operations disabled",
+	}
+
 	desc, ok := haltLevelDescriptions[h]
 	if !ok {
 		return "Unknown halt level"

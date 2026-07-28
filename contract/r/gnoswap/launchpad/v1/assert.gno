@@ -1,4 +1,4 @@
-package v1
+package launchpad
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -59,4 +59,8 @@ func (lp *launchpadV1) assertHasProject(caller address) {
 			ufmt.Sprintf("caller %s is not the owner of any project", caller.String()),
 		))
 	}
+}
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
 }

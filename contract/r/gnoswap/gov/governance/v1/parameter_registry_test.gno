@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"errors"
@@ -10,13 +10,13 @@ import (
 )
 
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval
-func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
+func TestParameterRegistry_RegisterAndHandler(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		pkgPath          string
 		function         string
 		paramCount       int
-		handlerFunc      func([]string) error
+		handlerFunc      func(_ int, rlm realm, _ []string) error
 		expectedError    bool
 		expectedErrorMsg string
 	}{
@@ -25,7 +25,7 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 			pkgPath:    "test/pkg",
 			function:   "testFunc",
 			paramCount: 1,
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError: false,
@@ -42,7 +42,7 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			registry := NewParameterRegistry()
 
@@ -73,12 +73,12 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 }
 
 // TestParameterHandlerOptions_Execute tests parameter handler execution
-func TestParameterHandlerOptions_Execute(t *testing.T) {
+func TestParameterHandlerOptions_Execute(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		paramCount       int
 		params           []string
-		handlerFunc      func([]string) error
+		handlerFunc      func(_ int, rlm realm, _ []string) error
 		expectedError    bool
 		expectedErrorMsg string
 	}{
@@ -86,7 +86,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			name:       "Success - Execute with correct param count",
 			paramCount: 2,
 			params:     []string{"param1", "param2"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError: false,
@@ -95,7 +95,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			name:       "Failure - Wrong param count",
 			paramCount: 2,
 			params:     []string{"param1"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return nil
 			},
 			expectedError:    true,
@@ -105,7 +105,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			name:       "Failure - Handler error",
 			paramCount: 1,
 			params:     []string{"param1"},
-			handlerFunc: func([]string) error {
+			handlerFunc: func(_ int, rlm realm, _ []string) error {
 				return errors.New("handler error")
 			},
 			expectedError:    true,
@@ -114,7 +114,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			handler := NewParameterHandlerOptions(
 				"test/pkg",
@@ -124,7 +124,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			)
 
 			// when
-			err := handler.Execute(tc.params)
+			err := handler.Execute(0, cur, tc.params)
 
 			// then
 			if tc.expectedError {
@@ -138,7 +138,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 }
 
 // TestCreateParameterHandlers tests the creation of all parameter handlers
-func TestCreateParameterHandlers(t *testing.T) {
+func TestCreateParameterHandlers(cur realm, t *testing.T) {
 	// given & when
 	registry := CreateParameterHandlers()
 
@@ -165,7 +165,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 }
 
 // TestParseNumber tests number parsing
-func TestParseNumber(t *testing.T) {
+func TestParseNumber(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                string
@@ -209,9 +209,9 @@ func TestParseNumber(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					parseNumber(tc.input, tc.kind)
 				})
 			} else {
@@ -223,7 +223,7 @@ func TestParseNumber(t *testing.T) {
 }
 
 // TestParseBool tests boolean parsing
-func TestParseBool(t *testing.T) {
+func TestParseBool(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                string
@@ -250,9 +250,9 @@ func TestParseBool(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+				uassert.PanicsWithMessage(t, cur, tc.expectedPanicMessage, func() {
 					parseBool(tc.input)
 				})
 			} else {
@@ -263,7 +263,7 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
-func TestValidateExecutions(t *testing.T) {
+func TestValidateExecutions(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		numToExecute          int64
@@ -276,7 +276,7 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:          "Success - community_pool TransferToken",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
 		// emission
@@ -316,13 +316,13 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:          "Success - pool CollectProtocol",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",1000000,1000000",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoland/wugnot.wugnot,3000," + testutils.TestAddress("recipient").String() + ",1000000,1000000",
 			expectedError: false,
 		},
 		{
 			name:          "Success - pool CollectProtocol one-sided zero request",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",0,1000000",
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoland/wugnot.wugnot,3000," + testutils.TestAddress("recipient").String() + ",0,1000000",
 			expectedError: false,
 		},
 		{
@@ -392,19 +392,19 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:          "Success - staker SetTokenMinimumRewardAmount",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetTokenMinimumRewardAmount*EXE*gno.land/r/gnoswap/gns:1000000",
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetTokenMinimumRewardAmount*EXE*gno.land/r/gnoswap/gns.GNS:1000000",
 			expectedError: false,
 		},
 		{
 			name:          "Success - staker SetPoolTier",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,1",
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000,1",
 			expectedError: false,
 		},
 		{
 			name:          "Success - staker ChangePoolTier",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/staker*EXE*ChangePoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,2",
+			executions:    "gno.land/r/gnoswap/staker*EXE*ChangePoolTier*EXE*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000,2",
 			expectedError: false,
 		},
 		{
@@ -535,7 +535,7 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
 			expectedError:         true,
 			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
 		},
@@ -572,35 +572,35 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken empty address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken invalid address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,invalidAddress,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol empty recipient",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500,,100,100",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500,,100,100",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol invalid amount0Requested",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
 			expectedError:         true,
 			expectedErrorContains: "invalid int64 value: invalid",
 		},
 		{
 			name:                  "Failure - pool CollectProtocol negative amount1Requested",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns.GNS,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
 			expectedError:         true,
 			expectedErrorContains: "amount1Requested must be non-negative",
 		},
@@ -642,14 +642,14 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:                  "Failure - launchpad CreateProject empty recipient",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns,,1000000,,,10,20,70,1000",
+			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns.GNS,,1000000,,,10,20,70,1000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			err := validateExecutions(tc.numToExecute, splitExecutionsRaw(tc.executions))
 
 			if tc.expectedError {
@@ -662,7 +662,7 @@ func TestValidateExecutions(t *testing.T) {
 	}
 }
 
-func TestSplitExecutionsRaw(t *testing.T) {
+func TestSplitExecutionsRaw(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		raw      string
@@ -686,7 +686,7 @@ func TestSplitExecutionsRaw(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			actual := splitExecutionsRaw(tc.raw)
 			uassert.Equal(t, len(actual), len(tc.expected))
 			for i := range tc.expected {

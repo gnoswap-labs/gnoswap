@@ -1,4 +1,4 @@
-package v1
+package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
@@ -93,8 +93,8 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 
 	positions := pool.Positions()
 
-	result, exist := positions.Get(key)
-	if !exist {
+	result := positions.Get(key)
+	if result == nil {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected position(%s) to exist", key),
@@ -330,7 +330,7 @@ func (i *poolV1) GetInitializedTicksInRange(poolPath string, tickLower, tickUppe
 func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return pl.TickInfo{}, err
+		return pl.NewTickInfo(), err
 	}
 
 	return pool.GetTick(tick)
@@ -355,17 +355,17 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return pl.PositionInfo{}, err
+		return pl.NewPositionInfo(), err
 	}
 
-	iPositionInfo, ok := pool.Positions().Get(key)
-	if !ok {
-		return pl.PositionInfo{}, ufmt.Errorf("position %s not found", key)
+	iPositionInfo := pool.Positions().Get(key)
+	if iPositionInfo == nil {
+		return pl.NewPositionInfo(), ufmt.Errorf("position %s not found", key)
 	}
 
 	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
 	if !ok {
-		return pl.PositionInfo{}, ufmt.Errorf("failed to cast positionInfo: %T", iPositionInfo)
+		return pl.NewPositionInfo(), ufmt.Errorf("failed to cast positionInfo: %T", iPositionInfo)
 	}
 
 	return positionInfo, nil

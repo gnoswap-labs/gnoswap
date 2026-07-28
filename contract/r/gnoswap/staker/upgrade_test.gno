@@ -8,11 +8,11 @@ import (
 )
 
 // TestRegisterInitializer tests the staker upgrade system with table-driven approach
-func TestRegisterInitializer(t *testing.T) {
+func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
-		initializer          func(s IStakerStore, p PoolAccessor, e EmissionAccessor, nftAccessor NFTAccessor) IStaker
+		setup                func(cur realm, t *testing.T)
+		initializer          func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -26,9 +26,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register multiple different initializers",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/staker/new_version"),
 			initializer:     makeMockInitializer("new_version"),
@@ -36,9 +36,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"),
 			initializer:          makeMockInitializer("v1"),
@@ -59,18 +59,18 @@ func TestRegisterInitializer(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				RegisterInitializer(cross, tt.initializer)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				RegisterInitializer(cross(cur), tt.initializer)
 			})
 		} else {
-			RegisterInitializer(cross, tt.initializer)
+			RegisterInitializer(cross(cur), tt.initializer)
 
 			impl := implementation.(*MockStaker)
 			uassert.Equal(t, impl.Version, tt.expectedVersion)
@@ -79,10 +79,10 @@ func TestRegisterInitializer(t *testing.T) {
 }
 
 // TestUpgradeImpl tests the staker upgrade implementation
-func TestUpgradeImpl(t *testing.T) {
+func TestUpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		packagePath          string
 		callerRealm          runtime.Realm
 		expectedVersion      string
@@ -91,12 +91,12 @@ func TestUpgradeImpl(t *testing.T) {
 	}{
 		{
 			name: "upgrade impl is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:     "gno.land/r/gnoswap/staker/new_version",
 			callerRealm:     testing.NewUserRealm(adminAddr),
@@ -104,12 +104,12 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:          "gno.land/r/gnoswap/staker/new_version",
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
@@ -119,9 +119,9 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by initializer not found",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			packagePath:          "gno.land/r/gnoswap/staker/nonexistent",
 			callerRealm:          testing.NewUserRealm(adminAddr),
@@ -136,18 +136,18 @@ func TestUpgradeImpl(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				UpgradeImpl(cross, tt.packagePath)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				UpgradeImpl(cross(cur), tt.packagePath)
 			})
 		} else {
-			UpgradeImpl(cross, tt.packagePath)
+			UpgradeImpl(cross(cur), tt.packagePath)
 		}
 
 		impl := implementation.(*MockStaker)
@@ -156,20 +156,20 @@ func TestUpgradeImpl(t *testing.T) {
 }
 
 // TestGetImplementation tests the implementation getter
-func TestGetImplementation(t *testing.T) {
+func TestGetImplementation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
 			name: "get impl is success when implementation is set",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 		},
 		{
@@ -184,12 +184,12 @@ func TestGetImplementation(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.PanicsContains(t, tt.expectedAbortMessage, func() {
+			uassert.PanicsContains(t, cur, tt.expectedAbortMessage, func() {
 				getImplementation()
 			})
 		} else {
@@ -202,21 +202,21 @@ func TestGetImplementation(t *testing.T) {
 }
 
 // TestStakeToken tests the StakeToken proxy function
-func TestStakeToken(t *testing.T) {
+func TestStakeToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		referrer    string
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "stake token is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			positionId:  1,
 			referrer:    "",
@@ -229,13 +229,13 @@ func TestStakeToken(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		StakeToken(cross, tt.positionId, tt.referrer)
+		StakeToken(cross(cur), tt.positionId, tt.referrer)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -246,20 +246,20 @@ func TestStakeToken(t *testing.T) {
 }
 
 // TestUnStakeToken tests the UnStakeToken proxy function
-func TestUnStakeToken(t *testing.T) {
+func TestUnStakeToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "unstake token is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			positionId:  1,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
@@ -271,13 +271,13 @@ func TestUnStakeToken(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		UnStakeToken(cross, tt.positionId)
+		UnStakeToken(cross(cur), tt.positionId)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -288,20 +288,20 @@ func TestUnStakeToken(t *testing.T) {
 }
 
 // TestCollectReward tests the CollectReward proxy function
-func TestCollectReward(t *testing.T) {
+func TestCollectReward(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		positionId  uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "collect reward is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			positionId:  1,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
@@ -313,13 +313,13 @@ func TestCollectReward(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		CollectReward(cross, tt.positionId)
+		CollectReward(cross(cur), tt.positionId)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -330,21 +330,21 @@ func TestCollectReward(t *testing.T) {
 }
 
 // TestSetPoolTier tests the SetPoolTier proxy function
-func TestSetPoolTier(t *testing.T) {
+func TestSetPoolTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		poolPath    string
 		tier        uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "set pool tier is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			poolPath:    "gno.land/r/gnoswap/pool/test",
 			tier:        1,
@@ -357,13 +357,13 @@ func TestSetPoolTier(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		SetPoolTier(cross, tt.poolPath, tt.tier)
+		SetPoolTier(cross(cur), tt.poolPath, tt.tier)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -374,10 +374,10 @@ func TestSetPoolTier(t *testing.T) {
 }
 
 // TestCreateExternalIncentive tests the CreateExternalIncentive proxy function
-func TestCreateExternalIncentive(t *testing.T) {
+func TestCreateExternalIncentive(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
-		setup          func(t *testing.T)
+		setup          func(cur realm, t *testing.T)
 		targetPoolPath string
 		rewardToken    string
 		rewardAmount   int64
@@ -387,11 +387,11 @@ func TestCreateExternalIncentive(t *testing.T) {
 	}{
 		{
 			name: "create external incentive is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			targetPoolPath: "gno.land/r/gnoswap/pool/test",
 			rewardToken:    "gno.land/r/gnoswap/test_token/reward",
@@ -407,13 +407,13 @@ func TestCreateExternalIncentive(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		CreateExternalIncentive(cross, tt.targetPoolPath, tt.rewardToken, tt.rewardAmount, tt.startTimestamp, tt.endTimestamp)
+		CreateExternalIncentive(cross(cur), tt.targetPoolPath, tt.rewardToken, tt.rewardAmount, tt.startTimestamp, tt.endTimestamp)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -424,19 +424,19 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 // TestGetDepositGnsAmount tests the GetDepositGnsAmount getter function
-func TestGetDepositGnsAmount(t *testing.T) {
+func TestGetDepositGnsAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		expected int64
 	}{
 		{
 			name: "get deposit gns amount is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			expected: 1000,
 		},
@@ -447,7 +447,7 @@ func TestGetDepositGnsAmount(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockStaker := implementation.(*MockStaker)
@@ -467,20 +467,20 @@ func TestGetDepositGnsAmount(t *testing.T) {
 }
 
 // TestGetPoolTier tests the GetPoolTier getter function
-func TestGetPoolTier(t *testing.T) {
+func TestGetPoolTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		poolPath string
 		expected uint64
 	}{
 		{
 			name: "get pool tier is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			poolPath: "gno.land/r/gnoswap/pool/test",
 			expected: 1,
@@ -492,7 +492,7 @@ func TestGetPoolTier(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockStaker := implementation.(*MockStaker)
@@ -512,20 +512,20 @@ func TestGetPoolTier(t *testing.T) {
 }
 
 // TestIsStaked tests the IsStaked getter function
-func TestIsStaked(t *testing.T) {
+func TestIsStaked(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
-		setup      func(t *testing.T)
+		setup      func(cur realm, t *testing.T)
 		positionId uint64
 		expected   bool
 	}{
 		{
 			name: "is staked is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			positionId: 1,
 			expected:   true,
@@ -537,7 +537,7 @@ func TestIsStaked(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockStaker := implementation.(*MockStaker)
@@ -556,19 +556,19 @@ func TestIsStaked(t *testing.T) {
 	}
 }
 
-func TestGetTotalEmissionSent(t *testing.T) {
+func TestGetTotalEmissionSent(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		expected int64
 	}{
 		{
 			name: "get total emission sent delegates to implementation",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			expected: 500000,
 		},
@@ -579,7 +579,7 @@ func TestGetTotalEmissionSent(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockStaker := implementation.(*MockStaker)
@@ -598,19 +598,19 @@ func TestGetTotalEmissionSent(t *testing.T) {
 	}
 }
 
-func TestGetAllowedTokens(t *testing.T) {
+func TestGetAllowedTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func(t *testing.T)
+		setup    func(cur realm, t *testing.T)
 		expected []string
 	}{
 		{
 			name: "get allowed tokens delegates to implementation",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/staker/v1")
 			},
 			expected: []string{"gno.land/r/gnoswap/gns", "gno.land/r/onbloc/bar"},
 		},
@@ -621,7 +621,7 @@ func TestGetAllowedTokens(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockStaker := implementation.(*MockStaker)

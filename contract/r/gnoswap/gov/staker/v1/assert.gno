@@ -1,6 +1,7 @@
-package v1
+package staker
 
 import (
+	"errors"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -73,6 +74,10 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 
 func assertNoSameDelegatee(delegatee, newDelegatee address) {
 	if delegatee == newDelegatee {
-		panic(errSameDelegatee)
+		panic(errors.New(errSameDelegatee))
 	}
+}
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
 }

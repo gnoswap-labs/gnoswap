@@ -10,11 +10,6 @@ import (
 
 type Int [4]uint64
 
-var (
-	MAX_UINT64 = ^uint64(0)
-	MIN_I256    = &Int{0, 0, 0, 0x8000000000000000}
-)
-
 func Zero() *Int {
 	return &Int{}
 }
@@ -225,7 +220,7 @@ func (z *Int) Mul(x, y *Int) *Int {
 
 func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	if (x.IsMinI256() && y.IsOne()) || (x.IsOne() && y.IsMinI256()) {
-		return z.Set(MIN_I256), false
+		return z.Set(MinInt256()), false
 	}
 
 	var flipSign bool

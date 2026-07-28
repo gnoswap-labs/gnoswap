@@ -3,13 +3,13 @@ package staker
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // TestDelegationManager_NewDelegationManager tests the DelegationManager constructor
-func TestDelegationManager_NewDelegationManager(t *testing.T) {
-	t.Run("Create new delegation manager", func(t *testing.T) {
+func TestDelegationManager_NewDelegationManager(cur realm, t *testing.T) {
+	t.Run("Create new delegation manager", func(cur realm, t *testing.T) {
 		// when
 		dm := NewDelegationManager()
 
@@ -21,7 +21,7 @@ func TestDelegationManager_NewDelegationManager(t *testing.T) {
 }
 
 // TestDelegationManager_AddAndRemoveDelegation tests adding and removing delegation IDs
-func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
+func TestDelegationManager_AddAndRemoveDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		delegator        string
@@ -70,7 +70,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			if len(tc.initialIDs) > 0 {
@@ -114,7 +114,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 }
 
 // TestDelegationManager_GetUserDelegationIDs tests retrieving all delegation IDs for a user
-func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
+func TestDelegationManager_GetUserDelegationIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		delegator          string
@@ -148,7 +148,7 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			for delegatee, ids := range tc.delegations {
@@ -177,7 +177,7 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 }
 
 // TestDelegationManager_SetUserDelegations tests setting entire user delegations map
-func TestDelegationManager_SetUserDelegations(t *testing.T) {
+func TestDelegationManager_SetUserDelegations(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		delegations map[string]map[string][]int64
@@ -201,7 +201,7 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 
@@ -220,8 +220,9 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			result := dm.GetUserDelegations()
 			uassert.Equal(t, result.Size(), len(tc.delegations))
 			for delegator, delegatees := range tc.delegations {
-				resultDelegatees, exists := result.Get(delegator)
-				uassert.True(t, exists)
+				resultDelegatees := result.Get(delegator)
+				uassert.NotNil(t, resultDelegatees, "delegatees for %s should not be nil", delegator)
+
 				resultTree, ok := resultDelegatees.(*bptree.BPTree)
 				uassert.True(t, ok)
 				uassert.Equal(t, resultTree.Size(), len(delegatees))
@@ -231,7 +232,7 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 }
 
 // TestDelegationManager_GetDelegationIDs_NonExistent tests getting IDs for non-existent pairs
-func TestDelegationManager_GetDelegationIDs_NonExistent(t *testing.T) {
+func TestDelegationManager_GetDelegationIDs_NonExistent(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		delegator string
@@ -250,7 +251,7 @@ func TestDelegationManager_GetDelegationIDs_NonExistent(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			dm.SetDelegationIDs("delegator1", "delegatee1", []int64{1, 2, 3})

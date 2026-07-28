@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ func (gv *governanceV1) GetLatestConfig() governance.Config {
 	currentVersion := gv.getCurrentConfigVersion()
 	config, ok := gv.getConfig(currentVersion)
 	if !ok {
-		panic(errDataNotFound)
+		panic(errors.New(errDataNotFound))
 	}
 
 	return config
@@ -58,7 +58,9 @@ func (gv *governanceV1) GetLatestConfig() governance.Config {
 func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error) {
 	config, ok := gv.getConfig(configVersion)
 	if !ok {
-		return governance.Config{}, ufmt.Errorf("config version %d not found", configVersion)
+		// Construct the zero Config via the domain constructor so it is
+		// allocated inside the governance domain realm (realm allocation check).
+		return governance.NewConfig(0, 0, 0, 0, 0, 0, 0), ufmt.Errorf("config version %d not found", configVersion)
 	}
 
 	return config, nil

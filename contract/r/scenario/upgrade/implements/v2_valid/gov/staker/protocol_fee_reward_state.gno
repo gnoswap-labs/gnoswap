@@ -1,0 +1,1 @@
+../../../../../../gnoswap/gov/staker/v1/protocol_fee_reward_state.gno

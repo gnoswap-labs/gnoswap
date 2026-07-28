@@ -8,7 +8,7 @@ import (
 )
 
 // TestNewEmissionRewardState tests creating a new emission reward state
-func TestNewEmissionRewardState(t *testing.T) {
+func TestNewEmissionRewardState(cur realm, t *testing.T) {
 	tests := []struct {
 		name                            string
 		accumulatedRewardX128PerStake   *u256.Uint
@@ -30,7 +30,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			state := NewEmissionRewardState(tc.accumulatedRewardX128PerStake)
 
@@ -48,7 +48,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 }
 
 // TestEmissionRewardState_Setters tests all setter methods
-func TestEmissionRewardState_Setters(t *testing.T) {
+func TestEmissionRewardState_Setters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                     string
 		newRewardDebtX128        *u256.Uint
@@ -79,7 +79,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := NewEmissionRewardState(u256.NewUint(100))
 
@@ -103,7 +103,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 }
 
 // TestEmissionRewardState_Getters tests all getter methods
-func TestEmissionRewardState_Getters(t *testing.T) {
+func TestEmissionRewardState_Getters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		initialRewardDebtX128 *u256.Uint
@@ -115,7 +115,7 @@ func TestEmissionRewardState_Getters(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			state := NewEmissionRewardState(tc.initialRewardDebtX128)
 
@@ -131,7 +131,7 @@ func TestEmissionRewardState_Getters(t *testing.T) {
 }
 
 // TestEmissionRewardState_Clone tests that rewardDebtX128 is cloned
-func TestEmissionRewardState_Clone(t *testing.T) {
+func TestEmissionRewardState_Clone(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		initialRewardDebtX128 *u256.Uint
@@ -145,7 +145,7 @@ func TestEmissionRewardState_Clone(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			original := tc.initialRewardDebtX128
 

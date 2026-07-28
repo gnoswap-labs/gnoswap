@@ -1,5 +1,6 @@
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/utils
 
 gnoland start
 
@@ -29,7 +30,7 @@ func init() {
 	vm = version_manager.NewVersionManager(
 		"gno.land/r/test/parent",
 		kvStore,
-		func(kvStore store.KVStore) any {
+		func(_ int, rlm realm, kvStore store.KVStore) any {
 			return kvStore
 		},
 	)
@@ -38,10 +39,10 @@ func init() {
 // RegisterInitializer is exposed as a public function
 // This allows us to test what happens when a user calls it directly
 func RegisterInitializer(cur realm, name string) {
-	initializer := func(store any) any {
+	initializer := func(_ int, rlm realm, store any) any {
 		return name
 	}
-	err := vm.RegisterInitializer(initializer)
+	err := vm.RegisterInitializer(0, cur, initializer)
 	if err != nil {
 		panic(err)
 	}

@@ -9,12 +9,12 @@ import (
 )
 
 // TestFuzzStakeToken_InternalIncentive_Stateless fuzzes the StakeToken function.
-func TestFuzzStakeToken_InternalIncentive_Stateless(t *testing.T) {
+func TestFuzzStakeToken_InternalIncentive_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
-		initStates(t)
+		initStates(cur, t)
 
-		_, internalIncentiveTier, positionID := setupInternalIncentivePoolAndPosition(ft)
+		_, internalIncentiveTier, positionID := setupInternalIncentivePoolAndPosition(cur, ft)
 
 		params := NewValidStakeTokenParams(ft, positionID)
 		params.setInternalIncentiveTier(internalIncentiveTier)
@@ -22,17 +22,17 @@ func TestFuzzStakeToken_InternalIncentive_Stateless(t *testing.T) {
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
-		runTestStakeToken(ft, params)
+		runTestStakeToken(cur, ft, params)
 	})
 }
 
 // TestFuzzStakeToken_ExternalIncentive_Stateless fuzzes the StakeToken function.
-func TestFuzzStakeToken_ExternalIncentive_Stateless(t *testing.T) {
+func TestFuzzStakeToken_ExternalIncentive_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
-		initStates(t)
+		initStates(cur, t)
 
-		_, incentiveID, positionID := setupExternalRewardPoolAndPosition(ft)
+		_, incentiveID, positionID := setupExternalRewardPoolAndPosition(cur, ft)
 
 		params := NewValidStakeTokenParams(ft, positionID)
 		params.addExternalIncentiveId(incentiveID)
@@ -40,15 +40,15 @@ func TestFuzzStakeToken_ExternalIncentive_Stateless(t *testing.T) {
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
-		runTestStakeToken(ft, params)
+		runTestStakeToken(cur, ft, params)
 	}, false)
 }
 
 // runTestStakeToken runs the test swap route.
-func runTestStakeToken(ft *fuzz.T, params *stakeTokenParams) {
+func runTestStakeToken(cur realm, ft *fuzz.T, params *stakeTokenParams) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	staker.StakeToken(
-		cross,
+		cross(cur),
 		params.positionID,
 		"",
 	)

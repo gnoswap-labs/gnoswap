@@ -1,0 +1,1 @@
+../../../../../gnoswap/staker/v1/external_token_list.gno

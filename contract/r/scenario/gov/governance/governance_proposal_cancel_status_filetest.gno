@@ -36,12 +36,12 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
-	delegateGnsToAdmin()
+	delegateGnsToAdmin(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
@@ -50,19 +50,19 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Propose community pool spend")
-	proposalId := proposeTextProposal()
+	proposalId := proposeTextProposal(cur)
 	println()
 
 	println("[SCENARIO] 4. Cancel Proposal is successful by upcoming proposal")
-	cancelProposalWithError(proposalId, false, "")
+	cancelProposalWithError(cur, proposalId, false, "")
 	println()
 
 	println("[SCENARIO] 5. Cancel Proposal is aborted by already canceled proposal")
-	cancelProposalWithError(proposalId, true, "[GNOSWAP-GOVERNANCE-006]")
+	cancelProposalWithError(cur, proposalId, true, "[GNOSWAP-GOVERNANCE-006]")
 	println()
 
 	println("[SCENARIO] 6. Propose community pool spend")
-	proposalId2 := proposeTextProposal()
+	proposalId2 := proposeTextProposal(cur)
 	println()
 
 	println("[SCENARIO] 7. Skip heights for active proposal")
@@ -71,40 +71,40 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Cancel Proposal is aborted by active proposal")
-	cancelProposalWithError(proposalId2, true, "[GNOSWAP-GOVERNANCE-007]")
+	cancelProposalWithError(cur, proposalId2, true, "[GNOSWAP-GOVERNANCE-007]")
 	println()
 }
 
-func delegateGnsToAdmin() {
+func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Approve(cross, govStakerAddr, delegatedAmount)
-	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
-func proposeTextProposal() int64 {
+func proposeTextProposal(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeText(cross, "test_title", "test_description")
+	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
-func voteProposal(proposalId int64) {
+func voteProposal(cur realm, proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	governance.Vote(cross, proposalId, true)
+	governance.Vote(cross(cur), proposalId, true)
 	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
-func cancelProposalWithError(proposalId int64, hasAborted bool, abortMessage string) {
+func cancelProposalWithError(cur realm, proposalId int64, hasAborted bool, abortMessage string) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	if hasAborted {
-		uassert.AbortsContains(t, abortMessage, func() {
-			governance.Cancel(cross, proposalId)
+		uassert.AbortsContains(t, cur, abortMessage, func() {
+			governance.Cancel(cross(cur), proposalId)
 		})
 	} else {
-		governance.Cancel(cross, proposalId)
+		governance.Cancel(cross(cur), proposalId)
 	}
 	ufmt.Printf("[EXPECTED] proposal canceled and archived\n")
 }

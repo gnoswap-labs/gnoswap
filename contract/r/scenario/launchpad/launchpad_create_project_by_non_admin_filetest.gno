@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project by non admin
 
 package main
@@ -30,26 +32,26 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] Non-admin user attempts to create project
 	println("[SCENARIO] 2. Non-admin user attempts to create project")
-	createProjectByNonAdmin()
+	createProjectByNonAdmin(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Non-admin user attempts to create project
-func createProjectByNonAdmin() {
+func createProjectByNonAdmin(cur realm) {
 	testing.SetOriginCaller(nonAdminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -72,12 +74,12 @@ func createProjectByNonAdmin() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(nonAdminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance"
-	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
+	uassert.AbortsWithMessage(t, cur, expectedPanicMessage, func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			projectName,
 			rewardTokenPath,
 			recipientAddr,
@@ -100,7 +102,7 @@ func createProjectByNonAdmin() {
 // [SCENARIO] 2. Non-admin user attempts to create project
 // [INFO] non-admin attempting to create project
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

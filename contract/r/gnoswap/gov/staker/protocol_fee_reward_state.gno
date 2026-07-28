@@ -49,16 +49,33 @@ func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
 
 /* Setters */
 
+// SetRewardDebtX128 stores a copy of the given map. Copying into a map
+// allocated by this domain method keeps the stored map owned by
+// /r/gnoswap/gov/staker, so later per-token writes (SetRewardDebtX128ForToken)
+// from any realm clear the cross-realm write guard. Storing the caller's map
+// directly would leave the map stamped with the caller's realm.
 func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
-	p.rewardDebtX128 = rewardDebtX128
+	copied := make(map[string]*u256.Uint, len(rewardDebtX128))
+	for token, value := range rewardDebtX128 {
+		copied[token] = u256.Zero().Set(value)
+	}
+	p.rewardDebtX128 = copied
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewards(accumulatedRewards map[string]int64) {
-	p.accumulatedRewards = accumulatedRewards
+	copied := make(map[string]int64, len(accumulatedRewards))
+	for token, value := range accumulatedRewards {
+		copied[token] = value
+	}
+	p.accumulatedRewards = copied
 }
 
 func (p *ProtocolFeeRewardState) SetClaimedRewards(claimedRewards map[string]int64) {
-	p.claimedRewards = claimedRewards
+	copied := make(map[string]int64, len(claimedRewards))
+	for token, value := range claimedRewards {
+		copied[token] = value
+	}
+	p.claimedRewards = copied
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
@@ -102,7 +119,7 @@ func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *
 	if p.rewardDebtX128 == nil {
 		p.rewardDebtX128 = make(map[string]*u256.Uint)
 	}
-	p.rewardDebtX128[token] = value
+	p.rewardDebtX128[token] = u256.Zero().Set(value)
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {

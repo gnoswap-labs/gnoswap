@@ -1,4 +1,4 @@
-package v1
+package protocol_fee
 
 import (
 	prbac "gno.land/p/gnoswap/rbac"
@@ -47,4 +47,8 @@ func assertIsValidPercent(pct int64) {
 			ufmt.Sprintf("pct(%d) should not be smaller than 0", pct),
 		))
 	}
+}
+
+func assertNotImplementYet() {
+	panic("NotImplementYet")
 }

@@ -6,4 +6,4 @@
 //
 // Rewards are calculated per-tick and accumulate over time, with collection
 // flows integrated into the staking lifecycle.
-package v1
+package staker

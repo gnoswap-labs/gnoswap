@@ -122,11 +122,12 @@ amount1 = L * (sqrtCurrent - sqrtLower)
 ## Usage
 
 ```go
-// Mint new position
-tokenId, liquidity, amount0, amount1 := Mint(
-    cross,
+// Mint new position from the domain proxy into an implementation instance
+tokenId, liquidity, amount0, amount1 := positionManager.Mint(
+    0,
+    cur,
     "gno.land/r/onbloc/weth",  // token0
-    "gno.land/r/onbloc/usdc",  // token1
+    "gno.land/r/gnoswap/test_token/test_usdc",  // token1
     3000,                      // fee
     -887220,                   // tickLower
     887220,                    // tickUpper
@@ -140,8 +141,9 @@ tokenId, liquidity, amount0, amount1 := Mint(
 )
 
 // Add liquidity
-positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
-    cross,
+positionId, liquidity, amount0, amount1, poolPath := positionManager.IncreaseLiquidity(
+    0,
+    cur,
     tokenId,
     "500000",
     "1000000000",
@@ -151,14 +153,16 @@ positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 )
 
 // Collect fees
-positionId, collected0, collected1, poolPath, rawAmount0, rawAmount1 := CollectFee(
-    cross,
+positionId, collected0, collected1, poolPath, rawAmount0, rawAmount1 := positionManager.CollectFee(
+    0,
+    cur,
     tokenId,
 )
 
 // Reposition to new range (requires cleared position)
-positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
-    cross,
+positionId, liquidity, tickLower, tickUpper, amount0, amount1 := positionManager.Reposition(
+    0,
+    cur,
     tokenId,
     -443610,                   // new tickLower
     443610,                    // new tickUpper

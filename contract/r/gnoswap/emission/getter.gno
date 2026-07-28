@@ -1,5 +1,9 @@
 package emission
 
+import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+)
+
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
 //
 // Returns:
@@ -46,9 +50,9 @@ func GetAllDistributionBpsPct() map[int]int64 {
 // Returns:
 //   - amount: total accumulated distributed GNS
 func GetTotalAccuDistributed() int64 {
-	return safeAddInt64(
-		safeAddInt64(accuDistributedToStaker, accuDistributedToDevOps),
-		safeAddInt64(accuDistributedToCommunityPool, accuDistributedToGovStaker),
+	return gnsmath.SafeAddInt64(
+		gnsmath.SafeAddInt64(accuDistributedToStaker, accuDistributedToDevOps),
+		gnsmath.SafeAddInt64(accuDistributedToCommunityPool, accuDistributedToGovStaker),
 	)
 }
 
@@ -57,9 +61,9 @@ func GetTotalAccuDistributed() int64 {
 // Returns:
 //   - amount: total pending distributed GNS
 func GetTotalDistributed() int64 {
-	return safeAddInt64(
-		safeAddInt64(distributedToStaker, distributedToDevOps),
-		safeAddInt64(distributedToCommunityPool, distributedToGovStaker),
+	return gnsmath.SafeAddInt64(
+		gnsmath.SafeAddInt64(distributedToStaker, distributedToDevOps),
+		gnsmath.SafeAddInt64(distributedToCommunityPool, distributedToGovStaker),
 	)
 }
 
@@ -72,7 +76,7 @@ func GetDistributionEndTimestamp() int64 {
 		return 0
 	}
 
-	return safeAddInt64(distributionStartTimestamp, totalDistributionDuration-1)
+	return gnsmath.SafeAddInt64(distributionStartTimestamp, totalDistributionDuration-1)
 }
 
 // GetDistributableAmount returns distribution amounts by target and the remainder.

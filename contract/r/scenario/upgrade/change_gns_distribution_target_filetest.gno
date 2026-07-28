@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // change gns distribution target for upgrade
 package main
 
@@ -39,35 +41,35 @@ var (
 	newStakerAddr        = testutils.TestAddress("newStakerAddr")
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize emission")
-	initEmission()
+	initEmission(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint to distribution target (before upgrade)")
 	testing.SkipHeights(1)
 	ufmt.Println("[INFO] current block height", runtime.ChainHeight())
-	mintAndDistribute()
+	mintAndDistribute(cur)
 	println()
 
 	println("[SCENARIO] 3. Change distribution target for upgrade")
-	changeDistributionTarget()
+	changeDistributionTarget(cur)
 	println()
 
 	println("[SCENARIO] 4. Mint to distribution target (after upgrade)")
 	testing.SkipHeights(1)
 	println("[INFO] current block height", runtime.ChainHeight())
-	mintAndDistribute()
+	mintAndDistribute(cur)
 	println()
 }
 
-func initEmission() {
+func initEmission(cur realm) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-	emission.MintAndDistributeGns(cross)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
+	emission.MintAndDistributeGns(cross(cur))
 }
 
-func mintAndDistribute() {
+func mintAndDistribute(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
@@ -82,7 +84,7 @@ func mintAndDistribute() {
 	previousNewDevOpsBalance := gns.BalanceOf(newDevOpsAddr)
 	previousNewCommunityPoolBalance := gns.BalanceOf(newCommunityPoolAddr)
 
-	emission.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross(cur))
 
 	stakerBalanceChange := gns.BalanceOf(stakerAddr) - previousStakerBalance
 	govStakerBalanceChange := gns.BalanceOf(govStakerAddr) - previousGovStakerBalance
@@ -107,13 +109,13 @@ func mintAndDistribute() {
 	ufmt.Printf("[EXPECTED] (new) community pool balance change should be %d\n", newCommunityPoolBalanceChange)
 }
 
-func changeDistributionTarget() {
+func changeDistributionTarget(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
+	rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_STAKER.String(), newStakerAddr)
+	rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
+	rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
+	rbac.UpdateRoleAddress(cross(cur), prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
 
 	ufmt.Printf("[EXPECTED] staker address should be changed %s to %s\n", stakerAddr, newStakerAddr)
 	ufmt.Printf("[EXPECTED] gov staker address should be changed %s to %s\n", govStakerAddr, newGovStakerAddr)

@@ -1,9 +1,13 @@
-package v1
+package launchpad
 
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -23,10 +27,14 @@ import (
 //
 // Returns:
 //   - depositID: newly created deposit ID
-func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int64, referrer string) string {
+func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedLaunchpad()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	assertIsValidAmount(depositAmount)
 
@@ -38,7 +46,11 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 		panic(err.Error())
 	}
 
+	beforeTotalGNSStakedAmount := lp.store.GetTotalGNSStakedAmount()
+
 	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := lp.depositGns(
+		0,
+		rlm,
 		project,
 		tierDuration,
 		depositAmount,
@@ -48,7 +60,12 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 		panic(err.Error())
 	}
 
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
+	afterTotalGNSStakedAmount := gnsmath.SafeAddInt64(beforeTotalGNSStakedAmount, depositAmount)
+	if err := lp.store.SetTotalGNSStakedAmount(0, rlm, afterTotalGNSStakedAmount); err != nil {
+		panic(err.Error())
+	}
+
+	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
 	if isFirstDeposit {
 		chain.Emit(
@@ -56,10 +73,12 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
 			"targetProjectTierId", targetProjectTierID,
-			"amount", formatInt(depositAmount),
+			"amount", utils.FormatInt(depositAmount),
 			"depositId", deposit.ID(),
-			"claimableTime", formatInt(rewardState.ClaimableTime()),
+			"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 			"tierAmountPerSecondX128", distributeAmountPerSecondX128,
+			"totalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+			"recipient", project.Recipient().String(),
 		)
 	}
 
@@ -68,16 +87,18 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"targetProjectTierId", targetProjectTierID,
-		"amount", formatInt(depositAmount),
+		"amount", utils.FormatInt(depositAmount),
 		"depositId", deposit.ID(),
-		"claimableTime", formatInt(rewardState.ClaimableTime()),
+		"claimableTime", utils.FormatInt(rewardState.ClaimableTime()),
 		"referrer", actualReferrer,
+		"totalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+		"recipient", project.Recipient().String(),
 	)
 
-	launchpadAddress := runtime.CurrentRealm().Address()
+	launchpadAddress := rlm.Address()
 
 	// stake governance token to the project
-	err = lp.stakeGovernance(project.Recipient(), depositAmount, launchpadAddress, caller)
+	err = lp.stakeGovernance(0, rlm, project.Recipient(), depositAmount, launchpadAddress, caller)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -87,6 +108,8 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 
 // depositGns deposits GNS to a project tier.
 func (lp *launchpadV1) depositGns(
+	_ int,
+	rlm realm,
 	project *launchpad.Project,
 	tierDuration int64,
 	depositAmount int64,
@@ -154,9 +177,11 @@ func (lp *launchpadV1) depositGns(
 	project.SetTier(tierDuration, projectTier)
 
 	// Save the modified state back
-	if err := lp.store.SetDeposits(deposits); err != nil {
+	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
 		return nil, nil, false, "", err
 	}
+
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
 
 	return deposit,
 		rewardState,
@@ -166,11 +191,11 @@ func (lp *launchpadV1) depositGns(
 }
 
 // stakeGovernance stakes governance token to the project.
-func (lp *launchpadV1) stakeGovernance(recipient address, depositAmount int64, launchpadAddress address, callerAddress address) error {
-	gov_staker.SetAmountByProjectWallet(cross, recipient, depositAmount, true)
+func (lp *launchpadV1) stakeGovernance(_ int, rlm realm, recipient address, depositAmount int64, launchpadAddress address, callerAddress address) error {
+	gov_staker.SetAmountByProjectWallet(cross(rlm), recipient, depositAmount, true)
 
 	gns.TransferFrom(
-		cross,
+		cross(rlm),
 		callerAddress,
 		launchpadAddress,
 		depositAmount,

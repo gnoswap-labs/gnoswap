@@ -1,4 +1,4 @@
-package v1
+package governance
 
 const (
 	// Governance can execute multiple messages in a single proposal

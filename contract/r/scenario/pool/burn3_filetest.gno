@@ -30,15 +30,15 @@ var (
 	posRealm        = testing.NewUserRealm(positionAddr)
 )
 
-func main() {
-	testNonExistentPoolBurn()
+func main(cur realm) {
+	testNonExistentPoolBurn(cur)
 }
 
 // testNonExistentPoolBurn tests burning from non-existent pool (should abort)
-func testNonExistentPoolBurn() {
+func testNonExistentPoolBurn(cur realm) {
 	// Given: No pool exists
-	barTokenPath := "gno.land/r/onbloc/bar"
-	bazTokenPath := "gno.land/r/onbloc/baz"
+	barTokenPath := "gno.land/r/onbloc/bar.BAR"
+	bazTokenPath := "gno.land/r/onbloc/baz.BAZ"
 	fee := FeeTier500
 	tickLower := int32(-100)
 	tickUpper := int32(100)
@@ -55,12 +55,12 @@ func testNonExistentPoolBurn() {
 	testing.SetRealm(posRealm)
 
 	// Then: Should abort with specific error message
-	expectedAbortMsg := "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist"
+	expectedAbortMsg := "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500) to exist"
 	println("[EXPECTED] Should abort with message:", expectedAbortMsg)
 
-	uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
+	uassert.AbortsWithMessage(t, cur, expectedAbortMsg, func() {
 		pool.Burn(
-			cross,
+			cross(cur),
 			barTokenPath,
 			bazTokenPath,
 			fee,
@@ -76,10 +76,10 @@ func testNonExistentPoolBurn() {
 
 // Output:
 // [INFO] Attempting to burn from non-existent pool
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/baz
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/baz.BAZ
 // [INFO] Fee tier: 500
 // [INFO] Tick range: -100 to 100
 // [INFO] Burn amount: 1000000
-// [EXPECTED] Should abort with message: [GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist
+// [EXPECTED] Should abort with message: [GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500) to exist
 // [SCENARIO] 4. Non-existent Pool Burn - PASSED

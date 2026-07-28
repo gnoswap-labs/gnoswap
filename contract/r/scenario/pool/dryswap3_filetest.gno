@@ -3,12 +3,12 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -43,8 +43,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 // Test variables
@@ -59,12 +59,12 @@ var (
 // DrySwap Failure Cases Test
 // Testing DrySwap behavior when conditions are not met
 // Expected behavior: DrySwap should fail gracefully when liquidity is insufficient
-func main() {
-	testDrySwapFailureCases(t)
+func main(cur realm) {
+	testDrySwapFailureCases(cur, t)
 }
 
 // testDrySwapFailureCases tests DrySwap behavior in failure scenarios
-func testDrySwapFailureCases(t *testing.T) {
+func testDrySwapFailureCases(cur realm, t *testing.T) {
 	// Given: Pool exists but no liquidity is provided
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)
@@ -73,13 +73,13 @@ func testDrySwapFailureCases(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] Pool created successfully without any liquidity")
@@ -109,13 +109,13 @@ func testDrySwapFailureCases(t *testing.T) {
 	println("[INFO] Adding minimal liquidity to test partial failure")
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint small position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -156,8 +156,8 @@ func testDrySwapFailureCases(t *testing.T) {
 }
 
 // Output:
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/foo
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/foo.FOO
 // [INFO] Fee tier: 500
 // [INFO] Note: No liquidity will be minted to test failure case
 // [INFO] Pool created successfully without any liquidity

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -94,6 +95,10 @@ func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
 	p.stakedLiquidity = stakedLiquidity
 }
 
+func (p *Pool) SetStakedLiquidityAt(currentTime int64, delta *u256.Uint) {
+	p.StakedLiquidity().Set(currentTime, u256.Zero().Set(delta))
+}
+
 // LastUnclaimableTime returns the last unclaimable time
 func (p *Pool) LastUnclaimableTime() int64 {
 	return p.lastUnclaimableTime
@@ -122,6 +127,10 @@ func (p *Pool) RewardCache() *UintTree {
 // SetRewardCache sets the reward cache tree
 func (p *Pool) SetRewardCache(rewardCache *UintTree) {
 	p.rewardCache = rewardCache
+}
+
+func (p *Pool) SetRewardCacheAt(currentTime int64, reward int64) {
+	p.RewardCache().Set(currentTime, reward)
 }
 
 // Incentives returns the incentives
@@ -154,6 +163,10 @@ func (p *Pool) SetGlobalRewardRatioAccumulation(globalRewardRatioAccumulation *U
 	p.globalRewardRatioAccumulation = globalRewardRatioAccumulation
 }
 
+func (p *Pool) SetGlobalRewardRatioAccumulationAt(currentTime int64, acc string) {
+	p.GlobalRewardRatioAccumulation().Set(currentTime, acc)
+}
+
 // HistoricalTick returns the historical tick tree
 func (p *Pool) HistoricalTick() *UintTree {
 	return p.historicalTick
@@ -162,6 +175,10 @@ func (p *Pool) HistoricalTick() *UintTree {
 // SetHistoricalTick sets the historical tick tree
 func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
 	p.historicalTick = historicalTick
+}
+
+func (p *Pool) SetHistoricalTickAt(currentTime int64, tick int32) {
+	p.HistoricalTick().Set(currentTime, tick)
 }
 
 // Clone returns a deep copy of the pool.
@@ -201,11 +218,11 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		historicalTick:                NewUintTreeN(64),
 	}
 
-	pool.GlobalRewardRatioAccumulation().Set(currentTime, "0")
+	pool.SetGlobalRewardRatioAccumulationAt(currentTime, "0")
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
-	pool.RewardCache().Set(currentTime, int64(0))
-	pool.StakedLiquidity().Set(currentTime, u256.Zero())
+	pool.SetRewardCacheAt(currentTime, int64(0))
+	pool.SetStakedLiquidityAt(currentTime, u256.Zero())
 
 	return pool
 }
@@ -266,8 +283,8 @@ func (i *Incentives) SetUnclaimablePeriods(unclaimablePeriods *UintTree) {
 
 // Incentive returns an incentive by ID
 func (i *Incentives) Incentive(incentiveId string) (*ExternalIncentive, bool) {
-	value, exists := i.incentives.Get(incentiveId)
-	if !exists {
+	value := i.incentives.Get(incentiveId)
+	if value == nil {
 		return nil, false
 	}
 	incentive, ok := value.(*ExternalIncentive)
@@ -277,6 +294,14 @@ func (i *Incentives) Incentive(incentiveId string) (*ExternalIncentive, bool) {
 // SetIncentive sets an incentive by ID
 func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncentive) {
 	i.incentives.Set(incentiveId, incentive)
+}
+
+func (i *Incentives) SetUnclaimablePeriod(startTimestamp int64, endTimestamp int64) {
+	i.unclaimablePeriods.Set(startTimestamp, endTimestamp)
+}
+
+func (i *Incentives) RemoveUnclaimablePeriod(startTimestamp int64) {
+	i.unclaimablePeriods.Remove(startTimestamp)
 }
 
 // IterateIncentives iterates over all incentives
@@ -298,25 +323,25 @@ func NewIncentives(targetPoolPath string) *Incentives {
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
 	currentTimestamp := time.Now().Unix()
-	result.unclaimablePeriods.Set(currentTimestamp, int64(0))
+	result.SetUnclaimablePeriod(currentTimestamp, int64(0))
 	return result
 }
 
 type ExternalIncentive struct {
-	incentiveId              string  // incentive id
-	startTimestamp           int64   // start time for external reward
-	endTimestamp             int64   // end time for external reward
-	createdHeight            int64   // block height when the incentive was created
-	createdTimestamp         int64   // timestamp when the incentive was created
-	depositGnsAmount         int64   // deposited gns amount
-	targetPoolPath           string  // external reward target pool path
-	rewardToken              string  // external reward token path
-	totalRewardAmount        int64   // total reward amount
-	rewardAmount             int64   // to be distributed reward amount
-	rewardPerSecond          int64   // reward per second
-	distributedRewardAmount  int64   // distributed reward amount, when un-staked and refunded
-	accumulatedPenaltyAmount int64   // accumulated warmup penalty from CollectReward
-	creator                  address // creator address
+	incentiveId              string     // incentive id
+	startTimestamp           int64      // start time for external reward
+	endTimestamp             int64      // end time for external reward
+	createdHeight            int64      // block height when the incentive was created
+	createdTimestamp         int64      // timestamp when the incentive was created
+	depositGnsAmount         int64      // deposited gns amount
+	targetPoolPath           string     // external reward target pool path
+	rewardToken              string     // external reward token path
+	totalRewardAmount        int64      // total reward amount
+	rewardAmount             int64      // to be distributed reward amount
+	rewardPerSecondX128      *u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
+	distributedRewardAmount  int64      // distributed reward amount, when un-staked and refunded
+	accumulatedPenaltyAmount int64      // accumulated warmup penalty from CollectReward
+	creator                  address    // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
@@ -423,14 +448,15 @@ func (e *ExternalIncentive) SetRewardAmount(rewardAmount int64) {
 	e.rewardAmount = rewardAmount
 }
 
-// RewardPerSecond returns the reward per second
-func (e *ExternalIncentive) RewardPerSecond() int64 {
-	return e.rewardPerSecond
+// RewardPerSecondX128 returns the Q128-scaled reward per second.
+// The underlying value is (rewardAmount << 128) / duration.
+func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
+	return e.rewardPerSecondX128
 }
 
-// SetRewardPerSecond sets the reward per second
-func (e *ExternalIncentive) SetRewardPerSecond(rewardPerSecond int64) {
-	e.rewardPerSecond = rewardPerSecond
+// SetRewardPerSecondX128 sets the Q128-scaled reward per second.
+func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
+	e.rewardPerSecondX128 = u256.Zero().Set(rewardPerSecondX128)
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -474,6 +500,12 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 }
 
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
+	rewardPerSecondX128 := u256.Zero()
+
+	if e.rewardPerSecondX128 != nil {
+		rewardPerSecondX128 = e.rewardPerSecondX128.Clone()
+	}
+
 	return &ExternalIncentive{
 		incentiveId:              e.incentiveId,
 		startTimestamp:           e.startTimestamp,
@@ -485,7 +517,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardToken:              e.rewardToken,
 		totalRewardAmount:        e.totalRewardAmount,
 		rewardAmount:             e.rewardAmount,
-		rewardPerSecond:          e.rewardPerSecond,
+		rewardPerSecondX128:      rewardPerSecondX128,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
 		distributedRewardAmount:  e.distributedRewardAmount,
@@ -507,7 +539,15 @@ func NewExternalIncentive(
 	currentTime int64, // current time in unix time(seconds)
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
-	rewardPerSecond := rewardAmount / incentiveDuration
+
+	// Compute reward per second scaled by 2^128 to preserve sub-second precision.
+	// rewardPerSecondX128 = (rewardAmount << 128) / incentiveDuration.
+	// Consumers must divide by 2^128 when materializing back to a plain integer.
+	rewardPerSecondX128 := u256.MulDiv(
+		u256.NewUintFromInt64(rewardAmount),
+		consts.Q128(),
+		u256.NewUintFromInt64(incentiveDuration),
+	)
 
 	return &ExternalIncentive{
 		incentiveId:              incentiveId,
@@ -517,7 +557,7 @@ func NewExternalIncentive(
 		rewardAmount:             rewardAmount,
 		startTimestamp:           startTimestamp,
 		endTimestamp:             endTimestamp,
-		rewardPerSecond:          rewardPerSecond,
+		rewardPerSecondX128:      rewardPerSecondX128,
 		distributedRewardAmount:  0,
 		accumulatedPenaltyAmount: 0,
 		creator:                  creator,
@@ -546,8 +586,8 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 }
 
 func (t *Ticks) Get(tickId int32) *Tick {
-	v, ok := t.tree.Get(EncodeInt(tickId))
-	if !ok {
+	v := t.tree.Get(EncodeInt(tickId))
+	if v == nil {
 		tick := &Tick{
 			id:                   tickId,
 			stakedLiquidityGross: u256.Zero(),
@@ -657,7 +697,7 @@ func (t *Tick) StakedLiquidityGross() *u256.Uint {
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = u256.Zero().Set(stakedLiquidityGross)
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
@@ -667,7 +707,7 @@ func (t *Tick) StakedLiquidityDelta() *i256.Int {
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = i256.Zero().Set(stakedLiquidityDelta)
 }
 
 // OutsideAccumulation returns the outside accumulation tree
@@ -678,6 +718,11 @@ func (t *Tick) OutsideAccumulation() *UintTree {
 // SetOutsideAccumulation sets the outside accumulation tree
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
+}
+
+// SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
+func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
+	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
 }
 
 // Clone returns a deep copy of the tick.
@@ -711,6 +756,14 @@ type TierRatio struct {
 	Tier1 uint64
 	Tier2 uint64
 	Tier3 uint64
+}
+
+func NewTierRatio(tier1, tier2, tier3 uint64) TierRatio {
+	return TierRatio{
+		Tier1: tier1,
+		Tier2: tier2,
+		Tier3: tier3,
+	}
 }
 
 // Get returns the ratio(scaled up by 100) for the given tier.

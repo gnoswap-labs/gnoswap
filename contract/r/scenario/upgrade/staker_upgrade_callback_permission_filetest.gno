@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // Staker contract upgrade scenario test
 package main
 
@@ -29,45 +31,45 @@ const (
 	stakerTestPath = "gno.land/r/gnoswap/staker/insecure_staker_callback"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize staker contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Initialize emission")
-	initEmission()
+	initEmission(cur)
 	println()
 
 	println("[SCENARIO] 3. Check emission before upgrade")
-	checkEmission()
+	checkEmission(cur)
 	println()
 
 	println("[SCENARIO] 4. Upgrade staker contract to test version with unauthorized caller")
-	testStakerUpgrade()
+	testStakerUpgrade(cur)
 	println()
 }
 
-func initEmission() {
+func initEmission(cur realm) {
 	println("[INFO] Initializing emission")
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 }
 
-func checkEmission() {
+func checkEmission(cur realm) {
 	println("[INFO] Checking emission")
 	emissionAmountPerSecond := gns.GetEmissionAmountPerSecondByTimestamp(time.Now().Unix())
 	ufmt.Printf("[EXPECTED] Emission amount per second: %d\n", emissionAmountPerSecond)
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current implementation: %s\n", currentVersion)
 
 	if currentVersion != stakerV1Path {
 		ufmt.Println("[INFO] Setting implementation to v1")
 		testing.SetRealm(adminRealm)
-		staker.UpgradeImpl(cross, stakerV1Path)
+		staker.UpgradeImpl(cross(cur), stakerV1Path)
 		currentVersion = staker.GetImplementationPackagePath()
 	}
 
@@ -77,7 +79,7 @@ func initializeV1() {
 	}
 }
 
-func testStakerUpgrade() {
+func testStakerUpgrade(cur realm) {
 	// Verify current version is v1
 	currentVersion := staker.GetImplementationPackagePath()
 	ufmt.Printf("[INFO] Current version: %s\n", currentVersion)
@@ -92,8 +94,8 @@ func testStakerUpgrade() {
 	// Should panic with unauthorized caller message
 	expectedMsg := "unauthorized: caller g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 is not emission"
 
-	msg, hasPanic := handleCrossPanic(func() {
-		staker.UpgradeImpl(cross, stakerTestPath)
+	msg, hasPanic := handleCrossPanic(cur, func() {
+		staker.UpgradeImpl(cross(cur), stakerTestPath)
 	})
 
 	if !hasPanic {
@@ -107,7 +109,7 @@ func testStakerUpgrade() {
 	ufmt.Println("[EXPECTED] Staker upgrade with unauthorized caller panics correctly")
 }
 
-func handleCrossPanic(fn func()) (string, bool) {
+func handleCrossPanic(cur realm, fn func()) (string, bool) {
 	r := revive(fn)
 	if r == nil {
 		return "", false

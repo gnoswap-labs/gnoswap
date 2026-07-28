@@ -12,23 +12,23 @@ import (
 )
 
 // TestFuzzPoolCreate_ValidParams_Stateless tests pool creation with valid parameters
-func TestFuzzPoolCreate_ValidParams_Stateless(t *testing.T) {
+func TestFuzzPoolCreate_ValidParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewValidPoolCreateParams(ft)
 
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		pool.SetPoolCreationFee(cross, 0)
+		pool.SetPoolCreationFee(cross(cur), 0)
 
 		// when
 		fuzzResult.AddParams(index, params)
 
 		// then
 		pool.CreatePool(
-			cross,
+			cross(cur),
 			params.token0Path,
 			params.token1Path,
 			params.fee,
@@ -38,23 +38,23 @@ func TestFuzzPoolCreate_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzPoolCreate_RandomizedParams_Stateless tests pool creation with randomized parameters
-func TestFuzzPoolCreate_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzPoolCreate_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
-		initStates(t)
+		initStates(cur, t)
 
 		params := NewRandomizedPoolCreateParams(ft)
 
 		adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		pool.SetPoolCreationFee(cross, 0)
+		pool.SetPoolCreationFee(cross(cur), 0)
 
 		// when
 		fuzzResult.AddParams(index, params)
 
 		// then
 		pool.CreatePool(
-			cross,
+			cross(cur),
 			params.token0Path,
 			params.token1Path,
 			params.fee,
@@ -64,13 +64,13 @@ func TestFuzzPoolCreate_RandomizedParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzPoolCreate_RandomizedParams_Stateful tests pool creation with randomized parameters in stateful mode
-func TestFuzzPoolCreate_RandomizedParams_Stateful(t *testing.T) {
+func TestFuzzPoolCreate_RandomizedParams_Stateful(cur realm, t *testing.T) {
 	// given
-	initStates(t)
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedPoolCreateParams(ft)
@@ -82,7 +82,7 @@ func TestFuzzPoolCreate_RandomizedParams_Stateful(t *testing.T) {
 
 		// then
 		pool.CreatePool(
-			cross,
+			cross(cur),
 			params.token0Path,
 			params.token1Path,
 			params.fee,

@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"testing"
@@ -11,10 +11,10 @@ import (
 )
 
 // TestAssert_assertCallerIsProposer tests the private assertCallerIsProposer function
-func TestAssert_assertCallerIsProposer(t *testing.T) {
+func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupProposal    func(*governanceV1) int64
+		setupProposal    func(cur realm, gv *governanceV1) int64
 		caller           address
 		proposalID       int64
 		expectedPanic    bool
@@ -22,11 +22,14 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 	}{
 		{
 			name: "success - caller is proposer",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
@@ -34,7 +37,7 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 1
 			},
 			caller:        testutils.TestAddress("proposer1"),
@@ -43,21 +46,24 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 		},
 		{
 			name: "panic - proposal not found",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				return 999 // Non-existent proposal ID
 			},
 			caller:           testutils.TestAddress("proposer1"),
 			proposalID:       999,
 			expectedPanic:    true,
-			expectedPanicMsg: errProposalNotFound.Error(),
+			expectedPanicMsg: errProposalNotFound,
 		},
 		{
 			name: "panic - caller is not proposer",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
 				proposal := governance.NewProposal(
 					2,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
@@ -65,21 +71,24 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 2
 			},
 			caller:           testutils.TestAddress("not_proposer"),
 			proposalID:       2,
 			expectedPanic:    true,
-			expectedPanicMsg: errNotProposer.Error(),
+			expectedPanicMsg: errNotProposer,
 		},
 		{
 			name: "success - different proposer for different proposal",
-			setupProposal: func(gv *governanceV1) int64 {
+			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer2")
 				proposal := governance.NewProposal(
 					3,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(
+						testConfig, 10_000_000_000, true, time.Now().Unix(),
+						10_000_000_000,
+					),
 					governance.NewProposalMetadata("Test Title 2", "Test Description 2"),
 					NewProposalTextData(),
 					proposer,
@@ -87,7 +96,7 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(proposal)
+				gv.addProposal(0, cur, proposal)
 				return 3
 			},
 			caller:        testutils.TestAddress("proposer2"),
@@ -97,18 +106,18 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			gv := newMockGovernance()
-			tt.setupProposal(gv)
+			tt.setupProposal(cur, gv)
 
 			// when & then
 			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMsg, func() {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			}

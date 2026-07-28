@@ -15,8 +15,8 @@ func NewMockRouter(store router.IRouterStore) *TestRouter {
 	}
 }
 
-func init() {
-	router.RegisterInitializer(cross, func(store router.IRouterStore) router.IRouter {
+func init(cur realm) {
+	router.RegisterInitializer(cross(cur), func(_ int, rlm realm, store router.IRouterStore) router.IRouter {
 		return NewMockRouter(store)
 	})
 }
@@ -44,11 +44,11 @@ func (t *TestRouter) ExecuteFn(fnName string, actualFn func(args ...any) any, ar
 	return fn(args...)
 }
 
-func (t *TestRouter) ExactInSwapRoute(inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
+func (t *TestRouter) ExactInSwapRoute(_ int, rlm realm, inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
 	result := t.ExecuteFn(
 		"ExactInSwapRoute",
 		func(args ...any) any {
-			r1, r2 := t.instance.ExactInSwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
+			r1, r2 := t.instance.ExactInSwapRoute(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
 			return []any{r1, r2}
 		},
 		inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer,
@@ -56,11 +56,11 @@ func (t *TestRouter) ExactInSwapRoute(inputToken string, outputToken string, amo
 	return result[0].(string), result[1].(string)
 }
 
-func (t *TestRouter) ExactInSingleSwapRoute(inputToken string, outputToken string, amountIn string, routeArr string, amountOutMin string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
+func (t *TestRouter) ExactInSingleSwapRoute(_ int, rlm realm, inputToken string, outputToken string, amountIn string, routeArr string, amountOutMin string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	result := t.ExecuteFn(
 		"ExactInSingleSwapRoute",
 		func(args ...any) any {
-			r1, r2 := t.instance.ExactInSingleSwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
+			r1, r2 := t.instance.ExactInSingleSwapRoute(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
 			return []any{r1, r2}
 		},
 		inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer,
@@ -68,11 +68,11 @@ func (t *TestRouter) ExactInSingleSwapRoute(inputToken string, outputToken strin
 	return result[0].(string), result[1].(string)
 }
 
-func (t *TestRouter) ExactOutSwapRoute(inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
+func (t *TestRouter) ExactOutSwapRoute(_ int, rlm realm, inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
 	result := t.ExecuteFn(
 		"ExactOutSwapRoute",
 		func(args ...any) any {
-			r1, r2 := t.instance.ExactOutSwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
+			r1, r2 := t.instance.ExactOutSwapRoute(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
 			return []any{r1, r2}
 		},
 		inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer,
@@ -80,11 +80,11 @@ func (t *TestRouter) ExactOutSwapRoute(inputToken string, outputToken string, am
 	return result[0].(string), result[1].(string)
 }
 
-func (t *TestRouter) ExactOutSingleSwapRoute(inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
+func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	result := t.ExecuteFn(
 		"ExactOutSingleSwapRoute",
 		func(args ...any) any {
-			r1, r2 := t.instance.ExactOutSingleSwapRoute(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
+			r1, r2 := t.instance.ExactOutSingleSwapRoute(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(int64), args[7].(string))
 			return []any{r1, r2}
 		},
 		inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer,
@@ -104,11 +104,11 @@ func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swap
 	return result[0].(string), result[1].(string), result[2].(bool)
 }
 
-func (t *TestRouter) SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
+func (t *TestRouter) SwapCallback(_ int, rlm realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
 	result := t.ExecuteFn(
 		"SwapCallback",
 		func(args ...any) any {
-			return t.instance.SwapCallback(args[0].(string), args[1].(string), args[2].(int64), args[3].(int64), args[4].(address))
+			return t.instance.SwapCallback(0, rlm, args[0].(string), args[1].(string), args[2].(int64), args[3].(int64), args[4].(address))
 		},
 		token0Path, token1Path, amount0Delta, amount1Delta, payer,
 	)
@@ -125,10 +125,10 @@ func (t *TestRouter) GetSwapFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestRouter) SetSwapFee(fee uint64) {
+func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 	t.ExecuteFn(
 		"SetSwapFee",
-		func(args ...any) any { t.instance.SetSwapFee(args[0].(uint64)); return nil },
+		func(args ...any) any { t.instance.SetSwapFee(0, rlm, args[0].(uint64)); return nil },
 		fee,
 	)
 }

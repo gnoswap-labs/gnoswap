@@ -13,6 +13,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -22,7 +23,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
@@ -53,9 +53,9 @@ var (
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
+	barPath = "gno.land/r/onbloc/bar.BAR"
+	quxPath = "gno.land/r/onbloc/qux.QUX"
+	gnsPath = "gno.land/r/gnoswap/gns.GNS"
 
 	fee100 uint32 = 100
 
@@ -72,97 +72,97 @@ var (
 	incentiveEndTime   int64
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] CollectExternalIncentivePenalty")
 	println()
 
 	println("[SCENARIO] 1. Initialize")
-	initialize()
+	initialize(cur)
 	println()
 
 	println("[SCENARIO] 2. Create pool")
-	createPool()
+	createPool(cur)
 	println()
 
 	println("[SCENARIO] 3. Create external incentive")
-	createExternalIncentive()
+	createExternalIncentive(cur)
 	println()
 
 	println("[SCENARIO] 4. Start incentive and stake position")
 	testing.SkipHeights(1)
-	stakePosition()
-	stakePosition()
-	stakePosition()
+	stakePosition(cur)
+	stakePosition(cur)
+	stakePosition(cur)
 	testing.SkipHeights(1)
 	println()
 
 	println("[SCENARIO] 5. Collect rewards (accumulates penalty)")
 	// skip 30 days to accumulate rewards (still in warmup)
 	testing.SkipHeights(30 * 24 * 60 * 60 / 5)
-	collectRewards(1)
-	collectRewards(2)
+	collectRewards(cur, 1)
+	collectRewards(cur, 2)
 	println()
 
 	println("[SCENARIO] 6. End external incentive")
-	endIncentive()
+	endIncentive(cur)
 	println()
 
 	println("[SCENARIO] 7. Collect penalty")
 	testing.SkipHeights(1)
-	collectPenalty()
+	collectPenalty(cur)
 	println()
 
 	println("[SCENARIO] 8. Collect reward after external incentive ends")
 	testing.SkipHeights(1)
-	collectRewards(1)
+	collectRewards(cur, 1)
 	testing.SkipHeights(1)
-	collectRewards(2)
+	collectRewards(cur, 2)
 	testing.SkipHeights(1)
-	collectRewards(3)
+	collectRewards(cur, 3)
 	println()
 
 	println("[SCENARIO] 9. Verify new penalty accrues and can be collected again")
-	collectPenaltyAgain()
+	collectPenaltyAgain(cur)
 	println()
 }
 
-func initialize() {
+func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
-	sr.SetUnStakingFee(cross, 0)
-	pl.SetPoolCreationFee(cross, 0)
+	sr.SetUnStakingFee(cross(cur), 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 	testing.SkipHeights(1)
 
 	// transfer QUX to external creator for incentive
-	qux.Transfer(cross, externalCreatorUser, REWARD_AMOUNT)
-	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
+	qux.Transfer(cross(cur), externalCreatorUser, REWARD_AMOUNT)
+	gns.Transfer(cross(cur), externalCreatorUser, depositGnsAmount)
 
 	// transfer tokens to admin for position
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross(cur), poolAddr, maxInt64)
+	qux.Approve(cross(cur), poolAddr, maxInt64)
 
 	println("[INFO] initialized accounts")
 }
 
-func createPool() {
+func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 	testing.SkipHeights(1)
 
 	pl.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
-		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", 1)
+	sr.SetPoolTier(cross(cur), "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", 1)
 	println("[INFO] created pool and set tier")
 }
 
-func createExternalIncentive() {
-	testing.SetRealm(externalCreatorRealm)
-	qux.Approve(cross, stakerAddr, maxInt64)
-	gns.Approve(cross, stakerAddr, maxInt64)
+func createExternalIncentive(cur realm) {
+	testing.SetRealm(adminRealm)
+	qux.Approve(cross(cur), stakerAddr, maxInt64)
+	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	createTimestamp := time.Now().Unix()
 	startTime := int64(1234569600) // Fixed start time
@@ -170,11 +170,12 @@ func createExternalIncentive() {
 	incentiveStartTime = startTime
 	incentiveEndTime = endTime
 
-	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", externalCreatorAddr, createTimestamp, 1)
+	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 
+	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		REWARD_AMOUNT,
 		startTime,
@@ -192,11 +193,11 @@ func createExternalIncentive() {
 	ufmt.Printf("[INFO] created external incentive: %s\n", actualIncentiveID)
 }
 
-func stakePosition() {
+func stakePosition(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	positionId, liquidity, _, _ := pn.Mint(
-		cross,
+		cross(cur),
 		barPath,
 		quxPath,
 		fee100,
@@ -211,19 +212,19 @@ func stakePosition() {
 		"",
 	)
 
-	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	sr.StakeToken(cross, positionId, "")
+	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, positionId))
+	sr.StakeToken(cross(cur), positionId, "")
 
 	ufmt.Printf("[INFO] staked position %d (liquidity: %s)\n", positionId, liquidity)
 }
 
-func collectRewards(positionId uint64) {
+func collectRewards(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	quxBeforeCollect := qux.BalanceOf(adminAddr)
-	sr.CollectReward(cross, positionId)
+	sr.CollectReward(cross(cur), positionId)
 
-	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
-	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 	quxAfterCollect := qux.BalanceOf(adminAddr)
 	quxCollected := quxAfterCollect - quxBeforeCollect
 
@@ -233,15 +234,15 @@ func collectRewards(positionId uint64) {
 	ufmt.Printf("  - qux collected: %d\n", quxCollected)
 }
 
-func endIncentive() {
+func endIncentive(cur realm) {
 	nowTime := time.Now().Unix()
 	timeLeft := incentiveEndTime - nowTime
 	testing.SkipHeights(timeLeft / 5)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	sr.EndExternalIncentive(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -249,20 +250,20 @@ func endIncentive() {
 	println("[INFO] external incentive ended")
 }
 
-func collectPenalty() {
+func collectPenalty(cur realm) {
 	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
-	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
 
 	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
-	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID)
+	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] penalty before collection: %d\n", penaltyBefore)
 	ufmt.Printf("[INFO] penalty collected: %d\n", collected)
@@ -283,12 +284,12 @@ func collectPenalty() {
 	ufmt.Printf("[EXPECTED] staker qux balance: %d\n", qux.BalanceOf(stakerAddr))
 }
 
-func collectPenaltyAgain() {
+func collectPenaltyAgain(cur realm) {
 	testing.SkipHeights(1)
-	testing.SetRealm(externalCreatorRealm)
+	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
-		cross,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		actualIncentiveID,
 		externalCreatorUser,
 	)
@@ -303,7 +304,7 @@ func collectPenaltyAgain() {
 	ufmt.Printf("[EXPECTED] staker qux balance: %d\n", qux.BalanceOf(stakerAddr))
 }
 
-func positionIdFrom(positionId uint64) grc721.TokenID {
+func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
@@ -317,7 +318,7 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create external incentive
-// [INFO] created external incentive: g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567900:1
+// [INFO] created external incentive: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 //
 // [SCENARIO] 4. Start incentive and stake position
 // [INFO] staked position 1 (liquidity: 20026)
@@ -326,45 +327,45 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 //
 // [SCENARIO] 5. Collect rewards (accumulates penalty)
 // [INFO] position 1 CollectReward:
-//   - accumulatedPenaltyAmount: 433181379
-//   - distributedRewardAmount: 566468547
-//   - qux collected: 566468547
+//   - accumulatedPenaltyAmount: 433333913
+//   - distributedRewardAmount: 566668015
+//   - qux collected: 566668015
 // [INFO] position 2 CollectReward:
-//   - accumulatedPenaltyAmount: 866362758
-//   - distributedRewardAmount: 1132937094
-//   - qux collected: 566468547
+//   - accumulatedPenaltyAmount: 866667826
+//   - distributedRewardAmount: 1133336030
+//   - qux collected: 566668015
 //
 // [SCENARIO] 6. End external incentive
 // [INFO] external incentive ended
 //
 // [SCENARIO] 7. Collect penalty
-// [INFO] penalty before collection: 866362758
-// [INFO] penalty collected: 866362758
+// [INFO] penalty before collection: 866667826
+// [INFO] penalty collected: 866667826
 // [INFO] penalty remaining: 0
-// [INFO] creator QUX before: 3173785
-// [INFO] creator QUX after: 869536543
-// [INFO] creator QUX increase: 866362758
+// [INFO] creator QUX before: 9000005788
+// [INFO] creator QUX after: 9866673614
+// [INFO] creator QUX increase: 866667826
 // [EXPECTED] penalty successfully collected to creator
 // [EXPECTED] accumulatedPenaltyAmount reset to 0
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 6997526363
+// [EXPECTED] staker qux balance: 6999990356
 //
 // [SCENARIO] 8. Collect reward after external incentive ends
 // [INFO] position 1 CollectReward:
-//   - accumulatedPenaltyAmount: 149946622
-//   - distributedRewardAmount: 2985456399
-//   - qux collected: 1849345520
+//   - accumulatedPenaltyAmount: 149999421
+//   - distributedRewardAmount: 2983338537
+//   - qux collected: 1849996719
 // [INFO] position 2 CollectReward:
-//   - accumulatedPenaltyAmount: 299893244
-//   - distributedRewardAmount: 4834801919
-//   - qux collected: 1849345520
+//   - accumulatedPenaltyAmount: 299998842
+//   - distributedRewardAmount: 4833335256
+//   - qux collected: 1849996719
 // [INFO] position 3 CollectReward:
-//   - accumulatedPenaltyAmount: 883021244
-//   - distributedRewardAmount: 7250615987
-//   - qux collected: 2415814068
+//   - accumulatedPenaltyAmount: 883332176
+//   - distributedRewardAmount: 7249999990
+//   - qux collected: 2416664734
 //
 // [SCENARIO] 9. Verify new penalty accrues and can be collected again
-// [INFO] second collection returned: 883021244
+// [INFO] second collection returned: 883332176
 // [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 11
+// [EXPECTED] staker qux balance: 8

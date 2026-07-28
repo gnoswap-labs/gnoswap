@@ -1,4 +1,4 @@
-package v1
+package pool
 
 import (
 	"chain/runtime"
@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestAssertIsNotUserCall(t *testing.T) {
+func TestAssertIsNotUserCall(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		currentRealm runtime.Realm
@@ -28,21 +28,22 @@ func TestAssertIsNotUserCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			testing.SetRealm(tt.currentRealm)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertIsNotUserCall(tt.currentRealm)
+				testing.SetRealm(tt.currentRealm)
+				uassert.AbortsWithMessage(t, cur, tt.panicMsg, func(cur realm) {
+					assertIsNotUserCall(0, cur)
 				})
 			} else {
-				assertIsNotUserCall(tt.currentRealm)
+				assertIsNotUserCall(0, cur)
 			}
 		})
 	}
 }
 
-func TestAssertIsNotEqualsTokens(t *testing.T) {
+func TestAssertIsNotEqualsTokens(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		token0Path  string
@@ -61,14 +62,14 @@ func TestAssertIsNotEqualsTokens(t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar.BAR) != token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					assertIsNotEqualsTokens(tt.token0Path, tt.token1Path)
 				})
 			} else {
@@ -78,7 +79,7 @@ func TestAssertIsNotEqualsTokens(t *testing.T) {
 	}
 }
 
-func TestAssertIsSupportedFeeTier(t *testing.T) {
+func TestAssertIsSupportedFeeTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		fee         uint32
@@ -120,9 +121,9 @@ func TestAssertIsSupportedFeeTier(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					assertIsSupportedFeeTier(tt.fee)
 				})
 			} else {
@@ -132,10 +133,10 @@ func TestAssertIsSupportedFeeTier(t *testing.T) {
 	}
 }
 
-func TestAssertIsNotExistsPoolPath(t *testing.T) {
+func TestAssertIsNotExistsPoolPath(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setupFn     func(t *testing.T)
+		setupFn     func(cur realm, t *testing.T)
 		token0Path  string
 		token1Path  string
 		fee         uint32
@@ -144,8 +145,8 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 	}{
 		{
 			name: "success - pool does not exist",
-			setupFn: func(t *testing.T) {
-				initPoolTest(t)
+			setupFn: func(cur realm, t *testing.T) {
+				initPoolTest(cur, t)
 			},
 			token0Path:  barPath,
 			token1Path:  fooPath,
@@ -154,30 +155,30 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 		},
 		{
 			name: "fail - pool already exists",
-			setupFn: func(t *testing.T) {
-				initPoolTest(t)
+			setupFn: func(cur realm, t *testing.T) {
+				initPoolTest(cur, t)
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceSetPoolCreationFee(0)
+				mockInstanceSetPoolCreationFee(0, cur, 0)
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceCreatePool(barPath, fooPath, fee3000, "4295128740")
+				mockInstanceCreatePool(0, cur, barPath, fooPath, fee3000, "4295128740")
 			},
 			token0Path:  barPath,
 			token1Path:  fooPath,
 			fee:         fee3000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000) not to exist",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.setupFn != nil {
-				tt.setupFn(t)
+				tt.setupFn(cur, t)
 			}
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					assertIsNotExistsPoolPath(getMockInstance(), tt.token0Path, tt.token1Path, tt.fee)
 				})
 			} else {
@@ -187,7 +188,7 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 	}
 }
 
-func TestAssertIsValidTokenOrder(t *testing.T) {
+func TestAssertIsValidTokenOrder(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		token0Path  string
@@ -206,21 +207,21 @@ func TestAssertIsValidTokenOrder(t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar.BAR) < token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 		{
 			name:        "fail - tokens in reverse order",
 			token0Path:  fooPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo.FOO) < token1Path(gno.land/r/onbloc/bar.BAR)",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					assertIsValidTokenOrder(tt.token0Path, tt.token1Path)
 				})
 			} else {

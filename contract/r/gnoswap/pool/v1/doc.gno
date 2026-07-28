@@ -8,4 +8,4 @@
 // - Single-tick and cross-tick swaps
 // - Protocol fee collection
 // - Tick bitmap optimization for gas efficiency
-package v1
+package pool

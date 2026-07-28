@@ -2,6 +2,20 @@
 ENV ?= default
 include scripts/config/$(ENV).mk
 
+# Token paths for transfer-* targets (override from parent Makefile or env if needed).
+# Keep test_token list aligned with scripts/deploy.mk TEST_TOKEN_NAMES.
+GNS_PATH ?= gno.land/r/gnoswap/gns
+USDC_PATH ?= gno.land/r/gnoswap/test_token/test_usdc
+ATONE_PATH ?= gno.land/r/gnoswap/test_token/test_atone
+ATOM_PATH ?= gno.land/r/gnoswap/test_token/test_atom
+ETH_PATH ?= gno.land/r/gnoswap/test_token/test_eth
+SOL_PATH ?= gno.land/r/gnoswap/test_token/test_sol
+BTC_PATH ?= gno.land/r/gnoswap/test_token/test_btc
+DAI_PATH ?= gno.land/r/gnoswap/test_token/test_dai
+PHOTON_PATH ?= gno.land/r/gnoswap/test_token/test_photon
+TRX_PATH ?= gno.land/r/gnoswap/test_token/test_trx
+USDT_PATH ?= gno.land/r/gnoswap/test_token/test_usdt
+
 .PHONY: send-ugnot-must
 send-ugnot-must:
 	$(info ************ send ugnot to necessary accounts ************)
@@ -11,7 +25,9 @@ send-ugnot-must:
 	@echo
 
 .PHONY: transfer-base-token
-transfer-base-token: transfer-ugnot transfer-gns transfer-usdc transfer-baz transfer-bar transfer-obl transfer-qux transfer-foo
+transfer-base-token: transfer-ugnot transfer-gns \
+	transfer-usdc transfer-atone transfer-atom transfer-btc \
+	transfer-dai transfer-eth transfer-photon transfer-sol transfer-trx transfer-usdt
 
 # Default Token Transfer
 transfer-ugnot:
@@ -41,49 +57,85 @@ transfer-usdc:
 	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(USDC_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
-transfer-baz:
-	$(info ************ transfer 1_000_000_000 BAZ to accounts ************)
-	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
-	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
-	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
-	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
-	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(BAZ_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+transfer-atone:
+	$(info ************ transfer 1_000_000_000 ATONE to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(ATONE_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(ATONE_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(ATONE_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(ATONE_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(ATONE_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
-transfer-bar:
-	$(info ************ transfer 1_000_000_000 BAR to accounts ************)
-	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
-	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
-	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
-	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
-	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(BAR_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+transfer-atom:
+	$(info ************ transfer 1_000_000_000 ATOM to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(ATOM_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(ATOM_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(ATOM_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(ATOM_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(ATOM_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
-transfer-obl:
-	$(info ************ transfer 1_000_000_000 OBL to accounts ************)
-	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
-	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
-	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
-	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
-	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(OBL_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+transfer-eth:
+	$(info ************ transfer 1_000_000_000 ETH to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(ETH_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(ETH_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(ETH_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(ETH_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(ETH_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
-transfer-qux:
-	$(info ************ transfer 1_000_000_000 QUX to accounts ************)
-	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
-	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
-	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
-	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
-	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(QUX_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+transfer-sol:
+	$(info ************ transfer 1_000_000_000 SOL to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(SOL_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(SOL_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(SOL_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(SOL_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(SOL_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
-transfer-foo:
-	$(info ************ transfer 1_000_000_000 FOO to accounts ************)
-	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
-	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
-	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
-	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
-	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(FOO_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+transfer-btc:
+	$(info ************ transfer 1_000_000_000 BTC to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(BTC_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(BTC_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(BTC_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(BTC_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(BTC_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+	@echo
+
+transfer-dai:
+	$(info ************ transfer 1_000_000_000 DAI to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(DAI_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(DAI_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(DAI_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(DAI_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(DAI_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+	@echo
+
+transfer-photon:
+	$(info ************ transfer 1_000_000_000 PHOTON to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(PHOTON_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(PHOTON_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(PHOTON_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(PHOTON_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(PHOTON_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+	@echo
+
+transfer-trx:
+	$(info ************ transfer 1_000_000_000 TRX to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(TRX_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(TRX_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(TRX_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(TRX_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(TRX_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
+	@echo
+
+transfer-usdt:
+	$(info ************ transfer 1_000_000_000 USDT to accounts ************)
+	@[ -n "$(ADDR_TEST_ADMIN)" ] && echo "" | gnokey maketx call -pkgpath $(USDT_PATH) -func Transfer -args $(ADDR_TEST_ADMIN) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_TEST_ADMIN (not set)"
+	@[ -n "$(ADDR_USER_1)" ] && echo "" | gnokey maketx call -pkgpath $(USDT_PATH) -func Transfer -args $(ADDR_USER_1) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_1 (not set)"
+	@[ -n "$(ADDR_USER_2)" ] && echo "" | gnokey maketx call -pkgpath $(USDT_PATH) -func Transfer -args $(ADDR_USER_2) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_2 (not set)"
+	@[ -n "$(ADDR_USER_3)" ] && echo "" | gnokey maketx call -pkgpath $(USDT_PATH) -func Transfer -args $(ADDR_USER_3) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_3 (not set)"
+	@[ -n "$(ADDR_USER_4)" ] && echo "" | gnokey maketx call -pkgpath $(USDT_PATH) -func Transfer -args $(ADDR_USER_4) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin || echo "Skipping ADDR_USER_4 (not set)"
 	@echo
 
 faucet-ugnot:
@@ -271,21 +323,21 @@ propose-param:
 
 # create launchpad project
 create-launchpad-project:
-	$(info ************ create bar project ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/test_token/bar -func Approve -args $(ADDR_LAUNCHPAD) -args $(MAX_APPROVE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Test Launch" -args "gno.land/r/gnoswap/v1/test_token/bar" -args "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" -args 10000000000 -args "gno.land/r/gnoswap/gns" -args "0" -args 20 -args 30 -args 50 -args 1740385500 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	$(info ************ create atom project ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/test_token/test_atom -func Approve -args $(ADDR_LAUNCHPAD) -args $(MAX_APPROVE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Test Launch" -args "gno.land/r/gnoswap/v1/test_token/test_atom" -args "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" -args 10000000000 -args "gno.land/r/gnoswap/gns" -args "0" -args 20 -args 30 -args 50 -args 1740385500 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # deposit to project
 deposit-to-project:
 	$(info ************ deposit to project ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/obl:4215:30" -args 1000000 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/test_eth:4215:30" -args 1000000 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # collect project token
 collect-project-token:
 	$(info ************ collect project token ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectRewardByProjectId -args "gno.land/r/gnoswap/v1/test_token/obl:4215" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectRewardByProjectId -args "gno.land/r/gnoswap/v1/test_token/test_eth:4215" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo

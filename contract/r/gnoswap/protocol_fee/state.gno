@@ -1,7 +1,6 @@
 package protocol_fee
 
 import (
-	"chain/runtime"
 	"errors"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
@@ -11,8 +10,8 @@ import (
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	currentAddress address
+	domainPath     string
 
 	kvStore store.KVStore
 
@@ -20,7 +19,10 @@ var (
 	implementation IProtocolFee
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+	domainPath = cur.PkgPath()
+
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
 
@@ -34,7 +36,7 @@ func init() {
 	implementation = nil
 }
 
-func initializeDomainStore(kvStore store.KVStore) any {
+func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewProtocolFeeStore(kvStore)
 }
 

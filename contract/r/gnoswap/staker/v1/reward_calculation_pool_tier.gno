@@ -1,6 +1,9 @@
-package v1
+package staker
 
 import (
+	"errors"
+
+	"gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -23,33 +26,22 @@ const (
 // Returns:
 // - TierRatio: The ratio distribution across tier 1, 2, and 3, scaled up by 100.
 func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) sr.TierRatio {
-	// tier1 always exists
+	// tier1 always exists.
+	//
+	// TierRatio is declared in /r/gnoswap/staker; constructing it via a
+	// composite literal here (/r/gnoswap/staker/v1) trips the construction-time
+	// check ("cannot allocate ... in realm ..."). Route through the domain
+	// constructor sr.NewTierRatio so allocation happens in the declaring realm.
 	if tier2Count == 0 && tier3Count == 0 {
-		return sr.TierRatio{
-			Tier1: 100,
-			Tier2: 0,
-			Tier3: 0,
-		}
+		return sr.NewTierRatio(100, 0, 0)
 	}
 	if tier2Count == 0 {
-		return sr.TierRatio{
-			Tier1: 80,
-			Tier2: 0,
-			Tier3: 20,
-		}
+		return sr.NewTierRatio(80, 0, 20)
 	}
 	if tier3Count == 0 {
-		return sr.TierRatio{
-			Tier1: 70,
-			Tier2: 30,
-			Tier3: 0,
-		}
+		return sr.NewTierRatio(70, 30, 0)
 	}
-	return sr.TierRatio{
-		Tier1: 50,
-		Tier2: 30,
-		Tier3: 20,
-	}
+	return sr.NewTierRatio(50, 30, 20)
 }
 
 // PoolTier manages pool counts, ratios, and rewards for different tiers.
@@ -95,9 +87,9 @@ type PoolTier struct {
 // - *PoolTier: The new PoolTier instance.
 func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
 	result := &PoolTier{
-		membership:               bptree.NewBPTreeN(16),
+		membership:               sr.NewBPTreeN(16),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),
+		lastRewardCacheTimestamp: gnsmath.SafeAddInt64(currentTime, 1),
 		getEmission:              getEmission,
 		getHalvingBlocksInRange:  getHalvingBlocksInRange,
 		currentEmission:          getEmission(),
@@ -159,9 +151,10 @@ func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 
 // CurrentTier returns the tier of the given pool.
 func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
-	if tierI, ok := self.membership.Get(poolPath); !ok {
+	if tierI := self.membership.Get(poolPath); tierI == nil {
 		return 0
 	} else {
+		var ok bool
 		tier, ok = tierI.(uint64)
 		if !ok {
 			panic("failed to cast tier to uint64")
@@ -172,13 +165,13 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
-func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath string, nextTier uint64) {
+func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath string, nextTier uint64) map[uint64]int64 {
 	self.cacheReward(currentTime, pools)
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
 		// no change, return
-		return
+		return make(map[uint64]int64)
 	}
 
 	// decrement count from current tier if it exists
@@ -231,6 +224,8 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 	})
 
 	self.currentEmission = currentEmission
+
+	return tierRewards
 }
 
 // cacheReward MUST be called before calculating any position reward.
@@ -408,14 +403,14 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 // - int64: The reward for the pool.
 func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
 	if emission < 0 || tierRatio < 0 || tierCount < 0 {
-		panic(errCalculationError)
+		panic(errors.New(errCalculationError))
 	}
 
 	if emission == 0 || tierRatio == 0 || tierCount == 0 {
 		return 0
 	}
 
-	tierReward := safeMulDivInt64(emission, tierRatio, 100)
+	tierReward := gnsmath.SafeMulDivInt64(emission, tierRatio, 100)
 
 	return tierReward / tierCount
 }

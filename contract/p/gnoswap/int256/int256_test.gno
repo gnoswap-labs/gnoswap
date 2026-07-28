@@ -28,7 +28,7 @@ func TestSign(t *testing.T) {
 	}
 }
 
-func TestAbs(t *testing.T) {
+func TestAbs(cur realm, t *testing.T) {
 	tests := []struct {
 		x, want             string
 		expectedHasOverflow bool
@@ -51,7 +51,7 @@ func TestAbs(t *testing.T) {
 		}
 
 		if tc.expectedHasOverflow {
-			uassert.PanicsContains(t, "int256: overflow", func() {
+			uassert.PanicsContains(t, cur, "int256: overflow", func() {
 				x.Abs()
 			})
 			continue
@@ -65,7 +65,7 @@ func TestAbs(t *testing.T) {
 	}
 }
 
-func TestAbsWithPanicCases(t *testing.T) {
+func TestAbsWithPanicCases(cur realm, t *testing.T) {
 	tests := []struct {
 		x, want   string
 		wantErr   bool
@@ -106,7 +106,7 @@ func TestAbsWithPanicCases(t *testing.T) {
 		}
 
 		if tc.wantPanic {
-			uassert.PanicsContains(t, "int256: overflow", func() {
+			uassert.PanicsContains(t, cur, "int256: overflow", func() {
 				x.Abs()
 			})
 			ufmt.Printf("Abs(%s) correctly panicked with overflow\n", tc.x)
@@ -1125,21 +1125,21 @@ func TestRsh(t *testing.T) {
 	}
 }
 
-func TestLsh_NoPanic(t *testing.T) {
+func TestLsh_NoPanic(cur realm, t *testing.T) {
 	x := MustFromDecimal("-12345678901234567890")
 
 	for n := uint(0); n < 300; n++ {
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			_ = new(Int).Lsh(x, n)
 		})
 	}
 }
 
-func TestRsh_NoPanic(t *testing.T) {
+func TestRsh_NoPanic(cur realm, t *testing.T) {
 	x := MustFromDecimal("-12345678901234567890")
 
 	for n := uint(0); n < 300; n++ {
-		uassert.NotPanics(t, func() {
+		uassert.NotPanics(t, cur, func() {
 			_ = new(Int).Rsh(x, n)
 		})
 	}
@@ -1814,7 +1814,7 @@ func TestSetUint64(t *testing.T) {
 	}
 }
 
-func TestUint64(t *testing.T) {
+func TestUint64(cur realm, t *testing.T) {
 	tests := []struct {
 		x      string
 		want   uint64
@@ -1842,7 +1842,7 @@ func TestUint64(t *testing.T) {
 		z := MustFromDecimal(tc.x)
 
 		if tc.panics {
-			uassert.PanicsContains(t, "uint64 overflow", func() {
+			uassert.PanicsContains(t, cur, "uint64 overflow", func() {
 				z.Uint64()
 			})
 			continue
@@ -1855,7 +1855,7 @@ func TestUint64(t *testing.T) {
 	}
 }
 
-func TestInt64(t *testing.T) {
+func TestInt64(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		x             string
@@ -1910,7 +1910,7 @@ func TestInt64(t *testing.T) {
 			z := MustFromDecimal(tc.x)
 
 			if tc.panics {
-				uassert.PanicsContains(t, "int64 overflow", func() {
+				uassert.PanicsContains(t, cur, "int64 overflow", func() {
 					z.Int64()
 				})
 				return
@@ -1961,7 +1961,7 @@ func TestNeg(t *testing.T) {
 	}
 }
 
-func TestNegOverflow(t *testing.T) {
+func TestNegOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		x           string
 		want        string
@@ -1982,7 +1982,7 @@ func TestNegOverflow(t *testing.T) {
 		z := MustFromDecimal(tc.x)
 
 		if tc.shouldPanic {
-			uassert.PanicsContains(t, "int256: overflow", func() {
+			uassert.PanicsContains(t, cur, "int256: overflow", func() {
 				z.NegOverflow(z)
 			})
 			continue

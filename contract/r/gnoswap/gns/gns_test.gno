@@ -28,7 +28,7 @@ var (
 	userRealm = testing.NewUserRealm(testutils.TestAddress("user"))
 )
 
-func TestKnownAccounts(t *testing.T) {
+func TestKnownAccounts(cur realm, t *testing.T) {
 	testing.SetOriginCaller(alice)
 	testing.SetRealm(testing.NewUserRealm(alice))
 	func() {
@@ -37,15 +37,15 @@ func TestKnownAccounts(t *testing.T) {
 	}()
 }
 
-func TestTotalSupply(t *testing.T) {
+func TestTotalSupply(cur realm, t *testing.T) {
 	uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 }
 
-func TestBalanceOf(t *testing.T) {
+func TestBalanceOf(cur realm, t *testing.T) {
 	uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 }
 
-func TestValidEmissionAmount(t *testing.T) {
+func TestValidEmissionAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		amount       int64
@@ -65,7 +65,7 @@ func TestValidEmissionAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validEmissionAmount(tt.amount)
 
 			if tt.shouldError {
@@ -77,7 +77,7 @@ func TestValidEmissionAmount(t *testing.T) {
 	}
 }
 
-func TestHandleLeftEmissionAmount(t *testing.T) {
+func TestHandleLeftEmissionAmount(cur realm, t *testing.T) {
 	type testdata struct {
 		name      string
 		year      int64
@@ -104,7 +104,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			resetEmissionState(t)
 
 			if tt.subAmount > 0 {
@@ -119,64 +119,64 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 	}
 }
 
-func TestGetterSetter(t *testing.T) {
-	t.Run("last minted timestamp", func(t *testing.T) {
+func TestGetterSetter(cur realm, t *testing.T) {
+	t.Run("last minted timestamp", func(cur realm, t *testing.T) {
 		value := int64(1234567890)
 		setLastMintedTimestamp(value)
 		uassert.Equal(t, value, LastMintedTimestamp())
 	})
 
-	t.Run("left emission amount", func(t *testing.T) {
+	t.Run("left emission amount", func(cur realm, t *testing.T) {
 		value := int64(0)
 		setLeftEmissionAmount(value)
 		uassert.Equal(t, value, LeftEmissionAmount())
 	})
 }
 
-func TestGrc20Methods(t *testing.T) {
+func TestGrc20Methods(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		fn            func()
+		fn            func(cur realm)
 		shouldPanic   bool
 		exceptionKind string // abort / panic
 		panicMsg      string
 	}{
 		{
 			name: "TotalSupply",
-			fn: func() {
+			fn: func(cur realm) {
 				uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
 			},
 		},
 		{
 			name: "BalanceOf(admin)",
-			fn: func() {
+			fn: func(cur realm) {
 				uassert.Equal(t, INITIAL_MINT_AMOUNT, BalanceOf(adminAddr))
 			},
 		},
 		{
 			name: "BalanceOf(alice)",
-			fn: func() {
+			fn: func(cur realm) {
 				uassert.Equal(t, int64(0), BalanceOf(alice))
 			},
 		},
 		{
 			name: "Allowance(admin, alice)",
-			fn: func() {
+			fn: func(cur realm) {
 				uassert.Equal(t, int64(0), Allowance(adminAddr, alice))
 			},
 		},
 		{
 			name: "MintGns success",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SetRealm(emissionRealm)
-				MintGns(cross, adminAddr)
+				MintGns(cross(cur), adminAddr)
 			},
 		},
 		{
 			name: "MintGns without permission should panic",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SkipHeights(1) // Skip 1 block = 5 seconds pass
-				MintGns(cross, adminAddr)
+				MintGns(cross(cur), adminAddr)
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
@@ -184,18 +184,18 @@ func TestGrc20Methods(t *testing.T) {
 		},
 		{
 			name: "Transfer success",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				Transfer(cross, alice, int64(1))
+				Transfer(cross(cur), alice, int64(1))
 			},
 		},
 		{
 			name: "Transfer without enough balance should panic",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(testing.NewUserRealm(alice))
-				Transfer(cross, bob, int64(1))
+				Transfer(cross(cur), bob, int64(1))
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
@@ -203,10 +203,10 @@ func TestGrc20Methods(t *testing.T) {
 		},
 		{
 			name: "Transfer to self should panic",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SetOriginCaller(adminAddr)
 				testing.SetRealm(adminRealm)
-				Transfer(cross, adminAddr, int64(1))
+				Transfer(cross(cur), adminAddr, int64(1))
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
@@ -214,26 +214,26 @@ func TestGrc20Methods(t *testing.T) {
 		},
 		{
 			name: "TransferFrom success",
-			fn: func() {
+			fn: func(cur realm) {
 				// approve first
 				testing.SetRealm(adminRealm)
-				Approve(cross, alice, int64(1))
+				Approve(cross(cur), alice, int64(1))
 
 				// alice transfer admin's balance to bob
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(testing.NewUserRealm(alice))
-				TransferFrom(cross, adminAddr, bob, int64(1))
+				TransferFrom(cross(cur), adminAddr, bob, int64(1))
 			},
 		},
 		{
 			name: "TransferFrom without enough allowance should panic",
-			fn: func() {
+			fn: func(cur realm) {
 				testing.SetRealm(adminRealm)
-				Approve(cross, alice, int64(1))
+				Approve(cross(cur), alice, int64(1))
 
 				testing.SetOriginCaller(alice)
 				testing.SetRealm(testing.NewUserRealm(alice))
-				TransferFrom(cross, adminAddr, bob, int64(2))
+				TransferFrom(cross(cur), adminAddr, bob, int64(2))
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
@@ -242,28 +242,28 @@ func TestGrc20Methods(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetGnsTokenObject(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetGnsTokenObject(cur, t)
 
 			if tt.shouldPanic {
 				switch tt.exceptionKind {
 				case "abort":
-					uassert.AbortsContains(t, tt.panicMsg, tt.fn)
+					uassert.AbortsContains(t, cur, tt.panicMsg, func() { tt.fn(cur) })
 				case "panic":
-					uassert.PanicsContains(t, tt.panicMsg, tt.fn)
+					uassert.PanicsContains(t, cur, tt.panicMsg, func() { tt.fn(cur) })
 				default:
 					t.Fatalf("unknown exception kind: %s", tt.exceptionKind)
 				}
 			} else {
-				uassert.NotPanics(t, func() { tt.fn() })
+				uassert.NotPanics(t, cur, func() { tt.fn(cur) })
 			}
 		})
 	}
 }
 
-func TestCalculateAmountToMint(t *testing.T) {
+func TestCalculateAmountToMint(cur realm, t *testing.T) {
 	resetEmissionState(t)
-	InitGnsTest(t)
+	InitGnsTest(cur, t)
 	startTimestamp := GetHalvingYearStartTimestamp(1)
 	endTimestamp := GetHalvingYearEndTimestamp(12)
 
@@ -373,8 +373,8 @@ func TestCalculateAmountToMint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			InitGnsTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			InitGnsTest(cur, t)
 
 			amount, err := calculateAmountToMint(getEmissionState(), tt.inputFromTimestamp, tt.inputToTimestamp)
 			uassert.NoError(t, err)
@@ -384,9 +384,9 @@ func TestCalculateAmountToMint(t *testing.T) {
 	}
 }
 
-func TestCalculateAmountToMintBoundary(t *testing.T) {
-	t.Run("toTimestamp clamp to emission end", func(t *testing.T) {
-		InitGnsTest(t)
+func TestCalculateAmountToMintBoundary(cur realm, t *testing.T) {
+	t.Run("toTimestamp clamp to emission end", func(cur realm, t *testing.T) {
+		InitGnsTest(cur, t)
 
 		emissionEnd := GetHalvingYearEndTimestamp(12)
 		year12Start := GetHalvingYearStartTimestamp(12)
@@ -395,7 +395,7 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		amountAtEnd, err := calculateAmountToMint(getEmissionState(), year12Start, emissionEnd)
 		uassert.NoError(t, err)
 
-		InitGnsTest(t)
+		InitGnsTest(cur, t)
 
 		// Calculate amount for year 12 with toTimestamp after emission end (should be clamped)
 		amountAfterEnd, err := calculateAmountToMint(getEmissionState(), year12Start, emissionEnd+1000)
@@ -406,8 +406,8 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		uassert.Equal(t, GetHalvingAmountsPerYear(12), amountAtEnd)
 	})
 
-	t.Run("year end last second vs second-to-last", func(t *testing.T) {
-		InitGnsTest(t)
+	t.Run("year end last second vs second-to-last", func(cur realm, t *testing.T) {
+		InitGnsTest(cur, t)
 
 		year1Start := GetHalvingYearStartTimestamp(1)
 		year1End := GetHalvingYearEndTimestamp(1)
@@ -417,7 +417,7 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		amountSecondToLast, err := calculateAmountToMint(getEmissionState(), year1Start, year1End-1)
 		uassert.NoError(t, err)
 
-		InitGnsTest(t)
+		InitGnsTest(cur, t)
 
 		// Amount up to last second of year 1 (includes leftover)
 		amountLastSecond, err := calculateAmountToMint(getEmissionState(), year1Start, year1End)
@@ -432,8 +432,8 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 			"last second should include leftover, not just 1 second of emission")
 	})
 
-	t.Run("fromTimestamp at emission start boundary", func(t *testing.T) {
-		InitGnsTest(t)
+	t.Run("fromTimestamp at emission start boundary", func(cur realm, t *testing.T) {
+		InitGnsTest(cur, t)
 
 		emissionStart := GetHalvingYearStartTimestamp(1)
 		amountPerSecond := GetAmountPerSecondPerHalvingYear(1)
@@ -443,7 +443,7 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		uassert.NoError(t, err)
 		uassert.Equal(t, amountPerSecond, amountAtStart)
 
-		InitGnsTest(t)
+		InitGnsTest(cur, t)
 
 		// fromTimestamp before emission start (should be clamped to start)
 		amountBeforeStart, err := calculateAmountToMint(getEmissionState(), emissionStart-100, emissionStart)
@@ -451,8 +451,8 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		uassert.Equal(t, amountPerSecond, amountBeforeStart)
 	})
 
-	t.Run("year transition boundary", func(t *testing.T) {
-		InitGnsTest(t)
+	t.Run("year transition boundary", func(cur realm, t *testing.T) {
+		InitGnsTest(cur, t)
 
 		year1End := GetHalvingYearEndTimestamp(1)
 		year2Start := GetHalvingYearStartTimestamp(2)
@@ -476,8 +476,8 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 	})
 }
 
-func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
-	InitGnsTest(t)
+func TestMintGns_WithZeroLastMintedTimestamp(cur realm, t *testing.T) {
+	InitGnsTest(cur, t)
 	resetEmissionState(t)
 
 	// Verify lastMintedTimestamp is initialized to 0
@@ -489,7 +489,7 @@ func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
 	// Result: 1 second worth of emission (due to +1 in seconds calculation)
 	testing.SetRealm(emissionRealm)
 	currentTime := time.Now().Unix()
-	firstMintAmount := MintGns(cross, adminAddr)
+	firstMintAmount := MintGns(cross(cur), adminAddr)
 
 	uassert.Equal(t, int64(7134703), firstMintAmount)
 
@@ -497,7 +497,7 @@ func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
 	uassert.Equal(t, currentTime, LastMintedTimestamp())
 }
 
-func TestMintGns(t *testing.T) {
+func TestMintGns(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
 		inputRealm            runtime.Realm
@@ -537,25 +537,25 @@ func TestMintGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			InitGnsTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			InitGnsTest(cur, t)
 			resetEmissionState(t)
 
 			var firstMintedAmount int64
 			var secondMintedAmount int64
 
-			mintGnsFn := func() {
-				testing.SetRealm(tt.inputRealm)
-
-				firstMintedAmount = MintGns(cross, adminAddr)
-				testing.SkipHeights(tt.inputSkipHeight)
-				secondMintedAmount = MintGns(cross, adminAddr)
-			}
+			testing.SetRealm(tt.inputRealm)
 
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, mintGnsFn)
+				uassert.AbortsWithMessage(t, cur, tt.expectedAbortMessage, func() {
+					firstMintedAmount = MintGns(cross(cur), adminAddr)
+					testing.SkipHeights(tt.inputSkipHeight)
+					secondMintedAmount = MintGns(cross(cur), adminAddr)
+				})
 			} else {
-				uassert.NotPanics(t, mintGnsFn)
+				firstMintedAmount = MintGns(cross(cur), adminAddr)
+				testing.SkipHeights(tt.inputSkipHeight)
+				secondMintedAmount = MintGns(cross(cur), adminAddr)
 			}
 
 			// Validate individual minted amounts
@@ -567,16 +567,16 @@ func TestMintGns(t *testing.T) {
 	}
 }
 
-func TestMintGns_EdgeCases(t *testing.T) {
+func TestMintGns_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func()
+		setup                func(cur realm)
 		expectedMintedAmount int64
 	}{
 		{
 			name: "returns zero when lastMintedTimestamp equals currentTime",
-			setup: func() {
-				InitGnsTest(t)
+			setup: func(cur realm) {
+				InitGnsTest(cur, t)
 				resetEmissionState(t)
 				// Set lastMintedTimestamp to current time
 				setLastMintedTimestamp(time.Now().Unix())
@@ -585,8 +585,8 @@ func TestMintGns_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "returns zero when lastMintedTimestamp >= emissionEndTimestamp",
-			setup: func() {
-				InitGnsTest(t)
+			setup: func(cur realm) {
+				InitGnsTest(cur, t)
 				resetEmissionState(t)
 				// Set lastMintedTimestamp past emission end
 				setLastMintedTimestamp(GetEmissionEndTimestamp() + 1)
@@ -595,16 +595,16 @@ func TestMintGns_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "mints correctly after skipping multiple blocks",
-			setup: func() {
-				InitGnsTest(t)
+			setup: func(cur realm) {
+				InitGnsTest(cur, t)
 				resetEmissionState(t)
 			},
 			expectedMintedAmount: 7134703, // 1 second worth
 		},
 		{
 			name: "updates MintedEmissionAmount correctly",
-			setup: func() {
-				InitGnsTest(t)
+			setup: func(cur realm) {
+				InitGnsTest(cur, t)
 				resetEmissionState(t)
 				uassert.Equal(t, int64(0), MintedEmissionAmount())
 			},
@@ -612,8 +612,8 @@ func TestMintGns_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "updates LeftEmissionAmount correctly",
-			setup: func() {
-				InitGnsTest(t)
+			setup: func(cur realm) {
+				InitGnsTest(cur, t)
 				resetEmissionState(t)
 				uassert.Equal(t, MAX_EMISSION_AMOUNT, LeftEmissionAmount())
 			},
@@ -622,15 +622,13 @@ func TestMintGns_EdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			tt.setup(cur)
 
 			balanceBefore := BalanceOf(adminAddr)
 			var mintedAmount int64
-			uassert.NotPanics(t, func() {
-				testing.SetRealm(emissionRealm)
-				mintedAmount = MintGns(cross, adminAddr)
-			})
+			testing.SetRealm(emissionRealm)
+			mintedAmount = MintGns(cross(cur), adminAddr)
 			balanceAfter := BalanceOf(adminAddr)
 			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
 			uassert.Equal(t, mintedAmount, balanceAfter-balanceBefore)
@@ -638,7 +636,7 @@ func TestMintGns_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestMintGns_StateUpdates(t *testing.T) {
+func TestMintGns_StateUpdates(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		validateState func(t *testing.T, mintedAmount int64)
@@ -676,17 +674,15 @@ func TestMintGns_StateUpdates(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-			InitGnsTest(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetObject(cur, t)
+			InitGnsTest(cur, t)
 
 			balanceBefore := BalanceOf(adminAddr)
 
 			var mintedAmount int64
-			uassert.NotPanics(t, func() {
-				testing.SetRealm(emissionRealm)
-				mintedAmount = MintGns(cross, adminAddr)
-			})
+			testing.SetRealm(emissionRealm)
+			mintedAmount = MintGns(cross(cur), adminAddr)
 
 			balanceAfter := BalanceOf(adminAddr)
 
@@ -696,7 +692,7 @@ func TestMintGns_StateUpdates(t *testing.T) {
 	}
 }
 
-func TestInitEmissionState(t *testing.T) {
+func TestInitEmissionState(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		realm         runtime.Realm
@@ -765,19 +761,17 @@ func TestInitEmissionState(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetObject(cur, t)
+
+			testing.SetRealm(tt.realm)
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, tt.abortContains, func() {
-					testing.SetRealm(tt.realm)
-					InitEmissionState(cross, tt.height, tt.timestamp)
+				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+					InitEmissionState(cross(cur), tt.height, tt.timestamp)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
-					testing.SetRealm(tt.realm)
-					InitEmissionState(cross, tt.height, tt.timestamp)
-				})
+				InitEmissionState(cross(cur), tt.height, tt.timestamp)
 
 				if tt.validateState != nil {
 					tt.validateState(t)
@@ -787,28 +781,24 @@ func TestInitEmissionState(t *testing.T) {
 	}
 }
 
-func TestInitEmissionState_Reinitialize(t *testing.T) {
-	resetObject(t)
+func TestInitEmissionState_Reinitialize(cur realm, t *testing.T) {
+	resetObject(cur, t)
 
 	// First initialization
-	uassert.NotPanics(t, func() {
-		testing.SetRealm(emissionRealm)
-		InitEmissionState(cross, 50, 500)
-	})
+	testing.SetRealm(emissionRealm)
+	InitEmissionState(cross(cur), 50, 500)
 	uassert.Equal(t, int64(50), GetEmissionCreatedHeight())
 	uassert.Equal(t, int64(500), GetEmissionStartTimestamp())
 
 	// Reinitialize with new values
-	uassert.NotPanics(t, func() {
-		testing.SetRealm(emissionRealm)
-		InitEmissionState(cross, 200, 2000)
-	})
+	testing.SetRealm(emissionRealm)
+	InitEmissionState(cross(cur), 200, 2000)
 	// Should be overwritten with new values
 	uassert.Equal(t, int64(200), GetEmissionCreatedHeight())
 	uassert.Equal(t, int64(2000), GetEmissionStartTimestamp())
 }
 
-func TestInitEmissionState_HalvingDataInitialization(t *testing.T) {
+func TestInitEmissionState_HalvingDataInitialization(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		timestamp     int64
@@ -840,13 +830,11 @@ func TestInitEmissionState_HalvingDataInitialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetObject(cur, t)
 
-			uassert.NotPanics(t, func() {
-				testing.SetRealm(emissionRealm)
-				InitEmissionState(cross, 100, tt.timestamp)
-			})
+			testing.SetRealm(emissionRealm)
+			InitEmissionState(cross(cur), 100, tt.timestamp)
 
 			actualStart := GetHalvingYearStartTimestamp(tt.validateYear)
 			actualEnd := GetHalvingYearEndTimestamp(tt.validateYear)

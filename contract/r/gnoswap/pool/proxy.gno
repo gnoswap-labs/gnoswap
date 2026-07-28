@@ -15,6 +15,8 @@ func CreatePool(
 	sqrtPriceX96 string,
 ) {
 	getImplementation().CreatePool(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -24,7 +26,7 @@ func CreatePool(
 
 // SetPoolCreationFee sets the pool creation fee.
 func SetPoolCreationFee(cur realm, fee int64) {
-	getImplementation().SetPoolCreationFee(fee)
+	getImplementation().SetPoolCreationFee(0, cur, fee)
 }
 
 // IncreaseObservationCardinalityNext increases the observation cardinality for a pool.
@@ -42,6 +44,8 @@ func IncreaseObservationCardinalityNext(
 	cardinalityNext uint16,
 ) {
 	getImplementation().IncreaseObservationCardinalityNext(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -74,6 +78,8 @@ func Mint(
 	positionCaller address,
 ) (string, string) {
 	return getImplementation().Mint(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -96,6 +102,8 @@ func Burn(
 	positionCaller address,
 ) (string, string) {
 	return getImplementation().Burn(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -119,6 +127,8 @@ func Collect(
 	amount1Requested string,
 ) (string, string) {
 	return getImplementation().Collect(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -135,7 +145,7 @@ func Collect(
 // Parameters:
 //   - fee: withdrawal fee in basis points
 func SetWithdrawalFee(cur realm, fee uint64) {
-	getImplementation().SetWithdrawalFee(fee)
+	getImplementation().SetWithdrawalFee(0, cur, fee)
 }
 
 // HandleWithdrawalFee processes withdrawal fees for a position.
@@ -161,6 +171,8 @@ func HandleWithdrawalFee(
 	positionCaller address,
 ) (string, string, string, string) {
 	return getImplementation().HandleWithdrawalFee(
+		0,
+		cur,
 		token0Path,
 		amount0,
 		token1Path,
@@ -198,6 +210,8 @@ func Swap(
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 ) (string, string) {
 	return getImplementation().Swap(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -240,17 +254,17 @@ func DrySwap(
 
 // SetSwapEndHook sets the hook to be called at the end of a swap.
 func SetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
-	getImplementation().SetSwapEndHook(hook)
+	getImplementation().SetSwapEndHook(0, cur, hook)
 }
 
 // SetSwapStartHook sets the hook to be called at the start of a swap.
 func SetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
-	getImplementation().SetSwapStartHook(hook)
+	getImplementation().SetSwapStartHook(0, cur, hook)
 }
 
 // SetTickCrossHook sets the hook to be called when a tick is crossed during a swap.
 func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	getImplementation().SetTickCrossHook(hook)
+	getImplementation().SetTickCrossHook(0, cur, hook)
 }
 
 // CollectProtocol collects protocol fees from a pool.
@@ -276,6 +290,8 @@ func CollectProtocol(
 	amount1Requested string,
 ) (string, string) {
 	return getImplementation().CollectProtocol(
+		0,
+		cur,
 		token0Path,
 		token1Path,
 		fee,
@@ -291,5 +307,5 @@ func CollectProtocol(
 //   - feeProtocol0: protocol fee rate for token0
 //   - feeProtocol1: protocol fee rate for token1
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
-	getImplementation().SetFeeProtocol(feeProtocol0, feeProtocol1)
+	getImplementation().SetFeeProtocol(0, cur, feeProtocol0, feeProtocol1)
 }

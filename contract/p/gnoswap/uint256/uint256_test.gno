@@ -1,12 +1,13 @@
 package uint256
 
 import (
+	"errors"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestFromDecimal(t *testing.T) {
+func TestFromDecimal(cur realm, t *testing.T) {
 	t.Run("valid_inputs", func(t *testing.T) {
 		tests := []struct {
 			name     string
@@ -43,7 +44,7 @@ func TestFromDecimal(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
 					MustFromDecimal(tt.input)
 				})
 			})
@@ -81,7 +82,7 @@ func TestFromDecimal(t *testing.T) {
 			input   string
 			wantErr error
 		}{
-			{"overflow", "115792089237316195423570985008687907853269984665640564039457584007913129639936", ErrBig256Range},
+			{"overflow", "115792089237316195423570985008687907853269984665640564039457584007913129639936", errors.New(ErrBig256Range)},
 			{"invalid_characters", "123abc456", nil}, // expects any error
 			{"empty_string", "", nil},                // expects any error
 		}
@@ -90,7 +91,7 @@ func TestFromDecimal(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				_, err := FromDecimal(tt.input)
 				if tt.wantErr != nil {
-					if err != tt.wantErr {
+					if err.Error() != tt.wantErr.Error() {
 						t.Errorf("FromDecimal(%q) error = %v, want %v", tt.input, err, tt.wantErr)
 					}
 					return
@@ -310,7 +311,7 @@ func TestOperationConsistency(t *testing.T) {
 	})
 }
 
-func TestInt64Conversion(t *testing.T) {
+func TestInt64Conversion(cur realm, t *testing.T) {
 	t.Run("Int64", func(t *testing.T) {
 		tests := []struct {
 			name string
@@ -345,7 +346,7 @@ func TestInt64Conversion(t *testing.T) {
 		})
 
 		t.Run("negative panics", func(t *testing.T) {
-			uassert.PanicsContains(t, "val is negative", func() {
+			uassert.PanicsContains(t, cur, "val is negative", func() {
 				NewUintFromInt64(-1)
 			})
 		})

@@ -1,8 +1,4 @@
-package v1
-
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
+package launchpad
 
 const (
 	projectTier30  = int64(30)
@@ -17,31 +13,32 @@ const (
 
 	maxProjectConditionCount = 5
 
-	projectMinimumStartDelayTime = int64(dayTime * 3) // 3 days
+	projectMinimumStartDelayTime = dayTime * 3 // 3 days
 )
 
 // contract paths
 const (
 	GOV_XGNS_PATH string = "gno.land/r/gnoswap/gov/xgns"
-	GNS_PATH      string = "gno.land/r/gnoswap/gns"
+	GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 )
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurations = []int64{
 	projectTier30,
 	projectTier90,
 	projectTier180,
 }
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurationTimes = map[int64]int64{
 	projectTier30:  dayTime * projectTier30,  // 30 days
 	projectTier90:  dayTime * projectTier90,  // 90 days
 	projectTier180: dayTime * projectTier180, // 180 days
 }
 
+// MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierRewardCollectableDuration = map[int64]int64{
 	projectTier30:  dayTime * 1, // 1 days
 	projectTier90:  dayTime * 1, // 1 days
 	projectTier180: dayTime * 1, // 1 days
 }
-
-var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")

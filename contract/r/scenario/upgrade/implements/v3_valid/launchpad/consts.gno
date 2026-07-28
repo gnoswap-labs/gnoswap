@@ -1,4 +1,4 @@
-package v3
+package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
@@ -23,7 +23,7 @@ const (
 // contract paths
 const (
 	GOV_XGNS_PATH string = "gno.land/r/gnoswap/gov/xgns"
-	GNS_PATH      string = "gno.land/r/gnoswap/gns"
+	GNS_PATH      string = "gno.land/r/gnoswap/gns.GNS"
 )
 
 var projectTierDurations = []int64{

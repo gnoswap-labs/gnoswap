@@ -1,6 +1,10 @@
 package governance
 
-import "errors"
+import (
+	"errors"
+
+	bptree "gno.land/p/nt/bptree/v0"
+)
 
 // Config represents the configuration of the governor contract
 // All parameters in this struct can be modified through governance.
@@ -12,9 +16,9 @@ type Config struct {
 	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
 	// for proposal creation and cancellation threshold calculations (in seconds)
 	VotingWeightSmoothingDuration int64
-	// Quorum is the percentage of the proposal's snapshotted maximum voting weight required for approval.
+	// Quorum is the percentage of active xGNS supply required for proposal approval
 	Quorum int64
-	// ProposalCreationThreshold is the minimum GNS balance required for a proposer to create a proposal.
+	// ProposalCreationThreshold is the minimum xGNS amount required to create a proposal
 	ProposalCreationThreshold int64
 	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
 	ExecutionDelay int64
@@ -79,4 +83,64 @@ func (c Config) IsValid(currentTime int64) error {
 	}
 
 	return nil
+}
+
+func NewConfig(
+	votingStartDelay,
+	votingPeriod,
+	votingWeightSmoothingDuration,
+	quorum,
+	proposalCreationThreshold,
+	executionDelay,
+	executionWindow int64,
+) Config {
+	return Config{
+		VotingStartDelay:              votingStartDelay,
+		VotingPeriod:                  votingPeriod,
+		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
+		Quorum:                        quorum,
+		ProposalCreationThreshold:     proposalCreationThreshold,
+		ExecutionDelay:                executionDelay,
+		ExecutionWindow:               executionWindow,
+	}
+}
+
+// NewConfigPtr constructs a Config and returns a pointer to it. The Config is
+// allocated within the governance domain realm, satisfying realm allocation
+// checks for callers (such as tests) that require a *Config value.
+func NewConfigPtr(
+	votingStartDelay,
+	votingPeriod,
+	votingWeightSmoothingDuration,
+	quorum,
+	proposalCreationThreshold,
+	executionDelay,
+	executionWindow int64,
+) *Config {
+	c := NewConfig(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
+	return &c
+}
+
+func NewDefaultConfig() Config {
+	return Config{
+		VotingStartDelay:              86400,         // 1 day - delay before voting starts
+		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
+		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
+		Quorum:                        50,            // 50% of total xGNS supply required
+		ProposalCreationThreshold:     1_000_000_000, // 1 billion xGNS - minimum amount to create proposals
+		ExecutionDelay:                86400,         // 1 day - waiting period before execution
+		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
+	}
+}
+
+func NewConfigTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
 }

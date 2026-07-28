@@ -1,4 +1,4 @@
-package v1
+package router
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"

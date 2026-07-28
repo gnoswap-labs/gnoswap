@@ -222,6 +222,11 @@ func GetDepositEndTime(depositId string) (int64, error) {
 	return getImplementation().GetDepositEndTime(depositId)
 }
 
+// GetTotalGNSStakedAmount returns the total amount of GNS currently staked across all launchpad deposits.
+func GetTotalGNSStakedAmount() int64 {
+	return getImplementation().GetTotalGNSStakedAmount()
+}
+
 // GetProjectTierRewardManagerCount returns the total number of reward managers.
 func GetProjectTierRewardManagerCount() int {
 	return getImplementation().GetProjectTierRewardManagerCount()

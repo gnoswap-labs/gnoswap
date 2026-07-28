@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad contract upgrade scenario test
 package main
 
@@ -28,44 +30,44 @@ const (
 	launchpadTestPath = "gno.land/r/gnoswap/launchpad/v3_valid"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize launchpad contract with v1")
-	initializeV1()
+	initializeV1(cur)
 	println()
 
 	println("[SCENARIO] 2. Create project with v1")
-	projectId := createProject()
+	projectId := createProject(cur)
 	println()
 
 	println("[SCENARIO] 3. Verify project info with v1")
-	verifyProjectInfo(projectId)
+	verifyProjectInfo(cur, projectId)
 	println()
 
 	println("[SCENARIO] 4. Upgrade launchpad contract to test version")
-	testLaunchpadUpgrade()
+	testLaunchpadUpgrade(cur)
 	println()
 
 	println("[SCENARIO] 5. Verify project info with v3 valid")
-	verifyProjectInfo(projectId)
+	verifyProjectInfo(cur, projectId)
 	println()
 }
 
-func initializeV1() {
+func initializeV1(cur realm) {
 	ufmt.Println("[INFO] Setting implementation to v1")
 	testing.SetRealm(adminRealm)
-	launchpad.UpgradeImpl(cross, launchpadV1Path)
+	launchpad.UpgradeImpl(cross(cur), launchpadV1Path)
 
 	ufmt.Printf("[EXPECTED] launchpad upgraded to: %s\n", launchpadV1Path)
 }
 
-func createProject() string {
+func createProject(cur realm) string {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := adminAddr
 	projectName := "Test OBL Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(10_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
@@ -77,9 +79,9 @@ func createProject() string {
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -97,15 +99,15 @@ func createProject() string {
 	return projectId
 }
 
-func testLaunchpadUpgrade() {
+func testLaunchpadUpgrade(cur realm) {
 	// Upgrade to test version
 	ufmt.Println("[INFO] Upgrading launchpad contract to test version")
 	testing.SetRealm(adminRealm)
-	launchpad.UpgradeImpl(cross, launchpadTestPath)
+	launchpad.UpgradeImpl(cross(cur), launchpadTestPath)
 	ufmt.Printf("[EXPECTED] launchpad upgraded to: %s\n", launchpadTestPath)
 }
 
-func verifyProjectInfo(projectId string) {
+func verifyProjectInfo(cur realm, projectId string) {
 	testing.SetRealm(adminRealm)
 	projectInfo, _ := launchpad.GetProject(projectId)
 	ufmt.Printf("[EXPECTED] Project ID: %s\n", projectInfo.ID())
@@ -125,12 +127,12 @@ func verifyProjectInfo(projectId string) {
 // [SCENARIO] 2. Create project with v1
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 //
 // [SCENARIO] 3. Verify project info with v1
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123
@@ -141,9 +143,9 @@ func verifyProjectInfo(projectId string) {
 // [EXPECTED] launchpad upgraded to: gno.land/r/gnoswap/launchpad/v3_valid
 //
 // [SCENARIO] 5. Verify project info with v3 valid
-// [EXPECTED] Project ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: Test OBL Project
-// [EXPECTED] Project info: gno.land/r/onbloc/obl
+// [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Project created height: 123

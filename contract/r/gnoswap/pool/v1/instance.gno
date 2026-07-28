@@ -1,4 +1,4 @@
-package v1
+package pool
 
 import (
 	"gno.land/r/gnoswap/pool"

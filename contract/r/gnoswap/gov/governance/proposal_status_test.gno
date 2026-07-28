@@ -7,7 +7,7 @@ import (
 )
 
 // TestProposalStatus_NewProposalStatusBy tests the creation of proposal status with components
-func TestProposalStatus_NewProposalStatusBy(t *testing.T) {
+func TestProposalStatus_NewProposalStatusBy(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		schedule         *ProposalScheduleStatus
@@ -65,7 +65,7 @@ func TestProposalStatus_NewProposalStatusBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
 			actionStatus := NewProposalActionStatus(tt.actionExecutable)
 			voteStatus := NewProposalVoteStatus(1000, tt.quorumPercent)

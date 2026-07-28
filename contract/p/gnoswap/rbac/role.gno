@@ -1,6 +1,6 @@
 package rbac
 
-var zeroAddress = address("")
+const zeroAddress = address("")
 
 // Role represents a role with a name and an assigned address.
 type Role struct {

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
@@ -16,11 +17,11 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
+	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -31,7 +32,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/onbloc/usdc"
 )
 
 var (
@@ -46,11 +46,11 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
-	usdcPath   = "gno.land/r/onbloc/usdc"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
+	usdcPath   = "gno.land/r/gnoswap/test_token/test_usdc.USDC"
 
-	gnotPath = "gno.land/r/gnoland/wugnot"
+	gnotPath = "gno.land/r/gnoland/wugnot.wugnot"
 
 	fee500 uint32 = 500
 
@@ -60,20 +60,20 @@ var (
 
 var t *testing.T
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] #3 Router Swap Native Token Integration")
 	println("[INFO] Purpose: Validate ExactIn/ExactOut swaps with GNOT")
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
-	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Deposit must be called from main(cur) due to AssertOriginCall frame limit
 	// Admin deposit for pool setup
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000}})
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	setupPoolsAndLiquidity()
+	setupPoolsAndLiquidity(cur)
 	println()
 
 	println("[SCENARIO] 2. ExactIn: GNOT → GNS")
@@ -81,63 +81,63 @@ func main() {
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 1000000}})
 	testing.SetRealm(userRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	testExactInGnotToGns()
+	testExactInGnotToGns(cur)
 	println()
 
 	println("[SCENARIO] 3. ExactOut: GNS → GNOT")
-	testExactOutGnsToGnot()
+	testExactOutGnsToGnot(cur)
 	println()
 
 	println("[SCENARIO] 4. Multi-hop: GNOT → GNS → USDC")
 	// User deposit for multi-hop swap
 	testing.SetRealm(userRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	testMultiHopGnotToUsdc()
+	testMultiHopGnotToUsdc(cur)
 	println()
 
 	println("[SCENARIO] 5. Multi-hop: USDC → GNS → GNOT")
-	testMultiHopUsdcToGnot()
+	testMultiHopUsdcToGnot(cur)
 }
 
-func setupPoolsAndLiquidity() {
+func setupPoolsAndLiquidity(cur realm) {
 	println("[INFO] Setting up pools and initial liquidity")
 	testing.SetRealm(adminRealm)
 
 	// Set pool creation fee to 0 for testing
-	pl.SetPoolCreationFee(cross, 0)
+	pl.SetPoolCreationFee(cross(cur), 0)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
 	// Create pools
 	println("[INFO] Creating WUGNOT/GNS pool (fee: 0.05%)")
-	pl.CreatePool(cross, wugnotPath, gnsPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	println("[INFO] Creating GNS/USDC pool (fee: 0.05%)")
-	pl.CreatePool(cross, gnsPath, usdcPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	pl.CreatePool(cross(cur), gnsPath, usdcPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 
 	// Mint positions with 100M each token
 	// WUGNOT/GNS pool
-	wugnot.Approve(cross, poolAddr, 100000000)
-	gns.Approve(cross, poolAddr, 100000000)
-	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	wugnot.Approve(cross(cur), poolAddr, 100000000)
+	gns.Approve(cross(cur), poolAddr, 100000000)
+	pn.Mint(cross(cur), gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	// GNS/USDC pool
-	gns.Approve(cross, poolAddr, 100000000)
-	usdc.Approve(cross, poolAddr, 100000000)
-	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
+	gns.Approve(cross(cur), poolAddr, 100000000)
+	usdc.Approve(cross(cur), poolAddr, 100000000)
+	pn.Mint(cross(cur), gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Transfer tokens to user
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 10000000}})
-	gns.Transfer(cross, userAddr, 10000000)
-	usdc.Transfer(cross, userAddr, 10000000)
+	gns.Transfer(cross(cur), userAddr, 10000000)
+	usdc.Transfer(cross(cur), userAddr, 10000000)
 
 	// Verify user balances
 	testing.SetRealm(userRealm)
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	banker_ := banker.NewReadonlyBanker()
 	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	userGnsBalance := gns.BalanceOf(userAddr)
 	userUsdcBalance := usdc.BalanceOf(userAddr)
@@ -148,26 +148,26 @@ func setupPoolsAndLiquidity() {
 	println("  USDC:", userUsdcBalance)
 }
 
-func testExactInGnotToGns() {
+func testExactInGnotToGns(cur realm) {
 	println("[INFO] Testing ExactIn swap: 1,000,000 GNOT → GNS")
 	testing.SetRealm(userRealm)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve router fee payment
-	gns.Approve(cross, routerAddr, max_approve)
-	wugnot.Approve(cross, routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
+	wugnot.Approve(cross(cur), routerAddr, max_approve)
 
 	// Execute ExactIn swap with GNOT
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		gnotPath,  // input token (GNOT)
 		gnsPath,   // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // route
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -202,7 +202,7 @@ func testExactInGnotToGns() {
 	println("[INFO] Router balances - WUGNOT:", routerWugnotBalance, "GNS:", routerGnsBalance)
 }
 
-func testExactOutGnsToGnot() {
+func testExactOutGnsToGnot(cur realm) {
 	println("[INFO] Testing ExactOut swap: GNS → 1,000,000 WUGNOT")
 	testing.SetRealm(userRealm)
 
@@ -210,16 +210,16 @@ func testExactOutGnsToGnot() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for swap
-	gns.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
 
 	// Execute ExactOut swap requesting GNOT
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		gnsPath,   // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
@@ -249,27 +249,27 @@ func testExactOutGnsToGnot() {
 	ufmt.Printf("[INFO] Router total fees accumulated: %d\n", wugnot.BalanceOf(protocolFeeAddr))
 }
 
-func testMultiHopGnotToUsdc() {
+func testMultiHopGnotToUsdc(cur realm) {
 	println("[INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC")
 	testing.SetRealm(userRealm)
 
-	// Deposit already done in main()
+	// Deposit already done in main(cur)
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevUsdcBalance := usdc.BalanceOf(userAddr)
 
 	// Approve for router fees
-	gns.Approve(cross, routerAddr, max_approve)
-	usdc.Approve(cross, routerAddr, max_approve)
-	wugnot.Approve(cross, routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
+	usdc.Approve(cross(cur), routerAddr, max_approve)
+	wugnot.Approve(cross(cur), routerAddr, max_approve)
 
 	// Execute multi-hop swap
 	amountIn, amountOut := router.ExactInSwapRoute(
-		cross,
+		cross(cur),
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
+		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoswap/test_token/test_usdc.USDC:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -289,7 +289,7 @@ func testMultiHopGnotToUsdc() {
 	println("[EXPECTED] Router fee applied on final output")
 }
 
-func testMultiHopUsdcToGnot() {
+func testMultiHopUsdcToGnot(cur realm) {
 	println("[INFO] Testing Multi-hop: USDC → GNS → 1,000,000 WUGNOT")
 	testing.SetRealm(userRealm)
 
@@ -297,16 +297,16 @@ func testMultiHopUsdcToGnot() {
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 
 	// Approve tokens
-	usdc.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, routerAddr, max_approve)
+	usdc.Approve(cross(cur), routerAddr, max_approve)
+	gns.Approve(cross(cur), routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap
 	amountIn, amountOut := router.ExactOutSwapRoute(
-		cross,
+		cross(cur),
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/test_token/test_usdc.USDC:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),

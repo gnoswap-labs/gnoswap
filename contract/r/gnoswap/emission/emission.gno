@@ -6,6 +6,9 @@ import (
 	"math"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
@@ -21,7 +24,7 @@ var (
 	lastExecutedTimestamp int64
 
 	// emissionAddr is the address of the emission realm
-	emissionAddr = runtime.CurrentRealm().Address()
+	emissionAddr address
 
 	// distributionStartTimestamp is the timestamp from which emission distribution starts
 	// Default is 0, meaning distribution is not started until explicitly set
@@ -29,8 +32,12 @@ var (
 
 	// onDistributionPctChangeCallback is called when distribution percentages change
 	// This allows external contracts (like staker) to update their caches
-	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
+	onDistributionPctChangeCallback func(cur realm, emissionAmountPerSecond int64)
 )
+
+func init(cur realm) {
+	emissionAddr = cur.Address()
+}
 
 // setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) {
@@ -93,7 +100,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 
 	// Mint new tokens and add any leftover amounts from previous distribution
-	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
+	mintedEmissionRewardAmount := gns.MintGns(cross(cur), emissionAddr)
 
 	// Validate minted amount
 	if mintedEmissionRewardAmount < 0 {
@@ -114,7 +121,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 
 	distributable, leftAmount := calculateDistributableAmounts(distributableAmount)
-	totalDistAmount := safeSubInt64(distributableAmount, leftAmount)
+	totalDistAmount := gnsmath.SafeSubInt64(distributableAmount, leftAmount)
 	if leftAmount > 0 {
 		setLeftGNSAmount(leftAmount)
 	}
@@ -125,23 +132,28 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		panic(err)
 	}
 
-	if err := transferToTarget(amountByAddress); err != nil {
+	if err := transferToTarget(0, cur, amountByAddress); err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	stakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
+	govStakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(GOV_STAKER))
+
+	previousRealm := cur.Previous()
 	chain.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"lastTimestamp", formatInt(lastExecutedTimestamp),
-		"currentTimestamp", formatInt(currentTimestamp),
-		"currentHeight", formatInt(currentHeight),
-		"mintedAmount", formatInt(mintedEmissionRewardAmount),
-		"prevLeftAmount", formatInt(prevLeftAmount),
-		"distributedAmount", formatInt(totalDistAmount),
-		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
-		"gnsTotalSupply", formatInt(gns.TotalSupply()),
+		"lastTimestamp", utils.FormatInt(lastExecutedTimestamp),
+		"currentTimestamp", utils.FormatInt(currentTimestamp),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"mintedAmount", utils.FormatInt(mintedEmissionRewardAmount),
+		"prevLeftAmount", utils.FormatInt(prevLeftAmount),
+		"distributedAmount", utils.FormatInt(totalDistAmount),
+		"currentLeftAmount", utils.FormatInt(GetLeftGNSAmount()),
+		"gnsTotalSupply", utils.FormatInt(gns.TotalSupply()),
+		"stakerRewardPerSecond", utils.FormatInt(stakerRewardPerSecond),
+		"govStakerRewardPerSecond", utils.FormatInt(govStakerRewardPerSecond),
 	)
 
 	return totalDistAmount, true
@@ -170,7 +182,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if startTimestamp <= 0 {
@@ -197,7 +209,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	if gns.MintedEmissionAmount() == 0 {
 		currentHeight := runtime.ChainHeight()
-		gns.InitEmissionState(cross, currentHeight, startTimestamp)
+		gns.InitEmissionState(cross(cur), currentHeight, startTimestamp)
 	}
 
 	distributionStartTimestamp = startTimestamp
@@ -205,10 +217,10 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	chain.Emit(
 		"SetDistributionStartTime",
 		"caller", caller.String(),
-		"prevStartTimestamp", formatInt(prevStartTimestamp),
-		"newStartTimestamp", formatInt(startTimestamp),
-		"height", formatInt(runtime.ChainHeight()),
-		"timestamp", formatInt(time.Now().Unix()),
+		"prevStartTimestamp", utils.FormatInt(prevStartTimestamp),
+		"newStartTimestamp", utils.FormatInt(startTimestamp),
+		"height", utils.FormatInt(runtime.ChainHeight()),
+		"timestamp", utils.FormatInt(time.Now().Unix()),
 	)
 }
 
@@ -219,14 +231,14 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 //   - callback: function to call with emission amount per second when percentages change
 //
 // Only callable by the staker contract.
-func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
-	caller := runtime.PreviousRealm().Address()
+func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) {
+	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
 	onDistributionPctChangeCallback = callback
 
 	if onDistributionPctChangeCallback != nil {
 		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
+		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
 }

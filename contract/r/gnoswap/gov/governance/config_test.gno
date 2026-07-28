@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestConfig_IsValid(t *testing.T) {
+func TestConfig_IsValid(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		config           Config
@@ -254,7 +254,7 @@ func TestConfig_IsValid(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			err := tc.config.IsValid(tc.currentTime)
 

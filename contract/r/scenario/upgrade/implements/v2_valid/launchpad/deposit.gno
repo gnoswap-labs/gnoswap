@@ -1,0 +1,1 @@
+../../../../../gnoswap/launchpad/v1/deposit.gno

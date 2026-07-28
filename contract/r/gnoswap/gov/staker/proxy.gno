@@ -13,7 +13,7 @@ package staker
 // Returns:
 //   - delegatedAmount: The amount of GNS delegated and mirrored as xGNS.
 func Delegate(cur realm, to address, amount int64, referrer string) int64 {
-	return getImplementation().Delegate(to, amount, referrer)
+	return getImplementation().Delegate(0, cur, to, amount, referrer)
 }
 
 // Undelegate undelegates xGNS from the existing delegate.
@@ -26,7 +26,7 @@ func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 // Returns:
 //   - amount: The amount of GNS moved into undelegation lockup.
 func Undelegate(cur realm, from address, amount int64) int64 {
-	return getImplementation().Undelegate(from, amount)
+	return getImplementation().Undelegate(0, cur, from, amount)
 }
 
 // Redelegate redelegates xGNS from the existing delegate to another.
@@ -40,7 +40,7 @@ func Undelegate(cur realm, from address, amount int64) int64 {
 // Returns:
 //   - redelegatedAmount: The amount moved from the current delegatee to the new delegatee.
 func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
-	return getImplementation().Redelegate(delegatee, newDelegatee, amount)
+	return getImplementation().Redelegate(0, cur, delegatee, newDelegatee, amount)
 }
 
 // CollectUndelegatedGns collects the amount of the undelegated GNS.
@@ -51,7 +51,7 @@ func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 
 // Returns:
 //   - amount: The amount of GNS token collected.
 func CollectUndelegatedGns(cur realm) int64 {
-	return getImplementation().CollectUndelegatedGns()
+	return getImplementation().CollectUndelegatedGns(0, cur)
 }
 
 // Reward operations
@@ -61,7 +61,17 @@ func CollectUndelegatedGns(cur realm) int64 {
 // Parameters:
 //   - cur: Pass `cross` as argument.
 func CollectReward(cur realm) {
-	getImplementation().CollectReward()
+	getImplementation().CollectReward(0, cur)
+}
+
+// CollectEmissionReward claims accumulated GNS emission rewards.
+func CollectEmissionReward(cur realm) {
+	getImplementation().CollectEmissionReward(0, cur)
+}
+
+// CollectProtocolFeeReward claims accumulated protocol fee rewards for the provided token path.
+func CollectProtocolFeeReward(cur realm, tokenPath string) {
+	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
 
 // CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract (only callable by the launchpad contract).
@@ -70,7 +80,24 @@ func CollectReward(cur realm) {
 //   - cur: Pass `cross` as argument.
 //   - to: The recipient project wallet address.
 func CollectRewardFromLaunchPad(cur realm, to address) {
-	getImplementation().CollectRewardFromLaunchPad(to)
+	getImplementation().CollectRewardFromLaunchPad(0, cur, to)
+}
+
+// CollectEmissionRewardFromLaunchPad claims accumulated launchpad emission rewards.
+//
+// Parameters:
+//   - to: address to collect rewards for
+func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
+	getImplementation().CollectEmissionRewardFromLaunchPad(0, cur, to)
+}
+
+// CollectProtocolFeeRewardFromLaunchPad claims accumulated launchpad protocol fee rewards for the provided token path.
+//
+// Parameters:
+//   - to: address to collect rewards for
+//   - tokenPath: token path to collect
+func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath string) {
+	getImplementation().CollectProtocolFeeRewardFromLaunchPad(0, cur, to, tokenPath)
 }
 
 // SetAmountByProjectWallet adjusts launchpad-backed stake and xGNS accounting for a project wallet.
@@ -82,7 +109,7 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 //   - amount: stake amount delta to add or remove
 //   - add: true to add, false to subtract
 func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
-	getImplementation().SetAmountByProjectWallet(addr, amount, add)
+	getImplementation().SetAmountByProjectWallet(0, cur, addr, amount, add)
 }
 
 // Admin functions
@@ -96,7 +123,7 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 //   - threshold: timestamp threshold for cleanup
 //   - target: user address whose delegation history to clean
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target address) {
-	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold, target)
+	getImplementation().CleanStakerDelegationSnapshotByAdmin(0, cur, threshold, target)
 }
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.
@@ -106,5 +133,5 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target add
 //   - cur: Pass `cross` as argument.
 //   - period: lockup period in seconds
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
-	getImplementation().SetUnDelegationLockupPeriodByAdmin(period)
+	getImplementation().SetUnDelegationLockupPeriodByAdmin(0, cur, period)
 }

@@ -31,6 +31,8 @@ func CreateProject(
 	startTime int64,
 ) string {
 	return getImplementation().CreateProject(
+		0,
+		cur,
 		name,
 		tokenPath,
 		recipient,
@@ -49,7 +51,17 @@ func CreateProject(
 // Parameters:
 //   - cur: Pass `cross` as argument.
 func CollectProtocolFee(cur realm) {
-	getImplementation().CollectProtocolFee()
+	getImplementation().CollectProtocolFee(0, cur)
+}
+
+// CollectEmissionReward collects accumulated launchpad emission rewards.
+func CollectEmissionReward(cur realm) {
+	getImplementation().CollectEmissionReward(0, cur)
+}
+
+// CollectProtocolFeeReward collects accumulated launchpad protocol fee rewards for the provided token path.
+func CollectProtocolFeeReward(cur realm, tokenPath string) {
+	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
 
 // TransferLeftFromProjectByAdmin transfers the remaining amount from the ended project to the recipient.
@@ -62,7 +74,7 @@ func CollectProtocolFee(cur realm) {
 // Returns:
 //   - amount: The amount of transferred tokens.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
-	return getImplementation().TransferLeftFromProjectByAdmin(projectID, recipient)
+	return getImplementation().TransferLeftFromProjectByAdmin(0, cur, projectID, recipient)
 }
 
 // DepositGns deposits GNS to a launchpad project pool.
@@ -76,7 +88,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient addre
 // Returns:
 //   - depositId: The ID of the deposit.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	return getImplementation().DepositGns(targetProjectTierID, depositAmount, referrer)
+	return getImplementation().DepositGns(0, cur, targetProjectTierID, depositAmount, referrer)
 }
 
 // CollectDepositGns collects the deposited GNS using a depositID.
@@ -89,7 +101,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 //   - amount: The collected amount of GNS.
 //   - err: Error if collection fails.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	return getImplementation().CollectDepositGns(depositID)
+	return getImplementation().CollectDepositGns(0, cur, depositID)
 }
 
 // CollectRewardByDepositId collects the project token reward for users using a depositId.
@@ -101,5 +113,5 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 // Returns:
 //   - amount: The amount of collected reward token.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
-	return getImplementation().CollectRewardByDepositId(depositID)
+	return getImplementation().CollectRewardByDepositId(0, cur, depositID)
 }

@@ -393,16 +393,19 @@ func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) strin
 	return getImplementation().GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
 
-// GetIncentiveRewardPerSecond returns the reward rate per second of an incentive.
+// GetIncentiveRewardPerSecondX128 returns the reward rate per second of an
+// incentive, expressed as a Q128 fixed-point number (i.e. actual rate =
+// value / 2^128). Callers needing an integer rate can right-shift the result
+// by 128.
 //
 // Parameters:
 //   - poolPath: pool path associated with the incentive
 //   - incentiveId: external incentive ID
 //
 // Returns:
-//   - amount: reward amount emitted per second
-func GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
-	return getImplementation().GetIncentiveRewardPerSecond(poolPath, incentiveId)
+//   - amount: reward rate per second of the incentive, as a Q128 fixed-point value
+func GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
+	return getImplementation().GetIncentiveRewardPerSecondX128(poolPath, incentiveId).Clone()
 }
 
 // GetIncentiveRewardToken returns the reward token of an incentive.

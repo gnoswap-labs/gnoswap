@@ -8,11 +8,11 @@ import (
 )
 
 // TestRegisterInitializer tests the router upgrade system with table-driven approach
-func TestRegisterInitializer(t *testing.T) {
+func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
-		initializer          func(s IRouterStore) IRouter
+		setup                func(cur realm, t *testing.T)
+		initializer          func(_ int, rlm realm, s IRouterStore) IRouter
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool
@@ -26,9 +26,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register multiple different initializers",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/router/new_version"),
 			initializer:     makeMockInitializer("new_version"),
@@ -36,9 +36,9 @@ func TestRegisterInitializer(t *testing.T) {
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"),
 			initializer:          makeMockInitializer("v1"),
@@ -59,18 +59,18 @@ func TestRegisterInitializer(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				RegisterInitializer(cross, tt.initializer)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				RegisterInitializer(cross(cur), tt.initializer)
 			})
 		} else {
-			RegisterInitializer(cross, tt.initializer)
+			RegisterInitializer(cross(cur), tt.initializer)
 
 			impl := implementation.(*MockRouter)
 			uassert.Equal(t, impl.Version, tt.expectedVersion)
@@ -79,10 +79,10 @@ func TestRegisterInitializer(t *testing.T) {
 }
 
 // TestUpgradeImpl tests the router upgrade implementation
-func TestUpgradeImpl(t *testing.T) {
+func TestUpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		packagePath          string
 		callerRealm          runtime.Realm
 		expectedVersion      string
@@ -91,12 +91,12 @@ func TestUpgradeImpl(t *testing.T) {
 	}{
 		{
 			name: "upgrade impl is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:     "gno.land/r/gnoswap/router/new_version",
 			callerRealm:     testing.NewUserRealm(adminAddr),
@@ -104,12 +104,12 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/new_version"))
-				RegisterInitializer(cross, makeMockInitializer("new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
 			},
 			packagePath:          "gno.land/r/gnoswap/router/new_version",
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
@@ -119,9 +119,9 @@ func TestUpgradeImpl(t *testing.T) {
 		},
 		{
 			name: "upgrade impl is failed by initializer not found",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 			},
 			packagePath:          "gno.land/r/gnoswap/router/nonexistent",
 			callerRealm:          testing.NewUserRealm(adminAddr),
@@ -136,18 +136,18 @@ func TestUpgradeImpl(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
-				UpgradeImpl(cross, tt.packagePath)
+			uassert.AbortsContains(t, cur, tt.expectedAbortMessage, func() {
+				UpgradeImpl(cross(cur), tt.packagePath)
 			})
 		} else {
-			UpgradeImpl(cross, tt.packagePath)
+			UpgradeImpl(cross(cur), tt.packagePath)
 		}
 
 		impl := implementation.(*MockRouter)
@@ -156,20 +156,20 @@ func TestUpgradeImpl(t *testing.T) {
 }
 
 // TestGetImplementation tests the implementation getter
-func TestGetImplementation(t *testing.T) {
+func TestGetImplementation(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func(t *testing.T)
+		setup                func(cur realm, t *testing.T)
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
 			name: "get impl is success when implementation is set",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 		},
 		{
@@ -184,12 +184,12 @@ func TestGetImplementation(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		// Action
 		if tt.expectedHasAbort {
-			uassert.PanicsContains(t, tt.expectedAbortMessage, func() {
+			uassert.PanicsContains(t, cur, tt.expectedAbortMessage, func() {
 				getImplementation()
 			})
 		} else {
@@ -202,10 +202,10 @@ func TestGetImplementation(t *testing.T) {
 }
 
 // TestExactInSwapRoute tests the ExactInSwapRoute proxy function
-func TestExactInSwapRoute(t *testing.T) {
+func TestExactInSwapRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setup        func(t *testing.T)
+		setup        func(cur realm, t *testing.T)
 		inputToken   string
 		outputToken  string
 		amountIn     string
@@ -218,11 +218,11 @@ func TestExactInSwapRoute(t *testing.T) {
 	}{
 		{
 			name: "exact in swap route is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			inputToken:   "gno.land/r/gnoswap/test_token/token0",
 			outputToken:  "gno.land/r/gnoswap/test_token/token1",
@@ -241,13 +241,13 @@ func TestExactInSwapRoute(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		ExactInSwapRoute(cross, tt.inputToken, tt.outputToken, tt.amountIn, tt.routeArr, tt.quoteArr, tt.amountOutMin, tt.deadline, tt.referrer)
+		ExactInSwapRoute(cross(cur), tt.inputToken, tt.outputToken, tt.amountIn, tt.routeArr, tt.quoteArr, tt.amountOutMin, tt.deadline, tt.referrer)
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
@@ -258,10 +258,10 @@ func TestExactInSwapRoute(t *testing.T) {
 }
 
 // TestExactInSingleSwapRoute tests the ExactInSingleSwapRoute proxy function
-func TestExactInSingleSwapRoute(t *testing.T) {
+func TestExactInSingleSwapRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
-		setup             func(t *testing.T)
+		setup             func(cur realm, t *testing.T)
 		inputToken        string
 		outputToken       string
 		amountIn          string
@@ -274,11 +274,11 @@ func TestExactInSingleSwapRoute(t *testing.T) {
 	}{
 		{
 			name: "exact in single swap route is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			inputToken:        "gno.land/r/gnoswap/test_token/token0",
 			outputToken:       "gno.land/r/gnoswap/test_token/token1",
@@ -297,13 +297,13 @@ func TestExactInSingleSwapRoute(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		ExactInSingleSwapRoute(cross, tt.inputToken, tt.outputToken, tt.amountIn, tt.routeArr, tt.amountOutMin, tt.sqrtPriceLimitX96, tt.deadline, tt.referrer)
+		ExactInSingleSwapRoute(cross(cur), tt.inputToken, tt.outputToken, tt.amountIn, tt.routeArr, tt.amountOutMin, tt.sqrtPriceLimitX96, tt.deadline, tt.referrer)
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
@@ -314,10 +314,10 @@ func TestExactInSingleSwapRoute(t *testing.T) {
 }
 
 // TestExactOutSwapRoute tests the ExactOutSwapRoute proxy function
-func TestExactOutSwapRoute(t *testing.T) {
+func TestExactOutSwapRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		inputToken  string
 		outputToken string
 		amountOut   string
@@ -330,11 +330,11 @@ func TestExactOutSwapRoute(t *testing.T) {
 	}{
 		{
 			name: "exact out swap route is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			inputToken:  "gno.land/r/gnoswap/test_token/token0",
 			outputToken: "gno.land/r/gnoswap/test_token/token1",
@@ -353,13 +353,13 @@ func TestExactOutSwapRoute(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		ExactOutSwapRoute(cross, tt.inputToken, tt.outputToken, tt.amountOut, tt.routeArr, tt.quoteArr, tt.amountInMax, tt.deadline, tt.referrer)
+		ExactOutSwapRoute(cross(cur), tt.inputToken, tt.outputToken, tt.amountOut, tt.routeArr, tt.quoteArr, tt.amountInMax, tt.deadline, tt.referrer)
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
@@ -370,10 +370,10 @@ func TestExactOutSwapRoute(t *testing.T) {
 }
 
 // TestExactOutSingleSwapRoute tests the ExactOutSingleSwapRoute proxy function
-func TestExactOutSingleSwapRoute(t *testing.T) {
+func TestExactOutSingleSwapRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
-		setup             func(t *testing.T)
+		setup             func(cur realm, t *testing.T)
 		inputToken        string
 		outputToken       string
 		amountOut         string
@@ -386,11 +386,11 @@ func TestExactOutSingleSwapRoute(t *testing.T) {
 	}{
 		{
 			name: "exact out single swap route is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			inputToken:        "gno.land/r/gnoswap/test_token/token0",
 			outputToken:       "gno.land/r/gnoswap/test_token/token1",
@@ -409,13 +409,13 @@ func TestExactOutSingleSwapRoute(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		ExactOutSingleSwapRoute(cross, tt.inputToken, tt.outputToken, tt.amountOut, tt.routeArr, tt.amountInMax, tt.sqrtPriceLimitX96, tt.deadline, tt.referrer)
+		ExactOutSingleSwapRoute(cross(cur), tt.inputToken, tt.outputToken, tt.amountOut, tt.routeArr, tt.amountInMax, tt.sqrtPriceLimitX96, tt.deadline, tt.referrer)
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
@@ -426,10 +426,10 @@ func TestExactOutSingleSwapRoute(t *testing.T) {
 }
 
 // TestDrySwapRoute tests the DrySwapRoute proxy function
-func TestDrySwapRoute(t *testing.T) {
+func TestDrySwapRoute(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setup            func(t *testing.T)
+		setup            func(cur realm, t *testing.T)
 		inputToken       string
 		outputToken      string
 		specifiedAmount  string
@@ -441,11 +441,11 @@ func TestDrySwapRoute(t *testing.T) {
 	}{
 		{
 			name: "dry swap route is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			inputToken:       "gno.land/r/gnoswap/test_token/token0",
 			outputToken:      "gno.land/r/gnoswap/test_token/token1",
@@ -463,7 +463,7 @@ func TestDrySwapRoute(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockRouter := implementation.(*MockRouter)
@@ -482,10 +482,10 @@ func TestDrySwapRoute(t *testing.T) {
 }
 
 // TestSwapCallback tests the SwapCallback proxy function
-func TestSwapCallback(t *testing.T) {
+func TestSwapCallback(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		setup        func(t *testing.T)
+		setup        func(cur realm, t *testing.T)
 		token0Path   string
 		token1Path   string
 		amount0Delta int64
@@ -495,11 +495,11 @@ func TestSwapCallback(t *testing.T) {
 	}{
 		{
 			name: "swap callback is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			token0Path:   "gno.land/r/gnoswap/test_token/token0",
 			token1Path:   "gno.land/r/gnoswap/test_token/token1",
@@ -515,7 +515,7 @@ func TestSwapCallback(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockRouter := implementation.(*MockRouter)
@@ -524,7 +524,7 @@ func TestSwapCallback(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		SwapCallback(tt.token0Path, tt.token1Path, tt.amount0Delta, tt.amount1Delta, tt.payer)
+		SwapCallback(cross(cur), tt.token0Path, tt.token1Path, tt.amount0Delta, tt.amount1Delta, tt.payer)
 
 		// Assert
 		if mockRouter.Response.CallCount("SwapCallback") != 1 {
@@ -534,19 +534,19 @@ func TestSwapCallback(t *testing.T) {
 }
 
 // TestGetSwapFee tests the GetSwapFee proxy function
-func TestGetSwapFee(t *testing.T) {
+func TestGetSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		expectedFee uint64
 	}{
 		{
 			name: "get swap fee is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			expectedFee: 100,
 		},
@@ -557,7 +557,7 @@ func TestGetSwapFee(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		mockRouter := implementation.(*MockRouter)
@@ -577,20 +577,20 @@ func TestGetSwapFee(t *testing.T) {
 }
 
 // TestSetSwapFee tests the SetSwapFee proxy function
-func TestSetSwapFee(t *testing.T) {
+func TestSetSwapFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
-		setup       func(t *testing.T)
+		setup       func(cur realm, t *testing.T)
 		fee         uint64
 		callerRealm runtime.Realm
 	}{
 		{
 			name: "set swap fee is success",
-			setup: func(t *testing.T) {
+			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/router/v1")
+				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/router/v1")
 			},
 			fee:         200,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/router"),
@@ -602,13 +602,13 @@ func TestSetSwapFee(t *testing.T) {
 		resetTestState(t)
 
 		if tt.setup != nil {
-			tt.setup(t)
+			tt.setup(cur, t)
 		}
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		SetSwapFee(cross, tt.fee)
+		SetSwapFee(cross(cur), tt.fee)
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)

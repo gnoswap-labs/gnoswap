@@ -1,6 +1,8 @@
-package v1
+package staker
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -29,8 +31,8 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 }
 
 func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
-	value, ok := tree.Get(id)
-	if !ok {
+	value := tree.Get(id)
+	if value == nil {
 		return nil, false
 	}
 	v, ok := value.(*sr.ExternalIncentive)
@@ -43,17 +45,17 @@ func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, b
 // Create a new external incentive
 // Panics if the incentive already exists.
 func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
 // update updates an existing incentive with new information
 func (self *IncentivesResolver) update(incentive *sr.ExternalIncentive) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
 // starts incentive unclaimable period for this pool
 func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
-	self.UnclaimablePeriods().Set(startTimestamp, int64(0))
+	self.Incentives.SetUnclaimablePeriod(startTimestamp, int64(0))
 }
 
 // ends incentive unclaimable period for this pool
@@ -80,9 +82,9 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	}
 
 	if startTimestamp == endTimestamp {
-		self.UnclaimablePeriods().Remove(startTimestamp)
+		self.Incentives.RemoveUnclaimablePeriod(startTimestamp)
 	} else {
-		self.UnclaimablePeriods().Set(startTimestamp, endTimestamp)
+		self.Incentives.SetUnclaimablePeriod(startTimestamp, endTimestamp)
 	}
 }
 
@@ -118,7 +120,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.EndTimestamp(),
 		)
 
-		timeDiff = safeAddInt64(timeDiff, duration)
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
 
 		return true
 	})
@@ -141,13 +143,21 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.StartTimestamp(),
 			incentive.EndTimestamp(),
 		)
-		timeDiff = safeAddInt64(timeDiff, duration)
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
 
 		// ensures continue iterating through all unclaimable periods
 		return false
 	})
 
-	return safeMulInt64(timeDiff, incentive.RewardPerSecond())
+	// rewardPerSecondX128 = rps << 128, so dividing by q128 here recovers the
+	// floor of (timeDiff * rps) without the truncation that an int64 rps would
+	// have introduced at incentive-creation time.
+	unclaimable := u256.MulDiv(
+		u256.NewUintFromInt64(timeDiff),
+		incentive.RewardPerSecondX128(),
+		q128,
+	)
+	return gnsmath.SafeConvertToInt64(unclaimable)
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period
@@ -170,5 +180,5 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 	}
 
 	// Calculate overlap duration
-	return safeSubInt64(endTime, startTime)
+	return gnsmath.SafeSubInt64(endTime, startTime)
 }

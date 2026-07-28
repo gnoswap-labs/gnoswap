@@ -3,12 +3,12 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -41,8 +41,8 @@ var (
 
 // Token paths
 var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
+	fooPath = "gno.land/r/onbloc/foo.FOO"
+	barPath = "gno.land/r/onbloc/bar.BAR"
 )
 
 // Test variables
@@ -57,12 +57,12 @@ var (
 // DrySwap Test - ZeroForOne False (Token1 to Token0)
 // Testing DrySwap functionality with zeroForOne=false
 // Expected behavior: Calculate swap amounts for Token1 to Token0 direction
-func main() {
-	testDrySwapZeroForOneFalse(t)
+func main(cur realm) {
+	testDrySwapZeroForOneFalse(cur, t)
 }
 
 // testDrySwapZeroForOneFalse tests DrySwap with zeroForOne=false
-func testDrySwapZeroForOneFalse(t *testing.T) {
+func testDrySwapZeroForOneFalse(cur realm, t *testing.T) {
 	// Given: Pool exists with minted position
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)
@@ -73,23 +73,23 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		barPath,
 		fooPath,
 		FeeTier500,
-		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	// Approve tokens for minting
-	foo.Approve(cross, poolAddr, maxApprove)
-	bar.Approve(cross, poolAddr, maxApprove)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
 
 	// Mint position
 	testing.SetRealm(posRealm)
 	mintAmount0, mintAmount1 := pool.Mint(
-		cross,
+		cross(cur),
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -155,8 +155,8 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 }
 
 // Output:
-// [INFO] Token0: gno.land/r/onbloc/bar
-// [INFO] Token1: gno.land/r/onbloc/foo
+// [INFO] Token0: gno.land/r/onbloc/bar.BAR
+// [INFO] Token1: gno.land/r/onbloc/foo.FOO
 // [INFO] Fee tier: 500
 // [INFO] Initial liquidity amount: 100000000000
 // [INFO] Tick range: -11000 to -9000

@@ -27,6 +27,10 @@ func (os *ObservationState) SetCardinalityNext(cardinalityNext uint16) {
 	os.cardinalityNext = cardinalityNext
 }
 
+func (os *ObservationState) SetObservation(index uint16, observation *Observation) {
+	os.observations[index] = observation
+}
+
 func (os *ObservationState) SetObservations(observations map[uint16]*Observation) {
 	os.observations = observations
 }

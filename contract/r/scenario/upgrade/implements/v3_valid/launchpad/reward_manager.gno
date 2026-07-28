@@ -1,4 +1,4 @@
-package v3
+package v3_valid
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -14,8 +14,8 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 }
 
 func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
-	rewardStateI, exists := r.Rewards().Get(depositId)
-	if !exists {
+	rewardStateI := r.Rewards().Get(depositId)
+	if rewardStateI == nil {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
 	}
 

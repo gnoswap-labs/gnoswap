@@ -12,18 +12,18 @@ import (
 )
 
 // TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless tests DecreaseLiquidity with valid parameters
-func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(t *testing.T) {
+func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 		// Generate params for decrease liquidity
 		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId)
@@ -31,7 +31,7 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 
 		// when - decrease liquidity
 		_, liquidity, amount0, amount1, _, _, _ := position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			decreaseParams.positionId,
 			decreaseParams.liquidity,
 			decreaseParams.amount0Min,
@@ -52,25 +52,25 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 }
 
 // TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless tests DecreaseLiquidity with randomized parameters
-func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) {
+func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(cur realm, t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
-		initStates(t)
+		initStates(cur, t)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Create pool and initial position
-		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 		// Generate params for decrease liquidity
 		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		// when - decrease liquidity (may panic with invalid params)
 		position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			decreaseParams.positionId,
 			decreaseParams.liquidity,
 			decreaseParams.amount0Min,
@@ -80,8 +80,8 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 	})
 }
 
-func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
@@ -89,14 +89,14 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Create pool and initial position once with high liquidity
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		_, liquidity, amount0, amount1, _, _, _ := position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			decreaseParams.positionId,
 			decreaseParams.liquidity,
 			decreaseParams.amount0Min,
@@ -114,15 +114,15 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	})
 }
 
-func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
-	initStates(t)
+func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(cur realm, t *testing.T) {
+	initStates(cur, t)
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	tokenId := createTestPosition(t, adminAddr, poolAddr)
+	tokenId := createTestPosition(cur, t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// Generate randomized params for decrease liquidity
@@ -130,7 +130,7 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 		fuzzResult.AddParams(index, decreaseParams)
 
 		position.DecreaseLiquidity(
-			cross,
+			cross(cur),
 			decreaseParams.positionId,
 			decreaseParams.liquidity,
 			decreaseParams.amount0Min,

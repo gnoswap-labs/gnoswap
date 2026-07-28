@@ -1,6 +1,7 @@
-package v1
+package staker
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -34,15 +35,15 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 	externalPenalty := make(map[string]int64, rewardLen)
 
 	for _, reward := range rewards {
-		internal = safeAddInt64(internal, reward.Internal)
-		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
+		internal = gnsmath.SafeAddInt64(internal, reward.Internal)
+		internalPenalty = gnsmath.SafeAddInt64(internalPenalty, reward.InternalPenalty)
 
 		for incentive, amount := range reward.External {
-			externalReward[incentive] = safeAddInt64(externalReward[incentive], amount)
+			externalReward[incentive] = gnsmath.SafeAddInt64(externalReward[incentive], amount)
 		}
 
 		for incentive, penalty := range reward.ExternalPenalty {
-			externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
+			externalPenalty[incentive] = gnsmath.SafeAddInt64(externalPenalty[incentive], penalty)
 		}
 	}
 
@@ -163,6 +164,7 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 		return 0
 	}
 	poolResolver := NewPoolResolver(pool)
+
 	return poolResolver.processUnclaimableReward(endTimestamp)
 }
 
@@ -179,8 +181,8 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 			return false
 		}
 
-		incentiveIdsValue, exists := poolIncentiveIds.Get(poolPath)
-		if !exists {
+		incentiveIdsValue := poolIncentiveIds.Get(poolPath)
+		if incentiveIdsValue == nil {
 			return false
 		}
 

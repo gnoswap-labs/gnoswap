@@ -43,24 +43,24 @@ var (
 	currentBlockTime = int64(2)
 )
 
-func main() {
+func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
 	ufmt.Printf("[INFO] max smoothing period: %d seconds\n", maxSmoothingPeriod)
 
 	println("[SCENARIO] 1. Setup initial delegation (creates first snapshot)")
-	snapshot1Time := setupInitialDelegation()
+	snapshot1Time := setupInitialDelegation(cur)
 	println()
 
 	println("[SCENARIO] 2. Skip time and add more delegation (creates second snapshot)")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	addSecondDelegation()
+	addSecondDelegation(cur)
 	println()
 
 	println("[SCENARIO] 3. Skip time and add final delegation (creates third snapshot)")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	addThirdDelegation()
+	addThirdDelegation(cur)
 	println()
 
 	println("[SCENARIO] 4. Skip sufficient time for cleanup eligibility (3x max smoothing period)")
@@ -70,7 +70,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Verify delegation snapshot data exists")
-	verifySnapshotsExist()
+	verifySnapshotsExist(cur)
 	println()
 
 	println("[SCENARIO] 6. Calculate valid cleanup threshold")
@@ -81,50 +81,50 @@ func main() {
 	println("[SCENARIO] 7. Clean old snapshots (before first snapshot)")
 	safeCleanupTime := snapshot1Time - 100
 	if safeCleanupTime < validCleanupThreshold {
-		cleanOldSnapshots(safeCleanupTime)
+		cleanOldSnapshots(cur, safeCleanupTime)
 	} else {
 		println("[INFO] cleanup time not old enough, skipping")
 	}
 	println()
 
 	println("[SCENARIO] 8. Verify cleanup results")
-	verifyCleanupResults()
+	verifyCleanupResults(cur)
 	println()
 }
 
-func setupInitialDelegation() int64 {
+func setupInitialDelegation(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gns.Transfer(cross, aliceAddr, 3_000_000_000)
+	gns.Transfer(cross(cur), aliceAddr, 3_000_000_000)
 
-	gns.Approve(cross, govStakerAddr, 1_000_000_000)
-	gs.Delegate(cross, aliceAddr, 1_000_000_000, "")
+	gns.Approve(cross(cur), govStakerAddr, 1_000_000_000)
+	gs.Delegate(cross(cur), aliceAddr, 1_000_000_000, "")
 
 	snapshotTime := time.Now().Unix()
 	ufmt.Printf("[INFO] first delegation: 1,000,000,000 GNS at time %d\n", snapshotTime)
 	return snapshotTime
 }
 
-func addSecondDelegation() {
+func addSecondDelegation(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	gns.Approve(cross, govStakerAddr, 500_000_000)
-	gs.Delegate(cross, aliceAddr, 500_000_000, "")
+	gns.Approve(cross(cur), govStakerAddr, 500_000_000)
+	gs.Delegate(cross(cur), aliceAddr, 500_000_000, "")
 
 	snapshotTime := time.Now().Unix()
 	ufmt.Printf("[INFO] second delegation: 500,000,000 GNS at time %d\n", snapshotTime)
 }
 
-func addThirdDelegation() {
+func addThirdDelegation(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
 
-	gns.Approve(cross, govStakerAddr, 300_000_000)
-	gs.Delegate(cross, aliceAddr, 300_000_000, "")
+	gns.Approve(cross(cur), govStakerAddr, 300_000_000)
+	gs.Delegate(cross(cur), aliceAddr, 300_000_000, "")
 
 	snapshotTime := time.Now().Unix()
 	ufmt.Printf("[INFO] third delegation: 300,000,000 GNS at time %d\n", snapshotTime)
 }
 
-func verifySnapshotsExist() {
+func verifySnapshotsExist(cur realm) {
 	hasSnapshots := gs.HasDelegationSnapshotsKey()
 	if hasSnapshots {
 		println("[INFO] delegation snapshots exist")
@@ -140,15 +140,15 @@ func verifySnapshotsExist() {
 	}
 }
 
-func cleanOldSnapshots(cleanupTime int64) {
+func cleanOldSnapshots(cur realm, cleanupTime int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gs.CleanStakerDelegationSnapshotByAdmin(cross, cleanupTime, aliceAddr)
+	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
 	ufmt.Printf("[INFO] cleaned snapshots older than %d\n", cleanupTime)
 	println("[EXPECTED] old snapshot cleanup completed")
 }
 
-func verifyCleanupResults() {
+func verifyCleanupResults(cur realm) {
 	// Verify total delegation amount is preserved
 	totalDelegated := gs.GetTotalDelegated()
 	ufmt.Printf("[INFO] total delegated after cleanup: %d\n", totalDelegated)

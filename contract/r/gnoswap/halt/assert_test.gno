@@ -6,7 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestAssert_AssertIsNotHaltedPool(t *testing.T) {
+func TestAssert_AssertIsNotHaltedPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -19,17 +19,17 @@ func TestAssert_AssertIsNotHaltedPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: pool", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: pool", func() {
 					AssertIsNotHaltedPool()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedPool()
 				})
 			}
@@ -37,7 +37,7 @@ func TestAssert_AssertIsNotHaltedPool(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedPosition(t *testing.T) {
+func TestAssert_AssertIsNotHaltedPosition(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -50,16 +50,16 @@ func TestAssert_AssertIsNotHaltedPosition(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: position", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: position", func() {
 					AssertIsNotHaltedPosition()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedPosition()
 				})
 			}
@@ -67,7 +67,7 @@ func TestAssert_AssertIsNotHaltedPosition(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedProtocolFee(t *testing.T) {
+func TestAssert_AssertIsNotHaltedProtocolFee(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -80,16 +80,16 @@ func TestAssert_AssertIsNotHaltedProtocolFee(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: protocol_fee", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: protocol_fee", func() {
 					AssertIsNotHaltedProtocolFee()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedProtocolFee()
 				})
 			}
@@ -97,7 +97,7 @@ func TestAssert_AssertIsNotHaltedProtocolFee(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedRouter(t *testing.T) {
+func TestAssert_AssertIsNotHaltedRouter(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -110,16 +110,16 @@ func TestAssert_AssertIsNotHaltedRouter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: router", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: router", func() {
 					AssertIsNotHaltedRouter()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedRouter()
 				})
 			}
@@ -127,7 +127,7 @@ func TestAssert_AssertIsNotHaltedRouter(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedStaker(t *testing.T) {
+func TestAssert_AssertIsNotHaltedStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -140,16 +140,16 @@ func TestAssert_AssertIsNotHaltedStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: staker", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: staker", func() {
 					AssertIsNotHaltedStaker()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedStaker()
 				})
 			}
@@ -157,7 +157,7 @@ func TestAssert_AssertIsNotHaltedStaker(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedLaunchpad(t *testing.T) {
+func TestAssert_AssertIsNotHaltedLaunchpad(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -170,16 +170,16 @@ func TestAssert_AssertIsNotHaltedLaunchpad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: launchpad", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: launchpad", func() {
 					AssertIsNotHaltedLaunchpad()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedLaunchpad()
 				})
 			}
@@ -187,7 +187,7 @@ func TestAssert_AssertIsNotHaltedLaunchpad(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedGovernance(t *testing.T) {
+func TestAssert_AssertIsNotHaltedGovernance(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -200,16 +200,16 @@ func TestAssert_AssertIsNotHaltedGovernance(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: governance", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: governance", func() {
 					AssertIsNotHaltedGovernance()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedGovernance()
 				})
 			}
@@ -217,7 +217,7 @@ func TestAssert_AssertIsNotHaltedGovernance(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedGovStaker(t *testing.T) {
+func TestAssert_AssertIsNotHaltedGovStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -230,16 +230,16 @@ func TestAssert_AssertIsNotHaltedGovStaker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: gov_staker", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: gov_staker", func() {
 					AssertIsNotHaltedGovStaker()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedGovStaker()
 				})
 			}
@@ -247,7 +247,7 @@ func TestAssert_AssertIsNotHaltedGovStaker(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedXGns(t *testing.T) {
+func TestAssert_AssertIsNotHaltedXGns(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -260,16 +260,16 @@ func TestAssert_AssertIsNotHaltedXGns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: xgns", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: xgns", func() {
 					AssertIsNotHaltedXGns()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedXGns()
 				})
 			}
@@ -277,7 +277,7 @@ func TestAssert_AssertIsNotHaltedXGns(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedCommunityPool(t *testing.T) {
+func TestAssert_AssertIsNotHaltedCommunityPool(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -290,16 +290,16 @@ func TestAssert_AssertIsNotHaltedCommunityPool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: community_pool", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: community_pool", func() {
 					AssertIsNotHaltedCommunityPool()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedCommunityPool()
 				})
 			}
@@ -307,7 +307,7 @@ func TestAssert_AssertIsNotHaltedCommunityPool(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedEmission(t *testing.T) {
+func TestAssert_AssertIsNotHaltedEmission(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -320,16 +320,16 @@ func TestAssert_AssertIsNotHaltedEmission(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: emission", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: emission", func() {
 					AssertIsNotHaltedEmission()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedEmission()
 				})
 			}
@@ -337,7 +337,7 @@ func TestAssert_AssertIsNotHaltedEmission(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedWithdraw(t *testing.T) {
+func TestAssert_AssertIsNotHaltedWithdraw(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		haltLevel   HaltLevel
@@ -350,16 +350,16 @@ func TestAssert_AssertIsNotHaltedWithdraw(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: withdraw", func() {
+				uassert.PanicsWithMessage(t, cur, "halted: withdraw", func() {
 					AssertIsNotHaltedWithdraw()
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedWithdraw()
 				})
 			}
@@ -367,7 +367,7 @@ func TestAssert_AssertIsNotHaltedWithdraw(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedOperation(t *testing.T) {
+func TestAssert_AssertIsNotHaltedOperation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		opType      OpType
@@ -381,17 +381,17 @@ func TestAssert_AssertIsNotHaltedOperation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				expectedMsg := "halted: " + tt.opType.String()
-				uassert.PanicsWithMessage(t, expectedMsg, func() {
+				uassert.PanicsWithMessage(t, cur, expectedMsg, func() {
 					AssertIsNotHaltedOperation(tt.opType)
 				})
 			} else {
-				uassert.NotPanics(t, func() {
+				uassert.NotPanics(t, cur, func() {
 					AssertIsNotHaltedOperation(tt.opType)
 				})
 			}

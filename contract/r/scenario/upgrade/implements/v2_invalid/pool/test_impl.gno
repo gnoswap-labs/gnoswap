@@ -17,8 +17,8 @@ func NewV2InvalidPool(store pool.IPoolStore) pool.IPool {
 	}
 }
 
-func init() {
-	pool.RegisterInitializer(cross, func(store pool.IPoolStore) pool.IPool {
+func init(cur realm) {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		return NewV2InvalidPool(store)
 	})
 }
@@ -39,104 +39,104 @@ func (t *TestPool) isActive(fnName string) bool {
 }
 
 // IPoolManager interface
-func (t *TestPool) CreatePool(token0Path string, token1Path string, fee uint32, sqrtPriceX96 string) {
+func (t *TestPool) CreatePool(_ int, rlm realm, token0Path string, token1Path string, fee uint32, sqrtPriceX96 string) {
 	if !t.isActive("CreatePool") {
 		panic("test implementation: CreatePool not supported")
 	}
-	t.instance.CreatePool(token0Path, token1Path, fee, sqrtPriceX96)
+	t.instance.CreatePool(0, rlm, token0Path, token1Path, fee, sqrtPriceX96)
 }
 
-func (t *TestPool) SetPoolCreationFee(fee int64) {
+func (t *TestPool) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 	if !t.isActive("SetPoolCreationFee") {
 		panic("test implementation: SetPoolCreationFee not supported")
 	}
-	t.instance.SetPoolCreationFee(fee)
+	t.instance.SetPoolCreationFee(0, rlm, fee)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+func (t *TestPool) IncreaseObservationCardinalityNext(_ int, rlm realm, token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
 	if !t.isActive("IncreaseObservationCardinalityNext") {
 		panic("test implementation: IncreaseObservationCardinalityNext not supported")
 	}
-	t.instance.IncreaseObservationCardinalityNext(token0Path, token1Path, fee, cardinalityNext)
+	t.instance.IncreaseObservationCardinalityNext(0, rlm, token0Path, token1Path, fee, cardinalityNext)
 }
 
 // IPoolPosition interface
-func (t *TestPool) Mint(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+func (t *TestPool) Mint(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
 	if !t.isActive("Mint") {
 		panic("test implementation: Mint not supported")
 	}
-	return t.instance.Mint(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	return t.instance.Mint(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func (t *TestPool) Burn(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
 	if !t.isActive("Burn") {
 		panic("test implementation: Burn not supported")
 	}
-	return t.instance.Burn(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	return t.instance.Burn(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
-func (t *TestPool) Collect(token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
+func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	if !t.isActive("Collect") {
 		panic("test implementation: Collect not supported")
 	}
-	return t.instance.Collect(token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+	return t.instance.Collect(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
 
-func (t *TestPool) SetWithdrawalFee(fee uint64) {
+func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	if !t.isActive("SetWithdrawalFee") {
 		panic("test implementation: SetWithdrawalFee not supported")
 	}
-	t.instance.SetWithdrawalFee(fee)
+	t.instance.SetWithdrawalFee(0, rlm, fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
+func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
 	if !t.isActive("HandleWithdrawalFee") {
 		panic("test implementation: HandleWithdrawalFee not supported")
 	}
-	return t.instance.HandleWithdrawalFee(token0Path, amount0, token1Path, amount1, positionCaller)
+	return t.instance.HandleWithdrawalFee(0, rlm, token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
 // IPoolSwap interface
-func (t *TestPool) Swap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
 	if !t.isActive("Swap") {
 		panic("test implementation: Swap not supported")
 	}
-	return t.instance.Swap(token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
 }
 
-func (t *TestPool) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
+func (t *TestPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	if !t.isActive("SetSwapEndHook") {
 		panic("test implementation: SetSwapEndHook not supported")
 	}
-	t.instance.SetSwapEndHook(hook)
+	t.instance.SetSwapEndHook(0, rlm, hook)
 }
 
-func (t *TestPool) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
+func (t *TestPool) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	if !t.isActive("SetSwapStartHook") {
 		panic("test implementation: SetSwapStartHook not supported")
 	}
-	t.instance.SetSwapStartHook(hook)
+	t.instance.SetSwapStartHook(0, rlm, hook)
 }
 
-func (t *TestPool) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (t *TestPool) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	if !t.isActive("SetTickCrossHook") {
 		panic("test implementation: SetTickCrossHook not supported")
 	}
-	t.instance.SetTickCrossHook(hook)
+	t.instance.SetTickCrossHook(0, rlm, hook)
 }
 
-func (t *TestPool) CollectProtocol(token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
+func (t *TestPool) CollectProtocol(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
 	if !t.isActive("CollectProtocol") {
 		panic("test implementation: CollectProtocol not supported")
 	}
-	return t.instance.CollectProtocol(token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+	return t.instance.CollectProtocol(0, rlm, token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
 }
 
-func (t *TestPool) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
+func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
 	if !t.isActive("SetFeeProtocol") {
 		panic("test implementation: SetFeeProtocol not supported")
 	}
-	t.instance.SetFeeProtocol(feeProtocol0, feeProtocol1)
+	t.instance.SetFeeProtocol(0, rlm, feeProtocol0, feeProtocol1)
 }
 
 // IPoolGetter interface

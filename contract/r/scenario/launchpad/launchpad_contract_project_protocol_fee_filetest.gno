@@ -52,27 +52,27 @@ var (
 	contractProjectRealm = testing.NewCodeRealm(contractProjectPackagePath)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create launchpad project for contract recipient")
-	projectId := createContractRecipientProject()
+	projectId := createContractRecipientProject(cur)
 	projectTier30Id := projectId + ":30"
 	println()
 
 	println("[SCENARIO] 2. Alice deposits GNS into contract-owned project")
-	depositGnsForContractProject(projectTier30Id, 1_000_000)
+	depositGnsForContractProject(cur, projectTier30Id, 1_000_000)
 	println()
 
 	println("[SCENARIO] 3. Add and distribute protocol fees")
-	addProtocolFeesForContractProject(500, 1000)
-	distributeProtocolFeesForContractProject()
+	addProtocolFeesForContractProject(cur, 500, 1000)
+	distributeProtocolFeesForContractProject(cur)
 	println()
 
 	println("[SCENARIO] 4. Contract project recipient collects protocol fee")
-	collectProtocolFeesAsContractProjectRecipient()
+	collectProtocolFeesAsContractProjectRecipient(cur)
 	println()
 }
 
-func createContractRecipientProject() string {
+func createContractRecipientProject(cur realm) string {
 	println("[INFO] Creating OBL launchpad project")
 
 	rewardAmount := int64(10_000_000)
@@ -81,11 +81,11 @@ func createContractRecipientProject() string {
 
 	println("[INFO] Admin creating project with contract recipient")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, rewardAmount)
+	obl.Approve(cross(cur), launchpadAddr, rewardAmount)
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		"Contract Recipient OBL Project",
-		"gno.land/r/onbloc/obl",
+		"gno.land/r/onbloc/obl.OBL",
 		contractProjectAddr,
 		rewardAmount,
 		"",
@@ -110,53 +110,53 @@ func createContractRecipientProject() string {
 	return projectId
 }
 
-func depositGnsForContractProject(projectTierId string, depositAmount int64) {
+func depositGnsForContractProject(cur realm, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, aliceAddr, depositAmount)
+	gns.Transfer(cross(cur), aliceAddr, depositAmount)
 
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
-	gns.Approve(cross, launchpadAddr, depositAmount)
-	depositId := launchpad.DepositGns(cross, projectTierId, depositAmount, "")
+	gns.Approve(cross(cur), launchpadAddr, depositAmount)
+	depositId := launchpad.DepositGns(cross(cur), projectTierId, depositAmount, "")
 
 	ufmt.Printf("[EXPECTED] Deposit created with ID: %s\n", depositId)
 	ufmt.Printf("[EXPECTED] Deposit amount: %d\n", depositAmount)
 	testing.SkipHeights(1)
 }
 
-func addProtocolFeesForContractProject(barAmount, quxAmount int64) {
+func addProtocolFeesForContractProject(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross(cur), stakerAddr, barAmount)
+	qux.Transfer(cross(cur), stakerAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
+	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
+	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
 
 	ufmt.Printf("[INFO] Protocol fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
 }
 
-func distributeProtocolFeesForContractProject() {
+func distributeProtocolFeesForContractProject(cur realm) {
 	testing.SetRealm(govStakerRealm)
-	protocol_fee.DistributeProtocolFee(cross)
+	protocol_fee.DistributeProtocolFee(cross(cur))
 
 	println("[INFO] Protocol fee distributed")
 	testing.SkipHeights(1)
 }
 
-func collectProtocolFeesAsContractProjectRecipient() {
+func collectProtocolFeesAsContractProjectRecipient(cur realm) {
 	testing.SetRealm(govStakerRealm)
 	emissionReward, protocolFeeRewards, _ := staker.GetClaimableRewardByLaunchpad(contractProjectAddr)
-	ufmt.Printf("[INFO] claimable reward (contract recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatContractProjectProtocolFees(protocolFeeRewards))
+	ufmt.Printf("[INFO] claimable reward (contract recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatContractProjectProtocolFees(cur, protocolFeeRewards))
 
 	testing.SetRealm(contractProjectRealm)
 	prevBarBalance := bar.BalanceOf(contractProjectAddr)
 	prevQuxBalance := qux.BalanceOf(contractProjectAddr)
-	launchpad.CollectProtocolFee(cross)
+	launchpad.CollectProtocolFee(cross(cur))
 	afterBarBalance := bar.BalanceOf(contractProjectAddr)
 	afterQuxBalance := qux.BalanceOf(contractProjectAddr)
 
@@ -171,7 +171,7 @@ func collectProtocolFeesAsContractProjectRecipient() {
 	ufmt.Printf("[EXPECTED] Contract QUX balance delta: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
-func formatContractProjectProtocolFees(fees map[string]int64) string {
+func formatContractProjectProtocolFees(cur realm, fees map[string]int64) string {
 	if len(fees) == 0 {
 		return "map[]"
 	}
@@ -194,7 +194,7 @@ func formatContractProjectProtocolFees(fees map[string]int64) string {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating project with contract recipient
 // [INFO] Skipping 120960 blocks to activate project
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project recipient is contract: true
 //
 // [SCENARIO] 2. Alice deposits GNS into contract-owned project
@@ -206,6 +206,6 @@ func formatContractProjectProtocolFees(fees map[string]int64) string {
 // [INFO] Protocol fee distributed
 //
 // [SCENARIO] 4. Contract project recipient collects protocol fee
-// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:499 gno.land/r/onbloc/qux:999]
+// [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:499 gno.land/r/onbloc/qux.QUX:999]
 // [EXPECTED] Contract BAR balance delta: 499
 // [EXPECTED] Contract QUX balance delta: 999

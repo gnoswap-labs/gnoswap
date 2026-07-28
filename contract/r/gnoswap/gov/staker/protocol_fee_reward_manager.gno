@@ -42,8 +42,8 @@ func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 /* Getters */
 
 func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewardState, bool, error) {
-	ri, ok := p.rewardStates.Get(addr)
-	if !ok {
+	ri := p.rewardStates.Get(addr)
+	if ri == nil {
 		return nil, false, nil
 	}
 	rs, castOk := ri.(*ProtocolFeeRewardState)
@@ -87,11 +87,29 @@ func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *bptree.BPTree) 
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) {
-	p.accumulatedProtocolFeeX128PerStake = accumulatedProtocolFeeX128PerStake
+	copied := make(map[string]*u256.Uint, len(accumulatedProtocolFeeX128PerStake))
+	for token, value := range accumulatedProtocolFeeX128PerStake {
+		copied[token] = u256.Zero().Set(value)
+	}
+	p.accumulatedProtocolFeeX128PerStake = copied
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[string]int64) {
 	p.protocolFeeAmounts = protocolFeeAmounts
+}
+
+func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken(token string, value *u256.Uint) {
+	if p.accumulatedProtocolFeeX128PerStake == nil {
+		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
+	}
+	p.accumulatedProtocolFeeX128PerStake[token] = value
+}
+
+func (p *ProtocolFeeRewardManager) SetProtocolFeeAmountForToken(token string, amount int64) {
+	if p.protocolFeeAmounts == nil {
+		p.protocolFeeAmounts = make(map[string]int64)
+	}
+	p.protocolFeeAmounts[token] = amount
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedTimestamp(accumulatedTimestamp int64) {

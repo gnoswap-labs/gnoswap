@@ -5,6 +5,7 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
@@ -13,7 +14,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -35,78 +35,78 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	wugnotPath = "gno.land/r/gnoland/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/gns"
+	wugnotPath = "gno.land/r/gnoland/wugnot.wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns.GNS"
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Initialize Setup")
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
+	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
-	initializeSetup()
+	initializeSetup(cur)
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100)")
-	createPool(wugnotPath, gnsPath, 100, 6960)
+	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100)")
+	createPool(cur, wugnotPath, gnsPath, 100, 6960)
 	println()
 
 	println("[SCENARIO] 3. Mint Position (6820 ~ 7020)")
-	mintPosition(wugnotPath, gnsPath, 100, 6820, 7020, "1000000000", "1898192788", 1000000000)
+	mintPosition(cur, wugnotPath, gnsPath, 100, 6820, 7020, "1000000000", "1898192788", 1000000000)
 	println()
 
 	println("[SCENARIO] 4. Mint Position (6917 ~ 6948)")
-	mintPosition(wugnotPath, gnsPath, 100, 6917, 6947, "1000000000", "1898192788", 1000000000)
+	mintPosition(cur, wugnotPath, gnsPath, 100, 6917, 6947, "1000000000", "1898192788", 1000000000)
 	println()
 
 	println("[SCENARIO] 5. Mint Position (6970 ~ 7000)")
-	mintPosition(wugnotPath, gnsPath, 100, 6970, 7000, "1000000000", "1898192788", 1000000000)
+	mintPosition(cur, wugnotPath, gnsPath, 100, 6970, 7000, "1000000000", "1898192788", 1000000000)
 	println()
 
 	println("[SCENARIO] 6. Mint Position (3435 ~ 8335)")
-	mintPosition(wugnotPath, gnsPath, 100, 3435, 8335, "20000000", "46957288", 20000000)
+	mintPosition(cur, wugnotPath, gnsPath, 100, 3435, 8335, "20000000", "46957288", 20000000)
 	println()
 }
 
-func initializeSetup() {
+func initializeSetup(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFee(cross, 0)
+	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000000000}})
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue, cur)
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 	println("[INFO] ugnot Balance of admin:", banker_.GetCoins(adminAddr))
 
-	gns.Approve(cross, poolAddr, INT64_MAX)
-	wugnot.Approve(cross, poolAddr, INT64_MAX)
-	gns.Approve(cross, positionAddr, INT64_MAX)
-	wugnot.Approve(cross, positionAddr, INT64_MAX)
+	gns.Approve(cross(cur), poolAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), poolAddr, INT64_MAX)
+	gns.Approve(cross(cur), positionAddr, INT64_MAX)
+	wugnot.Approve(cross(cur), positionAddr, INT64_MAX)
 }
 
-func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
+func createPool(cur realm, token0Path string, token1Path string, fee uint32, startTick int32) {
 	testing.SetRealm(adminRealm)
 	pool.CreatePool(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
-		common.TickMathGetSqrtRatioAtTick(startTick).ToString(),
+		gnsmath.TickMathGetSqrtRatioAtTick(startTick).ToString(),
 	)
 
 	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)
 }
 
-func mintPosition(token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string, nativeCoinAmount int64) {
+func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string, nativeCoinAmount int64) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
-		cross,
+		cross(cur),
 		token0Path,
 		token1Path,
 		fee,
@@ -133,8 +133,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100)
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100 pool at tick 6960
+// [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100)
+// [EXPECTED] created gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:100 pool at tick 6960
 //
 // [SCENARIO] 3. Mint Position (6820 ~ 7020)
 // [INFO] Minting position

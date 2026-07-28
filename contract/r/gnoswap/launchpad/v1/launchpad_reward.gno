@@ -1,9 +1,13 @@
-package v1
+package launchpad
 
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -18,26 +22,31 @@ import (
 // Returns:
 //   - amount: reward token amount collected for the deposit
 // Only callable by deposit owner.
-func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
 	halt.AssertIsNotHaltedWithdraw()
 
-	previousRealm := runtime.PreviousRealm()
+	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
 
 	deposit := lp.mustGetDeposit(depositID)
+	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(
@@ -45,14 +54,15 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
-		"amount", formatInt(rewardAmount),
+		"targetProjectTierId", targetProjectTierID,
+		"amount", utils.FormatInt(rewardAmount),
 	)
 
 	return rewardAmount
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
+func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
@@ -88,14 +98,16 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 
 	// Update total collected amount for the tier
 	if rewardAmount > 0 {
-		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+		projectTier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
 		project.SetTier(deposit.Tier(), projectTier)
 
 		projects := lp.store.GetProjects()
-		if err := lp.store.SetProjects(projects); err != nil {
+		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 			return "", 0, err
 		}
 	}
+
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
 
 	return project.TokenPath(), rewardAmount, nil
 }

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
 // launchpad create project by insufficient reward token
 
 package main
@@ -9,7 +11,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	
+
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -30,28 +32,28 @@ var (
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
 
-func main() {
+func main(cur realm) {
 	// [SCENARIO] Init environment
 	println("[SCENARIO] 1. Init environment")
-	initEnvironment()
+	initEnvironment(cur)
 	println()
 
 	// [SCENARIO] Admin attempts to create project with insufficient reward token
 	println("[SCENARIO] 2. Admin attempts to create project with insufficient reward token")
-	createProjectByInsufficientRewardToken()
+	createProjectByInsufficientRewardToken(cur)
 	println()
 }
 
-func initEnvironment() {}
+func initEnvironment(cur realm) {}
 
 // Admin attempts to create project with insufficient reward token
-func createProjectByInsufficientRewardToken() {
+func createProjectByInsufficientRewardToken(cur realm) {
 	testing.SetOriginCaller(adminAddr)
 
 	oblBalance := obl.BalanceOf(adminAddr)
 
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(oblBalance + 1)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
@@ -74,12 +76,12 @@ func createProjectByInsufficientRewardToken() {
 	println("[INFO] create project with start time:", startTime)
 
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 
 	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-008] insufficient balance"
-	uassert.AbortsContains(t, expectedPanicMessage, func() {
+	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
 		launchpad.CreateProject(
-			cross,
+			cross(cur),
 			projectName,
 			rewardTokenPath,
 			recipientAddr,
@@ -102,7 +104,7 @@ func createProjectByInsufficientRewardToken() {
 // [SCENARIO] 2. Admin attempts to create project with insufficient reward token
 // [INFO] admin attempting to create project with insufficient reward token
 // [INFO] create project with project name: OBL Launchpad Project
-// [INFO] create project with reward token path: gno.land/r/onbloc/obl
+// [INFO] create project with reward token path: gno.land/r/onbloc/obl.OBL
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 100000000000001
 // [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns

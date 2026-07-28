@@ -37,9 +37,9 @@ var (
 	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
-func main() {
+func main(cur realm) {
 	println("[SCENARIO] 1. Create OBL launchpad project")
-	createOBLProject()
+	createOBLProject(cur)
 	println()
 
 	// [SCENARIO] 2. Skip blocks to end project
@@ -50,17 +50,17 @@ func main() {
 
 	// [SCENARIO] 3. Refund ended project without deposit
 	println("[SCENARIO] 3. Refund ended project without deposit")
-	refundEndedProjectWithoutDeposit()
+	refundEndedProjectWithoutDeposit(cur)
 	println()
 }
 
 // Create OBL launchpad project
-func createOBLProject() {
+func createOBLProject(cur realm) {
 	println("[INFO] Creating OBL launchpad project")
 
 	recipientAddr := projectAddr
 	projectName := "OBL Launchpad Project"
-	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardTokenPath := "gno.land/r/onbloc/obl.OBL"
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
@@ -71,9 +71,9 @@ func createOBLProject() {
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
-	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	obl.Approve(cross(cur), launchpadAddr, int64(rewardAmount))
 	projectId := launchpad.CreateProject(
-		cross,
+		cross(cur),
 		projectName,
 		rewardTokenPath,
 		recipientAddr,
@@ -114,8 +114,8 @@ func createOBLProject() {
 }
 
 // Refund ended project without deposit
-func refundEndedProjectWithoutDeposit() {
-	projectId := "gno.land/r/onbloc/obl:123"
+func refundEndedProjectWithoutDeposit(cur realm) {
+	projectId := "gno.land/r/onbloc/obl.OBL:123"
 
 	testing.SetRealm(launchpadRealm)
 	println("[INFO] Checking project status before refund")
@@ -132,7 +132,7 @@ func refundEndedProjectWithoutDeposit() {
 	println("[INFO] Project OBL balance before refund:", oblBalanceBefore)
 
 	println("[INFO] Project recipient attempting refund")
-	launchpad.TransferLeftFromProjectByAdmin(cross, projectId, projectAddr)
+	launchpad.TransferLeftFromProjectByAdmin(cross(cur), projectId, projectAddr)
 
 	println("[INFO] Checking OBL balance after refund")
 	oblBalanceAfter := obl.BalanceOf(projectAddr)
@@ -146,9 +146,9 @@ func refundEndedProjectWithoutDeposit() {
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
 // [INFO] Skipping 120960 blocks
-// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project name: OBL Launchpad Project
-// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 1000000000
 // [EXPECTED] Project tier30 ratio: 10
 // [EXPECTED] Project tier90 ratio: 20

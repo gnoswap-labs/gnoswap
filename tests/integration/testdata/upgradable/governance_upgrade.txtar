@@ -10,7 +10,7 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-loadpkg gno.land/r/onbloc/usdc
+loadpkg gno.land/r/gnoswap/test_token/test_usdc
 loadpkg gno.land/r/onbloc/foo
 loadpkg gno.land/r/onbloc/bar
 loadpkg gno.land/r/onbloc/baz
@@ -20,9 +20,11 @@ loadpkg gno.land/r/onbloc/obl
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/consts
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/utils
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/r/gnoswap/rbac

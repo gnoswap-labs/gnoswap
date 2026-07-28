@@ -1,0 +1,1 @@
+../../../../../gnoswap/router/v1/instance.gno

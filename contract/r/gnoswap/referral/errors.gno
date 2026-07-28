@@ -1,20 +1,18 @@
 package referral
 
 import (
-	"errors"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-var (
-	ErrInvalidAddress  = errors.New("invalid address format")
-	ErrSelfReferral    = errors.New("self referral is not allowed")
-	ErrUnauthorized    = errors.New("unauthorized caller")
-	ErrTooManyRequests = errors.New("too many requests: operations allowed once per 24 hours for each address")
-	ErrNotFound        = errors.New("referral not found")
-	ErrInvalidTime     = errors.New("invalid time format")
+const (
+	ErrInvalidAddress  = "invalid address format"
+	ErrSelfReferral    = "self referral is not allowed"
+	ErrUnauthorized    = "unauthorized caller"
+	ErrTooManyRequests = "too many requests: operations allowed once per 24 hours for each address"
+	ErrNotFound        = "referral not found"
+	ErrInvalidTime     = "invalid time format"
 )
 
-func makeErrorWithDetails(err error, detail string) error {
-	return ufmt.Errorf("%s: %s", err.Error(), detail)
+func makeErrorWithDetails(message string, detail string) error {
+	return ufmt.Errorf("%s: %s", message, detail)
 }

@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test_token/test_dai"
+gno = "0.9"

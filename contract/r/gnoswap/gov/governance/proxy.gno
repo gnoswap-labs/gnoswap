@@ -15,6 +15,7 @@ func ProposeText(
 	description string,
 ) int64 {
 	return getImplementation().ProposeText(
+		0, cur,
 		title,
 		description,
 	)
@@ -41,6 +42,7 @@ func ProposeCommunityPoolSpend(
 	amount int64,
 ) int64 {
 	return getImplementation().ProposeCommunityPoolSpend(
+		0, cur,
 		title,
 		description,
 		to,
@@ -68,6 +70,7 @@ func ProposeParameterChange(
 	executions string,
 ) int64 {
 	return getImplementation().ProposeParameterChange(
+		0, cur,
 		title,
 		description,
 		numToExecute,
@@ -90,6 +93,7 @@ func Vote(
 	yes bool,
 ) string {
 	return getImplementation().Vote(
+		0, cur,
 		proposalId,
 		yes,
 	)
@@ -107,7 +111,7 @@ func Execute(
 	cur realm,
 	proposalId int64,
 ) int64 {
-	return getImplementation().Execute(proposalId)
+	return getImplementation().Execute(0, cur, proposalId)
 }
 
 // Cancel cancels the proposal with the given ID.
@@ -122,7 +126,7 @@ func Cancel(
 	cur realm,
 	proposalId int64,
 ) int64 {
-	return getImplementation().Cancel(proposalId)
+	return getImplementation().Cancel(0, cur, proposalId)
 }
 
 // Reconfigure updates the governance configuration parameters.
@@ -151,6 +155,7 @@ func Reconfigure(
 	executionWindow int64,
 ) int64 {
 	return getImplementation().Reconfigure(
+		0, cur,
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
