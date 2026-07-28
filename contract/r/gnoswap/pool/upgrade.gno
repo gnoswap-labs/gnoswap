@@ -70,10 +70,6 @@ func UpgradeImpl(cur realm, packagePath string) {
 	}
 }
 
-// errUpgradeWhileLocked is returned when UpgradeImpl is invoked while the
-// pool's reentrancy lock (StoreKeyUnlocked) is held.
-const errUpgradeWhileLocked = "cannot upgrade pool implementation while pool is locked"
-
 // assertPoolUnlocked panics if the pool's reentrancy lock is currently held.
 // It mirrors poolV1.assertPoolUnlocked (r/gnoswap/pool/v1/lock.gno): read-only,
 // so it is safe to call before the admin/governance authorization check too.
