@@ -378,12 +378,6 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		}
 		project.SetTiers(updatedTiers)
 
-		projects := lp.store.GetProjects()
-		projects.Set(project.ID(), project)
-		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
-			return 0, err
-		}
-
 		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, refundableAmount)
 	}
 
