@@ -387,7 +387,7 @@ func (self *RewardState) applyWarmup() {
 		warmupReward := self.rewards[i]
 
 		// calculate warmup reward applying warmup ratio
-		self.rewards[i] = gnsmath.SafeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+		self.rewards[i] = gnsmath.SafeMulDivInt64(warmupReward, int64(warmup.WarmupRatio), 100)
 
 		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
 		self.penalties[i] = gnsmath.SafeSubInt64(warmupReward, self.rewards[i])
