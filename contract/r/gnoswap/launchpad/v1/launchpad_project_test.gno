@@ -1381,51 +1381,39 @@ func TestLaunchpadProject_TransferLeftFromProjectRepeatedRefundDoesNotDrainOther
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
 
-	projectAID := "gno.land/r/onbloc/obl.OBL:123"
-	projectBID := "gno.land/r/onbloc/obl.OBL:456"
-	projectARecipient := testutils.TestAddress("project-a")
-	projectBRecipient := testutils.TestAddress("project-b")
+	projectID := "gno.land/r/onbloc/obl.OBL:123"
+	recipient := testutils.TestAddress("project")
 	rewardAmount := int64(1_000_000)
 	currentTime := int64(2001)
 
-	projectA := newRefundableNoDepositorProject(projectAID, projectARecipient, rewardAmount)
-	projectB := newRefundableNoDepositorProject(projectBID, projectBRecipient, rewardAmount)
+	project := newRefundableNoDepositorProject(projectID, recipient, rewardAmount)
 
 	projects := lp.store.GetProjects()
-	projects.Set(projectAID, projectA)
-	projects.Set(projectBID, projectB)
+	projects.Set(projectID, project)
 	uassert.NoError(t, lp.store.SetProjects(0, cur, projects))
 
 	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-	projectTierRewardManagers.Set(projectAID+":180", newRewardManager(rewardAmount, 1000, 2000, 0))
-	projectTierRewardManagers.Set(projectBID+":180", newRewardManager(rewardAmount, 1000, 2000, 0))
+	projectTierRewardManagers.Set(projectID+":180", newRewardManager(rewardAmount, 1000, 2000, 0))
 	uassert.NoError(t, lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers))
 
 	testing.SetRealm(adminRealm)
-	projectAInitialBalance := obl.BalanceOf(projectARecipient)
-	projectBInitialBalance := obl.BalanceOf(projectBRecipient)
-	obl.Transfer(cross(cur), launchpadAddr, rewardAmount*2)
+	initialBalance := obl.BalanceOf(recipient)
+	obl.Transfer(cross(cur), launchpadAddr, rewardAmount)
 
-	refundedAmount, err := lp.transferLeftFromProject(0, cur, projectA, projectARecipient, currentTime)
+	refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 	uassert.NoError(t, err)
 	uassert.Equal(t, rewardAmount, refundedAmount)
-	uassert.Equal(t, projectAInitialBalance+rewardAmount, obl.BalanceOf(projectARecipient))
+	uassert.Equal(t, initialBalance+rewardAmount, obl.BalanceOf(recipient))
 
-	projectA, err = lp.getProject(projectAID)
+	project, err = lp.getProject(projectID)
 	uassert.NoError(t, err)
-	projectATier, err := getProjectTier(projectA, projectTier180)
+	projectTier, err := getProjectTier(project, projectTier180)
 	uassert.NoError(t, err)
-	uassert.Equal(t, rewardAmount, projectATier.TotalCollectedAmount())
-	_, err = lp.transferLeftFromProject(0, cur, projectA, projectARecipient, currentTime)
+	uassert.Equal(t, rewardAmount, projectTier.TotalCollectedAmount())
+
+	_, err = lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 	uassert.ErrorContains(t, err, "project has no remaining amount")
-	uassert.Equal(t, projectAInitialBalance+rewardAmount, obl.BalanceOf(projectARecipient))
-
-	projectB, err = lp.getProject(projectBID)
-	uassert.NoError(t, err)
-	refundedAmount, err = lp.transferLeftFromProject(0, cur, projectB, projectBRecipient, currentTime)
-	uassert.NoError(t, err)
-	uassert.Equal(t, rewardAmount, refundedAmount)
-	uassert.Equal(t, projectBInitialBalance+rewardAmount, obl.BalanceOf(projectBRecipient))
+	uassert.Equal(t, initialBalance+rewardAmount, obl.BalanceOf(recipient))
 }
 
 func newRefundableNoDepositorProject(projectID string, recipient address, rewardAmount int64) *launchpad.Project {

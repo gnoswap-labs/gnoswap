@@ -325,25 +325,25 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	for duration, tier := range project.Tiers() {
 		// Calculate pending rewards for remaining depositors
 		currentDepositCount := getTierCurrentDepositCount(tier)
-		claimableReward := int64(0)
+		tierCollectableReward := int64(0)
 
 		if currentDepositCount > 0 {
 			var err error
-			claimableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
+			tierCollectableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
 			if err != nil {
 				return 0, err
 			}
 
-			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, claimableReward)
+			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, tierCollectableReward)
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
-		refundableAmount := gnsmath.SafeSubInt64(leftReward, claimableReward)
-		if refundableAmount < 0 {
-			return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))
+		tierRefundableAmount := gnsmath.SafeSubInt64(leftReward, tierCollectableReward)
+		if tierRefundableAmount < 0 {
+			return 0, errors.New(ufmt.Sprintf("tierRefundableAmount(%d) < 0", tierRefundableAmount))
 		}
 
-		refundableAmountsByTier[duration] = refundableAmount
+		refundableAmountsByTier[duration] = tierRefundableAmount
 		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
 		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
 		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
@@ -358,15 +358,15 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
-	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
+	// Calculate refundable amount: project remaining minus collectable rewards for remaining depositors
 	projectLeftReward := accumLeftReward
-	refundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
+	projectRefundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
 
-	if refundableAmount < 0 {
-		return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))
+	if projectRefundableAmount < 0 {
+		return 0, errors.New(ufmt.Sprintf("projectRefundableAmount(%d) < 0", projectRefundableAmount))
 	}
 
-	if refundableAmount > 0 {
+	if projectRefundableAmount > 0 {
 		updatedTiers := make(map[int64]*launchpad.ProjectTier)
 		for duration, tier := range project.Tiers() {
 			tierRefundableAmount := refundableAmountsByTier[duration]
@@ -378,13 +378,13 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		}
 		project.SetTiers(updatedTiers)
 
-		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, refundableAmount)
+		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, projectRefundableAmount)
 	}
 
-	return refundableAmount, nil
+	return projectRefundableAmount, nil
 }
 
-// applyTierRewardGrowthWithRewards calculates the total claimable rewards
+// applyTierRewardGrowthWithRewards calculates the total collectable rewards
 // for all active deposits in a specific tier.
 func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
@@ -392,7 +392,7 @@ func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectT
 		return 0, err
 	}
 
-	// Update reward accumulation to current time before calculating claimable.
+	// Update reward accumulation to current time before calculating collectable rewards.
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime)
 	if err != nil {
 		return 0, err
