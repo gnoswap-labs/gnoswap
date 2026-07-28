@@ -10,8 +10,6 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-const ErrSpoofedRealm = "rlm does not match the current crossing frame"
-
 var (
 	domainPath string
 

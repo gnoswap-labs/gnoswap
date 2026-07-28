@@ -131,6 +131,26 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/pool/nonexistent",
 		},
+		{
+			name: "upgrade impl is failed while pool is locked",
+			setup: func(cur realm, t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
+
+				// Simulate a swap holding the reentrancy lock, e.g. a swapCallback
+				// reentering through governance.Execute before the swap unlocks.
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+				NewPoolStore(kvStore).SetUnlocked(0, cur, false)
+			},
+			packagePath:          "gno.land/r/gnoswap/pool/new_version",
+			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedVersion:      "v1",
+			expectedHasAbort:     true,
+			expectedAbortMessage: errUpgradeWhileLocked,
+		},
 	}
 
 	for _, tt := range tests {
