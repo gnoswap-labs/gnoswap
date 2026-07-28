@@ -28,7 +28,7 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.
 - `refunded` flag prevents double-claim on `EndExternalIncentive`. Set atomically.
 - `lastCollectTime` tracked **per incentive** (not shared). Updated only after successful transfer.
-- `rewardPerSecond = totalReward / duration` — integer truncation leaves dust. Verify dust does not accumulate into locked balance.
+- `rewardPerSecondX128 = (totalReward << 128) / duration` — reward rate is scaled by 2^128 (Q128) before storage, so the per-second truncation collapses to at most 1 wei over the incentive's full duration instead of accumulating as dust.
 - External incentive ending currently refunds reward tokens and the GNS deposit to the explicit `refundAddress` argument, not implicitly to the creator.
 
 ### Warmup
@@ -41,5 +41,5 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - Pool tier removal blocks unstake → NFTs permanently locked.
 - `lastCollectTime` shared across incentives → wrong reward amounts.
 - `referrer` not forwarded → lost referral attribution.
-- `rewardPerSecond` dust not handled → small balance permanently locked.
+- Assuming `rewardPerSecond` is a plain integer (pre-Q128 dust bug) instead of the current Q128-scaled `rewardPerSecondX128` → wrong reward-rate math when reading the raw value.
 - Documenting incentive refunds as creator-only → wrong operator/admin expectations when `refundAddress` is supplied.

@@ -1,4 +1,4 @@
-// package v1 manages liquidity mining rewards for GnoSwap positions.
+// package staker manages liquidity mining rewards for GnoSwap positions.
 //
 // The staker distributes GNS emissions and external incentives to liquidity
 // providers based on their position size, price range, and staking duration.

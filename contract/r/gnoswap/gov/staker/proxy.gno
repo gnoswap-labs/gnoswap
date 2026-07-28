@@ -65,11 +65,15 @@ func CollectReward(cur realm) {
 }
 
 // CollectEmissionReward claims accumulated GNS emission rewards.
+//
+// Not yet implemented: currently panics with "NotImplementYet".
 func CollectEmissionReward(cur realm) {
 	getImplementation().CollectEmissionReward(0, cur)
 }
 
 // CollectProtocolFeeReward claims accumulated protocol fee rewards for the provided token path.
+//
+// Not yet implemented: currently panics with "NotImplementYet".
 func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
@@ -85,6 +89,8 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 
 // CollectEmissionRewardFromLaunchPad claims accumulated launchpad emission rewards.
 //
+// Not yet implemented: currently panics with "NotImplementYet".
+//
 // Parameters:
 //   - to: address to collect rewards for
 func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
@@ -92,6 +98,8 @@ func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
 }
 
 // CollectProtocolFeeRewardFromLaunchPad claims accumulated launchpad protocol fee rewards for the provided token path.
+//
+// Not yet implemented: currently panics with "NotImplementYet".
 //
 // Parameters:
 //   - to: address to collect rewards for

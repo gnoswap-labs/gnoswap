@@ -25,7 +25,7 @@ import (
 //
 // Returns:
 //   - amount: original GNS deposit amount returned to the depositor
-//   - err: nil on success; withdrawal failures panic before returning
+//   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning
 // Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {

@@ -57,7 +57,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 A proposal is considered valid and executable when:
 - The voting period has ended
-- Total votes meet the quorum threshold computed from the proposal's snapshotted maximum voting weight
+- Total votes meet the quorum threshold computed from the total xGNS supply at proposal creation time
 - `YES` votes strictly exceed `NO` votes (ties do not pass)
 - The execution delay period (configured via `ExecutionDelay` default: 24 hours) has passed after voting ends
 - Within the execution window period (configured via `ExecutionWindow` default: 30 days)
@@ -78,11 +78,11 @@ voteWeight = (snapshot1 + snapshot2) / 2
 ### Quorum Calculation
 
 ```go
-maxVotingWeightSnapshot = averageVotingWeightAtProposalCreation
-quorumAmount = maxVotingWeightSnapshot * quorumPercent / 100  // quorumPercent defaults to 50
+quorumWeight = totalXGnsSupplyAtProposalCreation
+quorumAmount = quorumWeight * quorumPercent / 100  // quorumPercent defaults to 50
 ```
 
-The quorum threshold is calculated by applying the `Quorum` percentage (default: 50%) to the proposal's snapshotted maximum voting weight at creation time. A proposal passes only when total votes reach quorum and the accumulated `YES` votes strictly exceed the accumulated `NO` votes.
+The quorum threshold is calculated by applying the `Quorum` percentage (default: 50%) to the total xGNS supply at proposal creation time, not to the proposer's or voters' smoothed voting weight. A proposal passes only when total votes reach quorum and the accumulated `YES` votes strictly exceed the accumulated `NO` votes.
 
 ### Rewards Distribution
 
@@ -120,4 +120,4 @@ Undelegate(cross, delegateTo, amount)
 - Sybil resistance through stake weighting
 - Timelock prevents rushed execution
 - Single proposal limit per address
-- Proposal quorum is fixed from the creation-time voting-weight snapshot
+- Proposal quorum is fixed from the creation-time total xGNS supply

@@ -38,7 +38,6 @@ package protocol_fee
 
 import "gno.land/p/gnoswap/store"
 import "gno.land/p/gnoswap/version_manager"
-import "chain/runtime"
 
 var manager version_manager.VersionManager
 

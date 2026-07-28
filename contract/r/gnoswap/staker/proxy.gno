@@ -34,11 +34,12 @@ func UnStakeToken(cur realm, positionId uint64) string {
 // Returns:
 //   - gnsAmount: GNS reward amount sent to the user after fee handling
 //   - gnsPenalty: GNS penalty amount redirected during collection
-//   - externalRewards: reward amounts sent to the user by reward token path
+//   - externalRewards: gross reward amount per reward token, before protocol fee
+//     deduction; the amount actually transferred to the user may be lower
 //   - externalPenalties: penalty amounts redirected by reward token path
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	poolPath, stakingDetails, internalRewards, externalRewards := getImplementation().CollectReward(0, cur, positionId)
-	return poolPath, stakingDetails, cloneStringInt64Map(internalRewards), cloneStringInt64Map(externalRewards)
+	gnsAmount, gnsPenalty, externalRewards, externalPenalties := getImplementation().CollectReward(0, cur, positionId)
+	return gnsAmount, gnsPenalty, cloneStringInt64Map(externalRewards), cloneStringInt64Map(externalPenalties)
 }
 
 // SetPoolTier sets the reward tier for a pool.

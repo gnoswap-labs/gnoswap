@@ -65,10 +65,11 @@
 // Which one a given method checks is a per-method domain decision, not a v2
 // framework rule. The store currently checks:
 //
-//   - `Set` / `Delete`: `rlm.Previous().Address()` (the caller) against the
-//     write ACL. Set additionally bypasses the ACL when `rlm.IsCode()` is
-//     false so EOA / user-realm callers (deploy, tests) can populate state
-//     without prior registration; Delete has no such bypass.
+//   - `Set` / `Delete`: `rlm.Address()` (the realm performing the write, i.e.
+//     the domain realm calling into the store) against the write ACL. Set
+//     additionally bypasses the ACL when `rlm.IsCode()` is false so EOA /
+//     user-realm callers (deploy, tests) can populate state without prior
+//     registration; Delete has no such bypass.
 //   - `AddAuthorizedCaller`, `UpdateAuthorizedCaller`,
 //     `RemoveAuthorizedCaller`: `rlm.Address()` (the current realm) against
 //     the domain address.
@@ -128,8 +129,8 @@
 //
 //   - **Read Operations** (`Get`, `GetInt64`, `GetString`, ...): no permission
 //     check; reads are public within the package.
-//   - **Write Operations** (`Set`, `Delete`): require the caller --
-//     `rlm.Previous().Address()` -- to be in the write ACL. Set additionally
+//   - **Write Operations** (`Set`, `Delete`): require the calling realm --
+//     `rlm.Address()` -- to be in the write ACL. Set additionally
 //     bypasses the ACL when the immediate caller is an EOA / user realm
 //     (`!rlm.IsCode()`); Delete has no such bypass.
 //   - **Management Operations** (`AddAuthorizedCaller`,
@@ -150,7 +151,7 @@
 // The package defines several error types:
 //
 //   - `ErrKeyNotFound` - Requested key does not exist.
-//   - `ErrWritePermissionDenied` - the caller (`rlm.Previous().Address()`) is
+//   - `ErrWritePermissionDenied` - the calling realm (`rlm.Address()`) is
 //     not in the write ACL. For Set, this only fires when `rlm.IsCode()` is
 //     true; the EOA / user-realm path bypasses the ACL.
 //   - `ErrUpdatePermissionDenied` - ACL change attempted from a current realm

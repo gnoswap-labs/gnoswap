@@ -39,7 +39,7 @@ func SetGovStakerPct(cur realm, pct int64) {
 //   - amount: amount to add
 //
 // Returns:
-//   - err: nil on success; errProtocolFeeHalted when protocol-fee collection is halted
+//   - err: nil on success; errSpoofedRealm for a spoofed-realm call; errProtocolFeeHalted when protocol-fee collection is halted
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
 	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }

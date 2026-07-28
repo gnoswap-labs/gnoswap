@@ -1,4 +1,4 @@
-// package v1 handles token swaps through GnoSwap liquidity pools.
+// package router handles token swaps through GnoSwap liquidity pools.
 //
 // The router provides user-facing swap functions with slippage protection,
 // multi-hop routing, and both exact input and exact output swap modes.

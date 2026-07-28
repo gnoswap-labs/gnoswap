@@ -150,7 +150,7 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
-// EmissionCacheUpdateHook updates the emission cache when called.
+// emissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
 func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
@@ -397,7 +397,9 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 // Returns:
 //   - gnsAmount: GNS reward amount sent to the user after fee handling
 //   - gnsPenalty: GNS penalty amount redirected during collection
-//   - externalRewards: reward amounts sent to the user by reward token path
+//   - externalRewards: gross reward amount per reward token, before protocol fee
+//     deduction via handleStakingRewardFee; the amount actually transferred to
+//     the user is the net amount and may be lower than this value
 //   - externalPenalties: penalty amounts redirected by reward token path
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	if !rlm.IsCurrent() {

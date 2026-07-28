@@ -4,7 +4,7 @@ Liquidity mining and reward distribution for LP positions.
 
 ## Overview
 
-Staker manages distribution of internal (GNS emission) and external (user-provided) rewards to staked LP positions, with time-weighted rewards and warmup periods.
+Staker manages distribution of internal (GNS emission) and external (admin-funded) rewards to staked LP positions, with time-weighted rewards and warmup periods.
 
 ## Configuration
 
@@ -23,7 +23,7 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 - Distributed proportionally to in-range liquidity
 - Unclaimed rewards go to community pool
 
-### External Rewards (User Incentives)
+### External Rewards (Admin-Funded Incentives)
 - Created for specific pools
 - Constant reward per second over the configured incentive window
 - Proportional to staked liquidity
@@ -49,7 +49,7 @@ Unstakes position and collects all rewards.
 Collects accumulated rewards without unstaking.
 
 ### `CreateExternalIncentive`
-Creates external reward program for specific pool.
+Creates external reward program for specific pool. Admin only.
 
 ### `EndExternalIncentive`
 Ends incentive program and refunds remaining rewards to the provided refund address.
@@ -182,6 +182,7 @@ UnStakeToken(cross, 123)
 ## Security
 
 - Positions locked during staking
+- External incentive creation restricted to admin
 - External incentives require GNS deposit
 - Warmup periods prevent gaming
 - Unclaimed rewards properly redirected

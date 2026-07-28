@@ -191,7 +191,9 @@ func (r *routerV1) DrySwapRoute(
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), success
 }
 
-// drySwapRoute is a function for applying cross realm.
+// drySwapRoute is the read-only simulation path; it does not cross realms —
+// the caller's address is captured once via unsafe.PreviousRealm in
+// SwapProcessor.payer.
 func (r *routerV1) drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount int64,
