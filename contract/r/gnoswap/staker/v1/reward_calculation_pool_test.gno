@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -683,6 +684,27 @@ func TestRewardStateApplyWarmup(cur realm, t *testing.T) {
 			warmupRatios:      []uint64{30},
 			expectedRewards:   []int64{300},
 			expectedPenalties: []int64{700},
+		},
+		{
+			name:              "apply 100% warmup without intermediate overflow",
+			rewards:           []int64{math.MaxInt64},
+			warmupRatios:      []uint64{100},
+			expectedRewards:   []int64{math.MaxInt64},
+			expectedPenalties: []int64{0},
+		},
+		{
+			name:              "apply 50% warmup without intermediate overflow",
+			rewards:           []int64{math.MaxInt64},
+			warmupRatios:      []uint64{50},
+			expectedRewards:   []int64{math.MaxInt64 / 2},
+			expectedPenalties: []int64{math.MaxInt64 - math.MaxInt64/2},
+		},
+		{
+			name:              "apply 100% warmup above int64 multiplication threshold",
+			rewards:           []int64{math.MaxInt64/100 + 1},
+			warmupRatios:      []uint64{100},
+			expectedRewards:   []int64{math.MaxInt64/100 + 1},
+			expectedPenalties: []int64{0},
 		},
 	}
 
