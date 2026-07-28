@@ -48,10 +48,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
-// The pool's reentrancy lock must not be held: a swap can reach here through
-// swapCallback -> governance.Execute before it finishes, and running the new
-// version's initializer against swap accounting that is still mid-update can
-// corrupt pool state or leave the pool unusable.
+// The pool must not be locked (see assertPoolUnlocked).
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	caller := cur.Previous().Address()
