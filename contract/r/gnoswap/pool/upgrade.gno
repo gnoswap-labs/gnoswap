@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/access"
 )
 
@@ -47,10 +48,16 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
+// The pool's reentrancy lock must not be held: a swap can reach here through
+// swapCallback -> governance.Execute before it finishes, and running the new
+// version's initializer against swap accounting that is still mid-update can
+// corrupt pool state or leave the pool unusable.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertPoolUnlocked()
 
 	err := versionManager.ChangeImplementation(0, cur, packagePath)
 	if err != nil {
@@ -60,6 +67,22 @@ func UpgradeImpl(cur realm, packagePath string) {
 	err = updateImplementation()
 	if err != nil {
 		panic(err)
+	}
+}
+
+// errUpgradeWhileLocked is returned when UpgradeImpl is invoked while the
+// pool's reentrancy lock (StoreKeyUnlocked) is held.
+const errUpgradeWhileLocked = "cannot upgrade pool implementation while pool is locked"
+
+// assertPoolUnlocked panics if the pool's reentrancy lock is currently held.
+// It mirrors poolV1.assertPoolUnlocked (r/gnoswap/pool/v1/lock.gno): read-only,
+// so it is safe to call before the admin/governance authorization check too.
+// HasUnlocked() is false until a swap has ever run, so pools with no swap
+// history are unaffected.
+func assertPoolUnlocked() {
+	s := NewPoolStore(kvStore)
+	if s.HasUnlocked() && !s.GetUnlocked() {
+		panic(errors.New(errUpgradeWhileLocked))
 	}
 }
 
