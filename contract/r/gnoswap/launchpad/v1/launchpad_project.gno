@@ -320,13 +320,16 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	accumLeftReward := int64(0)
 	accumCollectedReward := int64(0)
 	accumCollectableReward := int64(0)
+	refundableAmountsByTier := make(map[int64]int64)
 
-	for _, tier := range project.Tiers() {
+	for duration, tier := range project.Tiers() {
 		// Calculate pending rewards for remaining depositors
 		currentDepositCount := getTierCurrentDepositCount(tier)
+		claimableReward := int64(0)
 
 		if currentDepositCount > 0 {
-			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentTime)
+			var err error
+			claimableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
 			if err != nil {
 				return 0, err
 			}
@@ -335,6 +338,12 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
+		refundableAmount := gnsmath.SafeSubInt64(leftReward, claimableReward)
+		if refundableAmount < 0 {
+			return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))
+		}
+
+		refundableAmountsByTier[duration] = refundableAmount
 		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
 		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
 		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
@@ -358,6 +367,23 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	}
 
 	if refundableAmount > 0 {
+		updatedTiers := make(map[int64]*launchpad.ProjectTier)
+		for duration, tier := range project.Tiers() {
+			tierRefundableAmount := refundableAmountsByTier[duration]
+			if tierRefundableAmount > 0 {
+				tier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(tier.TotalCollectedAmount(), tierRefundableAmount))
+			}
+
+			updatedTiers[duration] = tier
+		}
+		project.SetTiers(updatedTiers)
+
+		projects := lp.store.GetProjects()
+		projects.Set(project.ID(), project)
+		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+			return 0, err
+		}
+
 		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, refundableAmount)
 	}
 

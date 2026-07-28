@@ -1372,3 +1372,75 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 		})
 	}
 }
+
+func TestLaunchpadProject_TransferLeftFromProjectRepeatedRefundDoesNotDrainOtherProject(cur realm, t *testing.T) {
+	initLaunchpadProjectTest(t)
+	lp := getTestImplementation()
+
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	projectAID := "gno.land/r/onbloc/obl.OBL:123"
+	projectBID := "gno.land/r/onbloc/obl.OBL:456"
+	projectARecipient := testutils.TestAddress("project-a")
+	projectBRecipient := testutils.TestAddress("project-b")
+	rewardAmount := int64(1_000_000)
+	currentTime := int64(2001)
+
+	projectA := newRefundableNoDepositorProject(projectAID, projectARecipient, rewardAmount)
+	projectB := newRefundableNoDepositorProject(projectBID, projectBRecipient, rewardAmount)
+
+	projects := lp.store.GetProjects()
+	projects.Set(projectAID, projectA)
+	projects.Set(projectBID, projectB)
+	uassert.NoError(t, lp.store.SetProjects(0, cur, projects))
+
+	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+	projectTierRewardManagers.Set(projectAID+":180", newRewardManager(rewardAmount, 1000, 2000, 0))
+	projectTierRewardManagers.Set(projectBID+":180", newRewardManager(rewardAmount, 1000, 2000, 0))
+	uassert.NoError(t, lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers))
+
+	testing.SetRealm(adminRealm)
+	projectAInitialBalance := obl.BalanceOf(projectARecipient)
+	projectBInitialBalance := obl.BalanceOf(projectBRecipient)
+	obl.Transfer(cross(cur), launchpadAddr, rewardAmount*2)
+
+	refundedAmount, err := lp.transferLeftFromProject(0, cur, projectA, projectARecipient, currentTime)
+	uassert.NoError(t, err)
+	uassert.Equal(t, rewardAmount, refundedAmount)
+	uassert.Equal(t, projectAInitialBalance+rewardAmount, obl.BalanceOf(projectARecipient))
+
+	projectA, err = lp.getProject(projectAID)
+	uassert.NoError(t, err)
+	projectATier, err := getProjectTier(projectA, projectTier180)
+	uassert.NoError(t, err)
+	uassert.Equal(t, rewardAmount, projectATier.TotalCollectedAmount())
+	_, err = lp.transferLeftFromProject(0, cur, projectA, projectARecipient, currentTime)
+	uassert.ErrorContains(t, err, "project has no remaining amount")
+	uassert.Equal(t, projectAInitialBalance+rewardAmount, obl.BalanceOf(projectARecipient))
+
+	projectB, err = lp.getProject(projectBID)
+	uassert.NoError(t, err)
+	refundedAmount, err = lp.transferLeftFromProject(0, cur, projectB, projectBRecipient, currentTime)
+	uassert.NoError(t, err)
+	uassert.Equal(t, rewardAmount, refundedAmount)
+	uassert.Equal(t, projectBInitialBalance+rewardAmount, obl.BalanceOf(projectBRecipient))
+}
+
+func newRefundableNoDepositorProject(projectID string, recipient address, rewardAmount int64) *launchpad.Project {
+	tier := launchpad.NewProjectTier(projectID, projectTier180, rewardAmount, 1000, 2000)
+	tier.SetID(projectID + ":180")
+	tier.SetTotalDepositCount(0)
+	tier.SetTotalWithdrawCount(0)
+	tier.SetTotalCollectedAmount(0)
+
+	project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
+	project.SetID(projectID)
+
+	tiers := make(map[int64]*launchpad.ProjectTier)
+	tiers[projectTier180] = tier
+	project.SetTiers(tiers)
+
+	return project
+}
