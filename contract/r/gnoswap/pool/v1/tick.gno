@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"chain"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -266,12 +264,6 @@ func tickCross(
 	thisTick.SetSecondsOutside(uint32(blockTimestamp) - thisTick.SecondsOutside())
 
 	setTick(p, tick, thisTick)
-
-	chain.Emit(
-		"PoolTickCross",
-		"poolPath", p.PoolPath(),
-		"tick", NewTickEventInfo(tick, thisTick).ToString(),
-	)
 
 	return i256.MustFromDecimal(thisTick.LiquidityNet())
 }
