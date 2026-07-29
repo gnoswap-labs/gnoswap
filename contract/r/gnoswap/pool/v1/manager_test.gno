@@ -49,7 +49,6 @@ func TestCreatePool(cur realm, t *testing.T) {
 		sqrtPrice   string
 		shouldPanic bool
 		panicMsg    string
-		inOrder     bool
 	}{
 		{
 			name:       "success - normal token pair",
@@ -91,7 +90,6 @@ func TestCreatePool(cur realm, t *testing.T) {
 			sqrtPrice:   "4295343490",
 			shouldPanic: false,
 			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo.FOO) < token1Path(gno.land/r/onbloc/baz.BAZ)",
-			inOrder:     true,
 		},
 		{
 			name:        "fail - pool already exists",
@@ -203,21 +201,31 @@ func TestCreatePool(cur realm, t *testing.T) {
 					mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 				})
 			} else {
+				expectedPoolInfo := newPoolParams(
+					tt.token0Path,
+					tt.token1Path,
+					tt.fee,
+					tt.sqrtPrice,
+					getMockInstance().GetFeeAmountTickSpacing(tt.fee),
+					getMockInstance().store.GetSlot0FeeProtocol(),
+				)
+				err := expectedPoolInfo.update()
+				uassert.Nil(t, err, "unexpected pool info update error")
+
 				mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
 				pool := getMockInstance().mustGetPool(poolPath)
 
-				expectedToken0 := tt.token0Path
-				expectedToken1 := tt.token1Path
-				if tt.inOrder {
-					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+				if pool.Token0Path() != expectedPoolInfo.Token0Path() || pool.Token1Path() != expectedPoolInfo.Token1Path() {
+					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+						pool.Token0Path(), pool.Token1Path(), expectedPoolInfo.Token0Path(), expectedPoolInfo.Token1Path())
 				}
 
-				if pool.Token0Path() != expectedToken0 || pool.Token1Path() != expectedToken1 {
-					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
-						pool.Token0Path(), pool.Token1Path(), expectedToken0, expectedToken1)
+				if pool.Slot0SqrtPriceX96().ToString() != expectedPoolInfo.SqrtPriceX96().ToString() {
+					t.Errorf("incorrect sqrtPriceX96 in pool. got %s want %s",
+						pool.Slot0SqrtPriceX96().ToString(), expectedPoolInfo.SqrtPriceX96().ToString())
 				}
 			}
 		})
