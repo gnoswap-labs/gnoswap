@@ -284,7 +284,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			name: "does not flip from nonzero to greater nonzero",
 			preconditions: func() {
 				deleteTick(pool, 0)
-				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(3))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -299,7 +299,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			name: "flips from nonzero to zero",
 			preconditions: func() {
 				deleteTick(pool, 0)
-				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(3))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -314,7 +314,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			name: "does not flip from nonzero to lesser nonzero",
 			preconditions: func() {
 				deleteTick(pool, 0)
-				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(3))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -329,8 +329,8 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			name: "reverts if total liquidity gross is greater than max",
 			preconditions: func() {
 				deleteTick(pool, 0)
-				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
-				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(3))
+				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(3))
+				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, true, u256.NewUint(3))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -345,10 +345,10 @@ func TestTickUpdate(cur realm, t *testing.T) {
 		{
 			name: "nets the liquidity based on upper flag",
 			preconditions: func() {
-				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(10))
-				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
-				tickUpdate(pool, 0, 0, i256.NewInt(3), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
-				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(10))
+				tickUpdate(pool, 0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(10))
+				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, true, u256.NewUint(10))
+				tickUpdate(pool, 0, 0, i256.NewInt(3), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, true, u256.NewUint(10))
+				tickUpdate(pool, 0, 0, i256.One(), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.NewUint(10))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -363,7 +363,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 		{
 			name: "reverts on overflow liquidity gross",
 			preconditions: func() {
-				tickUpdate(pool, 0, 0, i256.MustFromDecimal("170141183460469231731687303715884105726"), u256.Zero(), u256.Zero(), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+				tickUpdate(pool, 0, 0, i256.MustFromDecimal("170141183460469231731687303715884105726"), u256.Zero(), u256.Zero(), u256.Zero(), 0, 0, false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -380,7 +380,7 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			preconditions: func() {
 				deleteTick(pool, 0)
 				deleteTick(pool, 1)
-				tickUpdate(pool, 1, 1, i256.One(), u256.One(), u256.NewUint(2), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+				tickUpdate(pool, 1, 1, i256.One(), u256.One(), u256.NewUint(2), u256.Zero(), 0, 0, false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
 			},
 			tick:                 0,
 			tickCurrent:          0,
@@ -400,8 +400,8 @@ func TestTickUpdate(cur realm, t *testing.T) {
 		{
 			name: "does not set any growth fields if tick is already initialized",
 			preconditions: func() {
-				tickUpdate(pool, 1, 1, i256.One(), u256.One(), u256.NewUint(2), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
-				tickUpdate(pool, 1, 1, i256.One(), u256.NewUint(6), u256.NewUint(7), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+				tickUpdate(pool, 1, 1, i256.One(), u256.One(), u256.NewUint(2), u256.Zero(), 0, 0, false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+				tickUpdate(pool, 1, 1, i256.One(), u256.NewUint(6), u256.NewUint(7), u256.Zero(), 0, 0, false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
 			},
 			tick:                 1,
 			tickCurrent:          1,
@@ -452,6 +452,9 @@ func TestTickUpdate(cur realm, t *testing.T) {
 						tt.liquidityDelta,
 						tt.feeGrowthGlobal0X128,
 						tt.feeGrowthGlobal1X128,
+						u256.Zero(),
+						0,
+						0,
 						tt.upper,
 						tt.maxLiquidity,
 					)
@@ -470,6 +473,9 @@ func TestTickUpdate(cur realm, t *testing.T) {
 					tt.liquidityDelta,
 					tt.feeGrowthGlobal0X128,
 					tt.feeGrowthGlobal1X128,
+					u256.Zero(),
+					0,
+					0,
 					tt.upper,
 					tt.maxLiquidity,
 				)
@@ -484,6 +490,9 @@ func TestTickUpdate(cur realm, t *testing.T) {
 						tt.liquidityDelta,
 						tt.feeGrowthGlobal0X128,
 						tt.feeGrowthGlobal1X128,
+						u256.Zero(),
+						0,
+						0,
 						tt.upper,
 						tt.maxLiquidity,
 					)
@@ -494,6 +503,72 @@ func TestTickUpdate(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTickUpdateSeedsOracleOutsideForActiveTick(cur realm, t *testing.T) {
+	const (
+		startTime = int64(1000)
+		initTime  = int64(1010)
+		crossTime = int64(1020)
+	)
+
+	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 5, 0)
+	pool.SetLiquidity(u256.NewUint(100))
+
+	observationState := pl.NewObservationState(startTime)
+	pool.SetObservationState(observationState)
+	uassert.NoError(t, writeObservation(observationState, initTime, 5, pool.Liquidity()))
+
+	tickCumulativeAtInit, secondsPerLiquidityAtInit, err := observeSingle(
+		observationState,
+		initTime,
+		0,
+		pool.Slot0Tick(),
+		observationState.Index(),
+		pool.Liquidity(),
+		observationState.Cardinality(),
+	)
+	uassert.NoError(t, err)
+
+	restoreContext := setOracleTestContext(initTime)
+	defer restoreContext()
+	_, err = updatePosition(pool, newModifyPositionParams(address("g1lp"), 0, 10, i256.NewInt(10)), pool.Slot0Tick())
+	uassert.NoError(t, err)
+
+	lowerTick := getTick(pool, 0)
+	uassert.Equal(t, tickCumulativeAtInit, lowerTick.TickCumulativeOutside())
+	uassert.Equal(t, secondsPerLiquidityAtInit, lowerTick.SecondsPerLiquidityOutsideX128())
+	uassert.Equal(t, uint32(initTime), lowerTick.SecondsOutside())
+
+	tickCumulativeAtCross, secondsPerLiquidityAtCross, err := observeSingle(
+		observationState,
+		crossTime,
+		0,
+		pool.Slot0Tick(),
+		observationState.Index(),
+		pool.Liquidity(),
+		observationState.Cardinality(),
+	)
+	uassert.NoError(t, err)
+	expectedSecondsPerLiquidityOutside := u256.Zero().Sub(
+		u256.MustFromDecimal(secondsPerLiquidityAtCross),
+		u256.MustFromDecimal(secondsPerLiquidityAtInit),
+	)
+
+	tickCross(
+		pool,
+		0,
+		u256.Zero(),
+		u256.Zero(),
+		u256.MustFromDecimal(secondsPerLiquidityAtCross),
+		tickCumulativeAtCross,
+		crossTime,
+	)
+
+	lowerTick = getTick(pool, 0)
+	uassert.Equal(t, tickCumulativeAtCross-tickCumulativeAtInit, lowerTick.TickCumulativeOutside())
+	uassert.Equal(t, expectedSecondsPerLiquidityOutside.ToString(), lowerTick.SecondsPerLiquidityOutsideX128())
+	uassert.Equal(t, uint32(crossTime-initTime), lowerTick.SecondsOutside())
 }
 
 func TestTickCross(cur realm, t *testing.T) {

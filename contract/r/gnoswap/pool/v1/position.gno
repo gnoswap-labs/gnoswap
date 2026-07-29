@@ -316,6 +316,23 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 
 	var flippedLower, flippedUpper bool
 	if !liquidityDelta.IsZero() {
+		blockTimestamp := time.Now().Unix()
+		observationState := p.ObservationState()
+		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
+			observationState,
+			blockTimestamp,
+			0,
+			tick,
+			observationState.Index(),
+			p.Liquidity(),
+			observationState.Cardinality(),
+		)
+		if err != nil {
+			return pl.NewDefaultPositionInfo(), err
+		}
+
+		secondsPerLiquidityCumulativeX128 := u256.MustFromDecimal(secondsPerLiquidityStr)
+
 		flippedLower = tickUpdate(
 			p,
 			positionParams.tickLower,
@@ -323,6 +340,9 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
+			secondsPerLiquidityCumulativeX128,
+			tickCumulative,
+			blockTimestamp,
 			false,
 			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)
@@ -334,6 +354,9 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
+			secondsPerLiquidityCumulativeX128,
+			tickCumulative,
+			blockTimestamp,
 			true,
 			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)
