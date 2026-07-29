@@ -176,23 +176,22 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 }
 
 func lte(time, a, b int64) bool {
-	if (a <= time) && (time <= b) {
+	if a <= time && b <= time {
 		return a <= b
 	}
 
-	aAdjusted := u256.NewUintFromInt64(a)
-	bAdjusted := u256.NewUintFromInt64(b)
-	timeUint256 := u256.NewUintFromInt64(time)
+	aAdjusted := a
+	bAdjusted := b
 
-	if aAdjusted.Gt(timeUint256) {
-		aAdjusted = aAdjusted.Add(aAdjusted, u256.NewUintFromInt64(1<<32))
+	if a <= time {
+		aAdjusted += 1 << 32
 	}
 
-	if bAdjusted.Gt(timeUint256) {
-		bAdjusted = bAdjusted.Add(bAdjusted, u256.NewUintFromInt64(1<<32))
+	if b <= time {
+		bAdjusted += 1 << 32
 	}
 
-	return aAdjusted.Lte(bAdjusted)
+	return aAdjusted <= bAdjusted
 }
 
 func writeObservation(
@@ -281,6 +280,10 @@ func observeSingle(
 		}
 
 		return last.TickCumulative(), last.SecondsPerLiquidityCumulativeX128(), nil
+	}
+
+	if int64(secondsAgo) > currentTime {
+		return 0, "", errors.New(errObservationTooOld)
 	}
 
 	target := currentTime - int64(secondsAgo)
