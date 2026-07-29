@@ -1122,8 +1122,8 @@ func TestCollect(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedOwed1After, utils.FormatInt(positionAfter.TokensOwed1()),
 				"TokensOwed1 should decrease by collected amount")
 
-			// Verify pool balance >= tokensOwed invariant
-			validateCollectInvariant(t, pool, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+			// Verify Collect never stores negative pool balances.
+			validateCollectInvariant(t, pool)
 
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
@@ -1134,20 +1134,58 @@ func TestCollect(cur realm, t *testing.T) {
 			resetObject(cur, t)
 		})
 	}
+
+	t.Run("insufficient_internal_balance_caps_collect", func(cur realm, t *testing.T) {
+		pool := setupStablecoinPool(cur, t)
+		approveTokensForPool(cur, t, pool)
+		testing.SetRealm(posRealm)
+
+		mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+		mockInstanceBurn(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+		positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+		positionBefore := mustGetPositionByPool(pool, positionKey)
+		owed0Before := positionBefore.TokensOwed0()
+		reducedBalance0 := int64(1)
+
+		pool.SetBalanceToken0(reducedBalance0)
+
+		amount0, amount1 := mockInstanceCollect(0, cur,
+			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+			MAX_INT64, "0",
+		)
+
+		uassert.Equal(t, utils.FormatInt(reducedBalance0), amount0,
+			"Collect should cap amount0 by pool balance")
+		uassert.Equal(t, "0", amount1,
+			"Collect should not collect token1 when zero is requested")
+		uassert.Equal(t, int64(0), pool.BalanceToken0(),
+			"Pool balance0 should stop at zero")
+
+		positionAfter := mustGetPositionByPool(pool, positionKey)
+		expectedOwed0After := gnsmath.SafeSubInt64(owed0Before, reducedBalance0)
+		uassert.Equal(t, utils.FormatInt(expectedOwed0After), utils.FormatInt(positionAfter.TokensOwed0()),
+			"TokensOwed0 should only decrease by the capped collected amount")
+		uassert.True(t, positionAfter.TokensOwed0() > 0,
+			"Remaining TokensOwed0 should stay claimable after partial collect")
+		uassert.True(t, pool.BalanceToken0() >= 0,
+			"Pool balance0 must never become negative")
+
+		resetObject(cur, t)
+	})
 }
 
-// validateCollectInvariant validates pool balance >= tokensOwed invariant
-func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
+// validateCollectInvariant validates collect never stores negative pool balances.
+func validateCollectInvariant(t *testing.T, pool *pl.Pool) {
 	t.Helper()
-	positionKey := getPositionKey(tickLower, tickUpper)
-	position := mustGetPositionByPool(pool, positionKey)
 
-	uassert.True(t, pool.BalanceToken0() >= position.TokensOwed0(),
-		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
-			utils.FormatInt(pool.BalanceToken0()), utils.FormatInt(position.TokensOwed0())))
-	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
-		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
-			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
+	uassert.True(t, pool.BalanceToken0() >= 0,
+		ufmt.Sprintf("Pool balance0 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken0())))
+	uassert.True(t, pool.BalanceToken1() >= 0,
+		ufmt.Sprintf("Pool balance1 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken1())))
 }
 
 func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {

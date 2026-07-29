@@ -238,14 +238,17 @@ func (i *poolV1) Collect(
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
-	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
-	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
+	amount0 := minCollectAmount(amount0Req, position.TokensOwed0(), pool.BalanceToken0())
+	amount1 := minCollectAmount(amount1Req, position.TokensOwed1(), pool.BalanceToken1())
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
 	if amount0 > 0 {
 		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
+		token0Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
@@ -253,7 +256,10 @@ func (i *poolV1) Collect(
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
+		token1Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
@@ -396,6 +402,14 @@ func minRequestedAmount(request, available int64) int64 {
 	}
 
 	return request
+}
+
+func minCollectAmount(request, owed, balance int64) int64 {
+	if balance < 0 {
+		panic(errors.New(errBalanceUpdateFailed))
+	}
+
+	return minRequestedAmount(minRequestedAmount(request, owed), balance)
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
