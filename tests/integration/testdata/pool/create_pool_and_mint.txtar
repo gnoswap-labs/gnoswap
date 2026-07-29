@@ -9,6 +9,8 @@ loadpkg gno.land/r/demo/defi/foo20
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
+loadpkg gno.land/r/onbloc/foo
+loadpkg gno.land/r/onbloc/baz
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
@@ -78,6 +80,16 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.
 
 ## Check created pool
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000\")"
+# stdout true
+
+## Create pool with reversed token order and assert canonical event values
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/foo.FOO" -args "gno.land/r/onbloc/baz.BAZ" -args 500 -args 4295343490 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+# stdout 'GAS USED:   [0-9]+'
+# stdout 'STORAGE DELTA:  [0-9]+ bytes'
+# stdout 'TOTAL TX COST:  [0-9]+ugnot'
+# stdout 'EVENTS:     \[{"type":"Transfer","attrs":\[{"key":"token","value":"gno.land/r/gnoswap/gns.GNS.0000000"},{"key":"from","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"to","value":"g1[a-z0-9]+"},{"key":"value","value":"100000000"}\],"pkg_path":"gno.land/p/demo/tokens/grc20"},{"type":"PoolCreationFee","attrs":\[{"key":"prevAddr","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"prevRealm","value":""},{"key":"poolPath","value":"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"},{"key":"feeTokenPath","value":"gno.land/r/gnoswap/gns.GNS"},{"key":"feeAmount","value":"100000000"}\],"pkg_path":"gno.land/r/gnoswap/pool/v1"},{"type":"CreatePool","attrs":\[{"key":"prevAddr","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"prevRealm","value":""},{"key":"token0Path","value":"gno.land/r/onbloc/baz.BAZ"},{"key":"token1Path","value":"gno.land/r/onbloc/foo.FOO"},{"key":"fee","value":"500"},{"key":"sqrtPriceX96","value":"1461373636357701573206614361639251909071969339631"},{"key":"poolPath","value":"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"},{"key":"tick","value":"-?[0-9]+"},{"key":"tickSpacing","value":"10"}\],"pkg_path":"gno.land/r/gnoswap/pool/v1"},.*\]'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500\")"
 # stdout true
 
 ## Mint position
