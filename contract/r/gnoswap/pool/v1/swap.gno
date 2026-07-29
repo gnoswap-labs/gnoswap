@@ -151,7 +151,7 @@ type SwapComputation struct {
 //   - zeroForOne: Direction of swap (true = token0 to token1)
 //   - amountSpecified: Exact input (positive) or exact output (negative)
 //   - sqrtPriceLimitX96: Price limit for the swap
-//   - payer: Address that provides input tokens
+//   - payer: User-provided swap context. Pool settlement does not authenticate it.
 //   - swapCallback: Callback function to handle token transfers
 //
 // Returns amount0 and amount1 deltas as strings.
@@ -303,7 +303,6 @@ func (i *poolV1) Swap(
 		"zeroForOne", utils.FormatBool(zeroForOne),
 		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
-		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,
