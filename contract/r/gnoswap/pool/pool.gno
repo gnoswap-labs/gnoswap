@@ -120,6 +120,10 @@ func (p *Pool) SetTickBitmap(wordPos int16, tickBitmap string) {
 	p.tickBitmaps[wordPos] = tickBitmap
 }
 
+func (p *Pool) DeleteTickBitmap(wordPos int16) {
+	delete(p.tickBitmaps, wordPos)
+}
+
 func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]string) {
 	p.tickBitmaps = tickBitmaps
 }

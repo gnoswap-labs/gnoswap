@@ -3,7 +3,6 @@ package pool
 import (
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -77,19 +76,12 @@ func tickBitmapNextInitializedTickWithInOneWord(
 	return nextTick, initialized
 }
 
-// getTickBitmap gets the tick bitmap for the given word position
-// if the tick bitmap is not initialized, initialize it to zero
+// getTickBitmap gets the tick bitmap for the given word position.
+// Missing words are implicit zeroes.
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
-		setTickBitmap(p, wordPos, u256.Zero())
-		value, exist = p.TickBitmaps()[wordPos]
-		if !exist {
-			panic(newErrorWithDetail(
-				errDataNotFound,
-				ufmt.Sprintf("failed to initialize tickBitmap(%d)", wordPos),
-			))
-		}
+		return u256.Zero()
 	}
 
 	return u256.MustFromDecimal(value)
@@ -97,6 +89,11 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 
 // setTickBitmap sets the tick bitmap for the given word position
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
+	if tickBitmap.IsZero() {
+		p.DeleteTickBitmap(wordPos)
+		return
+	}
+
 	p.SetTickBitmap(wordPos, tickBitmap.ToString())
 }
 

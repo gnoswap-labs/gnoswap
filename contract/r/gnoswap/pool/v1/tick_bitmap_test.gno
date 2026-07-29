@@ -125,6 +125,25 @@ func TestTickBitmap_FlipTick_SetAndUnset(cur realm, t *testing.T) {
 	uassert.False(t, bitIsSet(t, p, 100, 20))
 }
 
+func TestTickBitmap_GetMissingWordDoesNotPersist(cur realm, t *testing.T) {
+	p := newTickBitmapPool(t)
+
+	bitmap := getTickBitmap(p, 123)
+
+	uassert.True(t, bitmap.IsZero())
+	uassert.Equal(t, 0, len(p.TickBitmaps()))
+}
+
+func TestTickBitmap_FlipTick_RemovesZeroWord(cur realm, t *testing.T) {
+	p := newTickBitmapPool(t)
+
+	tickBitmapFlipTick(p, 100, 20)
+	uassert.Equal(t, 1, len(p.TickBitmaps()))
+
+	tickBitmapFlipTick(p, 100, 20)
+	uassert.Equal(t, 0, len(p.TickBitmaps()))
+}
+
 func TestTickBitmap_FlipTick_PanicOnBadSpacing(cur realm, t *testing.T) {
 	p := newTickBitmapPool(t)
 	defer func() {
