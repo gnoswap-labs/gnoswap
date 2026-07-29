@@ -36,7 +36,8 @@ import (
 //   - Simple majority decides outcome
 //   - No execution phase (signal only)
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created text proposal
 func (gv *governanceV1) ProposeText(
 	_ int, rlm realm,
 	title string,
@@ -146,7 +147,8 @@ func (gv *governanceV1) ProposeText(
 //   - Single transfer per proposal
 //   - Tracks all disbursements on-chain
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created community-pool-spend proposal
 func (gv *governanceV1) ProposeCommunityPoolSpend(
 	_ int, rlm realm,
 	title string,
@@ -264,7 +266,8 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 //   - Target handlers must exist in the parameter registry
 //   - Parameters must match registered function signatures
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created parameter-change proposal
 func (gv *governanceV1) ProposeParameterChange(
 	_ int, rlm realm,
 	title string,

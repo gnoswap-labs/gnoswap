@@ -52,6 +52,8 @@ func (k *kvStore) Has(key string) bool {
 
 // Get retrieves a value by key.
 // Reads are public within the package; only writes are gated by the ACL.
+// Realms exposing sensitive values must enforce their own read policy before
+// calling into the store.
 func (k *kvStore) Get(key string) (any, error) {
 	value, exists := k.data[k.makeKey(key)]
 	if !exists {

@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
+// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, position, router, or staker contract.
 func assertIsPoolOrPositionOrRouterOrStaker(caller address) {
 	if access.IsAuthorized(prbac.ROLE_POOL.String(), caller) ||
 		access.IsAuthorized(prbac.ROLE_POSITION.String(), caller) ||

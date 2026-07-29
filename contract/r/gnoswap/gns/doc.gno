@@ -16,7 +16,6 @@
 // Key Functions:
 //   - InitEmissionState: Initializes emission schedule (emission contract only)
 //   - MintGns: Mints tokens per emission schedule (emission contract only)
-//   - Burn: Burns tokens from circulation (admin only)
 //   - Transfer/TransferFrom/Approve: Standard GRC20 operations
 //
 // The emission state tracks accumulated and remaining amounts per halving year,

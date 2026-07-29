@@ -19,7 +19,8 @@ import (
 // Parameters:
 //   - depositID: ID of the deposit to collect from
 //
-// Returns amount of reward collected.
+// Returns:
+//   - amount: reward token amount collected for the deposit
 // Only callable by deposit owner.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
 	if !rlm.IsCurrent() {

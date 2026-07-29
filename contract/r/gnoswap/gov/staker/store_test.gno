@@ -59,7 +59,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "governance has read permission",
+			name:                          "governance can read without write permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"),
 			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,

@@ -37,7 +37,8 @@ import (
 //   - Cannot vote twice on same proposal
 //   - Voting period typically 7 days
 //
-// Returns voting weight used as string.
+// Returns:
+//   - voteWeight: voting weight applied to the caller's vote, formatted as a string
 func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
 	if !rlm.IsCurrent() {
 		panic(errors.New(errSpoofedRealm))

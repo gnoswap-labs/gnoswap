@@ -361,7 +361,7 @@ No data migration required
 │ Step 2: Call pool/upgrade.gno           │
 │ - UpgradeImpl("pool/v2")                │
 │ - Switches implementation pointer       │
-│ - Updates storage permissions           │
+│ - Reuses proxy-owned storage access     │
 └─────────────────────────────────────────┘
                  │
                  ▼
@@ -472,6 +472,7 @@ func UpgradeImpl(cur realm, packagePath string) {
     if err := updateImplementation(); err != nil {
         panic(err)
     }
+    // KVStore write access remains with the proxy realm.
 }
 ```
 

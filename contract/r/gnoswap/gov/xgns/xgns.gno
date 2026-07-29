@@ -29,6 +29,9 @@ func init(cur realm) {
 }
 
 // TotalSupply returns the total supply of xGNS tokens.
+//
+// Returns:
+//   - supply: total xGNS token supply
 func TotalSupply() int64 {
 	return token.TotalSupply()
 }
@@ -38,12 +41,19 @@ func TotalSupply() int64 {
 // Parameters:
 //   - owner: address to check balance for
 //
-// Returns balance amount.
+// Returns:
+//   - balance: token balance amount
 func BalanceOf(owner address) int64 {
 	return token.BalanceOf(owner)
 }
 
 // Render returns a formatted representation of the token state.
+//
+// Parameters:
+//   - path: render path for specific views
+//
+// Returns:
+//   - output: formatted token state representation
 func Render(path string) string {
 	if path == "" {
 		return token.RenderHome()

@@ -31,15 +31,20 @@
 //     representing the live crossing frame; the store verifies that frame
 //     before consulting the ACL, defending against replayed or captured
 //     `realm` values.
+//   - **Authorized Caller Management**: Dynamic addition, update, and removal
+//     of authorized callers with specific permissions.
 //
 // ## Permission Model
 //
-// There is exactly one assignable permission level:
+// The package defines one assignable permission level:
 //
-//   - **Write**: Allowed to call `Set` and `Delete`.
+//   - **Write (1)**: Allowed to call `Set` and `Delete`.
 //
 // The zero value of `Permission` is reserved and rejected by registration APIs.
-// The domain address is always treated as authorized and cannot be removed.
+// Callers not in the authorized-caller table have no write access. Read
+// methods do not enforce caller permissions; realm-level APIs must gate
+// sensitive reads themselves. The domain address (owner) is always treated
+// as authorized and cannot be removed.
 //
 // ## Realm Threading
 //
@@ -60,10 +65,11 @@
 // Which one a given method checks is a per-method domain decision, not a v2
 // framework rule. The store currently checks:
 //
-//   - `Set` / `Delete`: `rlm.Previous().Address()` (the caller) against the
-//     write ACL. Set additionally bypasses the ACL when `rlm.IsCode()` is
-//     false so EOA / user-realm callers (deploy, tests) can populate state
-//     without prior registration; Delete has no such bypass.
+//   - `Set` / `Delete`: `rlm.Address()` (the realm performing the write, i.e.
+//     the domain realm calling into the store) against the write ACL. Set
+//     additionally bypasses the ACL when `rlm.IsCode()` is false so EOA /
+//     user-realm callers (deploy, tests) can populate state without prior
+//     registration; Delete has no such bypass.
 //   - `AddAuthorizedCaller`, `UpdateAuthorizedCaller`,
 //     `RemoveAuthorizedCaller`: `rlm.Address()` (the current realm) against
 //     the domain address.
@@ -119,10 +125,12 @@
 //
 // ## Permission Checks at a Glance
 //
+// The store automatically verifies permissions during operations:
+//
 //   - **Read Operations** (`Get`, `GetInt64`, `GetString`, ...): no permission
 //     check; reads are public within the package.
-//   - **Write Operations** (`Set`, `Delete`): require the caller --
-//     `rlm.Previous().Address()` -- to be in the write ACL. Set additionally
+//   - **Write Operations** (`Set`, `Delete`): require the calling realm --
+//     `rlm.Address()` -- to be in the write ACL. Set additionally
 //     bypasses the ACL when the immediate caller is an EOA / user realm
 //     (`!rlm.IsCode()`); Delete has no such bypass.
 //   - **Management Operations** (`AddAuthorizedCaller`,
@@ -140,8 +148,10 @@
 //
 // ## Errors
 //
+// The package defines several error types:
+//
 //   - `ErrKeyNotFound` - Requested key does not exist.
-//   - `ErrWritePermissionDenied` - the caller (`rlm.Previous().Address()`) is
+//   - `ErrWritePermissionDenied` - the calling realm (`rlm.Address()`) is
 //     not in the write ACL. For Set, this only fires when `rlm.IsCode()` is
 //     true; the EOA / user-realm path bypasses the ACL.
 //   - `ErrUpdatePermissionDenied` - ACL change attempted from a current realm
@@ -153,12 +163,14 @@
 //   - `ErrInvalidPermission` - Permission value other than `Write` was passed.
 //   - `ErrFailedCast` - Typed getter saw a value whose runtime type does not
 //     match.
-//   - `errSpoofedRealm` - The supplied `realm` is not the live crossing frame.
+//   - `ErrSpoofedRealm` - The supplied `realm` is not the live crossing frame.
 //
 // ## Limitations and Considerations
 //
 //   - All stored values are of type `any`, so retrieval requires either a
 //     typed getter or a cast.
+//   - Read methods are not permission-gated. Add realm-level checks for
+//     sensitive reads.
 //   - ACL management can only be performed by the domain realm itself.
 //   - The domain address is implicitly authorized and cannot be removed.
 //   - Keys are automatically prefixed; callers should not encode the domain

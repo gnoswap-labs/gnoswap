@@ -37,7 +37,8 @@ import (
 //   - Emits execution event
 //   - Refunds gas costs from treasury
 //
-// Returns executed proposal ID.
+// Returns:
+//   - proposalID: ID of the executed proposal
 // Callable by anyone once proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	if !rlm.IsCurrent() {
@@ -151,7 +152,8 @@ func (gv *governanceV1) executeProposal(
 //   - Emits cancellation event
 //   - Frees up proposer's proposal slot
 //
-// Returns cancelled proposal ID.
+// Returns:
+//   - proposalID: ID of the cancelled proposal
 // Only callable by original proposer before voting begins.
 func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	if !rlm.IsCurrent() {

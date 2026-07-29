@@ -8,8 +8,8 @@ Manages referral relationships between users with cooldown periods to prevent ga
 
 ## Global Functions
 
-### `TryRegister(cur realm, addr address, referral string) bool`
-Attempts to register a referral relationship. Returns true on success, false on failure.
+### `TryRegister(cur realm, addr address, referral string) string`
+Attempts to register a referral relationship. Returns the effective referrer after registration or fallback.
 Emits `ReferralRegistrationFailed` event on error.
 
 ### `GetReferral(addr string) string`
@@ -37,7 +37,7 @@ import (
 
 // RegisterUserReferral registers a referral relationship for a user.
 // Must be called from an authorized realm (router, staker, etc.)
-func RegisterUserReferral(cur realm, userAddr, referrerAddr address) bool {
+func RegisterUserReferral(cur realm, userAddr, referrerAddr address) string {
     return referral.TryRegister(cross(cur), userAddr, referrerAddr.String())
 }
 ```
@@ -53,7 +53,7 @@ import (
 
 // RemoveUserReferral removes the referral relationship for a user.
 // Pass the contract's own address as the referral to indicate removal.
-func RemoveUserReferral(cur realm, userAddr address) bool {
+func RemoveUserReferral(cur realm, userAddr address) string {
     return referral.TryRegister(cross(cur), userAddr, referral.ContractAddress())
 }
 ```

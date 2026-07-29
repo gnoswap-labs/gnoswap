@@ -39,11 +39,11 @@ Adds fees to distribution queue.
 
 ```go
 // Distribute accumulated fees
-tokenAmounts := DistributeProtocolFee()
+DistributeProtocolFee(cross)
 
 // Configure distribution
-SetDevOpsPct(2000)     // 20% to DevOps
-SetGovStakerPct(8000)  // 80% to xGNS holders
+SetDevOpsPct(cross, 2000)     // 20% to DevOps
+SetGovStakerPct(cross, 8000)  // 80% to xGNS holders
 
 // View tokens reserved for the next distribution
 GetReservedTokens()
@@ -51,7 +51,7 @@ GetReservedTokens()
 
 ## Security
 
-- Admin-only configuration changes
+- Configuration changes are restricted to admin or governance; distribution is restricted to admin or gov/staker
 - Automatic fee accumulation
 - Multi-token support
 - Transparent distribution tracking
