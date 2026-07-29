@@ -178,7 +178,8 @@ func (i *poolV1) Swap(
 	assertIsNotUserCall(0, rlm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
-	if amountSpecified == "0" {
+	amounts := i256.MustFromDecimal(amountSpecified)
+	if amounts.IsZero() {
 		panic(newErrorWithDetail(
 			errInvalidSwapAmount,
 			"amountSpecified == 0",
@@ -223,7 +224,6 @@ func (i *poolV1) Swap(
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
-	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
@@ -337,7 +337,8 @@ func (i *poolV1) DrySwap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 ) (string, string, bool) {
-	if amountSpecified == "0" {
+	amounts := i256.MustFromDecimal(amountSpecified)
+	if amounts.IsZero() {
 		return "0", "0", false
 	}
 
@@ -353,7 +354,6 @@ func (i *poolV1) DrySwap(
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
-	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), time.Now().Unix())

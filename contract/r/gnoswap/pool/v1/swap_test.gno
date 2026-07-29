@@ -519,6 +519,54 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
 			riskFactor:    "Prevent gas waste and system load from meaningless trade",
 		},
+		{
+			name:        "zero_amount_with_leading_zero_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with leading zeros",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "00",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
+		{
+			name:        "zero_amount_with_positive_sign_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with a positive sign",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "+0",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
+		{
+			name:        "zero_amount_with_negative_sign_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with a negative sign",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "-0",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
 	}
 
 	for _, test := range securityTests {
