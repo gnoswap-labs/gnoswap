@@ -95,21 +95,32 @@ func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumul
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[string]int64) {
-	p.protocolFeeAmounts = protocolFeeAmounts
+	copied := make(map[string]int64, len(protocolFeeAmounts))
+	for token, amount := range protocolFeeAmounts {
+		copied[token] = amount
+	}
+	p.protocolFeeAmounts = copied
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken(token string, value *u256.Uint) {
-	if p.accumulatedProtocolFeeX128PerStake == nil {
-		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
+	copied := make(map[string]*u256.Uint, len(p.accumulatedProtocolFeeX128PerStake)+1)
+	for existingToken, existingValue := range p.accumulatedProtocolFeeX128PerStake {
+		copied[existingToken] = u256.Zero().Set(existingValue)
 	}
-	p.accumulatedProtocolFeeX128PerStake[token] = value
+	if value == nil {
+		value = u256.Zero()
+	}
+	copied[token] = u256.Zero().Set(value)
+	p.accumulatedProtocolFeeX128PerStake = copied
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmountForToken(token string, amount int64) {
-	if p.protocolFeeAmounts == nil {
-		p.protocolFeeAmounts = make(map[string]int64)
+	copied := make(map[string]int64, len(p.protocolFeeAmounts)+1)
+	for existingToken, existingAmount := range p.protocolFeeAmounts {
+		copied[existingToken] = existingAmount
 	}
-	p.protocolFeeAmounts[token] = amount
+	copied[token] = amount
+	p.protocolFeeAmounts = copied
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
