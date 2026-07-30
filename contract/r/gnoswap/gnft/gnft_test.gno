@@ -460,6 +460,16 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 	}
 }
 
+func TestSetTokenURIRejectsEmptyURI(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	testing.SetRealm(positionRealm)
+	checkErr(nft.Mint(positionAddr, tid(1)))
+
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-GNFT-001] cannot set URI || empty token URI", func() {
+		SetTokenURI(cross(cur), tid(1), grc721.TokenURI(""))
+	})
+}
+
 func TestGetApproved(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
