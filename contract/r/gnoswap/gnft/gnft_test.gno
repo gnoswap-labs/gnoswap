@@ -1180,7 +1180,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    testutils.TestAddress("addr03"),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
+			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve",
 		},
 		{
 			name:        "approve for non-existent token",
@@ -1188,7 +1188,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    addr02,
 			tokenId:     999,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-004] token does not exist || token 999",
+			panicMsg:    "[GNOSWAP-GNFT-004] token does not exist",
 		},
 		{
 			name:        "approve self",
@@ -1196,7 +1196,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    addr01,
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-005] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
+			panicMsg:    "[GNOSWAP-GNFT-005] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
 		},
 		{
 			name:        "approve invalid address",
@@ -1241,6 +1241,15 @@ func TestApprove(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApproveInvalidTokenIDOmitsTokenID(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	testing.SetRealm(addr01Realm)
+
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-GNFT-004] token does not exist", func() {
+		Approve(cross(cur), addr02, grc721.TokenID(strings.Repeat("9", 1024)))
+	})
 }
 
 func Test_setTokenURI(cur realm, t *testing.T) {
@@ -1367,7 +1376,6 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(cur)
 			}
-
 
 			// when
 			testing.SetRealm(testing.NewUserRealm(tc.ownerAddr))
