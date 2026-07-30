@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -120,7 +121,6 @@ func testSwapAndCheckFees(cur realm) {
 		true,
 		swapAmount,
 		MIN_PRICE,
-		adminAddr,
 		swapCallback,
 	)
 	println("[EXPECTED] Swap result - amount0:", swap0, "amount1:", swap1)
@@ -141,7 +141,6 @@ func testSwapAndCheckFees(cur realm) {
 		false,
 		swapAmount,
 		MAX_PRICE,
-		adminAddr,
 		swapCallback,
 	)
 	println("[EXPECTED] Swap result - amount0:", swap0_2, "amount1:", swap1_2)

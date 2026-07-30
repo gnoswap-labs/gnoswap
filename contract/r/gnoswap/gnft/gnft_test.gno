@@ -2,6 +2,7 @@ package gnft
 
 import (
 	"chain/runtime"
+	b64 "encoding/base64"
 	"strings"
 	"testing"
 
@@ -460,6 +461,16 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 	}
 }
 
+func TestSetTokenURIRejectsEmptyURI(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	testing.SetRealm(positionRealm)
+	checkErr(nft.Mint(positionAddr, tid(1)))
+
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-GNFT-001] cannot set URI || empty token URI", func() {
+		SetTokenURI(cross(cur), tid(1), grc721.TokenURI(""))
+	})
+}
+
 func TestGetApproved(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
@@ -893,6 +904,14 @@ func TestTokenURI(cur realm, t *testing.T) {
 				uassert.NoError(t, err)
 				uassert.NotEmpty(t, uri)
 				uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
+
+				decoded, err := b64.StdEncoding.DecodeString(strings.TrimPrefix(uri, "data:image/svg+xml;base64,"))
+				uassert.NoError(t, err)
+				decodedStr := string(decoded)
+				uassert.True(t, strings.Contains(decodedStr, `fill="url(#paint0_linear_gnft_1)"`))
+				uassert.True(t, strings.Contains(decodedStr, `id="paint0_linear_gnft_1"`))
+				uassert.True(t, strings.Contains(decodedStr, `clip-path="url(#clip0_gnft_1)"`))
+				uassert.True(t, strings.Contains(decodedStr, `id="clip0_gnft_1"`))
 			}
 		})
 	}
@@ -1224,6 +1243,16 @@ func TestApprove(cur realm, t *testing.T) {
 	}
 }
 
+func TestApproveInvalidTokenIDIncludesTokenID(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	testing.SetRealm(addr01Realm)
+	longTid := grc721.TokenID(strings.Repeat("9", 1024))
+
+	uassert.AbortsWithMessage(t, cur, errTokenNotExists+" || token "+string(longTid), func() {
+		Approve(cross(cur), addr02, longTid)
+	})
+}
+
 func Test_setTokenURI(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
@@ -1348,7 +1377,6 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(cur)
 			}
-
 
 			// when
 			testing.SetRealm(testing.NewUserRealm(tc.ownerAddr))

@@ -151,7 +151,6 @@ type SwapComputation struct {
 //   - zeroForOne: Direction of swap (true = token0 to token1)
 //   - amountSpecified: Exact input (positive) or exact output (negative)
 //   - sqrtPriceLimitX96: Price limit for the swap
-//   - payer: Address that provides input tokens
 //   - swapCallback: Callback function to handle token transfers
 //
 // Returns amount0 and amount1 deltas as strings.
@@ -165,7 +164,6 @@ func (i *poolV1) Swap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
 	if !rlm.IsCurrent() {
@@ -178,7 +176,8 @@ func (i *poolV1) Swap(
 	assertIsNotUserCall(0, rlm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
-	if amountSpecified == "0" {
+	amounts := i256.MustFromDecimal(amountSpecified)
+	if amounts.IsZero() {
 		panic(newErrorWithDetail(
 			errInvalidSwapAmount,
 			"amountSpecified == 0",
@@ -223,7 +222,6 @@ func (i *poolV1) Swap(
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
-	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
@@ -303,7 +301,6 @@ func (i *poolV1) Swap(
 		"zeroForOne", utils.FormatBool(zeroForOne),
 		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
-		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,
@@ -337,7 +334,8 @@ func (i *poolV1) DrySwap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 ) (string, string, bool) {
-	if amountSpecified == "0" {
+	amounts := i256.MustFromDecimal(amountSpecified)
+	if amounts.IsZero() {
 		return "0", "0", false
 	}
 
@@ -353,7 +351,6 @@ func (i *poolV1) DrySwap(
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
-	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), time.Now().Unix())

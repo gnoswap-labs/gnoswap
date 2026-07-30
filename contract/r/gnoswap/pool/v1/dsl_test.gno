@@ -188,7 +188,6 @@ func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint
 		params.zeroForOne,
 		params.amountSpecified.ToString(),
 		params.sqrtPriceLimitX96.ToString(),
-		e.currentAddress,
 		swapCallback,
 	)
 

@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -148,7 +149,6 @@ func verifyLargeSwapZeroForOne(cur realm) {
 		true,
 		"100000000",
 		MIN_SQRT_RATIO,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -202,7 +202,6 @@ func verifyLargeSwapOneForZero(cur realm) {
 		false,
 		"50000000",
 		MAX_SQRT_RATIO,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -264,7 +263,6 @@ func verifyExtremeSwapWithPriceLimit(cur realm) {
 		true,
 		"500000000",
 		targetPrice,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -299,7 +297,7 @@ func verifyMultipleDirectionSwaps(cur realm) {
 	bar.Approve(cross(cur), poolAddr, 10000000)
 
 	testing.SetRealm(routerRealm)
-	amt0_1, amt1_1 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, true, "10000000", MIN_SQRT_RATIO, adminAddr,
+	amt0_1, amt1_1 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, true, "10000000", MIN_SQRT_RATIO,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		})
@@ -313,7 +311,7 @@ func verifyMultipleDirectionSwaps(cur realm) {
 	foo.Approve(cross(cur), poolAddr, 20000000)
 
 	testing.SetRealm(routerRealm)
-	amt0_2, amt1_2 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, false, "20000000", MAX_SQRT_RATIO, adminAddr,
+	amt0_2, amt1_2 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, false, "20000000", MAX_SQRT_RATIO,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		})
@@ -327,7 +325,7 @@ func verifyMultipleDirectionSwaps(cur realm) {
 	bar.Approve(cross(cur), poolAddr, 10000000)
 
 	testing.SetRealm(routerRealm)
-	amt0_3, amt1_3 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, true, "-5000000", MIN_SQRT_RATIO, adminAddr,
+	amt0_3, amt1_3 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, true, "-5000000", MIN_SQRT_RATIO,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		})
@@ -341,7 +339,7 @@ func verifyMultipleDirectionSwaps(cur realm) {
 	foo.Approve(cross(cur), poolAddr, 20000000)
 
 	testing.SetRealm(routerRealm)
-	amt0_4, amt1_4 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, false, "-8000000", MAX_SQRT_RATIO, adminAddr,
+	amt0_4, amt1_4 := pool.Swap(cross(cur), barPath, fooPath, fee500, adminAddr, false, "-8000000", MAX_SQRT_RATIO,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		})
@@ -436,4 +434,3 @@ func safeSubInt64(cur realm, a, b int64) int64 {
 // [EXPECTED] All direction changes verified successfully
 //
 // [SCENARIO] Complete - All DrySwap predictions matched actual Swap results
-

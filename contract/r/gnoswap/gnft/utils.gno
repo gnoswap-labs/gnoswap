@@ -1,6 +1,7 @@
 package gnft
 
 import (
+	"errors"
 	"math/rand"
 	"time"
 
@@ -72,19 +73,16 @@ func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 		return
 	}
 
-	errMsg := err.Error()
-
-	// Check if token exists
-	owner, ownerErr := nft.OwnerOf(tid)
-	if ownerErr != nil {
-		panic(makeErrorWithDetails(errTokenNotExists, ufmt.Sprintf("token %s", string(tid))))
-	}
-
 	switch {
-	case errMsg == "caller is not token owner or approved":
+	case errors.Is(err, grc721.ErrInvalidTokenId):
+		panic(makeErrorWithDetails(errTokenNotExists, ufmt.Sprintf("token %s", string(tid))))
+
+	case errors.Is(err, grc721.ErrCallerIsNotOwnerOrApproved):
+		owner, ownerErr := nft.OwnerOf(tid)
+		checkErr(ownerErr)
 		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve for token %s owned by %s", caller, string(tid), owner)))
 
-	case errMsg == "approval to current owner":
+	case errors.Is(err, grc721.ErrApprovalToCurrentOwner):
 		panic(makeErrorWithDetails(errTransferToSelf, ufmt.Sprintf("cannot approve to current owner %s for token %s", approved, string(tid))))
 
 	default:

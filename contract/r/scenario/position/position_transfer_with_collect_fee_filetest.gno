@@ -5,10 +5,11 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -98,7 +99,6 @@ func main(cur realm) {
 	CollectFee(cur, "user1", user1Addr, "1")
 	CollectFee(cur, "user1", user1Addr, "2")
 	println()
-
 }
 
 func initPool(cur realm) {
@@ -205,7 +205,6 @@ func executeSwap(cur realm) {
 		true,
 		"5000000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},

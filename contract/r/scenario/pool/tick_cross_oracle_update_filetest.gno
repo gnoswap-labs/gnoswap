@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -132,8 +133,7 @@ func main(cur realm) {
 		adminAddr,
 		true,       // zeroForOne - tick decreases (0 -> past testTick)
 		"10000000", // large amount to ensure we cross(cur) testTick
-		gnsmath.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
-		adminAddr,
+		gnsmath.TickMathGetSqrtRatioAtTick(testTick-100).ToString(),
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -206,8 +206,7 @@ func main(cur realm) {
 		adminAddr,
 		false,      // oneForZero - tick increases (back above testTick)
 		"10000000", // large amount to ensure crossing back
-		gnsmath.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
-		adminAddr,
+		gnsmath.TickMathGetSqrtRatioAtTick(1000).ToString(),
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},

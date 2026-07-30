@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -157,7 +158,6 @@ func executeSwap(cur realm) {
 		true,
 		"1234567",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, WUGNOT_PATH, GNS_PATH, amount0Delta, amount1Delta, true)
 		},

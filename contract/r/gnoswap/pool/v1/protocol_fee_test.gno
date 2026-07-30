@@ -661,7 +661,6 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 		true,
 		"10000",
 		MIN_PRICE,
-		adminAddr,
 		swapCallback,
 	)
 
@@ -675,7 +674,6 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 		false,
 		"10000",
 		MAX_PRICE,
-		adminAddr,
 		swapCallback,
 	)
 

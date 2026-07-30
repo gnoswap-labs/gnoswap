@@ -44,7 +44,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 
 	params, err := parseImageParams(stored)
 	if err == nil {
-		return params.generateImageURI(), nil
+		return params.generateImageURI(tid), nil
 	}
 
 	return stored, nil
@@ -80,6 +80,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
+	assertIsNonEmptyTokenURI(tURI)
 	assertIsValidTokenURI(tid)
 
 	checkErr(setTokenURI(0, cur, tid, tURI))

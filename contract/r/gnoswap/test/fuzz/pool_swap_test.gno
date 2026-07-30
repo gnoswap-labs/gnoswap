@@ -164,7 +164,6 @@ func callPoolSwap(
 			zeroForOne,
 			amountSpecified,
 			sqrtPriceLimitX96,
-			adminAddr,
 			swapCallback,
 		)
 	}(cross(cur))

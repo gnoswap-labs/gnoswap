@@ -166,7 +166,6 @@ func testExtremePriceDown(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		false,
 		"10000000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
@@ -202,7 +201,6 @@ func testExtremePriceUp(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		true,
 		"5000000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},
@@ -238,7 +236,6 @@ func testMaximumSlippage(cur realm, before BalanceSnapshot) BalanceSnapshot {
 		false,
 		"20000000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, usdcPath, oblPath, amount0Delta, amount1Delta)
 		},

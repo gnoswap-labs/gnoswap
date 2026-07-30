@@ -145,7 +145,6 @@ func TestSwapBuyNative(cur realm) {
 		true,
 		"10000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
 		},
@@ -185,7 +184,6 @@ func TestSwapSellNative(cur realm) {
 		false,
 		"10000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
 		},

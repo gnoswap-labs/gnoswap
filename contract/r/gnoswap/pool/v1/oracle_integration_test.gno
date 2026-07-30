@@ -192,7 +192,7 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 		)
 
 		uassert.Error(t, err, "Should error when target before oldest observation")
-		uassert.ErrorContains(t, err, "[GNOSWAP-POOL-026]", "Should return observation too old error")
+		uassert.ErrorContains(t, err, "[GNOSWAP-POOL-025]", "Should return observation too old error")
 
 		// Test target = observation timestamp
 		beforeOrAt2, afterOrAt2, err := getSurroundingObservations(

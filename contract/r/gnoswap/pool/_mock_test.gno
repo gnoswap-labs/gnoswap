@@ -166,7 +166,6 @@ func (m *MockPool) Swap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *CallbackMarker) error,
 ) (string, string) {
 	res, ok := m.Response.Get("Swap")
