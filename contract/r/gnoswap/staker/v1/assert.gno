@@ -85,6 +85,13 @@ func assertIsValidPoolTier(tier uint64) {
 	}
 }
 
+// assertTier1HasSparePool ensures tier 1 keeps at least one pool after a tier change.
+func assertTier1HasSparePool(currentTier, tier1Count uint64) {
+	if currentTier == Tier1 && tier1Count == 1 {
+		panic(makeErrorWithDetails(errInvalidPoolTier, "tier 1 must have at least one pool"))
+	}
+}
+
 // assertIsGreaterThanMinimumRewardAmount ensures the reward amount meets minimum requirements.
 func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
 	minReward := s.getMinimumRewardAmount()

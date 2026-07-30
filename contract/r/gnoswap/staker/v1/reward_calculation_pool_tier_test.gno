@@ -140,6 +140,74 @@ func TestPoolTierChangeTier(cur realm, t *testing.T) {
 	}
 }
 
+func TestPoolTierChangeTierRejectsEmptyTier1(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		nextTier uint64
+		panics   bool
+	}{
+		{
+			name:     "tier 0",
+			nextTier: 0,
+			panics:   true,
+		},
+		{
+			name:     "tier 1",
+			nextTier: Tier1,
+			panics:   false,
+		},
+		{
+			name:     "tier 2",
+			nextTier: Tier2,
+			panics:   true,
+		},
+		{
+			name:     "tier 3",
+			nextTier: Tier3,
+			panics:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			pools := NewPools()
+			currentTime := int64(100000)
+			poolTier := NewPoolTier(pools, currentTime, defaultInitialPoolTierPath,
+				func() int64 { return 1000000 },
+				func(start, end int64) ([]int64, []int64) { return nil, nil })
+
+			if tt.panics {
+				uassert.PanicsContains(t, cur, errInvalidPoolTier, func() {
+					poolTier.changeTier(currentTime+1, pools, defaultInitialPoolTierPath, tt.nextTier)
+				})
+			} else {
+				uassert.NotPanics(t, cur, func() {
+					poolTier.changeTier(currentTime+1, pools, defaultInitialPoolTierPath, tt.nextTier)
+				})
+			}
+		})
+	}
+}
+
+func TestPoolTierChangeTierAllowsTier1PoolMutationWhenAnotherTier1Remains(cur realm, t *testing.T) {
+	pools := NewPools()
+	currentTime := int64(100000)
+	secondTier1Pool := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", 3000)
+
+	poolTier := NewPoolTier(pools, currentTime, defaultInitialPoolTierPath,
+		func() int64 { return 1000000 },
+		func(start, end int64) ([]int64, []int64) { return nil, nil })
+
+	pools.set(secondTier1Pool, sr.NewPool(secondTier1Pool, currentTime+1))
+	poolTier.changeTier(currentTime+1, pools, secondTier1Pool, Tier1)
+
+	uassert.NotPanics(t, cur, func() {
+		poolTier.changeTier(currentTime+2, pools, defaultInitialPoolTierPath, Tier2)
+	})
+	uassert.Equal(t, 1, poolTier.CurrentCount(Tier1))
+	uassert.Equal(t, uint64(Tier2), poolTier.CurrentTier(defaultInitialPoolTierPath))
+}
+
 func TestCurrentAllTierCounts(cur realm, t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)

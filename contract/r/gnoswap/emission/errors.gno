@@ -9,6 +9,7 @@ const (
 	errInvalidEmissionPct          = "[GNOSWAP-EMISSION-002] invalid emission percentage"
 	errDuplicateTarget             = "[GNOSWAP-EMISSION-003] duplicate emission target"
 	errDistributionAddressNotFound = "[GNOSWAP-EMISSION-004] distribution address not found"
+	errInvalidEmissionStart        = "[GNOSWAP-EMISSION-005] invalid emission start"
 )
 
 // makeErrorWithDetails creates a new error by combining a base error with additional details.

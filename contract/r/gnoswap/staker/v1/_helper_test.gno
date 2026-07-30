@@ -19,6 +19,7 @@ import (
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 
+	_ "gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -394,6 +395,22 @@ func initStakerTest(cur realm, t *testing.T) {
 	}
 
 	initStakerProxyTest(cur, t)
+}
+
+func createDefaultInitialPoolForStakerTest(cur realm, t *testing.T) {
+	t.Helper()
+
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross(cur), 0)
+
+	CreatePool(
+		cur,
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
+		adminAddr,
+	)
 }
 
 func initStakerProxyTest(cur realm, t *testing.T) {

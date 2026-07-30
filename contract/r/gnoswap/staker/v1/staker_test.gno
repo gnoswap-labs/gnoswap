@@ -41,6 +41,7 @@ func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
 	t.Run("normal collection works", func(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross(cur), 0)
+		createDefaultInitialPoolForStakerTest(cur, t)
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 		// setup
@@ -498,6 +499,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -583,6 +585,7 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -703,6 +706,7 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
@@ -763,6 +767,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)

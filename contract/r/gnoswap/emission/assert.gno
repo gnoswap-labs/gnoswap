@@ -2,7 +2,21 @@ package emission
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/pool"
 )
+
+const defaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+
+var defaultInitialPoolExists = func() bool {
+	return pool.ExistsPoolPath(defaultInitialPoolTierPath)
+}
+
+func assertDefaultInitialPoolExists() {
+	if !defaultInitialPoolExists() {
+		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool does not exist: "+defaultInitialPoolTierPath))
+	}
+}
 
 // assertValidDistributionTarget panics if the given distribution target is invalid.
 func assertValidDistributionTarget(target int) {

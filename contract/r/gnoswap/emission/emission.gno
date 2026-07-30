@@ -201,6 +201,8 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 		panic("distribution has already started, cannot change start timestamp")
 	}
 
+	assertDefaultInitialPoolExists()
+
 	prevStartTimestamp := distributionStartTimestamp
 
 	if gns.MintedEmissionAmount() == 0 {

@@ -45,4 +45,5 @@ func resetObject(t *testing.T) {
 	leftGNSAmount = 0
 	lastExecutedTimestamp = 0
 	distributionStartTimestamp = 0
+	defaultInitialPoolExists = func() bool { return true }
 }

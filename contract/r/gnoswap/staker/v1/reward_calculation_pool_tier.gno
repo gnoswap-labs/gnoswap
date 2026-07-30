@@ -166,13 +166,14 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
 func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath string, nextTier uint64) map[uint64]int64 {
-	self.cacheReward(currentTime, pools)
-	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
 		// no change, return
 		return make(map[uint64]int64)
 	}
+	assertTier1HasSparePool(currentTier, self.counts[Tier1])
+
+	self.cacheReward(currentTime, pools)
 
 	// decrement count from current tier if it exists
 	if currentTier > 0 {
