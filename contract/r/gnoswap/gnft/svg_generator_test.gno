@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/tokens/grc721"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -56,7 +57,7 @@ func TestSvgGenerator_generateImageURI(cur realm, t *testing.T) {
 
 			var uri string
 			uassert.NotPanics(t, cur, func() {
-				uri = params.generateImageURI()
+				uri = params.generateImageURI(tid(1))
 			})
 
 			// Verify URI prefix
@@ -103,7 +104,7 @@ func TestSvgGenerator_generateSVG(cur realm, t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Generate SVG
-			svg := p.generateSVG()
+			svg := p.generateSVG(tid(1))
 
 			// Verify SVG structure
 			uassert.True(t, strings.Contains(svg, "<svg"))
@@ -115,11 +116,30 @@ func TestSvgGenerator_generateSVG(cur realm, t *testing.T) {
 	}
 }
 
+func TestSvgGenerator_generateSVG_TokenScopedIDs(cur realm, t *testing.T) {
+	params, err := parseImageParams("10,12,125,123,#AABBCC,#DDEEFF")
+	uassert.NoError(t, err)
+
+	svg1 := params.generateSVG(tid(1))
+	svg2 := params.generateSVG(tid(2))
+
+	uassert.True(t, strings.Contains(svg1, `fill="url(#paint0_linear_gnft_1)"`))
+	uassert.True(t, strings.Contains(svg1, `id="paint0_linear_gnft_1"`))
+	uassert.True(t, strings.Contains(svg1, `clip-path="url(#clip0_gnft_1)"`))
+	uassert.True(t, strings.Contains(svg1, `id="clip0_gnft_1"`))
+	uassert.True(t, strings.Contains(svg2, `fill="url(#paint0_linear_gnft_2)"`))
+	uassert.True(t, strings.Contains(svg2, `id="paint0_linear_gnft_2"`))
+	uassert.True(t, strings.Contains(svg2, `clip-path="url(#clip0_gnft_2)"`))
+	uassert.True(t, strings.Contains(svg2, `id="clip0_gnft_2"`))
+	uassert.False(t, strings.Contains(svg1, `id="paint0_linear_gnft_2"`))
+	uassert.False(t, strings.Contains(svg2, `id="paint0_linear_gnft_1"`))
+}
+
 func TestSvgGenerator_paramsToImageRaw_ColorFormat(cur realm, t *testing.T) {
 	params := "10,12,125,123,#AABBCC,#DDEEFF"
 	p, err := parseImageParams(params)
 	uassert.NoError(t, err)
-	svg := p.generateSVG()
+	svg := p.generateSVG(tid(1))
 
 	// Extract colors from stop-color attributes
 	// Should find two colors in #XXXXXX format
@@ -183,7 +203,7 @@ func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(cur realm, t *testing.T)
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			p, err := parseImageParams(tc.params)
 			uassert.NoError(t, err)
-			svg := p.generateSVG()
+			svg := p.generateSVG(tid(1))
 
 			// Verify SVG contains linearGradient with coordinates
 			uassert.True(t, strings.Contains(svg, "linearGradient"))
@@ -226,7 +246,7 @@ func TestSvgGenerator_genImageParamsString_CoordinateRanges(cur realm, t *testin
 				params := genImageParamsString(r)
 				p, err := parseImageParams(params)
 				uassert.NoError(t, err)
-				svg := p.generateSVG()
+				svg := p.generateSVG(tid(1))
 
 				// Extract and validate coordinate values
 				x1, y1, x2, y2 := extractCoordinates(t, svg)
@@ -278,7 +298,7 @@ func TestSvgGenerator_roundTrip(cur realm, t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Convert to URI
-			uri := params.generateImageURI()
+			uri := params.generateImageURI(tid(1))
 
 			// Verify URI is valid base64-encoded SVG
 			uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
@@ -387,7 +407,7 @@ func TestSvgGenerator_outputConsistency(cur realm, t *testing.T) {
 			// Generate using old method (simulated)
 			pcg1 := rand.NewPCG(tc.seed1, tc.seed2)
 			r1 := rand.New(pcg1)
-			oldSVG := genImageRawDirect(r1)
+			oldSVG := genImageRawDirect(r1, tid(1))
 
 			// Generate using new method (params -> SVG)
 			pcg2 := rand.NewPCG(tc.seed1, tc.seed2)
@@ -395,7 +415,7 @@ func TestSvgGenerator_outputConsistency(cur realm, t *testing.T) {
 			params := genImageParamsString(r2)
 			p, err := parseImageParams(params)
 			uassert.NoError(t, err)
-			newSVG := p.generateSVG()
+			newSVG := p.generateSVG(tid(1))
 
 			// Both should produce identical output
 			uassert.Equal(t, oldSVG, newSVG)
@@ -405,7 +425,7 @@ func TestSvgGenerator_outputConsistency(cur realm, t *testing.T) {
 
 // genImageRawDirect simulates the old direct SVG generation for comparison.
 // This is the original logic before optimization, using the same concatenation approach.
-func genImageRawDirect(r *rand.Rand) string {
+func genImageRawDirect(r *rand.Rand, tid grc721.TokenID) string {
 	x1 := x1Min + r.Uint64N(x1Max-x1Min+1)
 	y1 := y1Min + r.Uint64N(y1Max-y1Min+1)
 	x2 := x2Min + r.Uint64N(x2Max-x2Min+1)
@@ -422,9 +442,14 @@ func genImageRawDirect(r *rand.Rand) string {
 		color2.WriteByte(charset[r.IntN(16)])
 	}
 
-	return svgTemplate[0] + itoa(int(x1)) + svgTemplate[1] + itoa(int(y1)) +
-		svgTemplate[2] + itoa(int(x2)) + svgTemplate[3] + itoa(int(y2)) +
-		svgTemplate[4] + color1.String() + svgTemplate[5] + color2.String() + svgTemplate[6]
+	suffix := svgIDSuffix(tid)
+	paintID := "paint0_linear_" + suffix
+	clipID := "clip0_" + suffix
+	return svgTemplate[0] + clipID + svgTemplate[1] + paintID + svgTemplate[2] + paintID +
+		svgTemplate[3] + itoa(int(x1)) + svgTemplate[4] + itoa(int(y1)) +
+		svgTemplate[5] + itoa(int(x2)) + svgTemplate[6] + itoa(int(y2)) +
+		svgTemplate[7] + color1.String() + svgTemplate[8] + color2.String() + svgTemplate[9] +
+		clipID + svgTemplate[10]
 }
 
 // itoa converts int to string (simple implementation for test)
@@ -508,7 +533,7 @@ func TestSvgGenerator_boundaryValues(cur realm, t *testing.T) {
 				p, err := parseImageParams(tc.params)
 				uassert.NoError(t, err)
 				uassert.NotPanics(t, cur, func() {
-					p.generateSVG()
+					p.generateSVG(tid(1))
 				})
 			}
 		})
@@ -774,7 +799,7 @@ func TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput(cur realm, 
 
 		// Should never panic
 		uassert.NotPanics(t, cur, func() {
-			svg := p.generateSVG()
+			svg := p.generateSVG(tid(1))
 			// Verify basic SVG structure
 			uassert.True(t, strings.Contains(svg, "<svg"))
 			uassert.True(t, strings.Contains(svg, "</svg>"))

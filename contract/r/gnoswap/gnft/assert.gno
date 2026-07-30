@@ -15,6 +15,13 @@ func assertIsValidTokenURI(tid grc721.TokenID) {
 	}
 }
 
+// assertIsNonEmptyTokenURI panics if the new URI is empty.
+func assertIsNonEmptyTokenURI(tURI grc721.TokenURI) {
+	if string(tURI) == "" {
+		panic(makeErrorWithDetails(errCannotSetURI, "empty token URI"))
+	}
+}
+
 // assertIsValidAddress panics if the address is invalid.
 func assertIsValidAddress(addr address) {
 	if !addr.IsValid() {
