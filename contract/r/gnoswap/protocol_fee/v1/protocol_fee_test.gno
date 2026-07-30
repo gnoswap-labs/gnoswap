@@ -172,6 +172,25 @@ func TestDistributeProtocolFee_Unauthorized(cur realm, t *testing.T) {
 	}
 }
 
+func TestDistributeProtocolFeeByTokenPath_NoAmountPreservesOtherReservedTokens(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pfs := pf.getProtocolFeeState()
+
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar.BAR")
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/obl.OBL")
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/qux.QUX")
+
+	testing.SetRealm(govStakerRealm)
+	func(cur realm) {
+		pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/obl.OBL")
+	}(cross(cur))
+
+	reservedTokens := pf.GetReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "gno.land/r/onbloc/bar.BAR")
+	uassert.Equal(t, reservedTokens[1], "gno.land/r/onbloc/qux.QUX")
+}
+
 // TestDistributeProtocolFee_WithDeposits covers the distribution arithmetic
 // (devOps split, gov/staker split, rounding for tiny amounts).
 //

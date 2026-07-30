@@ -226,6 +226,30 @@ func TestProtocolFeeStateClearReservedTokens(cur realm, t *testing.T) {
 	}
 }
 
+func TestProtocolFeeStateRemoveReservedTokenPreservesOthers(cur realm, t *testing.T) {
+	pfs := newProtocolFeeStateInternal(t)
+
+	pfs.store.AddReservedToken(0, cur, "tokenA")
+	pfs.store.AddReservedToken(0, cur, "tokenB")
+	pfs.store.AddReservedToken(0, cur, "tokenC")
+
+	err := pfs.removeReservedToken(0, cur, "tokenB")
+	uassert.NoError(t, err)
+
+	reservedTokens := pfs.ReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "tokenA")
+	uassert.Equal(t, reservedTokens[1], "tokenC")
+
+	err = pfs.removeReservedToken(0, cur, "tokenX")
+	uassert.NoError(t, err)
+
+	reservedTokens = pfs.ReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "tokenA")
+	uassert.Equal(t, reservedTokens[1], "tokenC")
+}
+
 func TestProtocolFeeState_SetDevOpsPct_NegativeValues(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string

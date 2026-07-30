@@ -84,9 +84,63 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	)
 }
 
-// DistributeProtocolFeeByTokenPath is retained for ABI compatibility while token-path distribution is deferred.
+// DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
 func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
-	assertNotImplementYet()
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	assertIsAdminOrGovStaker(prev.Address())
+
+	if halt.IsHaltedWithdraw() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	pfs := pf.getProtocolFeeState()
+
+	toDevOpsAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	)
+	toGovStakerAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	)
+
+	amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
+	balance := common.BalanceOf(tokenPath, protocolFeeAddr)
+
+	// amount should be less than or equal to balance
+	if amount > balance {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
+		))
+	}
+
+	if amount > 0 {
+		// Distribute to DevOps
+		if err := pfs.distributeToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {
+			panic(err)
+		}
+
+		// Distribute to Gov/Staker
+		if err := pfs.distributeToGovStaker(0, rlm, tokenPath, toGovStakerAmount); err != nil {
+			panic(err)
+		}
+	}
+
+	if err := pfs.removeReservedToken(0, rlm, tokenPath); err != nil {
+		panic(err)
+	}
+
+	chain.Emit(
+		"TransferProtocolFee",
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
+	)
 }
 
 // SetDevOpsPct sets the devOpsPct.
