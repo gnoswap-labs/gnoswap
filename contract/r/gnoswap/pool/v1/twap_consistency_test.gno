@@ -135,7 +135,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 				{timestamp: 0, tickCumulative: 0},
 				{timestamp: 10, tickCumulative: 120},
 			},
-			wantErr: "[GNOSWAP-POOL-026]",
+			wantErr: "[GNOSWAP-POOL-025]",
 		},
 		{
 			name:        "multi interval weighted average",

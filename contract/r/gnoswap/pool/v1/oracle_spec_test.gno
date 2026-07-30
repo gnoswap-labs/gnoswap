@@ -378,7 +378,7 @@ func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
 	os := pl.NewObservationState(0)
 
 	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
-	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-026]")
+	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-025]")
 }
 
 func testObserveInterpolatesMaxLiquidity(t *testing.T) {
