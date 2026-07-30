@@ -134,6 +134,19 @@ func TestTickBitmap_GetMissingWordDoesNotPersist(cur realm, t *testing.T) {
 	uassert.Equal(t, 0, len(p.TickBitmaps()))
 }
 
+func TestTickBitmap_SetAndDeleteWord(cur realm, t *testing.T) {
+	p := newTickBitmapPool(t)
+
+	setTickBitmap(p, 5, u256.NewUint(1))
+	uassert.Equal(t, "1", p.TickBitmaps()[5])
+
+	setTickBitmap(p, 5, u256.Zero())
+	uassert.Equal(t, "0", p.TickBitmaps()[5])
+
+	deleteTickBitmap(p, 5)
+	uassert.Equal(t, 0, len(p.TickBitmaps()))
+}
+
 func TestTickBitmap_FlipTick_RemovesZeroWord(cur realm, t *testing.T) {
 	p := newTickBitmapPool(t)
 

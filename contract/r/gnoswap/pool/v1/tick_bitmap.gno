@@ -50,7 +50,13 @@ func tickBitmapFlipTick(
 
 	mask := u256.Zero().Lsh(u256.One(), uint(bitPos))
 	current := getTickBitmap(p, wordPos)
-	setTickBitmap(p, wordPos, u256.Zero().Xor(current, mask))
+	next := u256.Zero().Xor(current, mask)
+	if next.IsZero() {
+		deleteTickBitmap(p, wordPos)
+		return
+	}
+
+	setTickBitmap(p, wordPos, next)
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
@@ -87,14 +93,14 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	return u256.MustFromDecimal(value)
 }
 
-// setTickBitmap sets the tick bitmap for the given word position
+// setTickBitmap sets the tick bitmap for the given word position.
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
-	if tickBitmap.IsZero() {
-		p.DeleteTickBitmap(wordPos)
-		return
-	}
-
 	p.SetTickBitmap(wordPos, tickBitmap.ToString())
+}
+
+// deleteTickBitmap deletes the tick bitmap for the given word position.
+func deleteTickBitmap(p *pl.Pool, wordPos int16) {
+	p.DeleteTickBitmap(wordPos)
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick
