@@ -277,7 +277,6 @@ func observeSingle(
 	beforeOrAt, atOrAfter, err := getSurroundingObservations(
 		os,
 		target,
-		currentTime,
 		tick,
 		index,
 		liquidity,
@@ -327,7 +326,6 @@ func observeSingle(
 func getSurroundingObservations(
 	os *pl.ObservationState,
 	target int64,
-	currentTime int64,
 	tick int32,
 	index uint16,
 	liquidity *u256.Uint,
@@ -369,12 +367,11 @@ func getSurroundingObservations(
 	}
 
 	// If we've reached this point, we have to binary search
-	return binarySearch(os, currentTime, target, index, cardinality)
+	return binarySearch(os, target, index, cardinality)
 }
 
 func binarySearch(
 	os *pl.ObservationState,
-	currentTime int64,
 	target int64,
 	index uint16,
 	cardinality uint16,
