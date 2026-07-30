@@ -172,7 +172,6 @@ func main(cur realm) {
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		userAddr,
 		callbackFn,
 	)
 }
@@ -201,7 +200,6 @@ func main(cur realm) {
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		userAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return swap_wrapper.HandleSwapCallbackWithContext(
 				cur,

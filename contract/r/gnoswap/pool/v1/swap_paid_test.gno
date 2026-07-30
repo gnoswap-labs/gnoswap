@@ -45,7 +45,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               true,
 				sqrtPriceLimitX96:        MIN_PRICE,
 				callbackSendToken0Amount: 1000, // equal to specified amount
@@ -86,7 +85,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "15000000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               true,
 				sqrtPriceLimitX96:        MIN_PRICE,
 				callbackSendToken0Amount: 15000000, // equal to specified amount
@@ -118,7 +116,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               true,
 				sqrtPriceLimitX96:        MIN_PRICE,
 				callbackSendToken0Amount: 1001, // greater than specified amount
@@ -150,14 +147,13 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               true,
 				sqrtPriceLimitX96:        MIN_PRICE,
 				callbackSendToken0Amount: 999, // less than specified amount
 				callbackSendToken1Amount: 0,
 			},
 			expectedHasPanic:        true,
-			expectedHasPanicMessage: "[GNOSWAP-POOL-024] insufficient payment || insufficient payment: expected 1000, received 999",
+			expectedHasPanicMessage: "[GNOSWAP-POOL-023] insufficient payment || insufficient payment: expected 1000, received 999",
 		},
 		{
 			name: "one for zero swap is success for paid amount equal to specified amount",
@@ -182,7 +178,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               false,
 				sqrtPriceLimitX96:        MAX_PRICE,
 				callbackSendToken0Amount: 0,
@@ -214,7 +209,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               false,
 				sqrtPriceLimitX96:        MAX_PRICE,
 				callbackSendToken0Amount: 0,
@@ -246,14 +240,13 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:               bazPath,
 				specifiedAmount:          "1000",
 				recipient:                adminAddr,
-				payer:                    adminAddr,
 				zeroForOne:               false,
 				sqrtPriceLimitX96:        MAX_PRICE,
 				callbackSendToken0Amount: 0,
 				callbackSendToken1Amount: 999, // less than specified amount
 			},
 			expectedHasPanic:        true,
-			expectedHasPanicMessage: "[GNOSWAP-POOL-024] insufficient payment || insufficient payment: expected 1000, received 999",
+			expectedHasPanicMessage: "[GNOSWAP-POOL-023] insufficient payment || insufficient payment: expected 1000, received 999",
 		},
 		{
 			name: "zero for one swap is success for partial paid amount",
@@ -278,7 +271,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 				token1Path:          bazPath,
 				specifiedAmount:     "5000000",
 				recipient:           adminAddr,
-				payer:               adminAddr,
 				zeroForOne:          true,
 				sqrtPriceLimitX96:   gnsmath.TickMathGetSqrtRatioAtTick(-10).ToString(),
 				isUseCallbackAmount: true,
@@ -325,7 +317,6 @@ func TestSwapCallback_Pay(cur realm, t *testing.T) {
 					tt.swapInfo.zeroForOne,
 					tt.swapInfo.specifiedAmount,
 					tt.swapInfo.sqrtPriceLimitX96,
-					tt.swapInfo.payer,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						var currentAmount0Delta int64 = 0
 						var currentAmount1Delta int64 = 0
@@ -474,7 +465,6 @@ type swapPaidSwapParams struct {
 	token1Path               string
 	specifiedAmount          string
 	recipient                address
-	payer                    address
 	zeroForOne               bool
 	sqrtPriceLimitX96        string
 	isUseCallbackAmount      bool

@@ -9,6 +9,8 @@ loadpkg gno.land/r/demo/defi/foo20
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
+loadpkg gno.land/r/onbloc/foo
+loadpkg gno.land/r/onbloc/baz
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
@@ -80,6 +82,16 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000\")"
 # stdout true
 
+## Create pool with reversed token order and assert canonical event values
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/foo.FOO" -args "gno.land/r/onbloc/baz.BAZ" -args 500 -args 4295343490 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+# stdout 'GAS USED:   [0-9]+'
+# stdout 'STORAGE DELTA:  [0-9]+ bytes'
+# stdout 'TOTAL TX COST:  [0-9]+ugnot'
+# stdout 'EVENTS:     \[{"type":"Transfer","attrs":\[{"key":"token","value":"gno.land/r/gnoswap/gns.GNS.0000000"},{"key":"from","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"to","value":"g1[a-z0-9]+"},{"key":"value","value":"100000000"}\],"pkg_path":"gno.land/p/demo/tokens/grc20"},{"type":"PoolCreationFee","attrs":\[{"key":"prevAddr","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"prevRealm","value":""},{"key":"poolPath","value":"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"},{"key":"feeTokenPath","value":"gno.land/r/gnoswap/gns.GNS"},{"key":"feeAmount","value":"100000000"}\],"pkg_path":"gno.land/r/gnoswap/pool/v1"},{"type":"CreatePool","attrs":\[{"key":"prevAddr","value":"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"},{"key":"prevRealm","value":""},{"key":"token0Path","value":"gno.land/r/onbloc/baz.BAZ"},{"key":"token1Path","value":"gno.land/r/onbloc/foo.FOO"},{"key":"fee","value":"500"},{"key":"sqrtPriceX96","value":"1461373636357701573206614361639251909071969339631"},{"key":"poolPath","value":"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"},{"key":"tick","value":"-?[0-9]+"},{"key":"tickSpacing","value":"10"}\],"pkg_path":"gno.land/r/gnoswap/pool/v1"},.*\]'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500\")"
+# stdout true
+
 ## Mint position
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -121,7 +133,7 @@ gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno
 # stdout "60283363"
 # stdout 'GAS USED:   6[0-9]{7}'
 # stdout 'STORAGE DELTA:  (6|7)[0-9]{3} bytes'
-# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS.0000000\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"60283363\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot.0000000\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"value\",\"value\":\"27293886\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/swap_wrapper\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"60283363\"},{\"key\":\"sqrtPriceLimitX96\",\"value\":\"1461446703485210103287273052203988822378723970341\"},{\"key\":\"payer\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"recipient\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"token0Amount\",\"value\":\"-27293886\"},{\"key\":\"token1Amount\",\"value\":\"60283363\"},{\"key\":\"protocolFee0\",\"value\":\"0\"},{\"key\":\"protocolFee1\",\"value\":\"0\"},{\"key\":\"sqrtPriceX96\",\"value\":\"174464392906408685394356148876\"},{\"key\":\"exactIn\",\"value\":\"true\"},{\"key\":\"currentTick\",\"value\":\"15788\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"feeGrowthGlobal0X128\",\"value\":\"0\"},{\"key\":\"feeGrowthGlobal1X128\",\"value\":\"1230808126800372841116295222572854256\"},{\"key\":\"balanceToken0\",\"value\":\"22706115\"},{\"key\":\"balanceToken1\",\"value\":\"110283364\"},{\"key\":\"ticks\",\"value\":\"\[{\\"tick\\":-887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"},{\\"tick\\":887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"}\]\"},{\"key\":\"tickCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
+# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS.0000000\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"60283363\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot.0000000\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"value\",\"value\":\"27293886\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/swap_wrapper\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"60283363\"},{\"key\":\"sqrtPriceLimitX96\",\"value\":\"1461446703485210103287273052203988822378723970341\"},{\"key\":\"recipient\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"token0Amount\",\"value\":\"-27293886\"},{\"key\":\"token1Amount\",\"value\":\"60283363\"},{\"key\":\"protocolFee0\",\"value\":\"0\"},{\"key\":\"protocolFee1\",\"value\":\"0\"},{\"key\":\"sqrtPriceX96\",\"value\":\"174464392906408685394356148876\"},{\"key\":\"exactIn\",\"value\":\"true\"},{\"key\":\"currentTick\",\"value\":\"15788\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"feeGrowthGlobal0X128\",\"value\":\"0\"},{\"key\":\"feeGrowthGlobal1X128\",\"value\":\"1230808126800372841116295222572854256\"},{\"key\":\"balanceToken0\",\"value\":\"22706115\"},{\"key\":\"balanceToken1\",\"value\":\"110283364\"},{\"key\":\"ticks\",\"value\":\"\[{\\"tick\\":-887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"},{\\"tick\\":887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"}\]\"},{\"key\":\"tickCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
 ### Verify swap wrapper balance transfers
 ## Check GNS balance decreased by swap amount
@@ -204,7 +216,6 @@ func WrappedSwap(
 		zeroForOne,
 		amountSpecified,
 		sqrtPriceLimitX96,
-		payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return handleSwapCallback(
 				cur,

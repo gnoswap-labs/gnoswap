@@ -3,9 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"fmt"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -221,7 +222,6 @@ func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 			zeroForOne,
 			amountSpecified,
 			MIN_PRICE,
-			adminAddr,
 			swapCallback,
 		)
 	}(cross(cur))

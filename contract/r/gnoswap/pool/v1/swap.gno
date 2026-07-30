@@ -151,7 +151,6 @@ type SwapComputation struct {
 //   - zeroForOne: Direction of swap (true = token0 to token1)
 //   - amountSpecified: Exact input (positive) or exact output (negative)
 //   - sqrtPriceLimitX96: Price limit for the swap
-//   - payer: Address that provides input tokens
 //   - swapCallback: Callback function to handle token transfers
 //
 // Returns amount0 and amount1 deltas as strings.
@@ -165,7 +164,6 @@ func (i *poolV1) Swap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
 	if !rlm.IsCurrent() {
@@ -303,7 +301,6 @@ func (i *poolV1) Swap(
 		"zeroForOne", utils.FormatBool(zeroForOne),
 		"requestAmount", amountSpecified,
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
-		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,

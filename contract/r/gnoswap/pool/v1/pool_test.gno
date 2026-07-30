@@ -407,7 +407,8 @@ func TestBurn_LiquidityWithdrawalScenarios(cur realm, t *testing.T) {
 			beforeLiquidity := new(u256.Uint).Set(pool.Liquidity())
 
 			// When: Withdraw specified amount of liquidity
-			amount0, amount1 := mockInstanceBurn(0, cur,
+			amount0, amount1 := mockInstanceBurn(
+				0, cur,
 				pool.Token0Path(),
 				pool.Token1Path(),
 				pool.Fee(),
@@ -581,7 +582,8 @@ func TestAccessControl_AuthorizationValidation(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not admin or governance", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, cur, expectedMsg, func() {
-					mockInstanceCollectProtocol(0, cur,
+					mockInstanceCollectProtocol(
+						0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						unauthorizedAddr, "100", "100",
 					)
@@ -949,7 +951,7 @@ func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 	approveTokenForRouter(cur, t, pool.Token0Path())
 
 	mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
-		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+		adminAddr, true, "1000000", "3945129629379410362911094631", func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 			return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 		})
 
@@ -1089,7 +1091,8 @@ func TestCollect(cur realm, t *testing.T) {
 			testing.SetRealm(posRealm)
 			if tt.expectedPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMsg, func() {
-					mockInstanceCollect(0, cur,
+					mockInstanceCollect(
+						0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 						tt.request0, tt.request1,
@@ -1099,7 +1102,8 @@ func TestCollect(cur realm, t *testing.T) {
 				return
 			}
 
-			amount0, amount1 := mockInstanceCollect(0, cur,
+			amount0, amount1 := mockInstanceCollect(
+				0, cur,
 				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 				tt.request0, tt.request1,
@@ -1164,7 +1168,8 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	bar.Approve(cross(cur), poolAddr, 1)
 
-	amount0, amount1 := mockInstanceSwap(0, cur,
+	amount0, amount1 := mockInstanceSwap(
+		0, cur,
 		barTokenPath,
 		fooTokenPath,
 		500,
@@ -1172,7 +1177,6 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 		true,
 		"1",
 		"4295128740",
-		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 			return mockSwapCallback(cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
 		},

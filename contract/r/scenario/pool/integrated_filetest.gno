@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -193,7 +194,6 @@ func testPoolSwapping(cur realm, t *testing.T) {
 		true, // zeroForOne
 		"16000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -217,7 +217,6 @@ func testPoolSwapping(cur realm, t *testing.T) {
 		false, // zeroForOne = false
 		"16000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -307,7 +306,6 @@ func testPoolMultiToken(cur realm, t *testing.T) {
 		true, // zeroForOne
 		"16000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},

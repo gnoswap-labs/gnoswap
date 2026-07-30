@@ -27,12 +27,11 @@ const (
 	errUnderflow                 = "[GNOSWAP-POOL-019] underflow"
 	errOverflow                  = "[GNOSWAP-POOL-020] overflow"
 	errBalanceUpdateFailed       = "[GNOSWAP-POOL-021] balance update failed"
-	errInvalidPayer              = "[GNOSWAP-POOL-022] invalid payer"
-	errNotAccessEOA              = "[GNOSWAP-POOL-023] not access EOA"
-	errInsufficientPayment       = "[GNOSWAP-POOL-024] insufficient payment"
-	errNotInitializedObservation = "[GNOSWAP-POOL-025] not initialized observation"
-	errObservationTooOld         = "[GNOSWAP-POOL-026] target timestamp before oldest observation"
-	errSpoofedRealm              = "[GNOSWAP-POOL-027] rlm does not match the current crossing frame"
+	errNotAccessEOA              = "[GNOSWAP-POOL-022] not access EOA"
+	errInsufficientPayment       = "[GNOSWAP-POOL-023] insufficient payment"
+	errNotInitializedObservation = "[GNOSWAP-POOL-024] not initialized observation"
+	errObservationTooOld         = "[GNOSWAP-POOL-025] target timestamp before oldest observation"
+	errSpoofedRealm              = "[GNOSWAP-POOL-026] rlm does not match the current crossing frame"
 )
 
 // newErrorWithDetail adds detail to an error message.

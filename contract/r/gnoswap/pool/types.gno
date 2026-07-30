@@ -115,7 +115,6 @@ type IPoolSwap interface {
 		zeroForOne bool,
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
-		payer address,
 		swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 	) (string, string)
 

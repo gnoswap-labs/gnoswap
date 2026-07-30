@@ -124,7 +124,6 @@ func testZeroAmountSwap(cur realm) {
 		true,
 		"1",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return zeroAmountSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},

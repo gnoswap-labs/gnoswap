@@ -79,7 +79,6 @@ func (r *routerV1) swapInner(
 		zeroForOne,
 		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
-		data.payer,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			// assert is pool to prevent unauthorized callback
 			caller := cur.Previous().Address()

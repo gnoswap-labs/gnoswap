@@ -233,7 +233,6 @@ func generateFeesWithSwap(cur realm, ft *fuzz.T, adminAddr, poolAddr address, po
 				zeroForOne,
 				ufmt.Sprintf("%d", amountSpecified),
 				sqrtPriceLimitX96,
-				adminAddr,
 				swapCallback,
 			)
 		}(cross(cur))

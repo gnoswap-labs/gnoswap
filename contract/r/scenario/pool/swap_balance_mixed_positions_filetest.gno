@@ -52,12 +52,12 @@ const (
 )
 
 type BalanceSnapshot struct {
-	userBaz         int64
-	userQux         int64
-	poolBaz         int64
-	poolQux         int64
-	protocolFeeBaz  int64
-	protocolFeeQux  int64
+	userBaz        int64
+	userQux        int64
+	poolBaz        int64
+	poolQux        int64
+	protocolFeeBaz int64
+	protocolFeeQux int64
 }
 
 func main(cur realm) {
@@ -172,7 +172,6 @@ func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) Balance
 		true,
 		"200000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
@@ -210,7 +209,6 @@ func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) Balanc
 		false,
 		"-80000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
