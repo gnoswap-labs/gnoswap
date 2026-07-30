@@ -86,11 +86,6 @@ make integration-test
 make integration-test-list
 make integration-test-run TEST=pool_create_pool_and_mint
 make integration-test-build
-
-# Gas reports
-make bless-install
-make gas-report TEST=uint256_gas_measurement
-make gas-report-tsv TEST=uint256_gas_measurement
 ```
 
 - `gno build` does not exist. Use `gno test` for compilation + runtime checks.
