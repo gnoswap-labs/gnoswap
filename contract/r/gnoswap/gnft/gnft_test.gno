@@ -1180,7 +1180,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    testutils.TestAddress("addr03"),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve",
+			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
 		},
 		{
 			name:        "approve for non-existent token",
@@ -1196,7 +1196,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    addr01,
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-005] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
+			panicMsg:    "[GNOSWAP-GNFT-005] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
 		},
 		{
 			name:        "approve invalid address",

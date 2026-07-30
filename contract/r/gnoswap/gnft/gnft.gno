@@ -152,7 +152,7 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 
 	caller := cur.Previous().Address()
 	err := nft.Approve(caller, approved, tid)
-	checkApproveErr(err, caller, approved)
+	checkApproveErr(err, caller, approved, tid)
 	return nil
 }
 

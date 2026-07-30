@@ -67,7 +67,7 @@ func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 }
 
 // checkApproveErr wraps approve errors with more specific context.
-func checkApproveErr(err error, caller, approved address) {
+func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
@@ -75,14 +75,16 @@ func checkApproveErr(err error, caller, approved address) {
 	errMsg := err.Error()
 
 	switch {
-	case errMsg == "invalid token id":
+	case errMsg == grc721.ErrInvalidTokenId.Error():
 		panic(errTokenNotExists)
 
-	case errMsg == "caller is not token owner or approved":
-		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve", caller)))
+	case errMsg == grc721.ErrCallerIsNotOwnerOrApproved.Error():
+		owner, ownerErr := nft.OwnerOf(tid)
+		checkErr(ownerErr)
+		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve for token %s owned by %s", caller, string(tid), owner)))
 
-	case errMsg == "approval to current owner":
-		panic(makeErrorWithDetails(errTransferToSelf, ufmt.Sprintf("cannot approve to current owner %s", approved)))
+	case errMsg == grc721.ErrApprovalToCurrentOwner.Error():
+		panic(makeErrorWithDetails(errTransferToSelf, ufmt.Sprintf("cannot approve to current owner %s for token %s", approved, string(tid))))
 
 	default:
 		panic(err.Error())
