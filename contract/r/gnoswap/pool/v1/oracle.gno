@@ -175,23 +175,8 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 	return nextCardinality, nil
 }
 
-func lte(time, a, b int64) bool {
-	if a <= time && b <= time {
-		return a <= b
-	}
-
-	aAdjusted := a
-	bAdjusted := b
-
-	if a <= time {
-		aAdjusted += 1 << 32
-	}
-
-	if b <= time {
-		bAdjusted += 1 << 32
-	}
-
-	return aAdjusted <= bAdjusted
+func lte(a, b int64) bool {
+	return a <= b
 }
 
 func writeObservation(
@@ -355,7 +340,7 @@ func getSurroundingObservations(
 	}
 
 	// If the target is chronologically at or after the newest observation, we can early return
-	if lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
+	if lte(beforeOrAt.BlockTimestamp(), target) {
 		if beforeOrAt.BlockTimestamp() == target {
 			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
 			return beforeOrAt, nil, nil
@@ -379,7 +364,7 @@ func getSurroundingObservations(
 	}
 
 	// Ensure that the target is chronologically at or after the oldest observation
-	if !lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
+	if !lte(beforeOrAt.BlockTimestamp(), target) {
 		return nil, nil, errors.New(errObservationTooOld)
 	}
 
@@ -417,10 +402,10 @@ func binarySearch(
 			return nil, nil, err
 		}
 
-		targetAtOrAfter := lte(currentTime, beforeOrAt.BlockTimestamp(), target)
+		targetAtOrAfter := lte(beforeOrAt.BlockTimestamp(), target)
 
 		// check if we've found the answer!
-		if targetAtOrAfter && lte(currentTime, target, atOrAfter.BlockTimestamp()) {
+		if targetAtOrAfter && lte(target, atOrAfter.BlockTimestamp()) {
 			break
 		}
 
