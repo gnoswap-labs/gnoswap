@@ -2,6 +2,7 @@ package gnft
 
 import (
 	"chain/runtime"
+	b64 "encoding/base64"
 	"strings"
 	"testing"
 
@@ -903,6 +904,14 @@ func TestTokenURI(cur realm, t *testing.T) {
 				uassert.NoError(t, err)
 				uassert.NotEmpty(t, uri)
 				uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
+
+				decoded, err := b64.StdEncoding.DecodeString(strings.TrimPrefix(uri, "data:image/svg+xml;base64,"))
+				uassert.NoError(t, err)
+				decodedStr := string(decoded)
+				uassert.True(t, strings.Contains(decodedStr, `fill="url(#paint0_linear_gnft_1)"`))
+				uassert.True(t, strings.Contains(decodedStr, `id="paint0_linear_gnft_1"`))
+				uassert.True(t, strings.Contains(decodedStr, `clip-path="url(#clip0_gnft_1)"`))
+				uassert.True(t, strings.Contains(decodedStr, `id="clip0_gnft_1"`))
 			}
 		})
 	}

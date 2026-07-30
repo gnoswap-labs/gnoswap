@@ -44,7 +44,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 
 	params, err := parseImageParams(stored)
 	if err == nil {
-		return params.generateImageURI(), nil
+		return params.generateImageURI(tid), nil
 	}
 
 	return stored, nil

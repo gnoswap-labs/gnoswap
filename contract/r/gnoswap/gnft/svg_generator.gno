@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -32,12 +33,16 @@ import (
 //	</svg>
 
 // svgTemplate holds pre-split template parts for efficient concatenation.
-// Usage: svgTemplate[0] + x1 + svgTemplate[1] + y1 + ... + color2 + svgTemplate[6]
-var svgTemplate = [7]string{
-	// [0] SVG header and body (before x1)
+// Usage: svgTemplate[0] + clipID + svgTemplate[1] + paintID + ... + color2 + svgTemplate[10]
+var svgTemplate = [11]string{
+	// [0] SVG header and body (before clip-path id)
 	`<svg width="135" height="135" viewBox="0 0 135 135" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_7698_56846)">
-<circle cx="67.5" cy="67.5" r="67.5" fill="url(#paint0_linear_7698_56846)"/>
+<g clip-path="url(#`,
+	// [1] between clip-path id and fill id
+	`)">
+<circle cx="67.5" cy="67.5" r="67.5" fill="url(#`,
+	// [2] between fill id and gradient id
+	`)"/>
 <path d="M51.2905 42.9449L66.4895 33L97 52.8061L81.8241 62.7425L51.2905 42.9449Z" fill="white"/>
 <path d="M51.6055 67.5059L66.8044 57.561L97 77.0657L82.1046 87.1793L51.6055 67.5059Z" fill="white" fill-opacity="0.4"/>
 <path d="M36.0464 81.7559L51.2905 71.811L81.7336 91.6547L66.4895 101.508L36.0464 81.7559Z" fill="white" fill-opacity="0.6"/>
@@ -45,23 +50,27 @@ var svgTemplate = [7]string{
 <path d="M82.1051 87.1797L97.0016 77.0662L97.0016 81.7029L81.7896 91.629L82.1051 87.1797Z" fill="white" fill-opacity="0.5"/>
 </g>
 <defs>
-<linearGradient id="paint0_linear_7698_56846" x1="`,
-	// [1] between x1 and y1
+<linearGradient id="`,
+	// [3] between gradient id and x1
+	`" x1="`,
+	// [4] between x1 and y1
 	`" y1="`,
-	// [2] between y1 and x2
+	// [5] between y1 and x2
 	`" x2="`,
-	// [3] between x2 and y2
+	// [6] between x2 and y2
 	`" y2="`,
-	// [4] between y2 and color1
+	// [7] between y2 and color1
 	`" gradientUnits="userSpaceOnUse">
 <stop stop-color="`,
-	// [5] between color1 and color2
+	// [8] between color1 and color2
 	`"/>
 <stop offset="1" stop-color="`,
-	// [6] SVG footer (after color2)
+	// [9] between color2 and clipPath id
 	`"/>
 </linearGradient>
-<clipPath id="clip0_7698_56846">
+<clipPath id="`,
+	// [10] SVG footer (after clipPath id)
+	`">
 <rect width="135" height="135" fill="white"/>
 </clipPath>
 </defs>
@@ -192,18 +201,27 @@ func parseImageParams(s string) (*ImageParams, error) {
 }
 
 // generateImageURI converts parsed image parameters to a base64-encoded SVG image URI.
-func (params ImageParams) generateImageURI() string {
-	svg := params.generateSVG()
+func (params ImageParams) generateImageURI(tid grc721.TokenID) string {
+	svg := params.generateSVG(tid)
 	sEnc := b64.StdEncoding.EncodeToString([]byte(svg))
 
 	return "data:image/svg+xml;base64," + sEnc
 }
 
 // generateSVG generates SVG image from parsed and validated parameters.
-func (params ImageParams) generateSVG() string {
-	return svgTemplate[0] + strconv.Itoa(params.x1) + svgTemplate[1] + strconv.Itoa(params.y1) +
-		svgTemplate[2] + strconv.Itoa(params.x2) + svgTemplate[3] + strconv.Itoa(params.y2) +
-		svgTemplate[4] + params.color1 + svgTemplate[5] + params.color2 + svgTemplate[6]
+func (params ImageParams) generateSVG(tid grc721.TokenID) string {
+	suffix := svgIDSuffix(tid)
+	paintID := "paint0_linear_" + suffix
+	clipID := "clip0_" + suffix
+	return svgTemplate[0] + clipID + svgTemplate[1] + paintID + svgTemplate[2] + paintID +
+		svgTemplate[3] + strconv.Itoa(params.x1) + svgTemplate[4] + strconv.Itoa(params.y1) +
+		svgTemplate[5] + strconv.Itoa(params.x2) + svgTemplate[6] + strconv.Itoa(params.y2) +
+		svgTemplate[7] + params.color1 + svgTemplate[8] + params.color2 + svgTemplate[9] +
+		clipID + svgTemplate[10]
+}
+
+func svgIDSuffix(tid grc721.TokenID) string {
+	return "gnft_" + string(tid)
 }
 
 // isValidHexColor checks if a string is a valid hex color in #XXXXXX format.
