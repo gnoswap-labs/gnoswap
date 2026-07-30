@@ -2967,6 +2967,7 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 	creator := testutils.TestAddress("creator")
 	refundee := testutils.TestAddress("refundee")
+	staker := testutils.TestAddress("staker")
 
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10
@@ -2974,6 +2975,7 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	totalRewardAmount := int64(1_000_000_000)
 	depositGnsAmount := int64(100_000_000)
 	incentiveId := "no-steal-test"
+	positionId := uint64(1)
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross(cur), poolAddr, math.MaxInt)
@@ -2990,10 +2992,31 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(incentive)
+	s.getExternalIncentives().set(incentiveId, incentive)
 
 	// Zero liquidity for the first 2 of 9 days only; a real staker held liquidity for the
 	// remaining 7 days but never called CollectReward.
-	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+86400*2, 0)
+	stakeTime := startTime + 86400*2
+	poolResolver.IncentivesResolver().startUnclaimablePeriod(startTime)
+	poolResolver.IncentivesResolver().endUnclaimablePeriod(stakeTime)
+	liquidity := u256.NewUint(1000)
+	poolResolver.modifyDeposit(i256.FromUint256(liquidity), stakeTime, 0)
+
+	warmups := []sr.Warmup{sr.NewWarmup(math.MaxInt64, math.MaxInt64, 100)}
+	deposit := sr.NewDeposit(staker, poolPath, liquidity, stakeTime, -10000, 10000, warmups)
+	deposit.AddExternalIncentiveId(incentiveId)
+	deposit.SetLastExternalIncentiveUpdatedAt(stakeTime)
+	s.getDeposits().set(positionId, deposit)
+
+	claimableDuration := endTime - stakeTime
+	accX128 := u256.MulDiv(u256.NewUintFromInt64(claimableDuration), q128, liquidity)
+	positionAccX128, overflow := u256.Zero().MulOverflow(accX128, liquidity)
+	if overflow {
+		t.Fatal("expected reward accumulation to fit uint256")
+	}
+	expectedRewardU256 := u256.MulDiv(positionAccX128, incentive.RewardPerSecondX128(), q128)
+	expectedRewardU256 = u256.Zero().Rsh(expectedRewardU256, 128)
+	expectedReward := gnsmath.SafeConvertToInt64(expectedRewardU256)
 
 	// Nobody has collected anything yet.
 	testing.SetRealm(adminRealm)
@@ -3010,18 +3033,25 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	if rewardLeftForStaker <= 0 {
 		t.Fatalf("expected a positive reward balance left for the still-uncollected staker, got %d", rewardLeftForStaker)
 	}
+	uassert.Equal(t, expectedReward, rewardLeftForStaker)
 
-	// The still-uncollected staker's due is at most what's left in RewardAmount -- the
-	// staker.gno:459 guard (RewardAmount() < totalRewardAmount) must accept it.
-	dueToStaker := rewardLeftForStaker
-	if updated.RewardAmount() < dueToStaker {
-		t.Fatalf("staker's legitimate due(%d) exceeds available RewardAmount(%d) after refund", dueToStaker, updated.RewardAmount())
+	stakerBarBefore := bar.BalanceOf(staker)
+
+	testing.SetRealm(testing.NewUserRealm(staker))
+	_, _, externalRewards, externalPenalties := sr.CollectReward(cross(cur), positionId)
+
+	uassert.Equal(t, expectedReward, externalRewards[barPath])
+	uassert.Equal(t, int64(0), externalPenalties[barPath])
+	uassert.Equal(t, expectedReward, bar.BalanceOf(staker)-stakerBarBefore)
+
+	depositResolver := NewDepositResolver(deposit)
+	uassert.Equal(t, expectedReward, depositResolver.CollectedExternalReward(incentiveId))
+	if depositResolver.ExternalRewardLastCollectTime(incentiveId) <= endTime {
+		t.Fatalf("expected external reward last collect time after incentive end, got %d", depositResolver.ExternalRewardLastCollectTime(incentiveId))
 	}
 
-	// Apply the same bookkeeping CollectReward would apply for this payout.
-	updatedResolver := NewExternalIncentiveResolver(updated)
-	updated.SetRewardAmount(gnsmath.SafeSubInt64(updated.RewardAmount(), dueToStaker))
-	updatedResolver.addDistributedRewardAmount(dueToStaker)
+	updated, exists = poolResolver.IncentivesResolver().Get(incentiveId)
+	uassert.True(t, exists)
 
 	// Every token is now accounted for: nothing left in RewardAmount, and refund + user
 	// payout together exactly equal TotalRewardAmount.
