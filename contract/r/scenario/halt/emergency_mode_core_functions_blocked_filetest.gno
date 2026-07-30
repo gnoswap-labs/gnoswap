@@ -5,10 +5,11 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -151,7 +152,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "pool", "Swap")
 	uassert.AbortsContains(t, cur, "halted: pool", func() {
-		pool.Swap(cross(cur), barPath, fooPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
+		pool.Swap(cross(cur), barPath, fooPath, fee, aliceAddr, true, "1000", "0", nil)
 	})
 	printBlockedExpected(cur, "pool", "Swap", "pool")
 

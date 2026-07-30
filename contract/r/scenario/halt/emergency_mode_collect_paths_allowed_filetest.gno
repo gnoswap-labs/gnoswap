@@ -297,10 +297,10 @@ func setupCollectScenario(cur realm) {
 
 func executeEmergencyCollectFeeSwaps(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "10000000", collectMinPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "10000000", collectMinPrice, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "10000000", collectMaxPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "10000000", collectMaxPrice, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
 }

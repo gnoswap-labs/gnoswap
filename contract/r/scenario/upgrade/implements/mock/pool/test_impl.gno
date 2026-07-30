@@ -131,14 +131,14 @@ func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amou
 }
 
 // IPoolSwap interface
-func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
 	result := t.ExecuteFn(
 		"Swap",
 		func(args ...any) any {
-			r1, r2 := t.instance.Swap(0, rlm, args[0].(string), args[1].(string), args[2].(uint32), args[3].(address), args[4].(bool), args[5].(string), args[6].(string), args[7].(address), args[8].(func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error))
+			r1, r2 := t.instance.Swap(0, rlm, args[0].(string), args[1].(string), args[2].(uint32), args[3].(address), args[4].(bool), args[5].(string), args[6].(string), args[7].(func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error))
 			return []any{r1, r2}
 		},
-		token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback,
+		token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback,
 	).([]any)
 	return result[0].(string), result[1].(string)
 }

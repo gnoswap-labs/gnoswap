@@ -60,8 +60,8 @@ func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amou
 }
 
 // IPoolSwap interface
-func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
-	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback)
 }
 
 func (t *TestPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {

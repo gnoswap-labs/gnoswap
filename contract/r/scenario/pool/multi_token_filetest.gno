@@ -3,9 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -178,7 +179,6 @@ func TestSwapFooBarFooToBar(cur realm) {
 		true,
 		"16000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 
@@ -222,7 +222,6 @@ func TestSwapBarBazBarToBaz(cur realm) {
 		true,
 		"16000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta, true)
 		},
