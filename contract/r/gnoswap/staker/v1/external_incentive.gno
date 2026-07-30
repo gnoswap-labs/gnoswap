@@ -214,6 +214,7 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
 	incentiveResolver.SetRefunded(true)
+	incentiveResolver.SetRewardAmount(gnsmath.SafeSubInt64(incentiveResolver.RewardAmount(), refund))
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive)
 
@@ -280,7 +281,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	refund := gnsmath.SafeAddInt64(unclaimableReward, remainder)
 
-	maxRefund := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
+	maxRefund := incentiveResolver.RewardAmount()
 	if refund > maxRefund {
 		refund = maxRefund
 	}
