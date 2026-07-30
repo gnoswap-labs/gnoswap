@@ -32,7 +32,11 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-const contractProjectPackagePath = "gno.land/r/test/contract"
+const (
+	contractProjectPackagePath = "gno.land/r/test/contract"
+	barPath                    = "gno.land/r/onbloc/bar.BAR"
+	quxPath                    = "gno.land/r/onbloc/qux.QUX"
+)
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -133,8 +137,8 @@ func addProtocolFeesForContractProject(cur realm, barAmount, quxAmount int64) {
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, barAmount)
 	qux.Approve(cross(cur), protocolFeeAddr, quxAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", barAmount)
-	protocol_fee.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", quxAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), barPath, barAmount)
+	protocol_fee.AddToProtocolFee(cross(cur), quxPath, quxAmount)
 
 	ufmt.Printf("[INFO] Protocol fee added - BAR: %d, QUX: %d\n", barAmount, quxAmount)
 	testing.SkipHeights(1)
@@ -154,21 +158,47 @@ func collectProtocolFeesAsContractProjectRecipient(cur realm) {
 	ufmt.Printf("[INFO] claimable reward (contract recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatContractProjectProtocolFees(cur, protocolFeeRewards))
 
 	testing.SetRealm(contractProjectRealm)
+	collectProtocolFeeRewardAndCheck(cur, barPath, 499, 0)
+	checkClaimableProtocolFees(cur, 0, 999)
+	collectProtocolFeeRewardAndCheck(cur, barPath, 0, 0)
+	checkClaimableProtocolFees(cur, 0, 999)
+	collectProtocolFeeAndCheck(cur, 0, 999)
+}
+
+func collectProtocolFeeRewardAndCheck(cur realm, tokenPath string, expectedBar, expectedQux int64) {
+	prevBarBalance := bar.BalanceOf(contractProjectAddr)
+	prevQuxBalance := qux.BalanceOf(contractProjectAddr)
+	launchpad.CollectProtocolFeeReward(cross(cur), tokenPath)
+	assertInt64Equal(cur, bar.BalanceOf(contractProjectAddr)-prevBarBalance, expectedBar, "contract BAR balance delta")
+	assertInt64Equal(cur, qux.BalanceOf(contractProjectAddr)-prevQuxBalance, expectedQux, "contract QUX balance delta")
+	ufmt.Printf("[EXPECTED] Contract BAR balance delta: %d\n", bar.BalanceOf(contractProjectAddr)-prevBarBalance)
+	ufmt.Printf("[EXPECTED] Contract QUX balance delta: %d\n", qux.BalanceOf(contractProjectAddr)-prevQuxBalance)
+}
+
+func collectProtocolFeeAndCheck(cur realm, expectedBar, expectedQux int64) {
 	prevBarBalance := bar.BalanceOf(contractProjectAddr)
 	prevQuxBalance := qux.BalanceOf(contractProjectAddr)
 	launchpad.CollectProtocolFee(cross(cur))
-	afterBarBalance := bar.BalanceOf(contractProjectAddr)
-	afterQuxBalance := qux.BalanceOf(contractProjectAddr)
+	assertInt64Equal(cur, bar.BalanceOf(contractProjectAddr)-prevBarBalance, expectedBar, "contract BAR balance delta")
+	assertInt64Equal(cur, qux.BalanceOf(contractProjectAddr)-prevQuxBalance, expectedQux, "contract QUX balance delta")
+	ufmt.Printf("[EXPECTED] Contract BAR balance delta: %d\n", bar.BalanceOf(contractProjectAddr)-prevBarBalance)
+	ufmt.Printf("[EXPECTED] Contract QUX balance delta: %d\n", qux.BalanceOf(contractProjectAddr)-prevQuxBalance)
+}
 
-	if afterBarBalance <= prevBarBalance {
-		panic("contract BAR balance did not increase")
-	}
-	if afterQuxBalance <= prevQuxBalance {
-		panic("contract QUX balance did not increase")
-	}
+func checkClaimableProtocolFees(cur realm, expectedBar, expectedQux int64) {
+	testing.SetRealm(govStakerRealm)
+	_, protocolFeeRewards, _ := staker.GetClaimableRewardByLaunchpad(contractProjectAddr)
+	assertInt64Equal(cur, protocolFeeRewards[barPath], expectedBar, "contract claimable BAR")
+	assertInt64Equal(cur, protocolFeeRewards[quxPath], expectedQux, "contract claimable QUX")
+	ufmt.Printf("[EXPECTED] Contract claimable BAR: %d\n", protocolFeeRewards[barPath])
+	ufmt.Printf("[EXPECTED] Contract claimable QUX: %d\n", protocolFeeRewards[quxPath])
+	testing.SetRealm(contractProjectRealm)
+}
 
-	ufmt.Printf("[EXPECTED] Contract BAR balance delta: %d\n", afterBarBalance-prevBarBalance)
-	ufmt.Printf("[EXPECTED] Contract QUX balance delta: %d\n", afterQuxBalance-prevQuxBalance)
+func assertInt64Equal(cur realm, actual, expected int64, label string) {
+	if actual != expected {
+		panic(ufmt.Sprintf("%s mismatch: expected %d, got %d", label, expected, actual))
+	}
 }
 
 func formatContractProjectProtocolFees(cur realm, fees map[string]int64) string {
@@ -208,4 +238,12 @@ func formatContractProjectProtocolFees(cur realm, fees map[string]int64) string 
 // [SCENARIO] 4. Contract project recipient collects protocol fee
 // [INFO] claimable reward (contract recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:499 gno.land/r/onbloc/qux.QUX:999]
 // [EXPECTED] Contract BAR balance delta: 499
+// [EXPECTED] Contract QUX balance delta: 0
+// [EXPECTED] Contract claimable BAR: 0
+// [EXPECTED] Contract claimable QUX: 999
+// [EXPECTED] Contract BAR balance delta: 0
+// [EXPECTED] Contract QUX balance delta: 0
+// [EXPECTED] Contract claimable BAR: 0
+// [EXPECTED] Contract claimable QUX: 999
+// [EXPECTED] Contract BAR balance delta: 0
 // [EXPECTED] Contract QUX balance delta: 999
