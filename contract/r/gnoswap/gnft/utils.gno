@@ -79,9 +79,7 @@ func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 		panic(errTokenNotExists)
 
 	case errMsg == grc721.ErrCallerIsNotOwnerOrApproved.Error():
-		owner, ownerErr := nft.OwnerOf(tid)
-		checkErr(ownerErr)
-		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve for token %s owned by %s", caller, string(tid), owner)))
+		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve for token %s", caller, string(tid))))
 
 	case errMsg == grc721.ErrApprovalToCurrentOwner.Error():
 		panic(makeErrorWithDetails(errTransferToSelf, ufmt.Sprintf("cannot approve to current owner %s for token %s", approved, string(tid))))
