@@ -210,7 +210,7 @@ func mockSwapCallback(cur realm, amount0Delta int64, amount1Delta int64) error {
 //
 // [SCENARIO] 5. Decrease liquidity through capped Collect
 // [EXPECTED] Capped collect amount0 should be 1
-// [EXPECTED] BAR balance increase should be 1
+// [EXPECTED] BAR balance increase should be 2
 // [EXPECTED] Pool token0 balance should be 0
 // [EXPECTED] Remaining tokensOwed0 should stay claimable
 //
