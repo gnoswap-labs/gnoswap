@@ -2800,6 +2800,236 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 	}
 }
 
+// TestEndExternalIncentive_RewardAmountInvariantAfterRefund is a regression test: previously
+// EndExternalIncentive transferred `refund` reward tokens out of the staker and added it to
+// DistributedRewardAmount, but never decremented RewardAmount. That left
+// TotalRewardAmount != RewardAmount + DistributedRewardAmount + AccumulatedPenaltyAmount
+// and made GetIncentiveRemainingRewardAmount report stale, inflated values after a refund.
+func TestEndExternalIncentive_RewardAmountInvariantAfterRefund(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	creator := testutils.TestAddress("creator")
+	refundee := testutils.TestAddress("refundee")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10 // 10 days ago
+	endTime := currentTime - 86400      // ended 1 day ago
+	totalRewardAmount := int64(1_000_000_000)
+	depositGnsAmount := int64(100_000_000)
+	incentiveId := "invariant-test"
+
+	// Register a real pool so EndExternalIncentive's assertIsPoolExists passes.
+	testing.SetRealm(adminRealm)
+	gns.Approve(cross(cur), poolAddr, math.MaxInt)
+	CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentive := sr.NewExternalIncentive(
+		incentiveId, poolPath, barPath, totalRewardAmount,
+		startTime, endTime, creator, depositGnsAmount,
+		runtime.ChainHeight(), startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(incentive)
+
+	// Carve out a genuine (non-dust) unclaimable window: liquidity present, then zero for
+	// 3 of the 9 remaining days, then present again. This is money nobody could ever have
+	// claimed, as opposed to money a staker simply hasn't collected yet.
+	zeroStart := startTime + 86400*2
+	zeroEnd := startTime + 86400*5
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
+	poolResolver.modifyDeposit(i256.NewInt(-1000), zeroStart, 0)
+	poolResolver.modifyDeposit(i256.NewInt(1000), zeroEnd, 0)
+
+	// Simulate two users who already collected part of the reward via CollectReward,
+	// exactly as staker.gno's CollectReward loop does.
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	collected := int64(300_000_000)
+	penalty := int64(50_000_000)
+	incentiveResolver.addDistributedRewardAmount(collected)
+	incentiveResolver.addAccumulatedPenaltyAmount(penalty)
+	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), collected+penalty))
+
+	rewardBefore := incentive.RewardAmount()
+	distributedBefore := incentive.DistributedRewardAmount()
+
+	// Fund the staker so the refund + GNS deposit transfers succeed.
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross(cur), stakerAddr, depositGnsAmount)
+	bar.Transfer(cross(cur), stakerAddr, totalRewardAmount)
+
+	refundeeBarBefore := bar.BalanceOf(refundee)
+
+	testing.SetRealm(testing.NewUserRealm(creator))
+	sr.EndExternalIncentive(cross(cur), poolPath, incentiveId, refundee)
+
+	updated, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+	uassert.True(t, exists)
+	uassert.True(t, updated.Refunded())
+
+	actualRefund := bar.BalanceOf(refundee) - refundeeBarBefore
+	if actualRefund <= 0 {
+		t.Fatalf("expected a substantial non-zero refund from the unclaimable window, got %d", actualRefund)
+	}
+
+	// The core bug: RewardAmount must decrease by exactly the amount actually refunded.
+	uassert.Equal(t, rewardBefore-actualRefund, updated.RewardAmount())
+	uassert.Equal(t, distributedBefore+actualRefund, updated.DistributedRewardAmount())
+
+	// AccumulatedPenaltyAmount must be untouched by the refund; it is only released via
+	// CollectExternalIncentivePenalty.
+	uassert.Equal(t, penalty, updated.AccumulatedPenaltyAmount())
+
+	// Invariant: TotalRewardAmount == RewardAmount + DistributedRewardAmount + AccumulatedPenaltyAmount.
+	sum := updated.RewardAmount() + updated.DistributedRewardAmount() + updated.AccumulatedPenaltyAmount()
+	uassert.Equal(t, totalRewardAmount, sum)
+
+	// GetIncentiveRemainingRewardAmount must reflect the post-refund value, not the stale
+	// pre-refund one.
+	remaining := s.GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
+	uassert.Equal(t, updated.RewardAmount(), remaining)
+}
+
+// TestEndExternalIncentive_RefundCappedByRewardAmountNotPenalty verifies that the refund cap
+// is RewardAmount alone, not TotalRewardAmount-DistributedRewardAmount (which also includes
+// AccumulatedPenaltyAmount). AccumulatedPenaltyAmount belongs to CollectExternalIncentivePenalty,
+// not to the creator refund, so a raw unclaimable-reward calculation must never be allowed to
+// dip into it.
+func TestEndExternalIncentive_RefundCappedByRewardAmountNotPenalty(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/refund_cap"
+	creator := testutils.TestAddress("creator")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10 // 10 days ago
+	endTime := startTime + 86400*10     // 10 day duration, already ended
+	totalRewardAmount := int64(864_000) // divisible by the 864000s duration: 1 wei/sec, no truncation dust
+
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentiveId := "refund-cap-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId, poolPath, WUGNOT_TOKEN_KEY, totalRewardAmount,
+		startTime, endTime, creator, 100_000_000,
+		runtime.ChainHeight(), startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(incentive)
+
+	// Zero liquidity for 9 of the 10 days: a large, legitimate unclaimable window.
+	zeroStart := startTime + 86400
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime, 0)
+	poolResolver.modifyDeposit(i256.NewInt(-1000), zeroStart, 0)
+
+	// No one has collected yet, but a large penalty has already accumulated (e.g. from an
+	// unrelated, already-unstaked position) and is waiting on CollectExternalIncentivePenalty.
+	penalty := int64(400_000)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	incentiveResolver.addAccumulatedPenaltyAmount(penalty)
+	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), penalty))
+	rewardAmount := incentive.RewardAmount() // 464,000
+
+	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
+	uassert.NoError(t, err)
+
+	// The raw unclaimable-reward calculation (9 of 10 days) is ~777,600 -- more than
+	// RewardAmount (464,000) but less than the old, looser cap of
+	// TotalRewardAmount-DistributedRewardAmount (864,000). It must be clamped to
+	// RewardAmount, not merely to the looser bound.
+	oldLooseCap := gnsmath.SafeSubInt64(incentive.TotalRewardAmount(), incentive.DistributedRewardAmount())
+	if refund > rewardAmount {
+		t.Fatalf("refund(%d) must never exceed RewardAmount(%d), even though it stays within the old cap(%d)", refund, rewardAmount, oldLooseCap)
+	}
+	uassert.Equal(t, rewardAmount, refund)
+
+	// AccumulatedPenaltyAmount must remain fully intact; none of it leaked into the refund.
+	uassert.Equal(t, penalty, incentiveResolver.AccumulatedPenaltyAmount())
+}
+
+// TestEndExternalIncentive_DoesNotStealUncollectedUserReward simulates the full lifecycle:
+// a refund happens for a genuinely-unclaimable window, and afterwards a staker who was
+// present the rest of the time (but never called CollectReward) can still collect their full,
+// legitimate share -- proving the refund fix doesn't touch money owed to real stakers, and
+// that 100% of TotalRewardAmount is eventually accounted for across refund + payout.
+func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	creator := testutils.TestAddress("creator")
+	refundee := testutils.TestAddress("refundee")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime - 86400
+	totalRewardAmount := int64(1_000_000_000)
+	depositGnsAmount := int64(100_000_000)
+	incentiveId := "no-steal-test"
+
+	testing.SetRealm(adminRealm)
+	gns.Approve(cross(cur), poolAddr, math.MaxInt)
+	CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentive := sr.NewExternalIncentive(
+		incentiveId, poolPath, barPath, totalRewardAmount,
+		startTime, endTime, creator, depositGnsAmount,
+		runtime.ChainHeight(), startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(incentive)
+
+	// Zero liquidity for the first 2 of 9 days only; a real staker held liquidity for the
+	// remaining 7 days but never called CollectReward.
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+86400*2, 0)
+
+	// Nobody has collected anything yet.
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross(cur), stakerAddr, depositGnsAmount)
+	bar.Transfer(cross(cur), stakerAddr, totalRewardAmount)
+
+	testing.SetRealm(testing.NewUserRealm(creator))
+	sr.EndExternalIncentive(cross(cur), poolPath, incentiveId, refundee)
+
+	updated, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+	uassert.True(t, exists)
+
+	rewardLeftForStaker := updated.RewardAmount()
+	if rewardLeftForStaker <= 0 {
+		t.Fatalf("expected a positive reward balance left for the still-uncollected staker, got %d", rewardLeftForStaker)
+	}
+
+	// The still-uncollected staker's due is at most what's left in RewardAmount -- the
+	// staker.gno:459 guard (RewardAmount() < totalRewardAmount) must accept it.
+	dueToStaker := rewardLeftForStaker
+	if updated.RewardAmount() < dueToStaker {
+		t.Fatalf("staker's legitimate due(%d) exceeds available RewardAmount(%d) after refund", dueToStaker, updated.RewardAmount())
+	}
+
+	// Apply the same bookkeeping CollectReward would apply for this payout.
+	updatedResolver := NewExternalIncentiveResolver(updated)
+	updated.SetRewardAmount(gnsmath.SafeSubInt64(updated.RewardAmount(), dueToStaker))
+	updatedResolver.addDistributedRewardAmount(dueToStaker)
+
+	// Every token is now accounted for: nothing left in RewardAmount, and refund + user
+	// payout together exactly equal TotalRewardAmount.
+	uassert.Equal(t, int64(0), updated.RewardAmount())
+	sum := updated.RewardAmount() + updated.DistributedRewardAmount() + updated.AccumulatedPenaltyAmount()
+	uassert.Equal(t, totalRewardAmount, sum)
+}
+
 func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
