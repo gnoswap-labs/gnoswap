@@ -1180,7 +1180,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    testutils.TestAddress("addr03"),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1",
+			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
 		},
 		{
 			name:        "approve for non-existent token",
@@ -1188,7 +1188,7 @@ func TestApprove(cur realm, t *testing.T) {
 			approved:    addr02,
 			tokenId:     999,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-004] token does not exist",
+			panicMsg:    "[GNOSWAP-GNFT-004] token does not exist || token 999",
 		},
 		{
 			name:        "approve self",
@@ -1243,12 +1243,13 @@ func TestApprove(cur realm, t *testing.T) {
 	}
 }
 
-func TestApproveInvalidTokenIDOmitsTokenID(cur realm, t *testing.T) {
+func TestApproveInvalidTokenIDIncludesTokenID(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	testing.SetRealm(addr01Realm)
+	longTid := grc721.TokenID(strings.Repeat("9", 1024))
 
-	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-GNFT-004] token does not exist", func() {
-		Approve(cross(cur), addr02, grc721.TokenID(strings.Repeat("9", 1024)))
+	uassert.AbortsWithMessage(t, cur, errTokenNotExists+" || token "+string(longTid), func() {
+		Approve(cross(cur), addr02, longTid)
 	})
 }
 
