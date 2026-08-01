@@ -4,7 +4,38 @@ import (
 	"errors"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 )
+
+// EmissionAccessor provides pool/v1 with cross-realm access to emission
+// functions. Wrappers are constructed inside the pool domain so that
+// closures persisted into emission state are owned by the pool proxy.
+type EmissionAccessor interface {
+	SetDefaultInitialPoolChecker(_ int, rlm realm, checker func() bool)
+}
+
+type emissionAccessor struct{}
+
+func (e *emissionAccessor) SetDefaultInitialPoolChecker(_ int, rlm realm, checker func() bool) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(ErrSpoofedRealm))
+	}
+
+	// Wrap the caller-provided checker in an adapter constructed HERE, inside
+	// the /r/gnoswap/pool domain package. By borrow rule #3 the wrapper
+	// closure is owned by /r/gnoswap/pool (its construction realm), not by the
+	// v1 implementation that passed `checker` in. This lets emission persist
+	// the checker into its package-level var without hitting "cannot persist
+	// realm value" (which fires when a v1-constructed closure is stored there
+	// directly).
+	emission.SetDefaultInitialPoolChecker(cross(rlm), func() bool {
+		return checker()
+	})
+}
+
+func newEmissionAccessor() EmissionAccessor {
+	return &emissionAccessor{}
+}
 
 // RegisterInitializer registers a new pool implementation version.
 // This function is called by each version (v1, v2, etc.) during initialization
@@ -17,7 +48,7 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore IPoolStore) IPool) {
+func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore IPoolStore, emissionAccessor EmissionAccessor) IPool) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
 			panic(errors.New(ErrSpoofedRealm))
@@ -28,7 +59,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore
 			panic("domainStore is not an IPoolStore")
 		}
 
-		return initializer(0, rlm, currentPoolStore)
+		return initializer(0, rlm, currentPoolStore, newEmissionAccessor())
 	}
 
 	err := versionManager.RegisterInitializer(0, cur, initializerFunc)

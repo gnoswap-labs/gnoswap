@@ -29,7 +29,7 @@ func init(cur realm) {
 }
 
 func registerPoolV1(cur realm) {
-	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore) pool.IPool {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore, emissionAccessor pool.EmissionAccessor) pool.IPool {
 		if !rlm.IsCurrent() {
 			panic(errors.New(errSpoofedRealm))
 		}
@@ -38,6 +38,10 @@ func registerPoolV1(cur realm) {
 		if err != nil {
 			panic(err)
 		}
+
+		emissionAccessor.SetDefaultInitialPoolChecker(0, rlm, func() bool {
+			return pool.ExistsPoolPath("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000")
+		})
 
 		return NewPoolV1(poolStore)
 	})
