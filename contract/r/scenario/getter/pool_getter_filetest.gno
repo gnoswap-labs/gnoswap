@@ -1086,7 +1086,7 @@ func getObservationState(cur realm) {
 //
 // [SCENARIO] 2.44. GetTickSecondsOutside
 // [INFO] Check GetTickSecondsOutside method
-// [EXPECTED] tick secondsOutside at min_tick: 0
+// [EXPECTED] tick secondsOutside at min_tick: 1234567890
 //
 // [SCENARIO] 2.45. GetTickSecondsPerLiquidityOutsideX128
 // [INFO] Check GetTickSecondsPerLiquidityOutsideX128 method
