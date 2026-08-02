@@ -11,7 +11,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -641,10 +640,10 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		if amount0Delta > 0 {
-			common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+			transferToken(cur, barPath, poolAddr, amount0Delta)
 		}
 		if amount1Delta > 0 {
-			common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+			transferToken(cur, fooPath, poolAddr, amount1Delta)
 		}
 
 		return nil

@@ -11,7 +11,6 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
@@ -704,8 +703,8 @@ func TestMint(cur realm, t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				common.SafeGRC20Transfer(cross(cur), tc.token0, tc.caller, amount0Int)
-				common.SafeGRC20Transfer(cross(cur), tc.token1, tc.caller, amount1Int)
+				transferToken(cur, tc.token0, tc.caller, amount0Int)
+				transferToken(cur, tc.token1, tc.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tc.caller))
 
@@ -801,16 +800,16 @@ func TestMint_ParticipantDerivationAndMintToValidation(cur realm, t *testing.T) 
 			}
 
 			testing.SetRealm(adminRealm)
-			common.SafeGRC20Transfer(cross(cur), barPath, caller, 1000000)
-			common.SafeGRC20Transfer(cross(cur), fooPath, caller, 1000000)
+			transferToken(cur, barPath, caller, 1000000)
+			transferToken(cur, fooPath, caller, 1000000)
 
 			if tt.callerCodePath != "" {
 				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
 			} else {
 				testing.SetRealm(testing.NewUserRealm(caller))
 			}
-			common.SafeGRC20Approve(cross(cur), barPath, poolAddr, 1000000)
-			common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, 1000000)
+			approveToken(cur, barPath, poolAddr, 1000000)
+			approveToken(cur, fooPath, poolAddr, 1000000)
 
 			mint := func(cur realm) (uint64, string, string, string) {
 				if tt.callerCodePath != "" {

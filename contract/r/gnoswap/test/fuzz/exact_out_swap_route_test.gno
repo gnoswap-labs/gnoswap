@@ -11,8 +11,6 @@ import (
 	"gno.land/p/gnoswap/fuzzutils"
 
 	"gno.land/r/gnoswap/access"
-
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/router"
 )
 
@@ -99,7 +97,7 @@ func runTestExactOutSwapRoute(cur realm, ft *fuzz.T, params *exactOutSwapRoutePa
 
 	// exact out swap route
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(cross(cur), params.inputToken, routerAddr, math.MaxInt64)
+	approveToken(cur, params.inputToken, routerAddr, math.MaxInt64)
 
 	router.ExactOutSwapRoute(
 		cross(cur),

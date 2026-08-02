@@ -432,14 +432,57 @@ func TestBurnTokens(cur realm, t *testing.T) {
 	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 }
 
+// transferToken / approveToken dispatch to the token's OWN realm so that the
+// debit is performed by the token realm itself. The patched grc20 forbids a
+// CallerTeller from a foreign realm (e.g. common's generic hub) from debiting
+// the transaction origin, which broke EOA-context test callbacks that used
+// common.SafeGRC20Transfer / common.SafeGRC20Approve.
+func transferToken(cur realm, path string, to address, amount int64) {
+	switch path {
+	case barPath:
+		bar.Transfer(cross(cur), to, amount)
+	case bazPath:
+		baz.Transfer(cross(cur), to, amount)
+	case fooPath:
+		foo.Transfer(cross(cur), to, amount)
+	case quxPath:
+		qux.Transfer(cross(cur), to, amount)
+	case oblPath:
+		obl.Transfer(cross(cur), to, amount)
+	case gnsPath:
+		gns.Transfer(cross(cur), to, amount)
+	default:
+		panic("test: unsupported token path " + path)
+	}
+}
+
+func approveToken(cur realm, path string, spender address, amount int64) {
+	switch path {
+	case barPath:
+		bar.Approve(cross(cur), spender, amount)
+	case bazPath:
+		baz.Approve(cross(cur), spender, amount)
+	case fooPath:
+		foo.Approve(cross(cur), spender, amount)
+	case quxPath:
+		qux.Approve(cross(cur), spender, amount)
+	case oblPath:
+		obl.Approve(cross(cur), spender, amount)
+	case gnsPath:
+		gns.Approve(cross(cur), spender, amount)
+	default:
+		panic("test: unsupported token path " + path)
+	}
+}
+
 func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		transferToken(cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		transferToken(cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

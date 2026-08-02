@@ -11,7 +11,6 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -204,8 +203,8 @@ func setupMintPosition(
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, amountDesired)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amountDesired)
+	approveToken(cur, token0Path, poolAddr, amountDesired)
+	approveToken(cur, token1Path, poolAddr, amountDesired)
 
 	return position.Mint(
 		cross(cur),

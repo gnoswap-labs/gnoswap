@@ -372,10 +372,10 @@ func swapPaidSwapCallback(
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		transferToken(cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		transferToken(cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -412,11 +412,11 @@ func initSwapPaidSetFeeMintPosition(
 	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, amount0Requested)
+		approveToken(cur, token0Path, poolAddr, amount0Requested)
 	}
 
 	if amount1Requested > 0 {
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amount1Requested)
+		approveToken(cur, token1Path, poolAddr, amount1Requested)
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))

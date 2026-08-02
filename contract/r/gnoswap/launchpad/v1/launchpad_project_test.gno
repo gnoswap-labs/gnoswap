@@ -1152,7 +1152,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			testing.SetRealm(adminRealm)
 			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
-			// Execute transfer
+			// Execute transfer as the launchpad realm (the actual on-chain caller
+			// of transferLeftFromProject), so the token debit comes from the
+			// launchpad realm's own address instead of the EOA transaction origin.
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
 			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
@@ -1271,7 +1274,8 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			testing.SetRealm(adminRealm)
 			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
-			// Execute transfer
+			// Execute transfer as the launchpad realm (see note above).
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 			currentTime := int64(2001)
 			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 
@@ -1357,7 +1361,8 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			testing.SetRealm(adminRealm)
 			obl.Transfer(cross(cur), launchpadAddr, tt.totalDistributeAmount)
 
-			// Execute transfer
+			// Execute transfer as the launchpad realm (see note above).
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 			currentTime := int64(2001)
 			refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 
@@ -1400,6 +1405,9 @@ func TestLaunchpadProject_TransferLeftFromProjectRepeatedRefundDoesNotDrainOther
 	initialBalance := obl.BalanceOf(recipient)
 	obl.Transfer(cross(cur), launchpadAddr, rewardAmount)
 
+	// Execute transfer as the launchpad realm (see note above); the realm stays
+	// set for the second transferLeftFromProject call below as well.
+	testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 	refundedAmount, err := lp.transferLeftFromProject(0, cur, project, recipient, currentTime)
 	uassert.NoError(t, err)
 	uassert.Equal(t, rewardAmount, refundedAmount)
