@@ -1011,20 +1011,19 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetObservation tests the GetObservation proxy function
-func TestGetObservation(cur realm, t *testing.T) {
+// TestGetLastObservation tests the GetLastObservation proxy function
+func TestGetLastObservation(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		setup             func(cur realm, t *testing.T)
 		poolPath          string
-		secondsAgo        int64
 		callerRealm       runtime.Realm
 		expectedTick      int64
 		expectedSqrt      string
 		expectedTimestamp int64
 	}{
 		{
-			name: "get observation is success",
+			name: "get last observation is success",
 			setup: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
@@ -1032,7 +1031,6 @@ func TestGetObservation(cur realm, t *testing.T) {
 				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:          "mock_pool_path",
-			secondsAgo:        3600,
 			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
 			expectedTick:      0,
 			expectedSqrt:      "0",
@@ -1049,25 +1047,25 @@ func TestGetObservation(cur realm, t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedTimestamp)
+		mockPool.Response.Set("GetLastObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedTimestamp)
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		tick, sqrt, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
+		tick, sqrt, timestamp := GetLastObservation(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetObservation") != 1 {
-			t.Error("GetObservation was not called on the implementation")
+		if mockPool.Response.CallCount("GetLastObservation") != 1 {
+			t.Error("GetLastObservation was not called on the implementation")
 		}
 		if tick != tt.expectedTick {
-			t.Errorf("GetObservation() tick = %v, want %v", tick, tt.expectedTick)
+			t.Errorf("GetLastObservation() tick = %v, want %v", tick, tt.expectedTick)
 		}
 		if sqrt != tt.expectedSqrt {
-			t.Errorf("GetObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
+			t.Errorf("GetLastObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
 		}
 		if timestamp != tt.expectedTimestamp {
-			t.Errorf("GetObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)
+			t.Errorf("GetLastObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)
 		}
 	}
 }

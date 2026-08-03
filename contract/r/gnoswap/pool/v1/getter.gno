@@ -199,7 +199,7 @@ func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
 
-func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
+func (i *poolV1) GetLastObservation(poolPath string) (
 	tickCumulative int64,
 	secondsPerLiquidityCumulativeX128 string,
 	blockTimestamp int64,
