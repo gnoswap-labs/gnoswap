@@ -33,6 +33,7 @@ import (
 
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
+	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -197,6 +198,7 @@ func haltAndSetNextVersion() {
 
 func initEmission() {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross)
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	emission.MintAndDistributeGns(cross)
 

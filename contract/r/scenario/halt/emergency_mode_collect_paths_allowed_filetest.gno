@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -226,6 +228,7 @@ func main(cur realm) {
 
 func setupCollectScenario(cur realm) {
 	testing.SetRealm(adminRealm2)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross(cur), 0)

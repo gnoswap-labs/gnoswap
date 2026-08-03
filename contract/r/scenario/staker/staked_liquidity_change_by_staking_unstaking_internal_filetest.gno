@@ -5,16 +5,17 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -93,6 +94,7 @@ func main(cur realm) {
 
 func initializeWithDefaults(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] prepare wugnot by depositing ugnot")
@@ -117,13 +119,16 @@ func createPool(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[INFO] create wugnot:gns:3000 pool")
-	pl.CreatePool(
-		cross(cur),
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // price ratio 1:1
-	)
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(
+			cross(cur),
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // price ratio 1:1
+		)
+	}
 
 	ufmt.Printf("[EXPECTED] pool created with price ratio 1:1\n")
 }
@@ -352,4 +357,3 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] position 01 reward after unstaking pos 02: 8026540
 // [WARNING] expected around 3210615, got 8026540
 // [INFO] position 01 now receives full rewards since position 02 is unstaked
-

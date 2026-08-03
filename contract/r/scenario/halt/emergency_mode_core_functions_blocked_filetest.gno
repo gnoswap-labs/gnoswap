@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-
+	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -82,6 +82,7 @@ func main(cur realm) {
 
 func setupScenario(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross(cur), 0)
@@ -375,6 +376,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "emission", "SetDistributionStartTime")
 	uassert.AbortsContains(t, cur, "halted: emission", func() {
+		scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1000)
 	})
 	printBlockedExpected(cur, "emission", "SetDistributionStartTime", "emission")

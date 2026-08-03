@@ -12,11 +12,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -106,6 +108,7 @@ func main(cur realm) {
 
 func initEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	ufmt.Println("[INFO] Initializing emission state")
@@ -113,6 +116,11 @@ func initEmissionState(cur realm) {
 
 func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
+	if pool.ExistsPoolPath(wugnotGnsPoolPath) {
+		ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)
+		return
+	}
+
 	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)
