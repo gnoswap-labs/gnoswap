@@ -1,6 +1,10 @@
 package gns
 
-import "time"
+import (
+	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+)
 
 // GetMaxEmissionAmount returns the maximum amount of emission allowed.
 func GetMaxEmissionAmount() int64 {
@@ -46,8 +50,8 @@ func GetCurrentYear() int64 {
 // Returns two slices: timestamps when halving periods start and corresponding emission rates per second.
 func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
 	halvingData := getEmissionState().getHalvingData()
-	halvingTimes := make([]int64, 0, HALVING_END_YEAR)
-	halvingEmissions := make([]int64, 0, HALVING_END_YEAR)
+	halvingTimes := make([]int64, 0, HALVING_END_YEAR+1)
+	halvingEmissions := make([]int64, 0, HALVING_END_YEAR+1)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startTimestamp := halvingData.getStartTimestamp(year)
@@ -61,6 +65,12 @@ func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64
 
 		halvingTimes = append(halvingTimes, startTimestamp)
 		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerSecond(year))
+	}
+
+	emissionEndTimestamp := halvingData.getEndTimestamp(HALVING_END_YEAR)
+	if fromTime <= emissionEndTimestamp && emissionEndTimestamp < toTime {
+		halvingTimes = append(halvingTimes, gnsmath.SafeAddInt64(emissionEndTimestamp, 1))
+		halvingEmissions = append(halvingEmissions, 0)
 	}
 
 	return halvingTimes, halvingEmissions

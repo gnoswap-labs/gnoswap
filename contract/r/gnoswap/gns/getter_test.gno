@@ -265,6 +265,23 @@ func TestGetEmissionAmountPerSecondInRangeBoundary(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start-1)
 		verifyResult(t, times, emissions, 2)
 	})
+
+	t.Run("crossing emission end includes zero emission boundary", func(cur realm, t *testing.T) {
+		year12End := GetHalvingYearEndTimestamp(12)
+		times, emissions := GetEmissionAmountPerSecondInRange(year12End-10, year12End+10)
+
+		uassert.Equal(t, 1, len(times))
+		uassert.Equal(t, 1, len(emissions))
+		uassert.Equal(t, year12End+1, times[0])
+		uassert.Equal(t, int64(0), emissions[0])
+	})
+
+	t.Run("starting after emission end excludes zero boundary", func(cur realm, t *testing.T) {
+		year12End := GetHalvingYearEndTimestamp(12)
+		times, emissions := GetEmissionAmountPerSecondInRange(year12End+1, year12End+10)
+
+		verifyResult(t, times, emissions, 0)
+	})
 }
 
 func TestGetEmissionFunctionsWithInvalidTimestamps(cur realm, t *testing.T) {
