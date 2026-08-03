@@ -67,7 +67,7 @@ func GetLiquidity(poolPath string) string {
 }
 
 // GetObservation returns observation data for calculating time-weighted averages.
-func GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
+func GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
 	return getImplementation().GetObservation(poolPath, secondsAgo)
 }
 

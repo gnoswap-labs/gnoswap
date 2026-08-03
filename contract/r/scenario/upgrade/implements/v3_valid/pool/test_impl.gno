@@ -129,7 +129,7 @@ func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
+func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, int64) {
 	return t.instance.GetObservation(poolPath, secondsAgo)
 }
 

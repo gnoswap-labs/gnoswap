@@ -498,9 +498,8 @@ func getObservation(cur realm) {
 	println("[INFO] Check GetObservation method")
 	testing.SetRealm(adminRealm)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp := pl.GetObservation(poolPath, 0)
+	tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp := pl.GetObservation(poolPath, 0)
 	ufmt.Printf("[EXPECTED] tickCumulative: %d\n", tickCumulative)
-	println("[EXPECTED] liquidityCumulative:", liquidityCumulative)
 	println("[EXPECTED] secondsPerLiquidityCumulativeX128:", secondsPerLiquidityCumulativeX128)
 	ufmt.Printf("[EXPECTED] blockTimestamp: %d\n", blockTimestamp)
 }
@@ -963,7 +962,6 @@ func getObservationState(cur realm) {
 // [SCENARIO] 2.16. GetObservation
 // [INFO] Check GetObservation method
 // [EXPECTED] tickCumulative: 0
-// [EXPECTED] liquidityCumulative: 0
 // [EXPECTED] secondsPerLiquidityCumulativeX128: 0
 // [EXPECTED] blockTimestamp: 1234567890
 //

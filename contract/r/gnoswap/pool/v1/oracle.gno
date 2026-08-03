@@ -115,15 +115,6 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 	// calculate cumulative values
 	tickCumulative := lastObservation.TickCumulative() + int64(tick)*timeDelta
 
-	// calculate liquidity cumulative
-	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
-	if overflow {
-		panic(errors.New(errOverflow))
-	}
-
-	prevLiqCum := u256.MustFromDecimal(lastObservation.LiquidityCumulative())
-	liquidityCumulative := u256.Zero().Add(prevLiqCum, liquidityDelta)
-
 	// calculate seconds per liquidity
 	liquidityForCalc := liquidity
 	if liquidity.IsZero() {
@@ -146,7 +137,6 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 	return pl.NewObservation(
 		currentTime,
 		tickCumulative,
-		liquidityCumulative.ToString(),
 		secondsPerLiquidityCumulativeX128.ToString(),
 		true,
 	), nil

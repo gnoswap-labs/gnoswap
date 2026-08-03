@@ -1021,7 +1021,6 @@ func TestGetObservation(cur realm, t *testing.T) {
 		callerRealm       runtime.Realm
 		expectedTick      int64
 		expectedSqrt      string
-		expectedLiquidity string
 		expectedTimestamp int64
 	}{
 		{
@@ -1037,7 +1036,6 @@ func TestGetObservation(cur realm, t *testing.T) {
 			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
 			expectedTick:      0,
 			expectedSqrt:      "0",
-			expectedLiquidity: "0",
 			expectedTimestamp: 0,
 		},
 	}
@@ -1051,12 +1049,12 @@ func TestGetObservation(cur realm, t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedLiquidity, tt.expectedTimestamp)
+		mockPool.Response.Set("GetObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedTimestamp)
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		tick, sqrt, liquidity, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
+		tick, sqrt, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
 
 		// Assert
 		if mockPool.Response.CallCount("GetObservation") != 1 {
@@ -1067,9 +1065,6 @@ func TestGetObservation(cur realm, t *testing.T) {
 		}
 		if sqrt != tt.expectedSqrt {
 			t.Errorf("GetObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
-		}
-		if liquidity != tt.expectedLiquidity {
-			t.Errorf("GetObservation() liquidity = %v, want %v", liquidity, tt.expectedLiquidity)
 		}
 		if timestamp != tt.expectedTimestamp {
 			t.Errorf("GetObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)

@@ -242,57 +242,6 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 	}
 }
 
-// TestObservationState_LiquidityAccumulation tests liquidity cumulative calculations
-func TestObservationState_LiquidityAccumulation(cur realm, t *testing.T) {
-	currentTime := time.Now().Unix()
-
-	tests := []struct {
-		name                        string
-		writes                      []writeOperation
-		expectedLiquidityCumulative string
-	}{
-		{
-			name: "constant liquidity",
-			writes: []writeOperation{
-				{time: currentTime + 100, tick: 1000, liquidity: "1000000"},
-				{time: currentTime + 200, tick: 1000, liquidity: "1000000"},
-			},
-			expectedLiquidityCumulative: "200000000", // 1000000 * 200
-		},
-		{
-			name: "changing liquidity",
-			writes: []writeOperation{
-				{time: currentTime + 100, tick: 1000, liquidity: "1000000"},
-				{time: currentTime + 200, tick: 1000, liquidity: "2000000"},
-			},
-			expectedLiquidityCumulative: "300000000", // 1000000*100 + 2000000*100
-		},
-		{
-			name: "zero liquidity",
-			writes: []writeOperation{
-				{time: currentTime + 100, tick: 1000, liquidity: "0"},
-			},
-			expectedLiquidityCumulative: "0",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			os := pl.NewObservationState(currentTime)
-
-			for _, write := range tt.writes {
-				liquidity := u256.MustFromDecimal(write.liquidity)
-				err := writeObservation(os, write.time, write.tick, liquidity)
-				uassert.NoError(t, err, "Write should succeed")
-			}
-
-			lastObs, err := lastObservation(os)
-			uassert.NoError(t, err, "Last observation should succeed")
-			uassert.Equal(t, tt.expectedLiquidityCumulative, lastObs.LiquidityCumulative(), "Liquidity cumulative mismatch")
-		})
-	}
-}
-
 // Verify TWAP rounding for a variety of tickDelta/secondsAgo combinations
 func TestGetTWAP_RoundingTable(cur realm, t *testing.T) {
 	tests := []struct {
@@ -475,7 +424,6 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 		now,
 		tickDelta,
 		"0",
-		"0",
 		true,
 	))
 	return os
@@ -494,7 +442,6 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
-		"0",
 		secondsPerLiquidityDelta.ToString(),
 		true,
 	))

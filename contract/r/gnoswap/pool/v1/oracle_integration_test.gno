@@ -55,10 +55,10 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				{time: baseTime + 900, tick: 1500, liquidity: "500000", description: "liquidity reduced"},
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
-				// Query observations to verify liquidity accumulation
+				// Query observations to verify seconds per liquidity accumulation
 				secondsAgos := []uint32{0, 300, 600, 900}
 				observationState := pool.ObservationState()
-				_, liquidityCumulatives, err := observe(
+				_, secondsPerLiquidityCumulatives, err := observe(
 					observationState,
 					baseTime+900,
 					secondsAgos,
@@ -69,12 +69,12 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				)
 				uassert.NoError(t, err, "Observe should succeed")
 
-				// Verify liquidity cumulative is monotonically increasing
-				for i := 1; i < len(liquidityCumulatives); i++ {
-					prev := u256.MustFromDecimal(liquidityCumulatives[i-1])
-					curr := u256.MustFromDecimal(liquidityCumulatives[i])
+				// Verify seconds per liquidity cumulative is monotonically increasing
+				for i := 1; i < len(secondsPerLiquidityCumulatives); i++ {
+					prev := u256.MustFromDecimal(secondsPerLiquidityCumulatives[i-1])
+					curr := u256.MustFromDecimal(secondsPerLiquidityCumulatives[i])
 					uassert.True(t, prev.Gte(curr),
-						"Liquidity cumulative should be non-decreasing forward in time")
+						"Seconds per liquidity cumulative should be non-decreasing forward in time")
 				}
 			},
 		},
@@ -91,10 +91,6 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				expectedTickCumulative := int64(1500 * 300) // 450000
 				uassert.Equal(t, expectedTickCumulative, obs.TickCumulative(),
 					"Tick cumulative should accumulate even with zero liquidity")
-
-				// Liquidity cumulative should remain zero
-				uassert.Equal(t, "0", obs.LiquidityCumulative(),
-					"Liquidity cumulative should remain zero")
 			},
 		},
 	}
