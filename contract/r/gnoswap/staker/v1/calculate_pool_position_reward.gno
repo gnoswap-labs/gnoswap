@@ -27,6 +27,27 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 		PositionId:    positionId,
 	})
 
+	return aggregateRewards(rewards)
+}
+
+// calcPositionRewardReadOnly calculates total position rewards and penalties
+// WITHOUT writing any state to storage. It mirrors calcPositionReward but drives
+// every computation through pure read-only paths (reward segments, in-memory
+// incentive-id union). Safe to call from getters.
+func (s *stakerV1) calcPositionRewardReadOnly(currentHeight, currentTimestamp int64, positionId uint64) Reward {
+	rewards := s.calculatePositionRewardReadOnly(&CalcPositionRewardParam{
+		CurrentHeight: currentHeight,
+		CurrentTime:   currentTimestamp,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
+		PositionId:    positionId,
+	})
+
+	return aggregateRewards(rewards)
+}
+
+func aggregateRewards(rewards []Reward) Reward {
 	internal := int64(0)
 	internalPenalty := int64(0)
 
@@ -55,7 +76,7 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 	}
 }
 
-// CalcPositionRewardParam is a struct for calculating position reward
+// CalcPositionRewardParam is internal parameters for calculating position reward
 type CalcPositionRewardParam struct {
 	// Environmental variables
 	CurrentHeight int64
@@ -153,6 +174,106 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 		return false
 	})
+
+	return rewards
+}
+
+// calculatePositionRewardReadOnly is the pure, read-only counterpart of
+// calculatePositionReward. It produces the identical reward/penalty result as
+// the write path but performs NO storage writes:
+//
+//  1. The pool is read but never created (a missing pool yields zero rewards).
+//  2. cacheRewardForPool is replaced by PoolTier.rewardSegmentsForPool, which
+//     reconstructs the reward-cache intervals in memory.
+//  3. The deposit's external incentive list is not synced; the union of the
+//     already-indexed incentive ids and the ids created since the last sync is
+//     computed in memory instead.
+//
+// It is safe to call from any getter.
+func (s *stakerV1) calculatePositionRewardReadOnly(param *CalcPositionRewardParam) []Reward {
+	deposit := param.Deposits.get(param.PositionId)
+	depositResolver := NewDepositResolver(deposit)
+	poolPath := deposit.TargetPoolPath()
+
+	pool, ok := param.Pools.Get(poolPath)
+	if !ok {
+		// A pool that was never created cannot have earned any rewards.
+		// (The write path would create an empty pool here; we skip the write.)
+		return make([]Reward, len(deposit.Warmups()))
+	}
+	poolResolver := NewPoolResolver(pool)
+
+	// Reconstruct the reward-cache intervals in memory, without persisting them.
+	segments := param.PoolTier.rewardSegmentsForPool(param.CurrentTime, param.Pools, poolPath)
+
+	lastCollectTime := depositResolver.InternalRewardLastCollectTime()
+
+	// Initializes reward/penalty arrays for rewards and penalties for each warmup
+	rewardState := poolResolver.RewardStateOf(deposit)
+
+	// Calculate internal rewards regardless of current tier status
+	// (identical semantics to the write path)
+	calculatedInternalRewards, calculatedInternalPenalties := rewardState.calculateInternalRewardReadOnly(lastCollectTime, param.CurrentTime, segments)
+
+	warmupLen := len(deposit.Warmups())
+	rewards := make([]Reward, warmupLen)
+	for i := 0; i < warmupLen; i++ {
+		rewards[i] = Reward{
+			Internal:        calculatedInternalRewards[i],
+			InternalPenalty: calculatedInternalPenalties[i],
+			External:        make(map[string]int64),
+			ExternalPenalty: make(map[string]int64),
+		}
+	}
+	rewardState.reset()
+
+	lastExternalIncentiveUpdatedAt := depositResolver.LastExternalIncentiveUpdatedAt()
+
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	// Build the effective set of incentive ids WITHOUT writing to the deposit:
+	// already-indexed ids + ids created since the deposit's last sync.
+	effectiveIncentiveIds := make(map[string]bool)
+	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
+		effectiveIncentiveIds[incentiveId] = true
+		return false
+	})
+
+	if lastExternalIncentiveUpdatedAt < param.CurrentTime {
+		newIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, lastExternalIncentiveUpdatedAt, param.CurrentTime)
+		for _, incentiveId := range newIncentiveIds {
+			effectiveIncentiveIds[incentiveId] = true
+		}
+	}
+
+	// Use the effective incentive ids instead of iterating all pool incentives
+	for incentiveId := range effectiveIncentiveIds {
+		incentive, ok := incentivesResolver.Get(incentiveId)
+		if !ok {
+			continue
+		}
+
+		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+		// Check if incentive is active during this specific collection period
+		if !incentiveResolver.IsStarted(param.CurrentTime) {
+			continue
+		}
+
+		// External incentivized pool.
+		// Calculate reward for each warmup using per-incentive lastCollectTime
+		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
+
+		for i := range externalReward {
+			if externalReward[i] > 0 || externalPenalty[i] > 0 {
+				rewards[i].External[incentiveId] = externalReward[i]
+				rewards[i].ExternalPenalty[incentiveId] = externalPenalty[i]
+			}
+		}
+
+		rewardState.reset()
+	}
 
 	return rewards
 }

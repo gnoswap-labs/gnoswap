@@ -216,18 +216,20 @@ func (s *stakerV1) GetDeposit(lpTokenId uint64) *sr.Deposit {
 }
 
 // CollectableEmissionReward returns the claimable internal reward amount for a position.
+// This is a pure read-only query: it performs no storage writes.
 func (s *stakerV1) CollectableEmissionReward(positionId uint64) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calcPositionRewardReadOnly(currentHeight, currentTime, positionId)
 	return reward.Internal
 }
 
 // CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
+// This is a pure read-only query: it performs no storage writes.
 func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calcPositionRewardReadOnly(currentHeight, currentTime, positionId)
 	amount, ok := reward.External[incentiveId]
 	if !ok {
 		return 0

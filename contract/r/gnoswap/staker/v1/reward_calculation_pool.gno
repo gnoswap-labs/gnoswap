@@ -318,6 +318,64 @@ func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]in
 	return self.rewards, self.penalties
 }
 
+// calculateInternalRewardReadOnly calculates the internal reward for the deposit
+// without writing anything to storage. It is the pure, read-only counterpart of
+// calculateInternalReward: instead of relying on reward-cache entries that
+// cacheRewardForPool would have persisted, it consumes the in-memory segments
+// reconstructed by PoolTier.rewardSegmentsForPool.
+//
+// The stored reward cache is still read up to its latest persisted entry; the
+// segments then extend the calculation to the requested endTime. This yields
+// the same result as the write path while leaving storage untouched.
+func (self *RewardState) calculateInternalRewardReadOnly(startTime, endTime int64, segments []RewardSegment) ([]int64, []int64) {
+	currentReward := self.pool.CurrentReward(startTime)
+
+	self.pool.RewardCache().Iterate(startTime, endTime, func(key int64, value any) bool {
+		reward, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		}
+
+		// Calculate reward for the period before this cache entry
+		err := self.rewardPerWarmup(startTime, key, currentReward)
+		if err != nil {
+			panic(err)
+		}
+
+		startTime = key
+		currentReward = reward
+		return false
+	})
+
+	// Apply the in-memory segments for the period not yet present in storage.
+	for _, seg := range segments {
+		if seg.Timestamp <= startTime {
+			continue
+		}
+
+		err := self.rewardPerWarmup(startTime, seg.Timestamp, currentReward)
+		if err != nil {
+			panic(err)
+		}
+
+		startTime = seg.Timestamp
+		currentReward = seg.Reward
+	}
+
+	if startTime < endTime {
+		// For the remaining period, use the last reward value.
+		// If the pool was de-tiered and the last value is 0, no new rewards.
+		err := self.rewardPerWarmup(startTime, endTime, currentReward)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	self.applyWarmup()
+
+	return self.rewards, self.penalties
+}
+
 // updateExternalReward updates the external reward for the deposit.
 // It updates the last collect time for the external reward for the given incentive ID.
 // It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.

@@ -264,6 +264,96 @@ func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 	self.lastRewardCacheTimestamp = currentTimestamp
 }
 
+// RewardSegment represents a single interval of internal-pool reward rate.
+// It is used by the read-only reward calculation to reconstruct the reward
+// cache intervals in memory without writing them to storage.
+type RewardSegment struct {
+	Timestamp int64
+	Reward    int64
+}
+
+// rewardSegmentsForPool computes the reward-rate intervals that
+// cacheRewardForPool would have persisted for the given pool over
+// (lastCachedRewardTime, currentTimestamp], WITHOUT performing any storage
+// write. It is the pure, read-only counterpart of cacheRewardForPool.
+//
+// The returned segments are sorted ascending by timestamp and always end with
+// a segment at currentTimestamp. If the pool is not internally incentivized,
+// has no cached reward yet, or requires no caching, it returns nil.
+func (self *PoolTier) rewardSegmentsForPool(currentTimestamp int64, pools *Pools, poolPath string) []RewardSegment {
+	pool, ok := pools.Get(poolPath)
+	if !ok {
+		return nil
+	}
+
+	tierNum := self.CurrentTier(poolPath)
+	// Pool not in the internal-incentive system.
+	if tierNum == 0 {
+		return nil
+	}
+
+	// Find the latest reward cache timestamp for this pool.
+	lastTimestamp := int64(0)
+	hasLast := false
+	pool.RewardCache().ReverseIterate(0, currentTimestamp, func(key int64, _ any) bool {
+		lastTimestamp = key
+		hasLast = true
+		return true
+	})
+
+	if !hasLast {
+		// Fallback to global tier cache cursor.
+		lastTimestamp = self.lastRewardCacheTimestamp
+	}
+
+	if currentTimestamp <= lastTimestamp {
+		return nil
+	}
+
+	// Determine halving boundaries since the pool's last cached reward timestamp.
+	halvingTimestamps, halvingEmissions := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
+
+	segments := make([]RewardSegment, 0, 2)
+
+	if len(halvingTimestamps) == 0 {
+		// No emission change within the range => use current emission.
+		segments = append(segments, RewardSegment{
+			Timestamp: currentTimestamp,
+			Reward:    self.poolRewardForTier(tierNum, self.currentEmission),
+		})
+		return segments
+	}
+
+	// Build a segment at every halving boundary.
+	currentEmission := int64(0)
+	for i, hvTimestamp := range halvingTimestamps {
+		currentEmission = halvingEmissions[i]
+		segments = append(segments, RewardSegment{
+			Timestamp: hvTimestamp,
+			Reward:    self.poolRewardForTier(tierNum, currentEmission),
+		})
+	}
+
+	// Remaining range [lastTimestamp, currentTimestamp).
+	segments = append(segments, RewardSegment{
+		Timestamp: currentTimestamp,
+		Reward:    self.poolRewardForTier(tierNum, currentEmission),
+	})
+
+	return segments
+}
+
+// poolRewardForTier returns the per-pool reward for a tier at the given emission,
+// mirroring applyCacheToPool without writing anything to storage.
+func (self *PoolTier) poolRewardForTier(tierNum uint64, emission int64) int64 {
+	tierRewards := self.computeTierRewards(emission)
+	poolReward, ok := tierRewards[tierNum]
+	if !ok {
+		return 0
+	}
+	return poolReward
+}
+
 // cacheRewardForPool caches internal reward/accumulators for a single pool only.
 // This avoids iterating all tiered pools on every position reward calculation.
 func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, poolPath string) {
