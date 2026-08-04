@@ -133,7 +133,7 @@ func initPoolAndCreatePosition(cur realm) {
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionId))
 	println("[EXPECTED] Position owner before staking:", owner.String())
 }
 
@@ -150,7 +150,7 @@ func stakePosition(cur realm) {
 }
 
 func verifyPositionIsStaked(cur realm) {
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionId))
 
 	println("[EXPECTED] Position owner after staking:", owner.String())
 	println("[EXPECTED] Staker contract address:", stakerAddr.String())
@@ -199,6 +199,14 @@ func testCollectFeeOnStakedPosition(cur realm) {
 
 func positionIdToTokenId(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(id)))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

@@ -43,42 +43,50 @@ func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
 func GetTickLiquidityGross(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityGross()
+	tickInfo := getTick(p, tick)
+	return tickInfo.LiquidityGross()
 }
 
 // GetTickLiquidityNet returns the net liquidity for the specified tick.
 func GetTickLiquidityNet(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityNet()
+	tickInfo := getTick(p, tick)
+	return tickInfo.LiquidityNet()
 }
 
 // GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
 func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside0X128()
+	tickInfo := getTick(p, tick)
+	return tickInfo.FeeGrowthOutside0X128()
 }
 
 // GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
 func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside1X128()
+	tickInfo := getTick(p, tick)
+	return tickInfo.FeeGrowthOutside1X128()
 }
 
 // GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
 func GetTickCumulativeOutside(p *pl.Pool, tick int32) int64 {
-	return mustGetTick(p, tick).TickCumulativeOutside()
+	tickInfo := getTick(p, tick)
+	return tickInfo.TickCumulativeOutside()
 }
 
 // GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
 func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).SecondsPerLiquidityOutsideX128()
+	tickInfo := getTick(p, tick)
+	return tickInfo.SecondsPerLiquidityOutsideX128()
 }
 
 // GetTickSecondsOutside returns the seconds outside the tick.
 func GetTickSecondsOutside(p *pl.Pool, tick int32) uint32 {
-	return mustGetTick(p, tick).SecondsOutside()
+	tickInfo := getTick(p, tick)
+	return tickInfo.SecondsOutside()
 }
 
 // GetTickInitialized returns whether the tick is initialized.
 func GetTickInitialized(p *pl.Pool, tick int32) bool {
-	return mustGetTick(p, tick).Initialized()
+	tickInfo := getTick(p, tick)
+	return tickInfo.Initialized()
 }
 
 // getFeeGrowthInside calculates the fee growth within a specified tick range.

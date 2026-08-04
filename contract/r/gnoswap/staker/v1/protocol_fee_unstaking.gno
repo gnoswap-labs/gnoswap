@@ -15,8 +15,9 @@ import (
 )
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
-func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
-
+func (s *stakerV1) GetUnstakingFee() (uint64, error) {
+	return s.store.GetUnstakingFee(), nil
+}
 // handleStakingRewardFee calculates and applies the unstaking fee.
 func (s *stakerV1) handleStakingRewardFee(
 	_ int,
@@ -25,7 +26,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
-	unstakingFee := s.GetUnstakingFee()
+	unstakingFee := s.store.GetUnstakingFee()
 	if unstakingFee == 0 {
 		s.addToProtocolFee(0, rlm)
 		return amount, 0, nil
@@ -112,7 +113,7 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 
 	assertIsValidFeeRate(fee)
 
-	prevUnStakingFee := s.GetUnstakingFee()
+	prevUnStakingFee := s.store.GetUnstakingFee()
 
 	err := s.setUnStakingFee(0, rlm, fee)
 	if err != nil {

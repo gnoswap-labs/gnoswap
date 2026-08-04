@@ -14,32 +14,32 @@ import (
 )
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
-func (s *stakerV1) GetDepositGnsAmount() int64 {
-	return s.store.GetDepositGnsAmount()
+func (s *stakerV1) GetDepositGnsAmount() (int64, error) {
+	return s.store.GetDepositGnsAmount(), nil
 }
 
 // GetMinimumRewardAmount returns the default minimum reward amount required for external incentives.
-func (s *stakerV1) GetMinimumRewardAmount() int64 {
-	return s.store.GetMinimumRewardAmount()
+func (s *stakerV1) GetMinimumRewardAmount() (int64, error) {
+	return s.store.GetMinimumRewardAmount(), nil
 }
 
 // GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
-func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
+func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) (int64, error) {
 	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if found {
-		return amount
+		return amount, nil
 	}
 	// Fallback to default if not found
 	return s.GetMinimumRewardAmount()
 }
 
 // GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
-func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
+func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool, error) {
 	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if !found {
-		return 0, false
+		return 0, false, nil
 	}
-	return amount, true
+	return amount, true, nil
 }
 
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
@@ -57,7 +57,7 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 
 	assertIsValidAmount(amount)
 
-	prevDepositGnsAmount := s.GetDepositGnsAmount()
+	prevDepositGnsAmount := s.store.GetDepositGnsAmount()
 	s.setDepositGnsAmount(0, rlm, amount)
 
 	chain.Emit(
@@ -123,7 +123,7 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 		))
 	}
 
-	prevAmount, found := s.GetSpecificTokenMinimumRewardAmount(tokenPath)
+	prevAmount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 
 	// If amount is 0, remove the entry; otherwise, set it.
 	if amount64 == 0 {

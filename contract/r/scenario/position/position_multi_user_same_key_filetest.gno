@@ -108,7 +108,7 @@ func mintUser1Position(cur realm) {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
+	positionLiquidity, _ := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
@@ -141,7 +141,7 @@ func mintUser2Position(cur realm) {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
+	positionLiquidity, _ := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)

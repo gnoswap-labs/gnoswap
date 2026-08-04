@@ -61,6 +61,6 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 }
 
 // CollectRewardByDepositId collects rewards from a deposit.
-func CollectRewardByDepositId(cur realm, depositID string) int64 {
+func CollectRewardByDepositId(cur realm, depositID string) (int64, error) {
 	return getImplementation().CollectRewardByDepositId(0, cur, depositID)
 }

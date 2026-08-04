@@ -35,7 +35,7 @@ type ILaunchpadProject interface {
 type ILaunchpadDeposit interface {
 	DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string
 	CollectDepositGns(_ int, rlm realm, depositID string) (int64, error)
-	CollectRewardByDepositId(_ int, rlm realm, depositID string) int64
+	CollectRewardByDepositId(_ int, rlm realm, depositID string) (int64, error)
 }
 
 type ILaunchpadGetter interface {

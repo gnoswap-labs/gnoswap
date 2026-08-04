@@ -150,98 +150,98 @@ func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) 
 	return t.instance.GetPosition(positionId)
 }
 
-func (t *TestPosition) IsBurned(positionId uint64) bool {
+func (t *TestPosition) IsBurned(positionId uint64) (bool, error) {
 	if !t.isActive("IsBurned") {
 		panic("test implementation: IsBurned not supported")
 	}
 	return t.instance.IsBurned(positionId)
 }
 
-func (t *TestPosition) IsInRange(positionId uint64) bool {
+func (t *TestPosition) IsInRange(positionId uint64) (bool, error) {
 	if !t.isActive("IsInRange") {
 		panic("test implementation: IsInRange not supported")
 	}
 	return t.instance.IsInRange(positionId)
 }
 
-func (t *TestPosition) GetPositionOperator(positionId uint64) address {
+func (t *TestPosition) GetPositionOperator(positionId uint64) (address, error) {
 	if !t.isActive("GetPositionOperator") {
 		panic("test implementation: GetPositionOperator not supported")
 	}
 	return t.instance.GetPositionOperator(positionId)
 }
 
-func (t *TestPosition) GetPositionPoolKey(positionId uint64) string {
+func (t *TestPosition) GetPositionPoolKey(positionId uint64) (string, error) {
 	if !t.isActive("GetPositionPoolKey") {
 		panic("test implementation: GetPositionPoolKey not supported")
 	}
 	return t.instance.GetPositionPoolKey(positionId)
 }
 
-func (t *TestPosition) GetPositionTickLower(positionId uint64) int32 {
+func (t *TestPosition) GetPositionTickLower(positionId uint64) (int32, error) {
 	if !t.isActive("GetPositionTickLower") {
 		panic("test implementation: GetPositionTickLower not supported")
 	}
 	return t.instance.GetPositionTickLower(positionId)
 }
 
-func (t *TestPosition) GetPositionTickUpper(positionId uint64) int32 {
+func (t *TestPosition) GetPositionTickUpper(positionId uint64) (int32, error) {
 	if !t.isActive("GetPositionTickUpper") {
 		panic("test implementation: GetPositionTickUpper not supported")
 	}
 	return t.instance.GetPositionTickUpper(positionId)
 }
 
-func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
+func (t *TestPosition) GetPositionLiquidity(positionId uint64) (string, error) {
 	if !t.isActive("GetPositionLiquidity") {
 		panic("test implementation: GetPositionLiquidity not supported")
 	}
 	return t.instance.GetPositionLiquidity(positionId)
 }
 
-func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	if !t.isActive("GetPositionTokenBalances") {
 		panic("test implementation: GetPositionTokenBalances not supported")
 	}
 	return t.instance.GetPositionTokenBalances(positionId)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
+func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
 	if !t.isActive("GetPositionFeeGrowthInside0LastX128") {
 		panic("test implementation: GetPositionFeeGrowthInside0LastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
+func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
 	if !t.isActive("GetPositionFeeGrowthInside1LastX128") {
 		panic("test implementation: GetPositionFeeGrowthInside1LastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	if !t.isActive("GetPositionTokensOwed0") {
 		panic("test implementation: GetPositionTokensOwed0 not supported")
 	}
 	return t.instance.GetPositionTokensOwed0(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	if !t.isActive("GetPositionTokensOwed1") {
 		panic("test implementation: GetPositionTokensOwed1 not supported")
 	}
 	return t.instance.GetPositionTokensOwed1(positionId)
 }
 
-func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
 	if !t.isActive("GetUnclaimedFee") {
 		panic("test implementation: GetUnclaimedFee not supported")
 	}
 	return t.instance.GetUnclaimedFee(positionId)
 }
 
-func (t *TestPosition) GetPositionOwner(positionId uint64) address {
+func (t *TestPosition) GetPositionOwner(positionId uint64) (address, error) {
 	if !t.isActive("GetPositionOwner") {
 		panic("test implementation: GetPositionOwner not supported")
 	}

@@ -110,8 +110,8 @@ func TestLiquidityManagement_addLiquidity(cur realm, t *testing.T) {
 				caller:         alice,
 			},
 			expectError:     true,
-			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-005] requested data not found || expected poolPath(invalid/pool/path) to exist",
+			errorType:       "panic",
+			expectedMessage: "expected poolPath(invalid/pool/path) to exist",
 		},
 		{
 			name: "add liquidity is failed by insufficient balance",

@@ -187,7 +187,7 @@ func collectReward(cur realm, ownerAddr address, depositId string) {
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	rewardAmount, _ := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
@@ -238,12 +238,14 @@ func collectRewardSilent(cur realm, ownerAddr address, depositId string) {
 }
 
 func assertCollectNotYetClaimable(cur realm, ownerAddr address, depositId string) {
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-011] invalid reward state"
-	uassert.AbortsContains(t, cur, expectedPanicMessage, func() {
+	expectedErrorMsg := "[GNOSWAP-LAUNCHPAD-011] invalid reward state"
+	err := func(cur realm) error {
 		testing.SetRealm(testing.NewUserRealm(ownerAddr))
-		launchpad.CollectRewardByDepositId(cross(cur), depositId)
-	})
-	ufmt.Printf("[EXPECTED] Collect should abort before claimable time: %s\n", expectedPanicMessage)
+		_, err := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+		return err
+	}(cross(cur))
+	uassert.ErrorContains(t, err, expectedErrorMsg)
+	ufmt.Printf("[EXPECTED] Collect should abort before claimable time: %s\n", expectedErrorMsg)
 }
 
 // Output:

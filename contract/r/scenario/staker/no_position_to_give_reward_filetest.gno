@@ -180,7 +180,7 @@ func mintPositionButDontStake(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s (not staked)\n", owner)
 
 	if owner != adminAddr {
@@ -231,7 +231,7 @@ func stakePositionAndVerifyEmission(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterStake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after staking: %s\n", ownerAfterStake)
 
 	if ownerAfterStake != stakerAddr {
@@ -274,6 +274,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

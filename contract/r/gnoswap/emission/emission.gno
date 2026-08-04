@@ -132,8 +132,17 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		panic(err)
 	}
 
-	stakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
-	govStakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(GOV_STAKER))
+	stakerPct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+	if err != nil {
+		panic(err)
+	}
+	stakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, stakerPct)
+
+	govStakerPct, err := GetDistributionBpsPct(GOV_STAKER)
+	if err != nil {
+		panic(err)
+	}
+	govStakerRewardPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, govStakerPct)
 
 	previousRealm := cur.Previous()
 	chain.Emit(

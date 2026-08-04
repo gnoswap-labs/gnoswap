@@ -181,7 +181,7 @@ func collectReward(cur realm, ownerAddr address, depositId string) {
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	rewardAmount, _ := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)

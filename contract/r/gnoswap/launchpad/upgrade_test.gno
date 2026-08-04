@@ -382,8 +382,8 @@ func TestCollectRewardByDepositId(cur realm, t *testing.T) {
 			UpgradeImpl(cross(cur), "gno.land/r/gnoswap/launchpad/v1")
 
 			testing.SetRealm(tt.callerRealm)
-			result := CollectRewardByDepositId(cross(cur), tt.depositID)
-			_ = result
+			result, err := CollectRewardByDepositId(cross(cur), tt.depositID)
+			_, _ = result, err
 		})
 	}
 }

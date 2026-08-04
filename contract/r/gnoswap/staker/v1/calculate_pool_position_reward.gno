@@ -17,7 +17,12 @@ type Reward struct {
 }
 
 // calculate total position rewards and penalties
-func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
+func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) (*Reward, error) {
+	// Validate deposit exists so external callers receive an error instead of a panic.
+	if _, err := s.getDeposit(positionId); err != nil {
+		return nil, err
+	}
+
 	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
@@ -47,12 +52,12 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 		}
 	}
 
-	return Reward{
+	return &Reward{
 		Internal:        internal,
 		InternalPenalty: internalPenalty,
 		External:        externalReward,
 		ExternalPenalty: externalPenalty,
-	}
+	}, nil
 }
 
 // CalcPositionRewardParam is a struct for calculating position reward

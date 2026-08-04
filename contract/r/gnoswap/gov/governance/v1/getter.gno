@@ -25,14 +25,14 @@ func (gv *governanceV1) GetMaxSmoothingPeriod() int64 {
 }
 
 // GetLatestConfig returns the latest governance configuration.
-func (gv *governanceV1) GetLatestConfig() governance.Config {
+func (gv *governanceV1) GetLatestConfig() (governance.Config, error) {
 	currentVersion := gv.getCurrentConfigVersion()
 	config, ok := gv.getConfig(currentVersion)
 	if !ok {
-		panic(errors.New(errDataNotFound))
+		return governance.NewConfig(0, 0, 0, 0, 0, 0, 0), errors.New(errDataNotFound)
 	}
 
-	return config
+	return config, nil
 }
 
 // GetConfig returns a specific governance configuration by version.

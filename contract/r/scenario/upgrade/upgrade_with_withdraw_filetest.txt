@@ -449,7 +449,7 @@ func unStakeTokenAndRemovePosition() {
 
 	positionLiquidity := position.GetPositionLiquidityStr(positionId)
 	position.DecreaseLiquidity(cross, positionId, positionLiquidity, "0", "0", time.Now().Add(time.Hour).Unix())
-	isBurned := position.IsBurned(positionId)
+	isBurned, _ := position.IsBurned(positionId)
 
 	ufmt.Printf("[EXPECTED] Decreased liquidity position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Decreased liquidity position liquidity should be %s\n", positionLiquidity)

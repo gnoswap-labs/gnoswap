@@ -231,3 +231,26 @@ func TestStakerDelegationSnapshot_BoundaryConditions(cur realm, t *testing.T) {
 		uassert.True(t, history.Size() > 0)
 	})
 }
+
+func TestDelegationSnapshotGetters_InvalidAmountType(cur realm, t *testing.T) {
+	t.Run("total delegation getter returns false", func(cur realm, t *testing.T) {
+		gs := createTestGovStaker()
+		history := gs.store.GetTotalDelegationHistory()
+		history.Set(100, "invalid")
+
+		amount, exists := gs.GetTotalDelegationAmountAtSnapshot(100)
+		uassert.Equal(t, int64(0), amount)
+		uassert.False(t, exists)
+	})
+
+	t.Run("user delegation getter returns false", func(cur realm, t *testing.T) {
+		gs := createTestGovStaker()
+		user := testutils.TestAddress("alice")
+		history := gs.store.GetUserDelegationHistory()
+		history.Set(makeUserHistoryKey(user.String(), 100), "invalid")
+
+		amount, exists := gs.GetUserDelegationAmountAtSnapshot(user, 100)
+		uassert.Equal(t, int64(0), amount)
+		uassert.False(t, exists)
+	})
+}

@@ -103,7 +103,7 @@ func testInitialTierInternalRewards(cur realm) {
 
 	// Verify tier assignment
 	tier := sr.GetPoolTier(poolPath1)
-	rewardPerSecond := sr.GetPoolReward(tier)
+	rewardPerSecond, _ := sr.GetPoolReward(tier)
 	ufmt.Printf("[VERIFY] tier assigned: %d, reward per second: %d\n", tier, rewardPerSecond)
 
 	// Verify pool has zero liquidity after tier assignment

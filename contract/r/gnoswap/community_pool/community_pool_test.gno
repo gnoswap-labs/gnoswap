@@ -238,8 +238,8 @@ func TestCommunityPool_GetBalanceOf(cur realm, t *testing.T) {
 		setup           func(cur realm)
 		tokenPath       string
 		expectedBalance int64
-		shouldAbort     bool
-		panicMsg        string
+		shouldError     bool
+		errorMsg        string
 	}{
 		{
 			name: "returns zero when pool has no tokens",
@@ -287,22 +287,22 @@ func TestCommunityPool_GetBalanceOf(cur realm, t *testing.T) {
 			expectedBalance: 6_000,
 		},
 		{
-			name: "panics with unregistered token path",
+			name: "error with unregistered token path",
 			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 			},
 			tokenPath:   "gno.land/r/demo/unregistered_token",
-			shouldAbort: true,
-			panicMsg:    "unknown token",
+			shouldError: true,
+			errorMsg:    "not registered",
 		},
 		{
-			name: "panics with empty token path",
+			name: "error with empty token path",
 			setup: func(cur realm) {
 				testing.SetRealm(adminRealm)
 			},
 			tokenPath:   "",
-			shouldAbort: true,
-			panicMsg:    "unknown token",
+			shouldError: true,
+			errorMsg:    "not registered",
 		},
 	}
 
@@ -312,12 +312,11 @@ func TestCommunityPool_GetBalanceOf(cur realm, t *testing.T) {
 				tt.setup(cur)
 			}
 
-			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
-					GetBalanceOf(tt.tokenPath)
-				})
+			balance, err := GetBalanceOf(tt.tokenPath)
+			if tt.shouldError {
+				uassert.ErrorContains(t, err, tt.errorMsg)
 			} else {
-				balance := GetBalanceOf(tt.tokenPath)
+				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedBalance, balance)
 			}
 		})

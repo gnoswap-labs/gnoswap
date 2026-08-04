@@ -143,12 +143,12 @@ func (m *MockGovernance) GetMaxSmoothingPeriod() int64 {
 }
 
 // Config getters
-func (m *MockGovernance) GetLatestConfig() Config {
+func (m *MockGovernance) GetLatestConfig() (Config, error) {
 	res, ok := m.Response.Get("GetLatestConfig")
 	if !ok {
-		return Config{}
+		return Config{}, nil
 	}
-	return res[0].(Config)
+	return res[0].(Config), nil
 }
 
 func (m *MockGovernance) GetConfig(configVersion int64) (Config, error) {

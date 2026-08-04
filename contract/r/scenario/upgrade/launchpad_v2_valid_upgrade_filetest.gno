@@ -247,7 +247,10 @@ func collectRewardV2Valid(cur realm, depositId string) {
 	testing.SkipHeights(day7Heights)
 
 	testing.SetRealm(user1Realm)
-	reward := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	reward, err := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] collected reward (deposit %s): %d\n", depositId, reward)
 }

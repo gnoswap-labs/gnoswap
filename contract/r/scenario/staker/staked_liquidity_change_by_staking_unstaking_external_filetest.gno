@@ -259,7 +259,7 @@ func unstakePosition02(cur realm) {
 	println("[INFO] unstake position 02")
 	sr.UnStakeToken(cross(cur), 2)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
 	if owner != adminAddr {
@@ -322,6 +322,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

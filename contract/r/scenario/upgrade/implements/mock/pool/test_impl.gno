@@ -229,84 +229,114 @@ func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Poo
 	return result[0].(*pool.Pool), result[1].(error)
 }
 
-func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetBalanceToken0(poolPath string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetBalanceToken0",
-		func(args ...any) any { return t.instance.GetBalanceToken0(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetBalanceToken0(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetBalanceToken1(poolPath string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetBalanceToken1",
-		func(args ...any) any { return t.instance.GetBalanceToken1(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetBalanceToken1(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetFee(poolPath string) uint32 {
-	return t.ExecuteFn(
+func (t *TestPool) GetFee(poolPath string) (uint32, error) {
+	val := t.ExecuteFn(
 		"GetFee",
-		func(args ...any) any { return t.instance.GetFee(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetFee(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(uint32)
+	return val, nil
 }
 
-func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
+func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) (int32, error) {
 	return t.ExecuteFn(
 		"GetFeeAmountTickSpacing",
-		func(args ...any) any { return t.instance.GetFeeAmountTickSpacing(args[0].(uint32)) },
+		func(args ...any) any {
+			spacing, err := t.instance.GetFeeAmountTickSpacing(args[0].(uint32))
+			if err != nil {
+				return int32(0)
+			}
+			return spacing
+		},
 		fee,
-	).(int32)
+	).(int32), nil
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
-	return t.ExecuteFn(
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
+	val := t.ExecuteFn(
 		"GetFeeGrowthGlobal0X128",
-		func(args ...any) any { return t.instance.GetFeeGrowthGlobal0X128(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetFeeGrowthGlobal0X128(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(*u256.Uint)
+	return val, nil
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
-	return t.ExecuteFn(
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error) {
+	val := t.ExecuteFn(
 		"GetFeeGrowthGlobal1X128",
-		func(args ...any) any { return t.instance.GetFeeGrowthGlobal1X128(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetFeeGrowthGlobal1X128(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(*u256.Uint)
+	return val, nil
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error) {
 	result := t.ExecuteFn(
 		"GetFeeGrowthGlobalX128",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetFeeGrowthGlobalX128(args[0].(string))
+			r1, r2, _ := t.instance.GetFeeGrowthGlobalX128(args[0].(string))
 			return []any{r1, r2}
 		},
 		poolPath,
 	).([]any)
-	return result[0].(*u256.Uint), result[1].(*u256.Uint)
+	return result[0].(*u256.Uint), result[1].(*u256.Uint), nil
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
-	return t.ExecuteFn(
+func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
+	val := t.ExecuteFn(
 		"GetLiquidity",
-		func(args ...any) any { return t.instance.GetLiquidity(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetLiquidity(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(*u256.Uint)
+	return val, nil
 }
 
-func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
+func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64, error) {
 	result := t.ExecuteFn(
 		"GetObservation",
 		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.GetObservation(args[0].(string), args[1].(int64))
+			r1, r2, r3, r4, _ := t.instance.GetObservation(args[0].(string), args[1].(int64))
 			return []any{r1, r2, r3, r4}
 		},
 		poolPath, secondsAgo,
 	).([]any)
-	return result[0].(int64), result[1].(string), result[2].(string), result[3].(int64)
+	return result[0].(int64), result[1].(string), result[2].(string), result[3].(int64), nil
 }
 
 func (t *TestPool) GetPoolCreationFee() int64 {
@@ -316,214 +346,292 @@ func (t *TestPool) GetPoolCreationFee() int64 {
 	).(int64)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error) {
+	val := t.ExecuteFn(
 		"GetPositionFeeGrowthInside0LastX128",
 		func(args ...any) any {
-			return t.instance.GetPositionFeeGrowthInside0LastX128(args[0].(string), args[1].(string))
+			res, _ := t.instance.GetPositionFeeGrowthInside0LastX128(args[0].(string), args[1].(string))
+			return res
 		},
 		poolPath, key,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error) {
+	val := t.ExecuteFn(
 		"GetPositionFeeGrowthInside1LastX128",
 		func(args ...any) any {
-			return t.instance.GetPositionFeeGrowthInside1LastX128(args[0].(string), args[1].(string))
+			res, _ := t.instance.GetPositionFeeGrowthInside1LastX128(args[0].(string), args[1].(string))
+			return res
 		},
 		poolPath, key,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error) {
 	result := t.ExecuteFn(
 		"GetPositionFeeGrowthInsideLastX128",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetPositionFeeGrowthInsideLastX128(args[0].(string), args[1].(string))
+			r1, r2, _ := t.instance.GetPositionFeeGrowthInsideLastX128(args[0].(string), args[1].(string))
 			return []any{r1, r2}
 		},
 		poolPath, key,
 	).([]any)
-	return result[0].(string), result[1].(string)
+	return result[0].(string), result[1].(string), nil
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) (string, error) {
+	val := t.ExecuteFn(
 		"GetPositionLiquidity",
-		func(args ...any) any { return t.instance.GetPositionLiquidity(args[0].(string), args[1].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetPositionLiquidity(args[0].(string), args[1].(string))
+			return res
+		},
 		poolPath, key,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetPositionTokensOwed0",
-		func(args ...any) any { return t.instance.GetPositionTokensOwed0(args[0].(string), args[1].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetPositionTokensOwed0(args[0].(string), args[1].(string))
+			return res
+		},
 		poolPath, key,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetPositionTokensOwed1",
-		func(args ...any) any { return t.instance.GetPositionTokensOwed1(args[0].(string), args[1].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetPositionTokensOwed1(args[0].(string), args[1].(string))
+			return res
+		},
 		poolPath, key,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetProtocolFeesToken0",
-		func(args ...any) any { return t.instance.GetProtocolFeesToken0(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetProtocolFeesToken0(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) (int64, error) {
+	val := t.ExecuteFn(
 		"GetProtocolFeesToken1",
-		func(args ...any) any { return t.instance.GetProtocolFeesToken1(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetProtocolFeesToken1(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
-	return t.ExecuteFn(
+func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
+	val := t.ExecuteFn(
 		"GetSlot0FeeProtocol",
-		func(args ...any) any { return t.instance.GetSlot0FeeProtocol(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetSlot0FeeProtocol(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(uint8)
+	return val, nil
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	return t.ExecuteFn(
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
+	val := t.ExecuteFn(
 		"GetSlot0SqrtPriceX96",
-		func(args ...any) any { return t.instance.GetSlot0SqrtPriceX96(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetSlot0SqrtPriceX96(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(*u256.Uint)
+	return val, nil
 }
 
-func (t *TestPool) GetSlot0Tick(poolPath string) int32 {
-	return t.ExecuteFn(
+func (t *TestPool) GetSlot0Tick(poolPath string) (int32, error) {
+	val := t.ExecuteFn(
 		"GetSlot0Tick",
-		func(args ...any) any { return t.instance.GetSlot0Tick(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetSlot0Tick(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int32)
+	return val, nil
 }
 
-func (t *TestPool) GetSlot0Unlocked(poolPath string) bool {
-	return t.ExecuteFn(
+func (t *TestPool) GetSlot0Unlocked(poolPath string) (bool, error) {
+	val := t.ExecuteFn(
 		"GetSlot0Unlocked",
-		func(args ...any) any { return t.instance.GetSlot0Unlocked(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetSlot0Unlocked(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(bool)
+	return val, nil
 }
 
-func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
+	val := t.ExecuteFn(
 		"GetTickCumulativeOutside",
-		func(args ...any) any { return t.instance.GetTickCumulativeOutside(args[0].(string), args[1].(int32)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetTickCumulativeOutside(args[0].(string), args[1].(int32))
+			return res
+		},
 		poolPath, tick,
 	).(int64)
+	return val, nil
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error) {
+	val := t.ExecuteFn(
 		"GetTickFeeGrowthOutside0X128",
 		func(args ...any) any {
-			return t.instance.GetTickFeeGrowthOutside0X128(args[0].(string), args[1].(int32))
+			res, _ := t.instance.GetTickFeeGrowthOutside0X128(args[0].(string), args[1].(int32))
+			return res
 		},
 		poolPath, tick,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error) {
+	val := t.ExecuteFn(
 		"GetTickFeeGrowthOutside1X128",
 		func(args ...any) any {
-			return t.instance.GetTickFeeGrowthOutside1X128(args[0].(string), args[1].(int32))
+			res, _ := t.instance.GetTickFeeGrowthOutside1X128(args[0].(string), args[1].(int32))
+			return res
 		},
 		poolPath, tick,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
 	result := t.ExecuteFn(
 		"GetTickFeeGrowthOutsideX128",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetTickFeeGrowthOutsideX128(args[0].(string), args[1].(int32))
+			r1, r2, _ := t.instance.GetTickFeeGrowthOutsideX128(args[0].(string), args[1].(int32))
 			return []any{r1, r2}
 		},
 		poolPath, tick,
 	).([]any)
-	return result[0].(string), result[1].(string)
+	return result[0].(string), result[1].(string), nil
 }
 
-func (t *TestPool) GetTickInitialized(poolPath string, tick int32) bool {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickInitialized(poolPath string, tick int32) (bool, error) {
+	val := t.ExecuteFn(
 		"GetTickInitialized",
-		func(args ...any) any { return t.instance.GetTickInitialized(args[0].(string), args[1].(int32)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetTickInitialized(args[0].(string), args[1].(int32))
+			return res
+		},
 		poolPath, tick,
 	).(bool)
+	return val, nil
 }
 
-func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) (string, error) {
+	val := t.ExecuteFn(
 		"GetTickLiquidityGross",
-		func(args ...any) any { return t.instance.GetTickLiquidityGross(args[0].(string), args[1].(int32)) },
-		poolPath, tick,
-	).(string)
-}
-
-func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) string {
-	return t.ExecuteFn(
-		"GetTickLiquidityNet",
-		func(args ...any) any { return t.instance.GetTickLiquidityNet(args[0].(string), args[1].(int32)) },
-		poolPath, tick,
-	).(string)
-}
-
-func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
-	return t.ExecuteFn(
-		"GetTickSecondsOutside",
-		func(args ...any) any { return t.instance.GetTickSecondsOutside(args[0].(string), args[1].(int32)) },
-		poolPath, tick,
-	).(uint32)
-}
-
-func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
-	return t.ExecuteFn(
-		"GetTickSecondsPerLiquidityOutsideX128",
 		func(args ...any) any {
-			return t.instance.GetTickSecondsPerLiquidityOutsideX128(args[0].(string), args[1].(int32))
+			res, _ := t.instance.GetTickLiquidityGross(args[0].(string), args[1].(int32))
+			return res
 		},
 		poolPath, tick,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetTickSpacing(poolPath string) int32 {
-	return t.ExecuteFn(
+func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) (string, error) {
+	val := t.ExecuteFn(
+		"GetTickLiquidityNet",
+		func(args ...any) any {
+			res, _ := t.instance.GetTickLiquidityNet(args[0].(string), args[1].(int32))
+			return res
+		},
+		poolPath, tick,
+	).(string)
+	return val, nil
+}
+
+func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) (uint32, error) {
+	val := t.ExecuteFn(
+		"GetTickSecondsOutside",
+		func(args ...any) any {
+			res, _ := t.instance.GetTickSecondsOutside(args[0].(string), args[1].(int32))
+			return res
+		},
+		poolPath, tick,
+	).(uint32)
+	return val, nil
+}
+
+func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error) {
+	val := t.ExecuteFn(
+		"GetTickSecondsPerLiquidityOutsideX128",
+		func(args ...any) any {
+			res, _ := t.instance.GetTickSecondsPerLiquidityOutsideX128(args[0].(string), args[1].(int32))
+			return res
+		},
+		poolPath, tick,
+	).(string)
+	return val, nil
+}
+
+func (t *TestPool) GetTickSpacing(poolPath string) (int32, error) {
+	val := t.ExecuteFn(
 		"GetTickSpacing",
-		func(args ...any) any { return t.instance.GetTickSpacing(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetTickSpacing(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int32)
+	return val, nil
 }
 
-func (t *TestPool) GetToken0Path(poolPath string) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetToken0Path(poolPath string) (string, error) {
+	val := t.ExecuteFn(
 		"GetToken0Path",
-		func(args ...any) any { return t.instance.GetToken0Path(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetToken0Path(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(string)
+	return val, nil
 }
 
-func (t *TestPool) GetToken1Path(poolPath string) string {
-	return t.ExecuteFn(
+func (t *TestPool) GetToken1Path(poolPath string) (string, error) {
+	val := t.ExecuteFn(
 		"GetToken1Path",
-		func(args ...any) any { return t.instance.GetToken1Path(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetToken1Path(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(string)
+	return val, nil
 }
 
 func (t *TestPool) GetWithdrawalFee() uint64 {
@@ -569,33 +677,41 @@ func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 }
 
 // Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	return t.ExecuteFn(
+func (t *TestPool) GetPoolPositionCount(poolPath string) (int, error) {
+	val := t.ExecuteFn(
 		"GetPoolPositionCount",
-		func(args ...any) any { return t.instance.GetPoolPositionCount(args[0].(string)) },
+		func(args ...any) any {
+			res, _ := t.instance.GetPoolPositionCount(args[0].(string))
+			return res
+		},
 		poolPath,
 	).(int)
+	return val, nil
 }
 
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return t.ExecuteFn(
+func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) ([]string, error) {
+	val := t.ExecuteFn(
 		"GetPoolPositionKeys",
 		func(args ...any) any {
-			return t.instance.GetPoolPositionKeys(args[0].(string), args[1].(int), args[2].(int))
+			res, _ := t.instance.GetPoolPositionKeys(args[0].(string), args[1].(int), args[2].(int))
+			return res
 		},
 		poolPath, offset, count,
 	).([]string)
+	return val, nil
 }
 
 // Tick enumeration
-func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
-	return t.ExecuteFn(
+func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error) {
+	val := t.ExecuteFn(
 		"GetInitializedTicksInRange",
 		func(args ...any) any {
-			return t.instance.GetInitializedTicksInRange(args[0].(string), args[1].(int32), args[2].(int32))
+			res, _ := t.instance.GetInitializedTicksInRange(args[0].(string), args[1].(int32), args[2].(int32))
+			return res
 		},
 		poolPath, tickLower, tickUpper,
 	).([]int32)
+	return val, nil
 }
 
 // Structure getters

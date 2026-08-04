@@ -26,7 +26,7 @@ func GetMaxSmoothingPeriod() int64 {
 // ==================================
 
 // GetLatestConfig returns the latest governance configuration.
-func GetLatestConfig() Config {
+func GetLatestConfig() (Config, error) {
 	return getImplementation().GetLatestConfig()
 }
 

@@ -855,7 +855,7 @@ func TestUpgrade_GetLatestConfig(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetLatestConfig()
+			_, _ = GetLatestConfig()
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)

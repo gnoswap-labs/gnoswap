@@ -35,11 +35,16 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
-	lp.assertIsDepositOwner(depositID, caller)
+	if err := lp.assertIsDepositOwner(depositID, caller); err != nil {
+		return 0, err
+	}
 
 	emission.MintAndDistributeGns(cross(rlm))
 
-	deposit := lp.mustGetDeposit(depositID)
+	deposit, err := lp.getDeposit(depositID)
+	if err != nil {
+		return 0, err
+	}
 	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
@@ -47,19 +52,19 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	// Collect reward before withdrawal
 	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	beforeTotalGNSStakedAmount := lp.store.GetTotalGNSStakedAmount()
 
 	recipient, withdrawalAmount, err := lp.withdrawDeposit(0, rlm, deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
-		panic(err.Error())
+		return 0, err
 	}
 
 	afterTotalGNSStakedAmount := gnsmath.SafeSubInt64(beforeTotalGNSStakedAmount, withdrawalAmount)
 	if err := lp.store.SetTotalGNSStakedAmount(0, rlm, afterTotalGNSStakedAmount); err != nil {
-		panic(err.Error())
+		return 0, err
 	}
 
 	// Cross-realm governance update before token transfers
