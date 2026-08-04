@@ -39,8 +39,8 @@ func registerPoolV1(cur realm) {
 			panic(err)
 		}
 
-		emissionAccessor.SetDefaultInitialPoolChecker(0, rlm, func() bool {
-			return pool.ExistsPoolPath("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000")
+		emissionAccessor.SetDefaultInitialPoolChecker(0, rlm, func(poolPath string) bool {
+			return pool.ExistsPoolPath(poolPath)
 		})
 
 		return NewPoolV1(poolStore)

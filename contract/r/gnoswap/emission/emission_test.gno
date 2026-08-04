@@ -34,7 +34,7 @@ func TestSetDistributionStartTime(cur realm, t *testing.T) {
 		{
 			name: "cannot set distribution start time without default initial pool",
 			setup: func(cur realm) {
-				defaultInitialPoolChecker = func() bool { return false }
+				defaultInitialPoolChecker = func(poolPath string) bool { return false }
 			},
 			timestamp:   1500 + now,
 			caller:      adminAddr,

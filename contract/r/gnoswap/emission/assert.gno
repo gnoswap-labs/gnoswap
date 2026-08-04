@@ -2,39 +2,15 @@ package emission
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	"gno.land/r/gnoswap/access"
 )
-
-const defaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
-
-// defaultInitialPoolChecker verifies the canonical default initial pool exists.
-// It is registered by pool/v1 at initialization time so that emission does not
-// need a compile-time dependency on the pool realm.
-var defaultInitialPoolChecker func() bool
-
-// SetDefaultInitialPoolChecker registers the callback that verifies the
-// canonical default initial pool exists before emission starts.
-//
-// Only callable by the pool contract.
-func SetDefaultInitialPoolChecker(cur realm, checker func() bool) {
-	caller := cur.Previous().Address()
-	access.AssertIsPool(caller)
-
-	if checker == nil {
-		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool checker cannot be nil"))
-	}
-
-	defaultInitialPoolChecker = checker
-}
 
 func assertDefaultInitialPoolExists() {
 	if defaultInitialPoolChecker == nil {
 		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool checker is not registered"))
 	}
 
-	if !defaultInitialPoolChecker() {
-		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool does not exist: "+defaultInitialPoolTierPath))
+	if !defaultInitialPoolChecker(DefaultInitialPoolTierPath) {
+		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool does not exist: "+DefaultInitialPoolTierPath))
 	}
 }
 

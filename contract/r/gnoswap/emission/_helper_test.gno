@@ -45,5 +45,5 @@ func resetObject(t *testing.T) {
 	leftGNSAmount = 0
 	lastExecutedTimestamp = 0
 	distributionStartTimestamp = 0
-	defaultInitialPoolChecker = func() bool { return true }
+	defaultInitialPoolChecker = func(poolPath string) bool { return true }
 }

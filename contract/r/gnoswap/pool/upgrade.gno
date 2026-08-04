@@ -11,12 +11,12 @@ import (
 // functions. Wrappers are constructed inside the pool domain so that
 // closures persisted into emission state are owned by the pool proxy.
 type EmissionAccessor interface {
-	SetDefaultInitialPoolChecker(_ int, rlm realm, checker func() bool)
+	SetDefaultInitialPoolChecker(_ int, rlm realm, checker func(poolPath string) bool)
 }
 
 type emissionAccessor struct{}
 
-func (e *emissionAccessor) SetDefaultInitialPoolChecker(_ int, rlm realm, checker func() bool) {
+func (e *emissionAccessor) SetDefaultInitialPoolChecker(_ int, rlm realm, checker func(poolPath string) bool) {
 	if !rlm.IsCurrent() {
 		panic(errors.New(ErrSpoofedRealm))
 	}
@@ -28,8 +28,8 @@ func (e *emissionAccessor) SetDefaultInitialPoolChecker(_ int, rlm realm, checke
 	// the checker into its package-level var without hitting "cannot persist
 	// realm value" (which fires when a v1-constructed closure is stored there
 	// directly).
-	emission.SetDefaultInitialPoolChecker(cross(rlm), func() bool {
-		return checker()
+	emission.SetDefaultInitialPoolChecker(cross(rlm), func(poolPath string) bool {
+		return checker(poolPath)
 	})
 }
 
