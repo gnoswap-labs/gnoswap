@@ -282,6 +282,13 @@ func TestGetEmissionAmountPerSecondInRangeBoundary(cur realm, t *testing.T) {
 
 		verifyResult(t, times, emissions, 0)
 	})
+
+	t.Run("reversed from/to returns empty", func(cur realm, t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(100, 50)
+
+		uassert.Equal(t, 0, len(times))
+		uassert.Equal(t, 0, len(emissions))
+	})
 }
 
 func TestGetEmissionFunctionsWithInvalidTimestamps(cur realm, t *testing.T) {

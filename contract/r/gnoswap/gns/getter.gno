@@ -49,6 +49,10 @@ func GetCurrentYear() int64 {
 // GetEmissionAmountPerSecondInRange returns halving timestamps and emission rates for the given time range.
 // Returns two slices: timestamps when halving periods start and corresponding emission rates per second.
 func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
+	if fromTime > toTime {
+		return nil, nil
+	}
+
 	halvingData := getEmissionState().getHalvingData()
 	halvingTimes := make([]int64, 0, HALVING_END_YEAR+1)
 	halvingEmissions := make([]int64, 0, HALVING_END_YEAR+1)
