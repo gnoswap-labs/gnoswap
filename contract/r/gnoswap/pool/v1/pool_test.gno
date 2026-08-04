@@ -1135,7 +1135,7 @@ func TestCollect(cur realm, t *testing.T) {
 		})
 	}
 
-	t.Run("insufficient_internal_balance_caps_collect", func(cur realm, t *testing.T) {
+	t.Run("insufficient_internal_balance_reverts_collect", func(cur realm, t *testing.T) {
 		pool := setupStablecoinPool(cur, t)
 		approveTokensForPool(cur, t, pool)
 		testing.SetRealm(posRealm)
@@ -1148,31 +1148,37 @@ func TestCollect(cur realm, t *testing.T) {
 		positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
 		positionBefore := mustGetPositionByPool(pool, positionKey)
 		owed0Before := positionBefore.TokensOwed0()
-		reducedBalance0 := int64(1)
+		uassert.True(t, owed0Before > int64(1),
+			"setup should leave tokensOwed0 larger than the forced balance")
 
-		pool.SetBalanceToken0(reducedBalance0)
+		// Simulate an internal-ledger desync: balance is stale-low (1) while owed is larger.
+		pool.SetBalanceToken0(int64(1))
 
-		amount0, amount1 := mockInstanceCollect(0, cur,
-			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
-			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
-			MAX_INT64, "0",
-		)
+		var amount0, amount1 string
+		r := revive(func() {
+			amount0, amount1 = mockInstanceCollect(
+				0, cur,
+				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+				MAX_INT64, "0",
+			)
+		})
 
-		uassert.Equal(t, utils.FormatInt(reducedBalance0), amount0,
-			"Collect should cap amount0 by pool balance")
-		uassert.Equal(t, "0", amount1,
-			"Collect should not collect token1 when zero is requested")
-		uassert.Equal(t, int64(0), pool.BalanceToken0(),
-			"Pool balance0 should stop at zero")
+		uassert.NotNil(t, r,
+			"Collect must revert when the internal balance is insufficient")
+		uassert.Equal(t, "", amount0,
+			"amount0 must not be returned on revert")
+		uassert.Equal(t, "", amount1,
+			"amount1 must not be returned on revert")
 
+		// State must be untouched: no negative balance, owed unchanged.
 		positionAfter := mustGetPositionByPool(pool, positionKey)
-		expectedOwed0After := gnsmath.SafeSubInt64(owed0Before, reducedBalance0)
-		uassert.Equal(t, utils.FormatInt(expectedOwed0After), utils.FormatInt(positionAfter.TokensOwed0()),
-			"TokensOwed0 should only decrease by the capped collected amount")
-		uassert.True(t, positionAfter.TokensOwed0() > 0,
-			"Remaining TokensOwed0 should stay claimable after partial collect")
+		uassert.Equal(t, utils.FormatInt(owed0Before), utils.FormatInt(positionAfter.TokensOwed0()),
+			"TokensOwed0 must stay unchanged after revert")
 		uassert.True(t, pool.BalanceToken0() >= 0,
 			"Pool balance0 must never become negative")
+		uassert.Equal(t, int64(1), pool.BalanceToken0(),
+			"Pool balance0 must stay at the forced value after revert")
 
 		resetObject(cur, t)
 	})

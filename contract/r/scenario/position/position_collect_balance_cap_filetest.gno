@@ -63,8 +63,8 @@ func main(cur realm) {
 	upgradePool(cur)
 	println()
 
-	ufmt.Println("[SCENARIO] 5. Decrease liquidity through capped Collect")
-	decreaseLiquidityWithCappedCollect(cur)
+	ufmt.Println("[SCENARIO] 5. Decrease liquidity with reverting Collect")
+	decreaseLiquidityWithRevertingCollect(cur)
 	println()
 
 	ufmt.Println("[SCENARIO] 6. Restore pool implementation")
@@ -143,36 +143,48 @@ func upgradePool(cur realm) {
 	ufmt.Printf("[EXPECTED] Pool implementation should be %s\n", pool.GetImplementationPackagePath())
 }
 
-func decreaseLiquidityWithCappedCollect(cur realm) {
+func decreaseLiquidityWithRevertingCollect(cur realm) {
 	testing.SetRealm(adminRealm)
 	barBefore := bar.BalanceOf(adminAddr)
+	owed0Before := position.GetPositionTokensOwed0(1)
 
-	_, _, _, _, amount0, _, _ := position.DecreaseLiquidity(
-		cross(cur),
-		1,
-		"100000000",
-		"0",
-		"0",
-		time.Now().Unix()+3600,
-	)
+	// Internal balance is desynced low (forced to 1 by the test implementation)
+	// while tokensOwed0 is larger. The underlying Collect cannot pay, so the
+	// whole DecreaseLiquidity must revert instead of persisting a negative
+	// pool balance. revive catches the cross-realm abort.
+	r := revive(func() {
+		position.DecreaseLiquidity(
+			cross(cur),
+			1,
+			"100000000",
+			"0",
+			"0",
+			time.Now().Unix()+3600,
+		)
+	})
 
 	barAfter := bar.BalanceOf(adminAddr)
 	owed0After := position.GetPositionTokensOwed0(1)
 	poolBalance0 := pool.GetBalanceToken0(poolKey)
 
-	ufmt.Printf("[EXPECTED] Capped collect amount0 should be %s\n", amount0)
-	ufmt.Printf("[EXPECTED] BAR balance increase should be %d\n", barAfter-barBefore)
-	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolBalance0)
-	ufmt.Println("[EXPECTED] Remaining tokensOwed0 should stay claimable")
+	if r != nil {
+		ufmt.Printf("[INFO] DecreaseLiquidity aborted: %v\n", r)
+	} else {
+		println("[WARNING] DecreaseLiquidity did not abort (unexpected)")
+	}
 
-	if amount0 != "1" {
-		panic(ufmt.Sprintf("[ERROR] amount0 should be capped to 1, got %s", amount0))
+	ufmt.Printf("[INFO] BAR balance change: %d (unchanged)\n", barAfter-barBefore)
+	ufmt.Printf("[INFO] Pool token0 balance: %d (not negative)\n", poolBalance0)
+	ufmt.Printf("[INFO] tokensOwed0 unchanged: %v\n", owed0After == owed0Before)
+
+	if r == nil {
+		panic("[ERROR] DecreaseLiquidity should have reverted on insufficient internal balance")
 	}
 	if poolBalance0 < 0 {
 		panic(ufmt.Sprintf("[ERROR] pool token0 balance should not be negative, got %d", poolBalance0))
 	}
-	if owed0After <= 0 {
-		panic(ufmt.Sprintf("[ERROR] remaining tokensOwed0 should stay claimable, got %d", owed0After))
+	if owed0After != owed0Before {
+		panic(ufmt.Sprintf("[ERROR] tokensOwed0 should stay unchanged after revert, got %d", owed0After))
 	}
 }
 
@@ -208,11 +220,11 @@ func mockSwapCallback(cur realm, amount0Delta int64, amount1Delta int64) error {
 // [SCENARIO] 4. Upgrade to balance-cap test implementation
 // [EXPECTED] Pool implementation should be gno.land/r/gnoswap/pool/collect_balance_cap
 //
-// [SCENARIO] 5. Decrease liquidity through capped Collect
-// [EXPECTED] Capped collect amount0 should be 1
-// [EXPECTED] BAR balance increase should be 2
-// [EXPECTED] Pool token0 balance should be 0
-// [EXPECTED] Remaining tokensOwed0 should stay claimable
+// [SCENARIO] 5. Decrease liquidity with reverting Collect
+// [INFO] DecreaseLiquidity aborted: [GNOSWAP-POOL-021] balance update failed. cannot decrease, token0(1) - amount(29999)
+// [INFO] BAR balance change: 0 (unchanged)
+// [INFO] Pool token0 balance: 1 (not negative)
+// [INFO] tokensOwed0 unchanged: true
 //
 // [SCENARIO] 6. Restore pool implementation
 // [EXPECTED] Pool implementation should be gno.land/r/gnoswap/pool/v1
