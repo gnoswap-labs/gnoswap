@@ -325,12 +325,22 @@ func testAccumulatesLiquidity(t *testing.T) {
 	}
 }
 
+// TestOracleLTE verifies int64 timestamp comparisons use natural ordering.
+func TestOracleLTE(cur realm, t *testing.T) {
+	uassert.True(t, lte(90, 100), "timestamps should use natural ordering")
+	uassert.True(t, lte(100, 100), "equal timestamps should compare as lte")
+	uassert.True(t, lte(-1, 0), "signed timestamps should preserve natural ordering")
+	uassert.False(t, lte(100, 90), "newer timestamps should not sort before older timestamps")
+	uassert.False(t, lte(int64(1<<32)-2, 2), "int64 timestamps must not apply uint32 wrap ordering")
+}
+
 func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(t *testing.T)
 	}{
 		{"fails if an older observation does not exist", testObserveFailsIfOlderNotExist},
+		{"fails if seconds ago exceeds current time", testObserveFailsIfSecondsAgoExceedsCurrentTime},
 		{"interpolates correctly at max liquidity", testObserveInterpolatesMaxLiquidity},
 		{"interpolates correctly at min liquidity", testObserveInterpolatesMinLiquidity},
 		{"interpolates the same as 0 liquidity for 1 liquidity", testObserveInterpolatesSameAs0For1},
@@ -362,6 +372,13 @@ func testObserveFailsIfOlderNotExist(t *testing.T) {
 
 	_, _, err := observeSingle(os, currentTime+5, 1, 2, 0, u256.NewUint(4), 1)
 	uassert.Error(t, err)
+}
+
+func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
+	os := pl.NewObservationState(0)
+
+	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-025]")
 }
 
 func testObserveInterpolatesMaxLiquidity(t *testing.T) {

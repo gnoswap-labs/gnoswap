@@ -184,7 +184,6 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 		_, _, err := getSurroundingObservations(
 			os,
 			currentTime-100, // target before first observation
-			currentTime+100,
 			100,
 			0,
 			u256.MustFromDecimal("1000000"),
@@ -198,7 +197,6 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 		beforeOrAt2, afterOrAt2, err := getSurroundingObservations(
 			os,
 			currentTime, // target equals observation
-			currentTime,
 			100,
 			0,
 			u256.MustFromDecimal("1000000"),
@@ -215,7 +213,6 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 		beforeOrAt3, afterOrAt3, err := getSurroundingObservations(
 			os,
 			currentTime+50, // target after observation
-			currentTime+100,
 			100,
 			0,
 			u256.MustFromDecimal("1000000"),
@@ -249,7 +246,6 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 		beforeOrAt, afterOrAt, err := getSurroundingObservations(
 			os,
 			target,
-			currentTime+500,
 			100,
 			os.Index(),
 			liquidity,
@@ -336,7 +332,6 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 	beforeOrAt, afterOrAt, err := getSurroundingObservations(
 		os,
 		target,
-		currentTime+800,
 		100,
 		os.Index(),
 		liquidity,
