@@ -180,6 +180,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
+	assertDefaultInitialPoolExists()
 
 	if startTimestamp <= 0 {
 		panic("distribution start timestamp must be positive")
@@ -200,8 +201,6 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	if distributionStartTimestamp != 0 && distributionStartTimestamp <= currentTimestamp {
 		panic("distribution has already started, cannot change start timestamp")
 	}
-
-	assertDefaultInitialPoolExists()
 
 	prevStartTimestamp := distributionStartTimestamp
 
