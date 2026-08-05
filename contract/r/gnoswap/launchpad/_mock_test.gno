@@ -106,12 +106,18 @@ func (m *MockLaunchpad) CollectDepositGns(_ int, rlm realm, depositID string) (i
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+func (m *MockLaunchpad) CollectRewardByDepositId(_ int, rlm realm, depositID string) (int64, error) {
 	res, ok := m.Response.Get("CollectRewardByDepositId")
 	if !ok {
-		return 0
+		return 0, nil
 	}
-	return res[0].(int64)
+	if len(res) < 2 {
+		return res[0].(int64), nil
+	}
+	if res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectCount() int {

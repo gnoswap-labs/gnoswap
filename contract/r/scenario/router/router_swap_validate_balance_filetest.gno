@@ -6,8 +6,8 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -212,7 +212,7 @@ func mintPositionWithGnot(cur realm) BalanceSnapshot {
 		"50000000",   // amount1Desired (GNOT)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout, // deadline
+		max_timeout,  // deadline
 		userAddr,
 		"",
 	)
@@ -300,7 +300,7 @@ func removeLiquidityToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	currentLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -343,7 +343,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	currentLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -358,7 +358,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 		max_timeout,
 	)
 
-	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	remainingLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	println("[INFO] Final liquidity removed:", remainingLiquidity)
 	println("[INFO] Final GNS returned:", amount0)

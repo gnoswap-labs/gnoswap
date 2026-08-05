@@ -210,7 +210,8 @@ func mintPositionV2Valid(cur realm) {
 func setPositionOperatorV2Valid(cur realm) {
 	testing.SetRealm(stakerRealm)
 	position.SetPositionOperator(cross(cur), positionId, operatorAddr)
-	ufmt.Printf("[EXPECTED] v2_valid set operator id=%d operator=%s\n", positionId, position.GetPositionOperator(positionId))
+	operator, _ := position.GetPositionOperator(positionId)
+	ufmt.Printf("[EXPECTED] v2_valid set operator id=%d operator=%s\n", positionId, operator)
 }
 
 // clearV1PositionForReposition fully drains the v1 position so it satisfies the
@@ -219,13 +220,14 @@ func setPositionOperatorV2Valid(cur realm) {
 // v2_valid and then collects fees to zero out tokensOwed.
 func clearV1PositionForReposition(cur realm) {
 	testing.SetRealm(adminRealm)
-	remaining := position.GetPositionLiquidity(positionId)
+	remaining, _ := position.GetPositionLiquidity(positionId)
 	id, liq, _, _, _, _, _ := position.DecreaseLiquidity(cross(cur), positionId, remaining, "0", "0", time.Now().Unix()+3600)
 	ufmt.Printf("[EXPECTED] v2_valid drained position id=%d removedLiquidity=%s\n", id, liq)
 
 	cid, amount0, amount1, _, _, _ := position.CollectFee(cross(cur), positionId)
+	liquidity, _ := position.GetPositionLiquidity(positionId)
 	ufmt.Printf("[EXPECTED] v2_valid cleared owed id=%d amount0=%s amount1=%s liquidity=%s\n",
-		cid, amount0, amount1, position.GetPositionLiquidity(positionId))
+		cid, amount0, amount1, liquidity)
 }
 
 // repositionV2Valid repositions the now-cleared v1 position into a new tick
@@ -242,17 +244,17 @@ func repositionV2Valid(cur realm) {
 }
 
 func printPositionData(cur realm) {
-	liquidity := position.GetPositionLiquidity(positionId)
-	tickLower, tickUpper := position.GetPositionTicks(positionId)
-	poolKey := position.GetPositionPoolKey(positionId)
+	liquidity, _ := position.GetPositionLiquidity(positionId)
+	tickLower, tickUpper, _ := position.GetPositionTicks(positionId)
+	poolKey, _ := position.GetPositionPoolKey(positionId)
 	ufmt.Printf("[EXPECTED] position id=%d liquidity=%s tickLower=%d tickUpper=%d pool=%s\n",
 		positionId, liquidity, tickLower, tickUpper, poolKey)
 }
 
 func printNewPositionData(cur realm) {
-	liquidity := position.GetPositionLiquidity(newPositionId)
-	tickLower, tickUpper := position.GetPositionTicks(newPositionId)
-	poolKey := position.GetPositionPoolKey(newPositionId)
+	liquidity, _ := position.GetPositionLiquidity(newPositionId)
+	tickLower, tickUpper, _ := position.GetPositionTicks(newPositionId)
+	poolKey, _ := position.GetPositionPoolKey(newPositionId)
 	ufmt.Printf("[EXPECTED] position id=%d liquidity=%s tickLower=%d tickUpper=%d pool=%s\n",
 		newPositionId, liquidity, tickLower, tickUpper, poolKey)
 }

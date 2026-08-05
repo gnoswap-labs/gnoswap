@@ -79,7 +79,7 @@ func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
 }
 
 // Config getters
-func (t *TestGovernance) GetLatestConfig() governance.Config {
+func (t *TestGovernance) GetLatestConfig() (governance.Config, error) {
 	return t.instance.GetLatestConfig()
 }
 

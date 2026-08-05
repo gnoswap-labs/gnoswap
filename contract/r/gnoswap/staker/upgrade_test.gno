@@ -454,7 +454,10 @@ func TestGetDepositGnsAmount(cur realm, t *testing.T) {
 		mockStaker.Response.Set("GetDepositGnsAmount", tt.expected)
 
 		// Action
-		result := GetDepositGnsAmount()
+		result, err := GetDepositGnsAmount()
+		if err != nil {
+			t.Fatalf("GetDepositGnsAmount() error = %v", err)
+		}
 
 		// Assert
 		if mockStaker.Response.CallCount("GetDepositGnsAmount") != 1 {
@@ -544,7 +547,10 @@ func TestIsStaked(cur realm, t *testing.T) {
 		mockStaker.Response.Set("IsStaked", tt.expected)
 
 		// Action
-		result := IsStaked(tt.positionId)
+		result, err := IsStaked(tt.positionId)
+		if err != nil {
+			t.Fatalf("IsStaked() error = %v", err)
+		}
 
 		// Assert
 		if mockStaker.Response.CallCount("IsStaked") != 1 {
@@ -586,7 +592,10 @@ func TestGetTotalEmissionSent(cur realm, t *testing.T) {
 		mockStaker.Response.Set("GetTotalEmissionSent", tt.expected)
 
 		// Action
-		result := GetTotalEmissionSent()
+		result, err := GetTotalEmissionSent()
+		if err != nil {
+			t.Fatalf("GetTotalEmissionSent() error = %v", err)
+		}
 
 		// Assert
 		if mockStaker.Response.CallCount("GetTotalEmissionSent") != 1 {
@@ -628,7 +637,10 @@ func TestGetAllowedTokens(cur realm, t *testing.T) {
 		mockStaker.Response.Set("GetAllowedTokens", tt.expected)
 
 		// Action
-		result := GetAllowedTokens()
+		result, err := GetAllowedTokens()
+		if err != nil {
+			t.Fatalf("GetAllowedTokens() error = %v", err)
+		}
 
 		// Assert
 		if mockStaker.Response.CallCount("GetAllowedTokens") != 1 {

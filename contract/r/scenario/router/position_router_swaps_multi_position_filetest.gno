@@ -145,8 +145,10 @@ func executeExactInRouterSwaps(cur realm) {
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
-	ufmt.Printf("[INFO] Pool balance of BAR: %d\n", pool.GetBalanceToken0(poolPath))
-	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", pool.GetBalanceToken1(poolPath))
+	balanceToken0, _ := pool.GetBalanceToken0(poolPath)
+	balanceToken1, _ := pool.GetBalanceToken1(poolPath)
+	ufmt.Printf("[INFO] Pool balance of BAR: %d\n", balanceToken0)
+	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", balanceToken1)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross(cur),

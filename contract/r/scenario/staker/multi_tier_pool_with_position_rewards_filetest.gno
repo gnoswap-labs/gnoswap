@@ -377,7 +377,7 @@ func exactInSingleSwapRouteBy(cur realm,
 	bar.Approve(cross(cur), routerAddr, maxInt64)
 	baz.Approve(cross(cur), routerAddr, maxInt64)
 
-	beforePoolTick := pl.GetSlot0Tick(poolPath)
+	beforePoolTick, _ := pl.GetSlot0Tick(poolPath)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
@@ -395,7 +395,7 @@ func exactInSingleSwapRouteBy(cur realm,
 	afterBARBalance := bar.BalanceOf(adminAddr)
 	afterBAZBalance := baz.BalanceOf(adminAddr)
 
-	afterPoolTick := pl.GetSlot0Tick(poolPath)
+	afterPoolTick, _ := pl.GetSlot0Tick(poolPath)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)

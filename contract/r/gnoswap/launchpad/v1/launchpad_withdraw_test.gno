@@ -78,13 +78,12 @@ func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {
 			testing.SkipHeights(60*60*24*180/5 + 2)
 
 			if tt.expectedHasAbort {
-				collectDepositFn := func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-						lp.CollectDepositGns(0, cur, tt.depositID)
-					}(cross(cur))
-				}
-				uassert.AbortsContains(t, cur, tt.expectedAbortMessage, collectDepositFn)
+				var err error
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+					_, err = lp.CollectDepositGns(0, cur, tt.depositID)
+				}(cross(cur))
+				uassert.ErrorContains(t, err, tt.expectedAbortMessage)
 				return
 			}
 
@@ -153,12 +152,12 @@ func TestLaunchpadWithdraw_CollectDepositGnsContractNonOwner(cur realm, t *testi
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 	testing.SkipHeights(60*60*24*180/5 + 2)
 
-	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-			lp.CollectDepositGns(0, cur, "1")
-		}(cross(cur))
-	})
+	var err error
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		_, err = lp.CollectDepositGns(0, cur, "1")
+	}(cross(cur))
+	uassert.ErrorContains(t, err, "[GNOSWAP-LAUNCHPAD-014] invalid owner")
 }
 
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
@@ -717,11 +716,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, cur, "not exist deposit", func() {
-			func(cur realm) {
-				lp.CollectDepositGns(0, cur, "")
-			}(cross(cur))
-		})
+		var err error
+		func(cur realm) {
+			_, err = lp.CollectDepositGns(0, cur, "")
+		}(cross(cur))
+		uassert.ErrorContains(t, err, "not exist deposit")
 	})
 
 	t.Run("fail - double collection attempt", func(cur realm, t *testing.T) {
@@ -748,13 +747,13 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 
 		// Second collection should fail
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		uassert.AbortsContains(t, cur, "not exist deposit", func() {
-			testing.SetOriginCaller(userAddr)
-			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				lp.CollectDepositGns(0, cur, "1")
-			}(cross(cur))
-		})
+		var secondErr error
+		testing.SetOriginCaller(userAddr)
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			_, secondErr = lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
+		uassert.ErrorContains(t, secondErr, "not exist deposit")
 	})
 
 	t.Run("fail - collection before tier ends", func(cur realm, t *testing.T) {
@@ -769,12 +768,12 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 		testing.SkipHeights(60*60*24*3/5 + 2)
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 
-		uassert.AbortsContains(t, cur, "project lock period is not over yet", func() {
-			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-				lp.CollectDepositGns(0, cur, "1")
-			}(cross(cur))
-		})
+		var err error
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			_, err = lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
+		uassert.ErrorContains(t, err, "project lock period is not over yet")
 	})
 
 	t.Run("fail - collection with numeric but invalid deposit ID", func(cur realm, t *testing.T) {
@@ -787,11 +786,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, cur, "not exist deposit", func() {
-			func(cur realm) {
-				lp.CollectDepositGns(0, cur, "99999")
-			}(cross(cur))
-		})
+		var err error
+		func(cur realm) {
+			_, err = lp.CollectDepositGns(0, cur, "99999")
+		}(cross(cur))
+		uassert.ErrorContains(t, err, "not exist deposit")
 	})
 
 	t.Run("fail - collection with special characters in deposit ID", func(cur realm, t *testing.T) {
@@ -804,11 +803,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, cur, "not exist deposit", func() {
-			func(cur realm) {
-				lp.CollectDepositGns(0, cur, "1; DROP TABLE deposits;--")
-			}(cross(cur))
-		})
+		var err error
+		func(cur realm) {
+			_, err = lp.CollectDepositGns(0, cur, "1; DROP TABLE deposits;--")
+		}(cross(cur))
+		uassert.ErrorContains(t, err, "not exist deposit")
 	})
 
 	t.Run("success - collection at exact end time boundary", func(cur realm, t *testing.T) {
@@ -853,11 +852,11 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(otherAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
 
-		uassert.AbortsContains(t, cur, "invalid owner", func() {
-			func(cur realm) {
-				lp.CollectDepositGns(0, cur, "1")
-			}(cross(cur))
-		})
+		var err error
+		func(cur realm) {
+			_, err = lp.CollectDepositGns(0, cur, "1")
+		}(cross(cur))
+		uassert.ErrorContains(t, err, "invalid owner")
 	})
 }
 
@@ -971,12 +970,12 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(cur realm, t *tes
 			testing.SetRealm(testing.NewUserRealm(userAddr))
 
 			if tt.shouldFail {
-				uassert.AbortsContains(t, cur, "project lock period is not over yet", func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-						lp.CollectDepositGns(0, cur, "1")
-					}(cross(cur))
-				})
+				var err error
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+					_, err = lp.CollectDepositGns(0, cur, "1")
+				}(cross(cur))
+				uassert.ErrorContains(t, err, "project lock period is not over yet")
 			}
 		})
 	}
@@ -1008,8 +1007,9 @@ func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(cur realm, t 
 	testing.SetOriginCaller(userAddr)
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		lp.CollectDepositGns(0, cur, "1")
+		_, err = lp.CollectDepositGns(0, cur, "1")
 	}(cross(cur))
+	uassert.NoError(t, err)
 
 	// Get deposit state after collection
 	depositAfter, err := getDeposit("1")

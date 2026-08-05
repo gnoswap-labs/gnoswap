@@ -19,11 +19,11 @@ import (
 // Parameters:
 //   - depositID: ID of the deposit to collect from
 //
-// Returns amount of reward collected.
+// Returns amount of reward collected and any error.
 // Only callable by deposit owner.
-func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
+		return 0, errors.New(errSpoofedRealm)
 	}
 
 	halt.AssertIsNotHaltedWithdraw()
@@ -31,16 +31,21 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 	previousRealm := rlm.Previous()
 
 	caller := previousRealm.Address()
-	lp.assertIsDepositOwner(depositID, caller)
+	if err := lp.assertIsDepositOwner(depositID, caller); err != nil {
+		return 0, err
+	}
 
-	deposit := lp.mustGetDeposit(depositID)
+	deposit, err := lp.getDeposit(depositID)
+	if err != nil {
+		return 0, err
+	}
 	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
 	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	// Transfer reward token to depositor
@@ -57,7 +62,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"amount", utils.FormatInt(rewardAmount),
 	)
 
-	return rewardAmount
+	return rewardAmount, nil
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.

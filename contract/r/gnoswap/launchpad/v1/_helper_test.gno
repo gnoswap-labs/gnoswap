@@ -239,7 +239,10 @@ func createTestDeposits(
 // the deposit-owner assertion. Collect via the internal path with the deposit
 // looked up directly so per-depositor reward accounting is preserved.
 func collectTestReward(cur realm, t *testing.T, lp *launchpadV1, userAddr address, depositID string) int64 {
-	deposit := lp.mustGetDeposit(depositID)
+	deposit, err := lp.getDeposit(depositID)
+	if err != nil {
+		panic(err)
+	}
 
 	var rewardAmount int64
 	var rewardTokenPath string
@@ -537,6 +540,10 @@ func collectRewardTest(cur realm, t *testing.T, depositID string) int64 {
 	return func(cur realm) int64 {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.CollectRewardByDepositId(0, cur, depositID)
+		reward, err := testImpl.CollectRewardByDepositId(0, cur, depositID)
+		if err != nil {
+			panic(err)
+		}
+		return reward
 	}(cross(cur))
 }

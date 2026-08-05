@@ -51,15 +51,6 @@ func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*launc
 	return manager, nil
 }
 
-func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
-	deposit, err := lp.getDeposit(depositID)
-	if err != nil {
-		panic(err)
-	}
-
-	return deposit
-}
-
 func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	depositI := deposits.Get(depositID)

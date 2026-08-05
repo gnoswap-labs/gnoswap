@@ -6,16 +6,18 @@ import (
 )
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
-// Panics if the caller is not the owner of the deposit.
-func (lp *launchpadV1) assertIsDepositOwner(depositID string, caller address) {
+// Returns an error if the caller is not the owner of the deposit or the deposit does not exist.
+func (lp *launchpadV1) assertIsDepositOwner(depositID string, caller address) error {
 	deposit, err := lp.getDeposit(depositID)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	if !deposit.IsDepositor(caller) {
-		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
+		return makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String()))
 	}
+
+	return nil
 }
 
 // assertIsValidAmount panics if the amount is zero.

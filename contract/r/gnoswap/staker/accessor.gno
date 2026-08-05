@@ -25,11 +25,19 @@ func (p *poolAccessor) ExistsPoolPath(poolPath string) bool {
 }
 
 func (p *poolAccessor) GetSlot0Tick(poolPath string) int32 {
-	return pool.GetSlot0Tick(poolPath)
+	tick, err := pool.GetSlot0Tick(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return tick
 }
 
 func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
-	return pool.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return sqrtPriceX96
 }
 
 func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
@@ -166,7 +174,11 @@ func (n *gnftAccessor) Exists(tid grc721.TokenID) bool {
 }
 
 func (n *gnftAccessor) MustOwnerOf(tid grc721.TokenID) address {
-	return gnft.MustOwnerOf(tid)
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 func (n *gnftAccessor) OwnerOf(tid grc721.TokenID) (address, error) {

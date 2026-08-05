@@ -34,7 +34,8 @@ const unauthorizedMsg = "unauthorized: caller %s is not admin or governance"
 
 func TestGetDepositGnsAmount(cur realm, t *testing.T) {
 	expected := int64(1_000_000_000)
-	actual := getMockInstance().GetDepositGnsAmount()
+	actual, err := getMockInstance().GetDepositGnsAmount()
+	uassert.NoError(t, err)
 	uassert.Equal(t, expected, actual)
 }
 
@@ -72,7 +73,9 @@ func TestSetDepositGnsAmount(cur realm, t *testing.T) {
 		},
 	}, mockInstanceSetDepositGnsAmount, func() int64 {
 		testing.SetRealm(adminRealm)
-		return getMockInstance().GetDepositGnsAmount()
+		amount, err := getMockInstance().GetDepositGnsAmount()
+		uassert.NoError(t, err)
+		return amount
 	})
 }
 
@@ -103,7 +106,9 @@ func TestSetMinimumRewardAmount(cur realm, t *testing.T) {
 		},
 	}, mockInstanceSetMinimumRewardAmount, func() int64 {
 		testing.SetRealm(adminRealm)
-		return getMockInstance().GetMinimumRewardAmount()
+		amount, err := getMockInstance().GetMinimumRewardAmount()
+		uassert.NoError(t, err)
+		return amount
 	})
 }
 
@@ -197,7 +202,8 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 				tt.setupFunc(instance)
 			}
 
-			result := instance.GetMinimumRewardAmountForToken(tt.tokenPath)
+			result, err := instance.GetMinimumRewardAmountForToken(tt.tokenPath)
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedAmount, result)
 		})
 	}
@@ -252,7 +258,8 @@ func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 				tt.setupFunc(instance)
 			}
 
-			value, found := instance.GetSpecificTokenMinimumRewardAmount(tt.tokenPath)
+			value, found, err := instance.GetSpecificTokenMinimumRewardAmount(tt.tokenPath)
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedFound, found)
 			if tt.expectedFound {
 				uassert.Equal(t, tt.expectedValue, value)
@@ -269,13 +276,15 @@ func TestInternalDepositGnsAmountGetterSetter(cur realm, t *testing.T) {
 	instance := getMockInstance()
 
 	// Test initial value
-	initial := instance.GetDepositGnsAmount()
+	initial, err := instance.GetDepositGnsAmount()
+	uassert.NoError(t, err)
 	uassert.True(t, initial > 0)
 
 	// Test setter and getter
 	newAmount := int64(5_000_000_000)
 	instance.setDepositGnsAmount(0, cur, newAmount)
-	result := instance.GetDepositGnsAmount()
+	result, err := instance.GetDepositGnsAmount()
+	uassert.NoError(t, err)
 	uassert.Equal(t, newAmount, result)
 }
 

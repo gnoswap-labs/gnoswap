@@ -599,19 +599,26 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(cur realm, t *testing.
 			testing.SetRealm(testing.NewUserRealm(callerAddr))
 
 			if tt.expectedErrorMsg != "" {
-				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
-					func(cur realm) {
+				if tt.haltLevel == halt.HaltLevelComplete {
+					uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
+						func(cur realm) {
+							testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+							_, _ = lp.CollectRewardByDepositId(0, cur, depositID)
+						}(cross(cur))
+					})
+				} else {
+					_, err := func(cur realm) (int64, error) {
 						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-						lp.CollectRewardByDepositId(0, cur, depositID)
+						return lp.CollectRewardByDepositId(0, cur, depositID)
 					}(cross(cur))
-				})
+					uassert.ErrorContains(t, err, tt.expectedErrorMsg)
+				}
 			} else {
-				uassert.NotPanics(t, cur, func() {
-					func(cur realm) {
-						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-						_ = lp.CollectRewardByDepositId(0, cur, depositID)
-					}(cross(cur))
-				})
+				_, err := func(cur realm) (int64, error) {
+					testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+					return lp.CollectRewardByDepositId(0, cur, depositID)
+				}(cross(cur))
+				uassert.NoError(t, err)
 			}
 
 			// Cleanup halt
@@ -657,11 +664,13 @@ func TestLaunchpadReward_CollectRewardByDepositId_ContractDepositor(cur realm, t
 	testing.SkipHeights(testSkipTier30Claimable)
 
 	var rewardAmount int64
+	var err error
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		rewardAmount = lp.CollectRewardByDepositId(0, cur, depositID)
+		rewardAmount, err = lp.CollectRewardByDepositId(0, cur, depositID)
 	}(cross(cur))
 
+	uassert.NoError(t, err)
 	uassert.True(t, rewardAmount > 0)
 }
 
@@ -686,12 +695,12 @@ func TestLaunchpadReward_CollectRewardByDepositId_ContractNonOwner(cur realm, t 
 	testing.SkipHeights(testSkipTier30Claimable)
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 
-	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
-		func(cur realm) {
-			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-			lp.CollectRewardByDepositId(0, cur, depositID)
-		}(cross(cur))
-	})
+	err := func(cur realm) error {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		_, err := lp.CollectRewardByDepositId(0, cur, depositID)
+		return err
+	}(cross(cur))
+	uassert.ErrorContains(t, err, "[GNOSWAP-LAUNCHPAD-014] invalid owner")
 }
 
 // TestCollectRewardByDepositId_ConsecutiveCollections tests multiple collections

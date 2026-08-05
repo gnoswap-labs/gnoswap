@@ -132,7 +132,7 @@ func mintPosition01(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] initial position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -142,7 +142,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check initial state before staking")
-	initialOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	initialOwner := mustOwnerOf(positionIdFrom(cur, 1))
 	initialGnsBalance := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[INFO] initial owner: %s\n", initialOwner)
@@ -154,7 +154,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 	println("[INFO] stake position 01")
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterStake := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] owner after stake: %s\n", ownerAfterStake)
 
@@ -165,7 +165,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 	println("[INFO] immediately unstake position 01 (same block)")
 	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[EXPECTED] owner after unstake: %s\n", ownerAfterUnstake)
@@ -193,7 +193,7 @@ func verifyFinalState(cur realm) {
 
 	println("[INFO] verify final state after same block operations")
 
-	finalOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	finalOwner := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] final position owner: %s\n", finalOwner)
 
@@ -210,7 +210,7 @@ func verifyFinalState(cur realm) {
 
 	testing.SkipHeights(1)
 
-	verifyOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	verifyOwner := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] verification - owner after normal stake: %s\n", verifyOwner)
 
@@ -238,6 +238,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

@@ -700,7 +700,7 @@ func TestGetSlot0SqrtPriceX96(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		sqrtPrice := GetSlot0SqrtPriceX96(tt.poolPath)
+		sqrtPrice, _ := GetSlot0SqrtPriceX96(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") != 1 {
@@ -748,7 +748,7 @@ func TestGetSlot0Tick(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		tick := GetSlot0Tick(tt.poolPath)
+		tick, _ := GetSlot0Tick(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0Tick") != 1 {
@@ -797,7 +797,7 @@ func TestGetLiquidity(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		liquidity := GetLiquidity(tt.poolPath)
+		liquidity, _ := GetLiquidity(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetLiquidity") != 1 {
@@ -846,7 +846,7 @@ func TestGetBalanceToken0(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		balance := GetBalanceToken0(tt.poolPath)
+		balance, _ := GetBalanceToken0(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetBalanceToken0") != 1 {
@@ -895,7 +895,7 @@ func TestGetBalanceToken1(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		balance := GetBalanceToken1(tt.poolPath)
+		balance, _ := GetBalanceToken1(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetBalanceToken1") != 1 {
@@ -946,7 +946,7 @@ func TestGetFeeGrowthGlobalX128(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		fee0, fee1 := GetFeeGrowthGlobalX128(tt.poolPath)
+		fee0, fee1, _ := GetFeeGrowthGlobalX128(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") != 1 {
@@ -999,7 +999,7 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		fee0, fee1 := GetPositionFeeGrowthInsideLastX128(tt.poolPath, tt.key)
+		fee0, fee1, _ := GetPositionFeeGrowthInsideLastX128(tt.poolPath, tt.key)
 
 		// Assert
 		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") != 1 {
@@ -1056,7 +1056,7 @@ func TestGetObservation(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		tick, sqrt, liquidity, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
+		tick, sqrt, liquidity, timestamp, _ := GetObservation(tt.poolPath, tt.secondsAgo)
 
 		// Assert
 		if mockPool.Response.CallCount("GetObservation") != 1 {
@@ -1550,7 +1550,7 @@ func TestGetFee(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetFee", tt.expectedFee)
 
 		// Action
-		fee := GetFee(tt.poolPath)
+		fee, _ := GetFee(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFee") != 1 {
@@ -1595,7 +1595,7 @@ func TestGetFeeAmountTickSpacing(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetFeeAmountTickSpacing", tt.expectedSpacing)
 
 		// Action
-		spacing := GetFeeAmountTickSpacing(tt.fee)
+		spacing, _ := GetFeeAmountTickSpacing(tt.fee)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFeeAmountTickSpacing") != 1 {
@@ -1640,7 +1640,7 @@ func TestGetSlot0FeeProtocol(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetSlot0FeeProtocol", tt.expectedFeeProtocol)
 
 		// Action
-		feeProtocol := GetSlot0FeeProtocol(tt.poolPath)
+		feeProtocol, _ := GetSlot0FeeProtocol(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0FeeProtocol") != 1 {
@@ -1685,7 +1685,7 @@ func TestGetSlot0Unlocked(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetSlot0Unlocked", tt.expectedUnlocked)
 
 		// Action
-		unlocked := GetSlot0Unlocked(tt.poolPath)
+		unlocked, _ := GetSlot0Unlocked(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0Unlocked") != 1 {
@@ -1730,7 +1730,7 @@ func TestGetToken0Path(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetToken0Path", tt.expectedPath)
 
 		// Action
-		path := GetToken0Path(tt.poolPath)
+		path, _ := GetToken0Path(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetToken0Path") != 1 {
@@ -1775,7 +1775,7 @@ func TestGetToken1Path(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetToken1Path", tt.expectedPath)
 
 		// Action
-		path := GetToken1Path(tt.poolPath)
+		path, _ := GetToken1Path(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetToken1Path") != 1 {
@@ -1820,7 +1820,7 @@ func TestGetTickSpacing(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetTickSpacing", tt.expectedSpacing)
 
 		// Action
-		spacing := GetTickSpacing(tt.poolPath)
+		spacing, _ := GetTickSpacing(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetTickSpacing") != 1 {
@@ -1865,7 +1865,7 @@ func TestGetProtocolFeesToken0(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetProtocolFeesToken0", tt.expectedFee)
 
 		// Action
-		fee := GetProtocolFeesToken0(tt.poolPath)
+		fee, _ := GetProtocolFeesToken0(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetProtocolFeesToken0") != 1 {
@@ -1910,7 +1910,7 @@ func TestGetProtocolFeesToken1(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetProtocolFeesToken1", tt.expectedFee)
 
 		// Action
-		fee := GetProtocolFeesToken1(tt.poolPath)
+		fee, _ := GetProtocolFeesToken1(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetProtocolFeesToken1") != 1 {
@@ -1957,7 +1957,7 @@ func TestGetPositionLiquidity(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetPositionLiquidity", tt.expectedLiquidity)
 
 		// Action
-		liquidity := GetPositionLiquidity(tt.poolPath, tt.key)
+		liquidity, _ := GetPositionLiquidity(tt.poolPath, tt.key)
 
 		// Assert
 		if mockPool.Response.CallCount("GetPositionLiquidity") != 1 {

@@ -148,7 +148,7 @@ func mintAndStakePosition(cur realm) uint64 {
 
 func verifyStaked(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
-	isStaked := sr.IsStaked(positionId)
+	isStaked, _ := sr.IsStaked(positionId)
 	ufmt.Printf("[INFO] Position %d staked status: %v\n", positionId, isStaked)
 
 	if !isStaked {
@@ -190,7 +190,7 @@ func attemptUnstake(cur realm, positionId uint64) {
 
 func verifyUnstaked(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
-	isStaked := sr.IsStaked(positionId)
+	isStaked, _ := sr.IsStaked(positionId)
 	ufmt.Printf("[INFO] Position %d staked status after unstaking: %v\n", positionId, isStaked)
 
 	if isStaked {

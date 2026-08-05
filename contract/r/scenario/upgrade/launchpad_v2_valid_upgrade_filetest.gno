@@ -19,21 +19,21 @@
 //
 // Mutating entry points exercised AFTER the upgrade to v2_valid:
 //   - DepositGns                     : second deposit to the v1-created tier
-//                                      (RMW project tier map + deposits BPTree +
-//                                      tier reward manager reward-state BPTree).
+//     (RMW project tier map + deposits BPTree +
+//     tier reward manager reward-state BPTree).
 //   - CreateProject                  : a SECOND project created entirely under
-//                                      v2_valid (projects BPTree insert + tier
-//                                      and condition map build post-upgrade —
-//                                      the strongest realm-owned rebuild test).
+//     v2_valid (projects BPTree insert + tier
+//     and condition map build post-upgrade —
+//     the strongest realm-owned rebuild test).
 //   - CollectRewardByDepositId       : collect accrued reward on the v1-created
-//                                      deposit (RMW reward-state tree).
+//     deposit (RMW reward-state tree).
 //   - CollectDepositGns              : withdraw the v1-created deposit after its
-//                                      tier lock ends (RMW deposit + project
-//                                      tier + reward-state tree removal).
+//     tier lock ends (RMW deposit + project
+//     tier + reward-state tree removal).
 //   - TransferLeftFromProjectByAdmin : refund the project's leftover reward
-//                                      after the project ends (RMW project).
+//     after the project ends (RMW project).
 //   - CollectProtocolFee             : collect protocol fee for the project
-//                                      recipient wallet (RMW via gov staker).
+//     recipient wallet (RMW via gov staker).
 package main
 
 import (
@@ -81,8 +81,8 @@ const (
 	launchpadV2ValidPath = "gno.land/r/gnoswap/launchpad/v2_valid"
 
 	// Block time is 5 seconds in the test harness.
-	day30Heights = int64(30 * 24 * 60 * 60 / 5)  // tier30 lock duration
-	day7Heights  = int64(7 * 24 * 60 * 60 / 5)   // project start delay used at creation
+	day30Heights  = int64(30 * 24 * 60 * 60 / 5)  // tier30 lock duration
+	day7Heights   = int64(7 * 24 * 60 * 60 / 5)   // project start delay used at creation
 	day180Heights = int64(180 * 24 * 60 * 60 / 5) // tier180 (project end)
 )
 
@@ -247,7 +247,10 @@ func collectRewardV2Valid(cur realm, depositId string) {
 	testing.SkipHeights(day7Heights)
 
 	testing.SetRealm(user1Realm)
-	reward := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	reward, err := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] collected reward (deposit %s): %d\n", depositId, reward)
 }

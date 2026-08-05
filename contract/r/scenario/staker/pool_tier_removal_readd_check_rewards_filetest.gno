@@ -10,8 +10,8 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -87,7 +87,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 3. Skip warmup period")
-	collectEmissionRewardsWithSkipHeights(cur, 86400 * 30)
+	collectEmissionRewardsWithSkipHeights(cur, 86400*30)
 	println()
 
 	println("[SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
@@ -201,7 +201,7 @@ func setPoolTier(cur realm, tier int) {
 	beforePoolTier := sr.GetPoolTier(barBazPoolPath)
 	beforePoolEmissionReward := int64(0)
 	if beforePoolTier != 0 {
-		beforePoolEmissionReward = sr.GetPoolReward(beforePoolTier)
+		beforePoolEmissionReward, _ = sr.GetPoolReward(beforePoolTier)
 	}
 
 	sr.SetPoolTier(cross(cur), barBazPoolPath, uint64(tier))
@@ -209,7 +209,7 @@ func setPoolTier(cur realm, tier int) {
 	afterPoolTier := sr.GetPoolTier(barBazPoolPath)
 	afterPoolEmissionReward := int64(0)
 	if afterPoolTier != 0 {
-		afterPoolEmissionReward = sr.GetPoolReward(afterPoolTier)
+		afterPoolEmissionReward, _ = sr.GetPoolReward(afterPoolTier)
 	}
 
 	ufmt.Printf("[EXPECTED] %s pool's tier changed: %d -> %d\n", barBazPoolPath, beforePoolTier, afterPoolTier)

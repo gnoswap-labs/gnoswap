@@ -161,13 +161,12 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 
 			// when & then
 			if tt.expectedPanic {
-				uassert.PanicsContains(t, cur, tt.expectedError, func() {
-					lp.assertIsDepositOwner(depositID, tt.caller)
-				})
+				err := lp.assertIsDepositOwner(depositID, tt.caller)
+				uassert.ErrorContains(t, err, tt.expectedError)
 				return
 			}
 
-			lp.assertIsDepositOwner(depositID, tt.caller)
+			uassert.NoError(t, lp.assertIsDepositOwner(depositID, tt.caller))
 		})
 	}
 }

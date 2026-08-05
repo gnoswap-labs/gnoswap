@@ -5,8 +5,8 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -165,7 +165,8 @@ func exactOutSingleSwapRouteBy(cur realm,
 	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 
-	ufmt.Printf("[EXPECTED] pool current tick: %d\n", pool.GetSlot0Tick(routeQueryString))
+	currentTick, _ := pool.GetSlot0Tick(routeQueryString)
+	ufmt.Printf("[EXPECTED] pool current tick: %d\n", currentTick)
 	ufmt.Printf("[EXPECTED] inputTokenAmount(GNS): %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(GNOT): %s\n", outputTokenAmount)
 	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)

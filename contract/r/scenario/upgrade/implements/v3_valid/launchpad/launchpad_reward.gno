@@ -16,7 +16,7 @@ import (
 //
 // Returns amount of reward collected.
 // Only callable by deposit owner.
-func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
 		panic(errSpoofedRealm)
 	}
@@ -34,7 +34,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 	currentTime := time.Now().Unix()
 	rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	chain.Emit(
@@ -45,7 +45,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"amount", formatInt(rewardAmount),
 	)
 
-	return rewardAmount
+	return rewardAmount, nil
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.

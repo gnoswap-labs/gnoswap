@@ -121,9 +121,9 @@ func createOBLProject(cur realm) {
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)  // 100,000,000 OBL
-	tier90Ratio := int64(20)  // 200,000,000 OBL
-	tier180Ratio := int64(70) // 700,000,000 OBL
+	tier30Ratio := int64(10)                       // 100,000,000 OBL
+	tier90Ratio := int64(20)                       // 200,000,000 OBL
+	tier180Ratio := int64(70)                      // 700,000,000 OBL
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")
@@ -181,7 +181,7 @@ func collectReward(cur realm, ownerAddr address, depositId string) {
 	beforeOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
 
-	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	rewardAmount, _ := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)

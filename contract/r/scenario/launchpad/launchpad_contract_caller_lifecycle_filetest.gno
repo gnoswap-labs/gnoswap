@@ -120,7 +120,7 @@ func collectRewardAndWithdrawFromContract(cur realm, depositId string) {
 
 	beforeOblBalance := obl.BalanceOf(contractAddr)
 	beforeGnsBalance := gns.BalanceOf(contractAddr)
-	rewardAmount := launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	rewardAmount, _ := launchpad.CollectRewardByDepositId(cross(cur), depositId)
 	gnsAmount, err := launchpad.CollectDepositGns(cross(cur), depositId)
 	if err != nil {
 		panic(err)
