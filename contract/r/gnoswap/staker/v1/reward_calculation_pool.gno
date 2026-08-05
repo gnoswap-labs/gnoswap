@@ -125,8 +125,21 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 	return liquidity
 }
 
+// GetOrCreateTick returns the tick for the given tickId, creating a fresh
+// zero-valued tick via NewTick if it does not exist yet.
+// The returned tick is NOT persisted: the caller must set the desired fields
+// and persist it via Ticks().SetTick, which prunes ticks whose
+// stakedLiquidityGross is zero. This keeps reads from growing the tick tree.
+func (self *PoolResolver) GetOrCreateTick(tickId int32) *sr.Tick {
+	tick := self.Ticks().Get(tickId)
+	if tick == nil {
+		return sr.NewTick(tickId)
+	}
+	return tick
+}
+
 func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
-	return NewTickResolver(self.Ticks().Get(tickId))
+	return NewTickResolver(self.GetOrCreateTick(tickId))
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.

@@ -298,8 +298,15 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	poolResolver.TickResolver(tickUpper).modifyDepositUpper(currentTime, signedLiquidity)
-	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
+	// GetOrCreateTick does not persist: the modified tick must be committed
+	// via SetTick (which prunes ticks whose stakedLiquidityGross is zero).
+	upperTick := poolResolver.GetOrCreateTick(tickUpper)
+	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(tickUpper, upperTick)
+
+	lowerTick := poolResolver.GetOrCreateTick(tickLower)
+	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(tickLower, lowerTick)
 	s.getPools().set(poolPath, pool)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
@@ -781,10 +788,16 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
-	upperTick := poolResolver.TickResolver(depositResolver.TickUpper())
-	lowerTick := poolResolver.TickResolver(depositResolver.TickLower())
-	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
-	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
+	// GetOrCreateTick does not persist: the modified tick must be committed
+	// via SetTick. When the last position at a boundary is unstaked the gross
+	// drops to zero and SetTick prunes the tick from the pool's tick tree.
+	upperTick := poolResolver.GetOrCreateTick(depositResolver.TickUpper())
+	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(depositResolver.TickUpper(), upperTick)
+
+	lowerTick := poolResolver.GetOrCreateTick(depositResolver.TickLower())
+	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(depositResolver.TickLower(), lowerTick)
 
 	s.getDeposits().remove(positionId)
 

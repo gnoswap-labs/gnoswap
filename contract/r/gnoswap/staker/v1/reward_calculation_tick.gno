@@ -73,15 +73,6 @@ func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp in
 		return
 	}
 
-	// Skip batch initialization when the pool has no staking state that a swap
-	// could affect: without staked ticks there is nothing to accumulate.
-	// This prevents the staker from persisting a swap batch on every swap of an
-	// inactive pool forever, keeping swap hooks effectively disabled until the
-	// pool is actually staked.
-	if pool.Ticks().Tree().Size() == 0 {
-		return
-	}
-
 	// Initialize batch processor for this swap
 	// This will accumulate all tick crosses until swap completion
 	currentSwapBatch := sr.NewSwapBatchProcessor(poolPath, pool, timestamp)
@@ -137,15 +128,13 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 	}
 
 	// Skip ticks that were never initialized by staking (no reward impact).
-	// Use the non-mutating existence check instead of Ticks().Get(): Get
-	// auto-inserts an empty tick into the pool's tick BPTree, so a swap that
-	// crosses an arbitrary uninitialized tick would permanently grow staker
-	// tick state.
-	if !pool.Ticks().Has(tickId) {
+	// Ticks().Get() is a pure read now (nil when missing), so a swap that
+	// crosses an arbitrary uninitialized tick is skipped without ever growing
+	// staker tick state.
+	tick := pool.Ticks().Get(tickId)
+	if tick == nil {
 		return
 	}
-
-	tick := pool.Ticks().Get(tickId)
 
 	// Skip ticks without staked boundary liquidity (no reward impact)
 	if tick.StakedLiquidityGross().IsZero() {
