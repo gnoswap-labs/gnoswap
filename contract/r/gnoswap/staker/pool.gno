@@ -344,6 +344,8 @@ type ExternalIncentive struct {
 	creator                  address    // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
+
+	unclaimableSeconds int64 // accumulated seconds of unclaimable periods overlapping the incentive window
 }
 
 // ExternalIncentive Getter/Setter methods
@@ -499,6 +501,19 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
+// UnclaimableSeconds returns the accumulated seconds of unclaimable periods
+// that overlap the incentive window. It is updated whenever an unclaimable
+// period closes and is backfilled once from the historical unclaimable
+// periods tree after an upgrade.
+func (e *ExternalIncentive) UnclaimableSeconds() int64 {
+	return e.unclaimableSeconds
+}
+
+// SetUnclaimableSeconds sets the accumulated unclaimable seconds.
+func (e *ExternalIncentive) SetUnclaimableSeconds(unclaimableSeconds int64) {
+	e.unclaimableSeconds = unclaimableSeconds
+}
+
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
 	rewardPerSecondX128 := u256.Zero()
 
@@ -520,6 +535,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardPerSecondX128:      rewardPerSecondX128,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
+		unclaimableSeconds:       e.unclaimableSeconds,
 		distributedRewardAmount:  e.distributedRewardAmount,
 		accumulatedPenaltyAmount: e.accumulatedPenaltyAmount,
 	}
@@ -565,6 +581,7 @@ func NewExternalIncentive(
 		createdTimestamp:         currentTime,
 		depositGnsAmount:         depositGnsAmount,
 		refunded:                 false,
+		unclaimableSeconds:       0,
 	}
 }
 
