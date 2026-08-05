@@ -88,7 +88,7 @@ func setupTestPool(cur realm, t *testing.T, token0, token1 string, fee uint32, s
 	t.Helper()
 	initPoolTest(cur, t)
 
-	tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee)
+	tickSpacing, _ := getMockInstance().GetFeeAmountTickSpacing(fee)
 	poolParams := newPoolParams(token0, token1, fee, sqrtPrice, tickSpacing, 0)
 	return newPool(poolParams)
 }
@@ -652,7 +652,7 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			getMockInstance().GetFeeAmountTickSpacing(fee500),
+			mustGetTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)
@@ -673,7 +673,7 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			getMockInstance().GetFeeAmountTickSpacing(fee500),
+			mustGetTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)

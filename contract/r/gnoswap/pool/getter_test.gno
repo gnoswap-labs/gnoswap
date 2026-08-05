@@ -89,7 +89,7 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 				m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000"))
 			},
 			getter: func() any {
-				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
+				fee0, fee1, _ := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -104,9 +104,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetPositionLiquidity",
-			setup:  func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
-			getter: func() any { return GetPositionLiquidity("foo:bar:500", "pos") },
+			name:  "GetPositionLiquidity",
+			setup: func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
+			getter: func() any {
+				liquidity, _ := GetPositionLiquidity("foo:bar:500", "pos")
+				return liquidity
+			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetPositionLiquidity"][0].(string)
@@ -117,7 +120,7 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			name:  "GetTickFeeGrowthOutsideX128",
 			setup: func(m *MockPool) { m.Response.Set("GetTickFeeGrowthOutsideX128", "1100", "2200") },
 			getter: func() any {
-				fee0, fee1 := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
+				fee0, fee1, _ := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -132,9 +135,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetSlot0SqrtPriceX96",
-			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
-			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
+			name:  "GetSlot0SqrtPriceX96",
+			setup: func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
+			getter: func() any {
+				sqrtPriceX96, _ := GetSlot0SqrtPriceX96("foo:bar:500")
+				return sqrtPriceX96
+			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(*u256.Uint)
@@ -189,9 +195,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetPoolPositionKeys",
-			setup:  func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
-			getter: func() any { return GetPoolPositionKeys("foo:bar:500", 0, 10) },
+			name:  "GetPoolPositionKeys",
+			setup: func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
+			getter: func() any {
+				keys, _ := GetPoolPositionKeys("foo:bar:500", 0, 10)
+				return keys
+			},
 			mutate: func(result any) {
 				values := result.([]string)
 				values[0] = "mutated"
@@ -274,9 +283,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetInitializedTicksInRange",
-			setup:  func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
-			getter: func() any { return GetInitializedTicksInRange("foo:bar:500", -20, 20) },
+			name:  "GetInitializedTicksInRange",
+			setup: func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
+			getter: func() any {
+				ticks, _ := GetInitializedTicksInRange("foo:bar:500", -20, 20)
+				return ticks
+			},
 			mutate: func(result any) {
 				values := result.([]int32)
 				values[0] = -99
