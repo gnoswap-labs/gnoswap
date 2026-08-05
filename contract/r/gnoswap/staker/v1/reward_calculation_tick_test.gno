@@ -332,3 +332,71 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 		t.Fatal("tick 10 outside accumulation was not updated")
 	}
 }
+
+// TestTickCrossHook_DoesNotAutoInsertUninitializedTick verifies that crossing
+// a tick that was never initialized by staking does not insert an empty tick
+// into the pool's tick tree.
+func TestTickCrossHook_DoesNotAutoInsertUninitializedTick(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+	batchTime := int64(1010)
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.modifyDeposit(liquidity, startTime, 5)
+
+	tickResolver := poolResolver.TickResolver(10)
+	tickResolver.modifyDepositUpper(startTime, liquidity)
+	tickResolver.modifyDepositLower(startTime, liquidity)
+
+	instance.getPools().set(poolPath, pool)
+	instance.swapStartHook(0, cur, poolPath, batchTime)
+	if instance.store.GetCurrentSwapBatch() == nil {
+		t.Fatal("current swap batch not found for pool with staked ticks")
+	}
+
+	// Crossing an uninitialized tick must not insert it into the pool's tick tree.
+	instance.tickCrossHook(0, cur, poolPath, 999, false, batchTime)
+
+	if pool.Ticks().Has(999) {
+		t.Fatal("tickCrossHook auto-inserted uninitialized tick 999; tick state must not grow")
+	}
+
+	batch := instance.store.GetCurrentSwapBatch()
+	if crosses := batch.Crosses(); len(crosses) != 0 {
+		t.Fatalf("batch crosses length = %d, want 0 for uninitialized tick", len(crosses))
+	}
+}
+
+// TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks verifies that the swap
+// start hook does not persist a swap batch for a pool without any staked ticks,
+// keeping swap hooks inactive on pools with no staking state.
+func TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+
+	// The mock store starts with a default inactive batch; capture it to detect
+	// whether swapStartHook replaces it.
+	before := instance.store.GetCurrentSwapBatch()
+
+	// Pool is registered but never staked: its tick tree must be empty.
+	pool := sr.NewPool(poolPath, startTime)
+	instance.getPools().set(poolPath, pool)
+
+	instance.swapStartHook(0, cur, poolPath, 1100)
+
+	after := instance.store.GetCurrentSwapBatch()
+	if after != before {
+		t.Fatal("swapStartHook must not replace the swap batch for a pool without staked ticks")
+	}
+	if after.PoolPath() == poolPath {
+		t.Fatal("swapStartHook must not create a swap batch for a pool without staked ticks")
+	}
+}
