@@ -403,12 +403,20 @@ func (p *mockPoolAccessor) ExistsPoolPath(poolPath string) bool {
 
 func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
 	testing.SetRealm(adminRealm)
-	return pool.GetSlot0Tick(poolPath)
+	tick, err := pool.GetSlot0Tick(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return tick
 }
 
 func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	testing.SetRealm(adminRealm)
-	return pool.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return sqrtPriceX96
 }
 
 func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
