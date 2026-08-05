@@ -98,11 +98,12 @@ func createPool(cur realm) {
 	pl.CreatePool(cross(cur), barPath, bazPath, fee100, gnsmath.TickMathGetSqrtRatioAtTick(15).ToString())
 	sr.SetPoolTier(cross(cur), poolPath, 1)
 
-	if tick := pl.GetSlot0Tick(poolPath); tick != 15 {
+	if tick, _ := pl.GetSlot0Tick(poolPath); tick != 15 {
 		panic(ufmt.Sprintf("expected initial pool tick 15, got %d", tick))
 	}
 
-	ufmt.Printf("[EXPECTED] pool created at tick %d\n", pl.GetSlot0Tick(poolPath))
+	initialTick, _ := pl.GetSlot0Tick(poolPath)
+	ufmt.Printf("[EXPECTED] pool created at tick %d\n", initialTick)
 	testing.SkipHeights(1)
 }
 
@@ -111,8 +112,8 @@ func mintAdjacentPositions(cur realm) {
 	mintPosition(cur, 10, 20, "100000", "100000")
 	matchPositionLiquidity(cur, 1, 2)
 
-	liq1 := pn.GetPositionLiquidity(1)
-	liq2 := pn.GetPositionLiquidity(2)
+	liq1, _ := pn.GetPositionLiquidity(1)
+	liq2, _ := pn.GetPositionLiquidity(2)
 	ufmt.Printf("[INFO] position 1 liquidity: %s\n", liq1)
 	ufmt.Printf("[INFO] position 2 liquidity: %s\n", liq2)
 	if liq1 != liq2 {
@@ -123,11 +124,13 @@ func mintAdjacentPositions(cur realm) {
 }
 
 func matchPositionLiquidity(cur realm, positionId1 uint64, positionId2 uint64) {
-	liq1, err := strconv.Atoi(pn.GetPositionLiquidity(positionId1))
+	liq1Str, _ := pn.GetPositionLiquidity(positionId1)
+	liq1, err := strconv.Atoi(liq1Str)
 	if err != nil {
 		panic(err)
 	}
-	liq2, err := strconv.Atoi(pn.GetPositionLiquidity(positionId2))
+	liq2Str, _ := pn.GetPositionLiquidity(positionId2)
+	liq2, err := strconv.Atoi(liq2Str)
 	if err != nil {
 		panic(err)
 	}
@@ -215,7 +218,7 @@ func stakeAndClearRewards(cur realm) {
 func crossSharedBoundary(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	beforeTick := pl.GetSlot0Tick(poolPath)
+	beforeTick, _ := pl.GetSlot0Tick(poolPath)
 	if beforeTick < 10 {
 		panic(ufmt.Sprintf("expected tick above shared boundary before swap, got %d", beforeTick))
 	}
@@ -237,7 +240,7 @@ func crossSharedBoundary(cur realm) {
 		"",
 	)
 
-	afterTick := pl.GetSlot0Tick(poolPath)
+	afterTick, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] swapped %s BAR for %s BAZ\n", tokenIn, tokenOut)
 	ufmt.Printf("[INFO] tick moved %d -> %d\n", beforeTick, afterTick)
 	if afterTick >= 10 {

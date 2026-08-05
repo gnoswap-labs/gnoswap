@@ -261,7 +261,8 @@ func TestGetUnstakingFee(cur realm, t *testing.T) {
 			instance.store.SetUnstakingFee(0, cur, tt.setFee)
 
 			// Get and verify
-			actualFee := instance.GetUnstakingFee()
+			actualFee, err := instance.GetUnstakingFee()
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedFee, actualFee)
 		})
 	}
@@ -300,7 +301,8 @@ func TestSetUnStakingFeeInternal(cur realm, t *testing.T) {
 			instance.setUnStakingFee(0, cur, tt.fee)
 
 			// Verify
-			actualFee := instance.GetUnstakingFee()
+			actualFee, err := instance.GetUnstakingFee()
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.wantFee, actualFee)
 		})
 	}

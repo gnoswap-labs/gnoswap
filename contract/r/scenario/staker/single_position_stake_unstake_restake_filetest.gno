@@ -149,7 +149,7 @@ func mintPosition01(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -164,7 +164,7 @@ func firstStakeOperation(cur realm) {
 	println("[INFO] stake position 01 for the first time")
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterStake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after first stake: %s\n", ownerAfterStake)
 
 	if ownerAfterStake != stakerAddr {
@@ -199,7 +199,7 @@ func unstakeOperation(cur realm) {
 	println("[INFO] unstake position 01")
 	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", ownerAfterUnstake)
 
 	if ownerAfterUnstake != adminAddr {
@@ -218,7 +218,7 @@ func restakeOperation(cur realm) {
 	println("[INFO] restake position 01")
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterRestake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterRestake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after restake: %s\n", ownerAfterRestake)
 
 	if ownerAfterRestake != stakerAddr {
@@ -256,7 +256,7 @@ func finalUnstakeOperation(cur realm) {
 	println("[INFO] final unstake operation")
 	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterFinalUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterFinalUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after final unstake: %s\n", ownerAfterFinalUnstake)
 
 	if ownerAfterFinalUnstake != adminAddr {
@@ -283,6 +283,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

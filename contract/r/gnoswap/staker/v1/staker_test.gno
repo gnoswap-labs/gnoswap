@@ -346,12 +346,14 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	// First collect should skip external processing because rewardAmount is zero.
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	communityPoolBefore := TokenBalance(t, barPath, communityPoolAddr)
-	resolver := getMockInstance().getDepositResolver(positionId)
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	firstLastCollect := resolver.ExternalRewardLastCollectTime(incentiveId)
 
 	sr.CollectReward(cross(cur), positionId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, firstLastCollect, resolver.ExternalRewardLastCollectTime(incentiveId))
 	uassert.Equal(t, int64(0), resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, communityPoolBefore, TokenBalance(t, barPath, communityPoolAddr))
@@ -363,7 +365,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	communityPoolBefore = TokenBalance(t, barPath, communityPoolAddr)
 	sr.CollectReward(cross(cur), positionId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	communityPoolAfter := TokenBalance(t, barPath, communityPoolAddr)
 	communityPoolChanges := communityPoolAfter - communityPoolBefore
 	if communityPoolChanges != 0 {
@@ -377,7 +380,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 
 	// Subsequent collect in the same second should not apply the penalty again.
 	sr.CollectReward(cross(cur), positionId)
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, communityPoolAfter, TokenBalance(t, barPath, communityPoolAddr))
 	uassert.Equal(t, collectedAfter, resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, lastCollectAfter, resolver.ExternalRewardLastCollectTime(incentiveId))
@@ -453,7 +457,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	}
 
 	blockHeight := runtime.ChainHeight()
-	reward := getMockInstance().calcPositionReward(blockHeight, time.Now().Unix(), positionId)
+	reward, err := getMockInstance().calcPositionReward(blockHeight, time.Now().Unix(), positionId)
+	uassert.NoError(t, err)
 	rewardAmount := reward.External[incentiveId]
 	externalPenalty := reward.ExternalPenalty[incentiveId]
 	if rewardAmount <= 0 {
@@ -467,7 +472,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	incentive.SetRewardAmount(totalRewardAmount - 1)
 	incentives.set(incentiveId, incentive)
 
-	depositResolver := getMockInstance().getDepositResolver(positionId)
+	depositResolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	beforeLastCollect := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 	beforeCollected := depositResolver.CollectedExternalReward(incentiveId)
 	beforeUserBar := bar.BalanceOf(addr01)
@@ -477,7 +483,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.CollectReward(cross(cur), positionId)
 
-	depositResolver = getMockInstance().getDepositResolver(positionId)
+	depositResolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	incentiveAfter := getMockInstance().getExternalIncentives().get(incentiveId)
 	afterUserBar := bar.BalanceOf(addr01)
 	afterCommunityBar := bar.BalanceOf(communityPoolAddr)
@@ -553,7 +560,8 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	communityGnsBefore := gns.BalanceOf(communityPoolAddr)
 
 	// Get deposit info to check internal state
-	depositResolver := getMockInstance().getDepositResolver(positionId)
+	depositResolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 
 	// Collect reward - should process penalty even if net reward is 0
 	sr.CollectReward(cross(cur), positionId)

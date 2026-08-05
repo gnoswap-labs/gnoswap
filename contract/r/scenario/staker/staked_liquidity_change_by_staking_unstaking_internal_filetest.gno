@@ -5,16 +5,15 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -243,7 +242,7 @@ func unstakePosition02(cur realm) {
 	println("[INFO] unstake position 02")
 	sr.UnStakeToken(cross(cur), 2)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
 	if owner != adminAddr {
@@ -307,6 +306,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	}
 }
 
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
+}
+
 // Output:
 // [SCENARIO] 1. Initialize with default settings
 // [INFO] prepare wugnot by depositing ugnot
@@ -352,4 +359,3 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] position 01 reward after unstaking pos 02: 8026540
 // [WARNING] expected around 3210615, got 8026540
 // [INFO] position 01 now receives full rewards since position 02 is unstaked
-

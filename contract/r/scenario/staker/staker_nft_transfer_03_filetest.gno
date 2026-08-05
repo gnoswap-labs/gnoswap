@@ -141,7 +141,7 @@ func mintPositionsForUsers(cur realm) {
 	ufmt.Printf("[EXPECTED] admin position ID: %d, liquidity: %s\n", positionId1, liquidity1)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_1, amount1_1)
 
-	owner1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner1 := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner: %s\n", owner1)
 
 	bar.Transfer(cross(cur), user2Addr, 1000)
@@ -175,7 +175,7 @@ func mintPositionsForUsers(cur realm) {
 	ufmt.Printf("[EXPECTED] user2 position ID: %d, liquidity: %s\n", positionId2, liquidity2)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_2, amount1_2)
 
-	owner2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner2 := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner: %s\n", owner2)
 
 	testing.SkipHeights(1)
@@ -189,7 +189,7 @@ func stakePositionsForUsers(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 1))
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterStake1 := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner after staking: %s\n", ownerAfterStake1)
 
 	// User2 stakes position 2
@@ -199,7 +199,7 @@ func stakePositionsForUsers(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, 2))
 	sr.StakeToken(cross(cur), 2, "")
 
-	ownerAfterStake2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	ownerAfterStake2 := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after staking: %s\n", ownerAfterStake2)
 
 	testing.SkipHeights(1)
@@ -248,7 +248,7 @@ func unstakeAndVerifyOwnership(cur realm) {
 	println("[INFO] admin: unstake position 01")
 	sr.UnStakeToken(cross(cur), 1)
 
-	ownerAfterUnstake1 := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterUnstake1 := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position 01 owner after unstaking: %s\n", ownerAfterUnstake1)
 
 	if ownerAfterUnstake1 != adminAddr {
@@ -261,7 +261,7 @@ func unstakeAndVerifyOwnership(cur realm) {
 	println("[INFO] user2: unstake position 02")
 	sr.UnStakeToken(cross(cur), 2)
 
-	ownerAfterUnstake2 := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	ownerAfterUnstake2 := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", ownerAfterUnstake2)
 
 	if ownerAfterUnstake2 != user2Addr {
@@ -288,6 +288,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
