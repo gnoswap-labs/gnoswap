@@ -2,7 +2,6 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
-	bptree "gno.land/p/nt/bptree/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -172,27 +171,21 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
 	currentIncentiveIds := make([]string, 0)
 
-	incentivesByTime := s.getExternalIncentivesByCreationTime()
+	pool, ok := s.getPools().Get(poolPath)
+	if !ok {
+		return currentIncentiveIds
+	}
+	poolResolver := NewPoolResolver(pool)
 
-	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
-		// Value is a slice of incentive IDs (handles timestamp collisions)
-		poolIncentiveIds, ok := value.(*bptree.BPTree)
-		if !ok {
-			return false
+	// Iterate the pool's own incentive tree instead of a global creation-time
+	// index. The pool's incentive set is bounded by the number of incentives
+	// created for this pool, so discovery cost no longer grows with the total
+	// number of incentives system-wide.
+	poolResolver.IncentivesResolver().IterateIncentives(func(incentiveId string, incentive *sr.ExternalIncentive) bool {
+		createdTimestamp := incentive.CreatedTimestamp()
+		if createdTimestamp >= startTime && createdTimestamp <= endTime {
+			currentIncentiveIds = append(currentIncentiveIds, incentiveId)
 		}
-
-		incentiveIdsValue := poolIncentiveIds.Get(poolPath)
-		if incentiveIdsValue == nil {
-			return false
-		}
-
-		incentiveIds, ok := incentiveIdsValue.([]string)
-		if !ok {
-			return false
-		}
-
-		currentIncentiveIds = append(currentIncentiveIds, incentiveIds...)
-
 		return false
 	})
 

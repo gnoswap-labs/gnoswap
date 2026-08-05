@@ -125,13 +125,6 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	if !stakerStore.HasExternalIncentivesByCreationTimeStoreKey() {
-		err := stakerStore.SetExternalIncentivesByCreationTime(0, rlm, sr.NewUintTree())
-		if err != nil {
-			return err
-		}
-	}
-
 	initializedPoolTier, initializedPools, initialPoolTierTime, initialTierRewards := initializePoolTier(stakerStore)
 
 	previousRealm := rlm.Previous()

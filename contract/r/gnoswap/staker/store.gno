@@ -34,7 +34,6 @@ const (
 	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
 	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
 	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
-	StoreKeyExternalIncentivesByCreationTime StoreKey = "externalIncentivesByCreationTime"
 )
 
 type stakerStore struct {
@@ -653,34 +652,6 @@ func (s *stakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProc
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyCurrentSwapBatch.String(), batch)
-}
-
-// ExternalIncentivesByCreationTime
-// key: timestamp -> value: *bptree.BPTree (poolPath -> []string)
-func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
-	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
-}
-
-func (s *stakerStore) GetExternalIncentivesByCreationTime() *UintTree {
-	result, err := s.kvStore.Get(StoreKeyExternalIncentivesByCreationTime.String())
-	if err != nil {
-		panic(err)
-	}
-
-	tree, ok := result.(*UintTree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *UintTree: %T", result))
-	}
-
-	return tree
-}
-
-func (s *stakerStore) SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *UintTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
 // NewStakerStore creates a new staker store instance with the provided KV store.
