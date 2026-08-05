@@ -191,6 +191,114 @@ func TestDistributeProtocolFeeByTokenPath_NoAmountPreservesOtherReservedTokens(c
 	uassert.Equal(t, reservedTokens[1], "gno.land/r/onbloc/qux.QUX")
 }
 
+// TestDistributeProtocolFeeByTokenPath_Unauthorized covers the authorization
+// failure path for the per-token flush. It shares assertIsAdminOrGovStaker
+// with the bulk path, but exercises the ByTokenPath entry directly.
+func TestDistributeProtocolFeeByTokenPath_Unauthorized(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		prevRealm runtime.Realm
+		panicMsg  string
+	}{
+		{
+			name:      "failure - caller is not admin or gov/staker",
+			prevRealm: testing.NewCodeRealm("gno.land/r/unknown/contract"),
+			panicMsg:  "unauthorized: caller g1pxn2ve8l38svvke6wzpvhkhld8xjktk66qpn5h is not admin or gov/staker",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(cur realm, t *testing.T) {
+			pf := createTestProtocolFee(t)
+
+			testing.SetRealm(test.prevRealm)
+			uassert.AbortsContains(t, cur, test.panicMsg, func() {
+				func(cur realm) {
+					pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/bar.BAR")
+				}(cross(cur))
+			})
+		})
+	}
+}
+
+// TestDistributeProtocolFeeByTokenPath_HaltScenario covers the halt behavior
+// of the per-token flush, mirroring the bulk-path halt tests:
+//   - SAFE_MODE halts withdrawals, so the flush is skipped silently and must
+//     not touch distribution state or reserved tokens.
+//   - EMERGENCY keeps withdrawals enabled, so the flush is not blocked; with
+//     no pending distribution the call is a no-op (mirrors
+//     TestDistributeProtocolFee_HaltScenario_Emergency).
+func TestDistributeProtocolFeeByTokenPath_HaltScenario(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		haltLevel halt.HaltLevel
+	}{
+		{
+			name:      "safe mode",
+			haltLevel: halt.HaltLevelSafeMode,
+		},
+		{
+			name:      "emergency",
+			haltLevel: halt.HaltLevelEmergency,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), tt.haltLevel)
+			defer func() {
+				func(cur realm) {
+					testing.SetOriginCaller(adminAddr)
+					testing.SetRealm(adminRealm)
+					halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+				}(cross(cur))
+			}()
+
+			if tt.haltLevel == halt.HaltLevelSafeMode {
+				// Seed pending distribution state only for safe mode: it is
+				// the case that must preserve it untouched.
+				if err := pf.getProtocolFeeState().addAccuToGovStaker(0, cur, "gno.land/r/onbloc/bar.BAR", 100); err != nil {
+					panic(err)
+				}
+				if err := pf.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar.BAR"); err != nil {
+					panic(err)
+				}
+
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(cross(cur), "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
+			}
+
+			testing.SetRealm(govStakerRealm)
+
+			// When - Then: the call does not panic.
+			uassert.NotPanics(t, cur, func() {
+				func(cur realm) {
+					pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/bar.BAR")
+				}(cross(cur))
+			})
+
+			if tt.haltLevel == halt.HaltLevelSafeMode {
+				// Safe mode: distribution state and reserved token are untouched.
+				uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				reservedTokens := pf.getProtocolFeeState().ReservedTokens()
+				uassert.Equal(t, 1, len(reservedTokens))
+				uassert.Equal(t, "gno.land/r/onbloc/bar.BAR", reservedTokens[0])
+			} else {
+				// Emergency: no distribution is recorded.
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar.BAR"))
+			}
+		})
+	}
+}
+
 // TestDistributeProtocolFee_WithDeposits covers the distribution arithmetic
 // (devOps split, gov/staker split, rounding for tiny amounts).
 //
