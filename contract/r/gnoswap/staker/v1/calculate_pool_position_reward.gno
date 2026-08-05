@@ -177,15 +177,13 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 	}
 	poolResolver := NewPoolResolver(pool)
 
-	// Iterate the pool's own incentive tree instead of a global creation-time
-	// index. The pool's incentive set is bounded by the number of incentives
-	// created for this pool, so discovery cost no longer grows with the total
-	// number of incentives system-wide.
-	poolResolver.IncentivesResolver().IterateIncentives(func(incentiveId string, incentive *sr.ExternalIncentive) bool {
-		createdTimestamp := incentive.CreatedTimestamp()
-		if createdTimestamp >= startTime && createdTimestamp <= endTime {
-			currentIncentiveIds = append(currentIncentiveIds, incentiveId)
-		}
+	// Look up the pool's own creation-time index instead of a global
+	// creation-time index. The index is scoped to this pool's incentives, so
+	// discovery cost is bounded by the number of incentives created for this
+	// pool within the queried range, and no longer grows with the total number
+	// of incentives system-wide.
+	poolResolver.IncentivesResolver().IterateIncentiveIdsByTime(startTime, endTime, func(incentiveId string) bool {
+		currentIncentiveIds = append(currentIncentiveIds, incentiveId)
 		return false
 	})
 
