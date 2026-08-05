@@ -242,8 +242,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
 //
-//   - byCreationTime: Per-pool creation-time index mapping an incentive's
-//     creation timestamp (key) to the incentive IDs created at that timestamp
+//   - byStartTime: Per-pool start-time index mapping an incentive's start
+//     timestamp (key) to the incentive IDs that start at that timestamp
 //     (value). This mirrors the lazy-discovery lookup previously served by a
 //     global creation-time index, but scoped to this pool's own incentives, so
 //     discovery cost is bounded by this pool's incentives instead of growing
@@ -255,7 +255,7 @@ type Incentives struct {
 
 	unclaimablePeriods *UintTree // blockTimestamp -> any
 
-	byCreationTime *UintTree // creationTimestamp -> []incentiveId
+	byStartTime *UintTree // startTimestamp -> []incentiveId
 }
 
 // Incentives Getter/Setter methods
@@ -323,27 +323,27 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 	})
 }
 
-// AddIncentiveByCreationTime registers an incentive ID under its creation
-// timestamp in the per-pool creation-time index. Multiple incentives created
-// at the same timestamp are accumulated as a list.
-func (i *Incentives) AddIncentiveByCreationTime(creationTime int64, incentiveId string) {
+// AddIncentiveByStartTime registers an incentive ID under its start timestamp
+// in the per-pool start-time index. Multiple incentives starting at the same
+// timestamp are accumulated as a list.
+func (i *Incentives) AddIncentiveByStartTime(startTimestamp int64, incentiveId string) {
 	var incentiveIds []string
-	if value, ok := i.byCreationTime.Get(creationTime); ok {
+	if value, ok := i.byStartTime.Get(startTimestamp); ok {
 		if ids, ok := value.([]string); ok {
 			incentiveIds = ids
 		}
 	}
 	incentiveIds = append(incentiveIds, incentiveId)
-	i.byCreationTime.Set(creationTime, incentiveIds)
+	i.byStartTime.Set(startTimestamp, incentiveIds)
 }
 
-// IterateIncentiveIdsByTime iterates over the incentive IDs created within the
-// inclusive [startTime, endTime] range, visiting only the buckets that fall in
-// the range. ReverseIterate is used because it is inclusive on both ends,
-// matching the discovery semantics previously implemented as
-// (createdTimestamp >= startTime && createdTimestamp <= endTime).
+// IterateIncentiveIdsByTime iterates over the incentive IDs that start within
+// the inclusive [startTime, endTime] range, visiting only the buckets that
+// fall in the range. ReverseIterate is used because it is inclusive on both
+// ends, matching the discovery semantics previously implemented as
+// (startTimestamp >= startTime && startTimestamp <= endTime).
 func (i *Incentives) IterateIncentiveIdsByTime(startTime, endTime int64, fn func(incentiveId string) bool) {
-	i.byCreationTime.ReverseIterate(startTime, endTime, func(_ int64, value any) bool {
+	i.byStartTime.ReverseIterate(startTime, endTime, func(_ int64, value any) bool {
 		incentiveIds, ok := value.([]string)
 		if !ok {
 			return false
@@ -362,7 +362,7 @@ func NewIncentives(targetPoolPath string) *Incentives {
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTreeN(64),
 		incentives:         bptree.NewBPTreeN(16),
-		byCreationTime:     NewUintTreeN(64),
+		byStartTime:        NewUintTreeN(64),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.

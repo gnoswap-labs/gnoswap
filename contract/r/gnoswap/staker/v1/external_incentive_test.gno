@@ -680,8 +680,9 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 	}
 
 	// Verify discovery via getExternalIncentiveIdsBy returns all 3 incentives
-	// created at the same timestamp for the same pool.
-	discovered := instance.getExternalIncentiveIdsBy(poolPath, currentTime, currentTime)
+	// that start at the same timestamp for the same pool. The index is keyed by
+	// start timestamp, so the discovery window is [startTime, startTime].
+	discovered := instance.getExternalIncentiveIdsBy(poolPath, startTime, startTime)
 	if len(discovered) != 3 {
 		t.Errorf("Expected 3 incentives discoverable at same timestamp, got %d", len(discovered))
 	}
@@ -1269,9 +1270,11 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 	// incentiveSetup represents an incentive to be added to the pool's incentive tree
 	type incentiveSetup struct {
-		poolPath     string
-		incentiveId  string
-		creationTime int64
+		poolPath    string
+		incentiveId string
+		startTime   int64 // incentive start timestamp (start-time index key)
+		endTime     int64 // incentive end timestamp; defaults to startTime+1000 when 0
+		createdTime int64 // incentive created timestamp; defaults to startTime when 0
 	}
 
 	// depositSetup represents initial deposit state
@@ -1298,8 +1301,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "basic case - new incentives added to deposit",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 200},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", startTime: 200},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1319,7 +1322,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "no incentives when lastUpdate == currentTime",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1339,8 +1342,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "partial update - only new incentives since last update",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-old", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-new", creationTime: 300},
+				{poolPath: "pool-a", incentiveId: "inc-old", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-new", startTime: 300},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1360,10 +1363,10 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "filter by pool path - only matching pool incentives",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "a-inc-1", creationTime: 100},
-				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 150},
-				{poolPath: "pool-a", incentiveId: "a-inc-2", creationTime: 200},
-				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 250},
+				{poolPath: "pool-a", incentiveId: "a-inc-1", startTime: 100},
+				{poolPath: "pool-b", incentiveId: "b-inc-1", startTime: 150},
+				{poolPath: "pool-a", incentiveId: "a-inc-2", startTime: 200},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", startTime: 250},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1383,7 +1386,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "empty time range - no incentives in range",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 500},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 500},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1403,9 +1406,9 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "multiple incentives at same timestamp",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-3", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-3", startTime: 100},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1425,8 +1428,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "no incentives exist for pool",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 100},
-				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 200},
+				{poolPath: "pool-b", incentiveId: "b-inc-1", startTime: 100},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", startTime: 200},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1446,7 +1449,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "preserve existing incentive ids",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "new-inc", creationTime: 300},
+				{poolPath: "pool-a", incentiveId: "new-inc", startTime: 300},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1466,8 +1469,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "exact boundary - incentive at lastUpdate time included",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "boundary-inc", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "after-inc", creationTime: 150},
+				{poolPath: "pool-a", incentiveId: "boundary-inc", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "after-inc", startTime: 150},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -1484,6 +1487,63 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 			expectedLastExternalUpdatedAt: 200,
 			expectedNewIncentiveCount:     2,
 		},
+		{
+			name: "indexed by start time, not creation time",
+			incentives: []incentiveSetup{
+				// created early but starts within the scan window -> discovered
+				{poolPath: "pool-a", incentiveId: "late-start-inc", createdTime: 50, startTime: 150},
+				// created within the scan window but starts after currentTime -> not yet discovered
+				{poolPath: "pool-a", incentiveId: "future-start-inc", createdTime: 150, startTime: 400},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 100,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   200,
+			expectedIncentiveIds:          []string{"late-start-inc"},
+			expectedLastExternalUpdatedAt: 200,
+			expectedNewIncentiveCount:     1,
+		},
+		{
+			// Stake-time scan window boundary. StakeToken scans
+			// [currentTime - TIMESTAMP_365DAYS, currentTime] on the start-time
+			// index. An incentive with duration <= 365 days that is still
+			// active at currentTime must satisfy start >= currentTime - 365d.
+			// This case pins down both edges of that window:
+			//   - incentive starting exactly at the lower bound with the max
+			//     duration ends exactly at currentTime -> must be discovered
+			//   - incentive starting one second before the lower bound with
+			//     the max duration ended before currentTime -> correctly
+			//     excluded from the scan (and filtered by EndTimestamp anyway)
+			//   - incentive starting exactly at currentTime -> discovered
+			//     (upper bound is inclusive)
+			name: "stake scan window boundary at TIMESTAMP_365DAYS",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "exact-lower-bound", startTime: 1_768_464_000, endTime: 1_800_000_000},
+				{poolPath: "pool-a", incentiveId: "below-lower-bound", startTime: 1_768_463_999, endTime: 1_799_999_999},
+				{poolPath: "pool-a", incentiveId: "exact-upper-bound", startTime: 1_800_000_000},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 1_768_464_000,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 1_768_464_000,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   1_800_000_000,
+			expectedIncentiveIds:          []string{"exact-lower-bound", "exact-upper-bound"},
+			expectedLastExternalUpdatedAt: 1_800_000_000,
+			expectedNewIncentiveCount:     2,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1498,17 +1558,29 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 					instance.getPools().set(inc.poolPath, pool)
 				}
 
+				// createdTime defaults to startTime when not explicitly set
+				createdTime := inc.createdTime
+				if createdTime == 0 {
+					createdTime = inc.startTime
+				}
+
+				// endTime defaults to startTime+1000 when not explicitly set
+				endTime := inc.endTime
+				if endTime == 0 {
+					endTime = inc.startTime + 1000
+				}
+
 				incentive := sr.NewExternalIncentive(
 					inc.incentiveId,
 					inc.poolPath,
 					WUGNOT_TOKEN_KEY,
 					1000000,
-					inc.creationTime,
-					inc.creationTime+1000,
+					inc.startTime,
+					endTime,
 					testutils.TestAddress("creator"),
 					100_000_000,
 					1000,
-					inc.creationTime,
+					createdTime,
 				)
 
 				externalIncentives := instance.store.GetExternalIncentives()

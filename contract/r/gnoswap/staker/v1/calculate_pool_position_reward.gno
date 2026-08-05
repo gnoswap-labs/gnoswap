@@ -107,12 +107,18 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	lastExternalIncentiveUpdatedAt := depositResolver.LastExternalIncentiveUpdatedAt()
 
-	// update deposit's incentive list with new incentives created since last update
+	// Lazy sync: add incentives whose START time falls in
+	// (lastExternalIncentiveUpdatedAt, param.CurrentTime] to the deposit's
+	// incentive list. The index is keyed by start timestamp, so an incentive
+	// is discovered by the first sync whose window crosses its start time.
+	// Discovery is deferred until the incentive actually starts, which is
+	// reward-neutral because reward calculation clamps to
+	// [max(stakeTime, startTimestamp), min(currentTime, endTimestamp)].
 	if lastExternalIncentiveUpdatedAt < param.CurrentTime {
-		// get new incentives created since last update
+		// get new incentives that started since last update
 		currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, lastExternalIncentiveUpdatedAt, param.CurrentTime)
 
-		// add new created incentives to deposit
+		// add newly started incentives to deposit
 		for _, incentiveId := range currentIncentiveIds {
 			deposit.AddExternalIncentiveId(incentiveId)
 		}
@@ -177,11 +183,11 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 	}
 	poolResolver := NewPoolResolver(pool)
 
-	// Look up the pool's own creation-time index instead of a global
+	// Look up the pool's own start-time index instead of a global
 	// creation-time index. The index is scoped to this pool's incentives, so
-	// discovery cost is bounded by the number of incentives created for this
-	// pool within the queried range, and no longer grows with the total number
-	// of incentives system-wide.
+	// discovery cost is bounded by the number of incentives for this pool
+	// within the queried range, and no longer grows with the total number of
+	// incentives system-wide.
 	poolResolver.IncentivesResolver().IterateIncentiveIdsByTime(startTime, endTime, func(incentiveId string) bool {
 		currentIncentiveIds = append(currentIncentiveIds, incentiveId)
 		return false
