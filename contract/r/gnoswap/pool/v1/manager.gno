@@ -79,16 +79,21 @@ func (i *poolV1) CreatePool(
 
 	slot0FeeProtocol := i.store.GetSlot0FeeProtocol()
 
+	tickSpacing, err := i.GetFeeAmountTickSpacing(fee)
+	if err != nil {
+		panic(err)
+	}
+
 	poolInfo := newPoolParams(
 		token0Path,
 		token1Path,
 		fee,
 		sqrtPriceX96,
-		i.GetFeeAmountTickSpacing(fee),
+		tickSpacing,
 		slot0FeeProtocol,
 	)
 
-	err := poolInfo.update()
+	err = poolInfo.update()
 	if err != nil {
 		panic(err)
 	}

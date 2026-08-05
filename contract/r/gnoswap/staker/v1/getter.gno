@@ -12,34 +12,41 @@ import (
 )
 
 // getPoolByPoolPath retrieves the pool by its path.
-func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
+func (s *stakerV1) getPoolByPoolPath(poolPath string) (*sr.Pool, error) {
 	result := s.store.GetPools().Get(poolPath)
 	if result == nil {
-		panic(makeErrorWithDetails(
+		return nil, makeErrorWithDetails(
 			errDataNotFound,
-			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
+			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath),
 		)
 	}
 
 	pool, ok := result.(*sr.Pool)
 	if !ok {
-		panic(makeErrorWithDetails(
+		return nil, makeErrorWithDetails(
 			errDataNotFound,
-			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
+			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath),
 		)
 	}
 
-	return pool
+	return pool, nil
 }
 
 // GetPool returns the pool for the given path.
-func (s *stakerV1) GetPool(poolPath string) *sr.Pool {
-	return s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPool(poolPath string) (*sr.Pool, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
 }
 
 // GetPoolIncentiveIdList returns all incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) ([]string, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 
 	incentives := pool.Incentives()
 
@@ -49,277 +56,378 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 		return false
 	})
 
-	return ids
+	return ids, nil
 }
 
 // getIncentive retrieves an external incentive by ID.
-func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) getIncentive(poolPath string, incentiveId string) (*sr.ExternalIncentive, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 
 	incentives := pool.Incentives()
 	incentive := incentives.IncentiveTrees().Get(incentiveId)
 	if incentive == nil {
-		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
+		return nil, ufmt.Errorf("incentiveId(%s) incentive does not exist", incentiveId)
 	}
 
 	ictv, ok := incentive.(*sr.ExternalIncentive)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
+		return nil, ufmt.Errorf("failed to cast incentive to *ExternalIncentive: %T", incentive)
 	}
-	return ictv
+	return ictv, nil
 }
 
 // GetIncentive returns the incentive for the given pool and ID.
-func (s *stakerV1) GetIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
+func (s *stakerV1) GetIncentive(poolPath string, incentiveId string) (*sr.ExternalIncentive, error) {
 	return s.getIncentive(poolPath, incentiveId)
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
-func (s *stakerV1) GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveStartTimestamp(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.StartTimestamp()
+	return incentive.StartTimestamp(), nil
 }
 
 // GetIncentiveEndTimestamp returns the end timestamp of an incentive.
-func (s *stakerV1) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveEndTimestamp(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.EndTimestamp()
+	return incentive.EndTimestamp(), nil
 }
 
 // GetTargetPoolPathByIncentiveId returns the target pool path of an incentive.
-func (s *stakerV1) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) (string, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return "", err
+	}
 
-	return incentive.TargetPoolPath()
+	return incentive.TargetPoolPath(), nil
 }
 
 // GetCreatedHeightOfIncentive returns the creation height of an incentive.
-func (s *stakerV1) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.CreatedHeight()
+	return incentive.CreatedHeight(), nil
 }
 
 // GetIncentiveCreatedTimestamp returns the creation timestamp of an incentive.
-func (s *stakerV1) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.CreatedTimestamp()
+	return incentive.CreatedTimestamp(), nil
 }
 
 // GetIncentiveTotalRewardAmount returns the total reward amount of an incentive.
-func (s *stakerV1) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.TotalRewardAmount()
+	return incentive.TotalRewardAmount(), nil
 }
 
 // GetIncentiveDistributedRewardAmount returns the distributed reward amount of an incentive.
-func (s *stakerV1) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.DistributedRewardAmount()
+	return incentive.DistributedRewardAmount(), nil
 }
 
 // GetIncentiveRemainingRewardAmount returns the remaining reward amount of an incentive.
-func (s *stakerV1) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.RewardAmount()
+	return incentive.RewardAmount(), nil
 }
 
 // GetIncentiveAccumulatedPenaltyAmount returns the accumulated warmup penalty amount of an incentive.
-func (s *stakerV1) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.AccumulatedPenaltyAmount()
+	return incentive.AccumulatedPenaltyAmount(), nil
 }
 
 // GetIncentiveDepositGnsAmount returns the deposit GNS amount of an incentive.
-func (s *stakerV1) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) (int64, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return 0, err
+	}
 
-	return incentive.DepositGnsAmount()
+	return incentive.DepositGnsAmount(), nil
 }
 
 // GetIncentiveRefunded returns whether an incentive has been refunded.
-func (s *stakerV1) GetIncentiveRefunded(poolPath string, incentiveId string) bool {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRefunded(poolPath string, incentiveId string) (bool, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return false, err
+	}
 
-	return incentive.Refunded()
+	return incentive.Refunded(), nil
 }
 
 // IsIncentiveActive returns whether an incentive is currently active.
-func (s *stakerV1) IsIncentiveActive(poolPath string, incentiveId string) bool {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) IsIncentiveActive(poolPath string, incentiveId string) (bool, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return false, err
+	}
 	currentTime := time.Now().Unix()
 
 	resolver := NewExternalIncentiveResolver(incentive)
-	return resolver.isActive(currentTime) && !resolver.Refunded()
+	return resolver.isActive(currentTime) && !resolver.Refunded(), nil
 }
 
 // GetIncentiveRewardToken returns the reward token of an incentive.
-func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) string {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) (string, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return "", err
+	}
 
-	return incentive.RewardToken()
+	return incentive.RewardToken(), nil
 }
 
 // GetIncentiveRewardAmount returns the reward amount of an incentive.
-func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return nil, err
+	}
 
-	return u256.NewUintFromInt64(incentive.RewardAmount())
+	return u256.NewUintFromInt64(incentive.RewardAmount()), nil
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount of an incentive as string.
-func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	rewardAmount := s.GetIncentiveRewardAmount(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (string, error) {
+	rewardAmount, err := s.GetIncentiveRewardAmount(poolPath, incentiveId)
+	if err != nil {
+		return "", err
+	}
 
-	return rewardAmount.ToString()
+	return rewardAmount.ToString(), nil
 }
 
 // GetIncentiveRewardPerSecondX128 returns the Q128-scaled reward per second of
 // an incentive (i.e. actual rate = value / 2^128). The Q128 form preserves
 // sub-second precision that would otherwise be lost to int64 truncation.
-func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (*u256.Uint, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return nil, err
+	}
 
-	return incentive.RewardPerSecondX128()
+	return incentive.RewardPerSecondX128(), nil
 }
 
 // GetIncentiveCreator returns the creator address of an incentive.
-func (s *stakerV1) GetIncentiveCreator(poolPath string, incentiveId string) address {
-	incentive := s.getIncentive(poolPath, incentiveId)
+func (s *stakerV1) GetIncentiveCreator(poolPath string, incentiveId string) (address, error) {
+	incentive, err := s.getIncentive(poolPath, incentiveId)
+	if err != nil {
+		return address(""), err
+	}
 
-	return incentive.Creator()
+	return incentive.Creator(), nil
 }
 
 // getDeposit retrieves a deposit by LP token ID.
-func (s *stakerV1) getDeposit(lpTokenId uint64) *sr.Deposit {
+func (s *stakerV1) getDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	deposit := s.getDeposits().get(lpTokenId)
 	if deposit == nil {
-		panic(makeErrorWithDetails(
+		return nil, makeErrorWithDetails(
 			errDataNotFound,
-			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId)),
+			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId),
 		)
 	}
 
-	return deposit
+	return deposit, nil
 }
 
 // GetDeposit returns the deposit for the given LP token ID.
-func (s *stakerV1) GetDeposit(lpTokenId uint64) *sr.Deposit {
+func (s *stakerV1) GetDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	return s.getDeposit(lpTokenId)
 }
 
 // CollectableEmissionReward returns the claimable internal reward amount for a position.
-func (s *stakerV1) CollectableEmissionReward(positionId uint64) int64 {
+func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
-	return reward.Internal
+	reward, err := s.calcPositionReward(currentHeight, currentTime, positionId)
+	if err != nil {
+		return 0, err
+	}
+	return reward.Internal, nil
 }
 
 // CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
-func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward, err := s.calcPositionReward(currentHeight, currentTime, positionId)
+	if err != nil {
+		return 0, err
+	}
 	amount, ok := reward.External[incentiveId]
 	if !ok {
-		return 0
+		return 0, nil
 	}
-	return amount
+	return amount, nil
 }
 
 // GetDepositOwner returns the owner of a deposit.
-func (s *stakerV1) GetDepositOwner(lpTokenId uint64) address {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositOwner(lpTokenId uint64) (address, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return address(""), err
+	}
 
-	return deposit.Owner()
+	return deposit.Owner(), nil
 }
 
 // GetDepositStakeTime returns the stake time of a deposit.
-func (s *stakerV1) GetDepositStakeTime(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositStakeTime(lpTokenId uint64) (int64, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
 
-	return deposit.StakeTime()
+	return deposit.StakeTime(), nil
 }
 
 // GetDepositTargetPoolPath returns the target pool path of a deposit.
-func (s *stakerV1) GetDepositTargetPoolPath(lpTokenId uint64) string {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositTargetPoolPath(lpTokenId uint64) (string, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return "", err
+	}
 
-	return deposit.TargetPoolPath()
+	return deposit.TargetPoolPath(), nil
 }
 
 // GetDepositTickLower returns the lower tick of a deposit.
-func (s *stakerV1) GetDepositTickLower(lpTokenId uint64) int32 {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositTickLower(lpTokenId uint64) (int32, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
 
-	return deposit.TickLower()
+	return deposit.TickLower(), nil
 }
 
 // GetDepositTickUpper returns the upper tick of a deposit.
-func (s *stakerV1) GetDepositTickUpper(lpTokenId uint64) int32 {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositTickUpper(lpTokenId uint64) (int32, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
 
-	return deposit.TickUpper()
+	return deposit.TickUpper(), nil
 }
 
 // GetDepositLiquidity returns the liquidity of a deposit.
-func (s *stakerV1) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositLiquidity(lpTokenId uint64) (*u256.Uint, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return nil, err
+	}
 
-	return deposit.Liquidity()
+	return deposit.Liquidity(), nil
 }
 
 // GetDepositLiquidityAsString returns the liquidity of a deposit as string.
-func (s *stakerV1) GetDepositLiquidityAsString(lpTokenId uint64) string {
-	liquidity := s.GetDepositLiquidity(lpTokenId)
+func (s *stakerV1) GetDepositLiquidityAsString(lpTokenId uint64) (string, error) {
+	liquidity, err := s.GetDepositLiquidity(lpTokenId)
+	if err != nil {
+		return "", err
+	}
 
-	return liquidity.ToString()
+	return liquidity.ToString(), nil
 }
 
 // GetDepositInternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
-func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) (int64, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
 
-	return deposit.InternalRewardLastCollectTime()
+	return deposit.InternalRewardLastCollectTime(), nil
 }
 
 // GetDepositCollectedInternalReward returns the collected internal reward amount.
-func (s *stakerV1) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositCollectedInternalReward(lpTokenId uint64) (int64, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
 
-	return deposit.CollectedInternalReward()
+	return deposit.CollectedInternalReward(), nil
 }
 
 // GetDepositCollectedExternalReward returns the collected external reward amount for an incentive.
-func (s *stakerV1) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64 {
-	return s.getDepositResolver(lpTokenId).CollectedExternalReward(incentiveId)
+func (s *stakerV1) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) (int64, error) {
+	depositResolver, err := s.getDepositResolver(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
+	return depositResolver.CollectedExternalReward(incentiveId), nil
 }
 
 // GetDepositExternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
-func (s *stakerV1) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
-	return s.getDepositResolver(lpTokenId).ExternalRewardLastCollectTime(incentiveId)
+func (s *stakerV1) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) (int64, error) {
+	depositResolver, err := s.getDepositResolver(lpTokenId)
+	if err != nil {
+		return 0, err
+	}
+	return depositResolver.ExternalRewardLastCollectTime(incentiveId), nil
 }
 
 // GetDepositWarmUp returns the warm-up records of a deposit.
-func (s *stakerV1) GetDepositWarmUp(lpTokenId uint64) []sr.Warmup {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositWarmUp(lpTokenId uint64) ([]sr.Warmup, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return nil, err
+	}
 
-	return deposit.Warmups()
+	return deposit.Warmups(), nil
 }
 
 // GetDepositExternalIncentiveIdList returns external incentive IDs for a deposit.
-func (s *stakerV1) GetDepositExternalIncentiveIdList(lpTokenId uint64) []string {
-	deposit := s.getDeposit(lpTokenId)
+func (s *stakerV1) GetDepositExternalIncentiveIdList(lpTokenId uint64) ([]string, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return nil, err
+	}
 
-	return deposit.GetExternalIncentiveIdList()
+	return deposit.GetExternalIncentiveIdList(), nil
 }
 
 // GetPoolTier returns the tier of a pool.
@@ -328,108 +436,133 @@ func (s *stakerV1) GetPoolTier(poolPath string) uint64 {
 }
 
 // GetPoolTierRatio returns the current reward ratio for a pool's tier.
-func (s *stakerV1) GetPoolTierRatio(poolPath string) uint64 {
+func (s *stakerV1) GetPoolTierRatio(poolPath string) (uint64, error) {
 	tier := s.GetPoolTier(poolPath)
 	ratio, err := s.getPoolTier().tierRatio.Get(tier)
 	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		return 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
 	}
 
-	return ratio
+	return ratio, nil
 }
 
 // GetPoolTierCount returns the number of pools in a tier.
-func (s *stakerV1) GetPoolTierCount(tier uint64) uint64 {
+func (s *stakerV1) GetPoolTierCount(tier uint64) (uint64, error) {
 	if tier == 0 {
-		return 0
+		return 0, nil
 	}
-	return uint64(s.getPoolTier().CurrentCount(tier))
+	return uint64(s.getPoolTier().CurrentCount(tier)), nil
 }
 
 // GetPoolReward returns the current reward amount for a tier.
-func (s *stakerV1) GetPoolReward(tier uint64) int64 {
-	return s.getPoolTier().CurrentReward(tier)
+func (s *stakerV1) GetPoolReward(tier uint64) (int64, error) {
+	if tier == 0 || tier >= AllTierCount {
+		return 0, makeErrorWithDetails(
+			errInvalidPoolTier,
+			ufmt.Sprintf("tier(%d) must be between 1 and %d", tier, AllTierCount-1),
+		)
+	}
+	return s.getPoolTier().CurrentReward(tier), nil
 }
 
 // GetPoolStakedLiquidity returns the current total staked liquidity of a pool.
-func (s *stakerV1) GetPoolStakedLiquidity(poolPath string) string {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolStakedLiquidity(poolPath string) (string, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return "", err
+	}
 	liquidity := NewPoolResolver(pool).CurrentStakedLiquidity(time.Now().Unix())
 	if liquidity == nil {
-		return u256.Zero().ToString()
+		return u256.Zero().ToString(), nil
 	}
 
-	return liquidity.ToString()
+	return liquidity.ToString(), nil
 }
 
 // GetPoolsByTier returns the list of pools in a tier.
-func (s *stakerV1) GetPoolsByTier(tier uint64) []string {
+func (s *stakerV1) GetPoolsByTier(tier uint64) ([]string, error) {
 	if tier == 0 {
-		return []string{}
+		return []string{}, nil
 	}
 
 	pools := make([]string, 0)
+	var iterErr error
 	s.getPoolTier().membership.Iterate("", "", func(poolPath string, value any) bool {
 		currentTier, ok := value.(uint64)
 		if !ok {
-			panic("failed to cast tier to uint64")
+			iterErr = ufmt.Errorf("failed to cast tier to uint64")
+			return true
 		}
 		if currentTier == tier {
 			pools = append(pools, poolPath)
 		}
 		return false
 	})
+	if iterErr != nil {
+		return nil, iterErr
+	}
 
-	return pools
+	return pools, nil
 }
 
 // GetTotalEmissionSent returns the total GNS emission sent.
-func (s *stakerV1) GetTotalEmissionSent() int64 {
-	return s.store.GetTotalEmissionSent()
+func (s *stakerV1) GetTotalEmissionSent() (int64, error) {
+	return s.store.GetTotalEmissionSent(), nil
 }
 
 // GetAllowedTokens returns the allowed external incentive token list.
-func (s *stakerV1) GetAllowedTokens() []string {
-	return s.store.GetAllowedTokens()
+func (s *stakerV1) GetAllowedTokens() ([]string, error) {
+	return s.store.GetAllowedTokens(), nil
 }
 
 // GetWarmupTemplate returns the current warmup template.
-func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
-	return s.store.GetWarmupTemplate()
+func (s *stakerV1) GetWarmupTemplate() ([]sr.Warmup, error) {
+	return s.store.GetWarmupTemplate(), nil
 }
 
 // IsStaked returns whether a position is staked.
-func (s *stakerV1) IsStaked(positionId uint64) bool {
-	return s.getDeposits().Has(positionId)
+func (s *stakerV1) IsStaked(positionId uint64) (bool, error) {
+	return s.getDeposits().Has(positionId), nil
 }
 
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.
-func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.ExternalIncentive {
+func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) ([]sr.ExternalIncentive, error) {
 	incentives := make([]sr.ExternalIncentive, 0)
+	var iterErr error
 
 	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
+			iterErr = ufmt.Errorf("failed to cast value to *ExternalIncentive")
+			return true
 		}
 		if incentive.TargetPoolPath() == poolPath {
 			incentives = append(incentives, *incentive)
 		}
 		return false
 	})
+	if iterErr != nil {
+		return nil, iterErr
+	}
 
-	return incentives
+	return incentives, nil
 }
 
 // GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
-func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.RewardCache().Size())
+func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) (uint64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(pool.RewardCache().Size()), nil
 }
 
 // GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
-func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) ([]int64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 	rewardCache := pool.RewardCache()
 
 	ids := make([]int64, 0)
@@ -438,34 +571,43 @@ func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []i
 		return false
 	})
 
-	return ids
+	return ids, nil
 }
 
 // GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) (int64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
 	value, ok := pool.RewardCache().Get(int64(timestamp))
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
 	rewardCache, ok := value.(int64)
 	if !ok {
-		panic("failed to cast reward cache value to int64")
+		return 0, ufmt.Errorf("failed to cast reward cache value to int64")
 	}
 
-	return rewardCache
+	return rewardCache, nil
 }
 
 // GetPoolIncentiveCount returns the number of incentives for a pool.
-func (s *stakerV1) GetPoolIncentiveCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.Incentives().IncentiveTrees().Size())
+func (s *stakerV1) GetPoolIncentiveCount(poolPath string) (uint64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(pool.Incentives().IncentiveTrees().Size()), nil
 }
 
 // GetPoolIncentiveIDs returns a paginated list of incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) ([]string, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 	incentives := pool.Incentives().IncentiveTrees()
 
 	ids := make([]string, 0)
@@ -474,18 +616,24 @@ func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []str
 		return false
 	})
 
-	return ids
+	return ids, nil
 }
 
 // GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.GlobalRewardRatioAccumulation().Size())
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) (uint64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(pool.GlobalRewardRatioAccumulation().Size()), nil
 }
 
 // GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) ([]uint64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 	accumulation := pool.GlobalRewardRatioAccumulation()
 
 	ids := make([]uint64, 0)
@@ -494,34 +642,43 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offs
 		return false
 	})
 
-	return ids
+	return ids, nil
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) (string, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return "", err
+	}
 	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
 	if !ok {
-		return "0"
+		return "0", nil
 	}
 
 	accumulationStr, ok := value.(string)
 	if !ok {
-		panic("failed to cast global reward ratio accumulation to string")
+		return "", ufmt.Errorf("failed to cast global reward ratio accumulation to string")
 	}
 
-	return accumulationStr
+	return accumulationStr, nil
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
-func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.HistoricalTick().Size())
+func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) (uint64, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(pool.HistoricalTick().Size()), nil
 }
 
 // GetPoolHistoricalTickIDs returns a paginated list of historical tick values for a pool.
-func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) ([]int32, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return nil, err
+	}
 	historicalTick := pool.HistoricalTick()
 
 	ticks := make([]int32, 0)
@@ -534,21 +691,24 @@ func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) 
 		return false
 	})
 
-	return ticks
+	return ticks, nil
 }
 
 // GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	pool := s.getPoolByPoolPath(poolPath)
+func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) (int32, error) {
+	pool, err := s.getPoolByPoolPath(poolPath)
+	if err != nil {
+		return 0, err
+	}
 	value, ok := pool.HistoricalTick().Get(int64(tick))
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
 	tickId, ok := value.(int32)
 	if !ok {
-		panic("failed to cast historical tick value to int32")
+		return 0, ufmt.Errorf("failed to cast historical tick value to int32")
 	}
 
-	return tickId
+	return tickId, nil
 }

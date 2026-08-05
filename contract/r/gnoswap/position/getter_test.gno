@@ -110,11 +110,16 @@ func TestPositionTokenBalanceGetterComposition(t *testing.T) {
 		int64(7000),
 	)
 
-	balance0, balance1 := GetPositionTokenBalances(1)
+	balance0, balance1, err := GetPositionTokenBalances(1)
+	uassert.NoError(t, err)
 	uassert.Equal(t, int64(6000), balance0)
 	uassert.Equal(t, int64(7000), balance1)
-	uassert.Equal(t, int64(6000), GetPositionToken0Balance(1))
-	uassert.Equal(t, int64(7000), GetPositionToken1Balance(1))
+	balance0, err = GetPositionToken0Balance(1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(6000), balance0)
+	balance1, err = GetPositionToken1Balance(1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(7000), balance1)
 	uassert.Equal(t, 3, mockPosition.Response.CallCount("GetPositionTokenBalances"))
 }
 
@@ -133,7 +138,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionFeeGrowthInside0LastX128", "2000")
 				return nil
 			},
-			getter:     func() any { return GetPositionFeeGrowthInside0LastX128(1) },
+			getter: func() any {
+				value, err := GetPositionFeeGrowthInside0LastX128(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return value
+			},
 			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "2000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
@@ -146,7 +157,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionFeeGrowthInside1LastX128", "3000")
 				return nil
 			},
-			getter:     func() any { return GetPositionFeeGrowthInside1LastX128(1) },
+			getter: func() any {
+				value, err := GetPositionFeeGrowthInside1LastX128(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return value
+			},
 			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "3000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
@@ -161,7 +178,10 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return stored
 			},
 			getter: func() any {
-				fee0, fee1 := GetPositionFeeGrowthInsideLastX128(1)
+				fee0, fee1, err := GetPositionFeeGrowthInsideLastX128(1)
+				if err != nil {
+					t.Fatal(err)
+				}
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -185,7 +205,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionLiquidity", "1000")
 				return nil
 			},
-			getter:     func() any { return GetPositionLiquidity(1) },
+			getter: func() any {
+				value, err := GetPositionLiquidity(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return value
+			},
 			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "1000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
@@ -198,7 +224,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionTokensOwed0", int64(4000))
 				return nil
 			},
-			getter:     func() any { return GetPositionTokensOwed0(1) },
+			getter: func() any {
+				value, err := GetPositionTokensOwed0(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return value
+			},
 			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(4000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
@@ -211,7 +243,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionTokensOwed1", int64(5000))
 				return nil
 			},
-			getter:     func() any { return GetPositionTokensOwed1(1) },
+			getter: func() any {
+				value, err := GetPositionTokensOwed1(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return value
+			},
 			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(5000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
@@ -226,7 +264,10 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return stored
 			},
 			getter: func() any {
-				owed0, owed1 := GetPositionTokensOwed(1)
+				owed0, owed1, err := GetPositionTokensOwed(1)
+				if err != nil {
+					t.Fatal(err)
+				}
 				return []any{owed0, owed1}
 			},
 			mutate: func(result any) {
@@ -251,7 +292,10 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return nil
 			},
 			getter: func() any {
-				fee0, fee1 := GetUnclaimedFee(1)
+				fee0, fee1, err := GetUnclaimedFee(1)
+				if err != nil {
+					t.Fatal(err)
+				}
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -295,7 +339,8 @@ func TestGetPositionTokenBalances(t *testing.T) {
 
 		mockPosition.Response.Set("GetPositionTokenBalances", int64(6000), int64(7000))
 
-		token0Balance, token1Balance := GetPositionTokenBalances(1)
+		token0Balance, token1Balance, err := GetPositionTokenBalances(1)
+		uassert.NoError(t, err)
 		uassert.Equal(t, int64(6000), token0Balance)
 		uassert.Equal(t, int64(7000), token1Balance)
 	})
@@ -305,7 +350,8 @@ func TestGetPositionTokenBalances(t *testing.T) {
 		mockPosition := newMockPosition("v1")
 		implementation = mockPosition
 
-		token0Balance, token1Balance := GetPositionTokenBalances(999)
+		token0Balance, token1Balance, err := GetPositionTokenBalances(999)
+		uassert.NotNil(t, err)
 		uassert.Equal(t, int64(0), token0Balance)
 		uassert.Equal(t, int64(0), token1Balance)
 	})
