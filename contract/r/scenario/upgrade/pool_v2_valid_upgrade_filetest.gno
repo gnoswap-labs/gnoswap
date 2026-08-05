@@ -17,14 +17,14 @@
 //   - Mint                                (positions/ticks BPTree + slot0 RMW)
 //   - Swap                                (slot0 + fee growth + bitmaps RMW)
 //   - Burn / Collect / HandleWithdrawalFee (driven via position.DecreaseLiquidity,
-//                                          which is the only legitimate caller of
-//                                          the position-role-gated pool entry points)
+//     which is the only legitimate caller of
+//     the position-role-gated pool entry points)
 //   - CollectProtocol                     (protocol fee accounting RMW)
 //   - SetFeeProtocol                      (iterates pools BPTree, RMWs every slot0)
 //   - IncreaseObservationCardinalityNext  (oracle observation array RMW)
 //   - SetPoolCreationFee / SetWithdrawalFee (scalar store writes)
 //   - SetSwapStartHook / SetSwapEndHook / SetTickCrossHook (func store writes,
-//                                          staker-role-gated)
+//     staker-role-gated)
 //
 // Because storage is owned by the domain (proxy) realm and all writes are
 // routed through domain-owned trees/methods, mutating v1-created data through
@@ -224,8 +224,9 @@ func createSecondPoolV2Valid(cur realm) {
 func decreaseLiquidityV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	_, removedLiq, _, _, _, _, _ := position.DecreaseLiquidity(cross(cur), uint64(1), "100000000", "0", "0", time.Now().Unix()+3600)
+	poolLiquidity, _ := pool.GetLiquidity(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=%s poolLiq=%s\n",
-		removedLiq, pool.GetLiquidity(barFoo500PoolPath))
+		removedLiq, poolLiquidity)
 }
 
 // setFeeProtocolV2Valid sets the protocol fee. SetFeeProtocol iterates the
@@ -233,17 +234,18 @@ func decreaseLiquidityV2Valid(cur realm) {
 func setFeeProtocolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	pool.SetFeeProtocol(cross(cur), 6, 6)
+	feeProtocol, _ := pool.GetSlot0FeeProtocol(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] v2_valid set fee protocol, slot0FeeProtocol=%d\n",
-		pool.GetSlot0FeeProtocol(barFoo500PoolPath))
+		feeProtocol)
 }
 
 // collectProtocolV2Valid collects accrued protocol fees (admin/governance gated),
 // RMWing the v1-created protocol-fee accounting for the pool.
 func collectProtocolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
-	before0, before1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	before0, before1, _ := pool.GetProtocolFeesTokens(barFoo500PoolPath)
 	amt0, amt1 := pool.CollectProtocol(cross(cur), barPath, fooPath, fee500, adminAddr, "1000000000", "1000000000")
-	after0, after1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	after0, after1, _ := pool.GetProtocolFeesTokens(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] v2_valid collected protocol fees collected0=%s collected1=%s feesBefore=(%d,%d) feesAfter=(%d,%d)\n",
 		amt0, amt1, before0, before1, after0, after1)
 }
@@ -278,8 +280,9 @@ func setSwapHooksV2Valid(cur realm) {
 func printPoolData(cur realm) {
 	testing.SetRealm(adminRealm)
 	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	positionCount, _ := pool.GetPoolPositionCount(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] pool=%s tick=%d liquidity=%s positions=%d\n",
-		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), pool.GetPoolPositionCount(barFoo500PoolPath))
+		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), positionCount)
 }
 
 // Output:

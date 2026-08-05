@@ -109,7 +109,11 @@ func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
 	if err0 != nil || err1 != nil {
 		return false
 	}
-	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(p.poolPath))
+	sqrtPriceX96String, err := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	if err != nil {
+		return false
+	}
+	sqrtPriceX96 := u256.MustFromDecimal(sqrtPriceX96String)
 	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickLower)
 	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickUpper)
 
@@ -147,7 +151,7 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *pos
 func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRepositionParams {
 	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
-	currentTick := pool.GetSlot0Tick(poolPath)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
 	tickLower, tickUpper := generateRandomTicks(t, currentTick, fee)
 
 	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
