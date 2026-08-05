@@ -420,13 +420,13 @@ func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targe
 	// historical tick must be set regardless of the deposit's range
 	poolResolver.Pool.SetHistoricalTickAt(currentTimestamp, canonicalPool.tick)
 
-	// GetOrCreateTick does not persist: the modified tick must be committed
+	// GetOrNewTick does not persist: the modified tick must be committed
 	// via SetTick (which prunes ticks whose stakedLiquidityGross is zero).
-	lowerTick := poolResolver.GetOrCreateTick(deposit.TickLower())
+	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
 	NewTickResolver(lowerTick).modifyDepositLower(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickLower(), lowerTick)
 
-	upperTick := poolResolver.GetOrCreateTick(deposit.TickUpper())
+	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
 	NewTickResolver(upperTick).modifyDepositUpper(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickUpper(), upperTick)
 
@@ -461,13 +461,13 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 	if self.isInRange(deposit) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}
-	// GetOrCreateTick does not persist: the modified tick must be committed
+	// GetOrNewTick does not persist: the modified tick must be committed
 	// via SetTick (which prunes ticks whose stakedLiquidityGross is zero).
-	lowerTick := poolResolver.GetOrCreateTick(deposit.TickLower())
+	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
 	NewTickResolver(lowerTick).modifyDepositLower(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickLower(), lowerTick)
 
-	upperTick := poolResolver.GetOrCreateTick(deposit.TickUpper())
+	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
 	NewTickResolver(upperTick).modifyDepositUpper(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickUpper(), upperTick)
 }

@@ -125,21 +125,17 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 	return liquidity
 }
 
-// GetOrCreateTick returns the tick for the given tickId, creating a fresh
+// GetOrNewTick returns the tick for the given tickId, creating a fresh
 // zero-valued tick via NewTick if it does not exist yet.
 // The returned tick is NOT persisted: the caller must set the desired fields
 // and persist it via Ticks().SetTick, which prunes ticks whose
 // stakedLiquidityGross is zero. This keeps reads from growing the tick tree.
-func (self *PoolResolver) GetOrCreateTick(tickId int32) *sr.Tick {
+func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 	tick := self.Ticks().Get(tickId)
 	if tick == nil {
 		return sr.NewTick(tickId)
 	}
 	return tick
-}
-
-func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
-	return NewTickResolver(self.GetOrCreateTick(tickId))
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
@@ -638,8 +634,8 @@ func (self *PoolResolver) CalculateRawRewardForPosition(currentTime int64, curre
 
 	globalAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, self.CurrentStakedLiquidity(currentTime))
 
-	lowerAcc := self.TickResolver(deposit.TickLower()).CurrentOutsideAccumulation(currentTime)
-	upperAcc := self.TickResolver(deposit.TickUpper()).CurrentOutsideAccumulation(currentTime)
+	lowerAcc := NewTickResolver(self.GetOrNewTick(deposit.TickLower())).CurrentOutsideAccumulation(currentTime)
+	upperAcc := NewTickResolver(self.GetOrNewTick(deposit.TickUpper())).CurrentOutsideAccumulation(currentTime)
 	if currentTick < deposit.TickLower() {
 		rewardAcc = u256.Zero().Sub(lowerAcc, upperAcc)
 	} else if currentTick >= deposit.TickUpper() {

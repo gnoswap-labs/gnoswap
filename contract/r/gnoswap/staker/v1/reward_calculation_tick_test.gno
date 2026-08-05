@@ -299,7 +299,7 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.modifyDeposit(liquidity, startTime, 5)
 
-	tick := poolResolver.GetOrCreateTick(10)
+	tick := poolResolver.GetOrNewTick(10)
 	tickResolver := NewTickResolver(tick)
 	tickResolver.modifyDepositUpper(startTime, liquidity)
 	tickResolver.modifyDepositLower(startTime, liquidity)
@@ -362,7 +362,7 @@ func TestTickCrossHook_DoesNotAutoInsertUninitializedTick(cur realm, t *testing.
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.modifyDeposit(liquidity, startTime, 5)
 
-	tick := poolResolver.GetOrCreateTick(10)
+	tick := poolResolver.GetOrNewTick(10)
 	tickResolver := NewTickResolver(tick)
 	tickResolver.modifyDepositUpper(startTime, liquidity)
 	tickResolver.modifyDepositLower(startTime, liquidity)

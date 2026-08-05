@@ -629,15 +629,15 @@ func TestIsExternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test TickResolver
-func TestTickResolver(cur realm, t *testing.T) {
+// Test GetOrNewTick
+func TestGetOrNewTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
 		tickId   int32
 	}{
 		{
-			name:     "get tick resolver",
+			name:     "get or new tick",
 			poolPath: "test_pool",
 			tickId:   0,
 		},
@@ -649,9 +649,9 @@ func TestTickResolver(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
 
-			tickResolver := poolResolver.TickResolver(tt.tickId)
+			tickResolver := NewTickResolver(poolResolver.GetOrNewTick(tt.tickId))
 			uassert.NotNil(t, tickResolver)
-			// TickResolver must be a pure read: resolving a missing tick must
+			// GetOrNewTick must be a pure read: resolving a missing tick must
 			// not grow the pool's tick tree.
 			uassert.False(t, pool.Ticks().Has(tt.tickId))
 		})
@@ -1016,11 +1016,6 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
-				// Ensure boundary ticks are resolvable with zero outside
-				// accumulation. GetOrCreateTick is a pure read that returns a
-				// fresh zero-valued tick for missing ticks without persisting.
-				poolResolver.GetOrCreateTick(-10)
-				poolResolver.GetOrCreateTick(10)
 				return resolver
 			}
 
