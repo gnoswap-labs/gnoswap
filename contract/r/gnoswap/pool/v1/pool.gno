@@ -245,7 +245,10 @@ func (i *poolV1) Collect(
 
 	if amount0 > 0 {
 		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
+		token0Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
@@ -253,7 +256,10 @@ func (i *poolV1) Collect(
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
+		token1Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
