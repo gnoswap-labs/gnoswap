@@ -164,7 +164,7 @@ func decreaseLiquidityWithRevertingCollect(cur realm) {
 
 	barAfter := bar.BalanceOf(adminAddr)
 	owed0After := position.GetPositionTokensOwed0(1)
-	poolBalance0 := pool.GetBalanceToken0(poolKey)
+	poolBalance0, _ := pool.GetBalanceToken0(poolKey)
 
 	if r != nil {
 		ufmt.Printf("[INFO] DecreaseLiquidity aborted: %v\n", r)
