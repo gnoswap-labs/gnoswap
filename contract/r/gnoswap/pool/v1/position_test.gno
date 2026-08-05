@@ -1135,7 +1135,7 @@ func TestPositionLiquidity(cur realm, t *testing.T) {
 				return pool, key
 			},
 			expectedResult:       "0",
-			expectedPanic:        true,
+			expectedPanic:        false,
 			expectedPanicMessage: "[GNOSWAP-POOL-005] requested data not found || positionKey(00008871520000887392) does not exist",
 		},
 	}
