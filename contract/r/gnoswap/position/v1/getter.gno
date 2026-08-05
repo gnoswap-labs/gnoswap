@@ -67,7 +67,10 @@ func (p *positionV1) IsBurned(positionId uint64) bool {
 func (p *positionV1) IsInRange(positionId uint64) bool {
 	position := p.mustGetPosition(positionId)
 	poolPath := position.PoolKey()
-	poolCurrentTick := pl.GetSlot0Tick(poolPath)
+	poolCurrentTick, err := pl.GetSlot0Tick(poolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	return position.TickLower() <= poolCurrentTick && poolCurrentTick < position.TickUpper()
 }
@@ -134,17 +137,29 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 
 	poolKey := position.PoolKey()
 
-	currentTick := pl.GetSlot0Tick(poolKey)
+	currentTick, err := pl.GetSlot0Tick(poolKey)
+	if err != nil {
+		panic(err)
+	}
 
-	feeGrowthGlobal0X128Str, feeGrowthGlobal1X128Str := pl.GetFeeGrowthGlobalX128(poolKey)
+	feeGrowthGlobal0X128Str, feeGrowthGlobal1X128Str, err := pl.GetFeeGrowthGlobalX128(poolKey)
+	if err != nil {
+		panic(err)
+	}
 	feeGrowthGlobal0X128 := u256.MustFromDecimal(feeGrowthGlobal0X128Str)
 	feeGrowthGlobal1X128 := u256.MustFromDecimal(feeGrowthGlobal1X128Str)
 
-	tickUpperFeeGrowthOutside0X128Str, tickUpperFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
+	tickUpperFeeGrowthOutside0X128Str, tickUpperFeeGrowthOutside1X128Str, err := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
+	if err != nil {
+		panic(err)
+	}
 	tickUpperFeeGrowthOutside0X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside0X128Str)
 	tickUpperFeeGrowthOutside1X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside1X128Str)
 
-	tickLowerFeeGrowthOutside0X128Str, tickLowerFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	tickLowerFeeGrowthOutside0X128Str, tickLowerFeeGrowthOutside1X128Str, err := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	if err != nil {
+		panic(err)
+	}
 	tickLowerFeeGrowthOutside0X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside0X128Str)
 	tickLowerFeeGrowthOutside1X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside1X128Str)
 
