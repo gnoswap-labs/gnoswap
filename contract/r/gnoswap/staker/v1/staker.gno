@@ -417,8 +417,21 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	blockHeight := runtime.ChainHeight()
 	previousRealm := rlm.Previous()
 
-	// get all internal and external rewards
-	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
+	// get all internal and external rewards.
+	// Calculation is read-only; the resulting state updates (reward-cache materialization, lazy pool
+	// persistence, deposit incentive-index updates) are applied via updatePositionReward, which is the
+	// collect-only counterpart to the calculation shared with the Collectable* view getters.
+	rewardParam := &CalcPositionRewardParam{
+		CurrentHeight: blockHeight,
+		CurrentTime:   currentTime,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
+		PositionId:    positionId,
+	}
+	rewards, rewardUpdate := s.calculatePositionReward(rewardParam)
+	s.updatePositionReward(rewardParam, rewardUpdate)
+	reward := aggregateRewards(rewards)
 
 	// transfer external rewards to user
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())

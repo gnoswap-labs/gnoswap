@@ -997,7 +997,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
-			}) *PoolResolver {
+			},
+			) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 
@@ -1040,8 +1041,10 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			)
 
 			// 2) Reward calculation equivalence.
-			compactRewards, compactPenalties := compactResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
-			denseRewards, densePenalties := denseResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
+			// The per-second rate is constant across the window; only the historical tick density differs.
+			segments := []internalRewardSegment{{start: tt.startTime, end: tt.endTime, rewardPerSecond: tt.rewardPerSecond}}
+			compactRewards, compactPenalties := compactResolver.RewardStateOf(deposit).calculateInternalReward(segments)
+			denseRewards, densePenalties := denseResolver.RewardStateOf(deposit).calculateInternalReward(segments)
 
 			uassert.Equal(t, len(compactRewards), len(denseRewards))
 			for i := range compactRewards {

@@ -282,33 +282,15 @@ type RewardState struct {
 	penalties []int64
 }
 
-// calculateInternalReward calculates the internal reward for the deposit.
-// It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
-func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
-	currentReward := self.pool.CurrentReward(startTime)
-
-	self.pool.RewardCache().Iterate(startTime, endTime, func(key int64, value any) bool {
-		reward, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
-		}
-
-		// Calculate reward for the period before this cache entry
-		err := self.rewardPerWarmup(startTime, key, currentReward)
-		if err != nil {
-			panic(err)
-		}
-
-		startTime = key
-		currentReward = reward
-		return false
-	})
-
-	if startTime < endTime {
-		// For the remaining period, use the last cached reward value
-		// If the pool was de-tiered and the last cached value is 0, this ensures no new rewards
-		err := self.rewardPerWarmup(startTime, endTime, currentReward)
-		if err != nil {
+// calculateInternalReward computes the position's per-warmup rewards and penalties from a pre-resolved
+// per-second reward-rate schedule (see PoolResolver.resolveInternalRewardSegments).
+//
+// It is pure: it neither queries pool tier/emission state nor writes any state, so the read-only view
+// path and the collect path use it identically. Each segment [start, end) is applied at its constant
+// per-second rate; rewardPerWarmup is a no-op for empty segments (start == end).
+func (self *RewardState) calculateInternalReward(segments []internalRewardSegment) ([]int64, []int64) {
+	for _, seg := range segments {
+		if err := self.rewardPerWarmup(seg.start, seg.end, seg.rewardPerSecond); err != nil {
 			panic(err)
 		}
 	}
