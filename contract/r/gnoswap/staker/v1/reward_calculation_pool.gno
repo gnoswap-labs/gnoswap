@@ -209,14 +209,6 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// cacheInternalReward caches the current emission and updates the global reward ratio accumulation.
-func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
-	self.cacheReward(currentTime, currentEmission)
-
-	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
-}
-
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
@@ -551,7 +543,14 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	// Only append a staked-liquidity entry when the value actually changes (e.g. a tick cross whose
+	// net delta is zero leaves it unchanged). Unlike the global reward ratio accumulation, this tree
+	// carries no time-checkpoint semantics: it is read purely as a point-in-time value via
+	// CurrentStakedLiquidity (latest entry <= t), so omitting a duplicate-valued entry preserves
+	// behavior while keeping this append-only tree from growing on no-op updates.
+	if !lastStakedLiquidity.Eq(deltaApplied) {
+		self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	}
 
 	return result
 }

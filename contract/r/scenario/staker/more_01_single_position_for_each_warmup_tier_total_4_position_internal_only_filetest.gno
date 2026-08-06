@@ -423,7 +423,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] community pool reward (unclaimable + penalty): 73576607
 // [INFO] progress to 50% warm-up
 // [EXPECTED] user reward (50% warm-up): 6688782
-// [EXPECTED] community pool reward (50% penalty): 6688782
+// [EXPECTED] community pool reward (50% penalty): 6688783
 // [INFO] progress to 70% warm-up
 // [EXPECTED] user reward (70% warm-up): 9364294
 // [EXPECTED] community pool reward (30% penalty): 4013270

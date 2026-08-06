@@ -402,35 +402,6 @@ func TestCacheRewardPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test cacheInternalReward
-func TestCacheInternalReward(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		poolPath        string
-		currentTime     int64
-		currentEmission int64
-	}{
-		{
-			name:            "cache internal reward",
-			poolPath:        "test_pool",
-			currentTime:     1000,
-			currentEmission: 10000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
-
-			poolResolver.cacheInternalReward(tt.currentTime, tt.currentEmission)
-
-			reward := poolResolver.CurrentReward(tt.currentTime)
-			uassert.Equal(t, tt.currentEmission, reward)
-		})
-	}
-}
-
 // Test calculateGlobalRewardRatioAccumulation
 func TestCalculateGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
