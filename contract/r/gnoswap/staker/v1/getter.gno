@@ -15,21 +15,17 @@ import (
 func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
 	result := s.store.GetPools().Get(poolPath)
 	if result == nil {
-		panic(
-			makeErrorWithDetails(
-				errDataNotFound,
-				ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath),
-			),
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
 		)
 	}
 
 	pool, ok := result.(*sr.Pool)
 	if !ok {
-		panic(
-			makeErrorWithDetails(
-				errDataNotFound,
-				ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath),
-			),
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath)),
 		)
 	}
 
@@ -222,20 +218,20 @@ func (s *stakerV1) GetDeposit(lpTokenId uint64) *sr.Deposit {
 }
 
 // CollectableEmissionReward returns the claimable internal reward amount for a position.
-// calcPositionReward is read-only, so querying a collectable amount never mutates state.
+// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
 func (s *stakerV1) CollectableEmissionReward(positionId uint64) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
 	return reward.Internal
 }
 
 // CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
-// calcPositionReward is read-only, so querying a collectable amount never mutates state.
+// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
 func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
 	amount, ok := reward.External[incentiveId]
 	if !ok {
 		return 0

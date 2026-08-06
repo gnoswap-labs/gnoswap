@@ -970,8 +970,7 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
-			},
-			) *PoolResolver {
+			}) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 

@@ -18,26 +18,6 @@ type Reward struct {
 	ExternalPenalty map[string]int64 // Incentive ID -> TokenAmount
 }
 
-// calcPositionReward calculates the aggregated position reward WITHOUT mutating any persisted state.
-//
-// It is the shared, read-only entry point used by both the Collectable* view getters and CollectReward.
-// State updates that used to be performed as a side effect of the calculation (reward-cache
-// materialization, lazy pool persistence, deposit incentive-index updates) are returned by
-// calculatePositionReward and applied separately via updatePositionReward — which only CollectReward
-// calls. This keeps the calculation identical for both callers and guarantees views never write.
-func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	rewards, _ := s.calculatePositionReward(&CalcPositionRewardParam{
-		CurrentHeight: currentHeight,
-		CurrentTime:   currentTimestamp,
-		Deposits:      s.getDeposits(),
-		Pools:         s.getPools(),
-		PoolTier:      s.getPoolTier(),
-		PositionId:    positionId,
-	})
-
-	return aggregateRewards(rewards)
-}
-
 // aggregateRewards sums the per-warmup rewards/penalties into a single Reward.
 func aggregateRewards(rewards []Reward) Reward {
 	internal := int64(0)
@@ -68,8 +48,8 @@ func aggregateRewards(rewards []Reward) Reward {
 	}
 }
 
-// CalcPositionRewardParam is a struct for calculating position reward
-type CalcPositionRewardParam struct {
+// calculatePositionRewardParam is a struct for calculating position reward
+type calculatePositionRewardParam struct {
 	// Environmental variables
 	CurrentHeight int64
 	CurrentTime   int64
@@ -96,13 +76,30 @@ type positionRewardUpdate struct {
 	advanceExternalIncentiveCursor bool
 }
 
+// calculateCollectablePositionReward calculates the aggregated position reward WITHOUT mutating any persisted state.
+//
+// It is the shared, read-only entry point used by both the Collectable* view getters and CollectReward.
+// This keeps the calculation identical for both callers and guarantees views never write.
+func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
+	rewards, _ := s.calculatePositionReward(&calculatePositionRewardParam{
+		CurrentHeight: currentHeight,
+		CurrentTime:   currentTimestamp,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
+		PositionId:    positionId,
+	})
+
+	return aggregateRewards(rewards)
+}
+
 // calculatePositionReward computes a position's per-warmup rewards WITHOUT mutating persisted state.
 //
 // The per-second emission-rate schedule is resolved up-front (resolveInternalRewardSegments) and fed to
 // the single internal-reward calculator, so the calculation needs no reward-cache materialization.
 // External incentive discovery is done into a local set rather than by mutating the deposit. All would-be
 // state changes are returned as a positionRewardUpdate for the caller to apply (collect only).
-func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) ([]Reward, positionRewardUpdate) {
+func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate) {
 	deposit := param.Deposits.get(param.PositionId)
 	depositResolver := NewDepositResolver(deposit)
 	poolPath := deposit.TargetPoolPath()
@@ -202,7 +199,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) ([]Re
 
 // updatePositionReward applies the persisted-state changes produced by calculatePositionReward.
 // It is called ONLY by the collect path; the Collectable* view getters discard the update.
-func (s *stakerV1) updatePositionReward(param *CalcPositionRewardParam, updateParams positionRewardUpdate) {
+func (s *stakerV1) updatePositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	// Persist a lazily created pool.
 	if !updateParams.poolExisted {
 		param.Pools.set(updateParams.poolPath, updateParams.pool)
