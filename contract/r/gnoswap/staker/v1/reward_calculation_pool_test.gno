@@ -402,35 +402,6 @@ func TestCacheRewardPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test cacheInternalReward
-func TestCacheInternalReward(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		poolPath        string
-		currentTime     int64
-		currentEmission int64
-	}{
-		{
-			name:            "cache internal reward",
-			poolPath:        "test_pool",
-			currentTime:     1000,
-			currentEmission: 10000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
-
-			poolResolver.cacheInternalReward(tt.currentTime, tt.currentEmission)
-
-			reward := poolResolver.CurrentReward(tt.currentTime)
-			uassert.Equal(t, tt.currentEmission, reward)
-		})
-	}
-}
-
 // Test calculateGlobalRewardRatioAccumulation
 func TestCalculateGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
@@ -629,15 +600,15 @@ func TestIsExternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test TickResolver
-func TestTickResolver(cur realm, t *testing.T) {
+// Test GetOrNewTick
+func TestGetOrNewTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
 		tickId   int32
 	}{
 		{
-			name:     "get tick resolver",
+			name:     "get or new tick",
 			poolPath: "test_pool",
 			tickId:   0,
 		},
@@ -649,8 +620,10 @@ func TestTickResolver(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
 
-			tickResolver := poolResolver.TickResolver(tt.tickId)
+			tickResolver := NewTickResolver(poolResolver.GetOrNewTick(tt.tickId))
 			uassert.NotNil(t, tickResolver)
+			// Does not insert a missing tick.
+			uassert.False(t, pool.Ticks().Has(tt.tickId))
 		})
 	}
 }
@@ -1014,9 +987,6 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
-				// Ensure boundary ticks exist with zero outside accumulation.
-				pool.Ticks().Get(-10)
-				pool.Ticks().Get(10)
 				return resolver
 			}
 

@@ -298,8 +298,13 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	poolResolver.TickResolver(tickUpper).modifyDepositUpper(currentTime, signedLiquidity)
-	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
+	upperTick := poolResolver.GetOrNewTick(tickUpper)
+	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(tickUpper, upperTick)
+
+	lowerTick := poolResolver.GetOrNewTick(tickLower)
+	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(tickLower, lowerTick)
 	s.getPools().set(poolPath, pool)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
@@ -307,8 +312,8 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	// Get accumulator values for reward calculation tracking
 	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-	lowerTickResolver := poolResolver.TickResolver(tickLower)
-	upperTickResolver := poolResolver.TickResolver(tickUpper)
+	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
+	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
 	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
 
@@ -541,8 +546,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 		tickLower := deposit.TickLower()
 		tickUpper := deposit.TickUpper()
-		lowerOutsideAccX128 := poolResolver.TickResolver(tickLower).CurrentOutsideAccumulation(currentTime)
-		upperOutsideAccX128 := poolResolver.TickResolver(tickUpper).CurrentOutsideAccumulation(currentTime)
+		lowerOutsideAccX128 := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).CurrentOutsideAccumulation(currentTime)
+		upperOutsideAccX128 := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).CurrentOutsideAccumulation(currentTime)
 
 		chain.Emit(
 			"CollectReward",
@@ -661,8 +666,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		// Get accumulator values for reward calculation tracking
 		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-		lowerTickResolver := poolResolver.TickResolver(deposit.TickLower())
-		upperTickResolver := poolResolver.TickResolver(deposit.TickUpper())
+		lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
+		upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
 		lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
 		upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
 
@@ -794,10 +799,13 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
-	upperTick := poolResolver.TickResolver(depositResolver.TickUpper())
-	lowerTick := poolResolver.TickResolver(depositResolver.TickLower())
-	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
-	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
+	upperTick := poolResolver.GetOrNewTick(depositResolver.TickUpper())
+	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(depositResolver.TickUpper(), upperTick)
+
+	lowerTick := poolResolver.GetOrNewTick(depositResolver.TickLower())
+	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
+	pool.Ticks().SetTick(depositResolver.TickLower(), lowerTick)
 
 	s.getDeposits().remove(positionId)
 
