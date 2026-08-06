@@ -392,7 +392,6 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	os.SetObservation(0, pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
-		"0", // liquidityCumulative
 		"0", // secondsPerLiquidityCumulativeX128
 		true,
 	))
