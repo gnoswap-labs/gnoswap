@@ -11,7 +11,7 @@ type testPool struct {
 }
 
 func init(cur realm) {
-	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore, _ pool.EmissionAccessor) pool.IPool {
 		return &testPool{
 			IPool: v1.NewPoolV1(store),
 			store: store,
