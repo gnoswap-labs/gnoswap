@@ -14,7 +14,7 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func(cur realm, t *testing.T)
-		initializer          func(_ int, rlm realm, poolStore IPoolStore, emissionAccessor EmissionAccessor) IPool
+		initializer          func(_ int, rlm realm, poolStore IPoolStore) IPool
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool

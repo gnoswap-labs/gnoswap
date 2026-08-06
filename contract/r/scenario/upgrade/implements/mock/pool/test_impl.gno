@@ -18,7 +18,7 @@ func NewV3ValidPool(store pool.IPoolStore) pool.IPool {
 }
 
 func init(cur realm) {
-	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore, _ pool.EmissionAccessor) pool.IPool {
+	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, store pool.IPoolStore) pool.IPool {
 		return NewV3ValidPool(store)
 	})
 }

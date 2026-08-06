@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ int, rlm realm, _ IPoolStore, _ EmissionAccessor) IPool {
-	return func(_ int, rlm realm, _ IPoolStore, _ EmissionAccessor) IPool {
+func makeMockInitializer(version string) func(_ int, rlm realm, _ IPoolStore) IPool {
+	return func(_ int, rlm realm, _ IPoolStore) IPool {
 		return newMockPool(version)
 	}
 }

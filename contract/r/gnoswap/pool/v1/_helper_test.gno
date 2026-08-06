@@ -452,7 +452,7 @@ func initPoolTest(cur realm, t *testing.T) {
 	if !initializedPool {
 		initializedPool = true
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, s pl.IPoolStore, _ pl.EmissionAccessor) pl.IPool {
+		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, s pl.IPoolStore) pl.IPool {
 			mockInstance = &poolV1{
 				store: mock.NewMockPoolStore(),
 			}

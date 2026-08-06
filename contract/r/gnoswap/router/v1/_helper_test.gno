@@ -415,7 +415,7 @@ func initPoolTest(cur realm, t *testing.T) {
 		registeredTestPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pl.IPoolStore, _ pl.EmissionAccessor) pl.IPool {
+		pl.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pl.IPoolStore) pl.IPool {
 			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
 		})
 	}
