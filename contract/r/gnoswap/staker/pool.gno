@@ -585,17 +585,11 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 	t.tree = tree
 }
 
+// Get returns the tick for the given tickId, or nil if it does not exist.
 func (t *Ticks) Get(tickId int32) *Tick {
 	v := t.tree.Get(EncodeInt(tickId))
 	if v == nil {
-		tick := &Tick{
-			id:                   tickId,
-			stakedLiquidityGross: u256.Zero(),
-			stakedLiquidityDelta: i256.Zero(),
-			outsideAccumulation:  NewUintTreeN(64),
-		}
-		t.tree.Set(EncodeInt(tickId), tick)
-		return tick
+		return nil
 	}
 
 	tick, ok := v.(*Tick)

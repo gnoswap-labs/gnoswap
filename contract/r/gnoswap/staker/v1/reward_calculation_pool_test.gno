@@ -629,15 +629,15 @@ func TestIsExternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test TickResolver
-func TestTickResolver(cur realm, t *testing.T) {
+// Test GetOrNewTick
+func TestGetOrNewTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
 		tickId   int32
 	}{
 		{
-			name:     "get tick resolver",
+			name:     "get or new tick",
 			poolPath: "test_pool",
 			tickId:   0,
 		},
@@ -649,8 +649,10 @@ func TestTickResolver(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
 
-			tickResolver := poolResolver.TickResolver(tt.tickId)
+			tickResolver := NewTickResolver(poolResolver.GetOrNewTick(tt.tickId))
 			uassert.NotNil(t, tickResolver)
+			// Does not insert a missing tick.
+			uassert.False(t, pool.Ticks().Has(tt.tickId))
 		})
 	}
 }
@@ -1013,9 +1015,6 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
-				// Ensure boundary ticks exist with zero outside accumulation.
-				pool.Ticks().Get(-10)
-				pool.Ticks().Get(10)
 				return resolver
 			}
 
