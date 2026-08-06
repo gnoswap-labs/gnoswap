@@ -26,10 +26,10 @@ deploy-test-tokens: $(addprefix deploy-,$(TEST_TOKEN_NAMES))
 deploy-libraries: deploy-uint256 deploy-int256 deploy-consts deploy-rbac deploy-gnsmath deploy-store deploy-version_manager deploy-utils
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission deploy-pool deploy-common deploy-community_pool deploy-gnft deploy-xgns
+deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission deploy-common deploy-community_pool deploy-gnft deploy-xgns
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-protocol_fee deploy-position deploy-router deploy-staker deploy-gov-staker deploy-governance deploy-launchpad
+deploy-gnoswap-realms: deploy-protocol_fee deploy-pool deploy-position deploy-router deploy-staker deploy-gov-staker deploy-governance deploy-launchpad
 
 .PHONY: deploy-gnoswap-impl-v1
 deploy-gnoswap-impl-v1: deploy-protocol_fee-v1 deploy-pool-v1 deploy-position-v1 deploy-router-v1 deploy-staker-v1 deploy-gov-staker-v1 deploy-governance-v1 deploy-launchpad-v1
