@@ -46,6 +46,7 @@ func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, b
 // Panics if the incentive already exists.
 func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
 	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
+	self.Incentives.AddIncentiveByStartTime(incentive.StartTimestamp(), incentive.IncentiveId())
 }
 
 // update updates an existing incentive with new information

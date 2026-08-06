@@ -249,8 +249,19 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		currentWarmups,
 	)
 
-	// when staking, add new created incentives to deposit
-	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, 0, currentTime)
+	// when staking, add new incentives to deposit.
+	//
+	// The per-pool start-time index is scanned over the window
+	// [currentTime - TIMESTAMP_365DAYS, currentTime]. Since an incentive's
+	// duration is at most TIMESTAMP_365DAYS (365 days), any incentive that is
+	// still active at currentTime satisfies
+	// startTimestamp >= currentTime - 365d, so an incentive whose start lies
+	// before this window is guaranteed to have ended and yields no reward
+	// (filtered by the EndTimestamp check below). Scanning from 0 is therefore
+	// unnecessary: the bounded window finds every incentive that could
+	// possibly be relevant, keeping the stake-time discovery cost independent
+	// of how many old incentives the pool has accumulated.
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, currentTime-TIMESTAMP_365DAYS, currentTime)
 
 	for _, incentiveId := range currentIncentiveIds {
 		incentive := s.getExternalIncentives().get(incentiveId)
