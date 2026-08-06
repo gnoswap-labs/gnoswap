@@ -298,8 +298,6 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	// GetOrNewTick does not persist: the modified tick must be committed
-	// via SetTick (which prunes ticks whose stakedLiquidityGross is zero).
 	upperTick := poolResolver.GetOrNewTick(tickUpper)
 	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
 	pool.Ticks().SetTick(tickUpper, upperTick)
@@ -788,9 +786,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
-	// GetOrNewTick does not persist: the modified tick must be committed
-	// via SetTick. When the last position at a boundary is unstaked the gross
-	// drops to zero and SetTick prunes the tick from the pool's tick tree.
 	upperTick := poolResolver.GetOrNewTick(depositResolver.TickUpper())
 	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
 	pool.Ticks().SetTick(depositResolver.TickUpper(), upperTick)

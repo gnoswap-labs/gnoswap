@@ -127,10 +127,7 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 		return
 	}
 
-	// Skip ticks that were never initialized by staking (no reward impact).
-	// Ticks().Get() is a pure read now (nil when missing), so a swap that
-	// crosses an arbitrary uninitialized tick is skipped without ever growing
-	// staker tick state.
+	// Skip ticks without staking state.
 	tick := pool.Ticks().Get(tickId)
 	if tick == nil {
 		return

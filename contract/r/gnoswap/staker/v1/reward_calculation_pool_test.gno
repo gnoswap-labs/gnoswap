@@ -651,8 +651,7 @@ func TestGetOrNewTick(cur realm, t *testing.T) {
 
 			tickResolver := NewTickResolver(poolResolver.GetOrNewTick(tt.tickId))
 			uassert.NotNil(t, tickResolver)
-			// GetOrNewTick must be a pure read: resolving a missing tick must
-			// not grow the pool's tick tree.
+			// Does not insert a missing tick.
 			uassert.False(t, pool.Ticks().Has(tt.tickId))
 		})
 	}
