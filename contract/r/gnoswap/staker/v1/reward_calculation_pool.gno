@@ -204,12 +204,23 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// cacheInternalReward caches the current emission and updates the global reward ratio accumulation.
+// cacheInternalReward caches the current emission for the pool.
+//
+// It deliberately does NOT write a global reward ratio accumulation checkpoint. That accumulation is a
+// function of staked liquidity only (emission is applied later, per-warmup), and staked liquidity changes
+// exclusively through modifyDeposit, which already checkpoints the accumulation (with the pre-change
+// liquidity) at every change. Between liquidity changes the accumulation for any timestamp is derived on
+// demand as lastCheckpoint + (t - lastCheckpointTime) * q128 / liquidity, so writing an extra checkpoint
+// here only subdivides a constant-liquidity interval without changing any computed value.
+//
+// cacheInternalReward runs on every position reward calculation (via cacheRewardForPool) and every emission
+// distribution across all tiered pools, so emitting a redundant checkpoint per call was a dominant driver
+// of the staker realm's unbounded storage growth (gas report issue 3).
+//
+// INVARIANT: if a future code path mutates staked liquidity outside modifyDeposit, it MUST checkpoint the
+// accumulation there (as modifyDeposit does) or on-demand reads will over-accumulate across the change.
 func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
 	self.cacheReward(currentTime, currentEmission)
-
-	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
