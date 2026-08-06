@@ -688,6 +688,9 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	deposits := getMockInstance().getDeposits()
 	uassert.False(t, deposits.Has(positionId), "deposit should be removed after unstaking")
 
+	uassert.False(t, pool.Ticks().Has(tickLower))
+	uassert.False(t, pool.Ticks().Has(tickUpper))
+
 	// Verify tick liquidity was updated (should be reduced after unstaking)
 	finalLowerLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).StakedLiquidityGross()
 	finalUpperLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).StakedLiquidityGross()
