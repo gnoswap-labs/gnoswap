@@ -72,6 +72,9 @@ func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp in
 	if !ok {
 		return
 	}
+	if pool.Ticks().Tree().Size() == 0 {
+		return
+	}
 
 	// Initialize batch processor for this swap
 	// This will accumulate all tick crosses until swap completion
