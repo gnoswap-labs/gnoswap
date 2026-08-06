@@ -326,7 +326,7 @@ func (self *PoolTier) applyCacheToPool(poolResolver *PoolResolver, tierNum uint6
 		return
 	}
 
-	poolResolver.cacheInternalReward(currentTimestamp, poolReward)
+	poolResolver.cacheReward(currentTimestamp, poolReward)
 }
 
 // applyCacheToAllPools applies the cached reward to all tiered pools.
@@ -362,7 +362,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.cacheInternalReward(currentTimestamp, poolReward)
+		poolResolver.cacheReward(currentTimestamp, poolReward)
 		return false
 	})
 }

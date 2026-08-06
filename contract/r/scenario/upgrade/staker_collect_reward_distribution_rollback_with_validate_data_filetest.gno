@@ -11,7 +11,6 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/scenarioutils"
-
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -311,8 +310,8 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 13. Collect reward with v1
 // [INFO] Collect reward
-// [EXPECTED] Total reward: 133374323
-// [EXPECTED] Reward to user: 39731368
+// [EXPECTED] Total reward: 133374324
+// [EXPECTED] Reward to user: 39731369
 // [EXPECTED] Reward penalty: 93642955
 //
 // [SCENARIO] 14. Check staking info after reward collection with v1

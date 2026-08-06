@@ -361,11 +361,11 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 //   - qux collected: 1849996719
 // [INFO] position 3 CollectReward:
 //   - accumulatedPenaltyAmount: 883332176
-//   - distributedRewardAmount: 7249999990
-//   - qux collected: 2416664734
+//   - distributedRewardAmount: 7249999991
+//   - qux collected: 2416664735
 //
 // [SCENARIO] 9. Verify new penalty accrues and can be collected again
 // [INFO] second collection returned: 883332176
 // [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 8
+// [EXPECTED] staker qux balance: 7

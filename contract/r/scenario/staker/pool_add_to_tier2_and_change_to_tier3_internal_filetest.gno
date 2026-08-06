@@ -347,7 +347,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 7. Collect reward with tier 3
 // [INFO] skip blocks to accumulate rewards with tier 3
 // [INFO] collect reward with tier 3
-// [EXPECTED] reward with tier 3: 16053074
+// [EXPECTED] reward with tier 3: 16053075
 // [INFO] tier 3 reward recorded for comparison
 //
 // [SCENARIO] 8. Compare tier rewards

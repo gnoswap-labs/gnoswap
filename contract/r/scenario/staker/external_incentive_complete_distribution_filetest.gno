@@ -482,36 +482,36 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 10. Collect final rewards
 // [INFO] collecting final rewards
-// [INFO] final rewards collected: 3887999999 QUX
+// [INFO] final rewards collected: 3888000000 QUX
 // [EXPECTED] community pool QUX unchanged on collect: 0 -> 0
 //
 // [SCENARIO] 11. Unstake position to collect all remaining rewards
 // [INFO] unstaking position to collect remaining rewards
 // [INFO] rewards collected from unstaking: 0 QUX
-// [INFO] total rewards collected so far: 6263999997 QUX
+// [INFO] total rewards collected so far: 6263999998 QUX
 // [INFO] position owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive
 // [INFO] before ending incentive:
 //   - Creator QUX: 7776000000
-//   - Staker contract QUX: 1512000003
+//   - Staker contract QUX: 1512000002
 //   - Creator GNS (deposit): 1000000000
-//   - Admin total rewards collected (QUX): 6263999997
+//   - Admin total rewards collected (QUX): 6263999998
 // [INFO] after ending incentive:
 //   - Creator QUX: 7776000000
-//   - Staker contract QUX: 1512000003
+//   - Staker contract QUX: 1512000002
 //   - Creator GNS (deposit): 2000000000
-//   - Admin QUX balances: 99990711998997
+//   - Admin QUX balances: 99990711998998
 // [RESULT] refund breakdown:
 //   - Total refunded reward token (QUX): 0
 //   - Total reduced from staker QUX: 0
 //   - Refunded GNS deposit: 1000000000
-// [EXPECTED] creator receives all remaining reward token: 1512000003
+// [EXPECTED] creator receives all remaining reward token: 1512000002
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
-//   - Rewards collected by staker: 6263999997 QUX
+//   - Rewards collected by staker: 6263999998 QUX
 //   - Undistributed reward refunded: 0 QUX
-//   - Total accounted for: 6263999997 QUX
-//   - Staker-retained penalty QUX: 1512000003
+//   - Total accounted for: 6263999998 QUX
+//   - Staker-retained penalty QUX: 1512000002

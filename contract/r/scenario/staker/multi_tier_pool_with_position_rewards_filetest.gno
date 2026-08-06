@@ -478,7 +478,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect rewards from one position 1
 // [INFO] collect reward by tokenID: 1
-// [EXPECTED] reward: 802652 (should be > 0)
+// [EXPECTED] reward: 802653 (should be > 0)
 //
 // [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
 // [INFO] ExactInSwapRoute

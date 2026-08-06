@@ -72,6 +72,9 @@ func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp in
 	if !ok {
 		return
 	}
+	if pool.Ticks().Tree().Size() == 0 {
+		return
+	}
 
 	// Initialize batch processor for this swap
 	// This will accumulate all tick crosses until swap completion
@@ -127,7 +130,11 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 		return
 	}
 
+	// Skip ticks without staking state.
 	tick := pool.Ticks().Get(tickId)
+	if tick == nil {
+		return
+	}
 
 	// Skip ticks without staked boundary liquidity (no reward impact)
 	if tick.StakedLiquidityGross().IsZero() {

@@ -668,8 +668,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	uassert.True(t, len(externalRewards) >= 0, "should have external reward tracking")
 
 	// Store initial tick state for comparison
-	lowerTick := poolResolver.TickResolver(tickLower)
-	upperTick := poolResolver.TickResolver(tickUpper)
+	lowerTick := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
+	upperTick := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	initialLowerLiquidity := lowerTick.StakedLiquidityGross().Clone()
 	initialUpperLiquidity := upperTick.StakedLiquidityGross().Clone()
 
@@ -691,9 +691,12 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	deposits := getMockInstance().getDeposits()
 	uassert.False(t, deposits.Has(positionId), "deposit should be removed after unstaking")
 
+	uassert.False(t, pool.Ticks().Has(tickLower))
+	uassert.False(t, pool.Ticks().Has(tickUpper))
+
 	// Verify tick liquidity was updated (should be reduced after unstaking)
-	finalLowerLiquidity := poolResolver.TickResolver(tickLower).StakedLiquidityGross()
-	finalUpperLiquidity := poolResolver.TickResolver(tickUpper).StakedLiquidityGross()
+	finalLowerLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).StakedLiquidityGross()
+	finalUpperLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).StakedLiquidityGross()
 	uassert.True(t, finalLowerLiquidity.Lt(initialLowerLiquidity) || finalLowerLiquidity.IsZero(),
 		"lower tick liquidity should be reduced")
 	uassert.True(t, finalUpperLiquidity.Lt(initialUpperLiquidity) || finalUpperLiquidity.IsZero(),

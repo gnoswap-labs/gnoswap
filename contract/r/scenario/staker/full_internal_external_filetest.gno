@@ -562,7 +562,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
-// [EXPECTED] reward from unstaking: 38798151
+// [EXPECTED] reward from unstaking: 38798152
 //
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)
