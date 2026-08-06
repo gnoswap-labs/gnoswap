@@ -189,6 +189,23 @@ func (pfs *protocolFeeState) clearReservedTokens(_ int, rlm realm) error {
 	return nil
 }
 
+// removeReservedToken removes one distributed token from the reserved token index.
+func (pfs *protocolFeeState) removeReservedToken(_ int, rlm realm, tokenPath string) error {
+	reservedTokens := pfs.ReservedTokens()
+	filteredReservedTokens := make([]string, 0, len(reservedTokens))
+
+	for _, reservedToken := range reservedTokens {
+		if reservedToken != tokenPath {
+			filteredReservedTokens = append(filteredReservedTokens, reservedToken)
+		}
+	}
+
+	if err := pfs.store.SetReservedTokens(0, rlm, filteredReservedTokens); err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewProtocolFeeState creates a new instance of protocolFeeState with initialized values
 func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *protocolFeeState {
 	return &protocolFeeState{

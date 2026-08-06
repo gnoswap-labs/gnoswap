@@ -390,6 +390,132 @@ func TestProtocolFeeRewardManager_claimRewards_Multipletimes(cur realm, t *testi
 	})
 }
 
+func TestProtocolFeeRewardManager_claimRewardForToken_SameTimestampIndependentTokens(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	err := resolver.addStake("user1", 100, 10)
+	uassert.NoError(t, err)
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenA", 1000, 20)
+	uassert.NoError(t, err)
+	claimedA, err := resolver.claimRewardForToken("user1", "tokenA", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedA, int64(1000))
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenB", 2000, 20)
+	uassert.NoError(t, err)
+	claimedB, err := resolver.claimRewardForToken("user1", "tokenB", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedB, int64(2000))
+
+	rewardState, ok, err := resolver.GetRewardState("user1")
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+
+	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenA"), int64(1000))
+	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenB"), int64(2000))
+	uassert.Equal(t, rewardState.GetAccumulatedRewardForToken("tokenA"), int64(1000))
+	uassert.Equal(t, rewardState.GetAccumulatedRewardForToken("tokenB"), int64(2000))
+	uassert.NotEqual(t, rewardState.GetRewardDebtX128ForToken("tokenA"), nil)
+	uassert.NotEqual(t, rewardState.GetRewardDebtX128ForToken("tokenB"), nil)
+	uassert.Equal(t, resolver.GetProtocolFeeAmount("tokenA"), int64(1000))
+	uassert.Equal(t, resolver.GetProtocolFeeAmount("tokenB"), int64(2000))
+	uassert.NotEqual(t, resolver.GetAccumulatedProtocolFeeX128PerStake("tokenA"), nil)
+	uassert.NotEqual(t, resolver.GetAccumulatedProtocolFeeX128PerStake("tokenB"), nil)
+
+	claimedBAgain, err := resolver.claimRewardForToken("user1", "tokenB", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedBAgain, int64(0))
+	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenA"), int64(1000))
+}
+
+func TestProtocolFeeRewardManager_claimRewardForToken_AllowsBulkClaimSameTimestamp(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	err := resolver.addStake("user1", 100, 10)
+	uassert.NoError(t, err)
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenA", 1000, 20)
+	uassert.NoError(t, err)
+	claimedA, err := resolver.claimRewardForToken("user1", "tokenA", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedA, int64(1000))
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStake(map[string]int64{
+		"tokenA": 1000,
+		"tokenB": 2000,
+	}, 20)
+	uassert.NoError(t, err)
+
+	claimedRewards, err := resolver.claimRewards("user1", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedRewards["tokenA"], int64(0))
+	uassert.Equal(t, claimedRewards["tokenB"], int64(2000))
+
+	rewardState, ok, err := resolver.GetRewardState("user1")
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenA"), int64(1000))
+	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenB"), int64(2000))
+}
+
+// TestProtocolFeeRewardManager_claimRewardForToken_NoStakers pins the behavior
+// when protocol fees are distributed while nobody is staked: the per-stake
+// delta is 0 (division guarded by totalStaked == 0), so the amount is recorded
+// but never becomes claimable. Fees distributed AFTER staking are claimable.
+func TestProtocolFeeRewardManager_claimRewardForToken_NoStakers(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	// Distribute fees while no stake exists.
+	err := resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenA", 1000, 20)
+	uassert.NoError(t, err)
+
+	// A later staker cannot claim the no-staker-era fees.
+	err = resolver.addStake("user1", 100, 30)
+	uassert.NoError(t, err)
+	claimedA, err := resolver.claimRewardForToken("user1", "tokenA", 30)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedA, int64(0))
+
+	// New fees after staking are claimable (delta 1000 over stake 100).
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenA", 2000, 40)
+	uassert.NoError(t, err)
+	claimedB, err := resolver.claimRewardForToken("user1", "tokenA", 40)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedB, int64(1000))
+}
+
+// TestProtocolFeeRewardManager_claimRewardForToken_NoRewardState covers the
+// graceful path for an address that never staked: the claim returns 0 without
+// panicking and without creating a reward state entry.
+func TestProtocolFeeRewardManager_claimRewardForToken_NoRewardState(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	err := resolver.addStake("user1", 100, 10)
+	uassert.NoError(t, err)
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenA", 1000, 20)
+	uassert.NoError(t, err)
+
+	claimed, err := resolver.claimRewardForToken("userWithoutStake", "tokenA", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimed, int64(0))
+
+	// No reward state entry was created for the non-staker.
+	_, ok, err := resolver.GetRewardState("userWithoutStake")
+	uassert.NoError(t, err)
+	uassert.False(t, ok)
+
+	// A real staker is unaffected.
+	claimedUser1, err := resolver.claimRewardForToken("user1", "tokenA", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedUser1, int64(1000))
+}
+
 // Test calculateAccumulatedRewardX128PerStake
 func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {

@@ -78,6 +78,42 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(cur realm, t *testing.T) {
 	}
 }
 
+func TestLaunchpadProtocolFee_CollectSplitRewards_NoProject(cur realm, t *testing.T) {
+	userWithoutProject := testutils.TestAddress("user_no_project")
+
+	tests := []struct {
+		name      string
+		collectFn func(cur realm, impl *launchpadV1)
+	}{
+		{
+			name: "emission reward",
+			collectFn: func(cur realm, impl *launchpadV1) {
+				impl.CollectEmissionReward(0, cur)
+			},
+		},
+		{
+			name: "protocol fee reward",
+			collectFn: func(cur realm, impl *launchpadV1) {
+				impl.CollectProtocolFeeReward(0, cur, testOblTokenPath)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestStore()
+			impl := getTestImplementation()
+
+			testing.SetRealm(testing.NewUserRealm(userWithoutProject))
+			uassert.AbortsContains(t, cur, "is not the owner of any project", func() {
+				func(cur realm) {
+					tt.collectFn(cur, impl)
+				}(cross(cur))
+			})
+		})
+	}
+}
+
 func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(cur realm, t *testing.T) {
 	const contractPackagePath = "gno.land/r/test/contract"
 

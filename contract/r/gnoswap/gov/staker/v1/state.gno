@@ -493,6 +493,33 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	return rewards, nil
 }
 
+// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token for an address.
+func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
+	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
+
+	distributedAmount := pf.GetActualDistributedToGovStakerByTokenPath(tokenPath)
+
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
+
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, distributedAmount, currentTimestamp); err != nil {
+		return 0, err
+	}
+
+	reward, err := resolvedManager.claimRewardForToken(address, tokenPath, currentTimestamp)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
+		return 0, err
+	}
+
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: distributedAmount})
+
+	return reward, nil
+}
+
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
 // This method queries the protocol fee contract for accumulated distributions.
 //
