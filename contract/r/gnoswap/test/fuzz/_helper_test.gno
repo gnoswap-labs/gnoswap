@@ -211,6 +211,45 @@ func mintTestToken(cur realm, tokenPath string, amount int64) {
 	}
 }
 
+// approveToken approves spender to spend amount of tokenPath from the current
+// EOA/origin caller, using the token's OWN realm (required by the grc20
+// origin-guard: a foreign realm cannot debit the transaction origin).
+func approveToken(cur realm, tokenPath string, spender address, amount int64) {
+	switch tokenPath {
+	case barPath:
+		bar.Approve(cross(cur), spender, amount)
+	case bazPath:
+		baz.Approve(cross(cur), spender, amount)
+	case fooPath:
+		foo.Approve(cross(cur), spender, amount)
+	case quxPath:
+		qux.Approve(cross(cur), spender, amount)
+	case oblPath:
+		obl.Approve(cross(cur), spender, amount)
+	default:
+		panic("test: unsupported token path " + tokenPath)
+	}
+}
+
+// transferToken transfers amount of tokenPath to `to` from the current
+// EOA/origin caller, using the token's OWN realm (see approveToken).
+func transferToken(cur realm, tokenPath string, to address, amount int64) {
+	switch tokenPath {
+	case barPath:
+		bar.Transfer(cross(cur), to, amount)
+	case bazPath:
+		baz.Transfer(cross(cur), to, amount)
+	case fooPath:
+		foo.Transfer(cross(cur), to, amount)
+	case quxPath:
+		qux.Transfer(cross(cur), to, amount)
+	case oblPath:
+		obl.Transfer(cross(cur), to, amount)
+	default:
+		panic("test: unsupported token path " + tokenPath)
+	}
+}
+
 // getTokenTotalSupply returns the total supply of a token
 func getTokenTotalSupply(tokenPath string) int64 {
 	switch tokenPath {

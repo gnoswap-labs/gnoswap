@@ -10,7 +10,6 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"
 
@@ -491,6 +490,53 @@ func createPoolWithoutFee(cur realm, token0 string, token1 string, fee uint32, t
 	pl.CreatePool(cross(cur), token0, token1, fee, gnsmath.TickMathGetSqrtRatioAtTick(tick).ToString())
 }
 
+// approveToken approves spender for the given token via the token realm's own
+// Approve, so the debit is authorized by the token's own realm (avoids the
+// grc20 origin-guard that rejects a CallerTeller from a foreign realm).
+func approveToken(cur realm, path string, spender address, amount int64) {
+	switch path {
+	case barPath:
+		bar.Approve(cross(cur), spender, amount)
+	case bazPath:
+		baz.Approve(cross(cur), spender, amount)
+	case fooPath:
+		foo.Approve(cross(cur), spender, amount)
+	case oblPath:
+		obl.Approve(cross(cur), spender, amount)
+	case quxPath:
+		qux.Approve(cross(cur), spender, amount)
+	case gnsPath:
+		gns.Approve(cross(cur), spender, amount)
+	case wugnotPath:
+		wugnot.Approve(cross(cur), spender, amount)
+	default:
+		panic("test: unsupported token path " + path)
+	}
+}
+
+// transferToken transfers the given token via the token realm's own Transfer,
+// so the debit is authorized by the token's own realm.
+func transferToken(cur realm, path string, to address, amount int64) {
+	switch path {
+	case barPath:
+		bar.Transfer(cross(cur), to, amount)
+	case bazPath:
+		baz.Transfer(cross(cur), to, amount)
+	case fooPath:
+		foo.Transfer(cross(cur), to, amount)
+	case oblPath:
+		obl.Transfer(cross(cur), to, amount)
+	case quxPath:
+		qux.Transfer(cross(cur), to, amount)
+	case gnsPath:
+		gns.Transfer(cross(cur), to, amount)
+	case wugnotPath:
+		wugnot.Transfer(cross(cur), to, amount)
+	default:
+		panic("test: unsupported token path " + path)
+	}
+}
+
 func mockInstanceMint(
 	cur realm,
 	token0 string,
@@ -511,8 +557,8 @@ func mockInstanceMint(
 	amount1Int, _ := strconv.ParseInt(amount1Desired, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), token0, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), token1, poolAddr, amount1Int)
+	approveToken(cur, token0, poolAddr, amount0Int)
+	approveToken(cur, token1, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.Mint(cross(cur),
@@ -545,8 +591,8 @@ func mockInstanceIncreaseLiquidity(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
+	approveToken(cur, barPath, poolAddr, amount0Int)
+	approveToken(cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.IncreaseLiquidity(cross(cur),
@@ -592,8 +638,8 @@ func mockInstanceReposition(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
+	approveToken(cur, barPath, poolAddr, amount0Int)
+	approveToken(cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.Reposition(cross(cur),
