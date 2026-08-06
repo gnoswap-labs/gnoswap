@@ -99,6 +99,15 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 			rewardDebtX128,
 		)
 
+		// Skip the 256-bit MulDiv for tokens with no newly distributed fees for this staker: the per-stake
+		// accumulator is unchanged since the staker's reward debt, so the reward is exactly zero. The zero
+		// is still recorded so the result map is unchanged; only the expensive computation is avoided,
+		// keeping cost proportional to the tokens that actually received fees (gas report issue 1 / §1.2).
+		if rewardDebtDeltaX128.IsZero() {
+			rewardAmounts[token] = 0
+			continue
+		}
+
 		// Multiply by staked amount to get total reward for this staker and token
 		rewardAmount := u256.MulDiv(
 			rewardDebtDeltaX128,
