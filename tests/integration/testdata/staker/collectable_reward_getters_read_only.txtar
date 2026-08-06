@@ -91,12 +91,20 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args g1q6d4ns
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
 
-# CollectableEmissionReward must be read-only:
-# calling it (cross-realm via MsgRun) must NOT write any storage.
+# Create an incentive after staking. In the base implementation, the next
+# collectable getter lazily adds this ID to the deposit and advances its cursor.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000" -args "gno.land/r/onbloc/bar.BAR" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Advance the chain beyond the creation timestamp so lazy discovery is reached.
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Collectable getters must calculate the newly discovered incentive without
+# persisting its ID or cursor. The base implementation writes here, so this is
+# a regression assertion for the vulnerability fixed by this PR.
 gnokey maketx run test1 $WORK/run/collectable_reward_getters.gno -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
-# stdout "0"
-# stdout "0"
-# stdout 'STORAGE DELTA:  0 bytes'
+stdout 'collectable getters are read only'
 
 -- run/collectable_reward_getters.gno --
 package main
@@ -104,6 +112,18 @@ package main
 import staker "gno.land/r/gnoswap/staker"
 
 func main() {
-	println(staker.CollectableEmissionReward(1))
-	println(staker.CollectableExternalIncentiveReward(1, "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:0:1"))
+	if staker.CollectableEmissionReward(1) != 0 {
+		panic("unexpected emission reward")
+	}
+	incentiveIds := staker.GetPoolIncentiveIdList("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
+	if len(incentiveIds) != 1 {
+		panic("expected one pool external incentive")
+	}
+	if staker.CollectableExternalIncentiveReward(1, incentiveIds[0]) != 0 {
+		panic("unexpected external incentive reward")
+	}
+	if len(staker.GetDepositExternalIncentiveIdList(1)) != 0 {
+		panic("getter persisted external incentive ID")
+	}
+	println("collectable getters are read only")
 }
