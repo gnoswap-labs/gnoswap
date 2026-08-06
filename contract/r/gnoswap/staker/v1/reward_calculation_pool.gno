@@ -236,6 +236,12 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 }
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
+//
+// NOTE: the write below cannot be skipped even when the accumulation value is unchanged (e.g. zero staked
+// liquidity or zero elapsed time). Each entry doubles as a *time checkpoint*: calculateGlobalRewardRatioAccumulation
+// derives timeDiff from the latest entry's timestamp. Omitting a same-valued write would fail to advance that
+// checkpoint, so a later non-zero-liquidity interval would over-accumulate across the skipped (zero-liquidity)
+// span. Bounding this append-only tree must therefore be done via watermark pruning, not by suppressing writes.
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
@@ -546,7 +552,14 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	// Only append a staked-liquidity entry when the value actually changes (e.g. a tick cross whose
+	// net delta is zero leaves it unchanged). Unlike the global reward ratio accumulation, this tree
+	// carries no time-checkpoint semantics: it is read purely as a point-in-time value via
+	// CurrentStakedLiquidity (latest entry <= t), so omitting a duplicate-valued entry preserves
+	// behavior while keeping this append-only tree from growing on no-op updates.
+	if !lastStakedLiquidity.Eq(deltaApplied) {
+		self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	}
 
 	return result
 }
