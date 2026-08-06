@@ -204,25 +204,6 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// cacheInternalReward caches the current emission for the pool.
-//
-// It deliberately does NOT write a global reward ratio accumulation checkpoint. That accumulation is a
-// function of staked liquidity only (emission is applied later, per-warmup), and staked liquidity changes
-// exclusively through modifyDeposit, which already checkpoints the accumulation (with the pre-change
-// liquidity) at every change. Between liquidity changes the accumulation for any timestamp is derived on
-// demand as lastCheckpoint + (t - lastCheckpointTime) * q128 / liquidity, so writing an extra checkpoint
-// here only subdivides a constant-liquidity interval without changing any computed value.
-//
-// cacheInternalReward runs on every position reward calculation (via cacheRewardForPool) and every emission
-// distribution across all tiered pools, so emitting a redundant checkpoint per call was a dominant driver
-// of the staker realm's unbounded storage growth (gas report issue 3).
-//
-// INVARIANT: if a future code path mutates staked liquidity outside modifyDeposit, it MUST checkpoint the
-// accumulation there (as modifyDeposit does) or on-demand reads will over-accumulate across the change.
-func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
-	self.cacheReward(currentTime, currentEmission)
-}
-
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
@@ -247,12 +228,6 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 }
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
-//
-// NOTE: the write below cannot be skipped even when the accumulation value is unchanged (e.g. zero staked
-// liquidity or zero elapsed time). Each entry doubles as a *time checkpoint*: calculateGlobalRewardRatioAccumulation
-// derives timeDiff from the latest entry's timestamp. Omitting a same-valued write would fail to advance that
-// checkpoint, so a later non-zero-liquidity interval would over-accumulate across the skipped (zero-liquidity)
-// span. Bounding this append-only tree must therefore be done via watermark pruning, not by suppressing writes.
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 

@@ -84,7 +84,7 @@ func TestCacheInternalReward_DoesNotCheckpointGlobalAccumulation(cur realm, t *t
 			sizeAfterStake := pool.GlobalRewardRatioAccumulation().Size()
 
 			for _, c := range tt.calls {
-				poolResolver.cacheInternalReward(c.at, c.emission)
+				poolResolver.cacheReward(c.at, c.emission)
 			}
 
 			// cacheInternalReward wrote no global accumulation checkpoint.
