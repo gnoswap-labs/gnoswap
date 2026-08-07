@@ -232,6 +232,20 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 	return u256.Zero().Add(oldAcc, acc)
 }
 
+// globalRewardRatioAccumulationAt returns the global reward ratio accumulation *at* currentTime.
+//
+// CurrentGlobalRewardRatioAccumulation returns the latest stored checkpoint (<= currentTime), which is
+// only equal to the accumulation at currentTime when a checkpoint was written at that very timestamp.
+// Checkpoints are written exclusively by modifyDeposit (staked liquidity changes), so on any other path
+// the stored value lags by (currentTime - lastCheckpointTime) * q128 / stakedLiquidity.
+//
+// Reward calculation never has this problem because it derives the accumulation on demand
+// (CalculateRawRewardForPosition). Event emission must do the same, otherwise off-chain indexers that
+// treat the emitted accumulator as authoritative at the event timestamp silently drop that interval.
+func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) *u256.Uint {
+	return self.calculateGlobalRewardRatioAccumulation(currentTime, self.CurrentStakedLiquidity(currentTime))
+}
+
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
