@@ -127,7 +127,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 			wantErr: "[GNOSWAP-POOL-025]",
 		},
 		{
-			name:        "window before unix epoch returns oracle error",
+			name:        "window before unix epoch returns pre-epoch error",
 			currentTime: 10,
 			secondsAgo:  11,
 			currentTick: 12,
@@ -135,7 +135,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 				{timestamp: 0, tickCumulative: 0},
 				{timestamp: 10, tickCumulative: 120},
 			},
-			wantErr: "[GNOSWAP-POOL-025]",
+			wantErr: "[GNOSWAP-POOL-027]",
 		},
 		{
 			name:        "multi interval weighted average",

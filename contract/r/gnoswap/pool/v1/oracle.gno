@@ -267,8 +267,9 @@ func observeSingle(
 		return last.TickCumulative(), last.SecondsPerLiquidityCumulativeX128(), nil
 	}
 
+	// A lookback longer than the chain's own age would place the target before unix epoch.
 	if int64(secondsAgo) > currentTime {
-		return 0, "", errors.New(errObservationTooOld)
+		return 0, "", errors.New(errObservationBeforeEpoch)
 	}
 
 	target := currentTime - int64(secondsAgo)
