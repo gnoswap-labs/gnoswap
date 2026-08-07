@@ -2321,3 +2321,161 @@ func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
 		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	})
 }
+
+// TestIncentiveIndexKeyedByStartTimestamp verifies discovery is keyed by the
+// incentive's start timestamp rather than its creation timestamp. The index is
+// written once at create() and there is no setter for the start timestamp, so
+// the key must always match StartTimestamp().
+func TestIncentiveIndexKeyedByStartTimestamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "start-time-index-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	createdTime := int64(100)
+	startTime := int64(5000)
+	incentive := sr.NewExternalIncentive(
+		"inc-start-key", poolPath, GNS_TOKEN_KEY, 1000,
+		startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, createdTime,
+	)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	// A window covering only the creation timestamp must not find it.
+	beforeStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime-1)
+	uassert.Equal(t, 0, len(beforeStart))
+
+	// A window ending exactly on the start timestamp must find it.
+	atStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime)
+	uassert.Equal(t, 1, len(atStart))
+	uassert.Equal(t, "inc-start-key", atStart[0])
+	uassert.Equal(t, startTime, incentive.StartTimestamp())
+}
+
+// TestExternalIncentivesGetPanicsOnMissingId pins the lookup contract: get
+// aborts on an unknown id instead of returning nil, so callers must not
+// nil-check its result.
+func TestExternalIncentivesGetPanicsOnMissingId(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	incentives := getMockInstance().getExternalIncentives()
+	uassert.False(t, incentives.Has("missing-incentive-id"))
+	uassert.PanicsContains(t, cur, "not found", func() {
+		incentives.get("missing-incentive-id")
+	})
+}
+
+// TestDiscoveredIncentiveIdsExistInTree asserts the start-time index never
+// yields an id absent from the incentive tree, which is what makes the
+// panicking get() safe on the discovery paths.
+func TestDiscoveredIncentiveIdsExistInTree(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "discovery-consistency-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	incentives := instance.getExternalIncentives()
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 7000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("inc-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		incentives.set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := instance.getExternalIncentiveIdsBy(poolPath, 0, 10000)
+	uassert.Equal(t, len(starts), len(discovered))
+	for _, incentiveId := range discovered {
+		uassert.True(t, incentives.Has(incentiveId))
+		uassert.Equal(t, incentiveId, incentives.get(incentiveId).IncentiveId())
+	}
+}
+
+// TestStakeScanLowerBoundClamp covers the stake-time scan window when the chain
+// time is under 365 days: the raw lower bound is negative and the index rejects
+// it, so the bound must be clamped to 0.
+func TestStakeScanLowerBoundClamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	uassert.Equal(t, int64(0), stakeScanLowerBound(0))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(1000))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS-1))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS))
+	uassert.Equal(t, int64(500), stakeScanLowerBound(TIMESTAMP_365DAYS+500))
+
+	poolPath := "scan-clamp-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	incentive := sr.NewExternalIncentive(
+		"inc-clamp", poolPath, GNS_TOKEN_KEY, 1000,
+		500, 1500, testutils.TestAddress("creator"), 0, 0, 0,
+	)
+	instance.getExternalIncentives().set("inc-clamp", incentive)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	currentTime := int64(1000)
+
+	// The unclamped bound aborts.
+	uassert.AbortsContains(t, cur, "negative value not supported", func() {
+		instance.getExternalIncentiveIdsBy(poolPath, currentTime-TIMESTAMP_365DAYS, currentTime)
+	})
+
+	// The clamped bound still finds the active incentive.
+	ids := instance.getExternalIncentiveIdsBy(poolPath, stakeScanLowerBound(currentTime), currentTime)
+	uassert.Equal(t, 1, len(ids))
+	uassert.Equal(t, "inc-clamp", ids[0])
+}
+
+// TestIncentiveTreeFullyCoveredByStartTimeIndex asserts every incentive in a
+// pool's incentive tree is reachable through the start-time discovery index.
+// An incentive registered without an index entry is never found by a new
+// staker, and its share silently falls through to the creator refund.
+func TestIncentiveTreeFullyCoveredByStartTimeIndex(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "index-coverage-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 900000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("cover-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		instance.getExternalIncentives().set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := make(map[string]bool)
+	for _, incentiveId := range instance.getExternalIncentiveIdsBy(poolPath, 0, math.MaxInt64) {
+		discovered[incentiveId] = true
+	}
+
+	total := 0
+	resolver.Incentives.IterateIncentives(func(incentiveId string, _ *sr.ExternalIncentive) bool {
+		total++
+		uassert.True(t, discovered[incentiveId],
+			ufmt.Sprintf("incentive %s is in the tree but not in the start-time index", incentiveId))
+		return false
+	})
+
+	uassert.Equal(t, len(starts), total)
+	uassert.Equal(t, len(starts), len(discovered))
+}
