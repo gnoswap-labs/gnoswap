@@ -326,15 +326,6 @@ func testAccumulatesLiquidity(t *testing.T) {
 	}
 }
 
-// TestOracleLTE verifies int64 timestamp comparisons use natural ordering.
-func TestOracleLTE(cur realm, t *testing.T) {
-	uassert.True(t, lte(90, 100), "timestamps should use natural ordering")
-	uassert.True(t, lte(100, 100), "equal timestamps should compare as lte")
-	uassert.True(t, lte(-1, 0), "signed timestamps should preserve natural ordering")
-	uassert.False(t, lte(100, 90), "newer timestamps should not sort before older timestamps")
-	uassert.False(t, lte(int64(1<<32)-2, 2), "int64 timestamps must not apply uint32 wrap ordering")
-}
-
 func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string

@@ -175,10 +175,6 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 	return nextCardinality, nil
 }
 
-func lte(a, b int64) bool {
-	return a <= b
-}
-
 func writeObservation(
 	os *pl.ObservationState,
 	currentTime int64,
@@ -338,8 +334,10 @@ func getSurroundingObservations(
 		return nil, nil, err
 	}
 
+	// Timestamps are int64, so natural ordering applies. Uniswap V3 needs a
+	// wraparound-aware comparison here only because it stores them as uint32.
 	// If the target is chronologically at or after the newest observation, we can early return
-	if lte(beforeOrAt.BlockTimestamp(), target) {
+	if beforeOrAt.BlockTimestamp() <= target {
 		if beforeOrAt.BlockTimestamp() == target {
 			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
 			return beforeOrAt, nil, nil
@@ -363,7 +361,7 @@ func getSurroundingObservations(
 	}
 
 	// Ensure that the target is chronologically at or after the oldest observation
-	if !lte(beforeOrAt.BlockTimestamp(), target) {
+	if beforeOrAt.BlockTimestamp() > target {
 		return nil, nil, errors.New(errObservationTooOld)
 	}
 
@@ -400,10 +398,10 @@ func binarySearch(
 			return nil, nil, err
 		}
 
-		targetAtOrAfter := lte(beforeOrAt.BlockTimestamp(), target)
+		targetAtOrAfter := beforeOrAt.BlockTimestamp() <= target
 
 		// check if we've found the answer!
-		if targetAtOrAfter && lte(target, atOrAfter.BlockTimestamp()) {
+		if targetAtOrAfter && target <= atOrAfter.BlockTimestamp() {
 			break
 		}
 
