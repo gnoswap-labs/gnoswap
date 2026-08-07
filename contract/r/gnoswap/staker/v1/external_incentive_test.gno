@@ -2321,3 +2321,35 @@ func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
 		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	})
 }
+
+// TestIncentiveIndexKeyedByStartTimestamp verifies discovery is keyed by the
+// incentive's start timestamp rather than its creation timestamp. The index is
+// written once at create() and there is no setter for the start timestamp, so
+// the key must always match StartTimestamp().
+func TestIncentiveIndexKeyedByStartTimestamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "start-time-index-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	createdTime := int64(100)
+	startTime := int64(5000)
+	incentive := sr.NewExternalIncentive(
+		"inc-start-key", poolPath, GNS_TOKEN_KEY, 1000,
+		startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, createdTime,
+	)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	// A window covering only the creation timestamp must not find it.
+	beforeStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime-1)
+	uassert.Equal(t, 0, len(beforeStart))
+
+	// A window ending exactly on the start timestamp must find it.
+	atStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime)
+	uassert.Equal(t, 1, len(atStart))
+	uassert.Equal(t, "inc-start-key", atStart[0])
+	uassert.Equal(t, startTime, incentive.StartTimestamp())
+}

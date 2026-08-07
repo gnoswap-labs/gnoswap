@@ -404,14 +404,12 @@ func (e *ExternalIncentive) SetIncentiveId(incentiveId string) {
 	e.incentiveId = incentiveId
 }
 
-// StartTimestamp returns the start timestamp
+// StartTimestamp returns the start timestamp.
+//
+// It keys the byStartTime discovery index and must stay immutable after the
+// incentive is registered, so no setter is exposed.
 func (e *ExternalIncentive) StartTimestamp() int64 {
 	return e.startTimestamp
-}
-
-// SetStartTimestamp sets the start timestamp
-func (e *ExternalIncentive) SetStartTimestamp(startTimestamp int64) {
-	e.startTimestamp = startTimestamp
 }
 
 // EndTimestamp returns the end timestamp
