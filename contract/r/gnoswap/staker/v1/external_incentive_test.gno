@@ -2437,3 +2437,45 @@ func TestStakeScanLowerBoundClamp(cur realm, t *testing.T) {
 	uassert.Equal(t, 1, len(ids))
 	uassert.Equal(t, "inc-clamp", ids[0])
 }
+
+// TestIncentiveTreeFullyCoveredByStartTimeIndex asserts every incentive in a
+// pool's incentive tree is reachable through the start-time discovery index.
+// An incentive registered without an index entry is never found by a new
+// staker, and its share silently falls through to the creator refund.
+func TestIncentiveTreeFullyCoveredByStartTimeIndex(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "index-coverage-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 900000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("cover-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		instance.getExternalIncentives().set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := make(map[string]bool)
+	for _, incentiveId := range instance.getExternalIncentiveIdsBy(poolPath, 0, math.MaxInt64) {
+		discovered[incentiveId] = true
+	}
+
+	total := 0
+	resolver.Incentives.IterateIncentives(func(incentiveId string, _ *sr.ExternalIncentive) bool {
+		total++
+		uassert.True(t, discovered[incentiveId],
+			ufmt.Sprintf("incentive %s is in the tree but not in the start-time index", incentiveId))
+		return false
+	})
+
+	uassert.Equal(t, len(starts), total)
+	uassert.Equal(t, len(starts), len(discovered))
+}
