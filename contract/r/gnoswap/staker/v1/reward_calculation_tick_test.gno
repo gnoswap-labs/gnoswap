@@ -458,3 +458,48 @@ func TestProcessBatchedTickCrosses_SkipsPrunedTick(cur realm, t *testing.T) {
 	})
 	uassert.NoError(t, hookErr)
 }
+
+// TestBoundaryTicksOutliveTheirDeposits asserts a tick is pruned only once no
+// deposit references it. Reward reads substitute a zero-valued tick when one is
+// missing, so a live deposit whose boundary tick was pruned early would have
+// its accumulated reward silently shifted.
+func TestBoundaryTicksOutliveTheirDeposits(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	startTime := int64(1000)
+	liquidity := i256.NewInt(1000)
+	pool := sr.NewPool("boundary-tick-pool", startTime)
+	poolResolver := NewPoolResolver(pool)
+
+	stake := func(tickLower, tickUpper int32, delta *i256.Int) {
+		lower := poolResolver.GetOrNewTick(tickLower)
+		NewTickResolver(lower).modifyDepositLower(startTime, delta)
+		pool.Ticks().SetTick(tickLower, lower)
+
+		upper := poolResolver.GetOrNewTick(tickUpper)
+		NewTickResolver(upper).modifyDepositUpper(startTime, delta)
+		pool.Ticks().SetTick(tickUpper, upper)
+	}
+
+	// Two deposits sharing the -10 boundary; unstaking one must keep it alive.
+	stake(-10, 10, liquidity)
+	stake(-10, 20, liquidity)
+	uassert.True(t, pool.Ticks().Has(-10))
+
+	stake(-10, 20, i256.Zero().Neg(liquidity))
+	uassert.True(t, pool.Ticks().Has(-10), "shared boundary must survive a partial unstake")
+	uassert.False(t, pool.Ticks().Has(20), "an unreferenced boundary must be pruned")
+	uassert.NotNil(t, pool.Ticks().Get(-10))
+	uassert.NotNil(t, pool.Ticks().Get(10))
+
+	// One deposit's upper boundary is another's lower boundary.
+	stake(10, 30, liquidity)
+	stake(10, 30, i256.Zero().Neg(liquidity))
+	uassert.True(t, pool.Ticks().Has(10), "boundary shared across roles must survive")
+
+	// The last deposit leaves and both of its boundaries go.
+	stake(-10, 10, i256.Zero().Neg(liquidity))
+	uassert.False(t, pool.Ticks().Has(-10))
+	uassert.False(t, pool.Ticks().Has(10))
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+}
