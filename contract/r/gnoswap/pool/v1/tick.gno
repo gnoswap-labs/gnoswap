@@ -156,6 +156,10 @@ func getFeeGrowthInside(
 //   - liquidityDelta: *i256.Int, the amount of liquidity to add or remove.
 //   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth value for token 0.
 //   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth value for token 1.
+//   - secondsPerLiquidityCumulativeX128: *u256.Uint, the current oracle accumulator used to
+//     seed the outside accumulator of a newly initialized active tick (tick <= tickCurrent).
+//   - tickCumulative: int64, the current oracle tick accumulator used for the same seeding.
+//   - blockTimestamp: int64, the current block timestamp used for the same seeding.
 //   - upper:         bool, indicates if this is the upper boundary (true for upper, false for lower).
 //   - maxLiquidity:  *u256.Uint, the maximum allowed liquidity.
 //
@@ -186,7 +190,7 @@ func getFeeGrowthInside(
 //
 // ```gno
 //
-//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, true, maxLiquidity)
+//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, secondsPerLiquidityCumulativeX128, tickCumulative, blockTimestamp, true, maxLiquidity)
 //	println("Tick flipped:", flipped)
 //
 // ```
@@ -197,6 +201,9 @@ func tickUpdate(
 	liquidityDelta *i256.Int,
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
+	secondsPerLiquidityCumulativeX128 *u256.Uint,
+	tickCumulative int64,
+	blockTimestamp int64,
 	upper bool,
 	maxLiquidity *u256.Uint,
 ) (flipped bool) {
@@ -218,6 +225,9 @@ func tickUpdate(
 		if tick <= tickCurrent {
 			tickInfo.SetFeeGrowthOutside0X128(feeGrowthGlobal0X128.ToString())
 			tickInfo.SetFeeGrowthOutside1X128(feeGrowthGlobal1X128.ToString())
+			tickInfo.SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityCumulativeX128.ToString())
+			tickInfo.SetTickCumulativeOutside(tickCumulative)
+			tickInfo.SetSecondsOutside(uint32(blockTimestamp))
 		}
 		tickInfo.SetInitialized(true)
 	}
