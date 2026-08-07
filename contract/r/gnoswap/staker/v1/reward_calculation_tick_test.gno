@@ -580,3 +580,58 @@ func TestRewardAfterUnstakeRestakeSameRange(cur realm, t *testing.T) {
 	uassert.False(t, overflow, "out-of-range accumulation must not underflow")
 	uassert.True(t, outOfRangeDelta.IsZero(), "an out-of-range deposit must not accrue")
 }
+
+// TestTickStateReturnsToEmptyOverStakeCycle asserts a full stake, swap, read,
+// unstake cycle leaves no tick behind. Reads used to insert a tick on lookup
+// and unstake never removed one, so the tree grew with every swap.
+func TestTickStateReturnsToEmptyOverStakeCycle(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "tick-growth-pool"
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, 1000)
+	poolResolver := NewPoolResolver(pool)
+	instance.getPools().set(poolPath, pool)
+
+	modifyRange := func(at int64, delta *i256.Int) {
+		lower := poolResolver.GetOrNewTick(-10)
+		NewTickResolver(lower).modifyDepositLower(at, delta)
+		pool.Ticks().SetTick(-10, lower)
+
+		upper := poolResolver.GetOrNewTick(10)
+		NewTickResolver(upper).modifyDepositUpper(at, delta)
+		pool.Ticks().SetTick(10, upper)
+	}
+
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+
+	poolResolver.modifyDeposit(liquidity, 1000, 0)
+	modifyRange(1000, liquidity)
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+
+	// A swap crossing ticks nobody staked must not insert them.
+	instance.swapStartHook(0, cur, poolPath, 1100)
+	instance.tickCrossHook(0, cur, poolPath, 500, false, 1100)
+	instance.tickCrossHook(0, cur, poolPath, -500, true, 1100)
+	uassert.False(t, pool.Ticks().Has(500))
+	uassert.False(t, pool.Ticks().Has(-500))
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+	uassert.NoError(t, instance.swapEndHook(0, cur, poolPath))
+
+	// Reading rewards for a range with unstaked boundaries must not insert them.
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"), poolPath,
+		u256.NewUint(1000), 1000, -60, 60, nil,
+	)
+	poolResolver.CalculateRawRewardForPosition(1100, 0, deposit)
+	uassert.False(t, pool.Ticks().Has(-60))
+	uassert.False(t, pool.Ticks().Has(60))
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+
+	// Unstaking releases both boundaries.
+	poolResolver.modifyDeposit(i256.Zero().Neg(liquidity), 1200, 0)
+	modifyRange(1200, i256.Zero().Neg(liquidity))
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+}
