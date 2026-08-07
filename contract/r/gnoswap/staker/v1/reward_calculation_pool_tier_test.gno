@@ -72,6 +72,108 @@ func TestCacheReward(cur realm, t *testing.T) {
 	}
 }
 
+func TestCacheRewardForPoolUsesLatestHalvingEmission(t *testing.T) {
+	poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
+
+	t.Run("halving in range updates cached emission", func(t *testing.T) {
+		pools := NewPools()
+		pool := sr.NewPool(poolPath, 1000)
+		pools.set(poolPath, pool)
+
+		poolTier := NewPoolTierBy(
+			sr.NewBPTreeN(16),
+			sr.NewTierRatio(100, 0, 0),
+			[AllTierCount]uint64{0, 1, 0, 0},
+			1000,
+			1000,
+			func() int64 { return 500 },
+			func(start, end int64) ([]int64, []int64) {
+				if start < 1010 && end > 1010 {
+					return []int64{1010}, []int64{500}
+				}
+				return nil, nil
+			},
+		)
+		poolTier.membership.Set(poolPath, uint64(1))
+
+		poolTier.cacheRewardForPool(1020, pools, poolPath)
+
+		uassert.Equal(t, int64(500), poolTier.currentEmission)
+		uassert.Equal(t, int64(500), NewPoolResolver(pool).CurrentReward(1020))
+	})
+
+	t.Run("post-halving range uses latest emission", func(t *testing.T) {
+		pools := NewPools()
+		pool := sr.NewPool(poolPath, 1000)
+		pool.RewardCache().Set(1020, int64(500))
+		pools.set(poolPath, pool)
+
+		poolTier := NewPoolTierBy(
+			sr.NewBPTreeN(16),
+			sr.NewTierRatio(100, 0, 0),
+			[AllTierCount]uint64{0, 1, 0, 0},
+			1000,
+			1000,
+			func() int64 { return 500 },
+			func(start, end int64) ([]int64, []int64) { return nil, nil },
+		)
+		poolTier.membership.Set(poolPath, uint64(1))
+
+		poolTier.cacheRewardForPool(1030, pools, poolPath)
+
+		uassert.Equal(t, int64(500), poolTier.currentEmission)
+		uassert.Equal(t, int64(500), NewPoolResolver(pool).CurrentReward(1030))
+	})
+}
+
+func TestCacheRewardStopsAtEmissionEndBoundary(t *testing.T) {
+	poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
+
+	newPoolTier := func() (*Pools, *sr.Pool, *PoolTier) {
+		pools := NewPools()
+		pool := sr.NewPool(poolPath, 1000)
+		pool.SetRewardCacheAt(1000, 1000)
+		pools.set(poolPath, pool)
+
+		poolTier := NewPoolTierBy(
+			sr.NewBPTreeN(16),
+			sr.NewTierRatio(100, 0, 0),
+			[AllTierCount]uint64{0, 1, 0, 0},
+			1000,
+			1000,
+			func() int64 { return 0 },
+			func(start, end int64) ([]int64, []int64) {
+				if start <= 1020 && 1020 < end {
+					return []int64{1021}, []int64{0}
+				}
+				return nil, nil
+			},
+		)
+		poolTier.membership.Set(poolPath, uint64(1))
+		return pools, pool, poolTier
+	}
+
+	t.Run("global tier cache writes zero at emission end boundary", func(t *testing.T) {
+		pools, pool, poolTier := newPoolTier()
+
+		poolTier.cacheReward(1030, pools)
+
+		uassert.Equal(t, int64(0), poolTier.currentEmission)
+		uassert.Equal(t, true, pool.RewardCache().Has(1021))
+		uassert.Equal(t, int64(0), NewPoolResolver(pool).CurrentReward(1030))
+	})
+
+	t.Run("lazy pool cache writes zero at emission end boundary", func(t *testing.T) {
+		pools, pool, poolTier := newPoolTier()
+
+		poolTier.cacheRewardForPool(1030, pools, poolPath)
+
+		uassert.Equal(t, int64(0), poolTier.currentEmission)
+		uassert.Equal(t, true, pool.RewardCache().Has(1021))
+		uassert.Equal(t, int64(0), NewPoolResolver(pool).CurrentReward(1030))
+	})
+}
+
 var test_gnousdc = pl.GetPoolPath("gno.land/r/gnoland/wugnot.wugnot", "gno.land/r/gnoswap/gns.GNS", 3000)
 
 func SetupPoolTier(t *testing.T) *PoolTier {
