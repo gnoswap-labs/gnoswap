@@ -449,20 +449,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			continue
 		}
 
+		// get panics on a missing id; incentives are never removed from the tree.
 		incentive := s.getExternalIncentives().get(incentiveId)
-		if incentive == nil {
-			// Incentive could be missing; skip to keep collection working.
-			chain.Emit(
-				"SkippedMissingIncentive",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
-				"positionId", utils.FormatUint(positionId),
-				"incentiveId", incentiveId,
-				"currentTime", utils.FormatInt(currentTime),
-				"currentHeight", utils.FormatInt(blockHeight),
-			)
-			continue
-		}
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		if !incentiveResolver.IsStarted(currentTime) {

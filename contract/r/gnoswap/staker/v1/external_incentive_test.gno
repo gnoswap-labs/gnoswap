@@ -2353,3 +2353,49 @@ func TestIncentiveIndexKeyedByStartTimestamp(cur realm, t *testing.T) {
 	uassert.Equal(t, "inc-start-key", atStart[0])
 	uassert.Equal(t, startTime, incentive.StartTimestamp())
 }
+
+// TestExternalIncentivesGetPanicsOnMissingId pins the lookup contract: get
+// aborts on an unknown id instead of returning nil, so callers must not
+// nil-check its result.
+func TestExternalIncentivesGetPanicsOnMissingId(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	incentives := getMockInstance().getExternalIncentives()
+	uassert.False(t, incentives.Has("missing-incentive-id"))
+	uassert.PanicsContains(t, cur, "not found", func() {
+		incentives.get("missing-incentive-id")
+	})
+}
+
+// TestDiscoveredIncentiveIdsExistInTree asserts the start-time index never
+// yields an id absent from the incentive tree, which is what makes the
+// panicking get() safe on the discovery paths.
+func TestDiscoveredIncentiveIdsExistInTree(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "discovery-consistency-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	incentives := instance.getExternalIncentives()
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 7000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("inc-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		incentives.set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := instance.getExternalIncentiveIdsBy(poolPath, 0, 10000)
+	uassert.Equal(t, len(starts), len(discovered))
+	for _, incentiveId := range discovered {
+		uassert.True(t, incentives.Has(incentiveId))
+		uassert.Equal(t, incentiveId, incentives.get(incentiveId).IncentiveId())
+	}
+}
