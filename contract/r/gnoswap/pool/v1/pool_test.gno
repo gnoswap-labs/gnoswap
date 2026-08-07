@@ -1122,8 +1122,8 @@ func TestCollect(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedOwed1After, utils.FormatInt(positionAfter.TokensOwed1()),
 				"TokensOwed1 should decrease by collected amount")
 
-			// Verify Collect never stores negative pool balances.
-			validateCollectInvariant(t, pool)
+			// Verify pool balance >= tokensOwed invariant
+			validateCollectInvariant(t, pool, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
 
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
@@ -1175,8 +1175,7 @@ func TestCollect(cur realm, t *testing.T) {
 		positionAfter := mustGetPositionByPool(pool, positionKey)
 		uassert.Equal(t, utils.FormatInt(owed0Before), utils.FormatInt(positionAfter.TokensOwed0()),
 			"TokensOwed0 must stay unchanged after revert")
-		uassert.True(t, pool.BalanceToken0() >= 0,
-			"Pool balance0 must never become negative")
+		validateNonNegativeBalances(t, pool)
 		uassert.Equal(t, int64(1), pool.BalanceToken0(),
 			"Pool balance0 must stay at the forced value after revert")
 
@@ -1184,8 +1183,25 @@ func TestCollect(cur realm, t *testing.T) {
 	})
 }
 
-// validateCollectInvariant validates collect never stores negative pool balances.
-func validateCollectInvariant(t *testing.T, pool *pl.Pool) {
+// validateCollectInvariant validates the normal-path invariant that the pool's
+// internal balance covers the position's outstanding owed amounts.
+func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
+	t.Helper()
+	positionKey := getPositionKey(tickLower, tickUpper)
+	position := mustGetPositionByPool(pool, positionKey)
+
+	uassert.True(t, pool.BalanceToken0() >= position.TokensOwed0(),
+		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
+			utils.FormatInt(pool.BalanceToken0()), utils.FormatInt(position.TokensOwed0())))
+	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
+		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
+			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
+}
+
+// validateNonNegativeBalances validates only that Collect never stores a
+// negative balance. Used by the forced-desync case, where the setup
+// deliberately violates the stronger invariant above.
+func validateNonNegativeBalances(t *testing.T, pool *pl.Pool) {
 	t.Helper()
 
 	uassert.True(t, pool.BalanceToken0() >= 0,

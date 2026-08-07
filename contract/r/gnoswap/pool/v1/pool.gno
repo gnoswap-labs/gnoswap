@@ -196,6 +196,11 @@ func (i *poolV1) Burn(
 //   - amount0: Token0 amount transferred (before any withdrawal fees)
 //   - amount1: Token1 amount transferred (before any withdrawal fees)
 //
+// The collected amount is capped by the position's tokensOwed. It is NOT
+// capped by the pool's internal balance: a balance short of the owed amount
+// means the internal ledger has drifted, so Collect reverts rather than
+// silently paying out less.
+//
 // Note: Withdrawal fees are applied by the position contract, not here.
 // Only callable by position contract.
 func (i *poolV1) Collect(
