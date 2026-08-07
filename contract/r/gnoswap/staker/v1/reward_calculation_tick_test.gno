@@ -415,3 +415,46 @@ func TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks(cur realm, t *testing
 		t.Fatal("swapStartHook must not create a swap batch for a pool without staked ticks")
 	}
 }
+
+// TestProcessBatchedTickCrosses_SkipsPrunedTick verifies batch processing
+// tolerates a tick removed between cross accumulation and batch processing.
+// A pruned tick has zero staked gross liquidity and no reward weight, so it
+// must be skipped rather than dereferenced.
+func TestProcessBatchedTickCrosses_SkipsPrunedTick(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+	batchTime := int64(1010)
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.modifyDeposit(liquidity, startTime, 5)
+
+	tick := poolResolver.GetOrNewTick(10)
+	tickResolver := NewTickResolver(tick)
+	tickResolver.modifyDepositUpper(startTime, liquidity)
+	tickResolver.modifyDepositLower(startTime, liquidity)
+	pool.Ticks().SetTick(10, tick)
+
+	instance.getPools().set(poolPath, pool)
+	instance.swapStartHook(0, cur, poolPath, batchTime)
+	instance.tickCrossHook(0, cur, poolPath, 10, false, batchTime)
+
+	batch := instance.store.GetCurrentSwapBatch()
+	if crosses := batch.Crosses(); len(crosses) != 1 {
+		t.Fatalf("batch crosses length = %d, want 1", len(crosses))
+	}
+
+	// Prune the tick after its cross was already accumulated.
+	pool.Ticks().SetTick(10, sr.NewTick(10))
+	uassert.False(t, pool.Ticks().Has(10))
+
+	var hookErr error
+	uassert.NotAborts(t, cur, func() {
+		hookErr = instance.swapEndHook(0, cur, poolPath)
+	})
+	uassert.NoError(t, hookErr)
+}
