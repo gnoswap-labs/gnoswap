@@ -2399,3 +2399,41 @@ func TestDiscoveredIncentiveIdsExistInTree(cur realm, t *testing.T) {
 		uassert.Equal(t, incentiveId, incentives.get(incentiveId).IncentiveId())
 	}
 }
+
+// TestStakeScanLowerBoundClamp covers the stake-time scan window when the chain
+// time is under 365 days: the raw lower bound is negative and the index rejects
+// it, so the bound must be clamped to 0.
+func TestStakeScanLowerBoundClamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	uassert.Equal(t, int64(0), stakeScanLowerBound(0))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(1000))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS-1))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS))
+	uassert.Equal(t, int64(500), stakeScanLowerBound(TIMESTAMP_365DAYS+500))
+
+	poolPath := "scan-clamp-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	incentive := sr.NewExternalIncentive(
+		"inc-clamp", poolPath, GNS_TOKEN_KEY, 1000,
+		500, 1500, testutils.TestAddress("creator"), 0, 0, 0,
+	)
+	instance.getExternalIncentives().set("inc-clamp", incentive)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	currentTime := int64(1000)
+
+	// The unclamped bound aborts.
+	uassert.AbortsContains(t, cur, "negative value not supported", func() {
+		instance.getExternalIncentiveIdsBy(poolPath, currentTime-TIMESTAMP_365DAYS, currentTime)
+	})
+
+	// The clamped bound still finds the active incentive.
+	ids := instance.getExternalIncentiveIdsBy(poolPath, stakeScanLowerBound(currentTime), currentTime)
+	uassert.Equal(t, 1, len(ids))
+	uassert.Equal(t, "inc-clamp", ids[0])
+}

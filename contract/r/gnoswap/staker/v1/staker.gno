@@ -171,6 +171,17 @@ func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSe
 	}
 }
 
+// stakeScanLowerBound returns the lower bound of the stake-time incentive scan
+// window, clamped to 0. The start-time index encodes keys as unsigned, so a
+// negative bound aborts when the chain time is under TIMESTAMP_365DAYS.
+func stakeScanLowerBound(currentTime int64) int64 {
+	if currentTime < TIMESTAMP_365DAYS {
+		return 0
+	}
+
+	return currentTime - TIMESTAMP_365DAYS
+}
+
 // StakeToken stakes an LP position NFT to earn rewards.
 //
 // Transfers position NFT to staker and begins reward accumulation.
@@ -251,17 +262,12 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// when staking, add new incentives to deposit.
 	//
-	// The per-pool start-time index is scanned over the window
-	// [currentTime - TIMESTAMP_365DAYS, currentTime]. Since an incentive's
-	// duration is at most TIMESTAMP_365DAYS (365 days), any incentive that is
-	// still active at currentTime satisfies
-	// startTimestamp >= currentTime - 365d, so an incentive whose start lies
-	// before this window is guaranteed to have ended and yields no reward
-	// (filtered by the EndTimestamp check below). Scanning from 0 is therefore
-	// unnecessary: the bounded window finds every incentive that could
-	// possibly be relevant, keeping the stake-time discovery cost independent
-	// of how many old incentives the pool has accumulated.
-	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, currentTime-TIMESTAMP_365DAYS, currentTime)
+	// Incentive duration is capped at TIMESTAMP_365DAYS, so anything still
+	// active at currentTime starts within [currentTime-365d, currentTime].
+	// Incentives starting before that window have ended and are filtered by
+	// the EndTimestamp check below.
+	//
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, stakeScanLowerBound(currentTime), currentTime)
 
 	for _, incentiveId := range currentIncentiveIds {
 		incentive := s.getExternalIncentives().get(incentiveId)
