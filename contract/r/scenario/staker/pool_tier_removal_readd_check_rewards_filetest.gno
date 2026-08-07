@@ -10,11 +10,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -87,7 +89,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 3. Skip warmup period")
-	collectEmissionRewardsWithSkipHeights(cur, 86400 * 30)
+	collectEmissionRewardsWithSkipHeights(cur, 86400*30)
 	println()
 
 	println("[SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
@@ -139,6 +141,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")

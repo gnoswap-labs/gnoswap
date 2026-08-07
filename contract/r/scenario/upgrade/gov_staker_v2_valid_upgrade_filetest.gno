@@ -17,13 +17,13 @@
 //  4. Upgrade to v2_valid.
 //  5. With v2_valid: MUTATE the v1-created structures via every reachable
 //     state-changing entry point exposed by proxy.gno:
-//       - SetUnDelegationLockupPeriodByAdmin (admin config RMW)
-//       - Delegate            (RMW delegation map/tree + reward state)
-//       - Redelegate          (moves delegation between targets; RMW map/tree)
-//       - Undelegate          (RMW delegation map/tree + undelegation withdraws)
-//       - CollectUndelegatedGns (RMW undelegation withdraw structures)
-//       - CollectReward       (RMW reward-state struct)
-//       - CleanStakerDelegationSnapshotByAdmin (RMW snapshot history trees)
+//     - SetUnDelegationLockupPeriodByAdmin (admin config RMW)
+//     - Delegate            (RMW delegation map/tree + reward state)
+//     - Redelegate          (moves delegation between targets; RMW map/tree)
+//     - Undelegate          (RMW delegation map/tree + undelegation withdraws)
+//     - CollectUndelegatedGns (RMW undelegation withdraw structures)
+//     - CollectReward       (RMW reward-state struct)
+//     - CleanStakerDelegationSnapshotByAdmin (RMW snapshot history trees)
 //     All of these read-modify-write v1-allocated maps / BPTrees / reward
 //     structs; a broken migration would panic here with a readonly-taint error.
 //     SetAmountByProjectWallet and CollectRewardFromLaunchPad are launchpad
@@ -36,6 +36,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/gnoswap/gnsmath"
@@ -159,6 +161,7 @@ func mintPosition(cur realm) {
 
 func initEmission(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	staker.SetPoolTier(cross(cur), barFoo3000PoolPath, 1)

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -86,6 +88,7 @@ func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set emission start time")
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 5%")

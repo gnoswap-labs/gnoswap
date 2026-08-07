@@ -10,10 +10,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -75,6 +77,7 @@ func main(cur realm) {
 
 func setup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 
@@ -98,7 +101,8 @@ func setup(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 	positionId1 = id1
 
 	id2, _, _, _ := position.Mint(
@@ -108,7 +112,8 @@ func setup(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 	positionId2 = id2
 
 	println("[EXPECTED] Position 1:", positionId1)
@@ -147,7 +152,8 @@ func revokeOperator(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 
 	gnft.SetApprovalForAll(cross(cur), bobAddr, false)
 	println("[INFO] Alice revoked Bob's operator status")
