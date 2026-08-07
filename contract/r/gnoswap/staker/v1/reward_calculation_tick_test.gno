@@ -6,6 +6,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -502,4 +503,80 @@ func TestBoundaryTicksOutliveTheirDeposits(cur realm, t *testing.T) {
 	uassert.False(t, pool.Ticks().Has(-10))
 	uassert.False(t, pool.Ticks().Has(10))
 	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+}
+
+// TestRewardAfterUnstakeRestakeSameRange covers a deposit restaked into the
+// same range after its boundary ticks were pruned. The first deposit crosses a
+// boundary, so the pruned ticks carried outside accumulation; the restaked
+// deposit must still earn exactly the global accumulation growth over the time
+// it is in range, and nothing while out of range.
+func TestRewardAfterUnstakeRestakeSameRange(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	liquidity := i256.NewInt(1_000_000)
+	pool := sr.NewPool("restake-pool", 0)
+	poolResolver := NewPoolResolver(pool)
+
+	modifyRange := func(at int64, delta *i256.Int, currentTick int32) {
+		poolResolver.modifyDeposit(delta, at, currentTick)
+
+		lower := poolResolver.GetOrNewTick(-10)
+		NewTickResolver(lower).modifyDepositLower(at, delta)
+		pool.Ticks().SetTick(-10, lower)
+
+		upper := poolResolver.GetOrNewTick(10)
+		NewTickResolver(upper).modifyDepositUpper(at, delta)
+		pool.Ticks().SetTick(10, upper)
+	}
+
+	crossTick := func(at int64, tickId int32, zeroForOne bool) {
+		tick := pool.Ticks().Get(tickId)
+		delta := tick.StakedLiquidityDelta()
+		nextTick := tickId
+		if zeroForOne {
+			delta = i256.Zero().Neg(delta)
+			nextTick--
+		}
+		newAcc := poolResolver.modifyDeposit(delta, at, nextTick)
+		NewTickResolver(tick).updateCurrentOutsideAccumulation(at, newAcc)
+	}
+
+	globalAcc := func(at int64) *u256.Uint {
+		return poolResolver.calculateGlobalRewardRatioAccumulation(at, poolResolver.CurrentStakedLiquidity(at))
+	}
+
+	// First deposit: staked at 100, crosses the upper boundary out at 200 and
+	// back in at 250 so the boundary tick accumulates outside values, then
+	// unstaked at 300 while in range.
+	modifyRange(100, liquidity, 0)
+	crossTick(200, 10, false)
+	uassert.False(t, NewTickResolver(pool.Ticks().Get(10)).CurrentOutsideAccumulation(200).IsZero(),
+		"the upper boundary must carry outside accumulation before pruning")
+	crossTick(250, 10, true)
+	modifyRange(300, i256.Zero().Neg(liquidity), 0)
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size(), "both boundaries must be pruned")
+
+	// Restake the same range at 500, back in range.
+	modifyRange(500, liquidity, 0)
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"), "restake-pool",
+		u256.NewUint(1_000_000), 500, -10, 10, nil,
+	)
+
+	// In range for [500, 900]: earns exactly the global accumulation growth.
+	inRangeStart := poolResolver.CalculateRawRewardForPosition(500, 0, deposit)
+	inRangeEnd := poolResolver.CalculateRawRewardForPosition(900, 0, deposit)
+	inRangeDelta, overflow := u256.Zero().SubOverflow(inRangeEnd, inRangeStart)
+	uassert.False(t, overflow, "in-range accumulation must not underflow after a restake")
+	uassert.Equal(t,
+		u256.Zero().Sub(globalAcc(900), globalAcc(500)).ToString(),
+		inRangeDelta.ToString(),
+	)
+
+	// Cross out of range at 900; nothing accrues afterwards.
+	crossTick(900, 10, false)
+	outOfRangeEnd := poolResolver.CalculateRawRewardForPosition(1300, 20, deposit)
+	outOfRangeDelta, overflow := u256.Zero().SubOverflow(outOfRangeEnd, inRangeEnd)
+	uassert.False(t, overflow, "out-of-range accumulation must not underflow")
+	uassert.True(t, outOfRangeDelta.IsZero(), "an out-of-range deposit must not accrue")
 }
