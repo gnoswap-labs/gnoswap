@@ -321,7 +321,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	// Get accumulator values for reward calculation tracking
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+	globalAccX128 := poolResolver.globalRewardRatioAccumulationAt(currentTime).ToString()
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
 	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
@@ -539,7 +539,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
 		poolResolver := NewPoolResolver(pool)
-		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+		globalAccX128 := poolResolver.globalRewardRatioAccumulationAt(currentTime).ToString()
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 
 		tickLower := deposit.TickLower()
@@ -662,7 +662,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		poolResolver := NewPoolResolver(pool)
 
 		// Get accumulator values for reward calculation tracking
-		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+		globalAccX128 := poolResolver.globalRewardRatioAccumulationAt(currentTime).ToString()
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 		lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
 		upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
@@ -752,7 +752,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	poolResolver := NewPoolResolver(pool)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+	globalAccX128 := poolResolver.globalRewardRatioAccumulationAt(currentTime).ToString()
 	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 
 	previousRealm := rlm.Previous()
