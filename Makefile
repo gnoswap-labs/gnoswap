@@ -4,6 +4,8 @@ TMP_PATH := $(PROJECT_ROOT)/tmp
 GNO_PATH := $(TMP_PATH)/gno
 GNOSWAP_PATH := $(TMP_PATH)/gnoswap
 SCRIPT := $(PROJECT_ROOT)/scripts/test.sh
+GNO_REPO ?= $(HOME)/gno-core
+GNO_MAX_GAS ?= 10000000000
 
 include $(PROJECT_ROOT)/scripts/test_values.mk
 
@@ -91,6 +93,15 @@ integration-test-run:
 integration-test-build:
 	@docker-compose build
 
+.PHONY: gnodev
+gnodev:
+	$(MAKE) -C "$(GNO_REPO)/contribs/gnodev" build
+	"$(GNO_REPO)/contribs/gnodev/build/gnodev" local -chain-id dev \
+		-log-format json -max-gas $(GNO_MAX_GAS) \
+		-add-account test1=1000000000000000ugnot \
+		-add-account gnoswap_admin=1000000000000000ugnot \
+		-paths gno.land/p/nt/bptree/v0,gno.land/p/nt/ufmt/v0,gno.land/p/onbloc/json,gno.land/p/nt/ownable/v0,gno.land/p/demo/tokens/grc20,gno.land/p/demo/tokens/grc721,gno.land/r/demo/defi/foo20,gno.land/r/sys/users,gno.land/r/gnoland/wugnot,gno.land/r/demo/defi/grc20reg
+
 # 📌 Gas report generation
 BLESS_DIR := $(PROJECT_ROOT)/tests/integration/bless
 GNO_INTEGRATION_DIR ?= $(HOME)/gno/gno.land/pkg/integration
@@ -144,6 +155,7 @@ help:
 	@echo "  make integration-test-list            List available integration tests"
 	@echo "  make integration-test-run TEST=<name> Run specific integration test"
 	@echo "  make integration-test-build           Build Docker image for integration tests"
+	@echo "  make gnodev GNO_REPO=<path>            Build and run gnodev from a Gno repository"
 	@echo ""
 	@echo "  make bless-install                    Install bless tool to GOPATH/bin"
 	@echo "  make gas-report TEST=<name>           Generate gas measurement report (markdown)"
