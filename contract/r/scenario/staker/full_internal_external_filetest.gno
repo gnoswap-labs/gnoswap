@@ -5,17 +5,18 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -147,6 +148,7 @@ func main(cur realm) {
 
 func initAccount(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -179,13 +181,18 @@ func initAccountPostDeposit(cur realm) {
 
 func createPoolWugnotGns3000Tier01(cur realm) {
 	testing.SetRealm(adminRealm)
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross(cur), 0)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.SetPoolCreationFee(cross(cur), 0)
+	}
 
 	println("[INFO] approve gns and create pool")
 	gns.Approve(cross(cur), poolAddr, maxInt64)
-	pl.CreatePool(cross(cur), wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(cross(cur), wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	}
 
 	totalSupply := gns.TotalSupply()
 	ufmt.Printf("[EXPECTED] gns total supply: %d\n", totalSupply)

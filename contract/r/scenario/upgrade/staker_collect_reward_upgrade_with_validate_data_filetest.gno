@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-
+	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -87,18 +87,20 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 9. Collect reward with v2_invalid (should panic)")
-	withAbortsWithMessage(cur, func() {
-		waitBlocks(cur, 10)
-		collectReward(cur, positionId)
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			waitBlocks(cur, 10)
+			collectReward(cur, positionId)
+		},
 		"[EXPECTED] Collect reward panics correctly with v2_invalid",
 	)
 	println()
 
 	println("[SCENARIO] 10. Check staking info with v2_invalid (should panic)")
-	withAbortsWithMessage(cur, func() {
-		checkStakingInfo(cur, positionId)
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			checkStakingInfo(cur, positionId)
+		},
 		"[EXPECTED] Check staking info panics correctly with v2_invalid",
 	)
 	println()
@@ -126,6 +128,7 @@ func initialize(cur realm) {
 	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	println("[EXPECTED] Initialized staker contract with v1:", stakerV1Path)
 
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+5)
 	testing.SkipHeights(1)
 }

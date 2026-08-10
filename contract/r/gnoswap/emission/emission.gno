@@ -14,7 +14,14 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-const totalDistributionDuration = 12 * 365 * 24 * 60 * 60 // 12 years
+const (
+	totalDistributionDuration = 12 * 365 * 24 * 60 * 60 // 12 years
+
+	// DefaultInitialPoolTierPath is the canonical default initial pool that must
+	// exist before emission distribution can start. The pool contract registers a
+	// checker (SetDefaultInitialPoolChecker) that verifies this pool exists.
+	DefaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+)
 
 var (
 	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
@@ -33,6 +40,11 @@ var (
 	// onDistributionPctChangeCallback is called when distribution percentages change
 	// This allows external contracts (like staker) to update their caches
 	onDistributionPctChangeCallback func(cur realm, emissionAmountPerSecond int64)
+
+	// defaultInitialPoolChecker verifies the canonical default initial pool exists.
+	// It is registered by pool/v1 at initialization time so that emission does not
+	// need a compile-time dependency on the pool realm.
+	defaultInitialPoolChecker func(poolPath string) bool
 )
 
 func init(cur realm) {
@@ -180,6 +192,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	caller := cur.Previous().Address()
 	access.AssertIsAdminOrGovernance(caller)
+	assertDefaultInitialPoolExists()
 
 	if startTimestamp <= 0 {
 		panic("distribution start timestamp must be positive")
@@ -234,4 +247,23 @@ func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emis
 		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
 		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
 	}
+}
+
+// SetDefaultInitialPoolChecker registers the callback that verifies the
+// canonical default initial pool exists before emission starts.
+//
+// The checker receives the pool path as a parameter so emission owns the
+// canonical path policy (DefaultInitialPoolTierPath) while pool supplies only
+// the generic "does this pool exist" capability.
+//
+// Only callable by the pool contract.
+func SetDefaultInitialPoolChecker(cur realm, checker func(poolPath string) bool) {
+	caller := cur.Previous().Address()
+	access.AssertIsPool(caller)
+
+	if checker == nil {
+		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool checker cannot be nil"))
+	}
+
+	defaultInitialPoolChecker = checker
 }

@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -93,6 +95,7 @@ func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Set emission start time
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Set initial distribution: 75% to staker
@@ -100,8 +103,8 @@ func initSystem(cur realm) {
 		cross(cur),
 		7500, // liquidityStakerPct
 		2000, // devOpsPct
-		500, // communityPoolPct
-		0, // govStakerPct
+		500,  // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	// Remove unstaking fee for clearer reward calculations
@@ -194,7 +197,7 @@ func changeDistribution(cur realm) {
 		5000, // liquidityStakerPct
 		3000, // devOpsPct
 		2000, // communityPoolPct
-		0, // govStakerPct
+		0,    // govStakerPct
 	)
 
 	// Check emission rate after change
