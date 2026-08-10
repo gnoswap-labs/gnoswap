@@ -327,8 +327,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	// Get accumulator values for reward calculation tracking
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
+	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
 	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
 	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
@@ -350,7 +349,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128,
+		"globalRewardRatioAccX128", globalAccX128.ToString(),
 		"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 	)
@@ -442,6 +441,16 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	// get all internal and external rewards
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
 
+	// Snapshot the accumulator values used for reward calculation tracking.
+	pool, _ := s.getPools().Get(deposit.TargetPoolPath())
+	poolResolver := NewPoolResolver(pool)
+	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
+
+	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
+	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
+	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
+	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
+
 	// transfer external rewards to user
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 	toUserExternalReward := make(map[string]int64)
@@ -531,16 +540,6 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"currentHeight", utils.FormatInt(blockHeight),
 		)
 
-		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
-		poolResolver := NewPoolResolver(pool)
-		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-
-		tickLower := deposit.TickLower()
-		tickUpper := deposit.TickUpper()
-		lowerOutsideAccX128 := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).CurrentOutsideAccumulation(currentTime)
-		upperOutsideAccX128 := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).CurrentOutsideAccumulation(currentTime)
-
 		chain.Emit(
 			"CollectReward",
 			"prevAddr", previousRealm.Address().String(),
@@ -557,7 +556,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"currentTime", utils.FormatInt(currentTime),
 			"currentHeight", utils.FormatInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
-			"globalRewardRatioAccX128", globalAccX128,
+			"globalRewardRatioAccX128", globalAccX128.ToString(),
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 		)
@@ -651,18 +650,6 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	rewardPenalty := utils.FormatInt(internalRewardPenalty)
 
 	if !skipInternalUpdate {
-		poolPath := depositResolver.TargetPoolPath()
-		pool, _ := s.getPools().Get(poolPath)
-		poolResolver := NewPoolResolver(pool)
-
-		// Get accumulator values for reward calculation tracking
-		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-		lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
-		upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
-		lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
-		upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
-
 		chain.Emit(
 			"CollectReward",
 			"prevAddr", previousRealm.Address().String(),
@@ -679,7 +666,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"currentTime", utils.FormatInt(currentTime),
 			"currentHeight", utils.FormatInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
-			"globalRewardRatioAccX128", globalAccX128,
+			"globalRewardRatioAccX128", globalAccX128.ToString(),
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 		)
@@ -746,8 +733,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	poolResolver := NewPoolResolver(pool)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
+	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -766,7 +752,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 		"to", deposit.Owner().String(),
 		"currentTick", utils.FormatInt(currentTick),
 		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128,
+		"globalRewardRatioAccX128", globalAccX128.ToString(),
 	)
 
 	return poolPath
