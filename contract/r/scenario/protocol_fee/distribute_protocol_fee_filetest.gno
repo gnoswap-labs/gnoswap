@@ -59,14 +59,16 @@ func main(cur realm) {
 	println("[SCENARIO] 3. Distribute protocol fees")
 	distributeProtocolFees(cur)
 	println()
+
+	recordProtocolFeesAfterDistribution(cur)
 }
 
 func setupTokens(cur realm) {
 	println("[INFO] Funding and approving bar tokens from staker")
-	fundAndApproveBarFromStaker(cur, 1000)
+	fundAndApproveBarFromStaker(cur, 2000)
 
 	println("[INFO] Funding and approving qux tokens from staker")
-	fundAndApproveQuxFromStaker(cur, 1000)
+	fundAndApproveQuxFromStaker(cur, 2000)
 
 	println("[EXPECTED] Bar balance of protocol_fee:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance of protocol_fee:", qux.BalanceOf(protocolFeeAddr))
@@ -94,6 +96,16 @@ func distributeProtocolFees(cur realm) {
 	println("[EXPECTED] Bar balance of govStaker after distribution:", bar.BalanceOf(govStakerAddr))
 	println("[EXPECTED] Qux balance of protocol_fee after distribution:", qux.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance of govStaker after distribution:", qux.BalanceOf(govStakerAddr))
+}
+
+func recordProtocolFeesAfterDistribution(cur realm) {
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross(cur), protocolFeeAddr, 1000)
+	qux.Approve(cross(cur), protocolFeeAddr, 1000)
+
+	// Re-adding a token after distribution must not panic after its reservation is removed.
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/bar.BAR", 1000)
+	pf.AddToProtocolFee(cross(cur), "gno.land/r/onbloc/qux.QUX", 1000)
 }
 
 // Output:

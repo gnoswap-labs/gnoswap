@@ -39,54 +39,103 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	reservedTokens := pfs.ReservedTokens()
 
 	for _, token := range reservedTokens {
-		toDevOpsAmount := gnsmath.SafeSubInt64(
-			pfs.GetAccuTransferToDevOpsByTokenPath(token),
-			pfs.GetActualDistributedToDevOpsByTokenPath(token),
+		pf.distributeProtocolFeeForToken(
+			0,
+			rlm,
+			pfs,
+			protocolFeeAddr,
+			token,
 		)
-		toGovStakerAmount := gnsmath.SafeSubInt64(
-			pfs.GetAccuTransferToGovStakerByTokenPath(token),
-			pfs.GetActualDistributedToGovStakerByTokenPath(token),
-		)
-
-		amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
-		balance := common.BalanceOf(token, protocolFeeAddr)
-
-		// amount should be less than or equal to balance
-		if amount > balance {
-			panic(makeErrorWithDetail(
-				errInvalidAmount,
-				ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
-			))
-		}
-
-		if amount <= 0 {
-			continue
-		}
-
-		// Distribute to DevOps
-		if err := pfs.distributeToDevOps(0, rlm, token, toDevOpsAmount); err != nil {
-			panic(err)
-		}
-
-		// Distribute to Gov/Staker
-		if err := pfs.distributeToGovStaker(0, rlm, token, toGovStakerAmount); err != nil {
-			panic(err)
-		}
 	}
-	if err := pfs.clearReservedTokens(0, rlm); err != nil {
+}
+
+// DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
+func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	assertIsAdminOrGovStaker(prev.Address())
+
+	if halt.IsHaltedWithdraw() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	pfs := pf.getProtocolFeeState()
+
+	if !containsString(pfs.ReservedTokens(), tokenPath) {
+		return
+	}
+
+	pf.distributeProtocolFeeForToken(
+		0,
+		rlm,
+		pfs,
+		protocolFeeAddr,
+		tokenPath,
+	)
+}
+
+// distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
+func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string) {
+	toDevOpsAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	)
+	toGovStakerAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	)
+
+	amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
+	balance := common.BalanceOf(tokenPath, protocolFeeAddr)
+
+	// amount should be less than or equal to balance
+	if amount > balance {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
+		))
+	}
+
+	if err := pfs.removeReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
+
+	if amount <= 0 {
+		return
+	}
+
+	// distributeToDevOps and distributeToGovStaker record history before transferring.
+	if err := pfs.distributeToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {
+		panic(err)
+	}
+	if err := pfs.distributeToGovStaker(0, rlm, tokenPath, toGovStakerAmount); err != nil {
+		panic(err)
+	}
+
+	prev := rlm.Previous()
 
 	chain.Emit(
 		"TransferProtocolFee",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
+		"tokenPath", tokenPath,
+		"toDevOpsAmount", strconv.FormatInt(toDevOpsAmount, 10),
+		"toGovStakerAmount", strconv.FormatInt(toGovStakerAmount, 10),
+		"amount", strconv.FormatInt(amount, 10),
 	)
 }
 
-// DistributeProtocolFeeByTokenPath is retained for ABI compatibility while token-path distribution is deferred.
-func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
-	assertNotImplementYet()
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 // SetDevOpsPct sets the devOpsPct.

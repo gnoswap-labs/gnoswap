@@ -18,8 +18,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/staker"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -69,15 +69,25 @@ func main(cur realm) {
 	checkClaimableRewards(cur)
 	println()
 
-	println("[SCENARIO] 6. Collect protocol fee reward for alice")
-	collectAndCheck(cur, aliceAddr, 999, 249)
+	println("[SCENARIO] 6. Collect only bar protocol fee reward for alice")
+	collectProtocolFeeRewardAndCheck(cur, aliceAddr, barPath, 999, 0)
+	checkClaimableProtocolFees(cur, aliceAddr, 0, 249)
 	println()
 
-	println("[SCENARIO] 7. Collect protocol fee reward for bob")
+	println("[SCENARIO] 7. Collect alice bar protocol fee reward again")
+	collectProtocolFeeRewardAndCheck(cur, aliceAddr, barPath, 0, 0)
+	checkClaimableProtocolFees(cur, aliceAddr, 0, 249)
+	println()
+
+	println("[SCENARIO] 8. Bulk collect remaining reward for alice")
+	collectAndCheck(cur, aliceAddr, 0, 249)
+	println()
+
+	println("[SCENARIO] 9. Collect protocol fee reward for bob")
 	collectAndCheck(cur, bobAddr, 0, 249)
 	println()
 
-	println("[SCENARIO] 8. Check remaining gov/staker balances")
+	println("[SCENARIO] 10. Check remaining gov/staker balances")
 	checkRemainingRewards(cur)
 	println()
 }
@@ -155,6 +165,34 @@ func collectAndCheck(cur realm, user address, expectedBar, expectedQux int64) {
 	ufmt.Printf("[EXPECTED] %s collected qux: %d\n", user, quxCollected)
 }
 
+func collectProtocolFeeRewardAndCheck(cur realm, user address, tokenPath string, expectedBar, expectedQux int64) {
+	testing.SetRealm(testing.NewUserRealm(user))
+	barBefore := common.BalanceOf(barPath, user)
+	quxBefore := common.BalanceOf(quxPath, user)
+
+	staker.CollectProtocolFeeReward(cross(cur), tokenPath)
+
+	barCollected := common.BalanceOf(barPath, user) - barBefore
+	quxCollected := common.BalanceOf(quxPath, user) - quxBefore
+
+	assertInt64Equal(cur, barCollected, expectedBar, user.String()+" collected bar")
+	assertInt64Equal(cur, quxCollected, expectedQux, user.String()+" collected qux")
+
+	ufmt.Printf("[EXPECTED] %s collected bar: %d\n", user, barCollected)
+	ufmt.Printf("[EXPECTED] %s collected qux: %d\n", user, quxCollected)
+}
+
+func checkClaimableProtocolFees(cur realm, user address, expectedBar, expectedQux int64) {
+	testing.SetRealm(gnoStakerRealm)
+	_, protocolFees, _ := staker.GetClaimableRewardByAddress(user)
+
+	assertInt64Equal(cur, protocolFees[barPath], expectedBar, user.String()+" claimable bar")
+	assertInt64Equal(cur, protocolFees[quxPath], expectedQux, user.String()+" claimable qux")
+
+	ufmt.Printf("[EXPECTED] %s claimable bar: %d\n", user, protocolFees[barPath])
+	ufmt.Printf("[EXPECTED] %s claimable qux: %d\n", user, protocolFees[quxPath])
+}
+
 func checkRemainingRewards(cur realm) {
 	remainingBar := common.BalanceOf(barPath, gnoStakerAddr)
 	remainingQux := common.BalanceOf(quxPath, gnoStakerAddr)
@@ -191,14 +229,26 @@ func assertInt64Equal(cur realm, actual, expected int64, label string) {
 // [EXPECTED] bob claimable bar: 0
 // [EXPECTED] bob claimable qux: 249
 //
-// [SCENARIO] 6. Collect protocol fee reward for alice
+// [SCENARIO] 6. Collect only bar protocol fee reward for alice
 // [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 999
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected qux: 0
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh claimable bar: 0
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh claimable qux: 249
+//
+// [SCENARIO] 7. Collect alice bar protocol fee reward again
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 0
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected qux: 0
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh claimable bar: 0
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh claimable qux: 249
+//
+// [SCENARIO] 8. Bulk collect remaining reward for alice
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 0
 // [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected qux: 249
 //
-// [SCENARIO] 7. Collect protocol fee reward for bob
+// [SCENARIO] 9. Collect protocol fee reward for bob
 // [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected bar: 0
 // [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected qux: 249
 //
-// [SCENARIO] 8. Check remaining gov/staker balances
+// [SCENARIO] 10. Check remaining gov/staker balances
 // [EXPECTED] remaining bar reward: 1
 // [EXPECTED] remaining qux reward: 2

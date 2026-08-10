@@ -95,14 +95,18 @@ func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumul
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[string]int64) {
-	p.protocolFeeAmounts = protocolFeeAmounts
+	copied := make(map[string]int64, len(protocolFeeAmounts))
+	for token, amount := range protocolFeeAmounts {
+		copied[token] = amount
+	}
+	p.protocolFeeAmounts = copied
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken(token string, value *u256.Uint) {
 	if p.accumulatedProtocolFeeX128PerStake == nil {
 		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
 	}
-	p.accumulatedProtocolFeeX128PerStake[token] = value
+	p.accumulatedProtocolFeeX128PerStake[token] = u256.Zero().Set(value)
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmountForToken(token string, amount int64) {

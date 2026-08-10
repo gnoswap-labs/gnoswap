@@ -77,7 +77,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	currentTimestamp int64,
 ) (map[string]int64, error) {
 	// Don't calculate rewards for past timestamps
-	if p.GetAccumulatedTimestamp() >= currentTimestamp {
+	if p.GetAccumulatedTimestamp() > currentTimestamp {
 		return make(map[string]int64), nil
 	}
 
@@ -119,6 +119,34 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	}
 
 	return rewardAmounts, nil
+}
+
+// calculateClaimableRewardForToken calculates newly earned rewards for exactly one token.
+func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewardForToken(
+	tokenPath string,
+	accumulatedRewardX128PerStake *u256.Uint,
+) (int64, error) {
+	if accumulatedRewardX128PerStake == nil {
+		accumulatedRewardX128PerStake = u256.Zero()
+	}
+
+	rewardDebtX128 := p.GetRewardDebtX128ForToken(tokenPath)
+	if rewardDebtX128 == nil {
+		rewardDebtX128 = u256.Zero()
+	}
+
+	rewardDebtDeltaX128 := u256.Zero().Sub(
+		accumulatedRewardX128PerStake,
+		rewardDebtX128,
+	)
+
+	rewardAmount := u256.MulDiv(
+		rewardDebtDeltaX128,
+		u256.NewUintFromInt64(p.GetStakedAmount()),
+		consts.Q128(),
+	)
+
+	return gnsmath.SafeConvertToInt64(rewardAmount), nil
 }
 
 // addStake increases the staked amount for this address.
@@ -177,6 +205,17 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 	return currentClaimedRewards, nil
 }
 
+// claimRewardForToken claims exactly one token path without using the shared claimedTimestamp as a gate.
+func (p *ProtocolFeeRewardStateResolver) claimRewardForToken(currentTimestamp int64, tokenPath string) (int64, error) {
+	accumulatedReward := p.GetAccumulatedRewardForToken(tokenPath)
+	claimedReward := p.GetClaimedRewardForToken(tokenPath)
+	claimableReward := gnsmath.SafeSubInt64(accumulatedReward, claimedReward)
+
+	p.SetClaimedRewardForToken(tokenPath, accumulatedReward)
+
+	return claimableReward, nil
+}
+
 // updateRewardDebtX128 updates the reward debt and accumulates new rewards for all tokens.
 // This method should be called before any stake changes to ensure accurate reward tracking.
 //
@@ -188,7 +227,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	currentTimestamp int64,
 ) error {
 	// Don't update if we're looking at a past timestamp
-	if p.GetAccumulatedTimestamp() >= currentTimestamp {
+	if p.GetAccumulatedTimestamp() > currentTimestamp {
 		return nil
 	}
 
@@ -208,6 +247,30 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	p.SetAccumulatedTimestamp(currentTimestamp)
+
+	return nil
+}
+
+// updateRewardDebtX128ForToken updates reward debt and accumulated rewards for exactly one token.
+func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128ForToken(
+	tokenPath string,
+	accumulatedProtocolFeeX128PerStake *u256.Uint,
+	currentTimestamp int64,
+) error {
+	if accumulatedProtocolFeeX128PerStake == nil {
+		accumulatedProtocolFeeX128PerStake = u256.Zero()
+	}
+
+	rewardAmount, err := p.calculateClaimableRewardForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
+	if err != nil {
+		return err
+	}
+
+	p.SetRewardDebtX128ForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
+	p.SetAccumulatedRewardForToken(
+		tokenPath,
+		gnsmath.SafeAddInt64(p.GetAccumulatedRewardForToken(tokenPath), rewardAmount),
+	)
 
 	return nil
 }
@@ -273,4 +336,17 @@ func (p *ProtocolFeeRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
 	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	return p.claimRewards(currentTimestamp)
+}
+
+// claimRewardForTokenWithUpdateRewardDebtX128 claims exactly one protocol fee token.
+func (p *ProtocolFeeRewardStateResolver) claimRewardForTokenWithUpdateRewardDebtX128(
+	tokenPath string,
+	accumulatedProtocolFeeX128PerStake *u256.Uint,
+	currentTimestamp int64,
+) (int64, error) {
+	if err := p.updateRewardDebtX128ForToken(tokenPath, accumulatedProtocolFeeX128PerStake, currentTimestamp); err != nil {
+		return 0, err
+	}
+
+	return p.claimRewardForToken(currentTimestamp, tokenPath)
 }

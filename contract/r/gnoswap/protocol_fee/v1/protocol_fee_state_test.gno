@@ -182,48 +182,28 @@ func TestProtocolFeeStateSetDevOpsPct(cur realm, t *testing.T) {
 	}
 }
 
-func TestProtocolFeeStateClearReservedTokens(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		initialData []string
-		expectedLen int
-	}{
-		{
-			name:        "clear empty reserved tokens",
-			initialData: []string{},
-			expectedLen: 0,
-		},
-		{
-			name:        "clear reserved tokens with single token",
-			initialData: []string{"token1"},
-			expectedLen: 0,
-		},
-		{
-			name:        "clear reserved tokens with multiple tokens",
-			initialData: []string{"token1", "token2", "token3"},
-			expectedLen: 0,
-		},
-	}
+func TestProtocolFeeStateRemoveReservedTokenPreservesOthers(cur realm, t *testing.T) {
+	pfs := newProtocolFeeStateInternal(t)
 
-	for _, test := range tests {
-		t.Run(test.name, func(cur realm, t *testing.T) {
-			pfs := newProtocolFeeStateInternal(t)
+	pfs.store.AddReservedToken(0, cur, "tokenA")
+	pfs.store.AddReservedToken(0, cur, "tokenB")
+	pfs.store.AddReservedToken(0, cur, "tokenC")
 
-			// Setup initial data
-			for _, token := range test.initialData {
-				pfs.store.AddReservedToken(0, cur, token)
-			}
+	err := pfs.removeReservedToken(0, cur, "tokenB")
+	uassert.NoError(t, err)
 
-			// Verify initial state
-			uassert.Equal(t, len(pfs.store.GetReservedTokens()), len(test.initialData))
+	reservedTokens := pfs.ReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "tokenA")
+	uassert.Equal(t, reservedTokens[1], "tokenC")
 
-			// Clear the list
-			pfs.clearReservedTokens(0, cur)
+	err = pfs.removeReservedToken(0, cur, "tokenX")
+	uassert.NoError(t, err)
 
-			// Verify final state
-			uassert.Equal(t, len(pfs.store.GetReservedTokens()), test.expectedLen)
-		})
-	}
+	reservedTokens = pfs.ReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "tokenA")
+	uassert.Equal(t, reservedTokens[1], "tokenC")
 }
 
 func TestProtocolFeeState_SetDevOpsPct_NegativeValues(cur realm, t *testing.T) {
@@ -529,39 +509,6 @@ func TestProtocolFeeState_RetrieveAmount_NonExistentKey(cur realm, t *testing.T)
 
 			// Then
 			uassert.Equal(t, result, tt.expectedAmt)
-		})
-	}
-}
-
-func TestProtocolFeeState_ClearReservedTokens_MultipleTokens(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		initialData []string
-	}{
-		{
-			name:        "clear list with many tokens",
-			initialData: []string{"token1", "token2", "token3", "token4", "token5"},
-		},
-		{
-			name:        "clear list with repeated setup",
-			initialData: []string{"token1", "token2"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given
-			pfs := newProtocolFeeStateInternal(t)
-			for _, token := range tt.initialData {
-				pfs.store.AddReservedToken(0, cur, token)
-			}
-			uassert.Equal(t, len(pfs.ReservedTokens()), len(tt.initialData))
-
-			// When
-			pfs.clearReservedTokens(0, cur)
-
-			// Then
-			uassert.Equal(t, len(pfs.ReservedTokens()), 0)
 		})
 	}
 }

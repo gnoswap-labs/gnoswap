@@ -268,3 +268,52 @@ func TestProtocolFeeRewardState_Clone(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestProtocolFeeRewardState_ForTokenSetters(cur realm, t *testing.T) {
+	t.Run("Preserve existing entries", func(cur realm, t *testing.T) {
+		state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		state.SetRewardDebtX128ForToken("token1", u256.NewUint(100))
+		state.SetRewardDebtX128ForToken("token2", u256.NewUint(200))
+		state.SetAccumulatedRewardForToken("token1", 10)
+		state.SetAccumulatedRewardForToken("token2", 20)
+		state.SetClaimedRewardForToken("token1", 1)
+		state.SetClaimedRewardForToken("token2", 2)
+
+		state.SetRewardDebtX128ForToken("token1", u256.NewUint(300))
+		state.SetAccumulatedRewardForToken("token1", 30)
+		state.SetClaimedRewardForToken("token1", 3)
+
+		uassert.Equal(t, len(state.GetRewardDebtX128()), 2)
+		uassert.Equal(t, state.GetRewardDebtX128ForToken("token1").ToString(), "300")
+		uassert.Equal(t, state.GetRewardDebtX128ForToken("token2").ToString(), "200")
+		uassert.Equal(t, len(state.GetAccumulatedRewards()), 2)
+		uassert.Equal(t, state.GetAccumulatedRewardForToken("token1"), int64(30))
+		uassert.Equal(t, state.GetAccumulatedRewardForToken("token2"), int64(20))
+		uassert.Equal(t, len(state.GetClaimedRewards()), 2)
+		uassert.Equal(t, state.GetClaimedRewardForToken("token1"), int64(3))
+		uassert.Equal(t, state.GetClaimedRewardForToken("token2"), int64(2))
+	})
+
+	t.Run("Clone uint values", func(cur realm, t *testing.T) {
+		state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		value := u256.NewUint(100)
+		state.SetRewardDebtX128ForToken("token", value)
+		value.Set(u256.NewUint(200))
+
+		uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), "100")
+	})
+
+	t.Run("Initialize nil maps", func(cur realm, t *testing.T) {
+		state := &ProtocolFeeRewardState{}
+		state.SetRewardDebtX128ForToken("token", u256.NewUint(100))
+		state.SetAccumulatedRewardForToken("token", 10)
+		state.SetClaimedRewardForToken("token", 1)
+
+		uassert.NotNil(t, state.GetRewardDebtX128())
+		uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), "100")
+		uassert.NotNil(t, state.GetAccumulatedRewards())
+		uassert.Equal(t, state.GetAccumulatedRewardForToken("token"), int64(10))
+		uassert.NotNil(t, state.GetClaimedRewards())
+		uassert.Equal(t, state.GetClaimedRewardForToken("token"), int64(1))
+	})
+}

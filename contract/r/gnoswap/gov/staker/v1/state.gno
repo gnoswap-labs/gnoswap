@@ -493,6 +493,49 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	return rewards, nil
 }
 
+// claimDistributedProtocolFeeRewardByTokenPath processes an observed protocol fee distribution for one token.
+func (g *govStakerV1) claimDistributedProtocolFeeRewardByTokenPath(address string, tokenPath string, distributedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
+	if distributedAmount == 0 {
+		return nil, 0, false, nil
+	}
+
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
+
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, distributedAmount, currentTimestamp); err != nil {
+		return nil, 0, false, err
+	}
+
+	reward, err := resolvedManager.claimRewardForToken(address, tokenPath, currentTimestamp)
+	if err != nil {
+		return nil, 0, false, err
+	}
+
+	return protocolFeeRewardManager, reward, true, nil
+}
+
+// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token for an address.
+func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
+	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
+
+	distributedAmount := pf.GetActualDistributedToGovStakerByTokenPath(tokenPath)
+	protocolFeeRewardManager, reward, processed, err := g.claimDistributedProtocolFeeRewardByTokenPath(address, tokenPath, distributedAmount, currentTimestamp)
+	if err != nil {
+		return 0, err
+	}
+	if !processed {
+		return 0, nil
+	}
+
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
+		return 0, err
+	}
+
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: distributedAmount})
+
+	return reward, nil
+}
+
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
 // This method queries the protocol fee contract for accumulated distributions.
 //

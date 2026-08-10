@@ -69,4 +69,5 @@ type IProtocolFeeStore interface {
 	GetReservedTokens() []string
 	SetReservedTokens(_ int, rlm realm, reservedTokens []string) error
 	AddReservedToken(_ int, rlm realm, tokenPath string) error
+	RemoveReservedToken(_ int, rlm realm, tokenPath string) error
 }
