@@ -152,21 +152,13 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
+	// must be at least 3 minutes from now
+	now := time.Now().Unix()
+	threeMinutesFromNow := now + 60*3
+	if startTimestamp < threeMinutesFromNow {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
-		))
-	}
-
-	// must be midnight of the day
-	startTime := time.Unix(startTimestamp, 0)
-	if !isMidnight(startTime) {
-		panic(makeErrorWithDetails(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
+			ufmt.Sprintf("startTimestamp(%d) must be at least 3 minutes from now(%d)", startTimestamp, threeMinutesFromNow),
 		))
 	}
 }
@@ -202,15 +194,6 @@ func assertIsValidAddress(addr address) {
 			ufmt.Sprintf("address(%s) is invalid", addr.String()),
 		))
 	}
-}
-
-// isMidnight checks if a time represents midnight (00:00:00).
-func isMidnight(startTime time.Time) bool {
-	hour := startTime.Hour()
-	minute := startTime.Minute()
-	second := startTime.Second()
-
-	return hour == 0 && minute == 0 && second == 0
 }
 
 // assertIsPositionOwner validates that the caller has permission to operate the token.
