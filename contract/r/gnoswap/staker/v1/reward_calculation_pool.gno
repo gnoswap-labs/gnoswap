@@ -126,6 +126,10 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 }
 
 // GetOrNewTick returns the existing tick or a new zero-valued tick.
+//
+// Substituting a zero-valued tick on a read is safe because ticks are pruned
+// only when their staked gross liquidity reaches zero, in the same call that
+// removes the last deposit referencing them.
 func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 	tick := self.Ticks().Get(tickId)
 	if tick == nil {
