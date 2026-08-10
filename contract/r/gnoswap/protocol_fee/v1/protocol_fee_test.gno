@@ -189,6 +189,34 @@ func TestDistributeProtocolFeeByTokenPath_NoAmountPreservesOtherReservedTokens(c
 	uassert.Equal(t, len(reservedTokens), 2)
 	uassert.Equal(t, reservedTokens[0], "gno.land/r/onbloc/bar.BAR")
 	uassert.Equal(t, reservedTokens[1], "gno.land/r/onbloc/qux.QUX")
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/obl.OBL"))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/obl.OBL"))
+}
+
+func TestDistributeProtocolFeeByTokenPath_NonReservedTokenDoesNotMutate(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pfs := pf.getProtocolFeeState()
+	nonReservedToken := "gno.land/r/onbloc/bar.BAR"
+	reservedToken := "gno.land/r/onbloc/obl.OBL"
+
+	if err := pfs.addAccuToGovStaker(0, cur, nonReservedToken, 100); err != nil {
+		panic(err)
+	}
+	if err := pfs.store.AddReservedToken(0, cur, reservedToken); err != nil {
+		panic(err)
+	}
+
+	testing.SetRealm(govStakerRealm)
+	func(cur realm) {
+		pf.DistributeProtocolFeeByTokenPath(0, cur, nonReservedToken)
+	}(cross(cur))
+
+	uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath(nonReservedToken))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath(nonReservedToken))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath(nonReservedToken))
+	reservedTokens := pf.GetReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 1)
+	uassert.Equal(t, reservedTokens[0], reservedToken)
 }
 
 // TestDistributeProtocolFeeByTokenPath_Unauthorized covers the authorization
