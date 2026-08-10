@@ -176,3 +176,43 @@ func TestProtocolFeeRewardManager_SetRewardStates(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestProtocolFeeRewardManager_ForTokenSetters(cur realm, t *testing.T) {
+	t.Run("Preserve existing entries", func(cur realm, t *testing.T) {
+		manager := NewProtocolFeeRewardManager()
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token1", u256.NewUint(100))
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token2", u256.NewUint(200))
+		manager.SetProtocolFeeAmountForToken("token1", 10)
+		manager.SetProtocolFeeAmountForToken("token2", 20)
+
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token1", u256.NewUint(300))
+		manager.SetProtocolFeeAmountForToken("token1", 30)
+
+		uassert.Equal(t, len(manager.GetAllAccumulatedProtocolFeeX128PerStake()), 2)
+		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token1").ToString(), "300")
+		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token2").ToString(), "200")
+		uassert.Equal(t, len(manager.GetProtocolFeeAmounts()), 2)
+		uassert.Equal(t, manager.GetProtocolFeeAmount("token1"), int64(30))
+		uassert.Equal(t, manager.GetProtocolFeeAmount("token2"), int64(20))
+	})
+
+	t.Run("Clone uint values", func(cur realm, t *testing.T) {
+		manager := NewProtocolFeeRewardManager()
+		value := u256.NewUint(100)
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token", value)
+		value.Set(u256.NewUint(200))
+
+		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token").ToString(), "100")
+	})
+
+	t.Run("Initialize nil maps", func(cur realm, t *testing.T) {
+		manager := &ProtocolFeeRewardManager{}
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token", nil)
+		manager.SetProtocolFeeAmountForToken("token", 10)
+
+		uassert.NotNil(t, manager.GetAllAccumulatedProtocolFeeX128PerStake())
+		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token").ToString(), "0")
+		uassert.NotNil(t, manager.GetProtocolFeeAmounts())
+		uassert.Equal(t, manager.GetProtocolFeeAmount("token"), int64(10))
+	})
+}

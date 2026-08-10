@@ -116,30 +116,24 @@ func (p *ProtocolFeeRewardState) GetClaimedRewardForToken(token string) int64 {
 // Additional setters for individual token rewards
 
 func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *u256.Uint) {
-	copied := make(map[string]*u256.Uint, len(p.rewardDebtX128)+1)
-	for existingToken, existingValue := range p.rewardDebtX128 {
-		copied[existingToken] = u256.Zero().Set(existingValue)
+	if p.rewardDebtX128 == nil {
+		p.rewardDebtX128 = make(map[string]*u256.Uint)
 	}
-	copied[token] = u256.Zero().Set(value)
-	p.rewardDebtX128 = copied
+	p.rewardDebtX128[token] = u256.Zero().Set(value)
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {
-	copied := make(map[string]int64, len(p.accumulatedRewards)+1)
-	for existingToken, existingValue := range p.accumulatedRewards {
-		copied[existingToken] = existingValue
+	if p.accumulatedRewards == nil {
+		p.accumulatedRewards = make(map[string]int64)
 	}
-	copied[token] = value
-	p.accumulatedRewards = copied
+	p.accumulatedRewards[token] = value
 }
 
 func (p *ProtocolFeeRewardState) SetClaimedRewardForToken(token string, value int64) {
-	copied := make(map[string]int64, len(p.claimedRewards)+1)
-	for existingToken, existingValue := range p.claimedRewards {
-		copied[existingToken] = existingValue
+	if p.claimedRewards == nil {
+		p.claimedRewards = make(map[string]int64)
 	}
-	copied[token] = value
-	p.claimedRewards = copied
+	p.claimedRewards[token] = value
 }
 
 // NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
