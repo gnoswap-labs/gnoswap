@@ -171,6 +171,17 @@ func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSe
 	}
 }
 
+// stakeScanLowerBound returns the lower bound of the stake-time incentive scan
+// window, clamped to 0. The start-time index encodes keys as unsigned, so a
+// negative bound aborts when the chain time is under TIMESTAMP_365DAYS.
+func stakeScanLowerBound(currentTime int64) int64 {
+	if currentTime < TIMESTAMP_365DAYS {
+		return 0
+	}
+
+	return currentTime - TIMESTAMP_365DAYS
+}
+
 // StakeToken stakes an LP position NFT to earn rewards.
 //
 // Transfers position NFT to staker and begins reward accumulation.
@@ -249,8 +260,14 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		currentWarmups,
 	)
 
-	// when staking, add new created incentives to deposit
-	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, 0, currentTime)
+	// when staking, add new incentives to deposit.
+	//
+	// Incentive duration is capped at TIMESTAMP_365DAYS, so anything still
+	// active at currentTime starts within [currentTime-365d, currentTime].
+	// Incentives starting before that window have ended and are filtered by
+	// the EndTimestamp check below.
+	//
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, stakeScanLowerBound(currentTime), currentTime)
 
 	for _, incentiveId := range currentIncentiveIds {
 		incentive := s.getExternalIncentives().get(incentiveId)
@@ -455,20 +472,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			continue
 		}
 
+		// get panics on a missing id; incentives are never removed from the tree.
 		incentive := s.getExternalIncentives().get(incentiveId)
-		if incentive == nil {
-			// Incentive could be missing; skip to keep collection working.
-			chain.Emit(
-				"SkippedMissingIncentive",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
-				"positionId", utils.FormatUint(positionId),
-				"incentiveId", incentiveId,
-				"currentTime", utils.FormatInt(currentTime),
-				"currentHeight", utils.FormatInt(blockHeight),
-			)
-			continue
-		}
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		if !incentiveResolver.IsStarted(currentTime) {

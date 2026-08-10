@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -45,6 +47,7 @@ func testComplexRatioChanges(cur realm) {
 	println("[SCENARIO] 1. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println()
 

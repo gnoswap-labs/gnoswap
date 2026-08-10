@@ -1236,63 +1236,6 @@ func TestStoreSetAndGetCurrentSwapBatch(cur realm, t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetExternalIncentivesByCreationTime(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(cur realm, ss IStakerStore)
-		testFn       func(cur realm, t *testing.T, ss IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get external incentives by creation time successfully",
-			setupFn: func(cur realm, ss IStakerStore) {
-				tree := NewUintTree()
-				ss.SetExternalIncentivesByCreationTime(0, cur, tree)
-			},
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should have external incentives by creation time after setting")
-				retrieved := ss.GetExternalIncentivesByCreationTime()
-				uassert.NotEqual(t, nil, retrieved)
-			},
-		},
-		{
-			name: "should not have external incentives by creation time initially",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should not have external incentives by creation time initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized external incentives by creation time",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				ss.GetExternalIncentivesByCreationTime()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized external incentives by creation time",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(cur, ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(cur, t, ss)
-		})
-	}
-}
-
 func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	resetTestState(t)
 

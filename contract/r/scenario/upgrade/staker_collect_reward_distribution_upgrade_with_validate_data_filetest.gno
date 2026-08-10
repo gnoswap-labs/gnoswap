@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-
+	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -119,6 +119,7 @@ func initialize(cur realm) {
 	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	println("[EXPECTED] Initialized staker contract with v1:", stakerV1Path)
 
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+5)
 	testing.SkipHeights(1)
 

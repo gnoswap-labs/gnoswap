@@ -2,7 +2,6 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
-	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -153,7 +152,14 @@ func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) 
 
 	lastExternalIncentiveUpdatedAt := depositResolver.LastExternalIncentiveUpdatedAt()
 	if lastExternalIncentiveUpdatedAt < param.CurrentTime {
-		newIds := s.getExternalIncentiveIdsBy(poolPath, lastExternalIncentiveUpdatedAt, param.CurrentTime)
+		// Discover incentives from this pool's own start-time index. Using the
+		// local resolver keeps calculation read-only even for an ephemeral pool
+		// that has not yet been persisted in param.Pools.
+		newIds := make([]string, 0)
+		poolResolver.IncentivesResolver().IterateIncentiveIdsByTime(lastExternalIncentiveUpdatedAt, param.CurrentTime, func(incentiveId string) bool {
+			newIds = append(newIds, incentiveId)
+			return false
+		})
 		updateParams.newExternalIncentiveIds = newIds
 		updateParams.advanceExternalIncentiveCursor = true
 
@@ -321,27 +327,19 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
 	currentIncentiveIds := make([]string, 0)
 
-	incentivesByTime := s.getExternalIncentivesByCreationTime()
+	pool, ok := s.getPools().Get(poolPath)
+	if !ok {
+		return currentIncentiveIds
+	}
+	poolResolver := NewPoolResolver(pool)
 
-	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
-		// Value is a slice of incentive IDs (handles timestamp collisions)
-		poolIncentiveIds, ok := value.(*bptree.BPTree)
-		if !ok {
-			return false
-		}
-
-		incentiveIdsValue := poolIncentiveIds.Get(poolPath)
-		if incentiveIdsValue == nil {
-			return false
-		}
-
-		incentiveIds, ok := incentiveIdsValue.([]string)
-		if !ok {
-			return false
-		}
-
-		currentIncentiveIds = append(currentIncentiveIds, incentiveIds...)
-
+	// Look up the pool's own start-time index instead of a global
+	// creation-time index. The index is scoped to this pool's incentives, so
+	// discovery cost is bounded by the number of incentives for this pool
+	// within the queried range, and no longer grows with the total number of
+	// incentives system-wide.
+	poolResolver.IncentivesResolver().IterateIncentiveIdsByTime(startTime, endTime, func(incentiveId string) bool {
+		currentIncentiveIds = append(currentIncentiveIds, incentiveId)
 		return false
 	})
 

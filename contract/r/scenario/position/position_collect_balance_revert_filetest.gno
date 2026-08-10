@@ -1,4 +1,4 @@
-// position collect balance cap
+// position collect reverts on insufficient internal balance
 
 // PKGPATH: gno.land/r/demo/main
 
@@ -15,7 +15,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
-	_ "gno.land/r/gnoswap/pool/collect_balance_cap"
+	_ "gno.land/r/gnoswap/pool/collect_balance_revert"
 	_ "gno.land/r/gnoswap/pool/v1"
 	"gno.land/r/gnoswap/position"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -32,7 +32,7 @@ const (
 	MIN_PRICE string = "4295128740"
 
 	poolV1Path             = "gno.land/r/gnoswap/pool/v1"
-	poolCollectCapTestPath = "gno.land/r/gnoswap/pool/collect_balance_cap"
+	poolCollectRevertTestPath = "gno.land/r/gnoswap/pool/collect_balance_revert"
 )
 
 var (
@@ -59,7 +59,7 @@ func main(cur realm) {
 	executeSwap(cur)
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Upgrade to balance-cap test implementation")
+	ufmt.Println("[SCENARIO] 4. Upgrade to balance-revert test implementation")
 	upgradePool(cur)
 	println()
 
@@ -138,7 +138,7 @@ func executeSwap(cur realm) {
 
 func upgradePool(cur realm) {
 	testing.SetRealm(adminRealm)
-	pool.UpgradeImpl(cross(cur), poolCollectCapTestPath)
+	pool.UpgradeImpl(cross(cur), poolCollectRevertTestPath)
 	ufmt.Printf("[EXPECTED] Pool implementation should be %s\n", pool.GetImplementationPackagePath())
 }
 
@@ -216,8 +216,8 @@ func mockSwapCallback(cur realm, amount0Delta int64, amount1Delta int64) error {
 // [SCENARIO] 3. Swap to move price
 // [EXPECTED] Swap should succeed
 //
-// [SCENARIO] 4. Upgrade to balance-cap test implementation
-// [EXPECTED] Pool implementation should be gno.land/r/gnoswap/pool/collect_balance_cap
+// [SCENARIO] 4. Upgrade to balance-revert test implementation
+// [EXPECTED] Pool implementation should be gno.land/r/gnoswap/pool/collect_balance_revert
 //
 // [SCENARIO] 5. Decrease liquidity with reverting Collect
 // [INFO] DecreaseLiquidity aborted: [GNOSWAP-POOL-021] balance update failed. cannot decrease, token0(1) - amount(29999)

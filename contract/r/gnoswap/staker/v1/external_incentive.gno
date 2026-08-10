@@ -10,7 +10,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
-	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -105,9 +104,6 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(incentive)
-
-	// add incentive to time-based index for lazy discovery during CollectReward
-	s.addIncentiveIdByCreationTime(0, rlm, targetPoolPath, incentiveId, currentTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -398,54 +394,4 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	)
 
 	return penaltyAmount
-}
-
-// addIncentiveIdByCreationTime adds an external incentive to the time-based index.
-//
-// The index structure is:
-//   - creationTime (int64) -> poolPath (string) -> []incentiveIds
-func (s *stakerV1) addIncentiveIdByCreationTime(_ int, rlm realm, poolPath, incentiveId string, creationTime int64) {
-	incentivesByTime := s.getExternalIncentivesByCreationTime()
-
-	// Rebuild the nested poolPath -> []incentiveId tree into a freshly allocated
-	// bptree on every call instead of mutating the one fetched out of the
-	// persisted UintTree. A persisted nested tree is owned by /r/gnoswap/staker
-	// and a direct bptree.Set on it from a different calling realm trips the
-	// readonly-taint gate (the bptree Set runs in the caller's realm, not the
-	// tree's owning realm). Allocating a fresh tree here makes it owned by the
-	// executing realm, so its leaf writes are always permitted; re-Setting all
-	// existing entries preserves the stored shape.
-	freshPoolIncentiveIds := sr.NewBPTreeN(16)
-	found := false
-
-	if currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(creationTime); ok {
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
-		if !ok {
-			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
-		}
-
-		currentPoolIncentiveIds.Iterate("", "", func(key string, value any) bool {
-			incentiveIds, ok := value.([]string)
-			if !ok {
-				panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", value))
-			}
-
-			copied := make([]string, len(incentiveIds))
-			copy(copied, incentiveIds)
-			if key == poolPath {
-				copied = append(copied, incentiveId)
-				found = true
-			}
-			freshPoolIncentiveIds.Set(key, copied)
-			return false
-		})
-	}
-
-	if !found {
-		freshPoolIncentiveIds.Set(poolPath, []string{incentiveId})
-	}
-
-	incentivesByTime.Set(creationTime, freshPoolIncentiveIds)
-
-	s.updateExternalIncentivesByCreationTime(0, rlm, incentivesByTime)
 }

@@ -209,9 +209,4 @@ type IStakerStore interface {
 	HasCurrentSwapBatchStoreKey() bool
 	GetCurrentSwapBatch() *SwapBatchProcessor
 	SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProcessor) error
-
-	// ExternalIncentivesByCreationTime
-	HasExternalIncentivesByCreationTimeStoreKey() bool
-	GetExternalIncentivesByCreationTime() *UintTree
-	SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *UintTree) error
 }

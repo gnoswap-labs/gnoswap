@@ -239,6 +239,12 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 
 	for _, tickCross := range batch.Crosses() {
 		tick := batch.Pool().Ticks().Get(tickCross.TickID())
+		if tick == nil {
+			// Pruned after the cross was accumulated, so its staked gross
+			// liquidity is zero and it carries no reward weight.
+			continue
+		}
+
 		tickResolver := NewTickResolver(tick)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 
