@@ -357,6 +357,27 @@ func (s *protocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath string) 
 	return s.SetReservedTokens(0, rlm, reservedTokens)
 }
 
+// RemoveReservedToken removes one tokenPath from the reserved-token list when present.
+func (s *protocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	reservedTokens := s.GetReservedTokens()
+	filteredReservedTokens := make([]string, 0, len(reservedTokens))
+	removed := false
+	for _, reservedToken := range reservedTokens {
+		if !removed && reservedToken == tokenPath {
+			removed = true
+			continue
+		}
+
+		filteredReservedTokens = append(filteredReservedTokens, reservedToken)
+	}
+
+	return s.SetReservedTokens(0, rlm, filteredReservedTokens)
+}
+
 // NewprotocolFeeStore creates a new protocol fee store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewProtocolFeeStore(kvStore store.KVStore) IProtocolFeeStore {

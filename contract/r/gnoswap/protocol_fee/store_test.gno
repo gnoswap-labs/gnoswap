@@ -500,6 +500,48 @@ func TestStoreAddReservedToken(cur realm, t *testing.T) {
 	}
 }
 
+func TestStoreRemoveReservedToken(cur realm, t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		expectedTokens []string
+	}{
+		{
+			name:           "removes middle token and preserves order",
+			tokenPath:      "tokenB",
+			expectedTokens: []string{"tokenA", "tokenC"},
+		},
+		{
+			name:           "does nothing for absent token",
+			tokenPath:      "tokenX",
+			expectedTokens: []string{"tokenA", "tokenB", "tokenC"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			ps := NewProtocolFeeStore(kvStore)
+
+			err := ps.InitializeReservedTokens(0, cur)
+			uassert.NoError(t, err)
+			for _, tokenPath := range []string{"tokenA", "tokenB", "tokenC"} {
+				err = ps.AddReservedToken(0, cur, tokenPath)
+				uassert.NoError(t, err)
+			}
+
+			err = ps.RemoveReservedToken(0, cur, tt.tokenPath)
+			uassert.NoError(t, err)
+
+			reservedTokens := ps.GetReservedTokens()
+			uassert.Equal(t, len(tt.expectedTokens), len(reservedTokens))
+			for i, tokenPath := range tt.expectedTokens {
+				uassert.Equal(t, tokenPath, reservedTokens[i])
+			}
+		})
+	}
+}
+
 func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
