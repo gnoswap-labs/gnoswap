@@ -261,7 +261,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 	return self.Reward[height][depositId]
 }
 
-func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
+func (self *canonicalRewardState) EmulateCalculateCollectablePositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	currentTimestamp := self.CurrentTime()
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
@@ -280,7 +280,9 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 
 	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
-	internalRewards, internalPenalties := poolResolver.RewardStateOf(deposit).calculateInternalReward(lastCollectTimestamp, currentTimestamp)
+	// Emulator materialized the reward cache above, so resolving the schedule reads it in full.
+	internalSegments := poolResolver.resolveInternalRewardSegments(self.global.poolTier, poolPath, lastCollectTimestamp, currentTimestamp)
+	internalRewards, internalPenalties := poolResolver.RewardStateOf(deposit).calculateInternalReward(internalSegments)
 
 	externalRewards := make([]map[string]int64, 4)
 	externalPenalties := make([]map[string]int64, 4)
@@ -322,7 +324,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 		}
 	}
 
-	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
+	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalculateCollectablePositionReward(depositId)
 
 	deposit := self.global.deposits.get(depositId)
 	resolver := NewDepositResolver(deposit)

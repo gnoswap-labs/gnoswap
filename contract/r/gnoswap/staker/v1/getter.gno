@@ -201,9 +201,11 @@ func (s *stakerV1) GetIncentiveCreator(poolPath string, incentiveId string) addr
 func (s *stakerV1) getDeposit(lpTokenId uint64) *sr.Deposit {
 	deposit := s.getDeposits().get(lpTokenId)
 	if deposit == nil {
-		panic(makeErrorWithDetails(
-			errDataNotFound,
-			ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId)),
+		panic(
+			makeErrorWithDetails(
+				errDataNotFound,
+				ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId),
+			),
 		)
 	}
 
@@ -216,18 +218,20 @@ func (s *stakerV1) GetDeposit(lpTokenId uint64) *sr.Deposit {
 }
 
 // CollectableEmissionReward returns the claimable internal reward amount for a position.
+// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
 func (s *stakerV1) CollectableEmissionReward(positionId uint64) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
 	return reward.Internal
 }
 
 // CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
+// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
 func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
 	amount, ok := reward.External[incentiveId]
 	if !ok {
 		return 0
