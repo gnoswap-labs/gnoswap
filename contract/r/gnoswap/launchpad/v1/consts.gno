@@ -5,7 +5,7 @@ const (
 	projectTier90  = int64(90)
 	projectTier180 = int64(180)
 
-	dayTime = int64(24 * 60 * 60) // 86400
+	minuteTime = int64(60)
 
 	minimumDepositAmount = int64(1_000_000)
 
@@ -13,7 +13,7 @@ const (
 
 	maxProjectConditionCount = 5
 
-	projectMinimumStartDelayTime = dayTime * 3 // 3 days
+	projectMinimumStartDelayTime = minuteTime * 3 // 3 minutes
 )
 
 // contract paths
@@ -31,14 +31,14 @@ var projectTierDurations = []int64{
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurationTimes = map[int64]int64{
-	projectTier30:  dayTime * projectTier30,  // 30 days
-	projectTier90:  dayTime * projectTier90,  // 90 days
-	projectTier180: dayTime * projectTier180, // 180 days
+	projectTier30:  minuteTime * projectTier30,  // 30 minutes
+	projectTier90:  minuteTime * projectTier90,  // 90 minutes
+	projectTier180: minuteTime * projectTier180, // 180 minutes
 }
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierRewardCollectableDuration = map[int64]int64{
-	projectTier30:  dayTime * 1, // 1 days
-	projectTier90:  dayTime * 1, // 1 days
-	projectTier180: dayTime * 1, // 1 days
+	projectTier30:  minuteTime * 1, // 1 minutes
+	projectTier90:  minuteTime * 1, // 1 minutes
+	projectTier180: minuteTime * 1, // 1 minutes
 }
