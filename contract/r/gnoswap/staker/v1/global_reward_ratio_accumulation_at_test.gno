@@ -90,7 +90,7 @@ func TestGlobalRewardRatioAccumulationAt(cur realm, t *testing.T) {
 			_, stored := poolResolver.CurrentGlobalRewardRatioAccumulation(tt.queryAt)
 			uassert.Equal(t, tt.wantStored, stored)
 
-			derived := poolResolver.globalRewardRatioAccumulationAt(tt.queryAt)
+			derived, _ := poolResolver.globalRewardRatioAccumulationAt(tt.queryAt)
 			uassert.Equal(t, tt.wantDerived, derived.ToString())
 		})
 	}
@@ -110,7 +110,7 @@ func TestGlobalRewardRatioAccumulationAt_MatchesRewardCalculationBase(cur realm,
 		at := createTime + elapsed
 
 		want := poolResolver.calculateGlobalRewardRatioAccumulation(at, poolResolver.CurrentStakedLiquidity(at))
-		got := poolResolver.globalRewardRatioAccumulationAt(at)
+		got, _ := poolResolver.globalRewardRatioAccumulationAt(at)
 
 		uassert.Equal(t, want.ToString(), got.ToString())
 	}

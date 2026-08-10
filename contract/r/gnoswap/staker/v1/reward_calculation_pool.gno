@@ -246,8 +246,11 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 // Reward calculation never has this problem because it derives the accumulation on demand
 // (CalculateRawRewardForPosition). Event emission must do the same, otherwise off-chain indexers that
 // treat the emitted accumulator as authoritative at the event timestamp silently drop that interval.
-func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) *u256.Uint {
-	return self.calculateGlobalRewardRatioAccumulation(currentTime, self.CurrentStakedLiquidity(currentTime))
+func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) (*u256.Uint, *u256.Uint) {
+	stakedLiquidity := self.CurrentStakedLiquidity(currentTime)
+	accumulation := self.calculateGlobalRewardRatioAccumulation(currentTime, stakedLiquidity)
+
+	return accumulation, stakedLiquidity
 }
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
