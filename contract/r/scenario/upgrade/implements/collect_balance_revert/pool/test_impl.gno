@@ -1,4 +1,4 @@
-package collect_balance_cap
+package collect_balance_revert
 
 import (
 	pool "gno.land/r/gnoswap/pool"
