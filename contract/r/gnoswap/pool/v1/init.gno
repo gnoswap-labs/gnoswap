@@ -3,6 +3,7 @@ package pool
 import (
 	"errors"
 	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/emission"
 )
 
 const (
@@ -38,6 +39,10 @@ func registerPoolV1(cur realm) {
 		if err != nil {
 			panic(err)
 		}
+
+		emission.SetDefaultInitialPoolChecker(cross(rlm), func(poolPath string) bool {
+			return pool.ExistsPoolPath(poolPath)
+		})
 
 		return NewPoolV1(poolStore)
 	})

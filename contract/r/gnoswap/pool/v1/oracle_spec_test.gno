@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -325,15 +326,6 @@ func testAccumulatesLiquidity(t *testing.T) {
 	}
 }
 
-// TestOracleLTE verifies int64 timestamp comparisons use natural ordering.
-func TestOracleLTE(cur realm, t *testing.T) {
-	uassert.True(t, lte(90, 100), "timestamps should use natural ordering")
-	uassert.True(t, lte(100, 100), "equal timestamps should compare as lte")
-	uassert.True(t, lte(-1, 0), "signed timestamps should preserve natural ordering")
-	uassert.False(t, lte(100, 90), "newer timestamps should not sort before older timestamps")
-	uassert.False(t, lte(int64(1<<32)-2, 2), "int64 timestamps must not apply uint32 wrap ordering")
-}
-
 func TestOracleObserve(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
@@ -378,7 +370,26 @@ func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
 	os := pl.NewObservationState(0)
 
 	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
-	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-025]")
+	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-027]")
+}
+
+// TestOracleLookbackErrorsAreDistinct pins the two rejection reasons to separate error codes.
+func TestOracleLookbackErrorsAreDistinct(cur realm, t *testing.T) {
+	// Retention failure: oldest observation (t=100) is newer than target (t=99).
+	tooOld := pl.NewObservationState(100)
+	_, _, errTooOld := observeSingle(tooOld, 150, 51, 12, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, errTooOld, "[GNOSWAP-POOL-025]")
+	if errTooOld != nil && strings.Contains(errTooOld.Error(), "[GNOSWAP-POOL-027]") {
+		t.Error("too-old lookback must not report the pre-epoch error code")
+	}
+
+	// Malformed request: secondsAgo exceeds the chain's own age.
+	beforeEpoch := pl.NewObservationState(0)
+	_, _, errEpoch := observeSingle(beforeEpoch, 10, 11, 12, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, errEpoch, "[GNOSWAP-POOL-027]")
+	if errEpoch != nil && strings.Contains(errEpoch.Error(), "[GNOSWAP-POOL-025]") {
+		t.Error("pre-epoch lookback must not report the too-old error code")
+	}
 }
 
 func testObserveInterpolatesMaxLiquidity(t *testing.T) {
@@ -392,7 +403,6 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	os.SetObservation(0, pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
-		"0", // liquidityCumulative
 		"0", // secondsPerLiquidityCumulativeX128
 		true,
 	))

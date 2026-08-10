@@ -4,12 +4,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -118,6 +119,7 @@ func initialize(cur realm) {
 	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	println("[EXPECTED] Initialized staker contract with v1:", stakerV1Path)
 
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+5)
 	testing.SkipHeights(1)
 
@@ -310,8 +312,8 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 13. Collect reward with v3_valid
 // [INFO] Collect reward
-// [EXPECTED] Total reward: 133374323
-// [EXPECTED] Reward to user: 39731368
+// [EXPECTED] Total reward: 133374324
+// [EXPECTED] Reward to user: 39731369
 // [EXPECTED] Reward penalty: 93642955
 //
 // [SCENARIO] 14. Check staking info after reward collection

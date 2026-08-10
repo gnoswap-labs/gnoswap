@@ -46,6 +46,7 @@ func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, b
 // Panics if the incentive already exists.
 func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
 	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
+	self.Incentives.AddIncentiveByStartTime(incentive.StartTimestamp(), incentive.IncentiveId())
 }
 
 // update updates an existing incentive with new information
@@ -86,67 +87,104 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	} else {
 		self.Incentives.SetUnclaimablePeriod(startTimestamp, endTimestamp)
 	}
+
+	// Accumulate the just-closed period into every active incentive
+	self.accumulateUnclaimableSeconds(startTimestamp, endTimestamp)
 }
 
-// calculate unclaimable reward by checking unclaimable periods
+// accumulateUnclaimableSeconds adds the unclaimable duration between
+// startTimestamp and endTimestamp to every non-refunded incentive whose window
+// overlaps the period. The accumulator is updated in place on the stored
+// incentive pointers, so no tree write is required here.
+func (self *IncentivesResolver) accumulateUnclaimableSeconds(startTimestamp, endTimestamp int64) {
+	self.Incentives.IterateIncentives(func(_ string, incentive *sr.ExternalIncentive) bool {
+		if incentive.Refunded() {
+			return false
+		}
+
+		duration := calculateUnClaimableDuration(
+			startTimestamp,
+			endTimestamp,
+			incentive.StartTimestamp(),
+			incentive.EndTimestamp(),
+		)
+		if duration > 0 {
+			incentive.SetUnclaimableSeconds(gnsmath.SafeAddInt64(incentive.UnclaimableSeconds(), duration))
+		}
+		return false
+	})
+}
+
+// calculate unclaimable reward from the per-incentive unclaimable seconds
+// accumulator instead of scanning the unbounded unclaimable periods tree.
 func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) int64 {
 	incentive, ok := self.Get(incentiveId)
 	if !ok {
 		return 0
 	}
 
-	timeDiff := int64(0)
+	// The accumulator holds the duration of every closed unclaimable period
+	// that overlaps the incentive window.
+	timeDiff := incentive.UnclaimableSeconds()
 
-	// Find unclaimable periods that end before or at incentive start, reverse iterate is inclusive of the end key
+	// Ongoing unclaimable periods (end == 0) are not yet accumulated because
+	// their end is unknown. They are resolved here by treating them as
+	// extending to the incentive end. Unclaimable periods never overlap and
+	// are recorded in ascending order, so an ongoing period is always the
+	// most recently started one and therefore the highest key in the tree.
+	// ReverseIterate visits the highest key first, so each scan below finds
+	// the only ongoing period that can affect the reward (if any) on its
+	// first visit and stops - the scan is bounded regardless of how many
+	// periods exist in the tree.
+	//
+	// Tail 1: the ongoing period that started before the incentive window
+	// (e.g. the initial pool-creation period). If the highest period starting
+	// before the window is already closed, no ongoing period can overlap the
+	// incentive start and there is nothing to add.
 	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp()-1, func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}
-
-		if endTimestamp == 0 {
-			endTimestamp = incentive.EndTimestamp()
-		}
-
-		if endTimestamp <= incentive.StartTimestamp() {
+		if endTimestamp != 0 {
+			// Already closed - the duration is already accumulated in
+			// UnclaimableSeconds(), and being the highest key it is also the
+			// latest period, so no ongoing period can exist below it.
 			return true
 		}
 
-		// Calculate duration of unclaimable period that overlaps with incentive period
-		duration := calculateUnClaimableDuration(
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, calculateUnClaimableDuration(
 			startTimestamp,
-			endTimestamp,
+			incentive.EndTimestamp(),
 			incentive.StartTimestamp(),
 			incentive.EndTimestamp(),
-		)
-
-		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
-
+		))
 		return true
 	})
 
-	// Find unclaimable periods that start within incentive period
-	self.UnclaimablePeriods().Iterate(incentive.StartTimestamp(), incentive.EndTimestamp(), func(startTimestamp int64, value any) bool {
+	// Tail 2: the ongoing period that started within the incentive window.
+	// The upper bound is endTime-1 to mirror the Iterate(start, end)
+	// half-open range, which excludes a period starting exactly at endTime
+	// (e.g. the initial pool-creation period that coincides with endTime).
+	self.UnclaimablePeriods().ReverseIterate(incentive.StartTimestamp(), incentive.EndTimestamp()-1, func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}
-
-		if endTimestamp == 0 {
-			endTimestamp = incentive.EndTimestamp()
+		if endTimestamp != 0 {
+			// Already closed - the duration is already accumulated in
+			// UnclaimableSeconds(), and being the highest key it is also the
+			// latest period, so no ongoing period can exist below it.
+			return true
 		}
 
-		// Calculate duration of unclaimable period that overlaps with incentive period
-		duration := calculateUnClaimableDuration(
+		timeDiff = gnsmath.SafeAddInt64(timeDiff, calculateUnClaimableDuration(
 			startTimestamp,
-			endTimestamp,
+			incentive.EndTimestamp(),
 			incentive.StartTimestamp(),
 			incentive.EndTimestamp(),
-		)
-		timeDiff = gnsmath.SafeAddInt64(timeDiff, duration)
-
-		// ensures continue iterating through all unclaimable periods
-		return false
+		))
+		return true
 	})
 
 	// rewardPerSecondX128 = rps << 128, so dividing by q128 here recovers the

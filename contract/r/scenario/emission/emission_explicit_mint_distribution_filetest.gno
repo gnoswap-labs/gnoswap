@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -47,8 +49,8 @@ func testExplicitMintDistribution(cur realm) {
 		cross(cur),
 		7000, // liquidityStakerPct
 		2500, // devOpsPct
-		500, // communityPoolPct
-		0, // govStakerPct
+		500,  // communityPoolPct
+		0,    // govStakerPct
 	)
 	println("[INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/GovStaker)")
 	println()
@@ -56,6 +58,7 @@ func testExplicitMintDistribution(cur realm) {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: all recipients = 0")
 	println()
@@ -94,9 +97,9 @@ func testExplicitMintDistribution(cur realm) {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross(cur),
-		0, // liquidityStakerPct
+		0,    // liquidityStakerPct
 		5000, // devOpsPct
-		0, // communityPoolPct
+		0,    // communityPoolPct
 		5000, // govStakerPct
 	)
 	println("[INFO] distribution ratio changed to 0/50/0/50")

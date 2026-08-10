@@ -7,10 +7,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -106,7 +108,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range")
-	exactInSingleSwapRouteBy(cur,
+	exactInSingleSwapRouteBy(
+		cur,
 		poolPath1,
 		barPath,
 		bazPath,
@@ -124,7 +127,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range", position2)
-	exactInSingleSwapRouteBy(cur,
+	exactInSingleSwapRouteBy(
+		cur,
 		poolPath1,
 		bazPath,
 		barPath,
@@ -147,6 +151,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -473,7 +478,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect rewards from one position 1
 // [INFO] collect reward by tokenID: 1
-// [EXPECTED] reward: 802652 (should be > 0)
+// [EXPECTED] reward: 802653 (should be > 0)
 //
 // [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
 // [INFO] ExactInSwapRoute

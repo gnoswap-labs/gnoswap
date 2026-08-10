@@ -32,6 +32,16 @@ func TestSetDistributionStartTime(cur realm, t *testing.T) {
 			caller:    adminAddr,
 		},
 		{
+			name: "cannot set distribution start time without default initial pool",
+			setup: func(cur realm) {
+				defaultInitialPoolChecker = func(poolPath string) bool { return false }
+			},
+			timestamp:   1500 + now,
+			caller:      adminAddr,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-005] invalid emission start || default initial pool does not exist: gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
+		},
+		{
 			name:      "governance can set distribution start time",
 			timestamp: 2000 + now,
 			caller:    govAddr,
@@ -76,6 +86,7 @@ func TestSetDistributionStartTime(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetObject(t)
 			testing.SetHeight(123)
 			if tt.setup != nil {
 				tt.setup(cur)

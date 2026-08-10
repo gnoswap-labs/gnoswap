@@ -61,8 +61,7 @@ func TestGetInitialCollectTime(cur realm, t *testing.T) {
 			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
+			incentive := sr.NewExternalIncentive("", "", "", 0, tt.incentiveStartTimestamp, tt.incentiveStartTimestamp+1, "", 0, 0, 0)
 
 			result := getInitialCollectTime(deposit, incentive)
 			uassert.Equal(t, tt.expected, result)
@@ -139,14 +138,14 @@ func TestRewardStructInitialization(cur realm, t *testing.T) {
 	}
 }
 
-// Test CalcPositionRewardParam struct
+// Test calculatePositionRewardParam struct
 
-func TestCalcPositionRewardParamStructure(cur realm, t *testing.T) {
+func TestcalculatePositionRewardParamStructure(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	currentHeight := int64(1000)
 	positionId := uint64(123)
 
-	param := &CalcPositionRewardParam{
+	param := &calculatePositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTime,
 		Deposits:      nil,
@@ -206,8 +205,7 @@ func TestGetInitialCollectTime_BoundaryValues(cur realm, t *testing.T) {
 			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
+			incentive := sr.NewExternalIncentive("", "", "", 0, tt.incentiveStartTimestamp, tt.incentiveStartTimestamp+1, "", 0, 0, 0)
 
 			result := getInitialCollectTime(deposit, incentive)
 			uassert.Equal(t, tt.expected, result)
@@ -302,8 +300,7 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 
 	deposit1 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit1.SetStakeTime(jan1)
-	incentive1 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive1.SetStartTimestamp(jan15)
+	incentive1 := sr.NewExternalIncentive("", "", "", 0, jan15, jan15+1, "", 0, 0, 0)
 
 	result1 := getInitialCollectTime(deposit1, incentive1)
 	uassert.Equal(t, jan15, result1)
@@ -311,8 +308,7 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 	// Scenario 2: Incentive started Jan 1, position staked Jan 15
 	deposit2 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit2.SetStakeTime(jan15)
-	incentive2 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive2.SetStartTimestamp(jan1)
+	incentive2 := sr.NewExternalIncentive("", "", "", 0, jan1, jan1+1, "", 0, 0, 0)
 
 	result2 := getInitialCollectTime(deposit2, incentive2)
 	uassert.Equal(t, jan15, result2)
@@ -320,14 +316,13 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 	// Scenario 3: Both start at the same time
 	deposit3 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit3.SetStakeTime(jan1)
-	incentive3 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive3.SetStartTimestamp(jan1)
+	incentive3 := sr.NewExternalIncentive("", "", "", 0, jan1, jan1+1, "", 0, 0, 0)
 
 	result3 := getInitialCollectTime(deposit3, incentive3)
 	uassert.Equal(t, jan1, result3)
 }
 
-func TestCalcPositionRewardParam_AllFields(cur realm, t *testing.T) {
+func TestcalculatePositionRewardParam_AllFields(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	currentHeight := int64(5000)
 	positionId := uint64(999)
@@ -336,7 +331,7 @@ func TestCalcPositionRewardParam_AllFields(cur realm, t *testing.T) {
 	deposits := NewDeposits()
 	pools := NewPools()
 
-	param := &CalcPositionRewardParam{
+	param := &calculatePositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTime,
 		Deposits:      deposits,
@@ -383,7 +378,7 @@ func TestReward_InternalOnlyNoExternal(cur realm, t *testing.T) {
 	uassert.Equal(t, 0, len(reward.ExternalPenalty))
 }
 
-func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(cur realm, t *testing.T) {
+func TestCalculateCollectablePositionReward_Prevent_ExternalPenaltyOnly(cur realm, t *testing.T) {
 	canonical := Setup(cur, t)
 
 	// Make the first warmup emit 0% reward so only penalties accumulate
@@ -428,7 +423,7 @@ func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(cur realm, t *testing.T)
 	currentTimestamp := time.Now().Unix() + 1
 	currentHeight := runtime.ChainHeight() + 1
 
-	reward := getMockInstance().calcPositionReward(currentHeight, currentTimestamp, positionId)
+	reward := getMockInstance().calculateCollectablePositionReward(currentHeight, currentTimestamp, positionId)
 
 	_, hasExternalReward := reward.External[incentiveId]
 	uassert.True(t, hasExternalReward)
@@ -438,9 +433,9 @@ func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(cur realm, t *testing.T)
 	uassert.True(t, penalty > 0)
 }
 
-// TestCalcPositionReward tests the calcPositionReward function
+// TestCalculateCollectablePositionReward tests the calculateCollectablePositionReward function
 // using a table-driven approach to verify various edge cases for internal and external rewards.
-func TestCalcPositionReward(cur realm, t *testing.T) {
+func TestCalculateCollectablePositionReward(cur realm, t *testing.T) {
 	baseTime := time.Now().Unix()
 	baseHeight := int64(100)
 
@@ -1243,7 +1238,7 @@ func TestCalcPositionReward(cur realm, t *testing.T) {
 			positionId, _ := tt.setupFunc(t, s, baseTime)
 
 			// Execute
-			reward := s.calcPositionReward(tt.currentHeight, tt.currentTimestamp, positionId)
+			reward := s.calculateCollectablePositionReward(tt.currentHeight, tt.currentTimestamp, positionId)
 
 			// Validate internal reward expectations
 			if tt.expectInternalReward {
@@ -1309,8 +1304,8 @@ func TestCalcPositionReward(cur realm, t *testing.T) {
 	}
 }
 
-// TestCalcPositionReward_BoundaryConditions tests edge cases at boundaries.
-func TestCalcPositionReward_BoundaryConditions(cur realm, t *testing.T) {
+// TestCalculateCollectablePositionReward_BoundaryConditions tests edge cases at boundaries.
+func TestCalculateCollectablePositionReward_BoundaryConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tickLower     int32
@@ -1398,7 +1393,7 @@ func TestCalcPositionReward_BoundaryConditions(cur realm, t *testing.T) {
 			poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 			// Execute
-			reward := s.calcPositionReward(baseHeight+10, baseTime+100, positionId)
+			reward := s.calculateCollectablePositionReward(baseHeight+10, baseTime+100, positionId)
 
 			// Verify
 			if tt.expectInRange {
@@ -1413,8 +1408,8 @@ func TestCalcPositionReward_BoundaryConditions(cur realm, t *testing.T) {
 	}
 }
 
-// TestCalcPositionReward_RewardAggregation tests that rewards from multiple warmup periods
-func TestCalcPositionReward_RewardAggregation(cur realm, t *testing.T) {
+// TestCalculateCollectablePositionReward_RewardAggregation tests that rewards from multiple warmup periods
+func TestCalculateCollectablePositionReward_RewardAggregation(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	s := getMockInstance()
 
@@ -1460,7 +1455,7 @@ func TestCalcPositionReward_RewardAggregation(cur realm, t *testing.T) {
 
 	var prevReward int64
 	for _, ts := range times {
-		reward := s.calcPositionReward(baseHeight+10, ts, positionId)
+		reward := s.calculateCollectablePositionReward(baseHeight+10, ts, positionId)
 
 		// Total reward should always be positive and increasing over time
 		totalReward := reward.Internal + reward.InternalPenalty
@@ -1470,8 +1465,8 @@ func TestCalcPositionReward_RewardAggregation(cur realm, t *testing.T) {
 	}
 }
 
-// TestCalcPositionReward_ExternalRewardMapIntegrity tests that external reward maps
-func TestCalcPositionReward_ExternalRewardMapIntegrity(cur realm, t *testing.T) {
+// TestCalculateCollectablePositionReward_ExternalRewardMapIntegrity tests that external reward maps
+func TestCalculateCollectablePositionReward_ExternalRewardMapIntegrity(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	s := getMockInstance()
 
@@ -1521,14 +1516,14 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(cur realm, t *testing.T) 
 	poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
 
 	// Get first reward
-	reward1 := s.calcPositionReward(baseHeight+10, baseTime+10, positionId)
+	reward1 := s.calculateCollectablePositionReward(baseHeight+10, baseTime+10, positionId)
 
 	// Modify the returned map (should not affect future calls)
 	reward1.External["modified-key"] = 999999
 	reward1.ExternalPenalty["modified-key"] = 888888
 
 	// Get second reward
-	reward2 := s.calcPositionReward(baseHeight+20, baseTime+20, positionId)
+	reward2 := s.calculateCollectablePositionReward(baseHeight+20, baseTime+20, positionId)
 
 	// Verify the modification didn't affect reward2
 	_, hasModified := reward2.External["modified-key"]

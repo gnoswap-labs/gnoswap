@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -36,6 +38,7 @@ func main(cur realm) {
 	// Scenario 2: Set distribution start height to 5000
 	println("\n[SCENARIO 2] Set Distribution Start Height to 5000")
 	futureTimestamp := time.Now().Unix() + 5000/5
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	newEmissionStart1 := gns.GetEmissionStartTimestamp()
@@ -51,6 +54,7 @@ func main(cur realm) {
 	// Scenario 3: Override to 10000
 	println("\n[SCENARIO 3] Override Distribution Start Height to 10000")
 	futureTimestamp = time.Now().Unix() + 10000/5
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	newEmissionStart2 := gns.GetEmissionStartTimestamp()

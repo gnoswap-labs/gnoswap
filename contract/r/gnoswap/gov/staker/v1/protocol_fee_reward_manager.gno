@@ -173,8 +173,27 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 		return err
 	}
 
-	self.SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
-	self.SetProtocolFeeAmounts(changedProtocolFeeAmounts)
+	// Persist only the tokens whose value actually changed instead of replacing the whole map.
+	// calculateAccumulatedRewardX128PerStake returns the previous (identical) accumulator and amount for
+	// tokens that received no new fees this round, so the full-map setters would deep-copy and re-persist
+	// every registered token on every add/remove/claim, growing storage and gas linearly in the number of
+	// registered tokens regardless of how many actually earned fees (gas report issue 1 / §1.2).
+	//
+	// Registered protocol-fee tokens are monotonic (never removed) and distributedAmounts always covers the
+	// full registered set, so the stored token set never shrinks; skipping unchanged entries therefore yields
+	// the same persisted state as the previous full-replace, only without the redundant re-writes.
+	for token, newAcc := range accumulatedProtocolFeeX128PerStake {
+		existing := self.GetAccumulatedProtocolFeeX128PerStake(token)
+		if existing == nil || !existing.Eq(newAcc) {
+			self.SetAccumulatedProtocolFeeX128PerStakeForToken(token, newAcc)
+		}
+	}
+	for token, amount := range changedProtocolFeeAmounts {
+		if self.GetProtocolFeeAmount(token) != amount {
+			self.SetProtocolFeeAmountForToken(token, amount)
+		}
+	}
+
 	self.SetAccumulatedTimestamp(currentTimestamp)
 
 	return nil

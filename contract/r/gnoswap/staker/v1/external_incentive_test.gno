@@ -9,7 +9,6 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -542,97 +541,6 @@ func TestDepositLastExternalIncentiveUpdatedAt(cur realm, t *testing.T) {
 	}
 }
 
-func TestExternalIncentivesByCreationTimeSliceStorage(cur realm, t *testing.T) {
-	tree := sr.NewUintTree()
-
-	timestamp := int64(1000)
-	poolPath := "pool1"
-
-	incentiveId1 := "addr1:1000:0"
-
-	poolIncentives := sr.NewBPTreeN(16)
-	incentiveIds := []string{incentiveId1}
-	poolIncentives.Set(poolPath, incentiveIds)
-
-	tree.Set(timestamp, poolIncentives)
-
-	value, ok := tree.Get(timestamp)
-	if !ok {
-		t.Fatal("Expected timestamp entry to exist")
-	}
-
-	poolTree, ok := value.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree, got %T", value)
-	}
-
-	idsValue := poolTree.Get(poolPath)
-	if idsValue == nil {
-		t.Fatal("Expected pool entry to exist")
-	}
-
-	stored := idsValue.([]string)
-	if len(stored) != 1 || stored[0] != incentiveId1 {
-		t.Errorf("Expected [%s], got %v", incentiveId1, stored)
-	}
-
-	// Allocate a fresh nested tree under /r/gnoswap/staker (via sr.NewBPTreeN)
-	// rather than mutating the tree fetched out of the sr-owned UintTree.
-	// A fetched sr-owned object is readonly-tainted when written from this
-	// (staker/v1) realm, mirroring the production addIncentiveIdByCreationTime
-	// path which always reconstructs the nested tree before Set.
-	incentiveId2 := "addr2:1000:1"
-	existingIds := idsValue.([]string)
-	incentiveIds = append(existingIds, incentiveId2)
-	poolTree = sr.NewBPTreeN(16)
-	poolTree.Set(poolPath, incentiveIds)
-	tree.Set(timestamp, poolTree)
-
-	value2, ok := tree.Get(timestamp)
-	if !ok {
-		t.Fatal("Expected to find value at timestamp 1000")
-	}
-	poolTree2 := value2.(*bptree.BPTree)
-	idsValue2 := poolTree2.Get(poolPath)
-	stored2 := idsValue2.([]string)
-
-	if len(stored2) != 2 {
-		t.Errorf("Expected 2 incentives, got %d", len(stored2))
-	}
-	if stored2[0] != incentiveId1 || stored2[1] != incentiveId2 {
-		t.Errorf("Expected [%s, %s], got %v", incentiveId1, incentiveId2, stored2)
-	}
-
-	poolPath2 := "pool2"
-	incentiveId3 := "addr3:1000:2"
-	incentiveIds3 := []string{incentiveId3}
-	poolTree2 = sr.NewBPTreeN(16)
-	poolTree2.Set(poolPath, incentiveIds)
-	poolTree2.Set(poolPath2, incentiveIds3)
-	tree.Set(timestamp, poolTree2)
-
-	value3, ok := tree.Get(timestamp)
-	if !ok {
-		t.Fatal("Expected to find value at timestamp 1000")
-	}
-	poolTree3 := value3.(*bptree.BPTree)
-	idsValue3 := poolTree3.Get(poolPath2)
-	if idsValue3 == nil {
-		t.Fatal("Expected pool2 entry to exist")
-	}
-
-	stored3 := idsValue3.([]string)
-	if len(stored3) != 1 || stored3[0] != incentiveId3 {
-		t.Errorf("Expected [%s] for pool2, got %v", incentiveId3, stored3)
-	}
-
-	idsValue4 := poolTree3.Get(poolPath)
-	stored4 := idsValue4.([]string)
-	if len(stored4) != 2 {
-		t.Errorf("Expected pool1 to still have 2 incentives, got %d", len(stored4))
-	}
-}
-
 // Test lazy sync logic: filter by pool
 func TestLazySyncPoolFiltering(cur realm, t *testing.T) {
 	pool1 := "pool1"
@@ -709,71 +617,9 @@ func TestLastUpdatePreventsReSync(cur realm, t *testing.T) {
 	}
 }
 
-// addIncentiveIdByCreationTimeForTest mirrors the production
-// addIncentiveIdByCreationTime indexing logic, but rebuilds the nested
-// poolPath -> []incentiveId tree into a fresh sr.NewBPTreeN on every call.
-//
-// A nested tree fetched back out of the (persisted) sr-owned UintTree is
-// readonly-tainted when mutated from the staker/v1 test realm. Reconstructing
-// a fresh tree (allocated here, owned by the calling realm) and re-Setting all
-// entries avoids touching the tainted object while preserving the same stored
-// shape: creationTime -> *bptree.BPTree -> poolPath -> []incentiveId.
-func addIncentiveIdByCreationTimeForTest(cur realm, t *testing.T, instance *stakerV1, poolPath, incentiveId string, creationTime int64) {
-	t.Helper()
-
-	var incentivesByTime *sr.UintTree
-	if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-		incentivesByTime = sr.NewUintTree()
-	} else {
-		incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
-	}
-
-	// Collect existing poolPath -> []incentiveId entries at this timestamp.
-	type poolEntry struct {
-		poolPath string
-		ids      []string
-	}
-	entries := []poolEntry{}
-
-	if existing, ok := incentivesByTime.Get(creationTime); ok {
-		existingTree, ok := existing.(*bptree.BPTree)
-		if !ok {
-			t.Fatalf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", existing)
-		}
-		existingTree.Iterate("", "", func(key string, value any) bool {
-			ids, ok := value.([]string)
-			if !ok {
-				t.Fatalf("invalid type in pool incentive map: expected []string, got %T", value)
-			}
-			// Copy the slice so the fresh tree does not alias tainted storage.
-			copied := make([]string, len(ids))
-			copy(copied, ids)
-			entries = append(entries, poolEntry{poolPath: key, ids: copied})
-			return false
-		})
-	}
-
-	// Rebuild a fresh nested tree and append the new incentive id.
-	freshTree := sr.NewBPTreeN(16)
-	found := false
-	for _, e := range entries {
-		ids := e.ids
-		if e.poolPath == poolPath {
-			ids = append(ids, incentiveId)
-			found = true
-		}
-		freshTree.Set(e.poolPath, ids)
-	}
-	if !found {
-		freshTree.Set(poolPath, []string{incentiveId})
-	}
-
-	incentivesByTime.Set(creationTime, freshTree)
-	instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
-}
-
 // TestCreateExternalIncentive_SameTimestamp tests that multiple incentives
-// created at the same timestamp are all stored correctly in the time-based tree.
+// created at the same timestamp are all stored in the pool's own incentive tree
+// and discoverable via getExternalIncentiveIdsBy.
 func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
@@ -817,44 +663,39 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 		// Add to pool
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.IncentivesResolver().create(incentive)
-
-		// Add to time-based index via the production helper, which rebuilds the
-		// nested tree under /r/gnoswap/staker so leaf writes clear the
-		// readonly-taint gate.
-		addIncentiveIdByCreationTimeForTest(cur, t, instance, poolPath, incentiveId, currentTime)
 	}
 
-	// Verify all 3 incentives are stored at the same timestamp for the same pool
-	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
-
-	poolMapValue, ok := incentivesByTime.Get(currentTime)
-	if !ok {
-		t.Fatal("Expected pool map at timestamp to exist")
+	// Verify all 3 incentives are stored in the pool's own incentive tree
+	poolResolver := NewPoolResolver(pool)
+	for _, expectedId := range incentiveIds {
+		ictv, exists := poolResolver.IncentivesResolver().Get(expectedId)
+		if !exists {
+			t.Errorf("Incentive %s not found in pool incentive tree", expectedId)
+			continue
+		}
+		if ictv.CreatedTimestamp() != currentTime {
+			t.Errorf("Incentive %s: expected created timestamp %d, got %d",
+				expectedId, currentTime, ictv.CreatedTimestamp())
+		}
 	}
 
-	poolMap, ok := poolMapValue.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected pool map to be *bptree.BPTree, got %T", poolMapValue)
+	// Verify discovery via getExternalIncentiveIdsBy returns all 3 incentives
+	// that start at the same timestamp for the same pool. The index is keyed by
+	// start timestamp, so the discovery window is [startTime, startTime].
+	discovered := instance.getExternalIncentiveIdsBy(poolPath, startTime, startTime)
+	if len(discovered) != 3 {
+		t.Errorf("Expected 3 incentives discoverable at same timestamp, got %d", len(discovered))
 	}
-
-	storedIdsValue := poolMap.Get(poolPath)
-	if storedIdsValue == nil {
-		t.Fatal("Expected incentive list for pool to exist")
-	}
-
-	storedIds, ok := storedIdsValue.([]string)
-	if !ok {
-		t.Fatalf("Expected incentive list to be []string, got %T", storedIdsValue)
-	}
-
-	if len(storedIds) != 3 {
-		t.Errorf("Expected 3 incentives at same timestamp for same pool, got %d", len(storedIds))
-	}
-
-	// Verify all IDs match
-	for i, expectedId := range incentiveIds {
-		if storedIds[i] != expectedId {
-			t.Errorf("Incentive %d: expected %s, got %s", i, expectedId, storedIds[i])
+	for _, expectedId := range incentiveIds {
+		found := false
+		for _, id := range discovered {
+			if id == expectedId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected incentive %s to be discoverable, missing", expectedId)
 		}
 	}
 
@@ -865,271 +706,6 @@ func TestCreateExternalIncentive_SameTimestamp(cur realm, t *testing.T) {
 		if !exists {
 			t.Errorf("Incentive %s not found in external incentives store", id)
 		}
-	}
-}
-
-// TestCreateExternalIncentive_TimeBasedIndex tests that the time-based index
-// correctly stores and retrieves incentives across different timestamps.
-func TestCreateExternalIncentive_TimeBasedIndex(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
-	instance := getMockInstance()
-
-	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
-	creator := testutils.TestAddress("creator")
-	baseTime := time.Now().Unix()
-
-	// Create pool
-	pool := sr.NewPool(poolPath, baseTime)
-	instance.getPools().set(poolPath, pool)
-
-	// Create incentives at different times
-	timestamps := []int64{
-		baseTime,
-		baseTime + 100,
-		baseTime + 200,
-		baseTime + 300,
-	}
-
-	incentiveIdsByTime := make(map[int64]string)
-
-	for _, ts := range timestamps {
-		incentiveId := instance.store.NextIncentiveID(creator, ts)
-		incentiveIdsByTime[ts] = incentiveId
-
-		incentive := sr.NewExternalIncentive(
-			incentiveId,
-			poolPath,
-			WUGNOT_TOKEN_KEY,
-			1000000,
-			ts+86400,
-			ts+86400*7,
-			creator,
-			100_000_000,
-			1000,
-			ts,
-		)
-
-		externalIncentives := instance.store.GetExternalIncentives()
-		externalIncentives.Set(incentiveId, incentive)
-
-		poolResolver := NewPoolResolver(pool)
-		poolResolver.IncentivesResolver().create(incentive)
-
-		// Add to time-based index (2-level structure: timestamp -> *bptree.BPTree -> poolPath -> []string)
-		var incentivesByTime *sr.UintTree
-		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime = sr.NewUintTree()
-		} else {
-			incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
-		}
-
-		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(ts)
-		if !ok {
-			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
-		}
-
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
-		if !ok {
-			t.Fatalf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue)
-		}
-
-		// Get or create incentive list for this pool
-		incentiveIdsValue := currentPoolIncentiveIds.Get(poolPath)
-		if incentiveIdsValue == nil {
-			incentiveIdsValue = []string{}
-		}
-
-		ids, ok := incentiveIdsValue.([]string)
-		if !ok {
-			t.Fatalf("invalid type in pool incentive map: expected []string, got %T", incentiveIdsValue)
-		}
-
-		// Append new incentive ID
-		ids = append(ids, incentiveId)
-		currentPoolIncentiveIds.Set(poolPath, ids)
-		incentivesByTime.Set(ts, currentPoolIncentiveIds)
-
-		instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
-	}
-
-	// Test range queries
-	testCases := []struct {
-		name      string
-		startTime int64
-		endTime   int64
-		expected  int
-	}{
-		{"All incentives", baseTime, baseTime + 400, 4},
-		{"Middle range", baseTime + 50, baseTime + 250, 2},      // 100, 200
-		{"Exact boundaries", baseTime + 100, baseTime + 301, 3}, // 100, 200, 300 (exclusive end)
-		{"Single timestamp", baseTime, baseTime + 50, 1},        // only baseTime
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
-
-			found := make([]string, 0)
-			incentivesByTime.Iterate(tc.startTime, tc.endTime, func(key int64, value any) bool {
-				// value is *bptree.BPTree (poolPath -> []string)
-				poolMap, ok := value.(*bptree.BPTree)
-				if !ok {
-					t.Fatalf("Expected *bptree.BPTree at timestamp %d, got %T", key, value)
-				}
-
-				// Get incentive IDs for the target pool
-				idsValue := poolMap.Get(poolPath)
-				if idsValue != nil {
-					ids, ok := idsValue.([]string)
-					if !ok {
-						t.Fatalf("Expected []string for pool %s, got %T", poolPath, idsValue)
-					}
-					found = append(found, ids...)
-				}
-				return false
-			})
-
-			if len(found) != tc.expected {
-				t.Errorf("Expected %d incentives in range [%d, %d], got %d",
-					tc.expected, tc.startTime, tc.endTime, len(found))
-			}
-		})
-	}
-}
-
-// TestCreateExternalIncentive_SameTimestampDifferentPools tests that
-// incentives created at the same timestamp for different pools are properly
-// stored in separate pool maps within the same timestamp entry.
-func TestCreateExternalIncentive_SameTimestampDifferentPools(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
-	instance := getMockInstance()
-
-	pool1Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
-	pool2Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
-	pool3Path := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:3000"
-	creator := testutils.TestAddress("creator")
-	currentTime := time.Now().Unix()
-
-	// Create pools
-	pool1 := sr.NewPool(pool1Path, currentTime)
-	pool2 := sr.NewPool(pool2Path, currentTime)
-	pool3 := sr.NewPool(pool3Path, currentTime)
-	instance.getPools().set(pool1Path, pool1)
-	instance.getPools().set(pool2Path, pool2)
-	instance.getPools().set(pool3Path, pool3)
-
-	poolPaths := []string{pool1Path, pool2Path, pool3Path}
-	pools := []*sr.Pool{pool1, pool2, pool3}
-	incentiveIdsByPool := make(map[string]string)
-
-	startTime := currentTime + 86400
-	endTime := startTime + 86400*7
-
-	// Create one incentive for each pool at the same timestamp
-	for i, poolPath := range poolPaths {
-		incentiveId := instance.store.NextIncentiveID(creator, currentTime)
-		incentiveIdsByPool[poolPath] = incentiveId
-
-		incentive := sr.NewExternalIncentive(
-			incentiveId,
-			poolPath,
-			WUGNOT_TOKEN_KEY,
-			int64((i+1)*1000000),
-			startTime,
-			endTime,
-			creator,
-			100_000_000,
-			1000,
-			currentTime, // Same timestamp for all
-		)
-
-		externalIncentives := instance.store.GetExternalIncentives()
-		externalIncentives.Set(incentiveId, incentive)
-
-		poolResolver := NewPoolResolver(pools[i])
-		poolResolver.IncentivesResolver().create(incentive)
-
-		// Add to time-based index (2-level structure)
-		var incentivesByTime *sr.UintTree
-		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime = sr.NewUintTree()
-		} else {
-			incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
-		}
-
-		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue, ok := incentivesByTime.Get(currentTime)
-		if !ok {
-			currentPoolIncentiveIdsValue = sr.NewBPTreeN(16)
-		}
-
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
-		if !ok {
-			t.Fatalf("invalid type: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue)
-		}
-
-		// Get or create incentive list for this pool
-		incentiveIdsValue := currentPoolIncentiveIds.Get(poolPath)
-		if incentiveIdsValue == nil {
-			incentiveIdsValue = []string{}
-		}
-
-		ids, ok := incentiveIdsValue.([]string)
-		if !ok {
-			t.Fatalf("invalid type: expected []string, got %T", incentiveIdsValue)
-		}
-
-		// Append new incentive ID
-		ids = append(ids, incentiveId)
-		currentPoolIncentiveIds.Set(poolPath, ids)
-		incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
-
-		instance.store.SetExternalIncentivesByCreationTime(0, cur, incentivesByTime)
-	}
-
-	// Verify all 3 pools have their incentives stored at the same timestamp
-	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
-
-	poolMapValue, ok := incentivesByTime.Get(currentTime)
-	if !ok {
-		t.Fatal("Expected pool map at timestamp to exist")
-	}
-
-	poolMap, ok := poolMapValue.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree, got %T", poolMapValue)
-	}
-
-	// Verify each pool has exactly 1 incentive
-	for _, poolPath := range poolPaths {
-		idsValue := poolMap.Get(poolPath)
-		if idsValue == nil {
-			t.Errorf("Expected incentive list for pool %s to exist", poolPath)
-			continue
-		}
-
-		ids, ok := idsValue.([]string)
-		if !ok {
-			t.Errorf("Expected []string for pool %s, got %T", poolPath, idsValue)
-			continue
-		}
-
-		if len(ids) != 1 {
-			t.Errorf("Expected 1 incentive for pool %s, got %d", poolPath, len(ids))
-			continue
-		}
-
-		expectedId := incentiveIdsByPool[poolPath]
-		if ids[0] != expectedId {
-			t.Errorf("Pool %s: expected incentive %s, got %s", poolPath, expectedId, ids[0])
-		}
-	}
-
-	// Verify pool map has exactly 3 entries
-	poolMapSize := poolMap.Size()
-	if poolMapSize != 3 {
-		t.Errorf("Expected 3 pools in pool map, got %d", poolMapSize)
 	}
 }
 
@@ -1236,7 +812,7 @@ func TestLazySync_MultipleConcurrentIncentives(cur realm, t *testing.T) {
 		warmups,
 	)
 
-	// Simulate lazy sync: iterate time-based index and add matching pool incentives
+	// Simulate lazy sync: add matching pool incentives to the deposit
 	// (This would normally happen in calculatePositionReward)
 	for _, incentiveId := range incentiveIds {
 		deposit.AddExternalIncentiveId(incentiveId)
@@ -1689,433 +1265,16 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(cur realm, t *testing.T) {
 	}
 }
 
-// TestAddIncentiveIdByCreationTime tests the addIncentiveIdByCreationTime function
-// with various scenarios using table-driven tests.
-func TestAddIncentiveIdByCreationTime(cur realm, t *testing.T) {
-	// incentiveInput represents a single incentive to be added
-	type incentiveInput struct {
-		poolPath     string
-		incentiveId  string
-		creationTime int64
-	}
-
-	// expectedResult represents expected state for a specific pool at a specific time
-	type expectedResult struct {
-		creationTime int64
-		poolPath     string
-		incentiveIds []string
-	}
-
-	tests := []struct {
-		name                 string
-		inputs               []incentiveInput
-		expected             []expectedResult
-		expectedHasPanic     bool
-		expectedPanicMessage string
-	}{
-		{
-			name: "new time new pool - basic case",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "test-incentive-1",
-					creationTime: 1000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 1000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"test-incentive-1"},
-				},
-			},
-		},
-		{
-			name: "same time same pool - multiple incentives",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-a",
-					creationTime: 2000,
-				},
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-b",
-					creationTime: 2000,
-				},
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-c",
-					creationTime: 2000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 2000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"incentive-a", "incentive-b", "incentive-c"},
-				},
-			},
-		},
-		{
-			name: "same time different pools - pool isolation",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "pool1-incentive",
-					creationTime: 3000,
-				},
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500",
-					incentiveId:  "pool2-incentive",
-					creationTime: 3000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"pool1-incentive"},
-				},
-				{
-					creationTime: 3000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500",
-					incentiveIds: []string{"pool2-incentive"},
-				},
-			},
-		},
-		{
-			name: "different times same pool - time isolation",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-0",
-					creationTime: 4000,
-				},
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-1",
-					creationTime: 5000,
-				},
-				{
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveId:  "incentive-2",
-					creationTime: 6000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 4000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"incentive-0"},
-				},
-				{
-					creationTime: 5000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"incentive-1"},
-				},
-				{
-					creationTime: 6000,
-					poolPath:     "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
-					incentiveIds: []string{"incentive-2"},
-				},
-			},
-		},
-		{
-			name: "zero creation time",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "zero-time-incentive",
-					creationTime: 0,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 0,
-					poolPath:     "gno.land/r/test/pool",
-					incentiveIds: []string{"zero-time-incentive"},
-				},
-			},
-		},
-		{
-			name: "negative creation time",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "negative-time-incentive",
-					creationTime: -1000,
-				},
-			},
-			expectedHasPanic:     true,
-			expectedPanicMessage: "negative value not supported",
-		},
-		{
-			name: "large creation time",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "large-time-incentive",
-					creationTime: math.MaxInt64 - 1,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: math.MaxInt64 - 1,
-					poolPath:     "gno.land/r/test/pool",
-					incentiveIds: []string{"large-time-incentive"},
-				},
-			},
-		},
-		{
-			name: "empty incentive id",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "",
-					creationTime: 7000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 7000,
-					poolPath:     "gno.land/r/test/pool",
-					incentiveIds: []string{""},
-				},
-			},
-		},
-		{
-			name: "duplicate incentive ids (no deduplication)",
-			inputs: []incentiveInput{
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "duplicate-incentive",
-					creationTime: 8000,
-				},
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "duplicate-incentive",
-					creationTime: 8000,
-				},
-				{
-					poolPath:     "gno.land/r/test/pool",
-					incentiveId:  "duplicate-incentive",
-					creationTime: 8000,
-				},
-			},
-			expected: []expectedResult{
-				{
-					creationTime: 8000,
-					poolPath:     "gno.land/r/test/pool",
-					incentiveIds: []string{"duplicate-incentive", "duplicate-incentive", "duplicate-incentive"},
-				},
-			},
-		},
-		{
-			name: "multiple times, pools, and incentives",
-			inputs: []incentiveInput{
-				// Time 1000: pool1 has 2, pool2 has 1
-				{poolPath: "pool1", incentiveId: "t1-p1-i1", creationTime: 1000},
-				{poolPath: "pool1", incentiveId: "t1-p1-i2", creationTime: 1000},
-				{poolPath: "pool2", incentiveId: "t1-p2-i1", creationTime: 1000},
-				// Time 2000: pool2 has 1, pool3 has 2
-				{poolPath: "pool2", incentiveId: "t2-p2-i1", creationTime: 2000},
-				{poolPath: "pool3", incentiveId: "t2-p3-i1", creationTime: 2000},
-				{poolPath: "pool3", incentiveId: "t2-p3-i2", creationTime: 2000},
-				// Time 3000: pool1 has 1
-				{poolPath: "pool1", incentiveId: "t3-p1-i1", creationTime: 3000},
-			},
-			expected: []expectedResult{
-				{creationTime: 1000, poolPath: "pool1", incentiveIds: []string{"t1-p1-i1", "t1-p1-i2"}},
-				{creationTime: 1000, poolPath: "pool2", incentiveIds: []string{"t1-p2-i1"}},
-				{creationTime: 2000, poolPath: "pool2", incentiveIds: []string{"t2-p2-i1"}},
-				{creationTime: 2000, poolPath: "pool3", incentiveIds: []string{"t2-p3-i1", "t2-p3-i2"}},
-				{creationTime: 3000, poolPath: "pool1", incentiveIds: []string{"t3-p1-i1"}},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initStakerTest(cur, t)
-			instance := getMockInstance()
-
-			if tt.expectedHasPanic {
-				// EncodeInt64 panics inside the /r/gnoswap/staker realm, so the
-				// failure surfaces as a cross-realm abort rather than a local panic.
-				uassert.AbortsContains(t, cur, tt.expectedPanicMessage, func() {
-					for _, input := range tt.inputs {
-						instance.addIncentiveIdByCreationTime(0, cur, input.poolPath, input.incentiveId, input.creationTime)
-					}
-				})
-
-				return
-			}
-
-			// Execute: add all incentives
-			for _, input := range tt.inputs {
-				instance.addIncentiveIdByCreationTime(0, cur, input.poolPath, input.incentiveId, input.creationTime)
-			}
-
-			// Verify: check all expected results
-			incentivesByTime := instance.getExternalIncentivesByCreationTime()
-
-			for _, exp := range tt.expected {
-				// Get time entry
-				value, ok := incentivesByTime.Get(exp.creationTime)
-				uassert.True(t, ok, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
-
-				poolIncentives, ok := value.(*bptree.BPTree)
-				uassert.True(t, ok, "Expected value to be *bptree.BPTree")
-
-				// Get pool entry
-				incentiveIdsValue := poolIncentives.Get(exp.poolPath)
-				uassert.True(t, incentiveIdsValue != nil, ufmt.Sprintf("Expected pool %s to exist at time %d", exp.poolPath, exp.creationTime))
-
-				incentiveIds, ok := incentiveIdsValue.([]string)
-				uassert.True(t, ok, "Expected value to be []string")
-
-				// Verify count
-				uassert.Equal(t, len(exp.incentiveIds), len(incentiveIds))
-
-				// Verify each incentive ID (order matters)
-				for i, expectedId := range exp.incentiveIds {
-					uassert.Equal(t, expectedId, incentiveIds[i])
-				}
-			}
-		})
-	}
-}
-
-// TestAddIncentiveIdByCreationTime_IterationRange tests time range iteration
-// for retrieving incentives within a specific time window.
-func TestAddIncentiveIdByCreationTime_IterationRange(cur realm, t *testing.T) {
-	// setup represents incentives to add before testing iteration
-	type setup struct {
-		poolPath     string
-		incentiveId  string
-		creationTime int64
-	}
-
-	tests := []struct {
-		name          string
-		setupData     []setup
-		queryPoolPath string
-		rangeStart    int64
-		rangeEnd      int64
-		expectedIds   []string
-		expectedCount int
-	}{
-		{
-			name: "middle range - partial results",
-			setupData: []setup{
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-300", creationTime: 300},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-400", creationTime: 400},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-500", creationTime: 500},
-			},
-			queryPoolPath: "gno.land/r/test/pool",
-			rangeStart:    150,
-			rangeEnd:      350,
-			expectedIds:   []string{"inc-200", "inc-300"},
-			expectedCount: 2,
-		},
-		{
-			name: "full range - all results",
-			setupData: []setup{
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-300", creationTime: 300},
-			},
-			queryPoolPath: "gno.land/r/test/pool",
-			rangeStart:    0,
-			rangeEnd:      400,
-			expectedIds:   []string{"inc-100", "inc-200", "inc-300"},
-			expectedCount: 3,
-		},
-		{
-			name: "empty range - no results",
-			setupData: []setup{
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
-			},
-			queryPoolPath: "gno.land/r/test/pool",
-			rangeStart:    300,
-			rangeEnd:      400,
-			expectedIds:   []string{},
-			expectedCount: 0,
-		},
-		{
-			name: "exact boundary match",
-			setupData: []setup{
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
-				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
-			},
-			queryPoolPath: "gno.land/r/test/pool",
-			rangeStart:    100,
-			rangeEnd:      200,
-			expectedIds:   []string{"inc-100"},
-			expectedCount: 1,
-		},
-		{
-			name: "filter by pool path",
-			setupData: []setup{
-				{poolPath: "pool-a", incentiveId: "a-inc-100", creationTime: 100},
-				{poolPath: "pool-b", incentiveId: "b-inc-100", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "a-inc-200", creationTime: 200},
-			},
-			queryPoolPath: "pool-a",
-			rangeStart:    0,
-			rangeEnd:      300,
-			expectedIds:   []string{"a-inc-100", "a-inc-200"},
-			expectedCount: 2,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			initStakerTest(cur, t)
-			instance := getMockInstance()
-
-			// Setup: add all incentives
-			for _, s := range tt.setupData {
-				instance.addIncentiveIdByCreationTime(0, cur, s.poolPath, s.incentiveId, s.creationTime)
-			}
-
-			// Execute: iterate over range
-			incentivesByTime := instance.getExternalIncentivesByCreationTime()
-			found := make([]string, 0)
-
-			incentivesByTime.Iterate(tt.rangeStart, tt.rangeEnd, func(key int64, value any) bool {
-				poolTree := value.(*bptree.BPTree)
-				idsValue := poolTree.Get(tt.queryPoolPath)
-				if idsValue != nil {
-					ids := idsValue.([]string)
-					found = append(found, ids...)
-				}
-				return false
-			})
-
-			// Verify
-			uassert.Equal(t, tt.expectedCount, len(found))
-			for i, expectedId := range tt.expectedIds {
-				if i < len(found) {
-					uassert.Equal(t, expectedId, found[i])
-				}
-			}
-		})
-	}
-}
-
 // TestGetExternalIncentiveIdsBy tests the getExternalIncentiveIdsBy function
 // which retrieves external incentive IDs within a specific time range for a pool.
 func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
-	// incentiveSetup represents an incentive to be added to the time index
+	// incentiveSetup represents an incentive to be added to the pool's incentive tree
 	type incentiveSetup struct {
-		poolPath     string
-		incentiveId  string
-		creationTime int64
+		poolPath    string
+		incentiveId string
+		startTime   int64 // incentive start timestamp (start-time index key)
+		endTime     int64 // incentive end timestamp; defaults to startTime+1000 when 0
+		createdTime int64 // incentive created timestamp; defaults to startTime when 0
 	}
 
 	// depositSetup represents initial deposit state
@@ -2142,8 +1301,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "basic case - new incentives added to deposit",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 200},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", startTime: 200},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2163,7 +1322,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "no incentives when lastUpdate == currentTime",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2183,8 +1342,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "partial update - only new incentives since last update",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-old", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-new", creationTime: 300},
+				{poolPath: "pool-a", incentiveId: "inc-old", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-new", startTime: 300},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2204,10 +1363,10 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "filter by pool path - only matching pool incentives",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "a-inc-1", creationTime: 100},
-				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 150},
-				{poolPath: "pool-a", incentiveId: "a-inc-2", creationTime: 200},
-				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 250},
+				{poolPath: "pool-a", incentiveId: "a-inc-1", startTime: 100},
+				{poolPath: "pool-b", incentiveId: "b-inc-1", startTime: 150},
+				{poolPath: "pool-a", incentiveId: "a-inc-2", startTime: 200},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", startTime: 250},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2227,7 +1386,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "empty time range - no incentives in range",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 500},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 500},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2247,9 +1406,9 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "multiple incentives at same timestamp",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "inc-3", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-1", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-3", startTime: 100},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2269,8 +1428,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "no incentives exist for pool",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 100},
-				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 200},
+				{poolPath: "pool-b", incentiveId: "b-inc-1", startTime: 100},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", startTime: 200},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2290,7 +1449,7 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "preserve existing incentive ids",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "new-inc", creationTime: 300},
+				{poolPath: "pool-a", incentiveId: "new-inc", startTime: 300},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2310,8 +1469,8 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 		{
 			name: "exact boundary - incentive at lastUpdate time included",
 			incentives: []incentiveSetup{
-				{poolPath: "pool-a", incentiveId: "boundary-inc", creationTime: 100},
-				{poolPath: "pool-a", incentiveId: "after-inc", creationTime: 150},
+				{poolPath: "pool-a", incentiveId: "boundary-inc", startTime: 100},
+				{poolPath: "pool-a", incentiveId: "after-inc", startTime: 150},
 			},
 			deposit: depositSetup{
 				owner:                          testutils.TestAddress("user1"),
@@ -2328,6 +1487,63 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 			expectedLastExternalUpdatedAt: 200,
 			expectedNewIncentiveCount:     2,
 		},
+		{
+			name: "indexed by start time, not creation time",
+			incentives: []incentiveSetup{
+				// created early but starts within the scan window -> discovered
+				{poolPath: "pool-a", incentiveId: "late-start-inc", createdTime: 50, startTime: 150},
+				// created within the scan window but starts after currentTime -> not yet discovered
+				{poolPath: "pool-a", incentiveId: "future-start-inc", createdTime: 150, startTime: 400},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 100,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   200,
+			expectedIncentiveIds:          []string{"late-start-inc"},
+			expectedLastExternalUpdatedAt: 200,
+			expectedNewIncentiveCount:     1,
+		},
+		{
+			// Stake-time scan window boundary. StakeToken scans
+			// [currentTime - TIMESTAMP_365DAYS, currentTime] on the start-time
+			// index. An incentive with duration <= 365 days that is still
+			// active at currentTime must satisfy start >= currentTime - 365d.
+			// This case pins down both edges of that window:
+			//   - incentive starting exactly at the lower bound with the max
+			//     duration ends exactly at currentTime -> must be discovered
+			//   - incentive starting one second before the lower bound with
+			//     the max duration ended before currentTime -> correctly
+			//     excluded from the scan (and filtered by EndTimestamp anyway)
+			//   - incentive starting exactly at currentTime -> discovered
+			//     (upper bound is inclusive)
+			name: "stake scan window boundary at TIMESTAMP_365DAYS",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "exact-lower-bound", startTime: 1_768_464_000, endTime: 1_800_000_000},
+				{poolPath: "pool-a", incentiveId: "below-lower-bound", startTime: 1_768_463_999, endTime: 1_799_999_999},
+				{poolPath: "pool-a", incentiveId: "exact-upper-bound", startTime: 1_800_000_000},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 1_768_464_000,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 1_768_464_000,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   1_800_000_000,
+			expectedIncentiveIds:          []string{"exact-lower-bound", "exact-upper-bound"},
+			expectedLastExternalUpdatedAt: 1_800_000_000,
+			expectedNewIncentiveCount:     2,
+		},
 	}
 
 	for _, tt := range tests {
@@ -2336,7 +1552,42 @@ func TestGetExternalIncentiveIdsBy(cur realm, t *testing.T) {
 			instance := getMockInstance()
 
 			for _, inc := range tt.incentives {
-				instance.addIncentiveIdByCreationTime(0, cur, inc.poolPath, inc.incentiveId, inc.creationTime)
+				pool, ok := instance.getPools().Get(inc.poolPath)
+				if !ok {
+					pool = sr.NewPool(inc.poolPath, 0)
+					instance.getPools().set(inc.poolPath, pool)
+				}
+
+				// createdTime defaults to startTime when not explicitly set
+				createdTime := inc.createdTime
+				if createdTime == 0 {
+					createdTime = inc.startTime
+				}
+
+				// endTime defaults to startTime+1000 when not explicitly set
+				endTime := inc.endTime
+				if endTime == 0 {
+					endTime = inc.startTime + 1000
+				}
+
+				incentive := sr.NewExternalIncentive(
+					inc.incentiveId,
+					inc.poolPath,
+					WUGNOT_TOKEN_KEY,
+					1000000,
+					inc.startTime,
+					endTime,
+					testutils.TestAddress("creator"),
+					100_000_000,
+					1000,
+					createdTime,
+				)
+
+				externalIncentives := instance.store.GetExternalIncentives()
+				externalIncentives.Set(inc.incentiveId, incentive)
+
+				poolResolver := NewPoolResolver(pool)
+				poolResolver.IncentivesResolver().create(incentive)
 			}
 
 			deposit := sr.NewDeposit(
@@ -3069,4 +2320,162 @@ func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
 	uassert.AbortsContains(t, cur, "is not admin", func() {
 		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	})
+}
+
+// TestIncentiveIndexKeyedByStartTimestamp verifies discovery is keyed by the
+// incentive's start timestamp rather than its creation timestamp. The index is
+// written once at create() and there is no setter for the start timestamp, so
+// the key must always match StartTimestamp().
+func TestIncentiveIndexKeyedByStartTimestamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "start-time-index-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	createdTime := int64(100)
+	startTime := int64(5000)
+	incentive := sr.NewExternalIncentive(
+		"inc-start-key", poolPath, GNS_TOKEN_KEY, 1000,
+		startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, createdTime,
+	)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	// A window covering only the creation timestamp must not find it.
+	beforeStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime-1)
+	uassert.Equal(t, 0, len(beforeStart))
+
+	// A window ending exactly on the start timestamp must find it.
+	atStart := instance.getExternalIncentiveIdsBy(poolPath, 0, startTime)
+	uassert.Equal(t, 1, len(atStart))
+	uassert.Equal(t, "inc-start-key", atStart[0])
+	uassert.Equal(t, startTime, incentive.StartTimestamp())
+}
+
+// TestExternalIncentivesGetPanicsOnMissingId pins the lookup contract: get
+// aborts on an unknown id instead of returning nil, so callers must not
+// nil-check its result.
+func TestExternalIncentivesGetPanicsOnMissingId(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	incentives := getMockInstance().getExternalIncentives()
+	uassert.False(t, incentives.Has("missing-incentive-id"))
+	uassert.PanicsContains(t, cur, "not found", func() {
+		incentives.get("missing-incentive-id")
+	})
+}
+
+// TestDiscoveredIncentiveIdsExistInTree asserts the start-time index never
+// yields an id absent from the incentive tree, which is what makes the
+// panicking get() safe on the discovery paths.
+func TestDiscoveredIncentiveIdsExistInTree(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "discovery-consistency-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	incentives := instance.getExternalIncentives()
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 7000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("inc-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		incentives.set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := instance.getExternalIncentiveIdsBy(poolPath, 0, 10000)
+	uassert.Equal(t, len(starts), len(discovered))
+	for _, incentiveId := range discovered {
+		uassert.True(t, incentives.Has(incentiveId))
+		uassert.Equal(t, incentiveId, incentives.get(incentiveId).IncentiveId())
+	}
+}
+
+// TestStakeScanLowerBoundClamp covers the stake-time scan window when the chain
+// time is under 365 days: the raw lower bound is negative and the index rejects
+// it, so the bound must be clamped to 0.
+func TestStakeScanLowerBoundClamp(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	uassert.Equal(t, int64(0), stakeScanLowerBound(0))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(1000))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS-1))
+	uassert.Equal(t, int64(0), stakeScanLowerBound(TIMESTAMP_365DAYS))
+	uassert.Equal(t, int64(500), stakeScanLowerBound(TIMESTAMP_365DAYS+500))
+
+	poolPath := "scan-clamp-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+
+	incentive := sr.NewExternalIncentive(
+		"inc-clamp", poolPath, GNS_TOKEN_KEY, 1000,
+		500, 1500, testutils.TestAddress("creator"), 0, 0, 0,
+	)
+	instance.getExternalIncentives().set("inc-clamp", incentive)
+	NewPoolResolver(pool).IncentivesResolver().create(incentive)
+
+	currentTime := int64(1000)
+
+	// The unclamped bound aborts.
+	uassert.AbortsContains(t, cur, "negative value not supported", func() {
+		instance.getExternalIncentiveIdsBy(poolPath, currentTime-TIMESTAMP_365DAYS, currentTime)
+	})
+
+	// The clamped bound still finds the active incentive.
+	ids := instance.getExternalIncentiveIdsBy(poolPath, stakeScanLowerBound(currentTime), currentTime)
+	uassert.Equal(t, 1, len(ids))
+	uassert.Equal(t, "inc-clamp", ids[0])
+}
+
+// TestIncentiveTreeFullyCoveredByStartTimeIndex asserts every incentive in a
+// pool's incentive tree is reachable through the start-time discovery index.
+// An incentive registered without an index entry is never found by a new
+// staker, and its share silently falls through to the creator refund.
+func TestIncentiveTreeFullyCoveredByStartTimeIndex(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	poolPath := "index-coverage-pool"
+	pool := sr.NewPool(poolPath, 0)
+
+	instance := getMockInstance()
+	instance.getPools().set(poolPath, pool)
+	resolver := NewPoolResolver(pool).IncentivesResolver()
+
+	starts := []int64{1000, 1000, 2000, 900000}
+	for i, startTime := range starts {
+		incentiveId := ufmt.Sprintf("cover-%d", i)
+		incentive := sr.NewExternalIncentive(
+			incentiveId, poolPath, GNS_TOKEN_KEY, 1000,
+			startTime, startTime+1000, testutils.TestAddress("creator"), 0, 0, startTime,
+		)
+		instance.getExternalIncentives().set(incentiveId, incentive)
+		resolver.create(incentive)
+	}
+
+	discovered := make(map[string]bool)
+	for _, incentiveId := range instance.getExternalIncentiveIdsBy(poolPath, 0, math.MaxInt64) {
+		discovered[incentiveId] = true
+	}
+
+	total := 0
+	resolver.Incentives.IterateIncentives(func(incentiveId string, _ *sr.ExternalIncentive) bool {
+		total++
+		uassert.True(t, discovered[incentiveId],
+			ufmt.Sprintf("incentive %s is in the tree but not in the start-time index", incentiveId))
+		return false
+	})
+
+	uassert.Equal(t, len(starts), total)
+	uassert.Equal(t, len(starts), len(discovered))
 }

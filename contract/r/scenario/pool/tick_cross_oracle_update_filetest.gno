@@ -271,7 +271,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [INFO] Tick -1000 initial state:
 // [INFO] Initialized: true
 // [INFO] TickCumulativeOutside: 0
-// [INFO] SecondsOutside: 0
+// [INFO] SecondsOutside: 1234567890
 // [INFO] SecondsPerLiquidityOutsideX128: 0
 //
 // [SCENARIO] 4. Wait for Time to Pass
@@ -286,7 +286,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [INFO] Tick -1000 after cross(cur):
 // [INFO] Initialized: true
 // [EXPECTED] TickCumulativeOutside updated: -500
-// [EXPECTED] SecondsOutside updated: 1234568390
+// [EXPECTED] SecondsOutside updated: 500
 // [EXPECTED] SecondsPerLiquidityOutsideX128 is set: 17014118346046923173168730371588410
 // [EXPECTED] Oracle field successfully updated (non-zero)
 //
@@ -304,7 +304,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [SCENARIO] 9. Verify Oracle Fields After Second Cross
 // [INFO] Tick -1000 after second cross(cur):
 // [EXPECTED] TickCumulativeOutside changed: -549500
-// [EXPECTED] SecondsOutside changed: 500
+// [EXPECTED] SecondsOutside changed: 1234568390
 // [EXPECTED] SecondsPerLiquidityOutsideX128 updated again: 170141183460469231731687303715884105728000
 // [EXPECTED] Oracle field values changed on second cross(cur)
 //

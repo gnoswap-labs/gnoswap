@@ -127,7 +127,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 			wantErr: "[GNOSWAP-POOL-025]",
 		},
 		{
-			name:        "window before unix epoch returns oracle error",
+			name:        "window before unix epoch returns pre-epoch error",
 			currentTime: 10,
 			secondsAgo:  11,
 			currentTick: 12,
@@ -135,7 +135,33 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 				{timestamp: 0, tickCumulative: 0},
 				{timestamp: 10, tickCumulative: 120},
 			},
-			wantErr: "[GNOSWAP-POOL-025]",
+			wantErr: "[GNOSWAP-POOL-027]",
+		},
+		{
+			// Timestamps are int64. A uint32-based comparison would sort
+			// 2^32-100 after 2^32+100 and pick the wrong bracket.
+			name:        "observations spanning the uint32 boundary keep natural ordering",
+			currentTime: 1<<32 + 100,
+			secondsAgo:  200,
+			currentTick: 25,
+			observations: []twapConsistencyObservation{
+				{timestamp: 1<<32 - 300, tickCumulative: 0},
+				{timestamp: 1<<32 - 100, tickCumulative: 1000},
+				{timestamp: 1<<32 + 100, tickCumulative: 6000},
+			},
+			wantTick: 25,
+		},
+		{
+			name:        "interpolation across the uint32 boundary keeps natural ordering",
+			currentTime: 1<<32 + 200,
+			secondsAgo:  250,
+			currentTick: 20,
+			observations: []twapConsistencyObservation{
+				{timestamp: 1<<32 - 300, tickCumulative: 0},
+				{timestamp: 1<<32 - 100, tickCumulative: 1000},
+				{timestamp: 1<<32 + 200, tickCumulative: 7000},
+			},
+			wantTick: 20,
 		},
 		{
 			name:        "multi interval weighted average",
@@ -202,7 +228,6 @@ func newTwapConsistencyObservationState(observations []twapConsistencyObservatio
 		seeded[uint16(i)] = pl.NewObservation(
 			observation.timestamp,
 			observation.tickCumulative,
-			"0",
 			"0",
 			true,
 		)
