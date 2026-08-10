@@ -106,9 +106,6 @@ func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken
 	if p.accumulatedProtocolFeeX128PerStake == nil {
 		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
 	}
-	if value == nil {
-		value = u256.Zero()
-	}
 	p.accumulatedProtocolFeeX128PerStake[token] = u256.Zero().Set(value)
 }
 

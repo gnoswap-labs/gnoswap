@@ -207,7 +207,7 @@ func TestProtocolFeeRewardManager_ForTokenSetters(cur realm, t *testing.T) {
 
 	t.Run("Initialize nil maps", func(cur realm, t *testing.T) {
 		manager := &ProtocolFeeRewardManager{}
-		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token", nil)
+		manager.SetAccumulatedProtocolFeeX128PerStakeForToken("token", u256.Zero())
 		manager.SetProtocolFeeAmountForToken("token", 10)
 
 		uassert.NotNil(t, manager.GetAllAccumulatedProtocolFeeX128PerStake())
