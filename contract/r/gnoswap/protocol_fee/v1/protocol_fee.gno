@@ -45,8 +45,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 			pfs,
 			protocolFeeAddr,
 			token,
-			prev.Address().String(),
-			prev.PkgPath(),
 			false,
 		)
 	}
@@ -81,14 +79,12 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 		pfs,
 		protocolFeeAddr,
 		tokenPath,
-		prev.Address().String(),
-		prev.PkgPath(),
 		true,
 	)
 }
 
 // distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
-func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string, prevAddr string, prevRealm string, removeReservation bool) {
+func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string, removeReservation bool) {
 	toDevOpsAmount := gnsmath.SafeSubInt64(
 		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
 		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
@@ -127,10 +123,12 @@ func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *pr
 		panic(err)
 	}
 
+	prev := rlm.Previous()
+
 	chain.Emit(
 		"TransferProtocolFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
 		"tokenPath", tokenPath,
 		"toDevOpsAmount", strconv.FormatInt(toDevOpsAmount, 10),
 		"toGovStakerAmount", strconv.FormatInt(toGovStakerAmount, 10),
