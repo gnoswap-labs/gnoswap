@@ -197,14 +197,10 @@ func (s *mockProtocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath stri
 
 func (s *mockProtocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath string) error {
 	filteredReservedTokens := make([]string, 0, len(s.reservedTokens))
-	removed := false
 	for _, reservedToken := range s.reservedTokens {
-		if !removed && reservedToken == tokenPath {
-			removed = true
-			continue
+		if reservedToken != tokenPath {
+			filteredReservedTokens = append(filteredReservedTokens, reservedToken)
 		}
-
-		filteredReservedTokens = append(filteredReservedTokens, reservedToken)
 	}
 
 	return s.SetReservedTokens(0, rlm, filteredReservedTokens)

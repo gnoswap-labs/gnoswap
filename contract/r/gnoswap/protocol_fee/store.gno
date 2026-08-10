@@ -365,14 +365,10 @@ func (s *protocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath strin
 
 	reservedTokens := s.GetReservedTokens()
 	filteredReservedTokens := make([]string, 0, len(reservedTokens))
-	removed := false
 	for _, reservedToken := range reservedTokens {
-		if !removed && reservedToken == tokenPath {
-			removed = true
-			continue
+		if reservedToken != tokenPath {
+			filteredReservedTokens = append(filteredReservedTokens, reservedToken)
 		}
-
-		filteredReservedTokens = append(filteredReservedTokens, reservedToken)
 	}
 
 	return s.SetReservedTokens(0, rlm, filteredReservedTokens)
