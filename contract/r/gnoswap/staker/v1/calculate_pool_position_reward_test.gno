@@ -61,8 +61,7 @@ func TestGetInitialCollectTime(cur realm, t *testing.T) {
 			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
+			incentive := sr.NewExternalIncentive("", "", "", 0, tt.incentiveStartTimestamp, tt.incentiveStartTimestamp+1, "", 0, 0, 0)
 
 			result := getInitialCollectTime(deposit, incentive)
 			uassert.Equal(t, tt.expected, result)
@@ -206,8 +205,7 @@ func TestGetInitialCollectTime_BoundaryValues(cur realm, t *testing.T) {
 			deposit := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 			deposit.SetStakeTime(tt.depositStakeTime)
 
-			incentive := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-			incentive.SetStartTimestamp(tt.incentiveStartTimestamp)
+			incentive := sr.NewExternalIncentive("", "", "", 0, tt.incentiveStartTimestamp, tt.incentiveStartTimestamp+1, "", 0, 0, 0)
 
 			result := getInitialCollectTime(deposit, incentive)
 			uassert.Equal(t, tt.expected, result)
@@ -302,8 +300,7 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 
 	deposit1 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit1.SetStakeTime(jan1)
-	incentive1 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive1.SetStartTimestamp(jan15)
+	incentive1 := sr.NewExternalIncentive("", "", "", 0, jan15, jan15+1, "", 0, 0, 0)
 
 	result1 := getInitialCollectTime(deposit1, incentive1)
 	uassert.Equal(t, jan15, result1)
@@ -311,8 +308,7 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 	// Scenario 2: Incentive started Jan 1, position staked Jan 15
 	deposit2 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit2.SetStakeTime(jan15)
-	incentive2 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive2.SetStartTimestamp(jan1)
+	incentive2 := sr.NewExternalIncentive("", "", "", 0, jan1, jan1+1, "", 0, 0, 0)
 
 	result2 := getInitialCollectTime(deposit2, incentive2)
 	uassert.Equal(t, jan15, result2)
@@ -320,8 +316,7 @@ func TestGetInitialCollectTime_RealisticScenarios(cur realm, t *testing.T) {
 	// Scenario 3: Both start at the same time
 	deposit3 := sr.NewDeposit("", "", u256.Zero(), 0, 0, 0, nil)
 	deposit3.SetStakeTime(jan1)
-	incentive3 := sr.NewExternalIncentive("", "", "", 0, 0, 1, "", 0, 0, 0)
-	incentive3.SetStartTimestamp(jan1)
+	incentive3 := sr.NewExternalIncentive("", "", "", 0, jan1, jan1+1, "", 0, 0, 0)
 
 	result3 := getInitialCollectTime(deposit3, incentive3)
 	uassert.Equal(t, jan1, result3)
