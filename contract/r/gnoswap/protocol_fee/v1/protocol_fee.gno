@@ -45,11 +45,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 			pfs,
 			protocolFeeAddr,
 			token,
-			false,
 		)
-	}
-	if err := pfs.clearReservedTokens(0, rlm); err != nil {
-		panic(err)
 	}
 }
 
@@ -79,12 +75,11 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 		pfs,
 		protocolFeeAddr,
 		tokenPath,
-		true,
 	)
 }
 
 // distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
-func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string, removeReservation bool) {
+func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string) {
 	toDevOpsAmount := gnsmath.SafeSubInt64(
 		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
 		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
@@ -105,10 +100,8 @@ func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *pr
 		))
 	}
 
-	if removeReservation {
-		if err := pfs.removeReservedToken(0, rlm, tokenPath); err != nil {
-			panic(err)
-		}
+	if err := pfs.removeReservedToken(0, rlm, tokenPath); err != nil {
+		panic(err)
 	}
 
 	if amount <= 0 {

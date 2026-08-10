@@ -181,14 +181,6 @@ func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath s
 	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
-// clearReservedTokens clears the reserved token index after distribution.
-func (pfs *protocolFeeState) clearReservedTokens(_ int, rlm realm) error {
-	if err := pfs.store.SetReservedTokens(0, rlm, []string{}); err != nil {
-		return err
-	}
-	return nil
-}
-
 // removeReservedToken removes one distributed token from the reserved token index.
 func (pfs *protocolFeeState) removeReservedToken(_ int, rlm realm, tokenPath string) error {
 	reservedTokens := pfs.ReservedTokens()
