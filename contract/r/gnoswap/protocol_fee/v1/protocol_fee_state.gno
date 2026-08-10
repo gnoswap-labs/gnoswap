@@ -183,19 +183,7 @@ func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath s
 
 // removeReservedToken removes one distributed token from the reserved token index.
 func (pfs *protocolFeeState) removeReservedToken(_ int, rlm realm, tokenPath string) error {
-	reservedTokens := pfs.ReservedTokens()
-	filteredReservedTokens := make([]string, 0, len(reservedTokens))
-
-	for _, reservedToken := range reservedTokens {
-		if reservedToken != tokenPath {
-			filteredReservedTokens = append(filteredReservedTokens, reservedToken)
-		}
-	}
-
-	if err := pfs.store.SetReservedTokens(0, rlm, filteredReservedTokens); err != nil {
-		return err
-	}
-	return nil
+	return pfs.store.RemoveReservedToken(0, rlm, tokenPath)
 }
 
 // NewProtocolFeeState creates a new instance of protocolFeeState with initialized values
