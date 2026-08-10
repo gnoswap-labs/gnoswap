@@ -302,8 +302,8 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 	poolResolver := NewPoolResolver(pool)
 
 	if len(halvingTimestamps) == 0 {
-		// No emission change within the range => use current emission.
-		self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, self.currentEmission)
+		// No emission change within the range => use the live emission.
+		self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, self.getEmission())
 		return
 	}
 
