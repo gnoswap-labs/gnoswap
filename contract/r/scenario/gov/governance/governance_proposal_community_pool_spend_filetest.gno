@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -82,6 +84,7 @@ func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)

@@ -16,8 +16,6 @@ const (
 	// unstakingFee is the fee charged when unstaking positions.
 	// This parameter can be modified through governance.
 	defaultUnstakingFee = uint64(100) // 1%
-
-	defaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func init(cur realm) {
@@ -131,7 +129,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	emitSetPoolTier(
 		previousRealm.Address().String(),
 		previousRealm.PkgPath(),
-		defaultInitialPoolTierPath,
+		emission.DefaultInitialPoolTierPath,
 		uint64(Tier1),
 		initializedPoolTier.currentEmission,
 		initialTierRewards,
@@ -213,20 +211,31 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	return nil
 }
 
+// initializePoolTier seeds the staker's pool tiering state on first init.
+//
+// The default pool is the canonical WUGNOT:GNS:3000 pool, sourced from the
+// emission realm's DefaultInitialPoolTierPath constant so that the staker's
+// tier-1 base pool is guaranteed to match the pool emission distributes to.
+//
+// When SetDistributionStartTime executes, emission distributes to this default
+// pool and the staker uses the same path as the base tier-1 pool for reward
+// accrual. Keeping both sides on emission's single constant structurally
+// enforces that invariant and removes any risk of the two realms drifting
+// apart on the canonical default pool identity.
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools, int64, map[uint64]int64) {
 	pools := NewPools()
 	currentTime := time.Now().Unix()
 
-	pl := NewPools().GetPoolOrNil(defaultInitialPoolTierPath)
+	pl := NewPools().GetPoolOrNil(emission.DefaultInitialPoolTierPath)
 	if pl == nil {
-		pl = sr.NewPool(defaultInitialPoolTierPath, currentTime)
-		pools.set(defaultInitialPoolTierPath, pl)
+		pl = sr.NewPool(emission.DefaultInitialPoolTierPath, currentTime)
+		pools.set(emission.DefaultInitialPoolTierPath, pl)
 	}
 
 	poolTier := NewPoolTier(
 		pools,
 		currentTime,
-		defaultInitialPoolTierPath,
+		emission.DefaultInitialPoolTierPath,
 		emission.GetStakerEmissionAmountPerSecond,
 		emission.GetStakerEmissionAmountPerSecondInRange,
 	)

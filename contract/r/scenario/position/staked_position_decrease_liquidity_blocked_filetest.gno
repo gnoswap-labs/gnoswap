@@ -8,10 +8,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -50,9 +52,9 @@ var (
 	token1Path = "gno.land/r/onbloc/foo.FOO"
 	fee        = uint32(3000)
 
-	maxInt64    int64 = 9223372036854775807
-	maxTimeout  int64 = 9999999999
-	positionId  uint64
+	maxInt64   int64 = 9223372036854775807
+	maxTimeout int64 = 9999999999
+	positionId uint64
 )
 
 func main(cur realm) {
@@ -79,6 +81,7 @@ func main(cur realm) {
 
 func initPoolAndCreatePosition(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 

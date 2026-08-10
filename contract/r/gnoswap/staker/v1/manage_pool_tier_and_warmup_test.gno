@@ -87,6 +87,11 @@ func TestSetPoolTier(cur realm, t *testing.T) {
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
+	anchorPoolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
+	anchorPool := sr.NewPool(anchorPoolPath, 100)
+	instance.getPools().set(anchorPoolPath, anchorPool)
+	instance.setPoolTier(0, cur, anchorPoolPath, 1, 100)
+
 	tests := []struct {
 		name        string
 		poolPath    string
@@ -150,7 +155,12 @@ func TestChangePoolTier(cur realm, t *testing.T) {
 	pool := sr.NewPool(poolPath, 100)
 	instance.getPools().set(poolPath, pool)
 
+	anchorPoolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
+	anchorPool := sr.NewPool(anchorPoolPath, 100)
+	instance.getPools().set(anchorPoolPath, anchorPool)
+
 	currentTime := int64(100)
+	instance.setPoolTier(0, cur, anchorPoolPath, 1, currentTime)
 
 	// Set initial tier
 	instance.setPoolTier(0, cur, poolPath, 1, currentTime)

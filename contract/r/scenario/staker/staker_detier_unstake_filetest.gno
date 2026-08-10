@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -98,6 +100,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
