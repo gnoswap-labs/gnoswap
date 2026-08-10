@@ -461,6 +461,42 @@ func TestProtocolFeeRewardManager_claimRewardForToken_AllowsBulkClaimSameTimesta
 	uassert.Equal(t, rewardState.GetClaimedRewardForToken("tokenB"), int64(2000))
 }
 
+func TestProtocolFeeRewardManager_addStake_SettlesSameTimestampAccumulator(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	err := resolver.addStake("user1", 100, 10)
+	uassert.NoError(t, err)
+	rewardState, ok, err := resolver.GetRewardState("user1")
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(100))
+	uassert.Equal(t, rewardState.GetStakedAmount(), int64(100))
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStake(map[string]int64{
+		"tokenA": 1000,
+	}, 20)
+	uassert.NoError(t, err)
+	claimedRewards, err := resolver.claimRewards("user1", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedRewards["tokenA"], int64(1000))
+
+	err = resolver.updateAccumulatedProtocolFeeX128PerStakeForToken("tokenB", 2000, 20)
+	uassert.NoError(t, err)
+	err = resolver.addStake("user1", 100, 20)
+	uassert.NoError(t, err)
+	rewardState, ok, err = resolver.GetRewardState("user1")
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(200))
+	uassert.Equal(t, rewardState.GetStakedAmount(), int64(200))
+
+	claimedRewards, err = resolver.claimRewards("user1", 21)
+	uassert.NoError(t, err)
+	uassert.Equal(t, claimedRewards["tokenA"], int64(0))
+	uassert.Equal(t, claimedRewards["tokenB"], int64(2000))
+}
+
 // TestProtocolFeeRewardManager_claimRewardForToken_NoStakers pins the behavior
 // when protocol fees are distributed while nobody is staked: the per-stake
 // delta is 0 (division guarded by totalStaked == 0), so the amount is recorded

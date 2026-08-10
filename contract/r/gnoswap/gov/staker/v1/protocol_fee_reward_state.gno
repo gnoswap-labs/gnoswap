@@ -77,7 +77,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	currentTimestamp int64,
 ) (map[string]int64, error) {
 	// Don't calculate rewards for past timestamps
-	if p.GetAccumulatedTimestamp() >= currentTimestamp {
+	if p.GetAccumulatedTimestamp() > currentTimestamp {
 		return make(map[string]int64), nil
 	}
 
@@ -218,7 +218,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	currentTimestamp int64,
 ) error {
 	// Don't update if we're looking at a past timestamp
-	if p.GetAccumulatedTimestamp() >= currentTimestamp {
+	if p.GetAccumulatedTimestamp() > currentTimestamp {
 		return nil
 	}
 
