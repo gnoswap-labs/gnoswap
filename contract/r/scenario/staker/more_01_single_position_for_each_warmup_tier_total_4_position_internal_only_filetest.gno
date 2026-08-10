@@ -5,14 +5,15 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoswap/access"
 
@@ -89,6 +90,7 @@ func main(cur realm) {
 
 func initAndSetupSinglePool(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -102,8 +104,8 @@ func initAndSetupSinglePool(cur realm) {
 		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] register gns change callback")
@@ -423,7 +425,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] community pool reward (unclaimable + penalty): 73576607
 // [INFO] progress to 50% warm-up
 // [EXPECTED] user reward (50% warm-up): 6688782
-// [EXPECTED] community pool reward (50% penalty): 6688782
+// [EXPECTED] community pool reward (50% penalty): 6688783
 // [INFO] progress to 70% warm-up
 // [EXPECTED] user reward (70% warm-up): 9364294
 // [EXPECTED] community pool reward (30% penalty): 4013270

@@ -196,6 +196,11 @@ func (i *poolV1) Burn(
 //   - amount0: Token0 amount transferred (before any withdrawal fees)
 //   - amount1: Token1 amount transferred (before any withdrawal fees)
 //
+// The collected amount is capped by the position's tokensOwed. It is NOT
+// capped by the pool's internal balance: a balance short of the owed amount
+// means the internal ledger has drifted, so Collect reverts rather than
+// silently paying out less.
+//
 // Note: Withdrawal fees are applied by the position contract, not here.
 // Only callable by position contract.
 func (i *poolV1) Collect(
@@ -245,7 +250,10 @@ func (i *poolV1) Collect(
 
 	if amount0 > 0 {
 		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
+		token0Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
@@ -253,7 +261,10 @@ func (i *poolV1) Collect(
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
+		token1Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)

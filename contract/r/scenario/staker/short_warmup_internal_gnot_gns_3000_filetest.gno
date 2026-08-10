@@ -5,7 +5,6 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"chain/runtime"
@@ -13,6 +12,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -88,6 +90,7 @@ func main(cur realm) {
 
 func initWithShortWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
@@ -133,7 +136,10 @@ func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create wugnot:gns:3000 pool at tick 0")
-	pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	}
 
 	testing.SkipHeights(1)
 	ufmt.Printf("[INFO] pool created, current height: %d\n", runtime.ChainHeight())

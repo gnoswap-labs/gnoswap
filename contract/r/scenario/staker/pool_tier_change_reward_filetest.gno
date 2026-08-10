@@ -8,10 +8,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -110,6 +112,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -369,7 +372,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] pool tier after change: 1 (should be 1)
 // [INFO] skip 5 blocks to accumulate rewards in tier 1
 // [INFO] collect rewards while in tier 1
-// [EXPECTED] tier 1 rewards: 10033169 GNS (5 blocks)
+// [EXPECTED] tier 1 rewards: 10033170 GNS (5 blocks)
 // [INFO] tier 1 rewards should be higher than tier 2 (better tier)
 //
 // [SCENARIO] 6. Remove from tier system and collect
@@ -390,11 +393,11 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 8. Verify tier change scenario
 // [INFO] verify tier change scenario
 // [ANALYSIS] Tier 2 rewards (30% share): 12039809 GNS
-// [ANALYSIS] Tier 1 rewards (50% share): 10033169 GNS
+// [ANALYSIS] Tier 1 rewards (50% share): 10033170 GNS
 // [ANALYSIS] Tier 0 rewards (no tier): 0 GNS
 // [ANALYSIS] Tier 3 rewards (20% share): 8026537 GNS
 // [WARNING] Tier 1 rewards not higher than Tier 2
-// [SUMMARY] Total rewards collected: 30099515 GNS
+// [SUMMARY] Total rewards collected: 30099516 GNS
 // [INFO] tier change scenario completed successfully
 // [INFO] confirmed: rewards correctly calculated for each tier period
 // [INFO] confirmed: tier removal preserves past rewards

@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -56,6 +58,7 @@ func testSingleBlockPrecision(cur realm) {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
@@ -80,12 +83,12 @@ func testSingleBlockPrecision(cur realm) {
 	testing.SetRealm(adminRealm)
 	getBalanceChanges(cur, func() {
 		emission.ChangeDistributionPct(
-		cross(cur),
-		4000, // liquidityStakerPct
-		3000, // devOpsPct
-		2000, // communityPoolPct
-		1000, // govStakerPct
-	)
+			cross(cur),
+			4000, // liquidityStakerPct
+			3000, // devOpsPct
+			2000, // communityPoolPct
+			1000, // govStakerPct
+		)
 	})
 
 	period1Staker := emission.GetDistributedToStaker()
@@ -121,12 +124,12 @@ func testSingleBlockPrecision(cur realm) {
 	testing.SetRealm(adminRealm)
 	getBalanceChanges(cur, func() {
 		emission.ChangeDistributionPct(
-		cross(cur),
-		7000, // liquidityStakerPct
-		1500, // devOpsPct
-		1000, // communityPoolPct
-		500, // govStakerPct
-	)
+			cross(cur),
+			7000, // liquidityStakerPct
+			1500, // devOpsPct
+			1000, // communityPoolPct
+			500,  // govStakerPct
+		)
 	})
 
 	totalStaker := emission.GetDistributedToStaker()

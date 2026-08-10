@@ -1118,9 +1118,57 @@ func TestCollect(cur realm, t *testing.T) {
 			resetObject(cur, t)
 		})
 	}
+
+	t.Run("insufficient_internal_balance_reverts_collect", func(cur realm, t *testing.T) {
+		pool := setupStablecoinPool(cur, t)
+		approveTokensForPool(cur, t, pool)
+		testing.SetRealm(posRealm)
+
+		mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+		mockInstanceBurn(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+		positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+		positionBefore := mustGetPositionByPool(pool, positionKey)
+		owed0Before := positionBefore.TokensOwed0()
+		uassert.True(t, owed0Before > int64(1),
+			"setup should leave tokensOwed0 larger than the forced balance")
+
+		// Simulate an internal-ledger desync: balance is stale-low (1) while owed is larger.
+		pool.SetBalanceToken0(int64(1))
+
+		var amount0, amount1 string
+		r := revive(func() {
+			amount0, amount1 = mockInstanceCollect(
+				0, cur,
+				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+				MAX_INT64, "0",
+			)
+		})
+
+		uassert.NotNil(t, r,
+			"Collect must revert when the internal balance is insufficient")
+		uassert.Equal(t, "", amount0,
+			"amount0 must not be returned on revert")
+		uassert.Equal(t, "", amount1,
+			"amount1 must not be returned on revert")
+
+		// State must be untouched: no negative balance, owed unchanged.
+		positionAfter := mustGetPositionByPool(pool, positionKey)
+		uassert.Equal(t, utils.FormatInt(owed0Before), utils.FormatInt(positionAfter.TokensOwed0()),
+			"TokensOwed0 must stay unchanged after revert")
+		validateNonNegativeBalances(t, pool)
+		uassert.Equal(t, int64(1), pool.BalanceToken0(),
+			"Pool balance0 must stay at the forced value after revert")
+
+		resetObject(cur, t)
+	})
 }
 
-// validateCollectInvariant validates pool balance >= tokensOwed invariant
+// validateCollectInvariant validates the normal-path invariant that the pool's
+// internal balance covers the position's outstanding owed amounts.
 func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
 	t.Helper()
 	positionKey := getPositionKey(tickLower, tickUpper)
@@ -1132,6 +1180,18 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
 			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
+}
+
+// validateNonNegativeBalances validates only that Collect never stores a
+// negative balance. Used by the forced-desync case, where the setup
+// deliberately violates the stronger invariant above.
+func validateNonNegativeBalances(t *testing.T, pool *pl.Pool) {
+	t.Helper()
+
+	uassert.True(t, pool.BalanceToken0() >= 0,
+		ufmt.Sprintf("Pool balance0 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken0())))
+	uassert.True(t, pool.BalanceToken1() >= 0,
+		ufmt.Sprintf("Pool balance1 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken1())))
 }
 
 func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {

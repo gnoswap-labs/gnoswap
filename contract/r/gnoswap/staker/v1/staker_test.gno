@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/testutils/v0"
 	"gno.land/p/nt/uassert/v0"
 
@@ -41,6 +40,7 @@ func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
 	t.Run("normal collection works", func(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross(cur), 0)
+		createDefaultInitialPoolForStakerTest(cur, t)
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 		// setup
@@ -498,6 +498,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -583,6 +584,7 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -665,8 +667,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	uassert.True(t, len(externalRewards) >= 0, "should have external reward tracking")
 
 	// Store initial tick state for comparison
-	lowerTick := poolResolver.TickResolver(tickLower)
-	upperTick := poolResolver.TickResolver(tickUpper)
+	lowerTick := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
+	upperTick := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	initialLowerLiquidity := lowerTick.StakedLiquidityGross().Clone()
 	initialUpperLiquidity := upperTick.StakedLiquidityGross().Clone()
 
@@ -688,9 +690,12 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	deposits := getMockInstance().getDeposits()
 	uassert.False(t, deposits.Has(positionId), "deposit should be removed after unstaking")
 
+	uassert.False(t, pool.Ticks().Has(tickLower))
+	uassert.False(t, pool.Ticks().Has(tickUpper))
+
 	// Verify tick liquidity was updated (should be reduced after unstaking)
-	finalLowerLiquidity := poolResolver.TickResolver(tickLower).StakedLiquidityGross()
-	finalUpperLiquidity := poolResolver.TickResolver(tickUpper).StakedLiquidityGross()
+	finalLowerLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).StakedLiquidityGross()
+	finalUpperLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).StakedLiquidityGross()
 	uassert.True(t, finalLowerLiquidity.Lt(initialLowerLiquidity) || finalLowerLiquidity.IsZero(),
 		"lower tick liquidity should be reduced")
 	uassert.True(t, finalUpperLiquidity.Lt(initialUpperLiquidity) || finalUpperLiquidity.IsZero(),
@@ -703,6 +708,7 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
@@ -763,6 +769,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
@@ -869,99 +876,5 @@ func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
 	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
 	if lastUpdate != 0 {
 		t.Errorf("Expected lastExternalIncentiveUpdatedAt to be 0, got %d", lastUpdate)
-	}
-}
-
-// TestStore_ExternalIncentivesByCreationTime tests the store functions
-// for the time-based incentive index with 2-level structure.
-func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
-	instance := getMockInstance()
-
-	poolPath1 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
-	poolPath2 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
-
-	// Test SetExternalIncentivesByCreationTime with 2-level structure
-	tree := sr.NewUintTree()
-
-	// Create pool map for timestamp 100
-	poolMap1 := sr.NewBPTreeN(16)
-	poolMap1.Set(poolPath1, []string{"incentive1"})
-	tree.Set(100, poolMap1)
-
-	// Create pool map for timestamp 200
-	poolMap2 := sr.NewBPTreeN(16)
-	poolMap2.Set(poolPath1, []string{"incentive2"})
-	poolMap2.Set(poolPath2, []string{"incentive3"})
-	tree.Set(200, poolMap2)
-
-	err := instance.store.SetExternalIncentivesByCreationTime(0, cur, tree)
-	if err != nil {
-		t.Fatalf("Failed to set incentives tree: %v", err)
-	}
-
-	// Test HasExternalIncentivesByCreationTimeStoreKey - now true
-	if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-		t.Error("Expected store key to exist after set")
-	}
-
-	// Test GetExternalIncentivesByCreationTime
-	retrieved := instance.store.GetExternalIncentivesByCreationTime()
-	if retrieved == nil {
-		t.Fatal("Expected to retrieve tree")
-	}
-
-	// Verify data at timestamp 100
-	value1, ok := retrieved.Get(100)
-	if !ok {
-		t.Error("Expected to find value at timestamp 100")
-	}
-	if value1 == nil {
-		t.Error("Expected pool map at timestamp 100")
-	}
-	pMap1, ok := value1.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree at timestamp 100, got %T", value1)
-	}
-	idsValue1 := pMap1.Get(poolPath1)
-	if idsValue1 == nil {
-		t.Error("Expected incentives for poolPath1 at timestamp 100")
-	}
-	ids1 := idsValue1.([]string)
-	if len(ids1) != 1 || ids1[0] != "incentive1" {
-		t.Errorf("Expected [incentive1], got %v", ids1)
-	}
-
-	// Verify data at timestamp 200
-	value2, ok := retrieved.Get(200)
-	if !ok {
-		t.Error("Expected to find value at timestamp 200")
-	}
-	if value2 == nil {
-		t.Error("Expected pool map at timestamp 200")
-	}
-	pMap2, ok := value2.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree at timestamp 200, got %T", value2)
-	}
-
-	// Check poolPath1 at timestamp 200
-	idsValue2a := pMap2.Get(poolPath1)
-	if idsValue2a == nil {
-		t.Error("Expected incentives for poolPath1 at timestamp 200")
-	}
-	ids2a := idsValue2a.([]string)
-	if len(ids2a) != 1 || ids2a[0] != "incentive2" {
-		t.Errorf("Expected [incentive2], got %v", ids2a)
-	}
-
-	// Check poolPath2 at timestamp 200
-	idsValue2b := pMap2.Get(poolPath2)
-	if idsValue2b == nil {
-		t.Error("Expected incentives for poolPath2 at timestamp 200")
-	}
-	ids2b := idsValue2b.([]string)
-	if len(ids2b) != 1 || ids2b[0] != "incentive3" {
-		t.Errorf("Expected [incentive3], got %v", ids2b)
 	}
 }

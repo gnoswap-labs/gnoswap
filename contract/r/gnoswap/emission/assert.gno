@@ -4,6 +4,16 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
+func assertDefaultInitialPoolExists() {
+	if defaultInitialPoolChecker == nil {
+		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool checker is not registered"))
+	}
+
+	if !defaultInitialPoolChecker(DefaultInitialPoolTierPath) {
+		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool does not exist: "+DefaultInitialPoolTierPath))
+	}
+}
+
 // assertValidDistributionTarget panics if the given distribution target is invalid.
 func assertValidDistributionTarget(target int) {
 	validTargets := map[int]bool{

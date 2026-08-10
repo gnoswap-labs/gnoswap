@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -331,6 +332,7 @@ func TestOracleObserve(cur realm, t *testing.T) {
 		fn   func(t *testing.T)
 	}{
 		{"fails if an older observation does not exist", testObserveFailsIfOlderNotExist},
+		{"fails if seconds ago exceeds current time", testObserveFailsIfSecondsAgoExceedsCurrentTime},
 		{"interpolates correctly at max liquidity", testObserveInterpolatesMaxLiquidity},
 		{"interpolates correctly at min liquidity", testObserveInterpolatesMinLiquidity},
 		{"interpolates the same as 0 liquidity for 1 liquidity", testObserveInterpolatesSameAs0For1},
@@ -362,6 +364,32 @@ func testObserveFailsIfOlderNotExist(t *testing.T) {
 
 	_, _, err := observeSingle(os, currentTime+5, 1, 2, 0, u256.NewUint(4), 1)
 	uassert.Error(t, err)
+}
+
+func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
+	os := pl.NewObservationState(0)
+
+	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-027]")
+}
+
+// TestOracleLookbackErrorsAreDistinct pins the two rejection reasons to separate error codes.
+func TestOracleLookbackErrorsAreDistinct(cur realm, t *testing.T) {
+	// Retention failure: oldest observation (t=100) is newer than target (t=99).
+	tooOld := pl.NewObservationState(100)
+	_, _, errTooOld := observeSingle(tooOld, 150, 51, 12, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, errTooOld, "[GNOSWAP-POOL-025]")
+	if errTooOld != nil && strings.Contains(errTooOld.Error(), "[GNOSWAP-POOL-027]") {
+		t.Error("too-old lookback must not report the pre-epoch error code")
+	}
+
+	// Malformed request: secondsAgo exceeds the chain's own age.
+	beforeEpoch := pl.NewObservationState(0)
+	_, _, errEpoch := observeSingle(beforeEpoch, 10, 11, 12, 0, u256.NewUint(4), 1)
+	uassert.ErrorContains(t, errEpoch, "[GNOSWAP-POOL-027]")
+	if errEpoch != nil && strings.Contains(errEpoch.Error(), "[GNOSWAP-POOL-025]") {
+		t.Error("pre-epoch lookback must not report the too-old error code")
+	}
 }
 
 func testObserveInterpolatesMaxLiquidity(t *testing.T) {

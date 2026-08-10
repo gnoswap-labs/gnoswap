@@ -5,10 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -91,6 +93,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -363,28 +366,28 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 6. Third reward collection with longer interval
 // [INFO] skip 10 blocks for third reward accumulation (longer period)
 // [INFO] collect third reward
-// [EXPECTED] third reward (10 blocks): 40132694
+// [EXPECTED] third reward (10 blocks): 40132695
 // [INFO] third reward collection completed
 //
 // [SCENARIO] 7. Compare reward accumulation patterns
 // [INFO] analyze reward accumulation patterns
 // [INFO] test pattern: frequent small collections
 // [INFO] small collection 1 (2 blocks): 8026538
-// [INFO] small collection 2 (2 blocks): 8026538
-// [INFO] small collection 3 (2 blocks): 8026538
+// [INFO] small collection 2 (2 blocks): 8026539
+// [INFO] small collection 3 (2 blocks): 8026539
 // [INFO] small collection 4 (2 blocks): 8026538
-// [INFO] small collection 5 (2 blocks): 8026538
-// [EXPECTED] total from frequent collections (10 blocks): 40132690
+// [INFO] small collection 5 (2 blocks): 8026539
+// [EXPECTED] total from frequent collections (10 blocks): 40132693
 // [INFO] test pattern: single large collection
 // [EXPECTED] single large collection (10 blocks): 40132694
 // [INFO] reward pattern analysis:
-// [INFO] - Frequent collections total: 40132690
+// [INFO] - Frequent collections total: 40132693
 // [INFO] - Single large collection: 40132694
 // [INFO] reward amounts may vary due to emission timing and block-based calculations
 //
 // [SCENARIO] 8. Final verification with multiple collections
 // [INFO] final verification with multiple rapid collections
-// [INFO] initial GNS balance: 100000164544041
+// [INFO] initial GNS balance: 100000164544045
 // [INFO] perform 3 consecutive collections
 // [EXPECTED] consecutive collection 1: 60199042
 // [EXPECTED] consecutive collection 2: 0

@@ -165,26 +165,6 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 	return nextCardinality, nil
 }
 
-func lte(time, a, b int64) bool {
-	if (a <= time) && (time <= b) {
-		return a <= b
-	}
-
-	aAdjusted := u256.NewUintFromInt64(a)
-	bAdjusted := u256.NewUintFromInt64(b)
-	timeUint256 := u256.NewUintFromInt64(time)
-
-	if aAdjusted.Gt(timeUint256) {
-		aAdjusted = aAdjusted.Add(aAdjusted, u256.NewUintFromInt64(1<<32))
-	}
-
-	if bAdjusted.Gt(timeUint256) {
-		bAdjusted = bAdjusted.Add(bAdjusted, u256.NewUintFromInt64(1<<32))
-	}
-
-	return aAdjusted.Lte(bAdjusted)
-}
-
 func writeObservation(
 	os *pl.ObservationState,
 	currentTime int64,
@@ -273,13 +253,17 @@ func observeSingle(
 		return last.TickCumulative(), last.SecondsPerLiquidityCumulativeX128(), nil
 	}
 
+	// A lookback longer than the chain's own age would place the target before unix epoch.
+	if int64(secondsAgo) > currentTime {
+		return 0, "", errors.New(errObservationBeforeEpoch)
+	}
+
 	target := currentTime - int64(secondsAgo)
 
 	// find the observations before and after the target
 	beforeOrAt, atOrAfter, err := getSurroundingObservations(
 		os,
 		target,
-		currentTime,
 		tick,
 		index,
 		liquidity,
@@ -329,7 +313,6 @@ func observeSingle(
 func getSurroundingObservations(
 	os *pl.ObservationState,
 	target int64,
-	currentTime int64,
 	tick int32,
 	index uint16,
 	liquidity *u256.Uint,
@@ -341,8 +324,10 @@ func getSurroundingObservations(
 		return nil, nil, err
 	}
 
+	// Timestamps are int64, so natural ordering applies. Uniswap V3 needs a
+	// wraparound-aware comparison here only because it stores them as uint32.
 	// If the target is chronologically at or after the newest observation, we can early return
-	if lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
+	if beforeOrAt.BlockTimestamp() <= target {
 		if beforeOrAt.BlockTimestamp() == target {
 			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
 			return beforeOrAt, nil, nil
@@ -366,17 +351,16 @@ func getSurroundingObservations(
 	}
 
 	// Ensure that the target is chronologically at or after the oldest observation
-	if !lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
+	if beforeOrAt.BlockTimestamp() > target {
 		return nil, nil, errors.New(errObservationTooOld)
 	}
 
 	// If we've reached this point, we have to binary search
-	return binarySearch(os, currentTime, target, index, cardinality)
+	return binarySearch(os, target, index, cardinality)
 }
 
 func binarySearch(
 	os *pl.ObservationState,
-	currentTime int64,
 	target int64,
 	index uint16,
 	cardinality uint16,
@@ -404,10 +388,10 @@ func binarySearch(
 			return nil, nil, err
 		}
 
-		targetAtOrAfter := lte(currentTime, beforeOrAt.BlockTimestamp(), target)
+		targetAtOrAfter := beforeOrAt.BlockTimestamp() <= target
 
 		// check if we've found the answer!
-		if targetAtOrAfter && lte(currentTime, target, atOrAfter.BlockTimestamp()) {
+		if targetAtOrAfter && target <= atOrAfter.BlockTimestamp() {
 			break
 		}
 

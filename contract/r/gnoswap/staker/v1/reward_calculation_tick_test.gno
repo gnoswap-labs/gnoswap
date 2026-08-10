@@ -6,6 +6,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -13,14 +14,20 @@ import (
 func TestTicks(t *testing.T) {
 	ticks := sr.NewTicks()
 
-	tick := ticks.Get(100)
-	if tick == nil || tick.Id() != 100 {
-		t.Errorf("Get(100) returned %v; want Tick with ID 100", tick)
+	// Get must not auto-insert: a missing tick returns nil and the tree stays empty.
+	if tick := ticks.Get(100); tick != nil {
+		t.Errorf("Get(100) returned %v; want nil for missing tick", tick)
 	}
+	uassert.False(t, ticks.Has(100))
 
+	tick := sr.NewTick(100)
 	tick.SetStakedLiquidityGross(u256.MustFromDecimal("1"))
 	ticks.SetTick(100, tick)
 	uassert.True(t, ticks.Has(100))
+
+	if got := ticks.Get(100); got == nil || got.Id() != 100 {
+		t.Errorf("Get(100) returned %v; want Tick with ID 100", got)
+	}
 
 	tick.SetStakedLiquidityGross(u256.Zero())
 	ticks.SetTick(100, tick)
@@ -30,22 +37,31 @@ func TestTicks(t *testing.T) {
 func TestTicksBasic(t *testing.T) {
 	ticks := sr.NewTicks()
 
-	tick100 := ticks.Get(100)
+	// Get must not auto-insert: a missing tick returns nil.
+	if tick := ticks.Get(100); tick != nil {
+		t.Errorf("Get(100) returned %v; want nil for missing tick", tick)
+	}
+	uassert.False(t, ticks.Has(100))
+
+	tick100 := sr.NewTick(100)
+	tick100.SetStakedLiquidityGross(u256.MustFromDecimal("1"))
+	ticks.SetTick(100, tick100)
 	uassert.True(t, ticks.Has(100))
 	uassert.Equal(t, tick100.Id(), int32(100))
 
 	tick100Again := ticks.Get(100)
+	uassert.NotNil(t, tick100Again)
 	uassert.Equal(t, int32(tick100Again.Id()), int32(tick100.Id()))
-	uassert.True(t, tick100Again.StakedLiquidityGross().IsZero())
+	uassert.False(t, tick100Again.StakedLiquidityGross().IsZero())
 	uassert.True(t, tick100Again.StakedLiquidityDelta().IsZero())
 
-	ticks.SetTick(100, tick100)
+	// Persisting a zero-gross tick prunes it from the tree.
+	ticks.SetTick(100, sr.NewTick(100))
 	uassert.False(t, ticks.Has(100))
 }
 
 func TestModifyDepositLower(t *testing.T) {
-	ticks := sr.NewTicks()
-	tick := ticks.Get(100)
+	tick := sr.NewTick(100)
 
 	// initial value must be zero
 	uassert.True(t, tick.StakedLiquidityGross().IsZero())
@@ -74,8 +90,7 @@ func TestModifyDepositLower(t *testing.T) {
 }
 
 func TestModifyDepositUpper(t *testing.T) {
-	ticks := sr.NewTicks()
-	tick := ticks.Get(200)
+	tick := sr.NewTick(200)
 
 	// deposit +10 => modifyDepositUpper
 	tickResolver := NewTickResolver(tick)
@@ -137,8 +152,7 @@ func TestNewTickResolver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ticks := sr.NewTicks()
-			tick := ticks.Get(tt.tickID)
+			tick := sr.NewTick(tt.tickID)
 
 			tickResolver := NewTickResolver(tick)
 
@@ -191,8 +205,7 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ticks := sr.NewTicks()
-			tick := ticks.Get(tt.tickID)
+			tick := sr.NewTick(tt.tickID)
 
 			if tt.setupFunc != nil {
 				tt.setupFunc(tick)
@@ -257,8 +270,7 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ticks := sr.NewTicks()
-			tick := ticks.Get(tt.tickID)
+			tick := sr.NewTick(tt.tickID)
 
 			// Set up current accumulation
 			if !tt.currentAcc.IsZero() {
@@ -288,10 +300,12 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.modifyDeposit(liquidity, startTime, 5)
 
-	tickResolver := poolResolver.TickResolver(10)
+	tick := poolResolver.GetOrNewTick(10)
+	tickResolver := NewTickResolver(tick)
 	tickResolver.modifyDepositUpper(startTime, liquidity)
 	tickResolver.modifyDepositLower(startTime, liquidity)
-	tick := pool.Ticks().Get(10)
+	pool.Ticks().SetTick(10, tick)
+	tick = pool.Ticks().Get(10)
 	if tick.StakedLiquidityGross().IsZero() {
 		t.Fatalf("tick 10 must remain initialized")
 	}
@@ -331,4 +345,293 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 	if tickResolver.CurrentOutsideAccumulation(batchTime).IsZero() {
 		t.Fatal("tick 10 outside accumulation was not updated")
 	}
+}
+
+// TestTickCrossHook_DoesNotAutoInsertUninitializedTick verifies that crossing
+// a tick that was never initialized by staking does not insert an empty tick
+// into the pool's tick tree.
+func TestTickCrossHook_DoesNotAutoInsertUninitializedTick(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+	batchTime := int64(1010)
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.modifyDeposit(liquidity, startTime, 5)
+
+	tick := poolResolver.GetOrNewTick(10)
+	tickResolver := NewTickResolver(tick)
+	tickResolver.modifyDepositUpper(startTime, liquidity)
+	tickResolver.modifyDepositLower(startTime, liquidity)
+	pool.Ticks().SetTick(10, tick)
+
+	instance.getPools().set(poolPath, pool)
+	instance.swapStartHook(0, cur, poolPath, batchTime)
+	if instance.store.GetCurrentSwapBatch() == nil {
+		t.Fatal("current swap batch not found for pool with staked ticks")
+	}
+
+	// Crossing an uninitialized tick must not insert it into the pool's tick tree.
+	instance.tickCrossHook(0, cur, poolPath, 999, false, batchTime)
+
+	if pool.Ticks().Has(999) {
+		t.Fatal("tickCrossHook auto-inserted uninitialized tick 999; tick state must not grow")
+	}
+
+	batch := instance.store.GetCurrentSwapBatch()
+	if crosses := batch.Crosses(); len(crosses) != 0 {
+		t.Fatalf("batch crosses length = %d, want 0 for uninitialized tick", len(crosses))
+	}
+}
+
+// TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks verifies that the swap
+// start hook does not persist a swap batch for a pool without any staked ticks,
+// keeping swap hooks inactive on pools with no staking state.
+func TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+
+	// The mock store starts with a default inactive batch; capture it to detect
+	// whether swapStartHook replaces it.
+	before := instance.store.GetCurrentSwapBatch()
+
+	// Pool is registered but never staked: its tick tree must be empty.
+	pool := sr.NewPool(poolPath, startTime)
+	instance.getPools().set(poolPath, pool)
+
+	instance.swapStartHook(0, cur, poolPath, 1100)
+
+	after := instance.store.GetCurrentSwapBatch()
+	if after != before {
+		t.Fatal("swapStartHook must not replace the swap batch for a pool without staked ticks")
+	}
+	if after.PoolPath() == poolPath {
+		t.Fatal("swapStartHook must not create a swap batch for a pool without staked ticks")
+	}
+}
+
+// TestProcessBatchedTickCrosses_SkipsPrunedTick verifies batch processing
+// tolerates a tick removed between cross accumulation and batch processing.
+// A pruned tick has zero staked gross liquidity and no reward weight, so it
+// must be skipped rather than dereferenced.
+func TestProcessBatchedTickCrosses_SkipsPrunedTick(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "test_pool"
+	startTime := int64(1000)
+	batchTime := int64(1010)
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.modifyDeposit(liquidity, startTime, 5)
+
+	tick := poolResolver.GetOrNewTick(10)
+	tickResolver := NewTickResolver(tick)
+	tickResolver.modifyDepositUpper(startTime, liquidity)
+	tickResolver.modifyDepositLower(startTime, liquidity)
+	pool.Ticks().SetTick(10, tick)
+
+	instance.getPools().set(poolPath, pool)
+	instance.swapStartHook(0, cur, poolPath, batchTime)
+	instance.tickCrossHook(0, cur, poolPath, 10, false, batchTime)
+
+	batch := instance.store.GetCurrentSwapBatch()
+	if crosses := batch.Crosses(); len(crosses) != 1 {
+		t.Fatalf("batch crosses length = %d, want 1", len(crosses))
+	}
+
+	// Prune the tick after its cross was already accumulated.
+	pool.Ticks().SetTick(10, sr.NewTick(10))
+	uassert.False(t, pool.Ticks().Has(10))
+
+	var hookErr error
+	uassert.NotAborts(t, cur, func() {
+		hookErr = instance.swapEndHook(0, cur, poolPath)
+	})
+	uassert.NoError(t, hookErr)
+}
+
+// TestBoundaryTicksOutliveTheirDeposits asserts a tick is pruned only once no
+// deposit references it. Reward reads substitute a zero-valued tick when one is
+// missing, so a live deposit whose boundary tick was pruned early would have
+// its accumulated reward silently shifted.
+func TestBoundaryTicksOutliveTheirDeposits(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	startTime := int64(1000)
+	liquidity := i256.NewInt(1000)
+	pool := sr.NewPool("boundary-tick-pool", startTime)
+	poolResolver := NewPoolResolver(pool)
+
+	stake := func(tickLower, tickUpper int32, delta *i256.Int) {
+		lower := poolResolver.GetOrNewTick(tickLower)
+		NewTickResolver(lower).modifyDepositLower(startTime, delta)
+		pool.Ticks().SetTick(tickLower, lower)
+
+		upper := poolResolver.GetOrNewTick(tickUpper)
+		NewTickResolver(upper).modifyDepositUpper(startTime, delta)
+		pool.Ticks().SetTick(tickUpper, upper)
+	}
+
+	// Two deposits sharing the -10 boundary; unstaking one must keep it alive.
+	stake(-10, 10, liquidity)
+	stake(-10, 20, liquidity)
+	uassert.True(t, pool.Ticks().Has(-10))
+
+	stake(-10, 20, i256.Zero().Neg(liquidity))
+	uassert.True(t, pool.Ticks().Has(-10), "shared boundary must survive a partial unstake")
+	uassert.False(t, pool.Ticks().Has(20), "an unreferenced boundary must be pruned")
+	uassert.NotNil(t, pool.Ticks().Get(-10))
+	uassert.NotNil(t, pool.Ticks().Get(10))
+
+	// One deposit's upper boundary is another's lower boundary.
+	stake(10, 30, liquidity)
+	stake(10, 30, i256.Zero().Neg(liquidity))
+	uassert.True(t, pool.Ticks().Has(10), "boundary shared across roles must survive")
+
+	// The last deposit leaves and both of its boundaries go.
+	stake(-10, 10, i256.Zero().Neg(liquidity))
+	uassert.False(t, pool.Ticks().Has(-10))
+	uassert.False(t, pool.Ticks().Has(10))
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+}
+
+// TestRewardAfterUnstakeRestakeSameRange covers a deposit restaked into the
+// same range after its boundary ticks were pruned. The first deposit crosses a
+// boundary, so the pruned ticks carried outside accumulation; the restaked
+// deposit must still earn exactly the global accumulation growth over the time
+// it is in range, and nothing while out of range.
+func TestRewardAfterUnstakeRestakeSameRange(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	liquidity := i256.NewInt(1_000_000)
+	pool := sr.NewPool("restake-pool", 0)
+	poolResolver := NewPoolResolver(pool)
+
+	modifyRange := func(at int64, delta *i256.Int, currentTick int32) {
+		poolResolver.modifyDeposit(delta, at, currentTick)
+
+		lower := poolResolver.GetOrNewTick(-10)
+		NewTickResolver(lower).modifyDepositLower(at, delta)
+		pool.Ticks().SetTick(-10, lower)
+
+		upper := poolResolver.GetOrNewTick(10)
+		NewTickResolver(upper).modifyDepositUpper(at, delta)
+		pool.Ticks().SetTick(10, upper)
+	}
+
+	crossTick := func(at int64, tickId int32, zeroForOne bool) {
+		tick := pool.Ticks().Get(tickId)
+		delta := tick.StakedLiquidityDelta()
+		nextTick := tickId
+		if zeroForOne {
+			delta = i256.Zero().Neg(delta)
+			nextTick--
+		}
+		newAcc := poolResolver.modifyDeposit(delta, at, nextTick)
+		NewTickResolver(tick).updateCurrentOutsideAccumulation(at, newAcc)
+	}
+
+	globalAcc := func(at int64) *u256.Uint {
+		return poolResolver.calculateGlobalRewardRatioAccumulation(at, poolResolver.CurrentStakedLiquidity(at))
+	}
+
+	// First deposit: staked at 100, crosses the upper boundary out at 200 and
+	// back in at 250 so the boundary tick accumulates outside values, then
+	// unstaked at 300 while in range.
+	modifyRange(100, liquidity, 0)
+	crossTick(200, 10, false)
+	uassert.False(t, NewTickResolver(pool.Ticks().Get(10)).CurrentOutsideAccumulation(200).IsZero(),
+		"the upper boundary must carry outside accumulation before pruning")
+	crossTick(250, 10, true)
+	modifyRange(300, i256.Zero().Neg(liquidity), 0)
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size(), "both boundaries must be pruned")
+
+	// Restake the same range at 500, back in range.
+	modifyRange(500, liquidity, 0)
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"), "restake-pool",
+		u256.NewUint(1_000_000), 500, -10, 10, nil,
+	)
+
+	// In range for [500, 900]: earns exactly the global accumulation growth.
+	inRangeStart := poolResolver.CalculateRawRewardForPosition(500, 0, deposit)
+	inRangeEnd := poolResolver.CalculateRawRewardForPosition(900, 0, deposit)
+	inRangeDelta, overflow := u256.Zero().SubOverflow(inRangeEnd, inRangeStart)
+	uassert.False(t, overflow, "in-range accumulation must not underflow after a restake")
+	uassert.Equal(t,
+		u256.Zero().Sub(globalAcc(900), globalAcc(500)).ToString(),
+		inRangeDelta.ToString(),
+	)
+
+	// Cross out of range at 900; nothing accrues afterwards.
+	crossTick(900, 10, false)
+	outOfRangeEnd := poolResolver.CalculateRawRewardForPosition(1300, 20, deposit)
+	outOfRangeDelta, overflow := u256.Zero().SubOverflow(outOfRangeEnd, inRangeEnd)
+	uassert.False(t, overflow, "out-of-range accumulation must not underflow")
+	uassert.True(t, outOfRangeDelta.IsZero(), "an out-of-range deposit must not accrue")
+}
+
+// TestTickStateReturnsToEmptyOverStakeCycle asserts a full stake, swap, read,
+// unstake cycle leaves no tick behind. Reads used to insert a tick on lookup
+// and unstake never removed one, so the tree grew with every swap.
+func TestTickStateReturnsToEmptyOverStakeCycle(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	instance := getMockInstance()
+	poolPath := "tick-growth-pool"
+	liquidity := i256.NewInt(1000)
+
+	pool := sr.NewPool(poolPath, 1000)
+	poolResolver := NewPoolResolver(pool)
+	instance.getPools().set(poolPath, pool)
+
+	modifyRange := func(at int64, delta *i256.Int) {
+		lower := poolResolver.GetOrNewTick(-10)
+		NewTickResolver(lower).modifyDepositLower(at, delta)
+		pool.Ticks().SetTick(-10, lower)
+
+		upper := poolResolver.GetOrNewTick(10)
+		NewTickResolver(upper).modifyDepositUpper(at, delta)
+		pool.Ticks().SetTick(10, upper)
+	}
+
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
+
+	poolResolver.modifyDeposit(liquidity, 1000, 0)
+	modifyRange(1000, liquidity)
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+
+	// A swap crossing ticks nobody staked must not insert them.
+	instance.swapStartHook(0, cur, poolPath, 1100)
+	instance.tickCrossHook(0, cur, poolPath, 500, false, 1100)
+	instance.tickCrossHook(0, cur, poolPath, -500, true, 1100)
+	uassert.False(t, pool.Ticks().Has(500))
+	uassert.False(t, pool.Ticks().Has(-500))
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+	uassert.NoError(t, instance.swapEndHook(0, cur, poolPath))
+
+	// Reading rewards for a range with unstaked boundaries must not insert them.
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"), poolPath,
+		u256.NewUint(1000), 1000, -60, 60, nil,
+	)
+	poolResolver.CalculateRawRewardForPosition(1100, 0, deposit)
+	uassert.False(t, pool.Ticks().Has(-60))
+	uassert.False(t, pool.Ticks().Has(60))
+	uassert.Equal(t, 2, pool.Ticks().Tree().Size())
+
+	// Unstaking releases both boundaries.
+	poolResolver.modifyDeposit(i256.Zero().Neg(liquidity), 1200, 0)
+	modifyRange(1200, i256.Zero().Neg(liquidity))
+	uassert.Equal(t, 0, pool.Ticks().Tree().Size())
 }

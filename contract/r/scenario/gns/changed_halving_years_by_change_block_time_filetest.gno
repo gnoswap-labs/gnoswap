@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/emission"
@@ -37,6 +39,7 @@ func main(cur realm) {
 
 	ufmt.Println("[SCENARIO] 3. Skip 10000 blocks (distribute of half of 1 year)")
 	testing.SetOriginCaller(adminAddr)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+10000*5)
 	testing.SkipHeights(10000)
 	println()
