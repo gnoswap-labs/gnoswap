@@ -98,7 +98,7 @@ func (p *positionV1) Mint(
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(processedInput.poolPath, 0)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(processedInput.poolPath)
 
 	chain.Emit(
 		"Mint",
@@ -119,7 +119,6 @@ func (p *positionV1) Mint(
 		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(processedInput.poolPath)),
 		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(processedInput.poolPath)),
 		"tickCumulative", utils.FormatInt(tickCumulative),
-		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 		"referrer", actualReferrer,
@@ -206,7 +205,7 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
 
 	chain.Emit(
 		"IncreaseLiquidity",
@@ -226,7 +225,6 @@ func (p *positionV1) IncreaseLiquidity(
 		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
 		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
 		"tickCumulative", utils.FormatInt(tickCumulative),
-		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
@@ -298,7 +296,7 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
 
 	chain.Emit(
 		"DecreaseLiquidity",
@@ -319,7 +317,6 @@ func (p *positionV1) DecreaseLiquidity(
 		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
 		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
 		"tickCumulative", utils.FormatInt(tickCumulative),
-		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)

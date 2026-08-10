@@ -494,7 +494,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			obs := pl.NewObservation(
 				100,
 				5000000000,
-				"3000000",
 				"0",
 				true,
 			)
@@ -504,7 +503,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 
 			lastObs, _ := lastObservation(pool.ObservationState())
 			beforeTickCumulative := lastObs.TickCumulative()
-			beforeLiquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 
 			observationState = pool.ObservationState()
 			lastObs, err := lastObservation(observationState)
@@ -517,7 +515,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			writeObservation(observationState2, currentTime, tt.initialTick, pool.Liquidity())
 			lastObs, _ = lastObservation(observationState2)
 			tickCumulative := lastObs.TickCumulative()
-			liquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 			lastUpdateTime := lastObs.BlockTimestamp()
 
 			// Then: Verify expected behavior
@@ -526,19 +523,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 
 			uassert.Equal(t, expectedTickIncrease, actualTickIncrease,
 				ufmt.Sprintf("Tick cumulative calculation error: expected(%d) != actual(%d)", expectedTickIncrease, actualTickIncrease))
-
-			// Verify liquidity accumulation (only if liquidity is not 0)
-			if tt.liquidity != "0" {
-				expectedLiquidityIncrease := new(u256.Uint).Mul(
-					u256.MustFromDecimal(tt.liquidity),
-					u256.NewUint(uint64(tt.timeElapsed)),
-				)
-				expectedLiquidityCumulative := new(u256.Uint).Add(beforeLiquidityCumulative, expectedLiquidityIncrease)
-				uassert.Equal(t, expectedLiquidityCumulative.ToString(), liquidityCumulative.ToString())
-			} else {
-				// If liquidity is 0, the accumulated value does not change
-				uassert.Equal(t, beforeLiquidityCumulative.ToString(), liquidityCumulative.ToString())
-			}
 
 			uassert.Equal(t, currentTime, lastUpdateTime)
 			t.Logf("✓ %s: %s (Business risk: %s)", tt.description, tt.expectedBehavior, tt.businessRisk)

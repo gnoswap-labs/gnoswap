@@ -229,7 +229,6 @@ func newTwapConsistencyObservationState(observations []twapConsistencyObservatio
 			observation.timestamp,
 			observation.tickCumulative,
 			"0",
-			"0",
 			true,
 		)
 	}

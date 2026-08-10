@@ -38,7 +38,6 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 type Observation struct {
 	blockTimestamp                    int64  // timestamp of the observation
 	tickCumulative                    int64  // cumulative tick up to this timestamp
-	liquidityCumulative               string // cumulative liquidity up to this timestamp
 	secondsPerLiquidityCumulativeX128 string // cumulative seconds per liquidity
 	initialized                       bool   // whether this observation has been initialized
 }
@@ -46,7 +45,6 @@ type Observation struct {
 // Observation Getters methods
 func (o *Observation) BlockTimestamp() int64       { return o.blockTimestamp }
 func (o *Observation) TickCumulative() int64       { return o.tickCumulative }
-func (o *Observation) LiquidityCumulative() string { return o.liquidityCumulative }
 func (o *Observation) SecondsPerLiquidityCumulativeX128() string {
 	return o.secondsPerLiquidityCumulativeX128
 }
@@ -61,10 +59,6 @@ func (o *Observation) SetTickCumulative(tickCumulative int64) {
 	o.tickCumulative = tickCumulative
 }
 
-func (o *Observation) SetLiquidityCumulative(liquidityCumulative string) {
-	o.liquidityCumulative = liquidityCumulative
-}
-
 func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 string) {
 	o.secondsPerLiquidityCumulativeX128 = secondsPerLiquidityCumulativeX128
 }
@@ -77,7 +71,6 @@ func (o *Observation) Clone() *Observation {
 	return &Observation{
 		blockTimestamp:                    o.blockTimestamp,
 		tickCumulative:                    o.tickCumulative,
-		liquidityCumulative:               o.liquidityCumulative,
 		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128,
 		initialized:                       o.initialized,
 	}
@@ -95,7 +88,6 @@ func NewObservationState(currentTime int64) *ObservationState {
 		currentTime,
 		0,
 		"0",
-		"0",
 		true,
 	)
 
@@ -105,14 +97,12 @@ func NewObservationState(currentTime int64) *ObservationState {
 func NewObservation(
 	blockTimestamp int64,
 	tickCumulative int64,
-	liquidityCumulative string,
 	secondsPerLiquidityCumulativeX128 string,
 	initialized bool,
 ) *Observation {
 	return &Observation{
 		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    tickCumulative,
-		liquidityCumulative:               liquidityCumulative,
 		secondsPerLiquidityCumulativeX128: secondsPerLiquidityCumulativeX128,
 		initialized:                       initialized,
 	}
@@ -122,7 +112,6 @@ func NewDefaultObservation() *Observation {
 	return NewObservation(
 		0,
 		0,
-		"0",
 		"0",
 		false,
 	)

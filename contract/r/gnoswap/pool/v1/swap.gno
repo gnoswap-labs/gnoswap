@@ -315,7 +315,6 @@ func (i *poolV1) Swap(
 		"balanceToken0", utils.FormatInt(pool.BalanceToken0()),
 		"balanceToken1", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(lastObservation.TickCumulative()),
-		"liquidityCumulative", lastObservation.LiquidityCumulative(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
 		"observationTimestamp", utils.FormatInt(lastObservation.BlockTimestamp()),
 	)
