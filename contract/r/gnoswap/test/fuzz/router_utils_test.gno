@@ -220,7 +220,8 @@ func setupRouterMintPositionByRoutePath(cur realm, ft *fuzz.T, routePathArr stri
 
 			// generate parameters for position
 			poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
-			tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+			currentTick, _ := pool.GetSlot0Tick(poolPath)
+			tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 			amountDesired := int64(1_000_000_000_000)
 
 			// setup position
