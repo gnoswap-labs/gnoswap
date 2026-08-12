@@ -419,7 +419,7 @@ func initSwapPaidSetFeeMintPosition(
 		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amount1Requested)
 	}
 
-	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))
+	sqrtPriceX96, _ := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))
 	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 
