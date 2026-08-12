@@ -96,9 +96,26 @@ func (p *positionV1) Mint(
 	params := newMintParams(processedInput, mintInput)
 	id, liquidity, amount0, amount1 := p.mint(0, rlm, params)
 
-	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
-
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(processedInput.poolPath)
+	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pl.GetLiquidity(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken0, err := pl.GetBalanceToken0(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken1, err := pl.GetBalanceToken1(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Mint",
@@ -115,9 +132,9 @@ func (p *positionV1) Mint(
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(id),
-		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(processedInput.poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(processedInput.poolPath)),
+		"poolLiquidity", poolLiquidity,
+		"token0Balance", utils.FormatInt(poolBalanceToken0),
+		"token1Balance", utils.FormatInt(poolBalanceToken1),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -205,7 +222,26 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pl.GetLiquidity(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken0, err := pl.GetBalanceToken0(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken1, err := pl.GetBalanceToken1(poolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"IncreaseLiquidity",
@@ -219,11 +255,11 @@ func (p *positionV1) IncreaseLiquidity(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
+		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"poolLiquidity", poolLiquidity,
+		"token0Balance", utils.FormatInt(poolBalanceToken0),
+		"token1Balance", utils.FormatInt(poolBalanceToken1),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -296,7 +332,26 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pl.GetLiquidity(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken0, err := pl.GetBalanceToken0(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolBalanceToken1, err := pl.GetBalanceToken1(poolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"DecreaseLiquidity",
@@ -311,11 +366,11 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
+		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"poolLiquidity", poolLiquidity,
+		"token0Balance", utils.FormatInt(poolBalanceToken0),
+		"token1Balance", utils.FormatInt(poolBalanceToken1),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -481,7 +536,10 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
 func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	if err != nil {
+		return FeeGrowthInside{}, err
+	}
 
 	feeGrowthInside := FeeGrowthInside{
 		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128),
@@ -504,8 +562,12 @@ func calculatePositionBalances(position *pos.Position) (int64, int64) {
 		return 0, 0
 	}
 
+	sqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(position.PoolKey())
+	if err != nil {
+		panic(err)
+	}
 	token0Balance, token1Balance := gnsmath.GetAmountsForLiquidity(
-		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
+		u256.MustFromDecimal(sqrtPriceX96), // currentSqrtPriceX96
 		gnsmath.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		gnsmath.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
