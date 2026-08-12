@@ -152,73 +152,73 @@ type IPoolSwap interface {
 type IPoolGetter interface {
 	ExistsPoolPath(poolPath string) bool
 
-	GetBalanceToken0(poolPath string) int64
+	GetBalanceToken0(poolPath string) (int64, error)
 
-	GetBalanceToken1(poolPath string) int64
+	GetBalanceToken1(poolPath string) (int64, error)
 
-	GetFee(poolPath string) uint32
+	GetFee(poolPath string) (uint32, error)
 
-	GetFeeAmountTickSpacing(fee uint32) (spacing int32)
+	GetFeeAmountTickSpacing(fee uint32) (spacing int32, err error)
 
-	GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint
+	GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error)
 
-	GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint
+	GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error)
 
-	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
+	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error)
 
-	GetLiquidity(poolPath string) *u256.Uint
+	GetLiquidity(poolPath string) (*u256.Uint, error)
 
-	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
+	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error)
 
 	GetPoolCreationFee() int64
 
-	GetPositionFeeGrowthInside0LastX128(poolPath, key string) string
+	GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error)
 
-	GetPositionFeeGrowthInside1LastX128(poolPath, key string) string
+	GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error)
 
-	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string)
+	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error)
 
-	GetPositionLiquidity(poolPath, key string) string
+	GetPositionLiquidity(poolPath, key string) (string, error)
 
-	GetPositionTokensOwed0(poolPath, key string) int64
+	GetPositionTokensOwed0(poolPath, key string) (int64, error)
 
-	GetPositionTokensOwed1(poolPath, key string) int64
+	GetPositionTokensOwed1(poolPath, key string) (int64, error)
 
-	GetProtocolFeesToken0(poolPath string) int64
+	GetProtocolFeesToken0(poolPath string) (int64, error)
 
-	GetProtocolFeesToken1(poolPath string) int64
+	GetProtocolFeesToken1(poolPath string) (int64, error)
 
-	GetSlot0FeeProtocol(poolPath string) uint8
+	GetSlot0FeeProtocol(poolPath string) (uint8, error)
 
-	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
+	GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error)
 
-	GetSlot0Tick(poolPath string) int32
+	GetSlot0Tick(poolPath string) (int32, error)
 
-	GetSlot0Unlocked(poolPath string) bool
+	GetSlot0Unlocked(poolPath string) (bool, error)
 
-	GetTickCumulativeOutside(poolPath string, tick int32) int64
+	GetTickCumulativeOutside(poolPath string, tick int32) (int64, error)
 
-	GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string
+	GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error)
 
-	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string
+	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error)
 
-	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string)
+	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error)
 
-	GetTickInitialized(poolPath string, tick int32) bool
+	GetTickInitialized(poolPath string, tick int32) (bool, error)
 
-	GetTickLiquidityGross(poolPath string, tick int32) string
+	GetTickLiquidityGross(poolPath string, tick int32) (string, error)
 
-	GetTickLiquidityNet(poolPath string, tick int32) string
+	GetTickLiquidityNet(poolPath string, tick int32) (string, error)
 
-	GetTickSecondsOutside(poolPath string, tick int32) uint32
+	GetTickSecondsOutside(poolPath string, tick int32) (uint32, error)
 
-	GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string
+	GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error)
 
-	GetTickSpacing(poolPath string) int32
+	GetTickSpacing(poolPath string) (int32, error)
 
-	GetToken0Path(poolPath string) string
+	GetToken0Path(poolPath string) (string, error)
 
-	GetToken1Path(poolPath string) string
+	GetToken1Path(poolPath string) (string, error)
 
 	GetWithdrawalFee() uint64
 
@@ -228,10 +228,10 @@ type IPoolGetter interface {
 	GetPoolPaths(offset, count int) []string
 	GetFeeAmountTickSpacings() map[uint32]int32
 
-	GetPoolPositionCount(poolPath string) int
-	GetPoolPositionKeys(poolPath string, offset, count int) []string
+	GetPoolPositionCount(poolPath string) (int, error)
+	GetPoolPositionKeys(poolPath string, offset, count int) ([]string, error)
 
-	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32
+	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error)
 
 	// Structure getters
 	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
