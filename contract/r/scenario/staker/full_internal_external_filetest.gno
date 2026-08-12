@@ -7,6 +7,7 @@ package main
 import (
 	"chain"
 	"chain/banker"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
@@ -401,7 +402,8 @@ func mintAndStakePos07OutRange(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"))
+	poolTick, _ := pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100")
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", poolTick)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
