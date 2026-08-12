@@ -462,19 +462,51 @@ func createTargetPool(cur realm) {
 
 	println("[EXPECTED] created pool:", pool.GetPoolPath(barPath, fooPath, fee500))
 	println("[EXPECTED] pool exists:", pool.ExistsPoolPath(barFoo500PoolPath))
-	println("[EXPECTED] token0:", pool.GetToken0Path(barFoo500PoolPath))
-	println("[EXPECTED] token1:", pool.GetToken1Path(barFoo500PoolPath))
-	println("[EXPECTED] fee:", pool.GetFee(barFoo500PoolPath))
-	println("[EXPECTED] tick spacing:", pool.GetTickSpacing(barFoo500PoolPath))
-	println("[EXPECTED] slot0 tick:", pool.GetSlot0Tick(barFoo500PoolPath))
-	println("[EXPECTED] slot0 sqrtPriceX96:", pool.GetSlot0SqrtPriceX96(barFoo500PoolPath))
-	println("[EXPECTED] slot0 unlocked:", pool.GetSlot0Unlocked(barFoo500PoolPath))
+	token0, err := pool.GetToken0Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	token1, err := pool.GetToken1Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolFee, err := pool.GetFee(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	tickSpacing, err := pool.GetTickSpacing(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	slot0Tick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	slot0SqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	slot0Unlocked, err := pool.GetSlot0Unlocked(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] token0:", token0)
+	println("[EXPECTED] token1:", token1)
+	println("[EXPECTED] fee:", poolFee)
+	println("[EXPECTED] tick spacing:", tickSpacing)
+	println("[EXPECTED] slot0 tick:", slot0Tick)
+	println("[EXPECTED] slot0 sqrtPriceX96:", slot0SqrtPriceX96)
+	println("[EXPECTED] slot0 unlocked:", slot0Unlocked)
 	println("[EXPECTED] creation fee accrued to protocol fee:", afterGnsAccu-beforeGnsAccu)
 
 	// protocol fee split for token0/token1 is exercised by the swaps below.
 	testing.SetRealm(adminRealm)
 	pool.SetFeeProtocol(cross(cur), 4, 4)
-	println("[EXPECTED] slot0 fee protocol:", pool.GetSlot0FeeProtocol(barFoo500PoolPath))
+	feeProtocol, err := pool.GetSlot0FeeProtocol(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] slot0 fee protocol:", feeProtocol)
 
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 10)
 	observation, err := pool.GetObservationState(barFoo500PoolPath)
@@ -484,7 +516,7 @@ func createTargetPool(cur realm) {
 	println("[EXPECTED] observation cardinality next:", observation.CardinalityNext())
 
 	uassert.Equal(t, int64(100_000_000), afterGnsAccu-beforeGnsAccu)
-	uassert.Equal(t, uint8(68), pool.GetSlot0FeeProtocol(barFoo500PoolPath)) // 4 + 4<<4
+	uassert.Equal(t, uint8(68), feeProtocol) // 4 + 4<<4
 	uassert.True(t, pool.ExistsPoolPath(barFoo500PoolPath))
 
 	// keep the remaining pools free to create
@@ -607,7 +639,11 @@ func swapBothWays(cur realm) {
 
 	println("[EXPECTED] fee-accrual swap bar->foo in/out:", inBar, outFoo)
 	println("[EXPECTED] fee-accrual swap foo->bar in/out:", inFoo, outBar)
-	println("[EXPECTED] pool tick after the fee-accrual swaps:", pool.GetSlot0Tick(barFoo500PoolPath))
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] pool tick after the fee-accrual swaps:", poolTick)
 }
 
 // parseInt64 parses a decimal amount string; every value it is used on is
@@ -661,11 +697,25 @@ func routerSwaps(cur realm) {
 	testing.SkipHeights(1)
 	println("[EXPECTED] exact-out in/out:", in4, out4)
 
-	println("[EXPECTED] pool tick after swaps:", pool.GetSlot0Tick(barFoo500PoolPath))
-	println("[EXPECTED] pool liquidity:", pool.GetLiquidity(barFoo500PoolPath))
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] pool tick after swaps:", poolTick)
+	println("[EXPECTED] pool liquidity:", poolLiquidity)
 	println("[EXPECTED] fee growth global:", feeGrowth0, feeGrowth1)
-	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] pool protocol fees:", protocolFee0, protocolFee1)
 	println("[EXPECTED] router fee accrued (FOO):", protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath)+
 		protocolFee.GetAccuTransferToDevOpsByTokenPath(fooPath))
@@ -1095,8 +1145,26 @@ func launchpadLifecycle(cur realm) {
 // ---------------------------------------------------------------------------
 
 func captureSnapshot() upgradeSnapshot {
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolSqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	positionFeeGrowth0, positionFeeGrowth1 := position.GetPositionFeeGrowthInsideLastX128(1)
 	positionOwed0, positionOwed1 := position.GetPositionTokensOwed(1)
 	positionUnclaimed0, positionUnclaimed1 := position.GetUnclaimedFee(1)
@@ -1112,9 +1180,9 @@ func captureSnapshot() upgradeSnapshot {
 	launchpadDepositAmount, _ := launchpad.GetDepositAmount(launchpadDepositId)
 
 	return upgradeSnapshot{
-		poolLiquidity:      pool.GetLiquidity(barFoo500PoolPath),
-		poolSqrtPriceX96:   pool.GetSlot0SqrtPriceX96(barFoo500PoolPath),
-		poolTick:           pool.GetSlot0Tick(barFoo500PoolPath),
+		poolLiquidity:      poolLiquidity,
+		poolSqrtPriceX96:   poolSqrtPriceX96,
+		poolTick:           poolTick,
 		poolFeeGrowth0:     feeGrowth0,
 		poolFeeGrowth1:     feeGrowth1,
 		poolProtocolFee0:   protocolFee0,
@@ -1447,12 +1515,18 @@ func windDown(cur realm) {
 	println("[EXPECTED] pool tier after removal:", staker.GetPoolTier(barFoo500PoolPath))
 
 	// admin sweeps the pool protocol fees
-	before0, before1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	before0, before1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	collected0, collected1 := pool.CollectProtocol(
 		cross(cur), barPath, fooPath, fee500, adminAddr, "1000000000", "1000000000",
 	)
 	testing.SkipHeights(1)
-	after0, after1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	after0, after1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] pool protocol fees before:", before0, before1)
 	println("[EXPECTED] collected protocol fees:", collected0, collected1)
 	println("[EXPECTED] pool protocol fees after:", after0, after1)

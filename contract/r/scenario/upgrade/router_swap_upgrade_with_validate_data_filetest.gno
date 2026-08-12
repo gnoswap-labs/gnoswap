@@ -121,12 +121,28 @@ func main(cur realm) {
 }
 
 func captureV1Snapshot() {
+	var err error
 	v1SwapFee = router.GetSwapFee()
-	v1PoolLiquidity = pool.GetLiquidity(barFoo500PoolPath)
-	v1PoolTick = pool.GetSlot0Tick(barFoo500PoolPath)
-	v1PoolFeeGrowth0, v1PoolFeeGrowth1 = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
-	v1PoolBalance0, v1PoolBalance1 = pool.GetBalances(barFoo500PoolPath)
+	v1PoolLiquidity, err = pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolTick, err = pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1, err = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolProtocolFee0, v1PoolProtocolFee1, err = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolBalance0, v1PoolBalance1, err = pool.GetBalances(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
 	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
 	v1PositionTickLower = position.GetPositionTickLower(positionId)
@@ -151,14 +167,31 @@ func captureV1Snapshot() {
 // position value must still match the snapshot exactly; a reset that the second
 // swap happens to repopulate would slip past a >= check.
 func validateExactAfterUpgrade() {
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
-	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	balance0, balance1, err := pool.GetBalances(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
 
 	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
-	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
+	uassert.Equal(t, v1PoolTick, poolTick)
 	uassert.Equal(t, v1PoolFeeGrowth0, feeGrowth0)
 	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
 	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
@@ -178,13 +211,23 @@ func validateExactAfterUpgrade() {
 }
 
 func validateAccrualAfterUpgrade() {
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	balance0, balance1, err := pool.GetBalances(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
 
 	// the router upgrade must not move liquidity or reshape the position
 	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
-	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
 	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
 	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
 	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
