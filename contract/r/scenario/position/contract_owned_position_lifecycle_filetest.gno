@@ -207,9 +207,12 @@ func generateFees(cur realm) {
 	)
 
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
-	ufmt.Printf("[EXPECTED] pool tick after swaps: %d\n", pool.GetSlot0Tick(poolPath))
-	ufmt.Printf("[EXPECTED] pool token0 balance after swaps: %d\n", pool.GetBalanceToken0(poolPath))
-	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", pool.GetBalanceToken1(poolPath))
+	poolTick, _ := pool.GetSlot0Tick(poolPath)
+	balance0, _ := pool.GetBalanceToken0(poolPath)
+	balance1, _ := pool.GetBalanceToken1(poolPath)
+	ufmt.Printf("[EXPECTED] pool tick after swaps: %d\n", poolTick)
+	ufmt.Printf("[EXPECTED] pool token0 balance after swaps: %d\n", balance0)
+	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", balance1)
 }
 
 func vaultCollectFees(cur realm) {
