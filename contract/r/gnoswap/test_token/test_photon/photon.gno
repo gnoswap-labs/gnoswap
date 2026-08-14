@@ -22,7 +22,7 @@ var (
 
 func init(cur realm) {
 	token, privateLedger = grc20.NewToken("Photon", "PHOTON", 6, tokenID, cur)
-	userTeller = token.CallerTeller()
+	userTeller = privateLedger.CallerTeller()
 
 	privateLedger.Mint(owner.Owner(), 10_000_000_000_000)
 	grc20reg.Register(cross(cur), token, "")
