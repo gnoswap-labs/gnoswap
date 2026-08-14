@@ -1,0 +1,33 @@
+
+H-01 EVIDENCE — swapCallback cross-domain reentrancy (pool lock not shared)
+
+Call stack (actual Gnoland realm dispatch):
+  1. attacker realm calls pool.Swap(token0Path, token1Path, fee, recipient, zeroForOne, amount, sqrtPriceLimit, BalanceCallback)
+  2. pool/v1/swap.gno: Swap() { lockPool(0,rlm) defer unlockPool()   <- sets store.GetUnlocked()=false
+       safeTransfer(output)   // sends token1 to recipient
+       safeSwapCallback(tokenPath, amountIn, amountOut, zeroForOne, swapCallback)
+         BalanceBefore = common.BalanceOf(tokenPath, poolAddr)
+         err := swapCallback(cross(rlm), amount0Delta, amount1Delta, CallbackMarker)   <- ATTACKER CODE RUNS HERE
+           -> attacker calls staker.CollectReward(posId)  // cross realm, same tx, still same block height/time
+              staker.gno: CollectReward checks halt+depositor, does NOT check pool lock
+              staker: calculatePositionReward(Pools, PoolTier, ...) reads ReverseIterate(0,currentTime) globalAcc
+                 but pool's applySwapResult not yet applied, BalanceToken0 not yet incremented
+              staker mutates: incentive.SetRewardAmount(-total), Deposit Resolver updates lastCollect
+           <- returns
+         BalanceAfter = common.BalanceOf(tokenPath, poolAddr); assert BalanceAfter-BalanceBefore >= amountIn
+         update Pool.Balances().SetTokenX(newBalance)  // only now
+       // defer unlockPool sets GetUnlocked()=true
+     }
+
+Only pool/upgrade.gno has assertPoolUnlocked() — pool domain. Staker/launchpad/position do not.
+
+Impact: staker reward vault (GRC20) double-paid at old tick/acc (pre-swap) if tick crossed.
+Launchpad TransferLeft similarly: shared OBL/rewardToken balance drained via sibling project accounting before pool balance settles.
+
+Why not fixed by #1354: #1354 added assertPoolUnlocked only to pool.UpgradeImpl (governance path). Callback→staker path uncovered.
+
+Fix: gate staker entrypoints CollectReward/UnStakeToken/StakeToken + launchpad TransferLeft with pool lock check,
+or add reentry depth guard in safeSwapCallback (forbid vm.Call to staker/launchpad while lock held).
+
+Wrote sketch to /tmp/h01_evil_realm.gno
+Saved to /Volumes/Madhouse/DEFI-HUNTS/projects/63-gnoswap/poc/h01_evil_realm.gno

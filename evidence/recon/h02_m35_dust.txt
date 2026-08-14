@@ -1,0 +1,13 @@
+H-02 M35 dust PoC — perPosition floor + Mul/Div trunc
+dust 1/1e12 pool1e6 ratio30                   per=           0 rew=       0 pen=       0 sum=       0 lost=0 fixed_rew=0 fixed_pen=0
+dust 1/1e12 pool1e12 ratio30 => per=1         per=           1 rew=       0 pen=       0 sum=       0 lost=1 fixed_rew=0 fixed_pen=1
+dust 2/1e12 pool1e12 ratio30 => per=2         per=           2 rew=       0 pen=       1 sum=       1 lost=1 fixed_rew=0 fixed_pen=2
+tiny poolReward 100 dust ratio70 => per 0     per=           0 rew=       0 pen=       0 sum=       0 lost=0 fixed_rew=0 fixed_pen=0
+large poolReward 1e18 dust ratio33 => per 1e6 per=     1000000 rew=  330000 pen=  670000 sum= 1000000 lost=0 fixed_rew=330000 fixed_pen=670000
+
+Amplify: 1000 dust positions each posLiq=1, staked=1e12, poolReward=1e12, ratio=30 (per=1, rew 0 each)
+ each: per=1 rew=0 pen=0 sum=0 lost per pos=1
+ 1000 dust total lost = 1000 (goes to remainder -> EndExternalIncentiveShortfall cap, victim shorted)
+
+Verdict: floor Div loses 1 per dust position when per=1 ratio=30 (0+0 vs 1). At scale 1k dust, 1000 wei leaked to remainder/shortfall.
+Grade: Medium data-corruption (display vs on-chain) x3 per program, or Low x1 if mere rounding — chain to shortfall for weight.
