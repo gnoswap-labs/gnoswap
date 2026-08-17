@@ -1163,7 +1163,7 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 	}()
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Transfer(cross(cur), "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
+	bar.Transfer(cross(cur), protocolFeeAddr, 100)
 
 	testing.SetRealm(govStakerRealm)
 

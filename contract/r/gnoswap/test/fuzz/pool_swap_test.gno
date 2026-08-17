@@ -10,7 +10,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -130,8 +129,8 @@ func callPoolSwap(
 
 	// Approve tokens for swap
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+	approveToken(cur, token0Path, poolAddr, math.MaxInt64)
+	approveToken(cur, token1Path, poolAddr, math.MaxInt64)
 
 	// Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
@@ -140,12 +139,12 @@ func callPoolSwap(
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+				transferToken(cur, token0Path, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+				transferToken(cur, token1Path, poolAddr, amount1Delta)
 			}
 		}(cross(cur))
 

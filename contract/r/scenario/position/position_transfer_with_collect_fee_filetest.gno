@@ -25,7 +25,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -234,11 +233,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		payToken(cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		payToken(cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -264,6 +263,18 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 		panic("unsupported positionId type")
 	}
 }
+
+func payToken(cur realm, path string, to address, amount int64) {
+	switch path {
+	case "gno.land/r/onbloc/bar.BAR":
+		bar.Transfer(cross(cur), to, amount)
+	case "gno.land/r/onbloc/foo.FOO":
+		foo.Transfer(cross(cur), to, amount)
+	default:
+		panic("mockSwapCallback: unsupported token path " + path)
+	}
+}
+
 
 // Output:
 // [SCENARIO] 1. Initialize pool

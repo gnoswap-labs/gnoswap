@@ -10,7 +10,6 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
 
 func defaultAdminSetup(cur realm, env *TestEnv) {
@@ -84,8 +83,8 @@ func TestSingleSwap(cur realm, t *testing.T) {
 
 			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
+			TokenApprove(cur, t, tt.params.tokenIn, user1Addr, poolAddr, maxApprove)
+			TokenApprove(cur, t, tt.params.tokenOut, user1Addr, poolAddr, maxApprove)
 
 			amountIn, amountOut := singleSwapFn(cross(cur))
 

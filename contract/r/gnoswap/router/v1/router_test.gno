@@ -12,7 +12,6 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -901,7 +900,7 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), tt.inputToken, routerAddr, math.MaxInt64)
+			TokenApprove(cur, t, tt.inputToken, admin, routerAddr, math.MaxInt64)
 
 			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
@@ -1016,7 +1015,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 			toSwapAmount := utils.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)
+			TokenApprove(cur, t, barPath, admin, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
