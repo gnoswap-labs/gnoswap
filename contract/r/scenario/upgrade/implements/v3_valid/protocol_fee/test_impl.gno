@@ -88,3 +88,11 @@ func (t *TestProtocolFee) GetActualDistributedToGovStakerByTokenPath(path string
 func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
 	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }
+
+func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+	return t.instance.ConsumeAccrualPendingProtocolFees(0, rlm)
+}
+
+func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
+	return t.instance.GetAccrualPendingProtocolFees()
+}

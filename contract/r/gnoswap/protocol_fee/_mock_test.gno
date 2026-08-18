@@ -79,6 +79,22 @@ func (m *MockProtocolFee) GetGovStakerPct() int64 {
 	return res[0].(int64)
 }
 
+func (m *MockProtocolFee) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+	res, ok := m.Response.Get("ConsumeAccrualPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+	return res[0].(map[string]int64)
+}
+
+func (m *MockProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
+	res, ok := m.Response.Get("GetAccrualPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+	return res[0].(map[string]int64)
+}
+
 func (m *MockProtocolFee) GetReservedTokens() []string {
 	res, ok := m.Response.Get("GetReservedTokens")
 	if !ok {

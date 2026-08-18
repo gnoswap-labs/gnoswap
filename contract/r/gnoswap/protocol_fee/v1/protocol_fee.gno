@@ -280,4 +280,47 @@ func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath
 	if err := pfs.store.AddReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
+
+	// Mark the token so gov/staker only walks what actually collected a fee.
+	if err := pfs.store.AddAccrualPendingToken(0, rlm, tokenPath); err != nil {
+		panic(err)
+	}
+}
+
+// ConsumeAccrualPendingProtocolFees returns the gov/staker share of every token that
+// collected a fee since the last call, and clears the pending list. gov/staker folds
+// these into its accumulator on every stake change, so handing back only the tokens
+// that moved keeps that cost tied to the fees that arrived.
+//
+// Amounts are cumulative totals, matching GetAccuTransfersToGovStaker. Restricted to
+// gov/staker rather than admin as well: clearing the list without folding the fees into
+// an accumulator strands them until that token collects another fee.
+func (pf *protocolFeeV1) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	accrualPendingFees := pf.accrualPendingProtocolFees(pfs)
+
+	if len(accrualPendingFees) > 0 {
+		if err := pfs.store.ClearAccrualPendingTokens(0, rlm); err != nil {
+			panic(err)
+		}
+	}
+
+	return accrualPendingFees
+}
+
+// accrualPendingProtocolFees reads the gov/staker share of every pending token.
+func (pf *protocolFeeV1) accrualPendingProtocolFees(pfs *protocolFeeState) map[string]int64 {
+	accrualPendingFees := make(map[string]int64)
+	for _, tokenPath := range pfs.store.GetAccrualPendingTokens() {
+		accrualPendingFees[tokenPath] = pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
+	}
+
+	return accrualPendingFees
 }

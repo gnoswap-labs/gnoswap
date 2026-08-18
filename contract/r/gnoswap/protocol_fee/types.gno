@@ -18,6 +18,8 @@ type IProtocolFeeManager interface {
 	SetDevOpsPct(_ int, rlm realm, pct int64)
 	SetGovStakerPct(_ int, rlm realm, pct int64)
 	AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+
+	ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64
 }
 
 type IProtocolFeeGetter interface {
@@ -32,6 +34,7 @@ type IProtocolFeeGetter interface {
 	GetActualDistributedToDevOps() map[string]int64
 	GetActualDistributedToGovStakerByTokenPath(path string) int64
 	GetActualDistributedToDevOpsByTokenPath(path string) int64
+	GetAccrualPendingProtocolFees() map[string]int64
 }
 
 type IProtocolFeeStore interface {
@@ -70,4 +73,11 @@ type IProtocolFeeStore interface {
 	SetReservedTokens(_ int, rlm realm, reservedTokens []string) error
 	AddReservedToken(_ int, rlm realm, tokenPath string) error
 	RemoveReservedToken(_ int, rlm realm, tokenPath string) error
+
+	HasAccrualPendingTokensStoreKey() bool
+	InitializeAccrualPendingTokens(_ int, rlm realm) error
+	GetAccrualPendingTokens() []string
+	SetAccrualPendingTokens(_ int, rlm realm, accrualPendingTokens []string) error
+	AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error
+	ClearAccrualPendingTokens(_ int, rlm realm) error
 }

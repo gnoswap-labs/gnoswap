@@ -149,3 +149,17 @@ func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) i
 	}
 	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }
+
+func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+	if !t.isActive("ConsumeAccrualPendingProtocolFees") {
+		panic("test implementation: ConsumeAccrualPendingProtocolFees not supported")
+	}
+	return t.instance.ConsumeAccrualPendingProtocolFees(0, rlm)
+}
+
+func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
+	if !t.isActive("GetAccrualPendingProtocolFees") {
+		panic("test implementation: GetAccrualPendingProtocolFees not supported")
+	}
+	return t.instance.GetAccrualPendingProtocolFees()
+}
