@@ -397,51 +397,65 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 	return s.nftAccessor.TransferFrom(0, rlm, owner, to, positionIdFrom(positionId))
 }
 
-// CollectReward harvests accumulated rewards for a staked position. This includes both
-// internal GNS emission and external incentive rewards.
+// collectContext carries the values every reward delivery of one collect call shares: the deposit being
+// collected, the collect timestamp and height, the caller identity used in events, and the accumulator
+// snapshot emitted with every collect event.
 //
-// State Transition:
-//  1. Warm-up amounts are clears for both internal and external rewards
-//  2. Reward tokens are transferred to the owner
-//  3. Penalty fees are transferred to protocol/community addresses
-//  4. GNS balance is recalculated
-//
-// Requirements:
-//   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
-//
-// Parameters:
-// CollectReward claims accumulated rewards without unstaking.
-//
-// Parameters:
-//   - positionId: LP position NFT token ID
-//
-// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
-func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+// Resolving it once is what keeps a collect-everything call at a single snapshot: the emission delivery
+// and each incentive delivery all read the same context.
+type collectContext struct {
+	positionId      uint64
+	deposit         *sr.Deposit
+	depositResolver *DepositResolver
 
-	halt.AssertIsNotHaltedWithdraw()
+	currentTime int64
+	blockHeight int64
 
-	caller := rlm.Previous().Address()
-	assertIsDepositor(s, caller, positionId)
+	prevAddr  string
+	prevRealm string
 
+	stakedLiquidity     *u256.Uint
+	globalAccX128       *u256.Uint
+	lowerOutsideAccX128 *u256.Uint
+	upperOutsideAccX128 *u256.Uint
+}
+
+// newCollectContext resolves the deposit and snapshots the accumulator values used for reward
+// calculation tracking. Call it AFTER the calculation's state update has been applied, so a lazily
+// created pool is already persisted.
+func (s *stakerV1) newCollectContext(_ int, rlm realm, positionId uint64, currentTime, blockHeight int64) *collectContext {
 	deposit := s.getDeposits().get(positionId)
-	depositResolver := NewDepositResolver(deposit)
 
-	en.MintAndDistributeGns(cross(rlm))
+	pool, _ := s.getPools().Get(deposit.TargetPoolPath())
+	poolResolver := NewPoolResolver(pool)
+	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
 
-	currentTime := time.Now().Unix()
-	blockHeight := runtime.ChainHeight()
+	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
+	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
+
 	previousRealm := rlm.Previous()
 
-	// get all internal and external rewards.
-	// Calculation is read-only; the resulting state updates (reward-cache materialization, lazy pool
-	// persistence, deposit incentive-index updates) are applied via updatePositionReward, which is the
-	// collect-only counterpart to the calculation shared with the Collectable* view getters.
-	rewardParam := &calculatePositionRewardParam{
+	return &collectContext{
+		positionId:      positionId,
+		deposit:         deposit,
+		depositResolver: NewDepositResolver(deposit),
+
+		currentTime: currentTime,
+		blockHeight: blockHeight,
+
+		prevAddr:  previousRealm.Address().String(),
+		prevRealm: previousRealm.PkgPath(),
+
+		stakedLiquidity:     stakedLiquidity,
+		globalAccX128:       globalAccX128,
+		lowerOutsideAccX128: lowerTickResolver.CurrentOutsideAccumulation(currentTime),
+		upperOutsideAccX128: upperTickResolver.CurrentOutsideAccumulation(currentTime),
+	}
+}
+
+// newRewardCollectParam builds the calculation input for a collect of the given position.
+func (s *stakerV1) newRewardCollectParam(positionId uint64, currentTime, blockHeight int64) *calculatePositionRewardParam {
+	return &calculatePositionRewardParam{
 		CurrentHeight: blockHeight,
 		CurrentTime:   currentTime,
 		Deposits:      s.getDeposits(),
@@ -449,134 +463,301 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	}
-	rewards, rewardUpdate := s.calculatePositionReward(rewardParam)
+}
 
-	// aggregate the reward of internal and external rewards
+// CollectEmissionReward harvests only the GNS emission (internal) reward of a staked position.
+//
+// The emission and the external incentive rewards track their collection cursors independently
+// (a single lastCollectTime on the deposit for emission, one per incentive id for external), so
+// collecting one side leaves the other side fully accruable.
+//
+// State Transition:
+//  1. Emission is minted and distributed so the staker holds the GNS to pay out
+//  2. Warm-up ratios are applied and the emission reward is split into user / penalty amounts
+//  3. GNS is transferred to the owner, penalties and unclaimable amounts to the community pool
+//  4. The deposit's internal lastCollectTime is advanced
+//
+// Requirements:
+//   - Contract must not be halted
+//   - Caller must be the position owner
+//   - Position must be staked (have a deposit record)
+//
+// Parameters:
+//   - positionId: LP position NFT token ID
+//
+// Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
+func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	halt.AssertIsNotHaltedWithdraw()
+	assertIsDepositor(s, rlm.Previous().Address(), positionId)
+
+	en.MintAndDistributeGns(cross(rlm))
+
+	currentTime := time.Now().Unix()
+	blockHeight := runtime.ChainHeight()
+
+	// Calculation is read-only; the resulting state updates (reward-cache update, lazy pool persistence)
+	// are applied via updateInternalPositionReward, which is the collect-only counterpart to the
+	// calculation shared with the Collectable* view getters.
+	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewards, rewardUpdate := s.calculateInternalPositionReward(rewardParam)
 	reward := aggregateRewards(rewards)
+	s.updateInternalPositionReward(rewardParam, rewardUpdate)
 
-	// update the position reward state
+	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
+
+	return s.deliverEmissionReward(0, rlm, ctx, reward)
+}
+
+// CollectExternalIncentiveReward harvests one external incentive reward of a staked position.
+//
+// Each incentive keeps its own lastCollectTime, so the emission reward and every incentive other than
+// the requested one stay collectible afterwards. The requested incentive is itself left collectible when
+// it cannot be delivered (not started, zero reward, or underfunded).
+//
+// State Transition:
+//  1. Incentives created since the deposit's last update are added to its incentive index
+//  2. Warm-up ratios are applied and the reward is split into user / penalty amounts
+//  3. The reward token is transferred to the owner, the penalty accumulates on the incentive
+//  4. The collected incentive's lastCollectTime is advanced
+//
+// Requirements:
+//   - Contract must not be halted
+//   - Caller must be the position owner
+//   - Position must be staked (have a deposit record)
+//   - Incentive must exist and target the pool the position is staked in
+//
+// Parameters:
+//   - positionId: LP position NFT token ID
+//   - incentiveId: external incentive to collect
+//
+// Returns the collected reward amount, before the staking reward fee is taken, and the penalty amount
+// kept by the incentive.
+func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	halt.AssertIsNotHaltedWithdraw()
+	assertIsDepositor(s, rlm.Previous().Address(), positionId)
+	assertIsIncentiveOfDeposit(s, positionId, incentiveId)
+
+	currentTime := time.Now().Unix()
+	blockHeight := runtime.ChainHeight()
+
+	// Calculation is read-only; the resulting state updates (lazy pool persistence, deposit
+	// incentive-index updates) are applied via updateExternalPositionReward, which is the collect-only
+	// counterpart to the calculation shared with the Collectable* view getters.
+	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewards, rewardUpdate := s.calculateExternalPositionReward(rewardParam, incentiveId)
+	reward := aggregateRewards(rewards)
+	s.updateExternalPositionReward(rewardParam, rewardUpdate)
+
+	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
+
+	_, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
+		0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
+	)
+
+	// Persist the deposit even when nothing was delivered: the incentive-index update above still ran.
+	s.getDeposits().set(positionId, ctx.deposit)
+
+	return rewardAmount, rewardPenalty
+}
+
+// CollectReward harvests accumulated rewards for a staked position. This includes both
+// internal GNS emission and external incentive rewards.
+//
+// It is the "collect everything" entry point kept for callers that do not want to choose a side. It
+// calculates both sides in one pass and delivers each incentive, then the emission reward, through the
+// same delivery functions the single-source entry points use.
+//
+// Requirements:
+//   - Contract must not be halted
+//   - Caller must be the position owner
+//   - Position must be staked (have a deposit record)
+//
+// Parameters:
+//   - positionId: LP position NFT token ID
+//
+// Returns the GNS amount sent to the user, the GNS penalty amount, and the per-token external
+// reward and penalty amounts.
+func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	halt.AssertIsNotHaltedWithdraw()
+	assertIsDepositor(s, rlm.Previous().Address(), positionId)
+
+	en.MintAndDistributeGns(cross(rlm))
+
+	currentTime := time.Now().Unix()
+	blockHeight := runtime.ChainHeight()
+
+	// One calculation and one state update cover both reward sources.
+	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewards, rewardUpdate := s.calculatePositionReward(rewardParam)
+	reward := aggregateRewards(rewards)
 	s.updatePositionReward(rewardParam, rewardUpdate)
 
-	// Snapshot the accumulator values used for reward calculation tracking.
-	pool, _ := s.getPools().Get(deposit.TargetPoolPath())
-	poolResolver := NewPoolResolver(pool)
-	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
+	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
 
-	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
-	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
-	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
-	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
-
-	// transfer external rewards to user
-	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	// External rewards are delivered first, the order the two reward paths ran in before they were split.
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
 
-	for incentiveId, rewardAmount := range reward.External {
-		// Skip when user reward is zero.
-		// Do not update last collect time so the reward accrues until
-		// the next collection where a non-zero amount can be delivered.
-		if rewardAmount == 0 {
+	for _, incentiveId := range rewardUpdate.externalIncentiveIds {
+		rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
+			0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
+		)
+		// An empty reward token means the incentive delivered nothing and stays collectible.
+		if rewardToken == "" {
 			continue
 		}
-
-		// get panics on a missing id; incentives are never removed from the tree.
-		incentive := s.getExternalIncentives().get(incentiveId)
-
-		incentiveResolver := NewExternalIncentiveResolver(incentive)
-		if !incentiveResolver.IsStarted(currentTime) {
-			continue
-		}
-
-		externalPenalty := reward.ExternalPenalty[incentiveId]
-		totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
-
-		if incentiveResolver.RewardAmount() < totalRewardAmount {
-			// Do not update last collect time here; insufficient funds should
-			// leave the incentive collectible when refilled or corrected.
-			chain.Emit(
-				"InsufficientExternalReward",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
-				"positionId", utils.FormatUint(positionId),
-				"incentiveId", incentiveId,
-				"requiredAmount", utils.FormatInt(totalRewardAmount),
-				"availableAmount", utils.FormatInt(incentiveResolver.RewardAmount()),
-				"currentTime", utils.FormatInt(currentTime),
-				"currentHeight", utils.FormatInt(blockHeight),
-			)
-			continue
-		}
-
-		// process reward states
-		rewardToken := incentive.RewardToken()
 
 		toUserExternalReward[rewardToken] = gnsmath.SafeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
-
-		incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
-		incentiveResolver.addDistributedRewardAmount(rewardAmount)
-		incentiveResolver.addAccumulatedPenaltyAmount(externalPenalty)
-		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
-
-		// Update the last collect time ONLY for this specific incentive
-		// This happens only if the reward was successfully transferred.
-		err := depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
-		if err != nil {
-			panic(err)
-		}
-
-		// If incentive ended and user already collected after end, remove from index
-		// This ensures deposit's incentive list shrinks over time as incentives complete
-		if depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
-			deposit.RemoveExternalIncentiveId(incentiveId)
-		}
-
-		// update
-		s.getExternalIncentives().set(incentiveId, incentive)
-
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		if toUser > 0 {
-			common.SafeGRC20Transfer(cross(rlm), rewardToken, deposit.Owner(), toUser)
-		}
-
-		chain.Emit(
-			"ProtocolFeeExternalReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"fromPositionId", utils.FormatUint(positionId),
-			"fromPoolPath", incentive.TargetPoolPath(),
-			"feeTokenPath", rewardToken,
-			"feeAmount", utils.FormatInt(feeAmount),
-			"currentTime", utils.FormatInt(currentTime),
-			"currentHeight", utils.FormatInt(blockHeight),
-		)
-
-		chain.Emit(
-			"CollectReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"positionId", utils.FormatUint(positionId),
-			"poolPath", deposit.TargetPoolPath(),
-			"recipient", deposit.Owner().String(),
-			"incentiveId", incentiveId,
-			"rewardToken", rewardToken,
-			"rewardAmount", utils.FormatInt(rewardAmount),
-			"rewardToUser", utils.FormatInt(toUser),
-			"rewardToFee", utils.FormatInt(rewardAmount-toUser),
-			"rewardPenalty", utils.FormatInt(externalPenalty),
-			"currentTime", utils.FormatInt(currentTime),
-			"currentHeight", utils.FormatInt(blockHeight),
-			"stakedLiquidity", stakedLiquidity.ToString(),
-			"globalRewardRatioAccX128", globalAccX128.ToString(),
-			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
-			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
-		)
+		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], rewardPenalty)
 	}
+
+	internalRewardToUser, internalRewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
+
+	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
+}
+
+// deliverExternalIncentiveReward pays out one incentive's already-calculated reward: it debits the
+// incentive, advances its lastCollectTime, takes the staking reward fee and transfers the rest.
+//
+// The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward, has not
+// started, or does not hold enough reward token, so the amount stays collectible later. A skipped
+// incentive is reported by an empty reward token.
+//
+// Returns the reward token, the collected reward amount before the staking reward fee, and the penalty.
+func (s *stakerV1) deliverExternalIncentiveReward(
+	_ int,
+	rlm realm,
+	ctx *collectContext,
+	incentiveId string,
+	rewardAmount int64,
+	externalPenalty int64,
+) (string, int64, int64) {
+	// Skip when user reward is zero.
+	// Do not update last collect time so the reward accrues until
+	// the next collection where a non-zero amount can be delivered.
+	if rewardAmount == 0 {
+		return "", 0, 0
+	}
+
+	// get panics on a missing id; incentives are never removed from the tree.
+	incentive := s.getExternalIncentives().get(incentiveId)
+
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	if !incentiveResolver.IsStarted(ctx.currentTime) {
+		return "", 0, 0
+	}
+
+	totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
+
+	if incentiveResolver.RewardAmount() < totalRewardAmount {
+		// Do not update last collect time here; insufficient funds should
+		// leave the incentive collectible when refilled or corrected.
+		chain.Emit(
+			"InsufficientExternalReward",
+			"prevAddr", ctx.prevAddr,
+			"prevRealm", ctx.prevRealm,
+			"positionId", utils.FormatUint(ctx.positionId),
+			"incentiveId", incentiveId,
+			"requiredAmount", utils.FormatInt(totalRewardAmount),
+			"availableAmount", utils.FormatInt(incentiveResolver.RewardAmount()),
+			"currentTime", utils.FormatInt(ctx.currentTime),
+			"currentHeight", utils.FormatInt(ctx.blockHeight),
+		)
+
+		return "", 0, 0
+	}
+
+	// process reward states
+	rewardToken := incentive.RewardToken()
+
+	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
+	incentiveResolver.addDistributedRewardAmount(rewardAmount)
+	incentiveResolver.addAccumulatedPenaltyAmount(externalPenalty)
+	ctx.depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
+
+	// Update the last collect time ONLY for this specific incentive
+	// This happens only if the reward was successfully transferred.
+	err := ctx.depositResolver.updateExternalRewardLastCollectTime(incentiveId, ctx.currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	// If incentive ended and user already collected after end, remove from index
+	// This ensures deposit's incentive list shrinks over time as incentives complete
+	if ctx.depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
+		ctx.deposit.RemoveExternalIncentiveId(incentiveId)
+	}
+
+	// update
+	s.getExternalIncentives().set(incentiveId, incentive)
+
+	toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if toUser > 0 {
+		common.SafeGRC20Transfer(cross(rlm), rewardToken, ctx.deposit.Owner(), toUser)
+	}
+
+	chain.Emit(
+		"ProtocolFeeExternalReward",
+		"prevAddr", ctx.prevAddr,
+		"prevRealm", ctx.prevRealm,
+		"fromPositionId", utils.FormatUint(ctx.positionId),
+		"fromPoolPath", incentive.TargetPoolPath(),
+		"feeTokenPath", rewardToken,
+		"feeAmount", utils.FormatInt(feeAmount),
+		"currentTime", utils.FormatInt(ctx.currentTime),
+		"currentHeight", utils.FormatInt(ctx.blockHeight),
+	)
+
+	chain.Emit(
+		"CollectReward",
+		"prevAddr", ctx.prevAddr,
+		"prevRealm", ctx.prevRealm,
+		"positionId", utils.FormatUint(ctx.positionId),
+		"poolPath", ctx.deposit.TargetPoolPath(),
+		"recipient", ctx.deposit.Owner().String(),
+		"incentiveId", incentiveId,
+		"rewardToken", rewardToken,
+		"rewardAmount", utils.FormatInt(rewardAmount),
+		"rewardToUser", utils.FormatInt(toUser),
+		"rewardToFee", utils.FormatInt(rewardAmount-toUser),
+		"rewardPenalty", utils.FormatInt(externalPenalty),
+		"currentTime", utils.FormatInt(ctx.currentTime),
+		"currentHeight", utils.FormatInt(ctx.blockHeight),
+		"stakedLiquidity", ctx.stakedLiquidity.ToString(),
+		"globalRewardRatioAccX128", ctx.globalAccX128.ToString(),
+		"lowerTickOutsideAccX128", ctx.lowerOutsideAccX128.ToString(),
+		"upperTickOutsideAccX128", ctx.upperOutsideAccX128.ToString(),
+	)
+
+	return rewardToken, rewardAmount, externalPenalty
+}
+
+// deliverEmissionReward pays out the already-calculated GNS emission reward: it takes the staking reward
+// fee, settles the pool's unclaimable accumulation to the community pool, advances totalEmissionSent and
+// the deposit's internal lastCollectTime, and transfers the GNS.
+//
+// When the position has no emission reward to deliver, the internal lastCollectTime is left untouched so
+// the amount keeps accruing; the pool's unclaimable accumulation is still settled.
+//
+// Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
+func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 	internalReward := int64(0)
 	internalRewardToUser := int64(0)
@@ -602,14 +783,14 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 		chain.Emit(
 			"ProtocolFeeInternalReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"fromPositionId", utils.FormatUint(positionId),
-			"fromPoolPath", deposit.TargetPoolPath(),
+			"prevAddr", ctx.prevAddr,
+			"prevRealm", ctx.prevRealm,
+			"fromPositionId", utils.FormatUint(ctx.positionId),
+			"fromPoolPath", ctx.deposit.TargetPoolPath(),
 			"feeTokenPath", GNS_TOKEN_KEY,
 			"feeAmount", utils.FormatInt(internalRewardToFee),
-			"currentTime", utils.FormatInt(currentTime),
-			"currentHeight", utils.FormatInt(blockHeight),
+			"currentTime", utils.FormatInt(ctx.currentTime),
+			"currentHeight", utils.FormatInt(ctx.blockHeight),
 		)
 	}
 
@@ -618,18 +799,18 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	if internalRewardToUser > 0 {
 		// internal reward to user
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, internalRewardToUser)
-		depositResolver.addCollectedInternalReward(reward.Internal)
+		ctx.depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	if internalRewardPenalty > 0 {
 		// internal penalty to community pool
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, internalRewardPenalty)
-		depositResolver.addCollectedInternalReward(internalRewardPenalty)
+		ctx.depositResolver.addCollectedInternalReward(internalRewardPenalty)
 	}
 
 	// Unclaimable must be processed after regular rewards so that accumulated
 	// unclaimable amounts are reset in the same collect window.
-	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
+	unClaimableInternal := s.processUnClaimableReward(ctx.depositResolver.TargetPoolPath(), ctx.currentTime)
 	if unClaimableInternal > 0 {
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
@@ -641,17 +822,17 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	if !skipInternalUpdate {
 		// Update lastCollectTime for internal rewards (GNS emissions)
-		err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
+		err = ctx.depositResolver.updateInternalRewardLastCollectTime(ctx.currentTime)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	deposits := s.getDeposits()
-	deposits.set(positionId, deposit)
+	deposits.set(ctx.positionId, ctx.deposit)
 
 	if internalRewardToUser > 0 {
-		gns.Transfer(cross(rlm), deposit.Owner(), internalRewardToUser)
+		gns.Transfer(cross(rlm), ctx.deposit.Owner(), internalRewardToUser)
 	}
 
 	if internalRewardPenalty > 0 {
@@ -662,33 +843,30 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		gns.Transfer(cross(rlm), communityPoolAddr, unClaimableInternal)
 	}
 
-	rewardToUser := utils.FormatInt(internalRewardToUser)
-	rewardPenalty := utils.FormatInt(internalRewardPenalty)
-
 	if !skipInternalUpdate {
 		chain.Emit(
 			"CollectReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"positionId", utils.FormatUint(positionId),
-			"poolPath", depositResolver.TargetPoolPath(),
-			"recipient", depositResolver.Owner().String(),
+			"prevAddr", ctx.prevAddr,
+			"prevRealm", ctx.prevRealm,
+			"positionId", utils.FormatUint(ctx.positionId),
+			"poolPath", ctx.depositResolver.TargetPoolPath(),
+			"recipient", ctx.depositResolver.Owner().String(),
 			"rewardToken", GNS_TOKEN_KEY,
 			"rewardAmount", utils.FormatInt(internalReward),
-			"rewardToUser", rewardToUser,
+			"rewardToUser", utils.FormatInt(internalRewardToUser),
 			"rewardToFee", utils.FormatInt(internalRewardToFee),
-			"rewardPenalty", rewardPenalty,
+			"rewardPenalty", utils.FormatInt(internalRewardPenalty),
 			"rewardUnClaimableAmount", utils.FormatInt(unClaimableInternal),
-			"currentTime", utils.FormatInt(currentTime),
-			"currentHeight", utils.FormatInt(blockHeight),
-			"stakedLiquidity", stakedLiquidity.ToString(),
-			"globalRewardRatioAccX128", globalAccX128.ToString(),
-			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
-			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
+			"currentTime", utils.FormatInt(ctx.currentTime),
+			"currentHeight", utils.FormatInt(ctx.blockHeight),
+			"stakedLiquidity", ctx.stakedLiquidity.ToString(),
+			"globalRewardRatioAccX128", ctx.globalAccX128.ToString(),
+			"lowerTickOutsideAccX128", ctx.lowerOutsideAccX128.ToString(),
+			"upperTickOutsideAccX128", ctx.upperOutsideAccX128.ToString(),
 		)
 	}
 
-	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
+	return internalRewardToUser, internalRewardPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
