@@ -31,7 +31,7 @@ func (s *stakerV1) handleStakingRewardFee(
 
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
-		s.addToProtocolFee(0, rlm, tokenPath)
+		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
@@ -42,12 +42,11 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
-		s.addToProtocolFee(0, rlm, tokenPath)
+		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
-	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
-	s.addToProtocolFee(0, rlm, tokenPath)
+	s.settleProtocolFee(0, rlm, tokenPath, feeAmount)
 
 	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
@@ -74,35 +73,47 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	}
 }
 
-// addToProtocolFee sends the pending staker protocol fee of tokenPath to the
-// protocol fee realm. It is best-effort: an entry only survives while protocol fee
-// collection is halted, and is settled by the next call for the same token, which
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
 // every fee path makes even when the fee is zero.
 //
-// Only the entry of tokenPath is touched, so an unrelated token can never block
-// settlement and the cost does not scale with the number of pending entries.
-func (s *stakerV1) addToProtocolFee(_ int, rlm realm, tokenPath string) {
-	pendingProtocolFees := s.store.GetPendingProtocolFees()
-	amount, exists := pendingProtocolFees[tokenPath]
-	if !exists || halt.IsHaltedProtocolFee() {
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
+func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
+	if halt.IsHaltedProtocolFee() {
+		s.addPendingProtocolFee(0, rlm, tokenPath, amount)
 		return
 	}
 
-	if amount > 0 {
+	pendingProtocolFees := s.store.GetPendingProtocolFees()
+	pendingAmount, hasPending := pendingProtocolFees[tokenPath]
+	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
+
+	if totalAmount > 0 {
 		protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, totalAmount)
+
+		// AddToProtocolFee only reports an error for a halted realm, which is handled
+		// above. The branch keeps the amount pending should that ever change.
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			s.addPendingProtocolFee(0, rlm, tokenPath, amount)
 			return
 		}
 	}
 
+	if !hasPending {
+		return
+	}
+
 	remainingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pendingAmount := range pendingProtocolFees {
+	for pendingTokenPath, pending := range pendingProtocolFees {
 		if pendingTokenPath == tokenPath {
 			continue
 		}
 
-		remainingProtocolFees[pendingTokenPath] = pendingAmount
+		remainingProtocolFees[pendingTokenPath] = pending
 	}
 
 	if err := s.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
