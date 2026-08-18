@@ -64,6 +64,20 @@ func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return t.instance.CollectReward(0, rlm, positionId)
 }
 
+func (t *TestStaker) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
+	if !t.isActive("CollectEmissionReward") {
+		panic("test implementation: CollectEmissionReward not supported")
+	}
+	return t.instance.CollectEmissionReward(0, rlm, positionId)
+}
+
+func (t *TestStaker) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
+	if !t.isActive("CollectExternalIncentiveReward") {
+		panic("test implementation: CollectExternalIncentiveReward not supported")
+	}
+	return t.instance.CollectExternalIncentiveReward(0, rlm, positionId, incentiveId)
+}
+
 func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !t.isActive("SetPoolTier") {
 		panic("test implementation: SetPoolTier not supported")

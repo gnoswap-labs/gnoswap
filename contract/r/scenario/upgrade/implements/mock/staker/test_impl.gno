@@ -64,6 +64,30 @@ func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return result[0].(string), result[1].(string), result[2].(map[string]int64), result[3].(map[string]int64)
 }
 
+func (t *TestStaker) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
+	result := t.ExecuteFn(
+		"CollectEmissionReward",
+		func(args ...any) any {
+			r1, r2 := t.instance.CollectEmissionReward(0, rlm, args[0].(uint64))
+			return []any{r1, r2}
+		},
+		positionId,
+	).([]any)
+	return result[0].(int64), result[1].(int64)
+}
+
+func (t *TestStaker) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
+	result := t.ExecuteFn(
+		"CollectExternalIncentiveReward",
+		func(args ...any) any {
+			r1, r2 := t.instance.CollectExternalIncentiveReward(0, rlm, args[0].(uint64), args[1].(string))
+			return []any{r1, r2}
+		},
+		positionId, incentiveId,
+	).([]any)
+	return result[0].(int64), result[1].(int64)
+}
+
 func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.ExecuteFn(
 		"SetPoolTier",
