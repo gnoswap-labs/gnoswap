@@ -121,10 +121,5 @@ func SetSwapFee(cur realm, fee uint64) {
 
 // GetPendingProtocolFees returns the pending protocol fee amount per token path.
 func GetPendingProtocolFees() map[string]int64 {
-	pendingProtocolFees := make(map[string]int64)
-	for tokenPath, amount := range getImplementation().GetPendingProtocolFees() {
-		pendingProtocolFees[tokenPath] = amount
-	}
-
-	return pendingProtocolFees
+	return cloneStringInt64Map(getImplementation().GetPendingProtocolFees())
 }
