@@ -125,7 +125,8 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	instance.addToProtocolFee(0, cur)
+	instance.addToProtocolFee(0, cur, barPath)
+	instance.addToProtocolFee(0, cur, gnsPath)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)

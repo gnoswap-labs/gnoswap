@@ -128,7 +128,8 @@ func (i *poolV1) CreatePool(
 			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}
-	i.addToProtocolFee(0, rlm)
+
+	i.addToProtocolFee(0, rlm, GNS_TOKEN_KEY)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(

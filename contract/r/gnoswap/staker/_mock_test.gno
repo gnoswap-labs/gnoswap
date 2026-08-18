@@ -125,6 +125,15 @@ func (m *MockStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetUnStakingFee")
 }
 
+func (m *MockStaker) GetPendingProtocolFees() map[string]int64 {
+	res, ok := m.Response.Get("GetPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+
+	return res[0].(map[string]int64)
+}
+
 // Getter methods
 func (m *MockStaker) GetPool(poolPath string) *Pool {
 	res, ok := m.Response.Get("GetPool")
