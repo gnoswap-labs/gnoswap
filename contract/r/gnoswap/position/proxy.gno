@@ -79,11 +79,11 @@ func IncreaseLiquidity(
 // Returns:
 //   - uint64: position ID
 //   - string: removed liquidity amount
-//   - string: amount of token0 removed
-//   - string: amount of token1 removed
+//   - string: collected fee amount of token0 (after the withdrawal fee)
+//   - string: collected fee amount of token1 (after the withdrawal fee)
+//   - string: amount of token0 returned to the caller
+//   - string: amount of token1 returned to the caller
 //   - string: pool path
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
