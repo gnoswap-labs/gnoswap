@@ -562,6 +562,64 @@ func TestConsumeAccrualPendingProtocolFees(cur realm, t *testing.T) {
 	uassert.Equal(t, afterMoreFees[barPath], int64(125))
 }
 
+func TestConsumeAccrualPendingProtocolFeeByTokenPath(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	poolRealm := testing.NewCodeRealm(poolPath)
+	barPath := "gno.land/r/onbloc/bar.BAR"
+	quxPath := "gno.land/r/onbloc/qux.QUX"
+
+	for _, fee := range []struct {
+		tokenPath string
+		amount    int64
+	}{{barPath, 100}, {quxPath, 50}} {
+		fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, fee.tokenPath, fee.amount)
+		testing.SetRealm(poolRealm)
+		func(cur realm) {
+			pf.AddToProtocolFee(0, cur, fee.tokenPath, fee.amount)
+		}(cross(cur))
+	}
+
+	// Consuming one token leaves the others listed.
+	testing.SetRealm(govStakerRealm)
+	consumed := func(cur realm) int64 {
+		return pf.ConsumeAccrualPendingProtocolFeeByTokenPath(0, cur, barPath)
+	}(cross(cur))
+
+	uassert.Equal(t, consumed, int64(100))
+	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 1)
+	uassert.Equal(t, pf.store.GetAccrualPendingTokens()[0], quxPath)
+
+	// A later all-token consume no longer hands the claimed token back.
+	testing.SetRealm(govStakerRealm)
+	remaining := func(cur realm) map[string]int64 {
+		return pf.ConsumeAccrualPendingProtocolFees(0, cur)
+	}(cross(cur))
+
+	uassert.Equal(t, len(remaining), 1)
+	uassert.Equal(t, remaining[quxPath], int64(50))
+}
+
+func TestAddToProtocolFee_NoGovStakerShareIsNotListedForAccrual(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	poolRealm := testing.NewCodeRealm(poolPath)
+	barPath := "gno.land/r/onbloc/bar.BAR"
+
+	// The whole fee goes to devOps, so gov/staker has nothing to accrue.
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		pf.SetDevOpsPct(0, cur, 10000)
+	}(cross(cur))
+
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 100)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 100)
+	}(cross(cur))
+
+	uassert.Equal(t, pf.GetAccuTransferToGovStakerByTokenPath(barPath), int64(0))
+	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 0)
+}
+
 func TestProtocolFee_AddToProtocolFee_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string

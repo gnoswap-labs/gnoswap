@@ -41,6 +41,12 @@ func ConsumeAccrualPendingProtocolFees(cur realm) map[string]int64 {
 	return getImplementation().ConsumeAccrualPendingProtocolFees(0, cur)
 }
 
+// ConsumeAccrualPendingProtocolFeeByTokenPath is the single-token counterpart of
+// ConsumeAccrualPendingProtocolFees. Only gov/staker may call it.
+func ConsumeAccrualPendingProtocolFeeByTokenPath(cur realm, tokenPath string) int64 {
+	return getImplementation().ConsumeAccrualPendingProtocolFeeByTokenPath(0, cur, tokenPath)
+}
+
 // GetDevOpsPct returns the DevOps fee percentage.
 func GetDevOpsPct() int64 {
 	return getImplementation().GetDevOpsPct()

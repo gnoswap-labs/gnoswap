@@ -163,3 +163,10 @@ func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
 	}
 	return t.instance.GetAccrualPendingProtocolFees()
 }
+
+func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
+	if !t.isActive("ConsumeAccrualPendingProtocolFeeByTokenPath") {
+		panic("test implementation: ConsumeAccrualPendingProtocolFeeByTokenPath not supported")
+	}
+	return t.instance.ConsumeAccrualPendingProtocolFeeByTokenPath(0, rlm, tokenPath)
+}

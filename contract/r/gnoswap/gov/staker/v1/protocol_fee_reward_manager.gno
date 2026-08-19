@@ -227,8 +227,15 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 		return err
 	}
 
-	self.SetAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
-	self.SetProtocolFeeAmountForToken(tokenPath, changedProtocolFeeAmount)
+	// Write only what changed, as the all-token path does (gas report issue 1 / §1.2).
+	existing := self.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
+	if existing == nil || !existing.Eq(accumulatedProtocolFeeX128PerStake) {
+		self.SetAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
+	}
+
+	if self.GetProtocolFeeAmount(tokenPath) != changedProtocolFeeAmount {
+		self.SetProtocolFeeAmountForToken(tokenPath, changedProtocolFeeAmount)
+	}
 
 	return nil
 }

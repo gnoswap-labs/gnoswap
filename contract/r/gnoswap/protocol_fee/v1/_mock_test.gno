@@ -236,6 +236,25 @@ func (s *mockProtocolFeeStore) AddAccrualPendingToken(_ int, rlm realm, tokenPat
 	return nil
 }
 
+func (s *mockProtocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	filtered := make([]string, 0, len(s.accrualPendingTokens))
+	listed := false
+	for _, accrualPendingToken := range s.accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			listed = true
+			continue
+		}
+
+		filtered = append(filtered, accrualPendingToken)
+	}
+
+	if !listed {
+		return nil
+	}
+
+	return s.SetAccrualPendingTokens(0, rlm, filtered)
+}
+
 func (s *mockProtocolFeeStore) ClearAccrualPendingTokens(_ int, rlm realm) error {
 	return s.SetAccrualPendingTokens(0, rlm, []string{})
 }

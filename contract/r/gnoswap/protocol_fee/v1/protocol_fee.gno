@@ -281,9 +281,12 @@ func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath
 		panic(err)
 	}
 
-	// Mark the token so gov/staker only walks what actually collected a fee.
-	if err := pfs.store.AddAccrualPendingToken(0, rlm, tokenPath); err != nil {
-		panic(err)
+	// Mark the token so gov/staker only walks what actually collected a fee. A split
+	// that leaves gov/staker nothing moves no accumulator, so it is not listed.
+	if toGovStakerAmount > 0 {
+		if err := pfs.store.AddAccrualPendingToken(0, rlm, tokenPath); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -313,6 +316,26 @@ func (pf *protocolFeeV1) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map
 	}
 
 	return accrualPendingFees
+}
+
+// ConsumeAccrualPendingProtocolFeeByTokenPath returns the gov/staker share of tokenPath
+// and drops it from the pending list. It is the single-token counterpart of
+// ConsumeAccrualPendingProtocolFees, used by the per-token claim path so that a token it
+// has already folded into the accumulator is not handed out again by a later consume.
+func (pf *protocolFeeV1) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	if err := pfs.store.RemoveAccrualPendingToken(0, rlm, tokenPath); err != nil {
+		panic(err)
+	}
+
+	return pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 }
 
 // accrualPendingProtocolFees reads the gov/staker share of every pending token.

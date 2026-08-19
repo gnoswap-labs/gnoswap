@@ -20,6 +20,7 @@ type IProtocolFeeManager interface {
 	AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
 
 	ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64
+	ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64
 }
 
 type IProtocolFeeGetter interface {
@@ -79,5 +80,6 @@ type IProtocolFeeStore interface {
 	GetAccrualPendingTokens() []string
 	SetAccrualPendingTokens(_ int, rlm realm, accrualPendingTokens []string) error
 	AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error
+	RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error
 	ClearAccrualPendingTokens(_ int, rlm realm) error
 }

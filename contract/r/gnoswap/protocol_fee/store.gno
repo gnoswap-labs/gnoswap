@@ -434,6 +434,32 @@ func (s *protocolFeeStore) AddAccrualPendingToken(_ int, rlm realm, tokenPath st
 	return s.SetAccrualPendingTokens(0, rlm, accrualPendingTokens)
 }
 
+// RemoveAccrualPendingToken drops one token from the list. It writes only when the
+// token was listed, so settling a token that collected no fee costs no store write.
+func (s *protocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	accrualPendingTokens := s.GetAccrualPendingTokens()
+	filteredAccrualPendingTokens := make([]string, 0, len(accrualPendingTokens))
+	listed := false
+	for _, accrualPendingToken := range accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			listed = true
+			continue
+		}
+
+		filteredAccrualPendingTokens = append(filteredAccrualPendingTokens, accrualPendingToken)
+	}
+
+	if !listed {
+		return nil
+	}
+
+	return s.SetAccrualPendingTokens(0, rlm, filteredAccrualPendingTokens)
+}
+
 func (s *protocolFeeStore) ClearAccrualPendingTokens(_ int, rlm realm) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)

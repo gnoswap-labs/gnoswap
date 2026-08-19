@@ -516,7 +516,7 @@ func (g *govStakerV1) claimAccruedProtocolFeeRewardByTokenPath(address string, t
 func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
 	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
 
-	accruedAmount := pf.GetAccuTransferToGovStakerByTokenPath(tokenPath)
+	accruedAmount := pf.ConsumeAccrualPendingProtocolFeeByTokenPath(cross(rlm), tokenPath)
 	protocolFeeRewardManager, reward, processed, err := g.claimAccruedProtocolFeeRewardByTokenPath(address, tokenPath, accruedAmount, currentTimestamp)
 	if err != nil {
 		return 0, err

@@ -178,3 +178,13 @@ func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
 		func(args ...any) any { return t.instance.GetAccrualPendingProtocolFees() },
 	).(map[string]int64)
 }
+
+func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
+	return t.ExecuteFn(
+		"ConsumeAccrualPendingProtocolFeeByTokenPath",
+		func(args ...any) any {
+			return t.instance.ConsumeAccrualPendingProtocolFeeByTokenPath(0, rlm, args[0].(string))
+		},
+		tokenPath,
+	).(int64)
+}
