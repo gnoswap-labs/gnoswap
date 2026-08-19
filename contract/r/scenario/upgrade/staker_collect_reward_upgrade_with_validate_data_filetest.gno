@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/r/gnoswap/scenarioutils"
 	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -44,6 +44,23 @@ var (
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
+
+	// snapshot of the staking state written by v1
+	v1DepositOwner       address
+	v1DepositPoolPath    string
+	v1DepositLiquidity   string
+	v1DepositStakeTime   int64
+	v1DepositTickLower   int32
+	v1DepositTickUpper   int32
+	v1DepositWarmupCount int
+	v1CollectedInternal  int64
+	v1PoolTier           uint64
+	v1PoolTierRatio      uint64
+	v1PoolStakedLiq      string
+	v1UnstakingFee       uint64
+	v1DepositGnsAmount   int64
+	v1AllowedTokenCount  int
+	v1TotalEmissionSent  int64
 )
 
 const (
@@ -80,6 +97,10 @@ func main(cur realm) {
 
 	println("[SCENARIO] 7. Check staking info before upgrade")
 	checkStakingInfo(cur, positionId)
+	println()
+
+	println("[SCENARIO] 7-1. Snapshot the staking state written by v1")
+	captureV1Snapshot()
 	println()
 
 	println("[SCENARIO] 8. Staker Contract Upgrade to v2_invalid")
@@ -120,6 +141,74 @@ func main(cur realm) {
 	println("[SCENARIO] 14. Check staking info after reward collection")
 	checkStakingInfo(cur, positionId)
 	println()
+
+	println("[SCENARIO] 15. Validate the v1 staking state after the upgrades")
+	validateV1Snapshot()
+	println()
+}
+
+func captureV1Snapshot() {
+	v1DepositOwner = staker.GetDepositOwner(positionId)
+	v1DepositPoolPath = staker.GetDepositTargetPoolPath(positionId)
+	v1DepositLiquidity = staker.GetDepositLiquidityAsString(positionId)
+	v1DepositStakeTime = staker.GetDepositStakeTime(positionId)
+	v1DepositTickLower = staker.GetDepositTickLower(positionId)
+	v1DepositTickUpper = staker.GetDepositTickUpper(positionId)
+	v1DepositWarmupCount = len(staker.GetDepositWarmUp(positionId))
+	v1CollectedInternal = staker.GetDepositCollectedInternalReward(positionId)
+	v1PoolTier = staker.GetPoolTier(barFoo500PoolPath)
+	v1PoolTierRatio = staker.GetPoolTierRatio(barFoo500PoolPath)
+	v1PoolStakedLiq = staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	v1UnstakingFee = staker.GetUnstakingFee()
+	v1DepositGnsAmount = staker.GetDepositGnsAmount()
+	v1AllowedTokenCount = len(staker.GetAllowedTokens())
+	v1TotalEmissionSent = staker.GetTotalEmissionSent()
+
+	println("[EXPECTED] Deposit owner:", v1DepositOwner)
+	println("[EXPECTED] Deposit liquidity:", v1DepositLiquidity)
+	println("[EXPECTED] Deposit ticks:", v1DepositTickLower, v1DepositTickUpper)
+	println("[EXPECTED] Deposit warmup tiers:", v1DepositWarmupCount)
+	println("[EXPECTED] Collected internal reward so far:", v1CollectedInternal)
+	println("[EXPECTED] Pool tier / ratio:", v1PoolTier, v1PoolTierRatio)
+	println("[EXPECTED] Pool staked liquidity:", v1PoolStakedLiq)
+	println("[EXPECTED] Unstaking fee / deposit GNS amount:", v1UnstakingFee, v1DepositGnsAmount)
+	println("[EXPECTED] Allowed token count:", v1AllowedTokenCount)
+	println("[EXPECTED] Total emission sent:", v1TotalEmissionSent)
+
+	// the deposit must mirror the staked position and already have collected
+	// a non-zero internal reward
+	uassert.Equal(t, barFoo500PoolPath, v1DepositPoolPath)
+	uassert.Equal(t, v1DepositLiquidity, v1PoolStakedLiq)
+	uassert.True(t, v1CollectedInternal > 0)
+	uassert.Equal(t, uint64(1), v1PoolTier)
+}
+
+func validateV1Snapshot() {
+	// deposit identity is immutable across upgrades
+	uassert.Equal(t, v1DepositOwner, staker.GetDepositOwner(positionId))
+	uassert.Equal(t, v1DepositPoolPath, staker.GetDepositTargetPoolPath(positionId))
+	uassert.Equal(t, v1DepositLiquidity, staker.GetDepositLiquidityAsString(positionId))
+	uassert.Equal(t, v1DepositStakeTime, staker.GetDepositStakeTime(positionId))
+	uassert.Equal(t, v1DepositTickLower, staker.GetDepositTickLower(positionId))
+	uassert.Equal(t, v1DepositTickUpper, staker.GetDepositTickUpper(positionId))
+	uassert.Equal(t, v1DepositWarmupCount, len(staker.GetDepositWarmUp(positionId)))
+	uassert.Equal(t, v1PoolTier, staker.GetPoolTier(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolTierRatio, staker.GetPoolTierRatio(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolStakedLiq, staker.GetPoolStakedLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1UnstakingFee, staker.GetUnstakingFee())
+	uassert.Equal(t, v1DepositGnsAmount, staker.GetDepositGnsAmount())
+	uassert.Equal(t, v1AllowedTokenCount, len(staker.GetAllowedTokens()))
+	uassert.True(t, staker.IsStaked(positionId))
+
+	// reward ledgers only ever move forward
+	uassert.True(t, staker.GetDepositCollectedInternalReward(positionId) > v1CollectedInternal)
+	uassert.True(t, staker.GetTotalEmissionSent() > v1TotalEmissionSent)
+
+	println("[EXPECTED] Deposit identity data is unchanged after the upgrades")
+	println("[EXPECTED] Collected internal reward grew from", v1CollectedInternal,
+		"to", staker.GetDepositCollectedInternalReward(positionId))
+	println("[EXPECTED] Total emission sent grew from", v1TotalEmissionSent,
+		"to", staker.GetTotalEmissionSent())
 }
 
 func initialize(cur realm) {
@@ -276,6 +365,18 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
+// [SCENARIO] 7-1. Snapshot the staking state written by v1
+// [EXPECTED] Deposit owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] Deposit liquidity: 1066918731
+// [EXPECTED] Deposit ticks: -960 960
+// [EXPECTED] Deposit warmup tiers: 4
+// [EXPECTED] Collected internal reward so far: 133775649
+// [EXPECTED] Pool tier / ratio: 1 100
+// [EXPECTED] Pool staked liquidity: 1066918731
+// [EXPECTED] Unstaking fee / deposit GNS amount: 100 1000000000
+// [EXPECTED] Allowed token count: 2
+// [EXPECTED] Total emission sent: 146751888
+//
 // [SCENARIO] 8. Staker Contract Upgrade to v2_invalid
 // [INFO] Upgrade staker contract to v2_invalid
 // [EXPECTED] Upgraded staker contract to v2_invalid: gno.land/r/gnoswap/staker/v2_invalid
@@ -312,3 +413,8 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Target pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
+//
+// [SCENARIO] 15. Validate the v1 staking state after the upgrades
+// [EXPECTED] Deposit identity data is unchanged after the upgrades
+// [EXPECTED] Collected internal reward grew from 133775649 to 267551299
+// [EXPECTED] Total emission sent grew from 146751888 to 280126212

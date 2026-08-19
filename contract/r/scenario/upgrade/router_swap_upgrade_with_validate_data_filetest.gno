@@ -4,12 +4,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	prbac "gno.land/p/gnoswap/rbac"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
@@ -38,6 +40,24 @@ var (
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
+
+	// snapshot taken after the v1 swap; the router upgrade must not touch any
+	// of the pool / position state it produced
+	v1SwapFee            uint64
+	v1PoolLiquidity      string
+	v1PoolTick           int32
+	v1PoolFeeGrowth0     string
+	v1PoolFeeGrowth1     string
+	v1PoolProtocolFee0   int64
+	v1PoolProtocolFee1   int64
+	v1PoolBalance0       int64
+	v1PoolBalance1       int64
+	v1PositionLiquidity  string
+	v1PositionPoolKey    string
+	v1PositionTickLower  int32
+	v1PositionTickUpper  int32
+	v1PositionUnclaimed0 string
+	v1PositionUnclaimed1 string
 )
 
 const (
@@ -70,6 +90,10 @@ func main(cur realm) {
 	checkPositionData(cur, positionId)
 	println()
 
+	println("[SCENARIO] 6-1. Snapshot the swap state produced by v1")
+	captureV1Snapshot()
+	println()
+
 	println("[SCENARIO] 6. Router Contract Upgrade to v2_mock")
 	upgradeRouterContractToV2Mock(cur)
 	println()
@@ -85,6 +109,66 @@ func main(cur realm) {
 	println("[SCENARIO] 9. Check position data by v2_mock version")
 	checkPositionData(cur, positionId)
 	println()
+
+	println("[SCENARIO] 10. Validate the v1 swap state after the router upgrade")
+	validateV1Snapshot()
+	println()
+}
+
+func captureV1Snapshot() {
+	v1SwapFee = router.GetSwapFee()
+	v1PoolLiquidity = pool.GetLiquidity(barFoo500PoolPath)
+	v1PoolTick = pool.GetSlot0Tick(barFoo500PoolPath)
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1 = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	v1PoolBalance0, v1PoolBalance1 = pool.GetBalances(barFoo500PoolPath)
+	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
+	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
+	v1PositionTickLower = position.GetPositionTickLower(positionId)
+	v1PositionTickUpper = position.GetPositionTickUpper(positionId)
+	v1PositionUnclaimed0, v1PositionUnclaimed1 = position.GetUnclaimedFee(positionId)
+
+	println("[EXPECTED] Router swap fee:", v1SwapFee)
+	println("[EXPECTED] Pool tick after the v1 swap:", v1PoolTick)
+	println("[EXPECTED] Pool liquidity:", v1PoolLiquidity)
+	println("[EXPECTED] Pool balances:", v1PoolBalance0, v1PoolBalance1)
+	println("[EXPECTED] Pool fee growth global:", v1PoolFeeGrowth0, v1PoolFeeGrowth1)
+	println("[EXPECTED] Pool protocol fees:", v1PoolProtocolFee0, v1PoolProtocolFee1)
+	println("[EXPECTED] Position unclaimed fee:", v1PositionUnclaimed0, v1PositionUnclaimed1)
+
+	// the v1 swap actually charged an LP fee, otherwise the rest of the test
+	// would be validating an empty state
+	uassert.NotEqual(t, "0", v1PositionUnclaimed1)
+	uassert.Equal(t, v1PoolLiquidity, v1PositionLiquidity)
+}
+
+func validateV1Snapshot() {
+	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
+	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+
+	// the router upgrade must not move liquidity or reshape the position
+	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
+	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
+	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
+	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
+	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
+	uassert.False(t, position.IsBurned(positionId))
+
+	// the swap routed through the upgraded router keeps accruing on top of the
+	// v1 values instead of resetting them
+	uassert.True(t, feeGrowth0 >= v1PoolFeeGrowth0)
+	uassert.True(t, feeGrowth1 >= v1PoolFeeGrowth1)
+	uassert.True(t, unclaimed1 >= v1PositionUnclaimed1)
+	uassert.True(t, balance1 > v1PoolBalance1)
+	uassert.True(t, balance0 < v1PoolBalance0)
+
+	println("[EXPECTED] Router swap fee is unchanged:", router.GetSwapFee())
+	println("[EXPECTED] Pool balances after the second swap:", balance0, balance1)
+	println("[EXPECTED] Pool fee growth global after the second swap:", feeGrowth0, feeGrowth1)
+	println("[EXPECTED] Position unclaimed fee after the second swap:", unclaimed0, unclaimed1)
+	println("[EXPECTED] Position identity data is unchanged after the router upgrade")
 }
 
 func initialize(cur realm) {
@@ -204,6 +288,15 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
 //
+// [SCENARIO] 6-1. Snapshot the swap state produced by v1
+// [EXPECTED] Router swap fee: 15
+// [EXPECTED] Pool tick after the v1 swap: 18
+// [EXPECTED] Pool liquidity: 1066918731
+// [EXPECTED] Pool balances: 49001436 51000000
+// [EXPECTED] Pool fee growth global: 0 159469675165417291499109789005929
+// [EXPECTED] Pool protocol fees: 0 0
+// [EXPECTED] Position unclaimed fee: 0 499
+//
 // [SCENARIO] 6. Router Contract Upgrade to v2_mock
 // [INFO] Upgrade router contract to v2_mock
 // [EXPECTED] Upgraded router contract to v2_mock: gno.land/r/gnoswap/router/v2_mock
@@ -225,3 +318,10 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
+//
+// [SCENARIO] 10. Validate the v1 swap state after the router upgrade
+// [EXPECTED] Router swap fee is unchanged: 15
+// [EXPECTED] Pool balances after the second swap: 48004739 52000000
+// [EXPECTED] Pool fee growth global after the second swap: 0 318939350330834582998219578011858
+// [EXPECTED] Position unclaimed fee after the second swap: 0 999
+// [EXPECTED] Position identity data is unchanged after the router upgrade
