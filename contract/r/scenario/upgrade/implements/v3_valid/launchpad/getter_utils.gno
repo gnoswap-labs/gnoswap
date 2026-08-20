@@ -15,7 +15,7 @@ func cloneProjectEntry(value any) any {
 		return nil
 	}
 
-	return project.CloneShallow()
+	return project.Clone()
 }
 
 // cloneRewardStateEntry is the transformation for a project tier's reward

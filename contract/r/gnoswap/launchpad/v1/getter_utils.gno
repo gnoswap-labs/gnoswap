@@ -12,15 +12,15 @@ import (
 // mutable and its setters are declared in /r/gnoswap/launchpad, so an external
 // holder of the stored pointer could write realm state through it.
 //
-// The copy is shallow: see Project.CloneShallow for why the maps are left nil
-// and which lookups replace them.
+// Project.Clone leaves the project's maps nil; see it for which lookups read
+// them instead.
 func cloneProjectEntry(value any) any {
 	project, ok := value.(*launchpad.Project)
 	if !ok {
 		return nil
 	}
 
-	return project.CloneShallow()
+	return project.Clone()
 }
 
 // cloneRewardStateEntry is the transformation for a project tier's reward
