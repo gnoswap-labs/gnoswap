@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/pool"
+
+	"gno.land/r/gnoswap/common"
 )
 
 // assertIsNotExpired ensures the transaction deadline has not passed.
@@ -21,6 +24,14 @@ func assertIsNotExpired(deadline int64) {
 			ufmt.Sprintf("transaction too old, now(%d) > deadline(%d)", now, deadline),
 		))
 	}
+}
+
+func assertSingleSwap(p *SingleSwapParams) {
+	if p.tokenIn == p.tokenOut {
+		panic(errors.New(errSameTokenSwap))
+	}
+
+	common.MustRegistered(p.tokenIn, p.tokenOut)
 }
 
 func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {

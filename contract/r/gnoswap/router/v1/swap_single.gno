@@ -1,28 +1,17 @@
 package router
 
 import (
-	"errors"
-
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
-
-func validateSingleSwap(p *SingleSwapParams) {
-	if p.tokenIn == p.tokenOut {
-		panic(errors.New(errSameTokenSwap))
-	}
-
-	common.MustRegistered(p.tokenIn, p.tokenOut)
-}
 
 // singleSwap executes a swap within a single pool using the provided parameters.
 // It processes a token swap within two assets using a specific fee tier and
 // automatically sets the recipient to the caller's address.
 func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int64) {
-	validateSingleSwap(p)
+	assertSingleSwap(p)
 
 	caller := rlm.Previous().Address()
 	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
@@ -42,7 +31,7 @@ func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int
 // the address resolved at the entry point (DrySwapRoute) since dry-run paths
 // do not have realm context.
 func (r *routerV1) singleDrySwap(payer address, p *SingleSwapParams) (int64, int64) {
-	validateSingleSwap(p)
+	assertSingleSwap(p)
 
 	return r.swapDryInner(
 		p.amountSpecified,

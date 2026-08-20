@@ -294,7 +294,7 @@ func TestMinMaxTick_Symmetry(cur realm, t *testing.T) {
 
 // Test swap_single.gno functions
 
-func TestValidateSingleSwap_SameToken(cur realm, t *testing.T) {
+func TestAssertSingleSwap_SameToken(cur realm, t *testing.T) {
 	params := &SingleSwapParams{
 		tokenIn:  "gno.land/r/onbloc/foo.FOO",
 		tokenOut: "gno.land/r/onbloc/foo.FOO", // Same token
@@ -305,7 +305,7 @@ func TestValidateSingleSwap_SameToken(cur realm, t *testing.T) {
 		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
-			validateSingleSwap(params)
+			assertSingleSwap(params)
 		},
 	)
 }
