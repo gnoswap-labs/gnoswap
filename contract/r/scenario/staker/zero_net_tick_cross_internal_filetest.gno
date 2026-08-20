@@ -115,8 +115,14 @@ func mintAdjacentPositions(cur realm) {
 	mintPosition(cur, 10, 20, "100000", "100000")
 	matchPositionLiquidity(cur, 1, 2)
 
-	liq1 := pn.GetPositionLiquidity(1)
-	liq2 := pn.GetPositionLiquidity(2)
+	liq1, err := pn.GetPositionLiquidity(1)
+	if err != nil {
+		panic(err)
+	}
+	liq2, err := pn.GetPositionLiquidity(2)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[INFO] position 1 liquidity: %s\n", liq1)
 	ufmt.Printf("[INFO] position 2 liquidity: %s\n", liq2)
 	if liq1 != liq2 {
@@ -127,11 +133,19 @@ func mintAdjacentPositions(cur realm) {
 }
 
 func matchPositionLiquidity(cur realm, positionId1 uint64, positionId2 uint64) {
-	liq1, err := strconv.Atoi(pn.GetPositionLiquidity(positionId1))
+	liquidity1, err := pn.GetPositionLiquidity(positionId1)
 	if err != nil {
 		panic(err)
 	}
-	liq2, err := strconv.Atoi(pn.GetPositionLiquidity(positionId2))
+	liq1, err := strconv.Atoi(liquidity1)
+	if err != nil {
+		panic(err)
+	}
+	liquidity2, err := pn.GetPositionLiquidity(positionId2)
+	if err != nil {
+		panic(err)
+	}
+	liq2, err := strconv.Atoi(liquidity2)
 	if err != nil {
 		panic(err)
 	}

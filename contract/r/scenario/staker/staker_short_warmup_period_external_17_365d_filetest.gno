@@ -121,10 +121,26 @@ func mintBarBaz3000_1_4(cur realm) {
 	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
 	testing.SkipHeights(1)
 
-	t1Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(1))
-	t2Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(2))
-	t3Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(3))
-	t4Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(4))
+	t1Liquidity, err := pn.GetPositionLiquidity(1)
+	if err != nil {
+		panic(err)
+	}
+	t2Liquidity, err := pn.GetPositionLiquidity(2)
+	if err != nil {
+		panic(err)
+	}
+	t3Liquidity, err := pn.GetPositionLiquidity(3)
+	if err != nil {
+		panic(err)
+	}
+	t4Liquidity, err := pn.GetPositionLiquidity(4)
+	if err != nil {
+		panic(err)
+	}
+	t1Liq := u256.MustFromDecimal(t1Liquidity)
+	t2Liq := u256.MustFromDecimal(t2Liquidity)
+	t3Liq := u256.MustFromDecimal(t3Liquidity)
+	t4Liq := u256.MustFromDecimal(t4Liquidity)
 
 	all := u256.Zero()
 	all.Add(all, t1Liq)
