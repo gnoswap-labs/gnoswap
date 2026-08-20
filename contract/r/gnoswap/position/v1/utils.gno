@@ -60,7 +60,8 @@ func (p *positionV1) isOwner(positionId uint64, addr address) bool {
 // input: positionId uint64, addr std.Address
 // output: bool
 func (p *positionV1) isOperator(positionId uint64, addr address) bool {
-	return p.GetPositionOperator(positionId) == addr
+	operator, err := p.GetPositionOperator(positionId)
+	return err == nil && operator == addr
 }
 
 // isStaked checks whether positionId is staked

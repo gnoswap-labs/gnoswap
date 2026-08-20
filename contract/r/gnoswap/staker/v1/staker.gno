@@ -214,7 +214,10 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	caller := previousRealm.Address()
 	currentTime := time.Now().Unix()
 
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
+	owner, err := s.nftAccessor.OwnerOf(positionIdFrom(positionId))
+	if err != nil {
+		panic(err.Error())
+	}
 	assertIsPositionOwner(owner, caller)
 
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
@@ -224,7 +227,10 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	}
 
 	// check pool path from positionId
-	poolPath := pn.GetPositionPoolKey(positionId)
+	poolPath, err := pn.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
 	pools := s.getPools()
 
 	pool, ok := pools.Get(poolPath)
@@ -235,7 +241,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		))
 	}
 
-	err := s.poolHasIncentives(pool)
+	err = s.poolHasIncentives(pool)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -300,7 +306,11 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	poolResolver := NewPoolResolver(pool)
 
 	isInRange := false
-	if pn.IsInRange(positionId) {
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	if inRange {
 		isInRange = true
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
@@ -782,7 +792,11 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	currentTime := time.Now().Unix()
 	currentTick := s.poolAccessor.GetSlot0Tick(depositResolver.TargetPoolPath())
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(depositResolver.Liquidity()))
-	if pn.IsInRange(positionId) {
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		return err
+	}
+	if inRange {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
@@ -828,12 +842,23 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	return u256.MustFromDecimal(pn.GetPositionLiquidity(positionId))
+	liquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return u256.MustFromDecimal(liquidity)
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
-	tickLower := pn.GetPositionTickLower(positionId)
-	tickUpper := pn.GetPositionTickUpper(positionId)
+	tickLower, err := pn.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickUpper, err := pn.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
 	if tickUpper < tickLower {
 		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}
