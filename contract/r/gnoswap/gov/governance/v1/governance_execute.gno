@@ -53,9 +53,6 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now().Unix()
 
-	// Mint and distribute GNS tokens as part of the execution process
-	emission.MintAndDistributeGns(cross(rlm))
-
 	// Attempt to execute the proposal with current context
 	proposal, err := gv.executeProposal(
 		0, rlm,
@@ -104,6 +101,9 @@ func (gv *governanceV1) executeProposal(
 	if !proposalResolver.IsExecutable(executedAt) {
 		return nil, errors.New(errProposalNotExecutable)
 	}
+
+	// Mint and distribute GNS tokens after proposal validation
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Mark proposal as executed in its status
 	err := proposalResolver.execute(executedAt, executedHeight, executedBy)
