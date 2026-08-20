@@ -595,16 +595,12 @@ func TestGetProjectActiveStatus(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProjectIDs(cur realm, t *testing.T) {
+func TestGetProjects(cur realm, t *testing.T) {
 	tests := []struct {
-		name   string
-		offset int
-		count  int
+		name string
 	}{
 		{
-			name:   "get projects is success",
-			offset: 0,
-			count:  10,
+			name: "get projects is success",
 		},
 	}
 
@@ -617,31 +613,27 @@ func TestGetProjectIDs(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjectIDs(tt.offset, tt.count)
+			GetProjects()
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectIDs") != 1 {
-				t.Error("GetProjectIDs was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjects") != 1 {
+				t.Error("GetProjects was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
+func TestGetProjectTierRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		projectId string
 		tier      int64
-		offset    int
-		count     int
 	}{
 		{
-			name:      "get project tier deposits is success",
+			name:      "get project tier rewards is success",
 			projectId: "project1",
 			tier:      30,
-			offset:    0,
-			count:     10,
 		},
 	}
 
@@ -654,12 +646,12 @@ func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjectTierDepositIDs(tt.projectId, tt.tier, tt.offset, tt.count)
+			GetProjectTierRewards(tt.projectId, tt.tier)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectTierDepositIDs") != 1 {
-				t.Error("GetProjectTierDepositIDs was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectTierRewards") != 1 {
+				t.Error("GetProjectTierRewards was not called on the implementation")
 			}
 		})
 	}

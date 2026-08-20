@@ -155,12 +155,16 @@ func testProjectGetters(cur realm, projectId string) {
 	count := launchpad.GetProjectCount()
 	println("[EXPECTED] Project count:", count)
 
-	// GetProjectIDs
-	ids := launchpad.GetProjectIDs(0, 10)
-	println("[EXPECTED] Project IDs (offset=0, limit=10):", len(ids), "projects")
-	for i, id := range ids {
-		ufmt.Printf("[EXPECTED] - Project %d: %s\n", i+1, id)
-	}
+	// GetProjects
+	projects := launchpad.GetProjects()
+	println("[EXPECTED] Project IDs (offset=0, limit=10):", projects.Size(), "projects")
+
+	index := 0
+	projects.IterateByOffset(0, 10, func(id string, _ any) bool {
+		index++
+		ufmt.Printf("[EXPECTED] - Project %d: %s\n", index, id)
+		return false
+	})
 
 	// GetProject
 	project, err := launchpad.GetProject(projectId)

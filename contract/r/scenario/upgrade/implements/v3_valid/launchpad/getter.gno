@@ -5,6 +5,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	"gno.land/r/gnoswap/launchpad"
 )
 
@@ -14,22 +15,9 @@ func (lp *launchpadV1) GetProjectCount() int {
 	return projects.Size()
 }
 
-// GetProjectIDs returns a paginated list of project IDs.
-// Returns empty slice if offset is negative or count is non-positive.
-func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
-	if offset < 0 || count <= 0 {
-		return []string{}
-	}
-
-	projects := lp.store.GetProjects()
-	projectIDs := make([]string, 0)
-
-	projects.IterateByOffset(offset, count, func(key string, value interface{}) bool {
-		projectIDs = append(projectIDs, key)
-		return false
-	})
-
-	return projectIDs
+// GetProjects returns a read-only view of every project, keyed by project ID.
+func (lp *launchpadV1) GetProjects() *rotree.ReadOnlyTree {
+	return rotree.Wrap(lp.store.GetProjects(), cloneProjectEntry)
 }
 
 // GetProject retrieves a project by its ID.
@@ -286,21 +274,16 @@ func (lp *launchpadV1) GetProjectTierDepositCount(projectId string, tier int64) 
 	return rewardManager.Rewards().Size()
 }
 
-// GetProjectTierDepositIDs returns a paginated list of deposit IDs for a project tier.
-func (lp *launchpadV1) GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
+// GetProjectTierRewards returns a read-only view of a project tier's reward
+// states, keyed by deposit ID.
+func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
 	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
 	rewardManager, err := lp.GetProjectTierRewardManager(projectTierID)
 	if err != nil {
-		return []string{}
+		return nil
 	}
 
-	depositIDs := make([]string, 0)
-	rewardManager.Rewards().IterateByOffset(offset, count, func(key string, value interface{}) bool {
-		depositIDs = append(depositIDs, key)
-		return false
-	})
-
-	return depositIDs
+	return rotree.Wrap(rewardManager.Rewards(), cloneRewardStateEntry)
 }
 
 // GetDeposit retrieves a deposit by its ID.
@@ -518,7 +501,6 @@ func (lp *launchpadV1) GetProjectTierRewardAccumulatedDistributeAmount(projectTi
 
 	return manager.AccumulatedDistributeAmount(), nil
 }
-
 
 // GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
 // Returns 0 and error if reward manager not found.

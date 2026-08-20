@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse is a simple mock response helper
@@ -231,12 +232,12 @@ func (m *MockLaunchpad) GetProjectActiveStatus(projectId string) (bool, error) {
 	return res[0].(bool), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectIDs(offset, count int) []string {
-	res, ok := m.Response.Get("GetProjectIDs")
+func (m *MockLaunchpad) GetProjects() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetProjects")
 	if !ok {
-		return []string{}
+		return nil
 	}
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockLaunchpad) GetProjectTierDepositCount(projectId string, tier int64) int {
@@ -247,12 +248,12 @@ func (m *MockLaunchpad) GetProjectTierDepositCount(projectId string, tier int64)
 	return res[0].(int)
 }
 
-func (m *MockLaunchpad) GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
-	res, ok := m.Response.Get("GetProjectTierDepositIDs")
+func (m *MockLaunchpad) GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetProjectTierRewards")
 	if !ok {
-		return []string{}
+		return nil
 	}
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockLaunchpad) GetProjectName(projectId string) (string, error) {
