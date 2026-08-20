@@ -157,6 +157,9 @@ func captureV1Snapshot() {
 
 	println("[EXPECTED] snapshot pct (devops / gov staker):", v1DevOpsPct, v1GovStakerPct)
 	println("[EXPECTED] snapshot reserved tokens:", len(v1ReservedTokens))
+	for _, tokenPath := range v1ReservedTokens {
+		println("[EXPECTED] snapshot reserved token:", tokenPath)
+	}
 	println("[EXPECTED] snapshot BAR accrued:", v1AccuGovStakeBar, v1AccuDevOpsBar)
 	println("[EXPECTED] snapshot FOO accrued:", v1AccuGovStakeFoo, v1AccuDevOpsFoo)
 }
@@ -171,7 +174,13 @@ func upgradeTo(cur realm, packagePath string) {
 func validateSnapshot() {
 	uassert.Equal(t, v1DevOpsPct, protocolFee.GetDevOpsPct())
 	uassert.Equal(t, v1GovStakerPct, protocolFee.GetGovStakerPct())
-	uassert.Equal(t, len(v1ReservedTokens), len(protocolFee.GetReservedTokens()))
+	// the reserved-token list drives the distribution loop, so its contents and
+	// ordering matter, not just its length
+	reservedTokens := protocolFee.GetReservedTokens()
+	uassert.Equal(t, len(v1ReservedTokens), len(reservedTokens))
+	for i, tokenPath := range v1ReservedTokens {
+		uassert.Equal(t, tokenPath, reservedTokens[i])
+	}
 	uassert.Equal(t, v1AccuGovStakeBar, protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath))
 	uassert.Equal(t, v1AccuDevOpsBar, protocolFee.GetAccuTransferToDevOpsByTokenPath(barPath))
 	uassert.Equal(t, v1AccuGovStakeFoo, protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath))
@@ -185,6 +194,9 @@ func validateSnapshot() {
 	println("[EXPECTED] FOO accrued after upgrade:",
 		protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath),
 		protocolFee.GetAccuTransferToDevOpsByTokenPath(fooPath))
+	for _, tokenPath := range reservedTokens {
+		println("[EXPECTED] reserved token after upgrade:", tokenPath)
+	}
 	println("[EXPECTED] every v1 value survived the upgrade")
 }
 
@@ -263,6 +275,8 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 3. Snapshot v1 data through the getters
 // [EXPECTED] snapshot pct (devops / gov staker): 3000 7000
 // [EXPECTED] snapshot reserved tokens: 2
+// [EXPECTED] snapshot reserved token: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] snapshot reserved token: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] snapshot BAR accrued: 700000 300000
 // [EXPECTED] snapshot FOO accrued: 1400000 600000
 //
@@ -280,6 +294,8 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] pct after upgrade (devops / gov staker): 3000 7000
 // [EXPECTED] BAR accrued after upgrade: 700000 300000
 // [EXPECTED] FOO accrued after upgrade: 1400000 600000
+// [EXPECTED] reserved token after upgrade: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] reserved token after upgrade: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] every v1 value survived the upgrade
 //
 // [SCENARIO] 8. Keep operating on the v1-created data with v3_valid

@@ -197,20 +197,57 @@ type upgradeSnapshot struct {
 	positionTickLower  int32
 	positionTickUpper  int32
 	positionOwner      address
+	positionOperator   address
+	positionFeeGrowth0 string
+	positionFeeGrowth1 string
+	positionOwed0      int64
+	positionOwed1      int64
+	positionUnclaimed0 string
+	positionUnclaimed1 string
+	positionBurned     bool
+	positionInRange    bool
 	stakerPoolTier     uint64
+	stakerPoolTierRat  uint64
 	stakerUnstakingFee uint64
 	stakerDepositGns   int64
+	stakerAllowedToken int
 	depositLiquidity   string
+	depositStakeTime   int64
+	depositTickLower   int32
+	depositTickUpper   int32
+	depositWarmupCount int
+	depositCollected   int64
+	totalEmissionSent  int64
+	incentiveTotal     int64
+	incentiveDistrib   int64
+	incentiveRefunded  bool
 	devOpsPct          int64
 	govStakerPct       int64
 	accuGovStakerBar   int64
+	accuDevOpsBar      int64
+	reservedTokens     []string
 	totalDelegated     int64
 	totalXGnsSupply    int64
+	totalLocked        int64
 	delegationCount    int
+	delegationIDs      []int64
 	proposalCount      int
+	proposalIDs        []int64
+	paramProposalYea   int64
+	paramProposalNay   int64
+	paramProposalState string
+	spendProposalState string
+	textProposalState  string
+	adminVoteWeight    int64
 	configVersion      int64
+	configVotingPeriod int64
 	projectCount       int
+	projectActive      bool
+	projectRecipient   address
+	projectTier30Total int64
 	launchpadDeposits  int64
+	launchpadDepositID int64
+	depositAmount      int64
 }
 
 func main(cur realm) {
@@ -999,6 +1036,19 @@ func launchpadLifecycle(cur realm) {
 func captureSnapshot() upgradeSnapshot {
 	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
 	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	positionFeeGrowth0, positionFeeGrowth1 := position.GetPositionFeeGrowthInsideLastX128(1)
+	positionOwed0, positionOwed1 := position.GetPositionTokensOwed(1)
+	positionUnclaimed0, positionUnclaimed1 := position.GetUnclaimedFee(1)
+	paramStatus, _ := govGovernance.GetProposalStatusByProposalId(paramProposalId)
+	spendStatus, _ := govGovernance.GetProposalStatusByProposalId(spendProposalId)
+	textStatus, _ := govGovernance.GetProposalStatusByProposalId(textProposalId)
+	paramYea, _ := govGovernance.GetYeaByProposalId(paramProposalId)
+	paramNay, _ := govGovernance.GetNayByProposalId(paramProposalId)
+	adminVoteWeight, _ := govGovernance.GetVoteWeight(paramProposalId, adminAddr)
+	projectActive, _ := launchpad.GetProjectActiveStatus(launchpadProjectId)
+	projectRecipient, _ := launchpad.GetProjectRecipient(launchpadProjectId)
+	projectTier30Total, _ := launchpad.GetProjectTierTotalDistributeAmount(launchpadProjectId, 30)
+	launchpadDepositAmount, _ := launchpad.GetDepositAmount(launchpadDepositId)
 
 	return upgradeSnapshot{
 		poolLiquidity:      pool.GetLiquidity(barFoo500PoolPath),
@@ -1016,20 +1066,57 @@ func captureSnapshot() upgradeSnapshot {
 		positionTickLower:  position.GetPositionTickLower(1),
 		positionTickUpper:  position.GetPositionTickUpper(1),
 		positionOwner:      position.GetPositionOwner(1),
+		positionOperator:   position.GetPositionOperator(1),
+		positionFeeGrowth0: positionFeeGrowth0,
+		positionFeeGrowth1: positionFeeGrowth1,
+		positionOwed0:      positionOwed0,
+		positionOwed1:      positionOwed1,
+		positionUnclaimed0: positionUnclaimed0,
+		positionUnclaimed1: positionUnclaimed1,
+		positionBurned:     position.IsBurned(1),
+		positionInRange:    position.IsInRange(1),
 		stakerPoolTier:     staker.GetPoolTier(barFoo500PoolPath),
+		stakerPoolTierRat:  staker.GetPoolTierRatio(barFoo500PoolPath),
 		stakerUnstakingFee: staker.GetUnstakingFee(),
 		stakerDepositGns:   staker.GetDepositGnsAmount(),
+		stakerAllowedToken: len(staker.GetAllowedTokens()),
 		depositLiquidity:   staker.GetDepositLiquidityAsString(1),
+		depositStakeTime:   staker.GetDepositStakeTime(1),
+		depositTickLower:   staker.GetDepositTickLower(1),
+		depositTickUpper:   staker.GetDepositTickUpper(1),
+		depositWarmupCount: len(staker.GetDepositWarmUp(1)),
+		depositCollected:   staker.GetDepositCollectedInternalReward(1),
+		totalEmissionSent:  staker.GetTotalEmissionSent(),
+		incentiveTotal:     staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId),
+		incentiveDistrib:   staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId),
+		incentiveRefunded:  staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId),
 		devOpsPct:          protocolFee.GetDevOpsPct(),
 		govStakerPct:       protocolFee.GetGovStakerPct(),
 		accuGovStakerBar:   protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath),
+		accuDevOpsBar:      protocolFee.GetAccuTransferToDevOpsByTokenPath(barPath),
+		reservedTokens:     protocolFee.GetReservedTokens(),
 		totalDelegated:     govStaker.GetTotalDelegated(),
 		totalXGnsSupply:    govStaker.GetTotalxGnsSupply(),
+		totalLocked:        govStaker.GetTotalLockedAmount(),
 		delegationCount:    govStaker.GetDelegationCount(),
+		delegationIDs:      govStaker.GetDelegationIDs(0, 10),
 		proposalCount:      govGovernance.GetProposalCount(),
+		proposalIDs:        govGovernance.GetProposalIDs(0, 10),
+		paramProposalYea:   paramYea,
+		paramProposalNay:   paramNay,
+		paramProposalState: paramStatus,
+		spendProposalState: spendStatus,
+		textProposalState:  textStatus,
+		adminVoteWeight:    adminVoteWeight,
 		configVersion:      govGovernance.GetLatestConfigVersion(),
+		configVotingPeriod: govGovernance.GetLatestConfig().VotingPeriod,
 		projectCount:       launchpad.GetProjectCount(),
+		projectActive:      projectActive,
+		projectRecipient:   projectRecipient,
+		projectTier30Total: projectTier30Total,
 		launchpadDeposits:  launchpad.GetTotalGNSStakedAmount(),
+		launchpadDepositID: launchpad.GetCurrentDepositId(),
+		depositAmount:      launchpadDepositAmount,
 	}
 }
 
@@ -1045,6 +1132,14 @@ func printSnapshot(s upgradeSnapshot) {
 	println("[EXPECTED] proposal count:", s.proposalCount)
 	println("[EXPECTED] project count:", s.projectCount)
 	println("[EXPECTED] launchpad deposits:", s.launchpadDeposits)
+	println("[EXPECTED] position fee growth inside last:", s.positionFeeGrowth0, s.positionFeeGrowth1)
+	println("[EXPECTED] position unclaimed fee:", s.positionUnclaimed0, s.positionUnclaimed1)
+	println("[EXPECTED] staker collected internal reward:", s.depositCollected)
+	println("[EXPECTED] total emission sent:", s.totalEmissionSent)
+	println("[EXPECTED] external incentive total / distributed:", s.incentiveTotal, s.incentiveDistrib)
+	println("[EXPECTED] proposal ids:", len(s.proposalIDs), "delegation ids:", len(s.delegationIDs))
+	println("[EXPECTED] param proposal yea / nay / status:", s.paramProposalYea, s.paramProposalNay, s.paramProposalState)
+	println("[EXPECTED] launchpad project active:", s.projectActive)
 }
 
 // ---------------------------------------------------------------------------
@@ -1098,20 +1193,69 @@ func validateSnapshotUnchanged() {
 	uassert.Equal(t, snap.positionTickLower, after.positionTickLower)
 	uassert.Equal(t, snap.positionTickUpper, after.positionTickUpper)
 	uassert.Equal(t, snap.positionOwner, after.positionOwner)
+	uassert.Equal(t, snap.positionOperator, after.positionOperator)
+	uassert.Equal(t, snap.positionFeeGrowth0, after.positionFeeGrowth0)
+	uassert.Equal(t, snap.positionFeeGrowth1, after.positionFeeGrowth1)
+	uassert.Equal(t, snap.positionOwed0, after.positionOwed0)
+	uassert.Equal(t, snap.positionOwed1, after.positionOwed1)
+	uassert.Equal(t, snap.positionUnclaimed0, after.positionUnclaimed0)
+	uassert.Equal(t, snap.positionUnclaimed1, after.positionUnclaimed1)
+	uassert.Equal(t, snap.positionBurned, after.positionBurned)
+	uassert.Equal(t, snap.positionInRange, after.positionInRange)
 	uassert.Equal(t, snap.stakerPoolTier, after.stakerPoolTier)
+	uassert.Equal(t, snap.stakerPoolTierRat, after.stakerPoolTierRat)
 	uassert.Equal(t, snap.stakerUnstakingFee, after.stakerUnstakingFee)
 	uassert.Equal(t, snap.stakerDepositGns, after.stakerDepositGns)
+	uassert.Equal(t, snap.stakerAllowedToken, after.stakerAllowedToken)
 	uassert.Equal(t, snap.depositLiquidity, after.depositLiquidity)
+	uassert.Equal(t, snap.depositStakeTime, after.depositStakeTime)
+	uassert.Equal(t, snap.depositTickLower, after.depositTickLower)
+	uassert.Equal(t, snap.depositTickUpper, after.depositTickUpper)
+	uassert.Equal(t, snap.depositWarmupCount, after.depositWarmupCount)
+	uassert.Equal(t, snap.depositCollected, after.depositCollected)
+	uassert.Equal(t, snap.totalEmissionSent, after.totalEmissionSent)
+	uassert.Equal(t, snap.incentiveTotal, after.incentiveTotal)
+	uassert.Equal(t, snap.incentiveDistrib, after.incentiveDistrib)
+	uassert.Equal(t, snap.incentiveRefunded, after.incentiveRefunded)
 	uassert.Equal(t, snap.devOpsPct, after.devOpsPct)
 	uassert.Equal(t, snap.govStakerPct, after.govStakerPct)
 	uassert.Equal(t, snap.accuGovStakerBar, after.accuGovStakerBar)
+	uassert.Equal(t, snap.accuDevOpsBar, after.accuDevOpsBar)
 	uassert.Equal(t, snap.totalDelegated, after.totalDelegated)
 	uassert.Equal(t, snap.totalXGnsSupply, after.totalXGnsSupply)
+	uassert.Equal(t, snap.totalLocked, after.totalLocked)
 	uassert.Equal(t, snap.delegationCount, after.delegationCount)
 	uassert.Equal(t, snap.proposalCount, after.proposalCount)
+	uassert.Equal(t, snap.paramProposalYea, after.paramProposalYea)
+	uassert.Equal(t, snap.paramProposalNay, after.paramProposalNay)
+	uassert.Equal(t, snap.paramProposalState, after.paramProposalState)
+	uassert.Equal(t, snap.spendProposalState, after.spendProposalState)
+	uassert.Equal(t, snap.textProposalState, after.textProposalState)
+	uassert.Equal(t, snap.adminVoteWeight, after.adminVoteWeight)
 	uassert.Equal(t, snap.configVersion, after.configVersion)
+	uassert.Equal(t, snap.configVotingPeriod, after.configVotingPeriod)
 	uassert.Equal(t, snap.projectCount, after.projectCount)
+	uassert.Equal(t, snap.projectActive, after.projectActive)
+	uassert.Equal(t, snap.projectRecipient, after.projectRecipient)
+	uassert.Equal(t, snap.projectTier30Total, after.projectTier30Total)
 	uassert.Equal(t, snap.launchpadDeposits, after.launchpadDeposits)
+	uassert.Equal(t, snap.launchpadDepositID, after.launchpadDepositID)
+	uassert.Equal(t, snap.depositAmount, after.depositAmount)
+
+	// list-valued getters are compared element by element: a list of the same
+	// length holding different ids would otherwise pass
+	uassert.Equal(t, len(snap.reservedTokens), len(after.reservedTokens))
+	for i, tokenPath := range snap.reservedTokens {
+		uassert.Equal(t, tokenPath, after.reservedTokens[i])
+	}
+	uassert.Equal(t, len(snap.delegationIDs), len(after.delegationIDs))
+	for i, id := range snap.delegationIDs {
+		uassert.Equal(t, id, after.delegationIDs[i])
+	}
+	uassert.Equal(t, len(snap.proposalIDs), len(after.proposalIDs))
+	for i, id := range snap.proposalIDs {
+		uassert.Equal(t, id, after.proposalIDs[i])
+	}
 
 	println("[EXPECTED] every snapshot field is identical after the upgrade")
 }
@@ -1463,6 +1607,14 @@ func finalInvariants(cur realm) {
 // [EXPECTED] proposal count: 3
 // [EXPECTED] project count: 1
 // [EXPECTED] launchpad deposits: 1000000
+// [EXPECTED] position fee growth inside last: 198985911547938715431204752120259 200040607192185740424656367414182
+// [EXPECTED] position unclaimed fee: 0 0
+// [EXPECTED] staker collected internal reward: 2311656609564
+// [EXPECTED] total emission sent: 2302423347314
+// [EXPECTED] external incentive total / distributed: 1500000000 66572240
+// [EXPECTED] proposal ids: 3 delegation ids: 3
+// [EXPECTED] param proposal yea / nay / status: 6500000000 0 executed
+// [EXPECTED] launchpad project active: true
 //
 // [SCENARIO] 16. Upgrade all eight implementations to v2_valid
 // [EXPECTED] pool impl: gno.land/r/gnoswap/pool/v2_valid

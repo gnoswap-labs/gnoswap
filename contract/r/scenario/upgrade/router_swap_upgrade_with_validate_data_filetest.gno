@@ -98,6 +98,10 @@ func main(cur realm) {
 	upgradeRouterContractToV2Mock(cur)
 	println()
 
+	println("[SCENARIO] 6-2. Validate the v1 swap state exactly, before the second swap")
+	validateExactAfterUpgrade()
+	println()
+
 	println("[SCENARIO] 7. Perform swap to generate fees (check swap by v2_mock)")
 	exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
 	println()
@@ -110,8 +114,8 @@ func main(cur realm) {
 	checkPositionData(cur, positionId)
 	println()
 
-	println("[SCENARIO] 10. Validate the v1 swap state after the router upgrade")
-	validateV1Snapshot()
+	println("[SCENARIO] 10. Validate the accrual produced by the second swap")
+	validateAccrualAfterUpgrade()
 	println()
 }
 
@@ -142,7 +146,37 @@ func captureV1Snapshot() {
 	uassert.Equal(t, v1PoolLiquidity, v1PositionLiquidity)
 }
 
-func validateV1Snapshot() {
+// validateExactAfterUpgrade runs before the post-upgrade swap, so every pool and
+// position value must still match the snapshot exactly; a reset that the second
+// swap happens to repopulate would slip past a >= check.
+func validateExactAfterUpgrade() {
+	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
+	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+
+	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
+	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolFeeGrowth0, feeGrowth0)
+	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
+	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
+	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
+	uassert.Equal(t, v1PoolBalance0, balance0)
+	uassert.Equal(t, v1PoolBalance1, balance1)
+	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
+	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
+	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
+	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
+	uassert.Equal(t, v1PositionUnclaimed0, unclaimed0)
+	uassert.Equal(t, v1PositionUnclaimed1, unclaimed1)
+
+	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
+	println("[EXPECTED] Pool protocol fees:", protocolFee0, protocolFee1)
+	println("[EXPECTED] Position unclaimed fee:", unclaimed0, unclaimed1)
+}
+
+func validateAccrualAfterUpgrade() {
 	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
 	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
 	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
@@ -301,6 +335,11 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [INFO] Upgrade router contract to v2_mock
 // [EXPECTED] Upgraded router contract to v2_mock: gno.land/r/gnoswap/router/v2_mock
 //
+// [SCENARIO] 6-2. Validate the v1 swap state exactly, before the second swap
+// [EXPECTED] Every snapshot field matches exactly right after the upgrade
+// [EXPECTED] Pool protocol fees: 0 0
+// [EXPECTED] Position unclaimed fee: 0 499
+//
 // [SCENARIO] 7. Perform swap to generate fees (check swap by v2_mock)
 // [INFO] Exact-In Swap Route
 // [INFO] ExactInSwapRoute called by v2_mock contract
@@ -319,7 +358,7 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
 //
-// [SCENARIO] 10. Validate the v1 swap state after the router upgrade
+// [SCENARIO] 10. Validate the accrual produced by the second swap
 // [EXPECTED] Router swap fee is unchanged: 15
 // [EXPECTED] Pool balances after the second swap: 48004739 52000000
 // [EXPECTED] Pool fee growth global after the second swap: 0 318939350330834582998219578011858

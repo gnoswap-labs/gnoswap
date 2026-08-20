@@ -130,6 +130,10 @@ func main(cur realm) {
 	upgradeStakerContractToV3Valid(cur)
 	println()
 
+	println("[SCENARIO] 11-1. Validate the v1 staking data exactly, before collecting again")
+	validateExactAfterUpgrade()
+	println()
+
 	println("[SCENARIO] 12. Check staking info after upgrade to v3_valid")
 	checkStakingInfo(cur, positionId)
 	println()
@@ -142,8 +146,8 @@ func main(cur realm) {
 	checkStakingInfo(cur, positionId)
 	println()
 
-	println("[SCENARIO] 15. Validate the v1 staking state after the upgrades")
-	validateV1Snapshot()
+	println("[SCENARIO] 15. Validate the reward ledgers after the post-upgrade collection")
+	validateAccrualAfterUpgrade()
 	println()
 }
 
@@ -183,7 +187,34 @@ func captureV1Snapshot() {
 	uassert.Equal(t, uint64(1), v1PoolTier)
 }
 
-func validateV1Snapshot() {
+// validateExactAfterUpgrade runs before any post-upgrade collection, so the
+// reward ledgers must still hold exactly their v1 values. Checking only that
+// they grew, after a fresh collection, would let a reset-then-refilled ledger
+// pass.
+func validateExactAfterUpgrade() {
+	uassert.Equal(t, v1DepositOwner, staker.GetDepositOwner(positionId))
+	uassert.Equal(t, v1DepositPoolPath, staker.GetDepositTargetPoolPath(positionId))
+	uassert.Equal(t, v1DepositLiquidity, staker.GetDepositLiquidityAsString(positionId))
+	uassert.Equal(t, v1DepositStakeTime, staker.GetDepositStakeTime(positionId))
+	uassert.Equal(t, v1DepositTickLower, staker.GetDepositTickLower(positionId))
+	uassert.Equal(t, v1DepositTickUpper, staker.GetDepositTickUpper(positionId))
+	uassert.Equal(t, v1DepositWarmupCount, len(staker.GetDepositWarmUp(positionId)))
+	uassert.Equal(t, v1CollectedInternal, staker.GetDepositCollectedInternalReward(positionId))
+	uassert.Equal(t, v1TotalEmissionSent, staker.GetTotalEmissionSent())
+	uassert.Equal(t, v1PoolTier, staker.GetPoolTier(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolTierRatio, staker.GetPoolTierRatio(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolStakedLiq, staker.GetPoolStakedLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1UnstakingFee, staker.GetUnstakingFee())
+	uassert.Equal(t, v1DepositGnsAmount, staker.GetDepositGnsAmount())
+	uassert.Equal(t, v1AllowedTokenCount, len(staker.GetAllowedTokens()))
+	uassert.True(t, staker.IsStaked(positionId))
+
+	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
+	println("[EXPECTED] Collected internal reward:", staker.GetDepositCollectedInternalReward(positionId))
+	println("[EXPECTED] Total emission sent:", staker.GetTotalEmissionSent())
+}
+
+func validateAccrualAfterUpgrade() {
 	// deposit identity is immutable across upgrades
 	uassert.Equal(t, v1DepositOwner, staker.GetDepositOwner(positionId))
 	uassert.Equal(t, v1DepositPoolPath, staker.GetDepositTargetPoolPath(positionId))
@@ -394,6 +425,11 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [INFO] Upgrade staker contract to v3_valid
 // [EXPECTED] Upgraded staker contract to v3_valid: gno.land/r/gnoswap/staker/v3_valid
 //
+// [SCENARIO] 11-1. Validate the v1 staking data exactly, before collecting again
+// [EXPECTED] Every snapshot field matches exactly right after the upgrade
+// [EXPECTED] Collected internal reward: 133775649
+// [EXPECTED] Total emission sent: 146751888
+//
 // [SCENARIO] 12. Check staking info after upgrade to v3_valid
 // [INFO] Check staking info
 // [EXPECTED] Is staked: true
@@ -414,7 +450,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Staked liquidity: 1066918731
 // [EXPECTED] Stake time: 1234567900
 //
-// [SCENARIO] 15. Validate the v1 staking state after the upgrades
+// [SCENARIO] 15. Validate the reward ledgers after the post-upgrade collection
 // [EXPECTED] Deposit identity data is unchanged after the upgrades
 // [EXPECTED] Collected internal reward grew from 133775649 to 267551299
 // [EXPECTED] Total emission sent grew from 146751888 to 280126212

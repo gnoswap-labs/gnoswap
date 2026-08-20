@@ -235,6 +235,9 @@ func captureV1Snapshot() {
 
 	println("[EXPECTED] snapshot proposal count:", v1ProposalCount)
 	println("[EXPECTED] snapshot proposal ids:", len(v1ProposalIDs))
+	for _, id := range v1ProposalIDs {
+		println("[EXPECTED] snapshot proposal id:", id)
+	}
 	println("[EXPECTED] snapshot text proposal status:", v1TextStatus)
 	println("[EXPECTED] snapshot param proposal status:", v1ParamStatus)
 	println("[EXPECTED] snapshot param yea / nay:", v1ParamYea, v1ParamNay)
@@ -252,21 +255,42 @@ func upgradeTo(cur realm, packagePath string) {
 }
 
 func validateSnapshot() {
-	proposer, _ := govGovernance.GetProposerByProposalId(paramProposalId)
-	title, _ := govGovernance.GetTitleByProposalId(paramProposalId)
-	description, _ := govGovernance.GetDescriptionByProposalId(paramProposalId)
-	proposalType, _ := govGovernance.GetProposalTypeByProposalId(paramProposalId)
-	yea, _ := govGovernance.GetYeaByProposalId(paramProposalId)
-	nay, _ := govGovernance.GetNayByProposalId(paramProposalId)
-	quorumAmount, _ := govGovernance.GetQuorumAmountByProposalId(paramProposalId)
-	status, _ := govGovernance.GetProposalStatusByProposalId(paramProposalId)
-	configVer, _ := govGovernance.GetConfigVersionByProposalId(paramProposalId)
-	voteWeight, _ := govGovernance.GetVoteWeight(paramProposalId, adminAddr)
-	votedAt, _ := govGovernance.GetVotedAt(paramProposalId, adminAddr)
-	textStatus, _ := govGovernance.GetProposalStatusByProposalId(textProposalId)
+	// every getter error is asserted: a silent error would otherwise be turned
+	// into a zero value and could hide a missing or reshaped record
+	proposer, err := govGovernance.GetProposerByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	title, err := govGovernance.GetTitleByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	description, err := govGovernance.GetDescriptionByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	proposalType, err := govGovernance.GetProposalTypeByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	yea, err := govGovernance.GetYeaByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	nay, err := govGovernance.GetNayByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	quorumAmount, err := govGovernance.GetQuorumAmountByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	status, err := govGovernance.GetProposalStatusByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	configVer, err := govGovernance.GetConfigVersionByProposalId(paramProposalId)
+	uassert.NoError(t, err)
+	voteWeight, err := govGovernance.GetVoteWeight(paramProposalId, adminAddr)
+	uassert.NoError(t, err)
+	votedAt, err := govGovernance.GetVotedAt(paramProposalId, adminAddr)
+	uassert.NoError(t, err)
+	textStatus, err := govGovernance.GetProposalStatusByProposalId(textProposalId)
+	uassert.NoError(t, err)
+	_, err = govGovernance.GetConfig(v1LatestConfigVer)
+	uassert.NoError(t, err)
 
+	// compare the proposal ids themselves, not only how many there are
+	proposalIDs := govGovernance.GetProposalIDs(0, 10)
 	uassert.Equal(t, v1ProposalCount, govGovernance.GetProposalCount())
-	uassert.Equal(t, len(v1ProposalIDs), len(govGovernance.GetProposalIDs(0, 10)))
+	uassert.Equal(t, len(v1ProposalIDs), len(proposalIDs))
+	for i, id := range v1ProposalIDs {
+		uassert.Equal(t, id, proposalIDs[i])
+	}
 	uassert.Equal(t, v1TextStatus, textStatus)
 	uassert.Equal(t, v1ParamProposer, proposer)
 	uassert.Equal(t, v1ParamTitle, title)
@@ -287,6 +311,9 @@ func validateSnapshot() {
 	uassert.False(t, govGovernance.ExistsVotingInfo(paramProposalId, aliceAddr))
 
 	println("[EXPECTED] proposal count:", govGovernance.GetProposalCount())
+	for _, id := range proposalIDs {
+		println("[EXPECTED] proposal id after upgrade:", id)
+	}
 	println("[EXPECTED] param proposal title:", title)
 	println("[EXPECTED] param proposal yea / nay:", yea, nay)
 	println("[EXPECTED] admin vote weight:", voteWeight)
@@ -363,6 +390,8 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 5. Snapshot v1 data through the getters
 // [EXPECTED] snapshot proposal count: 2
 // [EXPECTED] snapshot proposal ids: 2
+// [EXPECTED] snapshot proposal id: 1
+// [EXPECTED] snapshot proposal id: 2
 // [EXPECTED] snapshot text proposal status: canceled
 // [EXPECTED] snapshot param proposal status: active
 // [EXPECTED] snapshot param yea / nay: 5000000000 0
@@ -383,6 +412,8 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 9. Validate the v1 proposal data through v3_valid
 // [EXPECTED] proposal count: 2
+// [EXPECTED] proposal id after upgrade: 1
+// [EXPECTED] proposal id after upgrade: 2
 // [EXPECTED] param proposal title: raise the unstaking fee
 // [EXPECTED] param proposal yea / nay: 5000000000 0
 // [EXPECTED] admin vote weight: 5000000000
