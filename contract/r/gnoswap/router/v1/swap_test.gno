@@ -292,36 +292,6 @@ func TestMinMaxTick_Symmetry(cur realm, t *testing.T) {
 	}
 }
 
-func TestSwapExecutor_Interface(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		executorType string
-	}{
-		{
-			name:         "real swap executor",
-			executorType: "real",
-		},
-		{
-			name:         "dry swap executor",
-			executorType: "dry",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			var executor SwapExecutor
-
-			if tt.executorType == "real" {
-				executor = &RealSwapExecutor{router: &routerV1{}}
-			} else {
-				executor = &DrySwapExecutor{router: &routerV1{}}
-			}
-
-			uassert.NotNil(t, executor)
-		})
-	}
-}
-
 // Test swap_multi.gno functions
 
 func TestSwapDirection(cur realm, t *testing.T) {
@@ -488,10 +458,7 @@ func TestMultiSwapProcessor_Fields(cur realm, t *testing.T) {
 
 // Test swap_single.gno functions
 
-func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
-	router := &routerV1{}
-	executor := &DrySwapExecutor{router: router}
-
+func TestValidateSingleSwap_SameToken(cur realm, t *testing.T) {
 	params := &SingleSwapParams{
 		tokenIn:  "gno.land/r/onbloc/foo.FOO",
 		tokenOut: "gno.land/r/onbloc/foo.FOO", // Same token
@@ -502,7 +469,7 @@ func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
-			router.executeSwap(0, nil, executor, params)
+			validateSingleSwap(params)
 		},
 	)
 }
@@ -534,54 +501,6 @@ func TestExecuteSwap_DifferentTokens(cur realm, t *testing.T) {
 			uassert.NotEqual(t, tt.tokenIn, tt.tokenOut)
 		})
 	}
-}
-
-func TestSingleSwap_ExecutorType(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		swapType     string
-		expectDryRun bool
-	}{
-		{
-			name:         "real swap",
-			swapType:     "real",
-			expectDryRun: false,
-		},
-		{
-			name:         "dry swap",
-			swapType:     "dry",
-			expectDryRun: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			router := &routerV1{}
-			var executor SwapExecutor
-
-			if tt.expectDryRun {
-				executor = &DrySwapExecutor{router: router}
-			} else {
-				executor = &RealSwapExecutor{router: router}
-			}
-
-			uassert.NotNil(t, executor)
-
-			if tt.expectDryRun {
-				_, isDry := executor.(*DrySwapExecutor)
-				uassert.True(t, isDry)
-			} else {
-				_, isReal := executor.(*RealSwapExecutor)
-				uassert.True(t, isReal)
-			}
-		})
-	}
-}
-
-func TestSwapExecutor_Consistency(cur realm, t *testing.T) {
-	// Verify both RealSwapExecutor and DrySwapExecutor implement SwapExecutor
-	var _ SwapExecutor = (*RealSwapExecutor)(nil)
-	var _ SwapExecutor = (*DrySwapExecutor)(nil)
 }
 
 // Additional edge case tests
