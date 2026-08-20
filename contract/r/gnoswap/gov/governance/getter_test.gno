@@ -40,9 +40,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			name:  "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				tree := bptree.NewBPTree32()
-				tree.Set("1", stored)
-				m.Response.Set("GetProposals", rotree.Wrap(tree, cloneProposalForTest))
+				m.Response.Set("GetProposalCommunityPoolSpendInfo", stored.data.communityPoolSpend, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {
@@ -65,9 +63,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			name:  "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				tree := bptree.NewBPTree32()
-				tree.Set("1", stored)
-				m.Response.Set("GetProposals", rotree.Wrap(tree, cloneProposalForTest))
+				m.Response.Set("GetProposalExecutionInfo", stored.data.execution, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {
@@ -174,17 +170,6 @@ func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
 	uassert.True(t, GetProposals() == nil)
 	uassert.True(t, GetVotingInfos(1) == nil)
 	uassert.True(t, GetUserProposals() == nil)
-}
-
-// cloneProposalForTest mirrors the implementation's rotree transformation, which
-// clones each proposal on read.
-func cloneProposalForTest(value any) any {
-	proposal, ok := value.(*Proposal)
-	if !ok {
-		return nil
-	}
-
-	return proposal.Clone()
 }
 
 // storedTestProposal returns the proposal the mock's read-only view wraps, so a

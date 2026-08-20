@@ -78,6 +78,54 @@ func (gv *governanceV1) GetProposalTypeByProposalId(proposalId int64) (governanc
 	return proposal.Type(), nil
 }
 
+// GetProposalCreatedAt returns the creation timestamp of a proposal.
+func (gv *governanceV1) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	proposal, exists := gv.store.GetProposal(proposalId)
+	if !exists {
+		return 0, ufmt.Errorf("proposal %d not found", proposalId)
+	}
+	return proposal.CreatedAt(), nil
+}
+
+// GetProposalCreatedHeight returns the creation block height of a proposal.
+func (gv *governanceV1) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	proposal, exists := gv.store.GetProposal(proposalId)
+	if !exists {
+		return 0, ufmt.Errorf("proposal %d not found", proposalId)
+	}
+	return proposal.CreatedHeight(), nil
+}
+
+// GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
+func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+	proposal, exists := gv.store.GetProposal(proposalID)
+	if !exists {
+		return nil, ufmt.Errorf("proposal %d not found", proposalID)
+	}
+
+	proposalData := proposal.Data()
+	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
+		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
+	}
+
+	return proposalData.CommunityPoolSpend(), nil
+}
+
+// GetProposalExecutionInfo returns the execution info for a proposal.
+func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+	proposal, exists := gv.store.GetProposal(proposalID)
+	if !exists {
+		return nil, ufmt.Errorf("proposal %d not found", proposalID)
+	}
+
+	proposalData := proposal.Data()
+	if proposalData == nil || proposalData.Execution() == nil {
+		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
+	}
+
+	return proposalData.Execution(), nil
+}
+
 // GetYeaByProposalId returns the yes vote weight of a proposal.
 func (gv *governanceV1) GetYeaByProposalId(proposalId int64) (int64, error) {
 	proposal, exists := gv.store.GetProposal(proposalId)

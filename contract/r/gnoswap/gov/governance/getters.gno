@@ -2,7 +2,6 @@ package governance
 
 import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // ==================================
@@ -55,23 +54,6 @@ func ExistsProposal(proposalID int64) bool {
 	return getImplementation().ExistsProposal(proposalID)
 }
 
-// mustGetProposal reads one proposal through the read-only view, which is the
-// only way the proxy reaches proposal data now that the single-entry getter is
-// gone.
-func mustGetProposal(proposalID int64) (*Proposal, error) {
-	proposals := GetProposals()
-	if proposals == nil {
-		return nil, ufmt.Errorf("proposal %d not found", proposalID)
-	}
-
-	proposal, ok := proposals.Get(formatInt64Key(proposalID)).(*Proposal)
-	if !ok {
-		return nil, ufmt.Errorf("proposal %d not found", proposalID)
-	}
-
-	return proposal, nil
-}
-
 // GetProposerByProposalId returns the proposer address of a proposal.
 func GetProposerByProposalId(proposalId int64) (address, error) {
 	return getImplementation().GetProposerByProposalId(proposalId)
@@ -119,22 +101,12 @@ func GetProposalStatusByProposalId(proposalId int64) (string, error) {
 
 // GetProposalCreatedAt returns the creation timestamp of a proposal.
 func GetProposalCreatedAt(proposalId int64) (int64, error) {
-	proposal, err := mustGetProposal(proposalId)
-	if err != nil {
-		return 0, err
-	}
-
-	return proposal.CreatedAt(), nil
+	return getImplementation().GetProposalCreatedAt(proposalId)
 }
 
 // GetProposalCreatedHeight returns the creation block height of a proposal.
 func GetProposalCreatedHeight(proposalId int64) (int64, error) {
-	proposal, err := mustGetProposal(proposalId)
-	if err != nil {
-		return 0, err
-	}
-
-	return proposal.createdHeight, nil
+	return getImplementation().GetProposalCreatedHeight(proposalId)
 }
 
 // ==================================
@@ -181,33 +153,22 @@ func GetVotedAt(proposalID int64, addr address) (int64, error) {
 
 // GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
 func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
-	proposal, err := mustGetProposal(proposalID)
+	info, err := getImplementation().GetProposalCommunityPoolSpendInfo(proposalID)
 	if err != nil {
 		return nil, err
 	}
 
-	proposalData := proposal.Data()
-	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
-		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
-	}
-
-	return proposalData.CommunityPoolSpend().Clone(), nil
+	return info.Clone(), nil
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
 func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
-	proposal, err := mustGetProposal(proposalID)
+	info, err := getImplementation().GetProposalExecutionInfo(proposalID)
 	if err != nil {
 		return nil, err
 	}
 
-	proposalData := proposal.Data()
-
-	if proposalData == nil || proposalData.Execution() == nil {
-		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
-	}
-
-	return proposalData.Execution().Clone(), nil
+	return info.Clone(), nil
 }
 
 // ==================================

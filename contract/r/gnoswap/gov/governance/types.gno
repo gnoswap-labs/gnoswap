@@ -81,6 +81,10 @@ type IGovernanceGetter interface {
 	ExistsProposal(proposalID int64) bool
 	GetProposerByProposalId(proposalId int64) (address, error)
 	GetProposalTypeByProposalId(proposalId int64) (ProposalType, error)
+	GetProposalCreatedAt(proposalId int64) (int64, error)
+	GetProposalCreatedHeight(proposalId int64) (int64, error)
+	GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error)
+	GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error)
 	GetYeaByProposalId(proposalId int64) (int64, error)
 	GetNayByProposalId(proposalId int64) (int64, error)
 	GetConfigVersionByProposalId(proposalId int64) (int64, error)

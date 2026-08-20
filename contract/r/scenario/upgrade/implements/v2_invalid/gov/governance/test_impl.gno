@@ -121,6 +121,34 @@ func (t *TestGovernance) GetProposerByProposalId(proposalId int64) (address, err
 	return t.instance.GetProposerByProposalId(proposalId)
 }
 
+func (t *TestGovernance) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	if !t.isActive("GetProposalCreatedAt") {
+		panic("test implementation: GetProposalCreatedAt not supported")
+	}
+	return t.instance.GetProposalCreatedAt(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	if !t.isActive("GetProposalCreatedHeight") {
+		panic("test implementation: GetProposalCreatedHeight not supported")
+	}
+	return t.instance.GetProposalCreatedHeight(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+	if !t.isActive("GetProposalCommunityPoolSpendInfo") {
+		panic("test implementation: GetProposalCommunityPoolSpendInfo not supported")
+	}
+	return t.instance.GetProposalCommunityPoolSpendInfo(proposalID)
+}
+
+func (t *TestGovernance) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+	if !t.isActive("GetProposalExecutionInfo") {
+		panic("test implementation: GetProposalExecutionInfo not supported")
+	}
+	return t.instance.GetProposalExecutionInfo(proposalID)
+}
+
 func (t *TestGovernance) GetProposalTypeByProposalId(proposalId int64) (governance.ProposalType, error) {
 	return t.instance.GetProposalTypeByProposalId(proposalId)
 }

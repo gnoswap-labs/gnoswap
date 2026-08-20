@@ -183,7 +183,8 @@ func testProposalGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Proposal details:")
 	println("[EXPECTED] - ID:", proposal.ID())
 	println("[EXPECTED] - Proposer:", proposal.Proposer())
-	println("[EXPECTED] - Type:", proposal.Type())
+	entryType, _ := governance.GetProposalTypeByProposalId(proposalId)
+	println("[EXPECTED] - Type:", entryType)
 	println("[EXPECTED] - Yes weight:", proposal.VotingYesWeight())
 	println("[EXPECTED] - No weight:", proposal.VotingNoWeight())
 

@@ -87,6 +87,22 @@ func (t *TestGovernance) GetProposerByProposalId(proposalId int64) (address, err
 	return t.instance.GetProposerByProposalId(proposalId)
 }
 
+func (t *TestGovernance) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	return t.instance.GetProposalCreatedAt(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	return t.instance.GetProposalCreatedHeight(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+	return t.instance.GetProposalCommunityPoolSpendInfo(proposalID)
+}
+
+func (t *TestGovernance) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+	return t.instance.GetProposalExecutionInfo(proposalID)
+}
+
 func (t *TestGovernance) GetProposalTypeByProposalId(proposalId int64) (governance.ProposalType, error) {
 	return t.instance.GetProposalTypeByProposalId(proposalId)
 }

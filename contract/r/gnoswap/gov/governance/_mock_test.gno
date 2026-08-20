@@ -193,6 +193,50 @@ func (m *MockGovernance) GetProposerByProposalId(id int64) (address, error) {
 	return res[0].(address), nil
 }
 
+func (m *MockGovernance) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	res, ok := m.Response.Get("GetProposalCreatedAt")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	res, ok := m.Response.Get("GetProposalCreatedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
+	res, ok := m.Response.Get("GetProposalCommunityPoolSpendInfo")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*CommunityPoolSpendInfo), nil
+}
+
+func (m *MockGovernance) GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
+	res, ok := m.Response.Get("GetProposalExecutionInfo")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*ExecutionInfo), nil
+}
+
 func (m *MockGovernance) GetProposalTypeByProposalId(id int64) (ProposalType, error) {
 	res, ok := m.Response.Get("GetProposalTypeByProposalId")
 	if !ok {

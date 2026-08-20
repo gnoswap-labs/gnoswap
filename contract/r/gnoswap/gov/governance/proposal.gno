@@ -40,6 +40,11 @@ func (p *Proposal) Proposer() address {
 	return p.proposer
 }
 
+// CreatedHeight returns the block height the proposal was created at.
+func (p *Proposal) CreatedHeight() int64 {
+	return p.createdHeight
+}
+
 // CreatedAt returns the creation timestamp of the proposal.
 func (p *Proposal) CreatedAt() int64 {
 	return p.status.schedule.createTime
@@ -140,6 +145,35 @@ func NewProposal(
 		configVersion: configVersion,
 		snapshotTime:  snapshotTime,
 		createdHeight: createdHeight,
+	}
+}
+
+// CloneShallow copies a proposal without its type-specific data: data is left
+// nil.
+//
+// It exists for the getter path only. Getters hand out a copy so a caller
+// cannot reach realm-owned state, but the read-only proposal view applies this
+// transformation to every entry it visits, and ProposalData carries the
+// execution message slice, so copying it would mean copying every message of
+// every proposal on a page.
+//
+// The omitted data is reachable through its own lookups instead:
+// GetProposalTypeByProposalId, GetProposalCommunityPoolSpendInfo, and
+// GetProposalExecutionInfo.
+func (p *Proposal) CloneShallow() *Proposal {
+	if p == nil {
+		return nil
+	}
+
+	return &Proposal{
+		id:            p.id,
+		proposer:      p.proposer,
+		configVersion: p.configVersion,
+		status:        p.status.Clone(),
+		metadata:      p.metadata.Clone(),
+		data:          nil,
+		snapshotTime:  p.snapshotTime,
+		createdHeight: p.createdHeight,
 	}
 }
 
