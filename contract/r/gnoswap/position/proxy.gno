@@ -76,14 +76,17 @@ func IncreaseLiquidity(
 //   - amount1MinStr: minimum amount of token1
 //   - deadline: transaction deadline
 //
+// The accrued swap fees are collected first, so the returned fee amounts are
+// net of the withdrawal fee while the returned principal is not subject to it.
+//
 // Returns:
 //   - uint64: position ID
 //   - string: removed liquidity amount
-//   - string: amount of token0 removed
-//   - string: amount of token1 removed
+//   - string: token0 fees collected, net of the withdrawal fee
+//   - string: token1 fees collected, net of the withdrawal fee
+//   - string: principal amount of token0 returned to the caller
+//   - string: principal amount of token1 returned to the caller
 //   - string: pool path
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -135,11 +138,11 @@ func Reposition(
 //
 // Returns:
 //   - uint64: position ID
-//   - string: amount of token0 collected
-//   - string: amount of token1 collected
+//   - string: token0 fees paid out, net of the withdrawal fee
+//   - string: token1 fees paid out, net of the withdrawal fee
 //   - string: pool path
-//   - string: token0 path
-//   - string: token1 path
+//   - string: token0 fees collected, before the withdrawal fee
+//   - string: token1 fees collected, before the withdrawal fee
 func CollectFee(
 	cur realm,
 	positionId uint64,
