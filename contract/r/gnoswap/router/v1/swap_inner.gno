@@ -134,18 +134,17 @@ func (r *routerV1) swapDryInner(
 
 // RealSwapExecutor implements SwapExecutor for actual swaps.
 type RealSwapExecutor struct {
-	rlm    realm
 	router *routerV1
 }
 
 // execute performs the actual swap execution.
-func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
-	caller := e.rlm.Previous().Address()
+func (e *RealSwapExecutor) execute(_ int, rlm realm, p *SingleSwapParams) (int64, int64) {
+	caller := rlm.Previous().Address()
 	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	return e.router.swapInner(
 		0,
-		e.rlm,
+		rlm,
 		p.amountSpecified,
 		recipient,             // if single swap => user will receive
 		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
@@ -162,7 +161,7 @@ type DrySwapExecutor struct {
 }
 
 // execute performs the dry swap execution.
-func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
+func (e *DrySwapExecutor) execute(_ int, _ realm, p *SingleSwapParams) (int64, int64) {
 	return e.router.swapDryInner(
 		p.amountSpecified,
 		u256.Zero(),

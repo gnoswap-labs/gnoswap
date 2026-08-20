@@ -502,7 +502,7 @@ func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
-			router.executeSwap(executor, params)
+			router.executeSwap(0, nil, executor, params)
 		},
 	)
 }
