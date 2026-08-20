@@ -31,7 +31,6 @@ const (
 	errInsufficientPayment       = "[GNOSWAP-POOL-023] insufficient payment"
 	errNotInitializedObservation = "[GNOSWAP-POOL-024] not initialized observation"
 	errObservationTooOld         = "[GNOSWAP-POOL-025] target timestamp before oldest observation"
-	errSpoofedRealm              = "[GNOSWAP-POOL-026] rlm does not match the current crossing frame"
 	errObservationBeforeEpoch    = "[GNOSWAP-POOL-027] lookback window starts before unix epoch"
 )
 
