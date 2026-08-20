@@ -32,7 +32,10 @@ func (p *positionDecreaseLiquidityParams) IsValid() bool {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" || !pool.ExistsPoolPath(poolPath) {
 		return false
 	}
@@ -51,7 +54,11 @@ func (p *positionDecreaseLiquidityParams) IsValid() bool {
 	}
 
 	// Liquidity must not exceed current position liquidity
-	currentLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(p.positionId))
+	liquidity, err := position.GetPositionLiquidity(p.positionId)
+	if err != nil {
+		return false
+	}
+	currentLiquidity := u256.MustFromDecimal(liquidity)
 	if liq.Gt(currentLiquidity) {
 		return false
 	}
@@ -118,7 +125,7 @@ func NewRandomizedPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId 
 }
 
 func newValidPositionDecreaseLiquidityParams(t *fuzz.T, positionId uint64) *positionDecreaseLiquidityParams {
-	currentLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(positionId))
+	currentLiquidity := u256.MustFromDecimal(mustGetPositionLiquidity(positionId))
 	if currentLiquidity.IsZero() {
 		panic("position liquidity must be positive for valid decrease fuzz case")
 	}
@@ -137,6 +144,6 @@ func newValidPositionDecreaseLiquidityParams(t *fuzz.T, positionId uint64) *posi
 		amount0Min: "0",
 		amount1Min: "0",
 		deadline:   deadline,
-		poolPath:   position.GetPositionPoolKey(positionId),
+		poolPath:   mustGetPositionPoolKey(positionId),
 	}
 }

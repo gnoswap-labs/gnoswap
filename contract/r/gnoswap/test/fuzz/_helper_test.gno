@@ -258,8 +258,26 @@ func getTokenPathsFromPosition(tokenId uint64) (string, string) {
 
 // getPoolInfoFromPosition extracts token0Path, token1Path, and fee tier from a position
 func getPoolInfoFromPosition(tokenId uint64) (string, string, uint32) {
-	poolKey := position.GetPositionPoolKey(tokenId)
+	poolKey := mustGetPositionPoolKey(tokenId)
 	return parsePoolKey(poolKey)
+}
+
+func mustGetPositionPoolKey(positionId uint64) string {
+	poolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return poolKey
+}
+
+func mustGetPositionLiquidity(positionId uint64) string {
+	liquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return liquidity
 }
 
 // parsePoolKey parses a pool key string (format: "token0:token1:fee") and returns token0, token1, fee
