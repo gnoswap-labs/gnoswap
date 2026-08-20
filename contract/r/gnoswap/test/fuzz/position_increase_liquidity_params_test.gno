@@ -34,7 +34,10 @@ func (p *positionIncreaseLiquidityParams) IsValid() bool {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" || !pool.ExistsPoolPath(poolPath) {
 		return false
 	}
@@ -133,7 +136,7 @@ func NewRandomizedPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId 
 }
 
 func newValidPositionIncreaseLiquidityParams(t *fuzz.T, positionId uint64) *positionIncreaseLiquidityParams {
-	poolPath := position.GetPositionPoolKey(positionId)
+	poolPath := mustGetPositionPoolKey(positionId)
 	if poolPath == "" {
 		panic("poolPath must exist for position")
 	}
