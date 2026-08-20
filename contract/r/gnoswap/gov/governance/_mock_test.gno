@@ -166,15 +166,6 @@ func (m *MockGovernance) GetConfig(configVersion int64) (Config, error) {
 	return res[0].(Config), nil
 }
 
-// Proposal getters
-func (m *MockGovernance) GetProposalCount() int {
-	res, ok := m.Response.Get("GetProposalCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
 func (m *MockGovernance) GetProposals() *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetProposals")
 	if !ok {
@@ -189,17 +180,6 @@ func (m *MockGovernance) ExistsProposal(proposalID int64) bool {
 		return false
 	}
 	return res[0].(bool)
-}
-
-func (m *MockGovernance) GetProposal(proposalID int64) (*Proposal, error) {
-	res, ok := m.Response.Get("GetProposal")
-	if !ok {
-		return nil, nil
-	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*Proposal), nil
 }
 
 func (m *MockGovernance) GetProposerByProposalId(id int64) (address, error) {
@@ -313,14 +293,6 @@ func (m *MockGovernance) GetVoteStatus(proposalId int64) (quorum, maxVotingWeigh
 	return res[0].(int64), res[1].(int64), res[2].(int64), res[3].(int64), nil
 }
 
-func (m *MockGovernance) GetVotingInfoCount(proposalID int64) int {
-	res, ok := m.Response.Get("GetVotingInfoCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
 func (m *MockGovernance) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetVotingInfos")
 	if !ok {
@@ -335,17 +307,6 @@ func (m *MockGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
 		return false
 	}
 	return res[0].(bool)
-}
-
-func (m *MockGovernance) GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
-	res, ok := m.Response.Get("GetVotingInfo")
-	if !ok {
-		return nil, nil
-	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*VotingInfo), nil
 }
 
 func (m *MockGovernance) GetVoteWeight(proposalID int64, addr address) (int64, error) {
@@ -379,15 +340,6 @@ func (m *MockGovernance) GetVotedAt(proposalID int64, addr address) (int64, erro
 		return 0, res[1].(error)
 	}
 	return res[0].(int64), nil
-}
-
-// User proposal getters
-func (m *MockGovernance) GetUserProposalCount(user address) int {
-	res, ok := m.Response.Get("GetUserProposalCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
 }
 
 func (m *MockGovernance) GetUserProposals() *rotree.ReadOnlyTree {

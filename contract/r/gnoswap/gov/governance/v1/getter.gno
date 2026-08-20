@@ -48,11 +48,6 @@ func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error
 	return config, nil
 }
 
-// GetProposalCount returns the total number of proposals.
-func (gv *governanceV1) GetProposalCount() int {
-	return gv.store.GetProposals().Size()
-}
-
 // GetProposals returns a read-only view of every proposal, keyed by the decimal
 // string form of the proposal ID.
 func (gv *governanceV1) GetProposals() *rotree.ReadOnlyTree {
@@ -63,15 +58,6 @@ func (gv *governanceV1) GetProposals() *rotree.ReadOnlyTree {
 func (gv *governanceV1) ExistsProposal(proposalID int64) bool {
 	_, exists := gv.store.GetProposal(proposalID)
 	return exists
-}
-
-// GetProposal returns a proposal by ID.
-func (gv *governanceV1) GetProposal(proposalID int64) (*governance.Proposal, error) {
-	proposal, exists := gv.store.GetProposal(proposalID)
-	if !exists {
-		return nil, ufmt.Errorf("proposal %d not found", proposalID)
-	}
-	return proposal, nil
 }
 
 // GetProposerByProposalId returns the proposer address of a proposal.
@@ -172,15 +158,6 @@ func (gv *governanceV1) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight
 	return voting.QuorumAmount(), voting.MaxVotingWeight(), voting.YesWeight(), voting.NoWeight(), nil
 }
 
-// GetVotingInfoCount returns the number of voters for a proposal.
-func (gv *governanceV1) GetVotingInfoCount(proposalID int64) int {
-	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
-	if !exists {
-		return 0
-	}
-	return votingInfos.Size()
-}
-
 // GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
 // voter address. nil is returned when the proposal has no votes.
 func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
@@ -195,15 +172,6 @@ func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 func (gv *governanceV1) ExistsVotingInfo(proposalID int64, addr address) bool {
 	_, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	return exists
-}
-
-// GetVotingInfo returns the voting info for a user on a proposal.
-func (gv *governanceV1) GetVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, error) {
-	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
-	if !exists {
-		return nil, ufmt.Errorf("voting info not found for proposal %d and address %s", proposalID, addr.String())
-	}
-	return votingInfo, nil
 }
 
 // GetVoteWeight returns the voting weight of an address for a proposal.
@@ -231,15 +199,6 @@ func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error
 		return 0, ufmt.Errorf("voting info not found for proposal %d and address %s", proposalID, addr.String())
 	}
 	return votingInfo.VotedAt(), nil
-}
-
-// GetUserProposalCount returns the number of proposals created by a user.
-func (gv *governanceV1) GetUserProposalCount(user address) int {
-	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
-	if !exists {
-		return 0
-	}
-	return len(proposalIDs)
 }
 
 // GetUserProposals returns a read-only view of the proposals created per user,

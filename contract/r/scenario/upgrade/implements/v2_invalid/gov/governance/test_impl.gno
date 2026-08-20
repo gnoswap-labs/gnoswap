@@ -109,21 +109,12 @@ func (t *TestGovernance) GetConfig(configVersion int64) (governance.Config, erro
 	return t.instance.GetConfig(configVersion)
 }
 
-// Proposal getters
-func (t *TestGovernance) GetProposalCount() int {
-	return t.instance.GetProposalCount()
-}
-
 func (t *TestGovernance) GetProposals() *rotree.ReadOnlyTree {
 	return t.instance.GetProposals()
 }
 
 func (t *TestGovernance) ExistsProposal(proposalID int64) bool {
 	return t.instance.ExistsProposal(proposalID)
-}
-
-func (t *TestGovernance) GetProposal(proposalID int64) (*governance.Proposal, error) {
-	return t.instance.GetProposal(proposalID)
 }
 
 func (t *TestGovernance) GetProposerByProposalId(proposalId int64) (address, error) {
@@ -167,20 +158,12 @@ func (t *TestGovernance) GetVoteStatus(proposalId int64) (quorum, maxVotingWeigh
 	return t.instance.GetVoteStatus(proposalId)
 }
 
-func (t *TestGovernance) GetVotingInfoCount(proposalID int64) int {
-	return t.instance.GetVotingInfoCount(proposalID)
-}
-
 func (t *TestGovernance) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	return t.instance.GetVotingInfos(proposalID)
 }
 
 func (t *TestGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
 	return t.instance.ExistsVotingInfo(proposalID, addr)
-}
-
-func (t *TestGovernance) GetVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, error) {
-	return t.instance.GetVotingInfo(proposalID, addr)
 }
 
 func (t *TestGovernance) GetVoteWeight(proposalID int64, addr address) (int64, error) {
@@ -193,11 +176,6 @@ func (t *TestGovernance) GetVotedHeight(proposalID int64, addr address) (int64, 
 
 func (t *TestGovernance) GetVotedAt(proposalID int64, addr address) (int64, error) {
 	return t.instance.GetVotedAt(proposalID, addr)
-}
-
-// User proposal getters
-func (t *TestGovernance) GetUserProposalCount(user address) int {
-	return t.instance.GetUserProposalCount(user)
 }
 
 func (t *TestGovernance) GetUserProposals() *rotree.ReadOnlyTree {

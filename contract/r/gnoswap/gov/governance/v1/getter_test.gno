@@ -2,6 +2,7 @@ package governance
 
 import (
 	"chain/runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -180,7 +181,7 @@ func TestGetConfig(cur realm, t *testing.T) {
 // Proposal Getter Tests
 // ==================================
 
-func TestGetProposalCount(cur realm, t *testing.T) {
+func TestGetProposalsSize(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(cur realm, t *testing.T) *governanceV1
@@ -205,7 +206,7 @@ func TestGetProposalCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetProposalCount()
+			count := gv.GetProposals().Size()
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
@@ -340,11 +341,11 @@ func TestGetProposal(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			proposal, err := gv.GetProposal(tc.proposalID)
+			proposal, ok := gv.GetProposals().Get(formatProposalKey(tc.proposalID)).(*governance.Proposal)
 			if tc.expectError {
-				uassert.True(t, err != nil)
+				uassert.False(t, ok)
 			} else {
-				uassert.True(t, err == nil)
+				uassert.True(t, ok)
 				uassert.True(t, proposal != nil)
 			}
 		})
@@ -677,7 +678,7 @@ func TestGetVotingInfoCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetVotingInfoCount(tc.proposalID)
+			count := votingInfoCount(gv, tc.proposalID)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
@@ -784,12 +785,8 @@ func TestGetVotingInfo(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			_, err := gv.GetVotingInfo(tc.proposalID, tc.addr)
-			if tc.expectError {
-				uassert.True(t, err != nil)
-			} else {
-				uassert.True(t, err == nil)
-			}
+			_, ok := votingInfoOf(gv, tc.proposalID, tc.addr)
+			uassert.Equal(t, !tc.expectError, ok)
 		})
 	}
 }
@@ -826,7 +823,7 @@ func TestGetUserProposalCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetUserProposalCount(tc.user)
+			count := userProposalCount(gv, tc.user)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
@@ -976,4 +973,41 @@ func TestGetCurrentVotingWeightSnapshot(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+// formatProposalKey mirrors the storage key encoding for proposal IDs.
+func formatProposalKey(proposalID int64) string {
+	return strconv.FormatInt(proposalID, 10)
+}
+
+// votingInfoCount reports how many voters a proposal has through the read-only view.
+func votingInfoCount(gv *governanceV1, proposalID int64) int {
+	votingInfos := gv.GetVotingInfos(proposalID)
+	if votingInfos == nil {
+		return 0
+	}
+
+	return votingInfos.Size()
+}
+
+// votingInfoOf reads one voter's info through the read-only view.
+func votingInfoOf(gv *governanceV1, proposalID int64, addr address) (*governance.VotingInfo, bool) {
+	votingInfos := gv.GetVotingInfos(proposalID)
+	if votingInfos == nil {
+		return nil, false
+	}
+
+	votingInfo, ok := votingInfos.Get(addr.String()).(*governance.VotingInfo)
+
+	return votingInfo, ok
+}
+
+// userProposalCount reports how many proposals a user created through the read-only view.
+func userProposalCount(gv *governanceV1, user address) int {
+	proposalIDs, ok := gv.GetUserProposals().Get(user.String()).([]int64)
+	if !ok {
+		return 0
+	}
+
+	return len(proposalIDs)
 }

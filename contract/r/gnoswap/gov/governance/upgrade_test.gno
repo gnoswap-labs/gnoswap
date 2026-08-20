@@ -546,35 +546,6 @@ func TestUpgrade_GetNayByProposalId(cur realm, t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalCount(cur realm, t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get proposal count is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-
-			// Action
-			GetProposalCount()
-
-			// Assert
-			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposalCount") != 1 {
-				t.Error("GetProposalCount was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestUpgrade_GetProposals(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
@@ -630,37 +601,6 @@ func TestUpgrade_ExistsProposal(cur realm, t *testing.T) {
 			mockGovernance := implementation.(*MockGovernance)
 			if mockGovernance.Response.CallCount("ExistsProposal") != 1 {
 				t.Error("ExistsProposal was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestUpgrade_GetProposal(cur realm, t *testing.T) {
-	tests := []struct {
-		name string
-		id   int64
-	}{
-		{
-			name: "get proposal is success",
-			id:   1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-
-			// Action
-			GetProposal(tt.id)
-
-			// Assert
-			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposal") != 1 {
-				t.Error("GetProposal was not called on the implementation")
 			}
 		})
 	}

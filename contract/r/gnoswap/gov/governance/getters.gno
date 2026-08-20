@@ -42,11 +42,6 @@ func GetConfig(configVersion int64) (Config, error) {
 // Proposal Getters
 // ==================================
 
-// GetProposalCount returns the total number of proposals.
-func GetProposalCount() int {
-	return getImplementation().GetProposalCount()
-}
-
 // GetProposals returns a read-only view of every proposal, keyed by the decimal
 // string form of the proposal ID. Callers paginate it themselves through
 // IterateByOffset. Reading an entry yields a clone, so the view cannot mutate
@@ -60,14 +55,21 @@ func ExistsProposal(proposalID int64) bool {
 	return getImplementation().ExistsProposal(proposalID)
 }
 
-// GetProposal returns a proposal by ID.
-// Returns a clone to prevent external modification.
-func GetProposal(proposalID int64) (*Proposal, error) {
-	proposal, err := getImplementation().GetProposal(proposalID)
-	if err != nil {
-		return nil, err
+// mustGetProposal reads one proposal through the read-only view, which is the
+// only way the proxy reaches proposal data now that the single-entry getter is
+// gone.
+func mustGetProposal(proposalID int64) (*Proposal, error) {
+	proposals := GetProposals()
+	if proposals == nil {
+		return nil, ufmt.Errorf("proposal %d not found", proposalID)
 	}
-	return proposal.Clone(), nil
+
+	proposal, ok := proposals.Get(formatInt64Key(proposalID)).(*Proposal)
+	if !ok {
+		return nil, ufmt.Errorf("proposal %d not found", proposalID)
+	}
+
+	return proposal, nil
 }
 
 // GetProposerByProposalId returns the proposer address of a proposal.
@@ -117,7 +119,7 @@ func GetProposalStatusByProposalId(proposalId int64) (string, error) {
 
 // GetProposalCreatedAt returns the creation timestamp of a proposal.
 func GetProposalCreatedAt(proposalId int64) (int64, error) {
-	proposal, err := getImplementation().GetProposal(proposalId)
+	proposal, err := mustGetProposal(proposalId)
 	if err != nil {
 		return 0, err
 	}
@@ -127,7 +129,7 @@ func GetProposalCreatedAt(proposalId int64) (int64, error) {
 
 // GetProposalCreatedHeight returns the creation block height of a proposal.
 func GetProposalCreatedHeight(proposalId int64) (int64, error) {
-	proposal, err := getImplementation().GetProposal(proposalId)
+	proposal, err := mustGetProposal(proposalId)
 	if err != nil {
 		return 0, err
 	}
@@ -150,11 +152,6 @@ func GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeig
 	return getImplementation().GetVoteStatus(proposalId)
 }
 
-// GetVotingInfoCount returns the number of voters for a proposal.
-func GetVotingInfoCount(proposalID int64) int {
-	return getImplementation().GetVotingInfoCount(proposalID)
-}
-
 // GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
 // voter address. Reading an entry yields a clone, so the view cannot mutate
 // realm state. nil is returned when the proposal has no votes.
@@ -165,16 +162,6 @@ func GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
 func ExistsVotingInfo(proposalID int64, addr address) bool {
 	return getImplementation().ExistsVotingInfo(proposalID, addr)
-}
-
-// GetVotingInfo returns the voting info for a user on a proposal.
-// Returns a clone to prevent external modification.
-func GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
-	votingInfo, err := getImplementation().GetVotingInfo(proposalID, addr)
-	if err != nil {
-		return nil, err
-	}
-	return votingInfo.Clone(), nil
 }
 
 // GetVoteWeight returns the voting weight of an address for a proposal.
@@ -194,7 +181,7 @@ func GetVotedAt(proposalID int64, addr address) (int64, error) {
 
 // GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
 func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
-	proposal, err := getImplementation().GetProposal(proposalID)
+	proposal, err := mustGetProposal(proposalID)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +196,7 @@ func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInf
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
 func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
-	proposal, err := getImplementation().GetProposal(proposalID)
+	proposal, err := mustGetProposal(proposalID)
 	if err != nil {
 		return nil, err
 	}
@@ -226,11 +213,6 @@ func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
 // ==================================
 // User Proposal Getters
 // ==================================
-
-// GetUserProposalCount returns the number of proposals created by a user.
-func GetUserProposalCount(user address) int {
-	return getImplementation().GetUserProposalCount(user)
-}
 
 // GetUserProposals returns a read-only view of the proposals created per user,
 // keyed by creator address with the creator's proposal IDs as the value.

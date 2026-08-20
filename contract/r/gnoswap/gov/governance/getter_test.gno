@@ -37,72 +37,14 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovernance)
 	}{
 		{
-			name:  "GetProposal",
-			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
-			getter: func(t *testing.T) any {
-				proposal, err := GetProposal(1)
-				uassert.NoError(t, err)
-				return proposal
-			},
-			mutate: func(result any) {
-				proposal := result.(*Proposal)
-				proposal.status.schedule.createTime = 111
-				proposal.status.schedule.activeTime = 222
-				proposal.status.voteStatus.yea = 333
-				proposal.status.voteStatus.nay = 444
-				proposal.status.actionStatus.executed = true
-				proposal.metadata.title = "mutated title"
-				proposal.metadata.description = "mutated description"
-				proposal.data.execution.num = 9
-				proposal.data.execution.msgs[0] = "mutated-msg"
-				proposal.data.execution.msgs = append(proposal.data.execution.msgs, "extra")
-				proposal.data.communityPoolSpend.amount = 555
-			},
-			assertRaw: func(t *testing.T, m *MockGovernance) {
-				proposal := m.Response.data["GetProposal"][0].(*Proposal)
-				uassert.Equal(t, int64(10), proposal.status.schedule.createTime)
-				uassert.Equal(t, int64(20), proposal.status.schedule.activeTime)
-				uassert.Equal(t, int64(0), proposal.status.voteStatus.yea)
-				uassert.Equal(t, int64(0), proposal.status.voteStatus.nay)
-				uassert.Equal(t, false, proposal.status.actionStatus.executed)
-				uassert.Equal(t, "title", proposal.metadata.title)
-				uassert.Equal(t, "description", proposal.metadata.description)
-				uassert.Equal(t, int64(2), proposal.data.execution.num)
-				uassert.Equal(t, "msg1", proposal.data.execution.msgs[0])
-				uassert.Equal(t, 2, len(proposal.data.execution.msgs))
-				uassert.Equal(t, int64(70), proposal.data.communityPoolSpend.amount)
-			},
-		},
-		{
-			name:  "GetVotingInfo",
-			setup: func(m *MockGovernance) { m.Response.Set("GetVotingInfo", newVotingInfoFixture(), nil) },
-			getter: func(t *testing.T) any {
-				votingInfo, err := GetVotingInfo(1, adminAddr)
-				uassert.NoError(t, err)
-				return votingInfo
-			},
-			mutate: func(result any) {
-				votingInfo := result.(*VotingInfo)
-				votingInfo.SetAvailableVoteWeight(1)
-				votingInfo.SetVotedWeight(2)
-				votingInfo.SetVotedHeight(3)
-				votingInfo.SetVotedAt(4)
-				votingInfo.SetVotedYes(false)
-				votingInfo.SetVoted(false)
-			},
-			assertRaw: func(t *testing.T, m *MockGovernance) {
-				votingInfo := m.Response.data["GetVotingInfo"][0].(*VotingInfo)
-				uassert.Equal(t, int64(100), votingInfo.AvailableVoteWeight())
-				uassert.Equal(t, int64(90), votingInfo.VotedWeight())
-				uassert.Equal(t, int64(80), votingInfo.VotedHeight())
-				uassert.Equal(t, int64(70), votingInfo.VotedAt())
-				uassert.Equal(t, true, votingInfo.VotedYes())
-				uassert.Equal(t, true, votingInfo.IsVoted())
-			},
-		},
-		{
 			name:  "GetProposalCommunityPoolSpendInfo",
-			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
+			setup: func(m *MockGovernance) {
+				stored := newProposalFixture()
+				tree := bptree.NewBPTree32()
+				tree.Set("1", stored)
+				m.Response.Set("GetProposals", rotree.Wrap(tree, cloneProposalForTest))
+				m.Response.Set("storedProposal", stored)
+			},
 			getter: func(t *testing.T) any {
 				info, err := GetProposalCommunityPoolSpendInfo(1)
 				uassert.NoError(t, err)
@@ -114,14 +56,20 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				info.amount = 999
 			},
 			assertRaw: func(t *testing.T, m *MockGovernance) {
-				info := m.Response.data["GetProposal"][0].(*Proposal).data.communityPoolSpend
+				info := storedTestProposal(m).data.communityPoolSpend
 				uassert.Equal(t, "token", info.tokenPath)
 				uassert.Equal(t, int64(70), info.amount)
 			},
 		},
 		{
 			name:  "GetProposalExecutionInfo",
-			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
+			setup: func(m *MockGovernance) {
+				stored := newProposalFixture()
+				tree := bptree.NewBPTree32()
+				tree.Set("1", stored)
+				m.Response.Set("GetProposals", rotree.Wrap(tree, cloneProposalForTest))
+				m.Response.Set("storedProposal", stored)
+			},
 			getter: func(t *testing.T) any {
 				info, err := GetProposalExecutionInfo(1)
 				uassert.NoError(t, err)
@@ -134,7 +82,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				info.msgs = append(info.msgs, "extra")
 			},
 			assertRaw: func(t *testing.T, m *MockGovernance) {
-				info := m.Response.data["GetProposal"][0].(*Proposal).data.execution
+				info := storedTestProposal(m).data.execution
 				uassert.Equal(t, int64(2), info.num)
 				uassert.Equal(t, "msg1", info.msgs[0])
 				uassert.Equal(t, 2, len(info.msgs))
@@ -226,4 +174,21 @@ func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
 	uassert.True(t, GetProposals() == nil)
 	uassert.True(t, GetVotingInfos(1) == nil)
 	uassert.True(t, GetUserProposals() == nil)
+}
+
+// cloneProposalForTest mirrors the implementation's rotree transformation, which
+// clones each proposal on read.
+func cloneProposalForTest(value any) any {
+	proposal, ok := value.(*Proposal)
+	if !ok {
+		return nil
+	}
+
+	return proposal.Clone()
+}
+
+// storedTestProposal returns the proposal the mock's read-only view wraps, so a
+// test can assert the stored copy was not reached through the view.
+func storedTestProposal(m *MockGovernance) *Proposal {
+	return m.Response.data["storedProposal"][0].(*Proposal)
 }
