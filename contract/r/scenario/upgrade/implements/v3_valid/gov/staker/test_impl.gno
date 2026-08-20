@@ -2,6 +2,7 @@
 package v3_valid
 
 import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 	v1 "gno.land/r/gnoswap/gov/staker/v1"
@@ -120,8 +121,8 @@ func (t *TestGovStaker) GetDelegationCount() int {
 	return t.instance.GetDelegationCount()
 }
 
-func (t *TestGovStaker) GetDelegationIDs(offset, count int) []int64 {
-	return t.instance.GetDelegationIDs(offset, count)
+func (t *TestGovStaker) GetDelegations() *rotree.ReadOnlyTree {
+	return t.instance.GetDelegations()
 }
 
 func (t *TestGovStaker) ExistsDelegation(delegationID int64) bool {
@@ -136,8 +137,8 @@ func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
 	return t.instance.GetDelegatorDelegateeCount(delegator)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	return t.instance.GetDelegatorDelegateeAddresses(delegator, offset, count)
+func (t *TestGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	return t.instance.GetDelegatorDelegations(delegator)
 }
 
 func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {

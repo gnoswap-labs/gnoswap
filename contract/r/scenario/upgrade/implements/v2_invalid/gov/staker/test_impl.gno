@@ -2,6 +2,7 @@
 package v2_invalid
 
 import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/gov/staker"
 	v1 "gno.land/r/gnoswap/gov/staker/v1"
@@ -152,11 +153,11 @@ func (t *TestGovStaker) GetDelegationCount() int {
 	return t.instance.GetDelegationCount()
 }
 
-func (t *TestGovStaker) GetDelegationIDs(offset, count int) []int64 {
-	if !t.isActive("GetDelegationIDs") {
-		panic("test implementation: GetDelegationIDs not supported")
+func (t *TestGovStaker) GetDelegations() *rotree.ReadOnlyTree {
+	if !t.isActive("GetDelegations") {
+		panic("test implementation: GetDelegations not supported")
 	}
-	return t.instance.GetDelegationIDs(offset, count)
+	return t.instance.GetDelegations()
 }
 
 func (t *TestGovStaker) ExistsDelegation(delegationID int64) bool {
@@ -180,11 +181,11 @@ func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
 	return t.instance.GetDelegatorDelegateeCount(delegator)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	if !t.isActive("GetDelegatorDelegateeAddresses") {
-		panic("test implementation: GetDelegatorDelegateeAddresses not supported")
+func (t *TestGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	if !t.isActive("GetDelegatorDelegations") {
+		panic("test implementation: GetDelegatorDelegations not supported")
 	}
-	return t.instance.GetDelegatorDelegateeAddresses(delegator, offset, count)
+	return t.instance.GetDelegatorDelegations(delegator)
 }
 
 func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {

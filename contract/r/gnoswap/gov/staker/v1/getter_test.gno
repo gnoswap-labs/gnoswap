@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -190,8 +191,8 @@ func TestGetter_GetDelegationCount(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetter_GetDelegationIDs tests GetDelegationIDs pagination
-func TestGetter_GetDelegationIDs(cur realm, t *testing.T) {
+// TestGetter_GetDelegations tests paginating the read-only delegation view
+func TestGetter_GetDelegations(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		totalDelegations  int
@@ -263,14 +264,20 @@ func TestGetter_GetDelegationIDs(cur realm, t *testing.T) {
 			gs := &govStakerV1{store: store}
 
 			// When: Get delegations with pagination
-			ids := gs.GetDelegationIDs(tt.offset, tt.count)
+			ids := make([]string, 0)
+			gs.GetDelegations().IterateByOffset(tt.offset, tt.count, func(key string, value any) bool {
+				_, ok := value.(*staker.Delegation)
+				uassert.True(t, ok)
+				ids = append(ids, key)
+				return false
+			})
 
 			// Then: Should return correct number of IDs
 			uassert.Equal(t, len(ids), tt.expectedCount)
 
 			// Verify IDs are sequential
 			for i, id := range ids {
-				expectedID := int64(tt.offset+i+1)
+				expectedID := strconv.FormatInt(int64(tt.offset+i+1), 10)
 				uassert.Equal(t, id, expectedID)
 			}
 		})
@@ -692,4 +699,32 @@ func TestGetter_HasDelegationSnapshotsKey(cur realm, t *testing.T) {
 			uassert.Equal(t, result, tt.expected)
 		})
 	}
+}
+
+// TestGetter_GetDelegatorDelegations tests the read-only delegator view
+func TestGetter_GetDelegatorDelegations(cur realm, t *testing.T) {
+	delegator := address(testutils.TestAddress("delegator"))
+	delegatee := address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl")
+
+	store := newMockGovStakerStore().(*mockGovStakerStore)
+	store.GetDelegationManager().SetDelegationIDs(delegator.String(), delegatee.String(), []int64{1, 2})
+
+	gs := &govStakerV1{store: store}
+
+	delegations := gs.GetDelegatorDelegations(delegator)
+	uassert.Equal(t, 1, delegations.Size())
+
+	first, ok := delegations.Get(delegatee.String()).([]int64)
+	uassert.True(t, ok)
+	uassert.Equal(t, 2, len(first))
+	first[0] = 9999
+
+	// The stored slice is copied on read, so the write above is not visible.
+	second, ok := delegations.Get(delegatee.String()).([]int64)
+	uassert.True(t, ok)
+	uassert.Equal(t, int64(1), second[0])
+
+	// A delegator with no delegations has no view at all.
+	unknown := address(testutils.TestAddress("unknown"))
+	uassert.True(t, gs.GetDelegatorDelegations(unknown) == nil)
 }

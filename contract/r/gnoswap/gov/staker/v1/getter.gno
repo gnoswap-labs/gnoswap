@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"strconv"
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/emission"
@@ -39,23 +39,10 @@ func (gs *govStakerV1) GetDelegationCount() int {
 	return delegations.Size()
 }
 
-// GetDelegationIDs returns a paginated list of delegation IDs.
-func (gs *govStakerV1) GetDelegationIDs(offset, count int) []int64 {
-	delegations := gs.store.GetAllDelegations()
-
-	ids := make([]int64, 0)
-
-	delegations.IterateByOffset(offset, count, func(key string, _ any) bool {
-		delegationID, err := strconv.ParseInt(key, 10, 64)
-		if err != nil {
-			return false
-		}
-
-		ids = append(ids, delegationID)
-		return false
-	})
-
-	return ids
+// GetDelegations returns a read-only view of every delegation, keyed by the
+// decimal string form of the delegation ID.
+func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
+	return rotree.Wrap(gs.store.GetAllDelegations(), cloneDelegationEntry)
 }
 
 // ExistsDelegation checks if a delegation exists.
@@ -83,22 +70,16 @@ func (gs *govStakerV1) GetDelegatorDelegateeCount(delegator address) int {
 	return delegatorTree.Size()
 }
 
-// GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+// GetDelegatorDelegations returns a read-only view of a delegator's delegations,
+// keyed by delegatee address with that pair's delegation IDs as the value.
+// nil is returned when the delegator has no delegations.
+func (gs *govStakerV1) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	delegationManager := gs.store.GetDelegationManager()
 	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
 	if !exists {
-		return []address{}
+		return nil
 	}
-
-	delegateeAddresses := make([]address, 0)
-
-	delegatorTree.IterateByOffset(offset, count, func(delegatee string, _ any) bool {
-		delegateeAddresses = append(delegateeAddresses, address(delegatee))
-		return false
-	})
-
-	return delegateeAddresses
+	return rotree.Wrap(delegatorTree, cloneDelegationIDsEntry)
 }
 
 // GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.

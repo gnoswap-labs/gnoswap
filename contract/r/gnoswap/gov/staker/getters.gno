@@ -2,6 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // GetTotalxGnsSupply returns the total supply of xGNS tokens.
@@ -29,9 +30,12 @@ func GetDelegationCount() int {
 	return getImplementation().GetDelegationCount()
 }
 
-// GetDelegationIDs returns a paginated list of delegation IDs.
-func GetDelegationIDs(offset, count int) []int64 {
-	return cloneInt64Slice(getImplementation().GetDelegationIDs(offset, count))
+// GetDelegations returns a read-only view of every delegation, keyed by the
+// decimal string form of the delegation ID. Callers paginate it themselves
+// through IterateByOffset. Reading an entry yields a clone, so the view cannot
+// mutate realm state.
+func GetDelegations() *rotree.ReadOnlyTree {
+	return getImplementation().GetDelegations()
 }
 
 // ExistsDelegation checks if a delegation exists.
@@ -53,9 +57,12 @@ func GetDelegatorDelegateeCount(delegator address) int {
 	return getImplementation().GetDelegatorDelegateeCount(delegator)
 }
 
-// GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
-func GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	return cloneAddressSlice(getImplementation().GetDelegatorDelegateeAddresses(delegator, offset, count))
+// GetDelegatorDelegations returns a read-only view of a delegator's delegations,
+// keyed by delegatee address with that pair's delegation IDs as the value.
+// Reading an entry yields a copy of the ID slice, so the view cannot mutate
+// realm state. nil is returned when the delegator has no delegations.
+func GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	return getImplementation().GetDelegatorDelegations(delegator)
 }
 
 // GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.

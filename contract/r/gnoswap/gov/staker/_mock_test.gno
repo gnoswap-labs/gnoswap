@@ -2,6 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse is a simple mock response helper
@@ -143,12 +144,12 @@ func (m *MockGovStaker) GetDelegationCount() int {
 	return res[0].(int)
 }
 
-func (m *MockGovStaker) GetDelegationIDs(offset, count int) []int64 {
-	res, ok := m.Response.Get("GetDelegationIDs")
+func (m *MockGovStaker) GetDelegations() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetDelegations")
 	if !ok {
-		return []int64{}
+		return nil
 	}
-	return res[0].([]int64)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovStaker) ExistsDelegation(delegationID int64) bool {
@@ -178,12 +179,12 @@ func (m *MockGovStaker) GetDelegatorDelegateeCount(delegator address) int {
 	return res[0].(int)
 }
 
-func (m *MockGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	res, ok := m.Response.Get("GetDelegatorDelegateeAddresses")
+func (m *MockGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetDelegatorDelegations")
 	if !ok {
-		return []address{}
+		return nil
 	}
-	return res[0].([]address)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
