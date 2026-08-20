@@ -5,29 +5,11 @@ import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
-// GetProjectCount returns the total number of projects.
-func GetProjectCount() int {
-	return getImplementation().GetProjectCount()
-}
-
 // GetProjects returns a read-only view of every project, keyed by project ID.
 // Callers paginate it themselves through IterateByOffset. Reading an entry
 // yields a clone, so the view cannot mutate realm state.
 func GetProjects() *rotree.ReadOnlyTree {
 	return getImplementation().GetProjects()
-}
-
-// GetProject retrieves a project by its ID.
-// Returns a cloned project to prevent external modification.
-func GetProject(projectId string) (*Project, error) {
-	project, err := getImplementation().GetProject(projectId)
-	if err != nil {
-		return nil, err
-	}
-	if project == nil {
-		return nil, nil
-	}
-	return project.Clone(), nil
 }
 
 // GetProjectName returns the name of a project by its ID.
@@ -155,11 +137,6 @@ func GetDepositCount() int {
 // GetCurrentDepositId returns the current deposit counter value.
 func GetCurrentDepositId() int64 {
 	return getImplementation().GetCurrentDepositId()
-}
-
-// GetProjectTierDepositCount returns the total number of deposits for a project tier.
-func GetProjectTierDepositCount(projectId string, tier int64) int {
-	return getImplementation().GetProjectTierDepositCount(projectId, tier)
 }
 
 // GetProjectTierRewards returns a read-only view of a project tier's reward

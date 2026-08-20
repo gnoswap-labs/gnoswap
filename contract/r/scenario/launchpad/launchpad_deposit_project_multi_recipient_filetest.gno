@@ -140,7 +140,7 @@ func createOBLProject(cur realm) {
 
 	// [INFO] Validate project info
 	testing.SetRealm(launchpadRealm)
-	project, _ := launchpad.GetProject(projectId)
+	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
 	println("[EXPECTED] Project name:", project.Name())
 	println("[EXPECTED] Project token path:", project.TokenPath())
 	println("[EXPECTED] Project deposit amount:", project.DepositAmount())

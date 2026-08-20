@@ -10,7 +10,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestGetProjectCount(cur realm, t *testing.T) {
+func TestGetProjectsSize(cur realm, t *testing.T) {
 	t.Run("empty store returns zero count", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
@@ -18,7 +18,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 		lp := getTestImplementation()
 
 		// Execute
-		count := lp.GetProjectCount()
+		count := lp.GetProjects().Size()
 
 		// Verify
 		uassert.Equal(t, 0, count)
@@ -40,7 +40,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 			recipientSuffix: "recipient1",
 		})
 
-		count1 := lp.GetProjectCount()
+		count1 := lp.GetProjects().Size()
 		uassert.Equal(t, 1, count1)
 
 		createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
@@ -53,7 +53,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 		})
 
 		// Execute
-		count2 := lp.GetProjectCount()
+		count2 := lp.GetProjects().Size()
 
 		// Verify
 		uassert.Equal(t, 2, count2)
@@ -113,14 +113,13 @@ func TestGetProjects(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProject(cur realm, t *testing.T) {
+func TestGetProjectsGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		projectID        string
 		createProject    bool
 		expectedNotNil   bool
 		expectedHasError bool
-		expectedError    string
 	}{
 		{
 			name:             "get existing project",
@@ -134,7 +133,6 @@ func TestGetProject(cur realm, t *testing.T) {
 			createProject:    false,
 			expectedNotNil:   false,
 			expectedHasError: true,
-			expectedError:    "project(nonexistent-project-id) not found",
 		},
 	}
 
@@ -159,16 +157,15 @@ func TestGetProject(cur realm, t *testing.T) {
 			}
 
 			// Execute
-			project, err := lp.GetProject(projectID)
+			project, ok := lp.GetProjects().Get(projectID).(*launchpad.Project)
 
 			// Verify
 			if tt.expectedHasError {
-				uassert.Error(t, err)
+				uassert.False(t, ok)
 				uassert.True(t, project == nil)
-				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
-				uassert.NoError(t, err)
 				if tt.expectedNotNil {
+					uassert.True(t, ok)
 					uassert.NotNil(t, project)
 					uassert.Equal(t, "Test Project", project.Name())
 				}

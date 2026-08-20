@@ -9,39 +9,15 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// GetProjectCount returns the total number of projects.
-func (lp *launchpadV1) GetProjectCount() int {
-	projects := lp.store.GetProjects()
-	return projects.Size()
-}
-
 // GetProjects returns a read-only view of every project, keyed by project ID.
 func (lp *launchpadV1) GetProjects() *rotree.ReadOnlyTree {
 	return rotree.Wrap(lp.store.GetProjects(), cloneProjectEntry)
 }
 
-// GetProject retrieves a project by its ID.
-// Returns a cloned project to prevent external modification.
-// Returns nil and error if project not found.
-func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
-	projects := lp.store.GetProjects()
-	value := projects.Get(projectId)
-	if value == nil {
-		return nil, errors.New("project not found")
-	}
-
-	project, ok := value.(*launchpad.Project)
-	if !ok {
-		return nil, errors.New("invalid project type")
-	}
-
-	return project.Clone(), nil
-}
-
 // GetProjectName returns the name of a project by its ID.
 // Returns empty string and error if project not found.
 func (lp *launchpadV1) GetProjectName(projectId string) (string, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +28,7 @@ func (lp *launchpadV1) GetProjectName(projectId string) (string, error) {
 // GetProjectTokenPath returns the token path of a project by its ID.
 // Returns empty string and error if project not found.
 func (lp *launchpadV1) GetProjectTokenPath(projectId string) (string, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return "", err
 	}
@@ -63,7 +39,7 @@ func (lp *launchpadV1) GetProjectTokenPath(projectId string) (string, error) {
 // GetProjectDepositAmount returns the deposit amount of a project by its ID.
 // Returns 0 and error if project not found.
 func (lp *launchpadV1) GetProjectDepositAmount(projectId string) (int64, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return 0, err
 	}
@@ -74,7 +50,7 @@ func (lp *launchpadV1) GetProjectDepositAmount(projectId string) (int64, error) 
 // GetProjectRecipient returns the recipient address of a project by its ID.
 // Returns empty address and error if project not found.
 func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +60,7 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 
 // GetProjectCondition retrieves a specific condition of a project.
 func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +77,7 @@ func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.
 // Returns empty map and error if project not found.
 func (lp *launchpadV1) GetProjectTiersRatios(projectId string) (map[int64]int64, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +88,7 @@ func (lp *launchpadV1) GetProjectTiersRatios(projectId string) (map[int64]int64,
 // GetProjectCreatedHeight returns the created height of a project by its ID.
 // Returns 0 and error if project not found.
 func (lp *launchpadV1) GetProjectCreatedHeight(projectId string) (int64, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return 0, err
 	}
@@ -123,7 +99,7 @@ func (lp *launchpadV1) GetProjectCreatedHeight(projectId string) (int64, error) 
 // GetProjectCreatedAt returns the created time of a project by its ID.
 // Returns 0 and error if project not found.
 func (lp *launchpadV1) GetProjectCreatedAt(projectId string) (int64, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return 0, err
 	}
@@ -135,7 +111,7 @@ func (lp *launchpadV1) GetProjectCreatedAt(projectId string) (int64, error) {
 // Returns a cloned tier to prevent external modification.
 // Returns nil and error if project or tier not found.
 func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.ProjectTier, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -262,16 +238,6 @@ func (lp *launchpadV1) GetTotalGNSStakedAmount() int64 {
 func (lp *launchpadV1) GetCurrentDepositId() int64 {
 	counter := lp.store.GetDepositCounter()
 	return counter.Get()
-}
-
-// GetProjectTierDepositCount returns the total number of deposits for a project tier.
-func (lp *launchpadV1) GetProjectTierDepositCount(projectId string, tier int64) int {
-	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
-	rewardManager, err := lp.GetProjectTierRewardManager(projectTierID)
-	if err != nil {
-		return 0
-	}
-	return rewardManager.Rewards().Size()
 }
 
 // GetProjectTierRewards returns a read-only view of a project tier's reward
@@ -554,7 +520,7 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 // GetProjectActiveStatus returns whether a project is currently active.
 // Returns false and error if project not found.
 func (lp *launchpadV1) GetProjectActiveStatus(projectId string) (bool, error) {
-	project, err := lp.GetProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return false, err
 	}

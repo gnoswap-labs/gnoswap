@@ -151,10 +151,6 @@ func testProjectGetters(cur realm, projectId string) {
 	// Set realm to launchpad for getter calls
 	testing.SetRealm(launchpadRealm)
 
-	// GetProjectCount
-	count := launchpad.GetProjectCount()
-	println("[EXPECTED] Project count:", count)
-
 	// GetProjects
 	projects := launchpad.GetProjects()
 	println("[EXPECTED] Project IDs (offset=0, limit=10):", projects.Size(), "projects")
@@ -167,9 +163,9 @@ func testProjectGetters(cur realm, projectId string) {
 	})
 
 	// GetProject
-	project, err := launchpad.GetProject(projectId)
-	if err != nil {
-		panic(err)
+	project, ok := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
+	if !ok {
+		panic("project not found")
 	}
 	println("[EXPECTED] Project details:")
 	println("[EXPECTED] - ID:", project.ID())
@@ -559,7 +555,6 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 //
 // [SCENARIO] 2. Test Project Getters
 // [INFO] Testing project getters
-// [EXPECTED] Project count: 1
 // [EXPECTED] Project IDs (offset=0, limit=10): 1 projects
 // [EXPECTED] - Project 1: gno.land/r/onbloc/obl.OBL:123
 // [EXPECTED] Project details:

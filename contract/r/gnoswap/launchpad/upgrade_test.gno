@@ -411,35 +411,6 @@ func TestCollectRewardByDepositId(cur realm, t *testing.T) {
 // Getter Tests
 // ==================================
 
-func TestGetProjectCount(cur realm, t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get project count is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(cur, t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetProjectCount()
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectCount") != 1 {
-				t.Error("GetProjectCount was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestGetDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
@@ -464,37 +435,6 @@ func TestGetDepositCount(cur realm, t *testing.T) {
 			mockLaunchpad := implementation.(*MockLaunchpad)
 			if mockLaunchpad.Response.CallCount("GetDepositCount") != 1 {
 				t.Error("GetDepositCount was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetProject(cur realm, t *testing.T) {
-	tests := []struct {
-		name      string
-		projectId string
-	}{
-		{
-			name:      "get project is success",
-			projectId: "project1",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(cur, t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetProject(tt.projectId)
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProject") != 1 {
-				t.Error("GetProject was not called on the implementation")
 			}
 		})
 	}

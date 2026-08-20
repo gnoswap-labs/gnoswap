@@ -11,32 +11,9 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// GetProjectCount returns the total number of projects.
-func (lp *launchpadV1) GetProjectCount() int {
-	projects := lp.store.GetProjects()
-	return projects.Size()
-}
-
 // GetProjects returns a read-only view of every project, keyed by project ID.
 func (lp *launchpadV1) GetProjects() *rotree.ReadOnlyTree {
 	return rotree.Wrap(lp.store.GetProjects(), cloneProjectEntry)
-}
-
-// GetProject retrieves a project by its ID.
-// Returns nil and error if project not found.
-func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
-	projects := lp.store.GetProjects()
-	value := projects.Get(projectId)
-	if value == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectId))
-	}
-
-	project, ok := value.(*launchpad.Project)
-	if !ok {
-		return nil, errors.New("invalid project type")
-	}
-
-	return project, nil
 }
 
 // GetProjectName returns the name of a project by its ID.
@@ -258,19 +235,6 @@ func (lp *launchpadV1) GetDepositCount() int {
 func (lp *launchpadV1) GetCurrentDepositId() int64 {
 	counter := lp.store.GetDepositCounter()
 	return counter.Get()
-}
-
-// GetProjectTierDepositCount returns the total number of deposits for a project tier.
-// Returns 0 and error if project or tier not found.
-func (lp *launchpadV1) GetProjectTierDepositCount(projectId string, tier int64) int {
-	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
-
-	rewardManager, err := lp.getProjectTierRewardManager(projectTierID)
-	if err != nil {
-		return 0
-	}
-
-	return rewardManager.Rewards().Size()
 }
 
 // GetProjectTierRewards returns a read-only view of a project tier's reward

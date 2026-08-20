@@ -40,9 +40,7 @@ type ILaunchpadDeposit interface {
 }
 
 type ILaunchpadGetter interface {
-	GetProjectCount() int
 	GetProjects() *rotree.ReadOnlyTree
-	GetProject(projectId string) (*Project, error)
 	GetProjectName(projectId string) (string, error)
 	GetProjectTokenPath(projectId string) (string, error)
 	GetProjectDepositAmount(projectId string) (int64, error)
@@ -65,7 +63,6 @@ type ILaunchpadGetter interface {
 
 	GetDepositCount() int
 	GetCurrentDepositId() int64
-	GetProjectTierDepositCount(projectId string, tier int64) int
 	GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree
 
 	GetDeposit(depositId string) (*Deposit, error)

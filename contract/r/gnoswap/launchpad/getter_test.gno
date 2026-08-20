@@ -65,38 +65,6 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockLaunchpad)
 	}{
 		{
-			name: "GetProject",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProject", newLaunchpadProject(), nil) },
-			getter: func(t *testing.T) any {
-				value, err := GetProject("project-1")
-				uassert.NoError(t, err)
-				return value
-			},
-			mutate: func(result any) {
-				project := result.(*Project)
-				project.SetID("mutated-project")
-				project.SetName("mutated-name")
-				project.SetTokenPath("mutated-token")
-				project.SetDepositAmount(2000)
-				project.SetCreatedHeight(99)
-				project.SetCreatedAt(88)
-				project.SetTiersRatios(map[int64]int64{30: 100})
-				project.Conditions()["token-path"].minimumAmount = 999
-				project.Tiers()[30].SetTotalDepositAmount(777)
-			},
-			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				project := m.Response.data["GetProject"][0].(*Project)
-				uassert.Equal(t, "project-name", project.Name())
-				uassert.Equal(t, "token-path", project.TokenPath())
-				uassert.Equal(t, int64(1000), project.DepositAmount())
-				uassert.Equal(t, int64(10), project.CreatedHeight())
-				uassert.Equal(t, int64(20), project.CreatedAt())
-				uassert.Equal(t, int64(500), project.conditions["token-path"].MinimumAmount())
-				uassert.Equal(t, int64(0), project.tiers[30].TotalDepositAmount())
-				uassert.Equal(t, int64(25), project.tiersRatios[30])
-			},
-		},
-		{
 			name: "GetProjectCondition",
 			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectCondition", NewProjectCondition("token-path", 500), nil) },
 			getter: func(t *testing.T) any {

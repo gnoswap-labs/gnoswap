@@ -115,14 +115,6 @@ func (m *MockLaunchpad) CollectRewardByDepositId(_ int, rlm realm, depositID str
 	return res[0].(int64)
 }
 
-func (m *MockLaunchpad) GetProjectCount() int {
-	res, ok := m.Response.Get("GetProjectCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
 func (m *MockLaunchpad) GetDepositCount() int {
 	res, ok := m.Response.Get("GetDepositCount")
 	if !ok {
@@ -153,17 +145,6 @@ func (m *MockLaunchpad) GetCurrentDepositId() int64 {
 		return 0
 	}
 	return res[0].(int64)
-}
-
-func (m *MockLaunchpad) GetProject(projectId string) (*Project, error) {
-	res, ok := m.Response.Get("GetProject")
-	if !ok {
-		return nil, nil
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*Project), nil
-	}
-	return res[0].(*Project), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetDeposit(depositId string) (*Deposit, error) {
@@ -238,14 +219,6 @@ func (m *MockLaunchpad) GetProjects() *rotree.ReadOnlyTree {
 		return nil
 	}
 	return res[0].(*rotree.ReadOnlyTree)
-}
-
-func (m *MockLaunchpad) GetProjectTierDepositCount(projectId string, tier int64) int {
-	res, ok := m.Response.Get("GetProjectTierDepositCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
 }
 
 func (m *MockLaunchpad) GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
