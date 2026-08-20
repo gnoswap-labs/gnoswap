@@ -143,8 +143,16 @@ func testBasicPositionMinting(cur realm) {
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
-	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
+	burned, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] Position is not burned:", !burned)
+	println("[EXPECTED] Position is in range:", inRange)
 }
 
 func testZeroLiquidityMintingFailure(cur realm) {
