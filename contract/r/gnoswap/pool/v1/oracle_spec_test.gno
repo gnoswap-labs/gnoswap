@@ -370,7 +370,7 @@ func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
 	os := pl.NewObservationState(0)
 
 	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
-	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-027]")
+	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-026]")
 }
 
 // TestOracleLookbackErrorsAreDistinct pins the two rejection reasons to separate error codes.
@@ -379,14 +379,14 @@ func TestOracleLookbackErrorsAreDistinct(cur realm, t *testing.T) {
 	tooOld := pl.NewObservationState(100)
 	_, _, errTooOld := observeSingle(tooOld, 150, 51, 12, 0, u256.NewUint(4), 1)
 	uassert.ErrorContains(t, errTooOld, "[GNOSWAP-POOL-025]")
-	if errTooOld != nil && strings.Contains(errTooOld.Error(), "[GNOSWAP-POOL-027]") {
+	if errTooOld != nil && strings.Contains(errTooOld.Error(), "[GNOSWAP-POOL-026]") {
 		t.Error("too-old lookback must not report the pre-epoch error code")
 	}
 
 	// Malformed request: secondsAgo exceeds the chain's own age.
 	beforeEpoch := pl.NewObservationState(0)
 	_, _, errEpoch := observeSingle(beforeEpoch, 10, 11, 12, 0, u256.NewUint(4), 1)
-	uassert.ErrorContains(t, errEpoch, "[GNOSWAP-POOL-027]")
+	uassert.ErrorContains(t, errEpoch, "[GNOSWAP-POOL-026]")
 	if errEpoch != nil && strings.Contains(errEpoch.Error(), "[GNOSWAP-POOL-025]") {
 		t.Error("pre-epoch lookback must not report the too-old error code")
 	}
