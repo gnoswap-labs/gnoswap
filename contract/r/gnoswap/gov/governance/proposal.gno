@@ -166,7 +166,7 @@ func (p *Proposal) Clone() *Proposal {
 		configVersion: p.configVersion,
 		status:        p.status.Clone(),
 		metadata:      p.metadata.Clone(),
-		data:          nil,
+		data:          p.data.Clone(),
 		snapshotTime:  p.snapshotTime,
 		createdHeight: p.createdHeight,
 	}
