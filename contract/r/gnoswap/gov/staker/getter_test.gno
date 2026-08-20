@@ -30,31 +30,6 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovStaker)
 	}{
 		{
-			name: "GetDelegation",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegation", newDelegation(), nil) },
-			getter: func(cur realm, t *testing.T) any {
-				delegation, err := GetDelegation(1)
-				uassert.NoError(t, err)
-				return delegation
-			},
-			mutate: func(result any) {
-				delegation := result.(*Delegation)
-				delegation.SetUnDelegateAmount(999)
-				delegation.SetCollectedAmount(888)
-				delegation.Withdraws()[0].SetCollected(true)
-				delegation.Withdraws()[0].SetCollectedAt(777)
-				delegation.Withdraws()[0].SetCollectedAmount(666)
-			},
-			assertRaw: func(t *testing.T, m *MockGovStaker) {
-				delegation := m.Response.data["GetDelegation"][0].(*Delegation)
-				uassert.Equal(t, int64(200), delegation.UnDelegatedAmount())
-				uassert.Equal(t, int64(300), delegation.CollectedAmount())
-				uassert.Equal(t, false, delegation.Withdraws()[0].IsCollected())
-				uassert.Equal(t, int64(0), delegation.Withdraws()[0].CollectedAt())
-				uassert.Equal(t, int64(0), delegation.Withdraws()[0].CollectedAmount())
-			},
-		},
-		{
 			name: "GetUserDelegationIDs",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetUserDelegationIDs", []int64{3, 4}) },
 			getter: func(cur realm, t *testing.T) any { return GetUserDelegationIDs(adminAddr, adminAddr) },

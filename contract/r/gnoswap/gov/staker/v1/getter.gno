@@ -33,12 +33,6 @@ func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
 	return gs.store.GetUnDelegationLockupPeriod()
 }
 
-// GetDelegationCount returns the total number of delegations.
-func (gs *govStakerV1) GetDelegationCount() int {
-	delegations := gs.store.GetAllDelegations()
-	return delegations.Size()
-}
-
 // GetDelegations returns a read-only view of every delegation, keyed by the
 // decimal string form of the delegation ID.
 func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
@@ -48,26 +42,6 @@ func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
 // ExistsDelegation checks if a delegation exists.
 func (gs *govStakerV1) ExistsDelegation(delegationID int64) bool {
 	return gs.store.HasDelegation(delegationID)
-}
-
-// GetDelegation returns the delegation for the given ID.
-func (gs *govStakerV1) GetDelegation(delegationID int64) (*staker.Delegation, error) {
-	delegation, exists := gs.store.GetDelegation(delegationID)
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("delegation not found: %d", delegationID))
-	}
-	return delegation, nil
-}
-
-// GetDelegatorDelegateeCount returns the number of delegatees for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegateeCount(delegator address) int {
-	delegationManager := gs.store.GetDelegationManager()
-	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
-	if !exists {
-		return 0
-	}
-
-	return delegatorTree.Size()
 }
 
 // GetDelegatorDelegations returns a read-only view of a delegator's delegations,
@@ -80,16 +54,6 @@ func (gs *govStakerV1) GetDelegatorDelegations(delegator address) *rotree.ReadOn
 		return nil
 	}
 	return rotree.Wrap(delegatorTree, cloneDelegationIDsEntry)
-}
-
-// GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
-func (gs *govStakerV1) GetUserDelegationCount(delegator address, delegatee address) int {
-	delegationManager := gs.store.GetDelegationManager()
-	delegationIDs, exists := delegationManager.GetDelegationIDs(delegator.String(), delegatee.String())
-	if !exists {
-		return 0
-	}
-	return len(delegationIDs)
 }
 
 // GetUserDelegationIDs returns a paginated list of delegation IDs for a specific delegator and delegatee.

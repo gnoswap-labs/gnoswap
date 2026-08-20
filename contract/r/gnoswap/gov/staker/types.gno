@@ -50,13 +50,9 @@ type IGovStakerGetter interface {
 	GetTotalxGnsSupply() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
-	GetDelegationCount() int
 	GetDelegations() *rotree.ReadOnlyTree
 	ExistsDelegation(delegationID int64) bool
-	GetDelegation(delegationID int64) (*Delegation, error)
-	GetDelegatorDelegateeCount(delegator address) int
 	GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree
-	GetUserDelegationCount(delegator address, delegatee address) int
 	GetUserDelegationIDs(delegator address, delegatee address) []int64
 	HasDelegationSnapshotsKey() bool
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)

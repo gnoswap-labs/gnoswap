@@ -25,11 +25,6 @@ func GetUnDelegationLockupPeriod() int64 {
 	return getImplementation().GetUnDelegationLockupPeriod()
 }
 
-// GetDelegationCount returns the total number of delegations.
-func GetDelegationCount() int {
-	return getImplementation().GetDelegationCount()
-}
-
 // GetDelegations returns a read-only view of every delegation, keyed by the
 // decimal string form of the delegation ID. Callers paginate it themselves
 // through IterateByOffset. Reading an entry yields a clone, so the view cannot
@@ -43,31 +38,12 @@ func ExistsDelegation(delegationID int64) bool {
 	return getImplementation().ExistsDelegation(delegationID)
 }
 
-// GetDelegation returns the delegation for the given ID.
-func GetDelegation(delegationID int64) (*Delegation, error) {
-	delegation, err := getImplementation().GetDelegation(delegationID)
-	if err != nil {
-		return nil, err
-	}
-	return delegation.Clone(), nil
-}
-
-// GetDelegatorDelegateeCount returns the number of delegatees for a specific delegator.
-func GetDelegatorDelegateeCount(delegator address) int {
-	return getImplementation().GetDelegatorDelegateeCount(delegator)
-}
-
 // GetDelegatorDelegations returns a read-only view of a delegator's delegations,
 // keyed by delegatee address with that pair's delegation IDs as the value.
 // Reading an entry yields a copy of the ID slice, so the view cannot mutate
 // realm state. nil is returned when the delegator has no delegations.
 func GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	return getImplementation().GetDelegatorDelegations(delegator)
-}
-
-// GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
-func GetUserDelegationCount(delegator address, delegatee address) int {
-	return getImplementation().GetUserDelegationCount(delegator, delegatee)
 }
 
 // GetUserDelegationIDs returns a list of delegation IDs for a specific delegator-delegatee pair.

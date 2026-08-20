@@ -146,13 +146,6 @@ func (t *TestGovStaker) GetTotalLockedAmount() int64 {
 	return t.instance.GetTotalLockedAmount()
 }
 
-func (t *TestGovStaker) GetDelegationCount() int {
-	if !t.isActive("GetDelegationCount") {
-		panic("test implementation: GetDelegationCount not supported")
-	}
-	return t.instance.GetDelegationCount()
-}
-
 func (t *TestGovStaker) GetDelegations() *rotree.ReadOnlyTree {
 	if !t.isActive("GetDelegations") {
 		panic("test implementation: GetDelegations not supported")
@@ -167,32 +160,11 @@ func (t *TestGovStaker) ExistsDelegation(delegationID int64) bool {
 	return t.instance.ExistsDelegation(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegation(delegationID int64) (*staker.Delegation, error) {
-	if !t.isActive("GetDelegation") {
-		panic("test implementation: GetDelegation not supported")
-	}
-	return t.instance.GetDelegation(delegationID)
-}
-
-func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
-	if !t.isActive("GetDelegatorDelegateeCount") {
-		panic("test implementation: GetDelegatorDelegateeCount not supported")
-	}
-	return t.instance.GetDelegatorDelegateeCount(delegator)
-}
-
 func (t *TestGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	if !t.isActive("GetDelegatorDelegations") {
 		panic("test implementation: GetDelegatorDelegations not supported")
 	}
 	return t.instance.GetDelegatorDelegations(delegator)
-}
-
-func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
-	if !t.isActive("GetUserDelegationCount") {
-		panic("test implementation: GetUserDelegationCount not supported")
-	}
-	return t.instance.GetUserDelegationCount(delegator, delegatee)
 }
 
 func (t *TestGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {

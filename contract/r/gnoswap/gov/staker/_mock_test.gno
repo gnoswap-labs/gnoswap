@@ -136,14 +136,6 @@ func (m *MockGovStaker) GetTotalLockedAmount() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetDelegationCount() int {
-	res, ok := m.Response.Get("GetDelegationCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
 func (m *MockGovStaker) GetDelegations() *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetDelegations")
 	if !ok {
@@ -160,39 +152,12 @@ func (m *MockGovStaker) ExistsDelegation(delegationID int64) bool {
 	return res[0].(bool)
 }
 
-func (m *MockGovStaker) GetDelegation(delegationID int64) (*Delegation, error) {
-	res, ok := m.Response.Get("GetDelegation")
-	if !ok {
-		return nil, nil
-	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*Delegation), nil
-}
-
-func (m *MockGovStaker) GetDelegatorDelegateeCount(delegator address) int {
-	res, ok := m.Response.Get("GetDelegatorDelegateeCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
 func (m *MockGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetDelegatorDelegations")
 	if !ok {
 		return nil
 	}
 	return res[0].(*rotree.ReadOnlyTree)
-}
-
-func (m *MockGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
-	res, ok := m.Response.Get("GetUserDelegationCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
 }
 
 func (m *MockGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {

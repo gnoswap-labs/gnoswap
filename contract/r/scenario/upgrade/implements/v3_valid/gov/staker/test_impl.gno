@@ -117,10 +117,6 @@ func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return t.instance.GetUnDelegationLockupPeriod()
 }
 
-func (t *TestGovStaker) GetDelegationCount() int {
-	return t.instance.GetDelegationCount()
-}
-
 func (t *TestGovStaker) GetDelegations() *rotree.ReadOnlyTree {
 	return t.instance.GetDelegations()
 }
@@ -129,20 +125,8 @@ func (t *TestGovStaker) ExistsDelegation(delegationID int64) bool {
 	return t.instance.ExistsDelegation(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegation(delegationID int64) (*staker.Delegation, error) {
-	return t.instance.GetDelegation(delegationID)
-}
-
-func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
-	return t.instance.GetDelegatorDelegateeCount(delegator)
-}
-
 func (t *TestGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	return t.instance.GetDelegatorDelegations(delegator)
-}
-
-func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
-	return t.instance.GetUserDelegationCount(delegator, delegatee)
 }
 
 func (t *TestGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
