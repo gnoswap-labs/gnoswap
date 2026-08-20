@@ -5,9 +5,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
+	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
 
@@ -206,10 +206,14 @@ func comparePositionBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")
-	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", position.GetPositionToken1Balance(1))
-	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", position.GetPositionToken0Balance(2))
-	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", position.GetPositionToken1Balance(2))
+	balance10, _ := position.GetPositionToken0Balance(1)
+	balance11, _ := position.GetPositionToken1Balance(1)
+	balance20, _ := position.GetPositionToken0Balance(2)
+	balance21, _ := position.GetPositionToken1Balance(2)
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", balance10)
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", balance11)
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", balance20)
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", balance21)
 	ufmt.Printf("[EXPECTED] Sum of positions should stay close to pool balances\n")
 }
 

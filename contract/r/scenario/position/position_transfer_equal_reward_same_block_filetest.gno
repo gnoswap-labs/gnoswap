@@ -165,7 +165,7 @@ func mintTwoPositions(cur realm) {
 func transferToBob(cur realm) {
 	testing.SetRealm(aliceRealm)
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId2))
-	bobOwns := gnft.MustOwnerOf(tokenIdOf(cur, positionId2))
+	bobOwns := mustOwnerOf(tokenIdOf(cur, positionId2))
 	println("[EXPECTED] Position 2 transferred to bob:", bobOwns == bobAddr)
 }
 
@@ -218,6 +218,14 @@ func verifyEqual(cur realm, aliceReward, bobReward int64) {
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
