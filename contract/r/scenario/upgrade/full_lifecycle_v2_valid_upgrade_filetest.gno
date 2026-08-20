@@ -527,10 +527,22 @@ func positionLifecycle(cur realm) {
 	println("[EXPECTED] increased liquidity:", increasedLiquidity, "amount0:", increased0, "amount1:", increased1)
 	println("[EXPECTED] position liquidity now:", position.GetPositionLiquidity(positionId))
 
+	// Trade both ways so the position actually accrues swap fees. Without this
+	// the DecreaseLiquidity below would collect a zero fee and the withdrawal
+	// fee it charges would be invisible.
+	swapBothWays(cur)
+
+	// DecreaseLiquidity collects the accrued fees first, so the gross fee is
+	// what the position holds right before the call.
+	grossFee0, grossFee1 := position.GetUnclaimedFee(positionId)
+	println("[EXPECTED] fees accrued before decrease (gross):", grossFee0, grossFee1)
+
 	// decrease half of the liquidity; the withdrawal fee is routed to protocol fee
 	decreaseAmount := position.GetPositionLiquidity(positionId)
 	beforeBarAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath) +
 		protocolFee.GetAccuTransferToDevOpsByTokenPath(barPath)
+	beforeFooAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath) +
+		protocolFee.GetAccuTransferToDevOpsByTokenPath(fooPath)
 
 	// returns: positionId, liquidity, fee0, fee1, amount0, amount1, poolPath
 	_, removedLiquidity, fee0, fee1, removed0, removed1, removedPoolPath := position.DecreaseLiquidity(
@@ -540,13 +552,31 @@ func positionLifecycle(cur realm) {
 
 	afterBarAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath) +
 		protocolFee.GetAccuTransferToDevOpsByTokenPath(barPath)
+	afterFooAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath) +
+		protocolFee.GetAccuTransferToDevOpsByTokenPath(fooPath)
+
+	withdrawalFee0 := afterBarAccu - beforeBarAccu
+	withdrawalFee1 := afterFooAccu - beforeFooAccu
 
 	println("[EXPECTED] removed liquidity:", removedLiquidity, "from pool:", removedPoolPath)
 	println("[EXPECTED] principal returned:", removed0, removed1)
-	println("[EXPECTED] fees returned with the principal:", fee0, fee1)
-	println("[EXPECTED] withdrawal fee accrued (BAR):", afterBarAccu-beforeBarAccu)
+	println("[EXPECTED] fees returned with the principal (net):", fee0, fee1)
+	println("[EXPECTED] withdrawal fee accrued (BAR / FOO):", withdrawalFee0, withdrawalFee1)
 	println("[EXPECTED] position liquidity after decrease:", position.GetPositionLiquidity(positionId))
 	println("[EXPECTED] position count:", position.GetPositionCount())
+
+	// withdrawal fee is withdrawalFeeBPS of the gross fee, and the caller keeps
+	// the rest; the principal is not charged
+	expectedWithdrawalFee0 := parseInt64(grossFee0) * int64(pool.GetWithdrawalFee()) / 10000
+	expectedWithdrawalFee1 := parseInt64(grossFee1) * int64(pool.GetWithdrawalFee()) / 10000
+	println("[EXPECTED] withdrawal fee expected from the gross fee:", expectedWithdrawalFee0, expectedWithdrawalFee1)
+
+	uassert.True(t, parseInt64(grossFee0) > 0)
+	uassert.True(t, parseInt64(grossFee1) > 0)
+	uassert.Equal(t, expectedWithdrawalFee0, withdrawalFee0)
+	uassert.Equal(t, expectedWithdrawalFee1, withdrawalFee1)
+	uassert.Equal(t, parseInt64(grossFee0)-expectedWithdrawalFee0, parseInt64(fee0))
+	uassert.Equal(t, parseInt64(grossFee1)-expectedWithdrawalFee1, parseInt64(fee1))
 
 	uassert.Equal(t, adminAddr, position.GetPositionOwner(positionId))
 	uassert.Equal(t, barFoo500PoolPath, position.GetPositionPoolKey(positionId))
@@ -555,14 +585,43 @@ func positionLifecycle(cur realm) {
 	uassert.Equal(t, 2, position.GetPositionCount())
 }
 
-// halfOf divides a decimal string by two. The liquidity values used here always
-// fit into int64, so a plain parse is enough.
-func halfOf(value string) string {
+// swapBothWays trades a small amount in each direction so both sides of the
+// position accrue swap fees while the price ends up back inside the range.
+func swapBothWays(cur realm) {
+	testing.SetRealm(adminRealm)
+	bar.Approve(cross(cur), routerAddr, math.MaxInt64)
+	foo.Approve(cross(cur), routerAddr, math.MaxInt64)
+	bar.Approve(cross(cur), poolAddr, math.MaxInt64)
+	foo.Approve(cross(cur), poolAddr, math.MaxInt64)
+
+	inBar, outFoo := router.ExactInSingleSwapRoute(
+		cross(cur), barPath, fooPath, "2000000", barFooRoute, "1", "0", time.Now().Unix()+3600, "",
+	)
+	testing.SkipHeights(1)
+	inFoo, outBar := router.ExactInSingleSwapRoute(
+		cross(cur), fooPath, barPath, "2000000", fooBarRoute, "1", "0", time.Now().Unix()+3600, "",
+	)
+	testing.SkipHeights(1)
+
+	println("[EXPECTED] fee-accrual swap bar->foo in/out:", inBar, outFoo)
+	println("[EXPECTED] fee-accrual swap foo->bar in/out:", inFoo, outBar)
+	println("[EXPECTED] pool tick after the fee-accrual swaps:", pool.GetSlot0Tick(barFoo500PoolPath))
+}
+
+// parseInt64 parses a decimal amount string; every value it is used on is
+// produced by the contracts themselves and fits into int64.
+func parseInt64(value string) int64 {
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		panic(err)
 	}
-	return strconv.FormatInt(parsed/2, 10)
+	return parsed
+}
+
+// halfOf divides a decimal string by two. The liquidity values used here always
+// fit into int64, so a plain parse is enough.
+func halfOf(value string) string {
+	return strconv.FormatInt(parseInt64(value)/2, 10)
 }
 
 // ---------------------------------------------------------------------------
@@ -1477,41 +1536,46 @@ func finalInvariants(cur realm) {
 // [EXPECTED] minted position: 2 liquidity: 327755575
 // [EXPECTED] increased liquidity: 213383746 amount0: 10000000 amount1: 10000000
 // [EXPECTED] position liquidity now: 1280302477
+// [EXPECTED] fee-accrual swap bar->foo in/out: 2000000 -1976553
+// [EXPECTED] fee-accrual swap foo->bar in/out: 2000000 -1981465
+// [EXPECTED] pool tick after the fee-accrual swaps: 0
+// [EXPECTED] fees accrued before decrease (gross): 597 597
 // [EXPECTED] removed liquidity: 640151238 from pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
-// [EXPECTED] principal returned: 29999999 29999999
-// [EXPECTED] fees returned with the principal: 0 0
-// [EXPECTED] withdrawal fee accrued (BAR): 0
+// [EXPECTED] principal returned: 29999012 30000987
+// [EXPECTED] fees returned with the principal (net): 592 592
+// [EXPECTED] withdrawal fee accrued (BAR / FOO): 5 5
 // [EXPECTED] position liquidity after decrease: 640151239
 // [EXPECTED] position count: 2
+// [EXPECTED] withdrawal fee expected from the gross fee: 5 5
 //
 // [SCENARIO] 6. Router: exact-in / exact-out, single and multi-hop
-// [EXPECTED] exact-in-single in/out: 1000000 -988484
-// [EXPECTED] exact-in in/out: 1000000 -990523
-// [EXPECTED] exact-out-single in/out: 505568 -500000
-// [EXPECTED] exact-out in/out: 505043 -500000
+// [EXPECTED] exact-in-single in/out: 1000000 -988486
+// [EXPECTED] exact-in in/out: 1000000 -990520
+// [EXPECTED] exact-out-single in/out: 505567 -500000
+// [EXPECTED] exact-out in/out: 505045 -500000
 // [EXPECTED] pool tick after swaps: 0
 // [EXPECTED] pool liquidity: 967906814
-// [EXPECTED] fee growth global: 198985911547938715431204752120259 200040607192185740424656367414182
-// [EXPECTED] pool protocol fees: 188 186
-// [EXPECTED] router fee accrued (FOO): 15034
+// [EXPECTED] fee growth global: 358045537627336065200174822438606 358257148375155596322091915147789
+// [EXPECTED] pool protocol fees: 438 438
+// [EXPECTED] router fee accrued (FOO): 35004
 //
 // [SCENARIO] 7. Collect position fees generated by the swaps
-// [EXPECTED] unclaimed fee before collect: 374 376
-// [EXPECTED] collected fee: 371 373 pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
-// [EXPECTED] fee tokens: 374 376
+// [EXPECTED] unclaimed fee before collect: 375 375
+// [EXPECTED] collected fee: 372 372 pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
+// [EXPECTED] fee tokens: 375 375
 // [EXPECTED] unclaimed fee after collect: 0 0
 //
 // [SCENARIO] 8. Reposition the second position into a new tick range
 // [EXPECTED] liquidity before reposition: 0
-// [EXPECTED] repositioned liquidity: 676731855 ticks: -600 600
-// [EXPECTED] amounts used: 19998928 20000000
+// [EXPECTED] repositioned liquidity: 676696536 ticks: -600 600
+// [EXPECTED] amounts used: 19996841 20000000
 // [EXPECTED] position ticks from getter: -600 600
 //
 // [SCENARIO] 9. Staker: tier setup, external incentive, stake position 1
 // [EXPECTED] pool tier after SetPoolTier: 2
 // [EXPECTED] pool tier after ChangePoolTier: 1
 // [EXPECTED] tier1 pool count: 2
-// [EXPECTED] incentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567955:1
+// [EXPECTED] incentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567965:1
 // [EXPECTED] incentive reward token: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] incentive total reward: 1500000000
 // [EXPECTED] incentive creator: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
@@ -1526,20 +1590,20 @@ func finalInvariants(cur realm) {
 //
 // [SCENARIO] 10. Accumulate 10 days of rewards and collect them
 // [EXPECTED] collectable emission reward: 924663981581
-// [EXPECTED] collectable external reward: 66572240
+// [EXPECTED] collectable external reward: 66572819
 // [EXPECTED] internal reward to user: 915417341766 penalty: 1386992627983
-// [EXPECTED] external reward to user: gno.land/r/gnoswap/gns.GNS 66572240
-// [EXPECTED] external reward penalty: gno.land/r/gnoswap/gns.GNS 99779032
+// [EXPECTED] external reward to user: gno.land/r/gnoswap/gns.GNS 66572819
+// [EXPECTED] external reward penalty: gno.land/r/gnoswap/gns.GNS 99780382
 // [EXPECTED] collected internal reward total: 2311656609564
 // [EXPECTED] total emission sent: 2302423347314
 //
 // [SCENARIO] 11. Protocol fee distribution to devops / gov staker
-// [EXPECTED] accumulated BAR (gov staker / devops): 9036 6023
-// [EXPECTED] distributed BAR to gov staker: 9036
-// [EXPECTED] distributed BAR to devops: 6023
+// [EXPECTED] accumulated BAR (gov staker / devops): 21049 14031
+// [EXPECTED] distributed BAR to gov staker: 21049
+// [EXPECTED] distributed BAR to devops: 14031
 // [EXPECTED] reserved token count: 0
-// [EXPECTED] distributed FOO to gov staker: 9024
-// [EXPECTED] distributed GNS to gov staker: 5608383323
+// [EXPECTED] distributed FOO to gov staker: 21007
+// [EXPECTED] distributed GNS to gov staker: 5608383326
 //
 // [SCENARIO] 12. Gov staker: delegate, redelegate, undelegate, collect
 // [EXPECTED] alice delegated amount: 2000000000
@@ -1556,7 +1620,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] alice claimable emission reward: 0
 // [EXPECTED] alice claimable protocol fee token count: 3
 // [EXPECTED] emission distributed amount: 0
-// [EXPECTED] protocol fee amount (BAR): 9036
+// [EXPECTED] protocol fee amount (BAR): 21049
 // [EXPECTED] delegation snapshots present: true
 //
 // [SCENARIO] 13. Governance: propose, vote, execute, cancel, reconfigure
@@ -1582,7 +1646,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] governance config version after reconfigure: 2
 //
 // [SCENARIO] 14. Launchpad: project, deposit, reward collection
-// [EXPECTED] project id: gno.land/r/onbloc/obl.OBL:518577
+// [EXPECTED] project id: gno.land/r/onbloc/obl.OBL:518579
 // [EXPECTED] project count: 1
 // [EXPECTED] project name: OBL launchpad project
 // [EXPECTED] project recipient is project owner: true
@@ -1596,9 +1660,9 @@ func finalInvariants(cur realm) {
 // [EXPECTED] project recipient collected launchpad rewards
 //
 // [SCENARIO] 15. Capture the pre-upgrade snapshot through the getters
-// [EXPECTED] pool liquidity: 1316883094
+// [EXPECTED] pool liquidity: 1316847775
 // [EXPECTED] pool tick: 0
-// [EXPECTED] pool protocol fees: 188 186
+// [EXPECTED] pool protocol fees: 438 438
 // [EXPECTED] position 1 liquidity: 640151239
 // [EXPECTED] staker pool tier: 1
 // [EXPECTED] staked deposit liquidity: 640151239
@@ -1607,11 +1671,11 @@ func finalInvariants(cur realm) {
 // [EXPECTED] proposal count: 3
 // [EXPECTED] project count: 1
 // [EXPECTED] launchpad deposits: 1000000
-// [EXPECTED] position fee growth inside last: 198985911547938715431204752120259 200040607192185740424656367414182
+// [EXPECTED] position fee growth inside last: 358045537627336065200174822438606 358257148375155596322091915147789
 // [EXPECTED] position unclaimed fee: 0 0
 // [EXPECTED] staker collected internal reward: 2311656609564
 // [EXPECTED] total emission sent: 2302423347314
-// [EXPECTED] external incentive total / distributed: 1500000000 66572240
+// [EXPECTED] external incentive total / distributed: 1500000000 66572819
 // [EXPECTED] proposal ids: 3 delegation ids: 3
 // [EXPECTED] param proposal yea / nay / status: 6500000000 0 executed
 // [EXPECTED] launchpad project active: true
@@ -1630,11 +1694,11 @@ func finalInvariants(cur realm) {
 // [EXPECTED] every snapshot field is identical after the upgrade
 //
 // [SCENARIO] 18. Re-run the same operations through v2_valid
-// [EXPECTED] v2_valid minted position: 3 liquidity: 1066900695
-// [EXPECTED] v2_valid mint amounts: 49998310 50000000
-// [EXPECTED] v2_valid swap in/out: 1000000 -989090
-// [EXPECTED] v2_valid staking reward to user/penalty: 42692890284 101133750250
-// [EXPECTED] v2_valid distributed FOO to gov staker: 15018
+// [EXPECTED] v2_valid minted position: 3 liquidity: 1066865580
+// [EXPECTED] v2_valid mint amounts: 49995019 50000000
+// [EXPECTED] v2_valid swap in/out: 1000000 -989093
+// [EXPECTED] v2_valid staking reward to user/penalty: 42692363335 101132501977
+// [EXPECTED] v2_valid distributed FOO to gov staker: 27001
 // [EXPECTED] v2_valid delegated amount: 1000000000
 // [EXPECTED] v2_valid delegation count: 4
 // [EXPECTED] v2_valid total delegated: 7800000000
@@ -1644,15 +1708,15 @@ func finalInvariants(cur realm) {
 //
 // [SCENARIO] 19. Wind down: end incentive, unstake, remove tier
 // [EXPECTED] incentive refunded: true
-// [EXPECTED] incentive distributed: 69697221
-// [EXPECTED] collected incentive penalty: 107070652
+// [EXPECTED] incentive distributed: 69697761
+// [EXPECTED] collected incentive penalty: 107071913
 // [EXPECTED] position 1 staked after unstake: false
 // [EXPECTED] position 1 owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] position 1 operator cleared: true
 // [EXPECTED] allowed token count after removal: 2
 // [EXPECTED] pool tier after removal: 0
-// [EXPECTED] pool protocol fees before: 313 186
-// [EXPECTED] collected protocol fees: 313 186
+// [EXPECTED] pool protocol fees before: 562 438
+// [EXPECTED] collected protocol fees: 562 438
 // [EXPECTED] pool protocol fees after: 0 0
 // [EXPECTED] launchpad project ended: true
 // [EXPECTED] launchpad leftover transferred: 900000001
@@ -1660,11 +1724,11 @@ func finalInvariants(cur realm) {
 // [SCENARIO] 20. Final invariants
 // [EXPECTED] pool count: 2
 // [EXPECTED] position count: 3
-// [EXPECTED] total emission sent: 19960011592312
+// [EXPECTED] total emission sent: 19960224142687
 // [EXPECTED] gov staker total delegated: 7800000000
 // [EXPECTED] governance proposal count: 4
 // [EXPECTED] launchpad project count: 1
-// [EXPECTED] incentive total/distributed/remaining/penalty: 1500000000 713588362 500166223 179174763
+// [EXPECTED] incentive total/distributed/remaining/penalty: 1500000000 713594326 500158844 179174917
 // [EXPECTED] pool impl: gno.land/r/gnoswap/pool/v2_valid
 // [EXPECTED] position impl: gno.land/r/gnoswap/position/v2_valid
 // [EXPECTED] router impl: gno.land/r/gnoswap/router/v2_valid
