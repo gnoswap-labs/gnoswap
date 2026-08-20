@@ -171,16 +171,15 @@ func latestPoolRewardCache() int64 {
 		panic("pool reward cache is empty")
 	}
 
-	ids := sr.GetPoolRewardCacheIDs(halvingCachePoolPath, 0, count)
-	if len(ids) == 0 {
-		panic("pool reward cache ids not found")
-	}
+	// Cache keys are zero-padded timestamps, so the last entry is the latest one.
+	latestId := int64(-1)
+	sr.GetPoolRewardCaches(halvingCachePoolPath).ReverseIterateByOffset(0, 1, func(key string, _ any) bool {
+		latestId = sr.DecodeInt64(key)
+		return true
+	})
 
-	latestId := ids[0]
-	for _, id := range ids {
-		if id > latestId {
-			latestId = id
-		}
+	if latestId < 0 {
+		panic("pool reward cache ids not found")
 	}
 
 	return sr.GetPoolRewardCache(halvingCachePoolPath, uint64(latestId))

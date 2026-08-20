@@ -3,6 +3,7 @@ package staker
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 type IStaker interface {
@@ -43,15 +44,15 @@ type IStakerManager interface {
 type IStakerGetter interface {
 	GetPool(poolPath string) *Pool
 	GetPoolRewardCacheCount(poolPath string) uint64
-	GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64
+	GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree
 	GetPoolRewardCache(poolPath string, timestamp uint64) int64
 	GetPoolIncentiveCount(poolPath string) uint64
-	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
+	GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree
 	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
-	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
+	GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree
 	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string
 	GetPoolHistoricalTickCount(poolPath string) uint64
-	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
+	GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree
 	GetPoolHistoricalTick(poolPath string, tick uint64) int32
 	GetIncentive(poolPath string, incentiveId string) *ExternalIncentive
 	GetDeposit(lpTokenId uint64) *Deposit

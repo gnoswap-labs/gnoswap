@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -431,18 +432,14 @@ func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
 	return uint64(pool.RewardCache().Size())
 }
 
-// GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
-func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+// GetPoolRewardCaches returns a read-only view of a pool's reward cache, keyed
+// by the encoded block timestamp.
+func (s *stakerV1) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	pool := s.getPoolByPoolPath(poolPath)
-	rewardCache := pool.RewardCache()
 
-	ids := make([]int64, 0)
-	rewardCache.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But the cached rewards are plain int64 values, so we can return them as is.
+	return pool.RewardCache().ReadOnly(nil)
 }
 
 // GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
@@ -467,18 +464,11 @@ func (s *stakerV1) GetPoolIncentiveCount(poolPath string) uint64 {
 	return uint64(pool.Incentives().IncentiveTrees().Size())
 }
 
-// GetPoolIncentiveIDs returns a paginated list of incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+// GetPoolIncentives returns a read-only view of a pool's external incentives,
+// keyed by incentive ID.
+func (s *stakerV1) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	pool := s.getPoolByPoolPath(poolPath)
-	incentives := pool.Incentives().IncentiveTrees()
-
-	ids := make([]string, 0)
-	incentives.IterateByOffset(offset, count, func(key string, _ any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
+	return rotree.Wrap(pool.Incentives().IncentiveTrees(), cloneExternalIncentiveEntry)
 }
 
 // GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
@@ -487,18 +477,14 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) ui
 	return uint64(pool.GlobalRewardRatioAccumulation().Size())
 }
 
-// GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+// GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's
+// global reward ratio accumulation, keyed by the encoded block timestamp.
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
 	pool := s.getPoolByPoolPath(poolPath)
-	accumulation := pool.GlobalRewardRatioAccumulation()
 
-	ids := make([]uint64, 0)
-	accumulation.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, uint64(key))
-		return false
-	})
-
-	return ids
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But the accumulations are plain strings, so we can return them as is.
+	return pool.GlobalRewardRatioAccumulation().ReadOnly(nil)
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
@@ -523,22 +509,14 @@ func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) uint64 {
 	return uint64(pool.HistoricalTick().Size())
 }
 
-// GetPoolHistoricalTickIDs returns a paginated list of historical tick values for a pool.
-func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+// GetPoolHistoricalTicks returns a read-only view of a pool's historical ticks,
+// keyed by the encoded block timestamp with the int32 tick as the value.
+func (s *stakerV1) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	pool := s.getPoolByPoolPath(poolPath)
-	historicalTick := pool.HistoricalTick()
 
-	ticks := make([]int32, 0)
-	historicalTick.IterateByOffset(offset, count, func(_ int64, value any) bool {
-		tickId, ok := value.(int32)
-		if !ok {
-			return false
-		}
-		ticks = append(ticks, tickId)
-		return false
-	})
-
-	return ticks
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But the ticks are plain int32 values, so we can return them as is.
+	return pool.HistoricalTick().ReadOnly(nil)
 }
 
 // GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.

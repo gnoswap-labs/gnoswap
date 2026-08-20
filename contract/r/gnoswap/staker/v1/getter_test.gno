@@ -3,6 +3,7 @@ package staker
 import (
 	"testing"
 
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -629,9 +630,10 @@ func TestGetterPoolRewardCache(cur realm, t *testing.T) {
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
 	uassert.Equal(t, uint64(3), count) // NewPool initializes with fixedTimestamp, which gets overwritten
 
-	// Test IDs pagination
-	ids := state.instance.GetPoolRewardCacheIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ids))
+	// Test pagination through the read-only view
+	keys := collectKeys(state.instance.GetPoolRewardCaches(state.poolPath), 0, 2)
+	uassert.Equal(t, 2, len(keys))
+	uassert.Equal(t, sr.EncodeInt64(state.fixedTimestamp), keys[0])
 
 	// Test get specific cache value
 	cacheValue := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp))
@@ -667,18 +669,23 @@ func TestGetterPoolIncentive(cur realm, t *testing.T) {
 	count := state.instance.GetPoolIncentiveCount(state.poolPath)
 	uassert.Equal(t, uint64(2), count)
 
-	// Test IDs pagination
-	ids := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 10)
+	// Test pagination through the read-only view
+	incentives := state.instance.GetPoolIncentives(state.poolPath)
+	ids := collectKeys(incentives, 0, 10)
 	uassert.Equal(t, 2, len(ids))
 	uassert.True(t, contains(ids, state.incentiveId))
 	uassert.True(t, contains(ids, "test-incentive-2"))
 
 	// Test pagination with offset
-	idsPage1 := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 1)
-	uassert.Equal(t, 1, len(idsPage1))
+	uassert.Equal(t, 1, len(collectKeys(incentives, 0, 1)))
+	uassert.Equal(t, 1, len(collectKeys(incentives, 1, 1)))
 
-	idsPage2 := state.instance.GetPoolIncentiveIDs(state.poolPath, 1, 1)
-	uassert.Equal(t, 1, len(idsPage2))
+	// Entries are cloned, so a reader cannot reach the stored incentive.
+	first, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
+	second, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
+	uassert.False(t, first == second)
 }
 
 func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
@@ -697,9 +704,9 @@ func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
 	uassert.Equal(t, uint64(4), count) // 3 new entries + 1 initial entry from NewPool
 
-	// Test IDs pagination
-	ids := state.instance.GetPoolGlobalRewardRatioAccumulationIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ids))
+	// Test pagination through the read-only view
+	keys := collectKeys(state.instance.GetPoolGlobalRewardRatioAccumulations(state.poolPath), 0, 2)
+	uassert.Equal(t, 2, len(keys))
 
 	// Test get specific accumulation value
 	accValue := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+100))
@@ -725,9 +732,10 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)
 	uassert.Equal(t, uint64(3), count)
 
-	// Test IDs pagination
-	ticks := state.instance.GetPoolHistoricalTickIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ticks))
+	// Test pagination through the read-only view
+	historicalTicks := state.instance.GetPoolHistoricalTicks(state.poolPath)
+	uassert.Equal(t, 2, len(collectKeys(historicalTicks, 0, 2)))
+	uassert.Equal(t, int32(-100), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp)).(int32))
 
 	// Test get specific tick value
 	tickValue := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp))
@@ -739,4 +747,15 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	// Test non-existent timestamp
 	nonExistent := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+9999))
 	uassert.Equal(t, int32(0), nonExistent)
+}
+
+// collectKeys paginates a read-only tree and returns the visited keys.
+func collectKeys(tree *rotree.ReadOnlyTree, offset, count int) []string {
+	keys := make([]string, 0, count)
+	tree.IterateByOffset(offset, count, func(key string, _ any) bool {
+		keys = append(keys, key)
+		return false
+	})
+
+	return keys
 }
