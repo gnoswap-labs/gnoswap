@@ -341,3 +341,7 @@ func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int
 func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
 	return t.instance.GetPoolHistoricalTick(poolPath, tick)
 }
+
+func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {
+	return t.instance.GetPendingProtocolFees()
+}

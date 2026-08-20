@@ -115,7 +115,6 @@ func (i *poolV1) CreatePool(
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 		gns.TransferFrom(cross(rlm), previousRealmAddr, poolAddr, poolCreationFee)
-		i.addPendingProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
@@ -126,7 +125,8 @@ func (i *poolV1) CreatePool(
 			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}
-	i.addToProtocolFee(0, rlm)
+
+	i.settleProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(

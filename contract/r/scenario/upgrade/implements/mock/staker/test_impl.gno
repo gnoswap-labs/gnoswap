@@ -722,3 +722,10 @@ func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
 		poolPath, tick,
 	).(int32)
 }
+
+func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {
+	return t.ExecuteFn(
+		"GetPendingProtocolFees",
+		func(args ...any) any { return t.instance.GetPendingProtocolFees() },
+	).(map[string]int64)
+}

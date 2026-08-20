@@ -91,3 +91,10 @@ func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 	}
 	t.instance.SetSwapFee(0, rlm, fee)
 }
+
+func (t *TestRouter) GetPendingProtocolFees() map[string]int64 {
+	if !t.isActive("GetPendingProtocolFees") {
+		panic("test implementation: GetPendingProtocolFees not supported")
+	}
+	return t.instance.GetPendingProtocolFees()
+}

@@ -100,6 +100,7 @@ type IStakerGetter interface {
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() uint64
+	GetPendingProtocolFees() map[string]int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string

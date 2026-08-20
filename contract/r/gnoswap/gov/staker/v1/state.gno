@@ -397,14 +397,12 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross(rlm))
-
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -418,7 +416,7 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return nil
 }
@@ -431,14 +429,12 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross(rlm))
-
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -451,7 +447,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return nil
 }
@@ -467,14 +463,16 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
 func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address string, currentTimestamp int64) (map[string]int64, error) {
+	// Claiming pays out of gov/staker's own balance, so the reserved fees are pulled in
+	// from the protocol fee realm first. The stake-change paths need no transfer.
 	pf.DistributeProtocolFee(cross(rlm))
 
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return nil, err
 	}
 
@@ -488,21 +486,21 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return rewards, nil
 }
 
-// claimDistributedProtocolFeeRewardByTokenPath processes an observed protocol fee distribution for one token.
-func (g *govStakerV1) claimDistributedProtocolFeeRewardByTokenPath(address string, tokenPath string, distributedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
-	if distributedAmount == 0 {
+// claimAccruedProtocolFeeRewardByTokenPath processes an observed protocol fee accrual for one token.
+func (g *govStakerV1) claimAccruedProtocolFeeRewardByTokenPath(address string, tokenPath string, accruedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
+	if accruedAmount == 0 {
 		return nil, 0, false, nil
 	}
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, distributedAmount, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accruedAmount, currentTimestamp); err != nil {
 		return nil, 0, false, err
 	}
 
@@ -518,8 +516,8 @@ func (g *govStakerV1) claimDistributedProtocolFeeRewardByTokenPath(address strin
 func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
 	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
 
-	distributedAmount := pf.GetActualDistributedToGovStakerByTokenPath(tokenPath)
-	protocolFeeRewardManager, reward, processed, err := g.claimDistributedProtocolFeeRewardByTokenPath(address, tokenPath, distributedAmount, currentTimestamp)
+	accruedAmount := pf.ConsumeAccrualPendingProtocolFeeByTokenPath(cross(rlm), tokenPath)
+	protocolFeeRewardManager, reward, processed, err := g.claimAccruedProtocolFeeRewardByTokenPath(address, tokenPath, accruedAmount, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
@@ -531,18 +529,23 @@ func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, 
 		return 0, err
 	}
 
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: distributedAmount})
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: accruedAmount})
 
 	return reward, nil
 }
 
-// getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
-// This method queries the protocol fee contract for accumulated distributions.
+// getAccrualPendingProtocolFees retrieves the protocol fee amounts reserved for
+// gov/staker, limited to the tokens that collected a fee since the last accrual.
+//
+// The reserved amount is recorded when a fee reaches the protocol fee realm, before it
+// is transferred out, so accrual does not depend on a transfer happening. This is the
+// read-only counterpart of pf.ConsumeAccrualPendingProtocolFees: a query never advances
+// accrual state.
 //
 // Returns:
-//   - map[string]int64: distributed amounts by token path
-func (g *govStakerV1) getDistributedProtocolFees() map[string]int64 {
-	return pf.GetActualDistributedToGovStaker()
+//   - map[string]int64: accrued amounts by token path
+func (g *govStakerV1) getAccrualPendingProtocolFees() map[string]int64 {
+	return pf.GetAccrualPendingProtocolFees()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.

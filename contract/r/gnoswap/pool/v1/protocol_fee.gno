@@ -65,13 +65,17 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0Int64 := gnsmath.SafeConvertToInt64(fee0)
 	fee1Int64 := gnsmath.SafeConvertToInt64(fee1)
 
-	i.addPendingProtocolFee(0, rlm, token0Path, fee0Int64)
-	i.addPendingProtocolFee(0, rlm, token1Path, fee1Int64)
-	i.addToProtocolFee(0, rlm)
+	i.settleProtocolFee(0, rlm, token0Path, fee0Int64)
+	i.settleProtocolFee(0, rlm, token1Path, fee1Int64)
 	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
+}
+
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func (i *poolV1) GetPendingProtocolFees() map[string]int64 {
+	return i.store.GetPendingProtocolFees()
 }
 
 func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
@@ -79,39 +83,60 @@ func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amoun
 		return
 	}
 
+	// The stored map is readonly tainted here, so it is copied before being updated.
 	existingProtocolFees := i.store.GetPendingProtocolFees()
 	pendingProtocolFees := make(map[string]int64)
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
 		pendingProtocolFees[pendingTokenPath] = pendingAmount
 	}
+
 	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := i.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
 
-// addToProtocolFee sends pending pool protocol fees to the protocol fee realm.
-// It is best-effort: when protocol fee collection is halted, it keeps pending
-// storage unchanged; otherwise it rebuilds pending storage with only entries
-// that could not be added, removing successful and non-positive entries.
-func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
-	pendingProtocolFees := i.store.GetPendingProtocolFees()
-	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
+// every fee path makes even when the fee is zero.
+//
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
+func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
+	if halt.IsHaltedProtocolFee() {
+		i.addPendingProtocolFee(0, rlm, tokenPath, amount)
 		return
 	}
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	pendingProtocolFees := i.store.GetPendingProtocolFees()
+	pendingAmount, hasPending := pendingProtocolFees[tokenPath]
+	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
+
+	if totalAmount > 0 {
+		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, totalAmount)
+
+		// AddToProtocolFee only reports an error for a halted realm, which is handled
+		// above. The branch keeps the amount pending should that ever change.
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			i.addPendingProtocolFee(0, rlm, tokenPath, amount)
+			return
+		}
+	}
+
+	if !hasPending {
+		return
+	}
+
 	remainingProtocolFees := make(map[string]int64)
-	for tokenPath, amount := range pendingProtocolFees {
-		if amount <= 0 {
+	for pendingTokenPath, pending := range pendingProtocolFees {
+		if pendingTokenPath == tokenPath {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
-			remainingProtocolFees[tokenPath] = amount
-			continue
-		}
+		remainingProtocolFees[pendingTokenPath] = pending
 	}
 
 	if err := i.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {

@@ -29,12 +29,12 @@ func emitUpdateEmissionRewardAccumulation(manager *staker.EmissionRewardManager)
 }
 
 // emitUpdateProtocolFeeRewardAccumulation emits the persisted per-token protocol fee
-// reward accumulation state for every distributed token. Like the emission variant it
+// reward accumulation state for every accrued token. Like the emission variant it
 // must be emitted after every path that calls updateAccumulatedProtocolFeeX128PerStake
 // (add/remove/claim). protocolFeeAmount and the accumulator are read from the manager's
 // persisted state so the emitted tuple stays internally consistent.
-func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, distributedAmounts map[string]int64) {
-	for tokenPath := range distributedAmounts {
+func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, accruedAmounts map[string]int64) {
+	for tokenPath := range accruedAmounts {
 		accumulatedProtocolFeeX128PerStake := "0"
 		if acc := manager.GetAccumulatedProtocolFeeX128PerStake(tokenPath); acc != nil {
 			accumulatedProtocolFeeX128PerStake = acc.ToString()
