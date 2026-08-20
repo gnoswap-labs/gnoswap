@@ -25,7 +25,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, protocolF
 	// version package's, which would fail the kvStore ACL.
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			return errors.New(errSpoofedRealm)
+			panic(errors.New(errSpoofedRealm))
 		}
 
 		currentProtocolFeeStore, ok := domainStore.(IProtocolFeeStore)

@@ -63,6 +63,25 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokeLaunchpadInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(cur, t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokeLaunchpadInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 func TestUpgradeImpl(cur realm, t *testing.T) {
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
