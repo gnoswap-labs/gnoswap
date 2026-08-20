@@ -148,36 +148,13 @@ func NewProposal(
 	}
 }
 
-// CloneShallow copies a proposal without its type-specific data: data is left
-// nil.
+// Clone copies a proposal's own fields and leaves its type-specific data nil.
 //
-// It exists for the getter path only. Getters hand out a copy so a caller
-// cannot reach realm-owned state, but the read-only proposal view applies this
-// transformation to every entry it visits, and ProposalData carries the
-// execution message slice, so copying it would mean copying every message of
-// every proposal on a page.
-//
-// The omitted data is reachable through its own lookups instead:
-// GetProposalTypeByProposalId, GetProposalCommunityPoolSpendInfo, and
-// GetProposalExecutionInfo.
-func (p *Proposal) CloneShallow() *Proposal {
-	if p == nil {
-		return nil
-	}
-
-	return &Proposal{
-		id:            p.id,
-		proposer:      p.proposer,
-		configVersion: p.configVersion,
-		status:        p.status.Clone(),
-		metadata:      p.metadata.Clone(),
-		data:          nil,
-		snapshotTime:  p.snapshotTime,
-		createdHeight: p.createdHeight,
-	}
-}
-
-// Clone creates a deep copy of the Proposal.
+// The copy is shallow because the read-only proposal view clones every entry a
+// caller reads, and ProposalData carries the execution message slice, so
+// copying it would copy every message for each entry on a page. Read the data
+// through its own lookups instead: GetProposalTypeByProposalId,
+// GetProposalCommunityPoolSpendInfo, and GetProposalExecutionInfo.
 func (p *Proposal) Clone() *Proposal {
 	if p == nil {
 		return nil
@@ -189,7 +166,7 @@ func (p *Proposal) Clone() *Proposal {
 		configVersion: p.configVersion,
 		status:        p.status.Clone(),
 		metadata:      p.metadata.Clone(),
-		data:          p.data.Clone(),
+		data:          nil,
 		snapshotTime:  p.snapshotTime,
 		createdHeight: p.createdHeight,
 	}
