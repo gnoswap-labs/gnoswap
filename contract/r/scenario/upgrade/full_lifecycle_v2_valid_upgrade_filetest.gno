@@ -211,11 +211,13 @@ type upgradeSnapshot struct {
 	stakerUnstakingFee uint64
 	stakerDepositGns   int64
 	stakerAllowedToken int
+	stakerAllowedList  []string
 	depositLiquidity   string
 	depositStakeTime   int64
 	depositTickLower   int32
 	depositTickUpper   int32
 	depositWarmupCount int
+	depositWarmups     []staker.Warmup
 	depositCollected   int64
 	totalEmissionSent  int64
 	incentiveTotal     int64
@@ -1139,11 +1141,13 @@ func captureSnapshot() upgradeSnapshot {
 		stakerUnstakingFee: staker.GetUnstakingFee(),
 		stakerDepositGns:   staker.GetDepositGnsAmount(),
 		stakerAllowedToken: len(staker.GetAllowedTokens()),
+		stakerAllowedList:  staker.GetAllowedTokens(),
 		depositLiquidity:   staker.GetDepositLiquidityAsString(1),
 		depositStakeTime:   staker.GetDepositStakeTime(1),
 		depositTickLower:   staker.GetDepositTickLower(1),
 		depositTickUpper:   staker.GetDepositTickUpper(1),
 		depositWarmupCount: len(staker.GetDepositWarmUp(1)),
+		depositWarmups:     staker.GetDepositWarmUp(1),
 		depositCollected:   staker.GetDepositCollectedInternalReward(1),
 		totalEmissionSent:  staker.GetTotalEmissionSent(),
 		incentiveTotal:     staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId),
@@ -1199,6 +1203,13 @@ func printSnapshot(s upgradeSnapshot) {
 	println("[EXPECTED] proposal ids:", len(s.proposalIDs), "delegation ids:", len(s.delegationIDs))
 	println("[EXPECTED] param proposal yea / nay / status:", s.paramProposalYea, s.paramProposalNay, s.paramProposalState)
 	println("[EXPECTED] launchpad project active:", s.projectActive)
+	for _, tokenPath := range s.stakerAllowedList {
+		println("[EXPECTED] staker allowed token:", tokenPath)
+	}
+	for i, warmup := range s.depositWarmups {
+		println("[EXPECTED] deposit warmup", i, "duration / nextWarmupTime / ratio:",
+			warmup.TimeDuration, warmup.NextWarmupTime, warmup.WarmupRatio)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1314,6 +1325,18 @@ func validateSnapshotUnchanged() {
 	uassert.Equal(t, len(snap.proposalIDs), len(after.proposalIDs))
 	for i, id := range snap.proposalIDs {
 		uassert.Equal(t, id, after.proposalIDs[i])
+	}
+	uassert.Equal(t, len(snap.stakerAllowedList), len(after.stakerAllowedList))
+	for i, tokenPath := range snap.stakerAllowedList {
+		uassert.Equal(t, tokenPath, after.stakerAllowedList[i])
+	}
+	// warm-up records carry the reward ratio schedule, so every field of every
+	// tier is compared, not just how many tiers there are
+	uassert.Equal(t, len(snap.depositWarmups), len(after.depositWarmups))
+	for i, warmup := range snap.depositWarmups {
+		uassert.Equal(t, warmup.TimeDuration, after.depositWarmups[i].TimeDuration)
+		uassert.Equal(t, warmup.NextWarmupTime, after.depositWarmups[i].NextWarmupTime)
+		uassert.Equal(t, warmup.WarmupRatio, after.depositWarmups[i].WarmupRatio)
 	}
 
 	println("[EXPECTED] every snapshot field is identical after the upgrade")
@@ -1679,6 +1702,13 @@ func finalInvariants(cur realm) {
 // [EXPECTED] proposal ids: 3 delegation ids: 3
 // [EXPECTED] param proposal yea / nay / status: 6500000000 0 executed
 // [EXPECTED] launchpad project active: true
+// [EXPECTED] staker allowed token: gno.land/r/gnoswap/gns.GNS
+// [EXPECTED] staker allowed token: gno.land/r/gnoland/wugnot.wugnot
+// [EXPECTED] staker allowed token: gno.land/r/onbloc/bar.BAR
+// [EXPECTED] deposit warmup 0 duration / nextWarmupTime / ratio: 432000 1234999970 30
+// [EXPECTED] deposit warmup 1 duration / nextWarmupTime / ratio: 864000 1235863970 50
+// [EXPECTED] deposit warmup 2 duration / nextWarmupTime / ratio: 2592000 1238455970 70
+// [EXPECTED] deposit warmup 3 duration / nextWarmupTime / ratio: 9223372036854775807 9223372036854775807 100
 //
 // [SCENARIO] 16. Upgrade all eight implementations to v2_valid
 // [EXPECTED] pool impl: gno.land/r/gnoswap/pool/v2_valid
