@@ -36,7 +36,10 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" || !pool.ExistsPoolPath(poolPath) {
 		return false
 	}
