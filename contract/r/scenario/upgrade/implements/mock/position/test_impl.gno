@@ -89,6 +89,14 @@ func (t *TestPosition) ExecuteFn(fnName string, actualFn func(args ...any) any, 
 	return fn(args...)
 }
 
+func getterError(result []any, index int) error {
+	if result[index] == nil {
+		return nil
+	}
+
+	return result[index].(error)
+}
+
 // IPositionManager interface
 func (t *TestPosition) Mint(_ int, rlm realm, token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, referrer string) (uint64, string, string, string) {
 	result := t.ExecuteFn(
@@ -189,122 +197,170 @@ func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) 
 	return result[0].(position.Position), result[1].(bool)
 }
 
-func (t *TestPosition) IsBurned(positionId uint64) bool {
-	return t.ExecuteFn(
+func (t *TestPosition) IsBurned(positionId uint64) (bool, error) {
+	result := t.ExecuteFn(
 		"IsBurned",
-		func(args ...any) any { return t.instance.IsBurned(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.IsBurned(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(bool)
+	).([]any)
+	return result[0].(bool), getterError(result, 1)
 }
 
-func (t *TestPosition) IsInRange(positionId uint64) bool {
-	return t.ExecuteFn(
+func (t *TestPosition) IsInRange(positionId uint64) (bool, error) {
+	result := t.ExecuteFn(
 		"IsInRange",
-		func(args ...any) any { return t.instance.IsInRange(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.IsInRange(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(bool)
+	).([]any)
+	return result[0].(bool), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionOperator(positionId uint64) address {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionOperator(positionId uint64) (address, error) {
+	result := t.ExecuteFn(
 		"GetPositionOperator",
-		func(args ...any) any { return t.instance.GetPositionOperator(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionOperator(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(address)
+	).([]any)
+	return result[0].(address), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionPoolKey(positionId uint64) string {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionPoolKey(positionId uint64) (string, error) {
+	result := t.ExecuteFn(
 		"GetPositionPoolKey",
-		func(args ...any) any { return t.instance.GetPositionPoolKey(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionPoolKey(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(string)
+	).([]any)
+	return result[0].(string), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionTickLower(positionId uint64) int32 {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionTickLower(positionId uint64) (int32, error) {
+	result := t.ExecuteFn(
 		"GetPositionTickLower",
-		func(args ...any) any { return t.instance.GetPositionTickLower(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionTickLower(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(int32)
+	).([]any)
+	return result[0].(int32), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionTickUpper(positionId uint64) int32 {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionTickUpper(positionId uint64) (int32, error) {
+	result := t.ExecuteFn(
 		"GetPositionTickUpper",
-		func(args ...any) any { return t.instance.GetPositionTickUpper(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionTickUpper(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(int32)
+	).([]any)
+	return result[0].(int32), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionLiquidity(positionId uint64) (string, error) {
+	result := t.ExecuteFn(
 		"GetPositionLiquidity",
-		func(args ...any) any { return t.instance.GetPositionLiquidity(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionLiquidity(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(string)
+	).([]any)
+	return result[0].(string), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	result := t.ExecuteFn(
 		"GetPositionTokenBalances",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetPositionTokenBalances(args[0].(uint64))
-			return []any{r1, r2}
+			r1, r2, err := t.instance.GetPositionTokenBalances(args[0].(uint64))
+			return []any{r1, r2, err}
 		},
 		positionId,
 	).([]any)
-	return result[0].(int64), result[1].(int64)
+	return result[0].(int64), result[1].(int64), getterError(result, 2)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
+	result := t.ExecuteFn(
 		"GetPositionFeeGrowthInside0LastX128",
-		func(args ...any) any { return t.instance.GetPositionFeeGrowthInside0LastX128(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionFeeGrowthInside0LastX128(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(string)
+	).([]any)
+	return result[0].(string), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
+	result := t.ExecuteFn(
 		"GetPositionFeeGrowthInside1LastX128",
-		func(args ...any) any { return t.instance.GetPositionFeeGrowthInside1LastX128(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionFeeGrowthInside1LastX128(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(string)
+	).([]any)
+	return result[0].(string), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) (int64, error) {
+	result := t.ExecuteFn(
 		"GetPositionTokensOwed0",
-		func(args ...any) any { return t.instance.GetPositionTokensOwed0(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionTokensOwed0(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(int64)
+	).([]any)
+	return result[0].(int64), getterError(result, 1)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) (int64, error) {
+	result := t.ExecuteFn(
 		"GetPositionTokensOwed1",
-		func(args ...any) any { return t.instance.GetPositionTokensOwed1(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionTokensOwed1(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(int64)
+	).([]any)
+	return result[0].(int64), getterError(result, 1)
 }
 
-func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
 	result := t.ExecuteFn(
 		"GetUnclaimedFee",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetUnclaimedFee(args[0].(uint64))
-			return []any{r1, r2}
+			r1, r2, err := t.instance.GetUnclaimedFee(args[0].(uint64))
+			return []any{r1, r2, err}
 		},
 		positionId,
 	).([]any)
-	return result[0].(*u256.Uint), result[1].(*u256.Uint)
+	return result[0].(*u256.Uint), result[1].(*u256.Uint), getterError(result, 2)
 }
 
-func (t *TestPosition) GetPositionOwner(positionId uint64) address {
-	return t.ExecuteFn(
+func (t *TestPosition) GetPositionOwner(positionId uint64) (address, error) {
+	result := t.ExecuteFn(
 		"GetPositionOwner",
-		func(args ...any) any { return t.instance.GetPositionOwner(args[0].(uint64)) },
+		func(args ...any) any {
+			value, err := t.instance.GetPositionOwner(args[0].(uint64))
+			return []any{value, err}
+		},
 		positionId,
-	).(address)
+	).([]any)
+	return result[0].(address), getterError(result, 1)
 }
