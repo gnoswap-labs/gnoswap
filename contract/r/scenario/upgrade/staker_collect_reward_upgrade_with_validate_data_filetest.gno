@@ -152,17 +152,48 @@ func main(cur realm) {
 }
 
 func captureV1Snapshot() {
-	v1DepositOwner = staker.GetDepositOwner(positionId)
-	v1DepositPoolPath = staker.GetDepositTargetPoolPath(positionId)
-	v1DepositLiquidity = staker.GetDepositLiquidityAsString(positionId)
-	v1DepositStakeTime = staker.GetDepositStakeTime(positionId)
-	v1DepositTickLower = staker.GetDepositTickLower(positionId)
-	v1DepositTickUpper = staker.GetDepositTickUpper(positionId)
-	v1DepositWarmupCount = len(staker.GetDepositWarmUp(positionId))
-	v1CollectedInternal = staker.GetDepositCollectedInternalReward(positionId)
+	v1DepositOwner, err := staker.GetDepositOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositPoolPath, err = staker.GetDepositTargetPoolPath(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositLiquidity, err = staker.GetDepositLiquidityAsString(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositStakeTime, err = staker.GetDepositStakeTime(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositTickLower, err = staker.GetDepositTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositTickUpper, err = staker.GetDepositTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	warmUp, err := staker.GetDepositWarmUp(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1DepositWarmupCount = len(warmUp)
+	v1CollectedInternal, err = staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
 	v1PoolTier = staker.GetPoolTier(barFoo500PoolPath)
-	v1PoolTierRatio = staker.GetPoolTierRatio(barFoo500PoolPath)
-	v1PoolStakedLiq = staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	v1PoolTierRatio, err = staker.GetPoolTierRatio(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolStakedLiq, err = staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	v1UnstakingFee = staker.GetUnstakingFee()
 	v1DepositGnsAmount = staker.GetDepositGnsAmount()
 	v1AllowedTokenCount = len(staker.GetAllowedTokens())
@@ -192,52 +223,140 @@ func captureV1Snapshot() {
 // they grew, after a fresh collection, would let a reset-then-refilled ledger
 // pass.
 func validateExactAfterUpgrade() {
-	uassert.Equal(t, v1DepositOwner, staker.GetDepositOwner(positionId))
-	uassert.Equal(t, v1DepositPoolPath, staker.GetDepositTargetPoolPath(positionId))
-	uassert.Equal(t, v1DepositLiquidity, staker.GetDepositLiquidityAsString(positionId))
-	uassert.Equal(t, v1DepositStakeTime, staker.GetDepositStakeTime(positionId))
-	uassert.Equal(t, v1DepositTickLower, staker.GetDepositTickLower(positionId))
-	uassert.Equal(t, v1DepositTickUpper, staker.GetDepositTickUpper(positionId))
-	uassert.Equal(t, v1DepositWarmupCount, len(staker.GetDepositWarmUp(positionId)))
-	uassert.Equal(t, v1CollectedInternal, staker.GetDepositCollectedInternalReward(positionId))
+	depositOwner, err := staker.GetDepositOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositOwner, depositOwner)
+	depositPoolPath, err := staker.GetDepositTargetPoolPath(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositPoolPath, depositPoolPath)
+	depositLiquidity, err := staker.GetDepositLiquidityAsString(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositLiquidity, depositLiquidity)
+	depositStakeTime, err := staker.GetDepositStakeTime(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositStakeTime, depositStakeTime)
+	depositTickLower, err := staker.GetDepositTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositTickLower, depositTickLower)
+	depositTickUpper, err := staker.GetDepositTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositTickUpper, depositTickUpper)
+	warmUp, err := staker.GetDepositWarmUp(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositWarmupCount, len(warmUp))
+	collectedInternalReward, err := staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1CollectedInternal, collectedInternalReward)
 	uassert.Equal(t, v1TotalEmissionSent, staker.GetTotalEmissionSent())
 	uassert.Equal(t, v1PoolTier, staker.GetPoolTier(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolTierRatio, staker.GetPoolTierRatio(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolStakedLiq, staker.GetPoolStakedLiquidity(barFoo500PoolPath))
+	poolTierRatio, err := staker.GetPoolTierRatio(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1PoolTierRatio, poolTierRatio)
+	poolStakedLiquidity, err := staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1PoolStakedLiq, poolStakedLiquidity)
 	uassert.Equal(t, v1UnstakingFee, staker.GetUnstakingFee())
 	uassert.Equal(t, v1DepositGnsAmount, staker.GetDepositGnsAmount())
 	uassert.Equal(t, v1AllowedTokenCount, len(staker.GetAllowedTokens()))
 	uassert.True(t, staker.IsStaked(positionId))
 
 	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
-	println("[EXPECTED] Collected internal reward:", staker.GetDepositCollectedInternalReward(positionId))
+	collectedInternalReward, err = staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] Collected internal reward:", collectedInternalReward)
 	println("[EXPECTED] Total emission sent:", staker.GetTotalEmissionSent())
 }
 
 func validateAccrualAfterUpgrade() {
 	// deposit identity is immutable across upgrades
-	uassert.Equal(t, v1DepositOwner, staker.GetDepositOwner(positionId))
-	uassert.Equal(t, v1DepositPoolPath, staker.GetDepositTargetPoolPath(positionId))
-	uassert.Equal(t, v1DepositLiquidity, staker.GetDepositLiquidityAsString(positionId))
-	uassert.Equal(t, v1DepositStakeTime, staker.GetDepositStakeTime(positionId))
-	uassert.Equal(t, v1DepositTickLower, staker.GetDepositTickLower(positionId))
-	uassert.Equal(t, v1DepositTickUpper, staker.GetDepositTickUpper(positionId))
-	uassert.Equal(t, v1DepositWarmupCount, len(staker.GetDepositWarmUp(positionId)))
+	depositOwner, err := staker.GetDepositOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositOwner, depositOwner)
+	depositPoolPath, err := staker.GetDepositTargetPoolPath(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositPoolPath, depositPoolPath)
+	depositLiquidity, err := staker.GetDepositLiquidityAsString(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositLiquidity, depositLiquidity)
+	depositStakeTime, err := staker.GetDepositStakeTime(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositStakeTime, depositStakeTime)
+	depositTickLower, err := staker.GetDepositTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositTickLower, depositTickLower)
+	depositTickUpper, err := staker.GetDepositTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositTickUpper, depositTickUpper)
+	warmUp, err := staker.GetDepositWarmUp(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1DepositWarmupCount, len(warmUp))
 	uassert.Equal(t, v1PoolTier, staker.GetPoolTier(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolTierRatio, staker.GetPoolTierRatio(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolStakedLiq, staker.GetPoolStakedLiquidity(barFoo500PoolPath))
+	poolTierRatio, err := staker.GetPoolTierRatio(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1PoolTierRatio, poolTierRatio)
+	poolStakedLiquidity, err := staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, v1PoolStakedLiq, poolStakedLiquidity)
 	uassert.Equal(t, v1UnstakingFee, staker.GetUnstakingFee())
 	uassert.Equal(t, v1DepositGnsAmount, staker.GetDepositGnsAmount())
 	uassert.Equal(t, v1AllowedTokenCount, len(staker.GetAllowedTokens()))
 	uassert.True(t, staker.IsStaked(positionId))
 
 	// reward ledgers only ever move forward
-	uassert.True(t, staker.GetDepositCollectedInternalReward(positionId) > v1CollectedInternal)
+	collectedInternalReward, err := staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.True(t, collectedInternalReward > v1CollectedInternal)
 	uassert.True(t, staker.GetTotalEmissionSent() > v1TotalEmissionSent)
 
 	println("[EXPECTED] Deposit identity data is unchanged after the upgrades")
+	collectedInternalReward, err = staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] Collected internal reward grew from", v1CollectedInternal,
-		"to", staker.GetDepositCollectedInternalReward(positionId))
+		"to", collectedInternalReward)
 	println("[EXPECTED] Total emission sent grew from", v1TotalEmissionSent,
 		"to", staker.GetTotalEmissionSent())
 }
@@ -320,9 +439,18 @@ func checkStakingInfo(cur realm, positionId uint64) {
 	println("[EXPECTED] Is staked:", isStaked)
 
 	if isStaked {
-		targetPoolPath := staker.GetDepositTargetPoolPath(positionId)
-		liquidity := staker.GetDepositLiquidityAsString(positionId)
-		stakeTime := staker.GetDepositStakeTime(positionId)
+		targetPoolPath, err := staker.GetDepositTargetPoolPath(positionId)
+		if err != nil {
+			panic(err)
+		}
+		liquidity, err := staker.GetDepositLiquidityAsString(positionId)
+		if err != nil {
+			panic(err)
+		}
+		stakeTime, err := staker.GetDepositStakeTime(positionId)
+		if err != nil {
+			panic(err)
+		}
 
 		println("[EXPECTED] Target pool path:", targetPoolPath)
 		println("[EXPECTED] Staked liquidity:", liquidity)

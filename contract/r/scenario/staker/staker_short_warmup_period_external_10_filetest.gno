@@ -159,7 +159,7 @@ func mintBarQux100Position1(cur realm) {
 		panic("position ID should be 1")
 	}
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
@@ -268,7 +268,7 @@ func mintAndStakePosition2(cur realm) {
 		panic("position ID should be 2")
 	}
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
@@ -334,6 +334,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

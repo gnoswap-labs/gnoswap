@@ -213,8 +213,8 @@ func collectRewards(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CollectReward(cross(cur), 1)
 
-	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
-	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyAfterCollect, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	distributedAfterCollect, _ := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] after CollectReward:\n")
 	ufmt.Printf("  - accumulatedPenaltyAmount: %d\n", penaltyAfterCollect)
@@ -245,7 +245,7 @@ func endIncentive(cur realm) {
 
 func collectPenalty(cur realm) {
 	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
-	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyBefore, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
@@ -256,7 +256,7 @@ func collectPenalty(cur realm) {
 	)
 
 	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
-	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyAfter, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] penalty before collection: %d\n", penaltyBefore)
 	ufmt.Printf("[INFO] penalty collected: %d\n", collected)

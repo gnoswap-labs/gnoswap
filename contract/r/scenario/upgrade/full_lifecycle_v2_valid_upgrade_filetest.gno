@@ -865,22 +865,50 @@ func stakerSetup(cur realm) {
 	staker.CreateExternalIncentive(cross(cur), barFoo500PoolPath, gnsPath, incentiveReward, startTime, endTime)
 	testing.SkipHeights(1)
 
+	incentiveRewardToken, err := staker.GetIncentiveRewardToken(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveTotalReward, err := staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveCreator, err := staker.GetIncentiveCreator(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveDepositGns, err := staker.GetIncentiveDepositGnsAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] incentive id:", externalIncentiveId)
-	println("[EXPECTED] incentive reward token:", staker.GetIncentiveRewardToken(barFoo500PoolPath, externalIncentiveId))
-	println("[EXPECTED] incentive total reward:", staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId))
-	println("[EXPECTED] incentive creator:", staker.GetIncentiveCreator(barFoo500PoolPath, externalIncentiveId))
-	println("[EXPECTED] incentive deposit gns:", staker.GetIncentiveDepositGnsAmount(barFoo500PoolPath, externalIncentiveId))
+	println("[EXPECTED] incentive reward token:", incentiveRewardToken)
+	println("[EXPECTED] incentive total reward:", incentiveTotalReward)
+	println("[EXPECTED] incentive creator:", incentiveCreator)
+	println("[EXPECTED] incentive deposit gns:", incentiveDepositGns)
 
 	// stake position 1; staker takes NFT custody and becomes the position operator
 	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID("1"))
 	lpTokenId := staker.StakeToken(cross(cur), 1, "")
 	testing.SkipHeights(1)
 
+	depositOwner, err := staker.GetDepositOwner(1)
+	if err != nil {
+		panic(err)
+	}
+	depositLiquidity, err := staker.GetDepositLiquidityAsString(1)
+	if err != nil {
+		panic(err)
+	}
+	depositTargetPool, err := staker.GetDepositTargetPoolPath(1)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] staked position 1 into:", lpTokenId)
 	println("[EXPECTED] is staked:", staker.IsStaked(1))
-	println("[EXPECTED] deposit owner:", staker.GetDepositOwner(1))
-	println("[EXPECTED] deposit liquidity:", staker.GetDepositLiquidityAsString(1))
-	println("[EXPECTED] deposit target pool:", staker.GetDepositTargetPoolPath(1))
+	println("[EXPECTED] deposit owner:", depositOwner)
+	println("[EXPECTED] deposit liquidity:", depositLiquidity)
+	println("[EXPECTED] deposit target pool:", depositTargetPool)
 	// StakeToken routes position.SetPositionOperator (staker-only entry point)
 	// and records the staking caller as the position operator.
 	positionOperator, err := position.GetPositionOperator(1)
@@ -888,13 +916,17 @@ func stakerSetup(cur realm) {
 		panic(err)
 	}
 	println("[EXPECTED] position operator after stake is the staker caller:", positionOperator == adminAddr)
-	println("[EXPECTED] pool staked liquidity:", staker.GetPoolStakedLiquidity(barFoo500PoolPath))
+	poolStakedLiquidity, err := staker.GetPoolStakedLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] pool staked liquidity:", poolStakedLiquidity)
 
 	uassert.Equal(t, uint64(1), staker.GetPoolTier(barFoo500PoolPath))
 	uassert.True(t, staker.IsStaked(1))
-	uassert.Equal(t, adminAddr, staker.GetDepositOwner(1))
+	uassert.Equal(t, adminAddr, depositOwner)
 	uassert.Equal(t, adminAddr, positionOperator)
-	uassert.Equal(t, incentiveReward, staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId))
+	uassert.Equal(t, incentiveReward, incentiveTotalReward)
 }
 
 func accumulateAndCollectStakingReward(cur realm) {
@@ -902,8 +934,14 @@ func accumulateAndCollectStakingReward(cur realm) {
 	// amount reflects two different warm-up ratios.
 	testing.SkipHeights(10 * secondsPerDay / blockTimeSeconds)
 
-	collectableEmission := staker.CollectableEmissionReward(1)
-	collectableExternal := staker.CollectableExternalIncentiveReward(1, externalIncentiveId)
+	collectableEmission, err := staker.CollectableEmissionReward(1)
+	if err != nil {
+		panic(err)
+	}
+	collectableExternal, err := staker.CollectableExternalIncentiveReward(1, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] collectable emission reward:", collectableEmission)
 	println("[EXPECTED] collectable external reward:", collectableExternal)
 
@@ -918,7 +956,11 @@ func accumulateAndCollectStakingReward(cur realm) {
 	for tokenPath, amount := range externalPenalty {
 		println("[EXPECTED] external reward penalty:", tokenPath, amount)
 	}
-	println("[EXPECTED] collected internal reward total:", staker.GetDepositCollectedInternalReward(1))
+	collectedInternalReward, err := staker.GetDepositCollectedInternalReward(1)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] collected internal reward total:", collectedInternalReward)
 	println("[EXPECTED] total emission sent:", staker.GetTotalEmissionSent())
 
 	toUser, _ := strconv.ParseInt(rewardToUser, 10, 64)
@@ -927,7 +969,7 @@ func accumulateAndCollectStakingReward(cur realm) {
 	uassert.True(t, penalty > 0)
 	// the collected-reward ledger also accounts for the penalty share and for
 	// the block mined between the getter read and the collect transaction
-	uassert.True(t, staker.GetDepositCollectedInternalReward(1) >= toUser)
+	uassert.True(t, collectedInternalReward >= toUser)
 }
 
 // ---------------------------------------------------------------------------
@@ -1284,6 +1326,46 @@ func captureSnapshot() upgradeSnapshot {
 	if err != nil {
 		panic(err)
 	}
+	stakerPoolTierRatio, err := staker.GetPoolTierRatio(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	depositLiquidity, err := staker.GetDepositLiquidityAsString(1)
+	if err != nil {
+		panic(err)
+	}
+	depositStakeTime, err := staker.GetDepositStakeTime(1)
+	if err != nil {
+		panic(err)
+	}
+	depositTickLower, err := staker.GetDepositTickLower(1)
+	if err != nil {
+		panic(err)
+	}
+	depositTickUpper, err := staker.GetDepositTickUpper(1)
+	if err != nil {
+		panic(err)
+	}
+	depositWarmups, err := staker.GetDepositWarmUp(1)
+	if err != nil {
+		panic(err)
+	}
+	depositCollected, err := staker.GetDepositCollectedInternalReward(1)
+	if err != nil {
+		panic(err)
+	}
+	incentiveTotal, err := staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveDistributed, err := staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveRefunded, err := staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
 	paramStatus, _ := govGovernance.GetProposalStatusByProposalId(paramProposalId)
 	spendStatus, _ := govGovernance.GetProposalStatusByProposalId(spendProposalId)
 	textStatus, _ := govGovernance.GetProposalStatusByProposalId(textProposalId)
@@ -1321,22 +1403,22 @@ func captureSnapshot() upgradeSnapshot {
 		positionBurned:     positionBurned,
 		positionInRange:    positionInRange,
 		stakerPoolTier:     staker.GetPoolTier(barFoo500PoolPath),
-		stakerPoolTierRat:  staker.GetPoolTierRatio(barFoo500PoolPath),
+		stakerPoolTierRat:  stakerPoolTierRatio,
 		stakerUnstakingFee: staker.GetUnstakingFee(),
 		stakerDepositGns:   staker.GetDepositGnsAmount(),
 		stakerAllowedToken: len(staker.GetAllowedTokens()),
 		stakerAllowedList:  staker.GetAllowedTokens(),
-		depositLiquidity:   staker.GetDepositLiquidityAsString(1),
-		depositStakeTime:   staker.GetDepositStakeTime(1),
-		depositTickLower:   staker.GetDepositTickLower(1),
-		depositTickUpper:   staker.GetDepositTickUpper(1),
-		depositWarmupCount: len(staker.GetDepositWarmUp(1)),
-		depositWarmups:     staker.GetDepositWarmUp(1),
-		depositCollected:   staker.GetDepositCollectedInternalReward(1),
+		depositLiquidity:   depositLiquidity,
+		depositStakeTime:   depositStakeTime,
+		depositTickLower:   depositTickLower,
+		depositTickUpper:   depositTickUpper,
+		depositWarmupCount: len(depositWarmups),
+		depositWarmups:     depositWarmups,
+		depositCollected:   depositCollected,
 		totalEmissionSent:  staker.GetTotalEmissionSent(),
-		incentiveTotal:     staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId),
-		incentiveDistrib:   staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId),
-		incentiveRefunded:  staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId),
+		incentiveTotal:     incentiveTotal,
+		incentiveDistrib:   incentiveDistributed,
+		incentiveRefunded:  incentiveRefunded,
 		devOpsPct:          protocolFee.GetDevOpsPct(),
 		govStakerPct:       protocolFee.GetGovStakerPct(),
 		accuGovStakerBar:   protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath),
@@ -1611,8 +1693,16 @@ func windDown(cur realm) {
 	testing.SetRealm(adminRealm)
 	staker.EndExternalIncentive(cross(cur), barFoo500PoolPath, externalIncentiveId, adminAddr)
 	testing.SkipHeights(1)
-	println("[EXPECTED] incentive refunded:", staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId))
-	println("[EXPECTED] incentive distributed:", staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId))
+	incentiveRefunded, err := staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveDistributed, err := staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] incentive refunded:", incentiveRefunded)
+	println("[EXPECTED] incentive distributed:", incentiveDistributed)
 
 	penalty := staker.CollectExternalIncentivePenalty(cross(cur), barFoo500PoolPath, externalIncentiveId, adminAddr)
 	testing.SkipHeights(1)
@@ -1691,15 +1781,35 @@ func finalInvariants(cur realm) {
 	// external incentive ledger: the amount handed out (rewards + the refund
 	// booked at EndExternalIncentive) can never exceed the funded total, and
 	// the incentive must be marked refunded once it has been ended.
-	total := staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId)
-	distributed := staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId)
-	remaining := staker.GetIncentiveRemainingRewardAmount(barFoo500PoolPath, externalIncentiveId)
-	penalty := staker.GetIncentiveAccumulatedPenaltyAmount(barFoo500PoolPath, externalIncentiveId)
+	total, err := staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	distributed, err := staker.GetIncentiveDistributedRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	remaining, err := staker.GetIncentiveRemainingRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	penalty, err := staker.GetIncentiveAccumulatedPenaltyAmount(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveRefunded, err := staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
+	incentiveActive, err := staker.IsIncentiveActive(barFoo500PoolPath, externalIncentiveId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] incentive total/distributed/remaining/penalty:", total, distributed, remaining, penalty)
 	uassert.True(t, distributed > 0)
 	uassert.True(t, distributed <= total)
-	uassert.True(t, staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId))
-	uassert.False(t, staker.IsIncentiveActive(barFoo500PoolPath, externalIncentiveId))
+	uassert.True(t, incentiveRefunded)
+	uassert.False(t, incentiveActive)
 
 	printImplementations()
 }
