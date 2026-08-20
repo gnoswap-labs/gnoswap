@@ -277,7 +277,8 @@ func isBurned(cur realm) {
 	println("[INFO] Check IsBurned method")
 	testing.SetRealm(adminRealm)
 
-	burned := pn.IsBurned(positionId)
+	burned, err := pn.IsBurned(positionId)
+	mustNoPositionGetterError(err)
 	ufmt.Printf("[EXPECTED] position %d is burned: %t\n", positionId, burned)
 }
 
@@ -285,7 +286,8 @@ func isInRange(cur realm) {
 	println("[INFO] Check IsInRange method")
 	testing.SetRealm(adminRealm)
 
-	inRange := pn.IsInRange(positionId)
+	inRange, err := pn.IsInRange(positionId)
+	mustNoPositionGetterError(err)
 	ufmt.Printf("[EXPECTED] position %d is in range: %t\n", positionId, inRange)
 }
 
@@ -293,8 +295,10 @@ func getPositionTokenBalances(cur realm) {
 	println("[INFO] Check GetPositionTokenBalances method")
 	testing.SetRealm(adminRealm)
 
-	balance0, balance1 := pn.GetPositionTokenBalances(positionId)
-	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
+	balance0, balance1, err := pn.GetPositionTokenBalances(positionId)
+	mustNoPositionGetterError(err)
+	unclaimedFee0, unclaimedFee1, err := pn.GetUnclaimedFee(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position token0 balance:", balance0)
 	println("[EXPECTED] position token1 balance:", balance1)
 	println("[EXPECTED] pool token0 balance:", bar.BalanceOf(poolAddr))
@@ -307,7 +311,8 @@ func getPositionToken0Balance(cur realm) {
 	println("[INFO] Check GetPositionToken0Balance method")
 	testing.SetRealm(adminRealm)
 
-	balance0 := pn.GetPositionToken0Balance(positionId)
+	balance0, err := pn.GetPositionToken0Balance(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position token0 balance:", balance0)
 }
 
@@ -315,7 +320,8 @@ func getPositionToken1Balance(cur realm) {
 	println("[INFO] Check GetPositionToken1Balance method")
 	testing.SetRealm(adminRealm)
 
-	balance1 := pn.GetPositionToken1Balance(positionId)
+	balance1, err := pn.GetPositionToken1Balance(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position token1 balance:", balance1)
 }
 
@@ -323,7 +329,8 @@ func getPositionFeeGrowthInside0LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside0LastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pn.GetPositionFeeGrowthInside0LastX128(positionId)
+	feeGrowth, err := pn.GetPositionFeeGrowthInside0LastX128(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth)
 }
 
@@ -331,7 +338,8 @@ func getPositionFeeGrowthInside1LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside1LastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pn.GetPositionFeeGrowthInside1LastX128(positionId)
+	feeGrowth, err := pn.GetPositionFeeGrowthInside1LastX128(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth)
 }
 
@@ -339,7 +347,8 @@ func getPositionFeeGrowthInsideLastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInsideLastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pn.GetPositionFeeGrowthInsideLastX128(positionId)
+	feeGrowth0, feeGrowth1, err := pn.GetPositionFeeGrowthInsideLastX128(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth0)
 	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1)
 }
@@ -348,7 +357,8 @@ func getPositionLiquidity(cur realm) {
 	println("[INFO] Check GetPositionLiquidity method")
 	testing.SetRealm(adminRealm)
 
-	liquidity := pn.GetPositionLiquidity(positionId)
+	liquidity, err := pn.GetPositionLiquidity(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position liquidity:", liquidity)
 }
 
@@ -356,7 +366,8 @@ func getPositionOperator(cur realm) {
 	println("[INFO] Check GetPositionOperator method")
 	testing.SetRealm(adminRealm)
 
-	operator := pn.GetPositionOperator(positionId)
+	operator, err := pn.GetPositionOperator(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position operator:", operator.String())
 }
 
@@ -364,7 +375,8 @@ func getPositionPoolKey(cur realm) {
 	println("[INFO] Check GetPositionPoolKey method")
 	testing.SetRealm(adminRealm)
 
-	poolKey := pn.GetPositionPoolKey(positionId)
+	poolKey, err := pn.GetPositionPoolKey(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position poolKey:", poolKey)
 }
 
@@ -372,7 +384,8 @@ func getPositionTickLower(cur realm) {
 	println("[INFO] Check GetPositionTickLower method")
 	testing.SetRealm(adminRealm)
 
-	tickLower := pn.GetPositionTickLower(positionId)
+	tickLower, err := pn.GetPositionTickLower(positionId)
+	mustNoPositionGetterError(err)
 	ufmt.Printf("[EXPECTED] position tickLower: %d\n", tickLower)
 }
 
@@ -380,7 +393,8 @@ func getPositionTickUpper(cur realm) {
 	println("[INFO] Check GetPositionTickUpper method")
 	testing.SetRealm(adminRealm)
 
-	tickUpper := pn.GetPositionTickUpper(positionId)
+	tickUpper, err := pn.GetPositionTickUpper(positionId)
+	mustNoPositionGetterError(err)
 	ufmt.Printf("[EXPECTED] position tickUpper: %d\n", tickUpper)
 }
 
@@ -388,7 +402,8 @@ func getPositionTicks(cur realm) {
 	println("[INFO] Check GetPositionTicks method")
 	testing.SetRealm(adminRealm)
 
-	tickLower, tickUpper := pn.GetPositionTicks(positionId)
+	tickLower, tickUpper, err := pn.GetPositionTicks(positionId)
+	mustNoPositionGetterError(err)
 	ufmt.Printf("[EXPECTED] position tickLower: %d\n", tickLower)
 	ufmt.Printf("[EXPECTED] position tickUpper: %d\n", tickUpper)
 }
@@ -397,7 +412,8 @@ func getPositionTokensOwed0(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed0 method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
+	tokensOwed0, err := pn.GetPositionTokensOwed0(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 }
 
@@ -405,7 +421,8 @@ func getPositionTokensOwed1(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed1 method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
+	tokensOwed1, err := pn.GetPositionTokensOwed1(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
@@ -413,7 +430,8 @@ func getPositionTokensOwed(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed0, tokensOwed1 := pn.GetPositionTokensOwed(positionId)
+	tokensOwed0, tokensOwed1, err := pn.GetPositionTokensOwed(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
@@ -422,7 +440,8 @@ func getUnclaimedFee(cur realm) {
 	println("[INFO] Check GetUnclaimedFee method")
 	testing.SetRealm(adminRealm)
 
-	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
+	unclaimedFee0, unclaimedFee1, err := pn.GetUnclaimedFee(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
 	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
@@ -431,8 +450,15 @@ func getPositionOwner(cur realm) {
 	println("[INFO] Check GetPositionOwner method")
 	testing.SetRealm(adminRealm)
 
-	owner := pn.GetPositionOwner(positionId)
+	owner, err := pn.GetPositionOwner(positionId)
+	mustNoPositionGetterError(err)
 	println("[EXPECTED] position owner:", owner.String())
+}
+
+func mustNoPositionGetterError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Output:
