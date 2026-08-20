@@ -5,14 +5,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoswap/access"
 
@@ -259,7 +258,7 @@ func unstakePosition02(cur realm) {
 	println("[INFO] unstake position 02")
 	sr.UnStakeToken(cross(cur), 2)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
 
 	if owner != adminAddr {
@@ -322,6 +321,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
