@@ -112,8 +112,16 @@ func testMintAndBalance(cur realm) {
 
 	pos, _ := position.GetPosition(positionId)
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(positionId))
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(positionId))
+	balance0, err := position.GetPositionToken0Balance(positionId)
+	if err != nil {
+		panic(err)
+	}
+	balance1, err := position.GetPositionToken1Balance(positionId)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", balance1)
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
