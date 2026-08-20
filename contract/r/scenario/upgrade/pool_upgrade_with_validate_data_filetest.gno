@@ -179,7 +179,7 @@ func captureV1Snapshot() {
 	v1PoolToken1 = pool.GetToken1Path(barFoo500PoolPath)
 	v1PoolBalance0, v1PoolBalance1 = pool.GetBalances(barFoo500PoolPath)
 	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
-	v1PoolPositionCount = pool.GetPoolPositionCount(barFoo500PoolPath)
+	v1PoolPositionCount = pool.GetPoolPositions(barFoo500PoolPath).Size()
 	v1TickLowerGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
 	v1TickLowerNet = pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower)
 	v1TickUpperGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper)
@@ -189,7 +189,7 @@ func captureV1Snapshot() {
 	v1PoolCreationFee = pool.GetPoolCreationFee()
 	v1WithdrawalFee = pool.GetWithdrawalFee()
 
-	v1PositionCount = position.GetPositionCount()
+	v1PositionCount = position.GetPositions().Size()
 	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
 	v1PositionOwner = position.GetPositionOwner(positionId)
 	v1PositionTickLower = position.GetPositionTickLower(positionId)
@@ -234,7 +234,7 @@ func validateV1Snapshot() {
 	uassert.Equal(t, v1PoolBalance1, balance1)
 	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
 	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
-	uassert.Equal(t, v1PoolPositionCount, pool.GetPoolPositionCount(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolPositionCount, pool.GetPoolPositions(barFoo500PoolPath).Size())
 	uassert.Equal(t, v1TickLowerGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
 	uassert.Equal(t, v1TickLowerNet, pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower))
 	uassert.Equal(t, v1TickUpperGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper))
@@ -244,7 +244,7 @@ func validateV1Snapshot() {
 	uassert.Equal(t, v1PoolCreationFee, pool.GetPoolCreationFee())
 	uassert.Equal(t, v1WithdrawalFee, pool.GetWithdrawalFee())
 
-	uassert.Equal(t, v1PositionCount, position.GetPositionCount())
+	uassert.Equal(t, v1PositionCount, position.GetPositions().Size())
 	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
 	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
 	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
@@ -263,13 +263,13 @@ func validateAfterSecondMint(cur realm) {
 
 	println("[EXPECTED] pool liquidity after the second mint:", pool.GetLiquidity(barFoo500PoolPath))
 	println("[EXPECTED] pool-side position liquidity:", pool.GetPositionLiquidity(barFoo500PoolPath, key))
-	println("[EXPECTED] pool position count:", pool.GetPoolPositionCount(barFoo500PoolPath))
-	println("[EXPECTED] position count:", position.GetPositionCount())
+	println("[EXPECTED] pool position count:", pool.GetPoolPositions(barFoo500PoolPath).Size())
+	println("[EXPECTED] position count:", position.GetPositions().Size())
 	println("[EXPECTED] tick liquidity gross (lower):", pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
 
 	// the two positions share the same tick range, so the pool-side position
 	// entry is the sum of both and the first position is untouched
-	uassert.Equal(t, v1PositionCount+1, position.GetPositionCount())
+	uassert.Equal(t, v1PositionCount+1, position.GetPositions().Size())
 	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
 	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetPositionLiquidity(barFoo500PoolPath, key))
 	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))

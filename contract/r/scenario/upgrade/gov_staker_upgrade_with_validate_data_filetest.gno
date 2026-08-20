@@ -11,12 +11,14 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -146,7 +148,7 @@ func delegateWithV1(cur realm) {
 
 	println("[EXPECTED] alice delegated amount:", aliceAmount)
 	println("[EXPECTED] bob delegated amount:", bobAmount)
-	println("[EXPECTED] delegation count:", govStaker.GetDelegationCount())
+	println("[EXPECTED] delegation count:", govStaker.GetDelegations().Size())
 	println("[EXPECTED] total delegated:", govStaker.GetTotalDelegated())
 	println("[EXPECTED] total xGNS supply:", govStaker.GetTotalxGnsSupply())
 	println("[EXPECTED] total locked amount:", govStaker.GetTotalLockedAmount())
@@ -154,7 +156,7 @@ func delegateWithV1(cur realm) {
 	// xGNS is minted 1:1 against the delegated GNS
 	uassert.Equal(t, aliceDelegation+bobDelegation, govStaker.GetTotalDelegated())
 	uassert.Equal(t, aliceDelegation+bobDelegation, govStaker.GetTotalxGnsSupply())
-	uassert.Equal(t, 2, govStaker.GetDelegationCount())
+	uassert.Equal(t, 2, govStaker.GetDelegations().Size())
 }
 
 func redelegateAndUndelegateWithV1(cur realm) {
@@ -162,9 +164,9 @@ func redelegateAndUndelegateWithV1(cur realm) {
 	redelegated := govStaker.Redelegate(cross(cur), adminAddr, aliceAddr, redelegateSize)
 	testing.SkipHeights(1)
 	println("[EXPECTED] redelegated:", redelegated)
-	println("[EXPECTED] alice->admin delegation count:", govStaker.GetUserDelegationCount(aliceAddr, adminAddr))
-	println("[EXPECTED] alice->alice delegation count:", govStaker.GetUserDelegationCount(aliceAddr, aliceAddr))
-	println("[EXPECTED] alice delegatee count:", govStaker.GetDelegatorDelegateeCount(aliceAddr))
+	println("[EXPECTED] alice->admin delegation count:", len(govStaker.GetUserDelegationIDs(aliceAddr, adminAddr)))
+	println("[EXPECTED] alice->alice delegation count:", len(govStaker.GetUserDelegationIDs(aliceAddr, aliceAddr)))
+	println("[EXPECTED] alice delegatee count:", govStaker.GetDelegatorDelegations(aliceAddr).Size())
 
 	undelegated := govStaker.Undelegate(cross(cur), aliceAddr, undelegateSize)
 	testing.SkipHeights(1)
@@ -183,12 +185,12 @@ func captureV1Snapshot() {
 	v1TotalXGnsSupply = govStaker.GetTotalxGnsSupply()
 	v1TotalLocked = govStaker.GetTotalLockedAmount()
 	v1LockupPeriod = govStaker.GetUnDelegationLockupPeriod()
-	v1DelegationCount = govStaker.GetDelegationCount()
-	v1DelegationIDs = govStaker.GetDelegationIDs(0, 10)
-	v1AliceToAdminCount = govStaker.GetUserDelegationCount(aliceAddr, adminAddr)
-	v1AliceToAliceCount = govStaker.GetUserDelegationCount(aliceAddr, aliceAddr)
+	v1DelegationCount = govStaker.GetDelegations().Size()
+	v1DelegationIDs = collectDelegationIDs(0, 10)
+	v1AliceToAdminCount = len(govStaker.GetUserDelegationIDs(aliceAddr, adminAddr))
+	v1AliceToAliceCount = len(govStaker.GetUserDelegationIDs(aliceAddr, aliceAddr))
 
-	firstDelegation, err := govStaker.GetDelegation(v1DelegationIDs[0])
+	firstDelegation, err := delegationByID(v1DelegationIDs[0])
 	if err != nil {
 		panic(err)
 	}
@@ -216,7 +218,7 @@ func upgradeTo(cur realm, packagePath string) {
 }
 
 func validateSnapshot() {
-	firstDelegation, err := govStaker.GetDelegation(v1DelegationIDs[0])
+	firstDelegation, err := delegationByID(v1DelegationIDs[0])
 	if err != nil {
 		panic(err)
 	}
@@ -225,10 +227,10 @@ func validateSnapshot() {
 	uassert.Equal(t, v1TotalXGnsSupply, govStaker.GetTotalxGnsSupply())
 	uassert.Equal(t, v1TotalLocked, govStaker.GetTotalLockedAmount())
 	uassert.Equal(t, v1LockupPeriod, govStaker.GetUnDelegationLockupPeriod())
-	uassert.Equal(t, v1DelegationCount, govStaker.GetDelegationCount())
-	uassert.Equal(t, len(v1DelegationIDs), len(govStaker.GetDelegationIDs(0, 10)))
-	uassert.Equal(t, v1AliceToAdminCount, govStaker.GetUserDelegationCount(aliceAddr, adminAddr))
-	uassert.Equal(t, v1AliceToAliceCount, govStaker.GetUserDelegationCount(aliceAddr, aliceAddr))
+	uassert.Equal(t, v1DelegationCount, govStaker.GetDelegations().Size())
+	uassert.Equal(t, len(v1DelegationIDs), len(collectDelegationIDs(0, 10)))
+	uassert.Equal(t, v1AliceToAdminCount, len(govStaker.GetUserDelegationIDs(aliceAddr, adminAddr)))
+	uassert.Equal(t, v1AliceToAliceCount, len(govStaker.GetUserDelegationIDs(aliceAddr, aliceAddr)))
 	uassert.Equal(t, v1FirstDelegateFrom, firstDelegation.DelegateFrom())
 	uassert.Equal(t, v1FirstDelegateTo, firstDelegation.DelegateTo())
 	uassert.Equal(t, v1FirstDelegateAmt, firstDelegation.TotalDelegatedAmount())
@@ -238,7 +240,7 @@ func validateSnapshot() {
 
 	println("[EXPECTED] total delegated:", govStaker.GetTotalDelegated())
 	println("[EXPECTED] total xGNS supply:", govStaker.GetTotalxGnsSupply())
-	println("[EXPECTED] delegation count:", govStaker.GetDelegationCount())
+	println("[EXPECTED] delegation count:", govStaker.GetDelegations().Size())
 	println("[EXPECTED] first delegation from/to/amount:",
 		firstDelegation.DelegateFrom(), firstDelegation.DelegateTo(), firstDelegation.TotalDelegatedAmount())
 	println("[EXPECTED] every v1 delegation value survived the upgrade")
@@ -263,7 +265,7 @@ func operateWithV3Valid(cur realm) {
 	bobAmount := govStaker.Delegate(cross(cur), bobAddr, bobDelegation, "")
 	testing.SkipHeights(1)
 	println("[EXPECTED] bob delegated again:", bobAmount)
-	println("[EXPECTED] delegation count:", govStaker.GetDelegationCount())
+	println("[EXPECTED] delegation count:", govStaker.GetDelegations().Size())
 	println("[EXPECTED] total delegated:", govStaker.GetTotalDelegated())
 
 	// reward collection through the new implementation
@@ -285,7 +287,7 @@ func operateWithV3Valid(cur realm) {
 	println("[EXPECTED] delegation snapshots present:", govStaker.HasDelegationSnapshotsKey())
 
 	uassert.Equal(t, undelegateSize, collected)
-	uassert.Equal(t, v1DelegationCount+1, govStaker.GetDelegationCount())
+	uassert.Equal(t, v1DelegationCount+1, govStaker.GetDelegations().Size())
 	uassert.Equal(t, v1TotalDelegated+bobDelegation, govStaker.GetTotalDelegated())
 }
 
@@ -353,3 +355,31 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] alice claimable protocol fee token count: 0
 // [EXPECTED] emission distributed amount: 0
 // [EXPECTED] delegation snapshots present: true
+
+// collectDelegationIDs pages the read-only delegation view and returns the IDs
+// its keys encode.
+func collectDelegationIDs(offset, count int) []int64 {
+	ids := []int64{}
+	govStaker.GetDelegations().IterateByOffset(offset, count, func(key string, _ any) bool {
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
+		return false
+	})
+
+	return ids
+}
+
+// delegationByID reads one delegation through the read-only view.
+func delegationByID(delegationID int64) (*govStaker.Delegation, error) {
+	delegation, ok := govStaker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*govStaker.Delegation)
+	if !ok {
+		return nil, ufmt.Errorf("delegation %d not found", delegationID)
+	}
+
+	return delegation, nil
+}
