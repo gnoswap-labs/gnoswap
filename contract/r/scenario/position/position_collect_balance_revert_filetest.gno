@@ -145,7 +145,10 @@ func upgradePool(cur realm) {
 func decreaseLiquidityWithRevertingCollect(cur realm) {
 	testing.SetRealm(adminRealm)
 	barBefore := bar.BalanceOf(adminAddr)
-	owed0Before := position.GetPositionTokensOwed0(1)
+	owed0Before, err := position.GetPositionTokensOwed0(1)
+	if err != nil {
+		panic(err)
+	}
 
 	// Internal balance is desynced low (forced to 1 by the test implementation)
 	// while tokensOwed0 is larger. The underlying Collect cannot pay, so the
@@ -163,7 +166,10 @@ func decreaseLiquidityWithRevertingCollect(cur realm) {
 	})
 
 	barAfter := bar.BalanceOf(adminAddr)
-	owed0After := position.GetPositionTokensOwed0(1)
+	owed0After, err := position.GetPositionTokensOwed0(1)
+	if err != nil {
+		panic(err)
+	}
 	poolBalance0, _ := pool.GetBalanceToken0(poolKey)
 
 	if r != nil {

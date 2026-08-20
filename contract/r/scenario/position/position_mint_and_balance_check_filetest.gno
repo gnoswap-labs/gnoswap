@@ -206,10 +206,26 @@ func comparePositionBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")
-	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", position.GetPositionToken1Balance(1))
-	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", position.GetPositionToken0Balance(2))
-	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", position.GetPositionToken1Balance(2))
+	balance10, err := position.GetPositionToken0Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	balance11, err := position.GetPositionToken1Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	balance20, err := position.GetPositionToken0Balance(2)
+	if err != nil {
+		panic(err)
+	}
+	balance21, err := position.GetPositionToken1Balance(2)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", balance10)
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", balance11)
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", balance20)
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", balance21)
 	ufmt.Printf("[EXPECTED] Sum of positions should stay close to pool balances\n")
 }
 

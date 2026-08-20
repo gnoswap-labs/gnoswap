@@ -124,8 +124,16 @@ func checkInitialPositionState(cur realm) {
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Initial position tickUpper should be %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, err := position.GetPositionToken0Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	balance1, err := position.GetPositionToken1Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", balance1)
 }
 
 func increasePositionLiquidity(cur realm) {
@@ -156,8 +164,16 @@ func checkDecreasedPositionState(cur realm) {
 	ufmt.Printf("[EXPECTED] Decreased position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, err := position.GetPositionToken0Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	balance1, err := position.GetPositionToken1Balance(1)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", balance1)
 }
 
 func executeSwap(cur realm) {
