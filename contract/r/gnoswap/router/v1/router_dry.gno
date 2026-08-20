@@ -77,17 +77,21 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	numHops int,
 	amountSpecified int64,
 ) (int64, int64, error) {
-	recipient := p.payer
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
-	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified)
+	singleParams := SingleSwapParams{
+		tokenIn:         input,
+		tokenOut:        output,
+		fee:             fee,
+		amountSpecified: amountSpecified,
+	}
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(p.payer, *swapParams, numHops, route)
+		return p.router.multiDrySwap(p.payer, singleParams, numHops, route)
 	case ExactOut:
-		return p.router.multiDrySwapNegative(p.payer, *swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(singleParams, numHops, route)
 	default:
 		return 0, 0, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}

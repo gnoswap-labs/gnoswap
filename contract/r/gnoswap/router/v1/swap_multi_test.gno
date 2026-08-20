@@ -38,6 +38,21 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			expectedLastOut: "98",
 			expectError:     false,
 		},
+		{
+			name: "two hop swap BAR -> BAZ -> QUX",
+			params: NewSwapParams().
+				Recipient(routerAddr).
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
+			numPools:        2,
+			swapPath:        barPath + ":" + bazPath + ":3000" + POOL_SEPARATOR + bazPath + ":" + quxPath + ":3000",
+			expectedFirstIn: "100",
+			expectedLastOut: "96",
+			expectError:     false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -49,6 +64,16 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
 			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
 				AndPositionMinted(cur)
+			if tt.numPools == 2 {
+				env.GivenPoolCreated(cur, bazPath, quxPath, 3000, "79228162514264337593543950336").
+					AndLiquidityProvided(cur, adminAddr, NewPositionBuilder().
+						Tokens(bazPath, quxPath).
+						Fee(3000).
+						Range(-887220, 887220).
+						Amounts("50000", "50000").
+						MinAmounts("0", "0").
+						Build())
+			}
 			testing.SetRealm(testing.NewUserRealm(user1Addr))
 			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
