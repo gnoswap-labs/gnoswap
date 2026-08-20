@@ -84,7 +84,8 @@ func main(cur realm) {
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 100)
 
 	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
-	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityNext())
+	observationState, _ := pool.GetObservationState(pool.GetPoolPath(barPath, fooPath, fee500))
+	println("[INFO] Observation cardinality limit:", observationState.CardinalityNext())
 	println()
 
 	// Add liquidity
@@ -215,7 +216,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 2. Increase Observation Cardinality
 // [INFO] Increasing observation cardinality limit to 100
-// [INFO] Observation cardinality limit: 1
+// [INFO] Observation cardinality limit: 100
 //
 // [SCENARIO] 3. Add Liquidity
 // [INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000

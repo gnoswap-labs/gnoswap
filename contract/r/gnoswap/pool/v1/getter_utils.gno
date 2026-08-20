@@ -11,11 +11,14 @@ import (
 // clonePoolEntry is the transformation for the pool tree. Pool is mutable and
 // its setters are declared in /r/gnoswap/pool, so an external holder of the
 // stored pointer could write realm state through it.
+//
+// The copy is shallow: see Pool.CloneShallow for why the collections are left
+// nil and which lookups replace them.
 func clonePoolEntry(value any) any {
 	pool, ok := value.(*pl.Pool)
 	if !ok {
 		return nil
 	}
 
-	return pool.Clone()
+	return pool.CloneShallow()
 }

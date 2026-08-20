@@ -188,6 +188,50 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 	})
 }
 
+// CloneShallow copies a pool without its collections: ticks, tickBitmaps,
+// positions, and observationState are left nil.
+//
+// It exists for the getter path only. Getters hand out a copy so a caller
+// cannot reach realm-owned state, but copying the collections would mean
+// walking the whole tick tree on every entry a caller reads -- the read-only
+// pool view applies this transformation to each entry it visits, so a single
+// page of pool paths would otherwise copy every tick of every pool on the page.
+//
+// The omitted collections are reachable through their own lookups instead:
+// GetTickInfo / GetInitializedTicksInRange for ticks, GetTickBitmaps for the
+// bitmaps, GetPoolPositions for positions, and GetObservationState for the
+// oracle state.
+//
+// Clone stays a deep copy: DrySwap snapshots a pool through it and walks the
+// snapshot's ticks.
+func (p *Pool) CloneShallow() *Pool {
+	if p == nil {
+		return nil
+	}
+
+	return &Pool{
+		token0Path:  p.token0Path,
+		token1Path:  p.token1Path,
+		fee:         p.fee,
+		tickSpacing: p.tickSpacing,
+		slot0: Slot0{
+			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
+			tick:         p.slot0.tick,
+			feeProtocol:  p.slot0.feeProtocol,
+			unlocked:     p.slot0.unlocked,
+		},
+		balances:             p.balances,
+		protocolFees:         p.protocolFees,
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
+		liquidity:            p.liquidity.Clone(),
+		ticks:                nil,
+		tickBitmaps:          nil,
+		positions:            nil,
+		observationState:     nil,
+	}
+}
+
 func (p *Pool) Clone() *Pool {
 	return &Pool{
 		token0Path:  p.token0Path,
