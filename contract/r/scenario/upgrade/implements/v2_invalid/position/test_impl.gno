@@ -8,6 +8,7 @@ import (
 
 	grc721 "gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	gnft "gno.land/r/gnoswap/gnft"
 	position "gno.land/r/gnoswap/position"
@@ -126,26 +127,11 @@ func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, 
 	t.instance.SetPositionOperator(0, rlm, positionId, operator)
 }
 
-// IPositionGetter interface
-func (t *TestPosition) GetPositionCount() int {
-	if !t.isActive("GetPositionCount") {
-		panic("test implementation: GetPositionCount not supported")
+func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
+	if !t.isActive("GetPositions") {
+		panic("test implementation: GetPositions not supported")
 	}
-	return t.instance.GetPositionCount()
-}
-
-func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
-	if !t.isActive("GetPositionIDs") {
-		panic("test implementation: GetPositionIDs not supported")
-	}
-	return t.instance.GetPositionIDs(offset, count)
-}
-
-func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
-	if !t.isActive("GetPosition") {
-		panic("test implementation: GetPosition not supported")
-	}
-	return t.instance.GetPosition(positionId)
+	return t.instance.GetPositions()
 }
 
 func (t *TestPosition) IsBurned(positionId uint64) bool {

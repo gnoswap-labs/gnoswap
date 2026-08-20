@@ -4,12 +4,30 @@ import (
 	"chain/runtime"
 	"time"
 
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
 	sr "gno.land/r/gnoswap/staker"
 )
+
+// findPoolByPoolPath retrieves the pool by its path, or nil when it does not
+// exist. Read-only views use it so a missing pool reads as nil rather than
+// aborting the caller's transaction.
+func (s *stakerV1) findPoolByPoolPath(poolPath string) *sr.Pool {
+	result := s.store.GetPools().Get(poolPath)
+	if result == nil {
+		return nil
+	}
+
+	pool, ok := result.(*sr.Pool)
+	if !ok {
+		return nil
+	}
+
+	return pool
+}
 
 // getPoolByPoolPath retrieves the pool by its path.
 func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
@@ -37,21 +55,6 @@ func (s *stakerV1) GetPool(poolPath string) *sr.Pool {
 	return s.getPoolByPoolPath(poolPath)
 }
 
-// GetPoolIncentiveIdList returns all incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
-	pool := s.getPoolByPoolPath(poolPath)
-
-	incentives := pool.Incentives()
-
-	ids := []string{}
-	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
-}
-
 // getIncentive retrieves an external incentive by ID.
 func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
 	pool := s.getPoolByPoolPath(poolPath)
@@ -67,11 +70,6 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
 	}
 	return ictv
-}
-
-// GetIncentive returns the incentive for the given pool and ID.
-func (s *stakerV1) GetIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
-	return s.getIncentive(poolPath, incentiveId)
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
@@ -425,134 +423,48 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	return incentives
 }
 
-// GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
-func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.RewardCache().Size())
-}
-
-// GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
-func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	rewardCache := pool.RewardCache()
-
-	ids := make([]int64, 0)
-	rewardCache.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
-}
-
-// GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.RewardCache().Get(int64(timestamp))
-	if !ok {
-		return 0
+// GetPoolRewardCaches returns a read-only view of a pool's reward cache, keyed
+// by the encoded block timestamp. nil is returned when the pool does not exist.
+func (s *stakerV1) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
 	}
 
-	rewardCache, ok := value.(int64)
-	if !ok {
-		panic("failed to cast reward cache value to int64")
+	return pool.RewardCache().ReadOnly(rewardCacheEntry)
+}
+
+// GetPoolIncentives returns a read-only view of a pool's external incentives,
+// keyed by incentive ID. nil is returned when the pool does not exist.
+func (s *stakerV1) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
 	}
 
-	return rewardCache
+	return rotree.Wrap(pool.Incentives().IncentiveTrees(), cloneExternalIncentiveEntry)
 }
 
-// GetPoolIncentiveCount returns the number of incentives for a pool.
-func (s *stakerV1) GetPoolIncentiveCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.Incentives().IncentiveTrees().Size())
-}
-
-// GetPoolIncentiveIDs returns a paginated list of incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
-	pool := s.getPoolByPoolPath(poolPath)
-	incentives := pool.Incentives().IncentiveTrees()
-
-	ids := make([]string, 0)
-	incentives.IterateByOffset(offset, count, func(key string, _ any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
-}
-
-// GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.GlobalRewardRatioAccumulation().Size())
-}
-
-// GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	accumulation := pool.GlobalRewardRatioAccumulation()
-
-	ids := make([]uint64, 0)
-	accumulation.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, uint64(key))
-		return false
-	})
-
-	return ids
-}
-
-// GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
-	if !ok {
-		return "0"
+// GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's
+// global reward ratio accumulation, keyed by the encoded block timestamp.
+// nil is returned when the pool does not exist.
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
 	}
 
-	accumulationStr, ok := value.(string)
-	if !ok {
-		panic("failed to cast global reward ratio accumulation to string")
-	}
-
-	return accumulationStr
+	return pool.GlobalRewardRatioAccumulation().ReadOnly(accumulationEntry)
 }
 
-// GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
-func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.HistoricalTick().Size())
-}
-
-// GetPoolHistoricalTickIDs returns a paginated list of historical tick values for a pool.
-func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
-	pool := s.getPoolByPoolPath(poolPath)
-	historicalTick := pool.HistoricalTick()
-
-	ticks := make([]int32, 0)
-	historicalTick.IterateByOffset(offset, count, func(_ int64, value any) bool {
-		tickId, ok := value.(int32)
-		if !ok {
-			return false
-		}
-		ticks = append(ticks, tickId)
-		return false
-	})
-
-	return ticks
-}
-
-// GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.HistoricalTick().Get(int64(tick))
-	if !ok {
-		return 0
+// GetPoolHistoricalTicks returns a read-only view of a pool's historical ticks,
+// keyed by the encoded block timestamp with the int32 tick as the value.
+// nil is returned when the pool does not exist.
+func (s *stakerV1) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
 	}
 
-	tickId, ok := value.(int32)
-	if !ok {
-		panic("failed to cast historical tick value to int32")
-	}
-
-	return tickId
+	return pool.HistoricalTick().ReadOnly(historicalTickEntry)
 }

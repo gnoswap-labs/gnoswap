@@ -24,6 +24,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -287,8 +288,8 @@ func verifyOwnership(cur realm) {
 
 	// Verify position can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position, err := pn.GetPosition(1)
-	if err != nil {
+	position, ok := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	if !ok {
 		panic("position should still exist")
 	}
 	ufmt.Printf("[EXPECTED] position still accessible - liquidity: %s\n", position.Liquidity())

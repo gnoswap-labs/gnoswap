@@ -9,15 +9,6 @@ func cloneInt64Slice(src []int64) []int64 {
 	return cloned
 }
 
-func cloneAddressSlice(src []address) []address {
-	if src == nil {
-		return nil
-	}
-	cloned := make([]address, len(src))
-	copy(cloned, src)
-	return cloned
-}
-
 func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	if src == nil {
 		return nil

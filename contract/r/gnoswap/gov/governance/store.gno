@@ -192,6 +192,10 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 		return errors.New("proposals store key not found")
 	}
 
+	if proposal == nil || proposal.ID() != proposalID {
+		return errors.New("proposal ID does not match the storage key")
+	}
+
 	proposals := s.GetProposals()
 	proposals.Set(formatInt64Key(proposalID), proposal)
 
@@ -280,10 +284,6 @@ func (s *governanceStore) SetUserProposals(_ int, rlm realm, userProposals *bptr
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyUserProposals.String(), userProposals)
-}
-
-func (s *governanceStore) GetUserProposalsTree() *bptree.BPTree {
-	return s.GetUserProposals()
 }
 
 func (s *governanceStore) GetUserProposalIDs(user string) ([]int64, bool) {

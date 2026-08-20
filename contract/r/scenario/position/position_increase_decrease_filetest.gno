@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -119,7 +120,7 @@ func mintInitialPosition(cur realm) {
 
 func checkInitialPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial position tickLower should be %d\n", pos.TickLower())
@@ -151,7 +152,7 @@ func increasePositionLiquidity(cur realm) {
 
 func checkIncreasedPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Increased position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
@@ -213,7 +214,7 @@ func decreasePositionLiquidity(cur realm) {
 
 func checkFinalPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())

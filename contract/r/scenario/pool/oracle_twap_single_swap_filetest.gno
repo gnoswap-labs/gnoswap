@@ -100,7 +100,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -130,7 +130,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 

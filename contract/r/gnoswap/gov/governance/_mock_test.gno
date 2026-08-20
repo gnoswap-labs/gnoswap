@@ -1,5 +1,9 @@
 package governance
 
+import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
+)
+
 // MockResponse is a simple mock response helper
 type MockResponse struct {
 	data      map[string][]any
@@ -162,21 +166,12 @@ func (m *MockGovernance) GetConfig(configVersion int64) (Config, error) {
 	return res[0].(Config), nil
 }
 
-// Proposal getters
-func (m *MockGovernance) GetProposalCount() int {
-	res, ok := m.Response.Get("GetProposalCount")
+func (m *MockGovernance) GetProposals() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetProposals")
 	if !ok {
-		return 0
+		return nil
 	}
-	return res[0].(int)
-}
-
-func (m *MockGovernance) GetProposalIDs(offset, count int) []int64 {
-	res, ok := m.Response.Get("GetProposalIDs")
-	if !ok {
-		return []int64{}
-	}
-	return res[0].([]int64)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovernance) ExistsProposal(proposalID int64) bool {
@@ -185,17 +180,6 @@ func (m *MockGovernance) ExistsProposal(proposalID int64) bool {
 		return false
 	}
 	return res[0].(bool)
-}
-
-func (m *MockGovernance) GetProposal(proposalID int64) (*Proposal, error) {
-	res, ok := m.Response.Get("GetProposal")
-	if !ok {
-		return nil, nil
-	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*Proposal), nil
 }
 
 func (m *MockGovernance) GetProposerByProposalId(id int64) (address, error) {
@@ -207,6 +191,50 @@ func (m *MockGovernance) GetProposerByProposalId(id int64) (address, error) {
 		return "", res[1].(error)
 	}
 	return res[0].(address), nil
+}
+
+func (m *MockGovernance) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	res, ok := m.Response.Get("GetProposalCreatedAt")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	res, ok := m.Response.Get("GetProposalCreatedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
+	res, ok := m.Response.Get("GetProposalCommunityPoolSpendInfo")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*CommunityPoolSpendInfo), nil
+}
+
+func (m *MockGovernance) GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
+	res, ok := m.Response.Get("GetProposalExecutionInfo")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*ExecutionInfo), nil
 }
 
 func (m *MockGovernance) GetProposalTypeByProposalId(id int64) (ProposalType, error) {
@@ -309,20 +337,12 @@ func (m *MockGovernance) GetVoteStatus(proposalId int64) (quorum, maxVotingWeigh
 	return res[0].(int64), res[1].(int64), res[2].(int64), res[3].(int64), nil
 }
 
-func (m *MockGovernance) GetVotingInfoCount(proposalID int64) int {
-	res, ok := m.Response.Get("GetVotingInfoCount")
+func (m *MockGovernance) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetVotingInfos")
 	if !ok {
-		return 0
+		return nil
 	}
-	return res[0].(int)
-}
-
-func (m *MockGovernance) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
-	res, ok := m.Response.Get("GetVotingInfoAddresses")
-	if !ok {
-		return []address{}
-	}
-	return res[0].([]address)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
@@ -331,17 +351,6 @@ func (m *MockGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
 		return false
 	}
 	return res[0].(bool)
-}
-
-func (m *MockGovernance) GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
-	res, ok := m.Response.Get("GetVotingInfo")
-	if !ok {
-		return nil, nil
-	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*VotingInfo), nil
 }
 
 func (m *MockGovernance) GetVoteWeight(proposalID int64, addr address) (int64, error) {
@@ -377,21 +386,12 @@ func (m *MockGovernance) GetVotedAt(proposalID int64, addr address) (int64, erro
 	return res[0].(int64), nil
 }
 
-// User proposal getters
-func (m *MockGovernance) GetUserProposalCount(user address) int {
-	res, ok := m.Response.Get("GetUserProposalCount")
+func (m *MockGovernance) GetUserProposals() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetUserProposals")
 	if !ok {
-		return 0
+		return nil
 	}
-	return res[0].(int)
-}
-
-func (m *MockGovernance) GetUserProposalIDs(user address, offset, count int) []int64 {
-	res, ok := m.Response.Get("GetUserProposalIDs")
-	if !ok {
-		return []int64{}
-	}
-	return res[0].([]int64)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 // Active proposal query

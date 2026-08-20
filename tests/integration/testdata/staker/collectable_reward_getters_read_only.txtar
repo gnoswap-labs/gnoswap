@@ -115,11 +115,18 @@ func main() {
 	if staker.CollectableEmissionReward(1) != 0 {
 		panic("unexpected emission reward")
 	}
-	incentiveIds := staker.GetPoolIncentiveIdList("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
-	if len(incentiveIds) != 1 {
+	incentives := staker.GetPoolIncentives("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
+	if incentives == nil || incentives.Size() != 1 {
 		panic("expected one pool external incentive")
 	}
-	if staker.CollectableExternalIncentiveReward(1, incentiveIds[0]) != 0 {
+
+	incentiveId := ""
+	incentives.IterateByOffset(0, 1, func(key string, _ any) bool {
+		incentiveId = key
+		return true
+	})
+
+	if staker.CollectableExternalIncentiveReward(1, incentiveId) != 0 {
 		panic("unexpected external incentive reward")
 	}
 	if len(staker.GetDepositExternalIncentiveIdList(1)) != 0 {

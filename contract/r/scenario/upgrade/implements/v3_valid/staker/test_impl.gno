@@ -3,6 +3,7 @@ package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	staker "gno.land/r/gnoswap/staker"
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
@@ -92,10 +93,6 @@ func (t *TestStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 // IStakerGetter interface
 func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
 	return t.instance.GetPool(poolPath)
-}
-
-func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
-	return t.instance.GetIncentive(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
@@ -242,10 +239,6 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return t.instance.GetMinimumRewardAmountForToken(tokenPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	return t.instance.GetPoolIncentiveIdList(poolPath)
-}
-
 func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
 	return t.instance.GetPoolStakedLiquidity(poolPath)
 }
@@ -298,48 +291,20 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	return t.instance.GetWarmupTemplate()
 }
 
-func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
-	return t.instance.GetPoolRewardCacheCount(poolPath)
+func (t *TestStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolRewardCaches(poolPath)
 }
 
-func (t *TestStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	return t.instance.GetPoolRewardCacheIDs(poolPath, offset, count)
+func (t *TestStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolIncentives(poolPath)
 }
 
-func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	return t.instance.GetPoolRewardCache(poolPath, timestamp)
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolGlobalRewardRatioAccumulations(poolPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
-	return t.instance.GetPoolIncentiveCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
-	return t.instance.GetPoolIncentiveIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	return t.instance.GetPoolGlobalRewardRatioAccumulationCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	return t.instance.GetPoolHistoricalTickCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
-	return t.instance.GetPoolHistoricalTickIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	return t.instance.GetPoolHistoricalTick(poolPath, tick)
+func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolHistoricalTicks(poolPath)
 }
 
 func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {

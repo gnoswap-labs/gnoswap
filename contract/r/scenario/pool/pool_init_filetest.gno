@@ -74,7 +74,7 @@ func main(cur realm) {
 	foo.Approve(cross(cur), poolAddr, maxApprove)
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 
 	println("[INFO] Test 1: Minting position in range")
 	// 1. returns in supply in range
@@ -90,7 +90,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	currentLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println()
@@ -108,7 +108,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	nowLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -129,7 +129,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -154,7 +154,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -176,7 +176,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	poolTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -81")
 	println()
@@ -198,7 +198,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -220,7 +220,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	poolTick = thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -120")
 	println()

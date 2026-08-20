@@ -1,27 +1,15 @@
 package position
 
 import (
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/utils"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
-// GetPositionCount returns the total number of positions.
-func GetPositionCount() int {
-	return getImplementation().GetPositionCount()
-}
-
-// GetPositionIDs returns a paginated list of position IDs.
-func GetPositionIDs(offset, count int) []uint64 {
-	return cloneUint64Slice(getImplementation().GetPositionIDs(offset, count))
-}
-
-// GetPosition returns the position data for a given position ID.
-func GetPosition(positionId uint64) (Position, error) {
-	position, ok := getImplementation().GetPosition(positionId)
-	if !ok {
-		return Position{}, ufmt.Errorf("position %d not found", positionId)
-	}
-
-	return clonePosition(position), nil
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID. Callers paginate it themselves through
+// IterateByOffset.
+func GetPositions() *rotree.ReadOnlyTree {
+	return getImplementation().GetPositions()
 }
 
 // IsBurned returns whether a position has been burned.
@@ -62,8 +50,13 @@ func GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
 func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string) {
-	position, err := GetPosition(positionId)
-	if err != nil {
+	positions := GetPositions()
+	if positions == nil {
+		return "0", "0"
+	}
+
+	position, ok := positions.Get(utils.Uint64ToString(positionId)).(Position)
+	if !ok {
 		return "0", "0"
 	}
 
@@ -97,8 +90,13 @@ func GetPositionTickUpper(positionId uint64) int32 {
 
 // GetPositionTicks returns the lower and upper ticks of a position.
 func GetPositionTicks(positionId uint64) (int32, int32) {
-	position, err := GetPosition(positionId)
-	if err != nil {
+	positions := GetPositions()
+	if positions == nil {
+		return 0, 0
+	}
+
+	position, ok := positions.Get(utils.Uint64ToString(positionId)).(Position)
+	if !ok {
 		return 0, 0
 	}
 
@@ -117,8 +115,13 @@ func GetPositionTokensOwed1(positionId uint64) int64 {
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
 func GetPositionTokensOwed(positionId uint64) (int64, int64) {
-	position, err := GetPosition(positionId)
-	if err != nil {
+	positions := GetPositions()
+	if positions == nil {
+		return 0, 0
+	}
+
+	position, ok := positions.Get(utils.Uint64ToString(positionId)).(Position)
+	if !ok {
 		return 0, 0
 	}
 

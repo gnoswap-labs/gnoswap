@@ -538,81 +538,80 @@ func shouldPanic(t *testing.T, fn func()) {
 	fn()
 }
 
-func TestGetPoolCount(cur realm, t *testing.T) {
+func TestGetPools(cur realm, t *testing.T) {
 	testCases := []struct {
-		name     string
-		setup    func(cur realm, t *testing.T)
-		expected int
+		name         string
+		setup        func(cur realm, t *testing.T)
+		offset       int
+		count        int
+		expectedSize int
+		expectedKeys int
 	}{
 		{
-			name: "empty store returns zero",
+			name: "empty store yields no entries",
 			setup: func(cur realm, t *testing.T) {
 				resetObject(cur, t)
 			},
-			expected: 0,
+			offset:       0,
+			count:        10,
+			expectedSize: 0,
+			expectedKeys: 0,
 		},
 		{
-			name: "returns correct count after adding pool",
+			name: "returns pools",
 			setup: func(cur realm, t *testing.T) {
 				testInitData(cur, t)
 			},
-			expected: 1,
+			offset:       0,
+			count:        10,
+			expectedSize: 1,
+			expectedKeys: 1,
+		},
+		{
+			name: "offset beyond range yields no entries",
+			setup: func(cur realm, t *testing.T) {
+				testInitData(cur, t)
+			},
+			offset:       100,
+			count:        10,
+			expectedSize: 1,
+			expectedKeys: 0,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			tc.setup(cur, t)
-			count := getMockInstance().GetPoolCount()
-			uassert.Equal(t, tc.expected, count)
+			pools := getMockInstance().GetPools()
+			uassert.Equal(t, tc.expectedSize, pools.Size())
+
+			keys := make([]string, 0)
+			pools.IterateByOffset(tc.offset, tc.count, func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			uassert.Equal(t, tc.expectedKeys, len(keys))
 		})
 	}
 }
 
-func TestGetPoolPaths(cur realm, t *testing.T) {
-	testCases := []struct {
-		name           string
-		setup          func(cur realm, t *testing.T)
-		offset         int
-		count          int
-		expectedLength int
-	}{
-		{
-			name: "empty store returns empty slice",
-			setup: func(cur realm, t *testing.T) {
-				resetObject(cur, t)
-			},
-			offset:         0,
-			count:          10,
-			expectedLength: 0,
-		},
-		{
-			name: "returns pool paths",
-			setup: func(cur realm, t *testing.T) {
-				testInitData(cur, t)
-			},
-			offset:         0,
-			count:          10,
-			expectedLength: 1,
-		},
-		{
-			name: "offset beyond range returns empty",
-			setup: func(cur realm, t *testing.T) {
-				testInitData(cur, t)
-			},
-			offset:         100,
-			count:          10,
-			expectedLength: 0,
-		},
-	}
+func TestGetPools_EntriesAreCloned(cur realm, t *testing.T) {
+	testInitData(cur, t)
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			tc.setup(cur, t)
-			paths := getMockInstance().GetPoolPaths(tc.offset, tc.count)
-			uassert.Equal(t, tc.expectedLength, len(paths))
-		})
-	}
+	pools := getMockInstance().GetPools()
+	poolPath := "token0:token1:3000"
+
+	first, ok := pools.Get(poolPath).(*pl.Pool)
+	uassert.True(t, ok)
+
+	second, ok := pools.Get(poolPath).(*pl.Pool)
+	uassert.True(t, ok)
+
+	// Each read hands out a distinct clone, so mutating one cannot reach the
+	// stored pool nor any other reader.
+	uassert.False(t, first == second)
+	first.SetBalanceToken0(first.BalanceToken0() + 1)
+	uassert.NotEqual(t, first.BalanceToken0(), second.BalanceToken0())
 }
 
 func TestExistsPoolPath(cur realm, t *testing.T) {
@@ -710,41 +709,7 @@ func TestGetFeeAmountTickSpacing(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetPoolPositionCount(cur realm, t *testing.T) {
-	testCases := []struct {
-		name     string
-		setup    func(cur realm, t *testing.T)
-		poolPath string
-		expected int
-	}{
-		{
-			name: "valid pool with positions",
-			setup: func(cur realm, t *testing.T) {
-				testInitData(cur, t)
-			},
-			poolPath: "token0:token1:3000",
-			expected: 1,
-		},
-		{
-			name: "non-existent pool returns zero",
-			setup: func(cur realm, t *testing.T) {
-				testInitData(cur, t)
-			},
-			poolPath: "nonexistent:pool:path",
-			expected: 0,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			tc.setup(cur, t)
-			count := getMockInstance().GetPoolPositionCount(tc.poolPath)
-			uassert.Equal(t, tc.expected, count)
-		})
-	}
-}
-
-func TestGetPoolPositionKeys(cur realm, t *testing.T) {
+func TestGetPoolPositions(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T)
@@ -752,9 +717,10 @@ func TestGetPoolPositionKeys(cur realm, t *testing.T) {
 		offset         int
 		count          int
 		expectedLength int
+		expectNil      bool
 	}{
 		{
-			name: "valid pool returns position keys",
+			name: "valid pool returns positions",
 			setup: func(cur realm, t *testing.T) {
 				testInitData(cur, t)
 			},
@@ -764,7 +730,7 @@ func TestGetPoolPositionKeys(cur realm, t *testing.T) {
 			expectedLength: 1,
 		},
 		{
-			name: "non-existent pool returns empty",
+			name: "non-existent pool returns nil",
 			setup: func(cur realm, t *testing.T) {
 				testInitData(cur, t)
 			},
@@ -772,13 +738,26 @@ func TestGetPoolPositionKeys(cur realm, t *testing.T) {
 			offset:         0,
 			count:          10,
 			expectedLength: 0,
+			expectNil:      true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			tc.setup(cur, t)
-			keys := getMockInstance().GetPoolPositionKeys(tc.poolPath, tc.offset, tc.count)
+			positions := getMockInstance().GetPoolPositions(tc.poolPath)
+			if tc.expectNil {
+				uassert.True(t, positions == nil)
+				return
+			}
+
+			keys := make([]string, 0)
+			positions.IterateByOffset(tc.offset, tc.count, func(key string, value any) bool {
+				_, ok := value.(pl.PositionInfo)
+				uassert.True(t, ok)
+				keys = append(keys, key)
+				return false
+			})
 			uassert.Equal(t, tc.expectedLength, len(keys))
 		})
 	}
@@ -834,7 +813,7 @@ func TestGetInitializedTicksInRange(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetPoolWithError(cur realm, t *testing.T) {
+func TestGetPoolsGetWithMissingPool(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(cur realm, t *testing.T)
@@ -868,11 +847,13 @@ func TestGetPoolWithError(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			tc.setup(cur, t)
-			pool, err := getMockInstance().GetPool(tc.token0Path, tc.token1Path, tc.fee)
+			poolPath := pl.GetPoolPath(tc.token0Path, tc.token1Path, tc.fee)
+			value := getMockInstance().GetPools().Get(poolPath)
 			if tc.expectError {
-				uassert.True(t, err != nil)
+				uassert.True(t, value == nil)
 			} else {
-				uassert.True(t, err == nil)
+				pool, ok := value.(*pl.Pool)
+				uassert.True(t, ok)
 				uassert.True(t, pool != nil)
 			}
 		})
@@ -930,7 +911,7 @@ func TestGetTickInfoWithError(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetPositionWithError(cur realm, t *testing.T) {
+func TestGetPoolPositionsGetWithMissingEntry(cur realm, t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(cur realm, t *testing.T)
@@ -970,11 +951,18 @@ func TestGetPositionWithError(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			tc.setup(cur, t)
-			positionInfo, err := getMockInstance().GetPosition(tc.poolPath, tc.key)
+			positions := getMockInstance().GetPoolPositions(tc.poolPath)
+			if positions == nil {
+				uassert.True(t, tc.expectError)
+				return
+			}
+
+			value := positions.Get(tc.key)
 			if tc.expectError {
-				uassert.True(t, err != nil)
+				uassert.True(t, value == nil)
 			} else {
-				uassert.True(t, err == nil)
+				positionInfo, ok := value.(pl.PositionInfo)
+				uassert.True(t, ok)
 				uassert.Equal(t, "1000000", positionInfo.Liquidity())
 			}
 		})

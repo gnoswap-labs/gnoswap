@@ -388,7 +388,7 @@ func bootstrapEmission(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[EXPECTED] canonical pool exists:", pool.ExistsPoolPath("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"))
-	println("[EXPECTED] pool count:", pool.GetPoolCount())
+	println("[EXPECTED] pool count:", pool.GetPools().Size())
 }
 
 // ---------------------------------------------------------------------------
@@ -565,7 +565,7 @@ func positionLifecycle(cur realm) {
 	println("[EXPECTED] fees returned with the principal (net):", fee0, fee1)
 	println("[EXPECTED] withdrawal fee accrued (BAR / FOO):", withdrawalFee0, withdrawalFee1)
 	println("[EXPECTED] position liquidity after decrease:", position.GetPositionLiquidity(positionId))
-	println("[EXPECTED] position count:", position.GetPositionCount())
+	println("[EXPECTED] position count:", position.GetPositions().Size())
 
 	// withdrawal fee is withdrawalFeeBPS of the gross fee, and the caller keeps
 	// the rest; the principal is not charged
@@ -584,7 +584,7 @@ func positionLifecycle(cur realm) {
 	uassert.Equal(t, barFoo500PoolPath, position.GetPositionPoolKey(positionId))
 	uassert.True(t, position.IsInRange(positionId))
 	uassert.False(t, position.IsBurned(positionId))
-	uassert.Equal(t, 2, position.GetPositionCount())
+	uassert.Equal(t, 2, position.GetPositions().Size())
 }
 
 // swapBothWays trades a small amount in each direction so both sides of the
@@ -847,7 +847,7 @@ func govStakerLifecycle(cur realm) {
 	println("[EXPECTED] alice delegated amount:", aliceDelegatedAmount)
 	println("[EXPECTED] total delegated:", govStaker.GetTotalDelegated())
 	println("[EXPECTED] total xGNS supply:", govStaker.GetTotalxGnsSupply())
-	println("[EXPECTED] delegation count:", govStaker.GetDelegationCount())
+	println("[EXPECTED] delegation count:", govStaker.GetDelegations().Size())
 
 	// admin delegates to itself; needed later to pass the proposal threshold
 	testing.SetRealm(adminRealm)
@@ -862,7 +862,7 @@ func govStakerLifecycle(cur realm) {
 	redelegated := govStaker.Redelegate(cross(cur), adminAddr, aliceAddr, 500_000_000)
 	testing.SkipHeights(1)
 	println("[EXPECTED] redelegated:", redelegated)
-	println("[EXPECTED] alice->alice delegation count:", govStaker.GetUserDelegationCount(aliceAddr, aliceAddr))
+	println("[EXPECTED] alice->alice delegation count:", len(govStaker.GetUserDelegationIDs(aliceAddr, aliceAddr)))
 
 	// undelegate and collect after the lockup period
 	govStaker.Undelegate(cross(cur), aliceAddr, 200_000_000)
@@ -961,7 +961,7 @@ func governanceLifecycle(cur realm) {
 	)
 	testing.SkipHeights(1)
 	println("[EXPECTED] param proposal id:", paramProposalId)
-	println("[EXPECTED] proposal count:", govGovernance.GetProposalCount())
+	println("[EXPECTED] proposal count:", govGovernance.GetProposals().Size())
 
 	unstakingFeeBefore := staker.GetUnstakingFee()
 	voteAndExecute(cur, config, paramProposalId)
@@ -984,7 +984,7 @@ func governanceLifecycle(cur realm) {
 
 	uassert.Equal(t, uint64(150), staker.GetUnstakingFee())
 	uassert.Equal(t, int64(2), newVersion)
-	uassert.Equal(t, 3, govGovernance.GetProposalCount())
+	uassert.Equal(t, 3, govGovernance.GetProposals().Size())
 	uassert.Equal(t, int64(1_000), aliceGnsAfter-aliceGnsBefore)
 }
 
@@ -1039,7 +1039,7 @@ func launchpadLifecycle(cur realm) {
 	launchpadTier30Id = ufmt.Sprintf("%s:%d", launchpadProjectId, launchpadTierWaitID)
 
 	println("[EXPECTED] project id:", launchpadProjectId)
-	println("[EXPECTED] project count:", launchpad.GetProjectCount())
+	println("[EXPECTED] project count:", launchpad.GetProjects().Size())
 	projectName, _ := launchpad.GetProjectName(launchpadProjectId)
 	println("[EXPECTED] project name:", projectName)
 	projectRecipient, _ := launchpad.GetProjectRecipient(launchpadProjectId)
@@ -1084,7 +1084,7 @@ func launchpadLifecycle(cur realm) {
 	testing.SkipHeights(1)
 	println("[EXPECTED] project recipient collected launchpad rewards")
 
-	uassert.Equal(t, 1, launchpad.GetProjectCount())
+	uassert.Equal(t, 1, launchpad.GetProjects().Size())
 	uassert.Equal(t, int64(1_000_000), depositAmount)
 	uassert.True(t, projectWalletFound)
 	uassert.True(t, claimed > 0)
@@ -1122,7 +1122,7 @@ func captureSnapshot() upgradeSnapshot {
 		poolCreationFee:    pool.GetPoolCreationFee(),
 		withdrawalFee:      pool.GetWithdrawalFee(),
 		swapFee:            router.GetSwapFee(),
-		positionCount:      position.GetPositionCount(),
+		positionCount:      position.GetPositions().Size(),
 		positionLiquidity:  position.GetPositionLiquidity(1),
 		positionTickLower:  position.GetPositionTickLower(1),
 		positionTickUpper:  position.GetPositionTickUpper(1),
@@ -1161,10 +1161,10 @@ func captureSnapshot() upgradeSnapshot {
 		totalDelegated:     govStaker.GetTotalDelegated(),
 		totalXGnsSupply:    govStaker.GetTotalxGnsSupply(),
 		totalLocked:        govStaker.GetTotalLockedAmount(),
-		delegationCount:    govStaker.GetDelegationCount(),
-		delegationIDs:      govStaker.GetDelegationIDs(0, 10),
-		proposalCount:      govGovernance.GetProposalCount(),
-		proposalIDs:        govGovernance.GetProposalIDs(0, 10),
+		delegationCount:    govStaker.GetDelegations().Size(),
+		delegationIDs:      collectDelegationIDs(0, 10),
+		proposalCount:      govGovernance.GetProposals().Size(),
+		proposalIDs:        collectProposalIDs(0, 10),
 		paramProposalYea:   paramYea,
 		paramProposalNay:   paramNay,
 		paramProposalState: paramStatus,
@@ -1173,7 +1173,7 @@ func captureSnapshot() upgradeSnapshot {
 		adminVoteWeight:    adminVoteWeight,
 		configVersion:      govGovernance.GetLatestConfigVersion(),
 		configVotingPeriod: govGovernance.GetLatestConfig().VotingPeriod,
-		projectCount:       launchpad.GetProjectCount(),
+		projectCount:       launchpad.GetProjects().Size(),
 		projectActive:      projectActive,
 		projectRecipient:   projectRecipient,
 		projectTier30Total: projectTier30Total,
@@ -1386,11 +1386,11 @@ func rerunAfterUpgrade(cur realm) {
 	// gov staker through v2_valid
 	testing.SetRealm(aliceRealm)
 	gns.Approve(cross(cur), govStakerAddr, 1_000_000_000)
-	delegationCountBefore := govStaker.GetDelegationCount()
+	delegationCountBefore := govStaker.GetDelegations().Size()
 	newDelegatedAmount := govStaker.Delegate(cross(cur), adminAddr, 1_000_000_000, "")
 	testing.SkipHeights(1)
 	println("[EXPECTED] v2_valid delegated amount:", newDelegatedAmount)
-	println("[EXPECTED] v2_valid delegation count:", govStaker.GetDelegationCount())
+	println("[EXPECTED] v2_valid delegation count:", govStaker.GetDelegations().Size())
 	println("[EXPECTED] v2_valid total delegated:", govStaker.GetTotalDelegated())
 
 	// launchpad through v2_valid: collect the remaining deposit principal
@@ -1408,12 +1408,12 @@ func rerunAfterUpgrade(cur realm) {
 	newProposalId := govGovernance.ProposeText(cross(cur), "post upgrade text", "created through v2_valid")
 	testing.SkipHeights(1)
 	println("[EXPECTED] v2_valid proposal id:", newProposalId)
-	println("[EXPECTED] v2_valid proposal count:", govGovernance.GetProposalCount())
+	println("[EXPECTED] v2_valid proposal count:", govGovernance.GetProposals().Size())
 
 	uassert.Equal(t, int64(1_000_000), principal)
-	uassert.Equal(t, 4, govGovernance.GetProposalCount())
+	uassert.Equal(t, 4, govGovernance.GetProposals().Size())
 	uassert.Equal(t, int64(1_000_000_000), newDelegatedAmount)
-	uassert.Equal(t, delegationCountBefore+1, govStaker.GetDelegationCount())
+	uassert.Equal(t, delegationCountBefore+1, govStaker.GetDelegations().Size())
 }
 
 // ---------------------------------------------------------------------------
@@ -1483,12 +1483,12 @@ func windDown(cur realm) {
 // ---------------------------------------------------------------------------
 
 func finalInvariants(cur realm) {
-	println("[EXPECTED] pool count:", pool.GetPoolCount())
-	println("[EXPECTED] position count:", position.GetPositionCount())
+	println("[EXPECTED] pool count:", pool.GetPools().Size())
+	println("[EXPECTED] position count:", position.GetPositions().Size())
 	println("[EXPECTED] total emission sent:", staker.GetTotalEmissionSent())
 	println("[EXPECTED] gov staker total delegated:", govStaker.GetTotalDelegated())
-	println("[EXPECTED] governance proposal count:", govGovernance.GetProposalCount())
-	println("[EXPECTED] launchpad project count:", launchpad.GetProjectCount())
+	println("[EXPECTED] governance proposal count:", govGovernance.GetProposals().Size())
+	println("[EXPECTED] launchpad project count:", launchpad.GetProjects().Size())
 
 	// external incentive ledger: the amount handed out (rewards + the refund
 	// booked at EndExternalIncentive) can never exceed the funded total, and
@@ -1767,3 +1767,39 @@ func finalInvariants(cur realm) {
 // [EXPECTED] protocol_fee impl: gno.land/r/gnoswap/protocol_fee/v2_valid
 // [EXPECTED] governance impl: gno.land/r/gnoswap/gov/governance/v2_valid
 // [EXPECTED] gov staker impl: gno.land/r/gnoswap/gov/staker/v2_valid
+
+// collectDelegationIDs pages the read-only delegation view and returns the IDs
+// its keys encode.
+func collectDelegationIDs(offset, count int) []int64 {
+	ids := []int64{}
+	govStaker.GetDelegations().IterateByOffset(offset, count, func(key string, _ any) bool {
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
+		return false
+	})
+
+	return ids
+}
+
+// collectProposalIDs pages the read-only proposal view and returns the IDs its
+// keys encode.
+func collectProposalIDs(offset, count int) []int64 {
+	ids := []int64{}
+	govGovernance.GetProposals().IterateByOffset(offset, count, func(key string, _ any) bool {
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
+		return false
+	})
+
+	return ids
+}

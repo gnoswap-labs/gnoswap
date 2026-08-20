@@ -213,7 +213,7 @@ func createSecondPoolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	pool.CreatePool(cross(cur), barPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	ufmt.Printf("[EXPECTED] v2_valid created second pool: %s (total pools=%d)\n",
-		pool.GetPoolPath(barPath, fooPath, fee3000), pool.GetPoolCount())
+		pool.GetPoolPath(barPath, fooPath, fee3000), pool.GetPools().Size())
 }
 
 // decreaseLiquidityV2Valid removes part of v1-created position 1 via
@@ -277,9 +277,9 @@ func setSwapHooksV2Valid(cur realm) {
 
 func printPoolData(cur realm) {
 	testing.SetRealm(adminRealm)
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] pool=%s tick=%d liquidity=%s positions=%d\n",
-		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), pool.GetPoolPositionCount(barFoo500PoolPath))
+		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), pool.GetPoolPositions(barFoo500PoolPath).Size())
 }
 
 // Output:

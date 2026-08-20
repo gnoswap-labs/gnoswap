@@ -3,6 +3,7 @@ package insecure_staker_callback
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	"gno.land/r/gnoswap/gns"
 	staker "gno.land/r/gnoswap/staker"
 	v1 "gno.land/r/gnoswap/staker/v1"
@@ -161,13 +162,6 @@ func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
 		panic("test implementation: GetPool not supported")
 	}
 	return t.instance.GetPool(poolPath)
-}
-
-func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
-	if !t.isActive("GetIncentive") {
-		panic("test implementation: GetIncentive not supported")
-	}
-	return t.instance.GetIncentive(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
@@ -422,13 +416,6 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return t.instance.GetMinimumRewardAmountForToken(tokenPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	if !t.isActive("GetPoolIncentiveIdList") {
-		panic("test implementation: GetPoolIncentiveIdList not supported")
-	}
-	return t.instance.GetPoolIncentiveIdList(poolPath)
-}
-
 func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
 	if !t.isActive("GetPoolStakedLiquidity") {
 		panic("test implementation: GetPoolStakedLiquidity not supported")
@@ -520,81 +507,32 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	return t.instance.GetWarmupTemplate()
 }
 
-func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
-	if !t.isActive("GetPoolRewardCacheCount") {
-		panic("test implementation: GetPoolRewardCacheCount not supported")
+func (t *TestStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolRewardCaches") {
+		panic("test implementation: GetPoolRewardCaches not supported")
 	}
-	return t.instance.GetPoolRewardCacheCount(poolPath)
+	return t.instance.GetPoolRewardCaches(poolPath)
 }
 
-func (t *TestStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	if !t.isActive("GetPoolRewardCacheIDs") {
-		panic("test implementation: GetPoolRewardCacheIDs not supported")
+func (t *TestStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolIncentives") {
+		panic("test implementation: GetPoolIncentives not supported")
 	}
-	return t.instance.GetPoolRewardCacheIDs(poolPath, offset, count)
+	return t.instance.GetPoolIncentives(poolPath)
 }
 
-func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	if !t.isActive("GetPoolRewardCache") {
-		panic("test implementation: GetPoolRewardCache not supported")
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolGlobalRewardRatioAccumulations") {
+		panic("test implementation: GetPoolGlobalRewardRatioAccumulations not supported")
 	}
-	return t.instance.GetPoolRewardCache(poolPath, timestamp)
+	return t.instance.GetPoolGlobalRewardRatioAccumulations(poolPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
-	if !t.isActive("GetPoolIncentiveCount") {
-		panic("test implementation: GetPoolIncentiveCount not supported")
+func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolHistoricalTicks") {
+		panic("test implementation: GetPoolHistoricalTicks not supported")
 	}
-	return t.instance.GetPoolIncentiveCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
-	if !t.isActive("GetPoolIncentiveIDs") {
-		panic("test implementation: GetPoolIncentiveIDs not supported")
-	}
-	return t.instance.GetPoolIncentiveIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	if !t.isActive("GetPoolGlobalRewardRatioAccumulationCount") {
-		panic("test implementation: GetPoolGlobalRewardRatioAccumulationCount not supported")
-	}
-	return t.instance.GetPoolGlobalRewardRatioAccumulationCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	if !t.isActive("GetPoolGlobalRewardRatioAccumulationIDs") {
-		panic("test implementation: GetPoolGlobalRewardRatioAccumulationIDs not supported")
-	}
-	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	if !t.isActive("GetPoolGlobalRewardRatioAccumulation") {
-		panic("test implementation: GetPoolGlobalRewardRatioAccumulation not supported")
-	}
-	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	if !t.isActive("GetPoolHistoricalTickCount") {
-		panic("test implementation: GetPoolHistoricalTickCount not supported")
-	}
-	return t.instance.GetPoolHistoricalTickCount(poolPath)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
-	if !t.isActive("GetPoolHistoricalTickIDs") {
-		panic("test implementation: GetPoolHistoricalTickIDs not supported")
-	}
-	return t.instance.GetPoolHistoricalTickIDs(poolPath, offset, count)
-}
-
-func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	if !t.isActive("GetPoolHistoricalTick") {
-		panic("test implementation: GetPoolHistoricalTick not supported")
-	}
-	return t.instance.GetPoolHistoricalTick(poolPath, tick)
+	return t.instance.GetPoolHistoricalTicks(poolPath)
 }
 
 func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {

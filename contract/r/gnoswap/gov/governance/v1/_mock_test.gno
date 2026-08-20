@@ -152,6 +152,13 @@ func (m *mockGovernanceStore) HasUserProposalsStoreKey() bool {
 	return m.userProposals != nil
 }
 
+func (m *mockGovernanceStore) GetUserProposals() *bptree.BPTree {
+	if m.userProposals == nil {
+		m.userProposals = governance.NewUserProposalTree()
+	}
+	return m.userProposals
+}
+
 func (m *mockGovernanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	if m.userProposals == nil {
 		return nil, false

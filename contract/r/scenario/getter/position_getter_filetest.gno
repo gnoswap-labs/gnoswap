@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -70,12 +71,8 @@ func main(cur realm) {
 
 	println("[SCENARIO] 2. Position Getter Methods")
 
-	println("[SCENARIO] 2.1. GetPositionCount")
-	getPositionCount(cur)
-	println()
-
-	println("[SCENARIO] 2.2. GetPositionIDs")
-	getPositionIDs(cur)
+	println("[SCENARIO] 2.2. GetPositions")
+	getPositions(cur)
 	println()
 
 	println("[SCENARIO] 2.3. GetPosition")
@@ -235,32 +232,28 @@ func exactInSwapRoute(cur realm) {
 
 // Position Getter Methods Tests
 
-func getPositionCount(cur realm) {
-	println("[INFO] Check GetPositionCount method")
+func getPositions(cur realm) {
+	println("[INFO] Check GetPositions method")
 	testing.SetRealm(adminRealm)
 
-	positionCount := pn.GetPositionCount()
-	ufmt.Printf("[EXPECTED] position count: %d\n", positionCount)
-}
+	positions := pn.GetPositions()
+	ufmt.Printf("[EXPECTED] position IDs count: %d\n", positions.Size())
 
-func getPositionIDs(cur realm) {
-	println("[INFO] Check GetPositionIDs method")
-	testing.SetRealm(adminRealm)
-
-	positionIDs := pn.GetPositionIDs(0, 10)
-	ufmt.Printf("[EXPECTED] position IDs count: %d\n", len(positionIDs))
-	for i, id := range positionIDs {
-		ufmt.Printf("[EXPECTED] position ID[%d]: %d\n", i, id)
-	}
+	index := 0
+	positions.IterateByOffset(0, 10, func(id string, _ any) bool {
+		ufmt.Printf("[EXPECTED] position ID[%d]: %s\n", index, id)
+		index++
+		return false
+	})
 }
 
 func getPosition(cur realm) {
-	println("[INFO] Check GetPosition method")
+	println("[INFO] Check GetPositions entry")
 	testing.SetRealm(adminRealm)
 
-	position, err := pn.GetPosition(positionId)
-	if err != nil {
-		println("[EXPECTED] GetPosition error:", err.Error())
+	position, ok := pn.GetPositions().Get(utils.Uint64ToString(positionId)).(pn.Position)
+	if !ok {
+		ufmt.Printf("[EXPECTED] position %d not found\n", positionId)
 	} else {
 		println("[EXPECTED] position poolKey:", position.PoolKey())
 		ufmt.Printf("[EXPECTED] position tickLower: %d\n", position.TickLower())
@@ -463,17 +456,13 @@ func getPositionOwner(cur realm) {
 // [EXPECTED] protocol fee foo balance change: 0
 //
 // [SCENARIO] 2. Position Getter Methods
-// [SCENARIO] 2.1. GetPositionCount
-// [INFO] Check GetPositionCount method
-// [EXPECTED] position count: 1
-//
-// [SCENARIO] 2.2. GetPositionIDs
-// [INFO] Check GetPositionIDs method
+// [SCENARIO] 2.2. GetPositions
+// [INFO] Check GetPositions method
 // [EXPECTED] position IDs count: 1
 // [EXPECTED] position ID[0]: 1
 //
 // [SCENARIO] 2.3. GetPosition
-// [INFO] Check GetPosition method
+// [INFO] Check GetPositions entry
 // [EXPECTED] position poolKey: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 // [EXPECTED] position tickLower: -887220
 // [EXPECTED] position tickUpper: 887220

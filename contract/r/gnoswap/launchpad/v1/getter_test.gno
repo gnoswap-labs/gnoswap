@@ -7,9 +7,10 @@ import (
 	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestGetProjectCount(cur realm, t *testing.T) {
+func TestGetProjectsSize(cur realm, t *testing.T) {
 	t.Run("empty store returns zero count", func(cur realm, t *testing.T) {
 		// Setup
 		resetTestStore()
@@ -17,7 +18,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 		lp := getTestImplementation()
 
 		// Execute
-		count := lp.GetProjectCount()
+		count := lp.GetProjects().Size()
 
 		// Verify
 		uassert.Equal(t, 0, count)
@@ -39,7 +40,7 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 			recipientSuffix: "recipient1",
 		})
 
-		count1 := lp.GetProjectCount()
+		count1 := lp.GetProjects().Size()
 		uassert.Equal(t, 1, count1)
 
 		createTestProject(cur, t, lp, launchpadAddr, adminRealm, testProjectConfig{
@@ -52,14 +53,14 @@ func TestGetProjectCount(cur realm, t *testing.T) {
 		})
 
 		// Execute
-		count2 := lp.GetProjectCount()
+		count2 := lp.GetProjects().Size()
 
 		// Verify
 		uassert.Equal(t, 2, count2)
 	})
 }
 
-func TestGetProjectIDs(cur realm, t *testing.T) {
+func TestGetProjects(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		offset        int
@@ -67,19 +68,19 @@ func TestGetProjectIDs(cur realm, t *testing.T) {
 		expectedCount int
 	}{
 		{
-			name:          "negative offset returns empty slice",
+			name:          "negative offset yields no entries",
 			offset:        -1,
 			count:         10,
 			expectedCount: 0,
 		},
 		{
-			name:          "zero count returns empty slice",
+			name:          "zero count yields no entries",
 			offset:        0,
 			count:         0,
 			expectedCount: 0,
 		},
 		{
-			name:          "negative count returns empty slice",
+			name:          "negative count yields no entries",
 			offset:        0,
 			count:         -1,
 			expectedCount: 0,
@@ -100,25 +101,25 @@ func TestGetProjectIDs(cur realm, t *testing.T) {
 			lp := getTestImplementation()
 
 			// Execute
-			result := lp.GetProjectIDs(tt.offset, tt.count)
+			keys := make([]string, 0)
+			lp.GetProjects().IterateByOffset(tt.offset, tt.count, func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
 
 			// Verify
-			if result == nil {
-				result = []string{}
-			}
-			uassert.Equal(t, tt.expectedCount, len(result))
+			uassert.Equal(t, tt.expectedCount, len(keys))
 		})
 	}
 }
 
-func TestGetProject(cur realm, t *testing.T) {
+func TestGetProjectsGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		projectID        string
 		createProject    bool
 		expectedNotNil   bool
 		expectedHasError bool
-		expectedError    string
 	}{
 		{
 			name:             "get existing project",
@@ -132,7 +133,6 @@ func TestGetProject(cur realm, t *testing.T) {
 			createProject:    false,
 			expectedNotNil:   false,
 			expectedHasError: true,
-			expectedError:    "project(nonexistent-project-id) not found",
 		},
 	}
 
@@ -157,16 +157,15 @@ func TestGetProject(cur realm, t *testing.T) {
 			}
 
 			// Execute
-			project, err := lp.GetProject(projectID)
+			project, ok := lp.GetProjects().Get(projectID).(*launchpad.Project)
 
 			// Verify
 			if tt.expectedHasError {
-				uassert.Error(t, err)
+				uassert.False(t, ok)
 				uassert.True(t, project == nil)
-				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
-				uassert.NoError(t, err)
 				if tt.expectedNotNil {
+					uassert.True(t, ok)
 					uassert.NotNil(t, project)
 					uassert.Equal(t, "Test Project", project.Name())
 				}
@@ -1094,8 +1093,8 @@ func TestGetRewardState(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
-	t.Run("get project tier deposit ids pagination", func(cur realm, t *testing.T) {
+func TestGetProjectTierRewards(cur realm, t *testing.T) {
+	t.Run("get project tier rewards pagination", func(cur realm, t *testing.T) {
 		setupTestEnvironment(cur, t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
@@ -1117,10 +1116,20 @@ func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
 		})
 
 		// Execute
-		ids := lp.GetProjectTierDepositIDs(projectID, 30, 0, 10)
+		rewards := lp.GetProjectTierRewards(projectID, 30)
 
 		// Verify
+		ids := make([]string, 0)
+		rewards.IterateByOffset(0, 10, func(key string, value any) bool {
+			_, ok := value.(*launchpad.RewardState)
+			uassert.True(t, ok)
+			ids = append(ids, key)
+			return false
+		})
 		uassert.True(t, len(ids) > 0)
+
+		// An unknown project tier yields no view at all.
+		uassert.True(t, lp.GetProjectTierRewards("unknown-project", 30) == nil)
 	})
 }
 

@@ -85,7 +85,7 @@ func initPool(cur realm) {
 		"130621891405341611593710811006",
 	)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Pool tick should be %d\n", p.Slot0Tick())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", p.Liquidity().ToString())
 }
@@ -174,7 +174,7 @@ func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[INFO] Pool tick before swap: %d\n", p.Slot0Tick())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -194,7 +194,7 @@ func executeSwap(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	p, _ = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Swap amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap amount1: %s\n", amount1)
 	ufmt.Printf("[EXPECTED] Pool tick after swap: %d\n", p.Slot0Tick())

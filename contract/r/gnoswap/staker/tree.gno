@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -88,6 +89,15 @@ func (self *UintTree) IterateByOffset(offset, count int, fn func(key int64, valu
 	self.tree.IterateByOffset(offset, count, func(key string, value any) bool {
 		return fn(DecodeInt64(key), value)
 	})
+}
+
+// ReadOnly returns a read-only view of the underlying tree, so callers can
+// paginate it without gaining a handle on the mutable tree.
+//
+// Keys are the zero-padded encoding produced by EncodeInt64, not the int64 keys
+// this type takes; use DecodeInt64 to recover them.
+func (self *UintTree) ReadOnly(makeEntrySafeFn func(any) any) *rotree.ReadOnlyTree {
+	return rotree.Wrap(self.tree, makeEntrySafeFn)
 }
 
 func (self *UintTree) Clone() *UintTree {

@@ -5,6 +5,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -49,28 +51,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				uassert.Equal(t, "foo:bar:500", pool.PoolPath())
 				uassert.Equal(t, int64(20), pool.LastUnclaimableTime())
 				uassert.Equal(t, int64(30), pool.UnclaimableAcc())
-			},
-		},
-		{
-			name:   "GetIncentive",
-			setup:  func(m *MockStaker) { incentive := newExternalIncentive(); m.Response.Set("GetIncentive", &incentive) },
-			getter: func() any { return GetIncentive("foo:bar:500", "incentive-1") },
-			mutate: func(result any) {
-				incentive := result.(*ExternalIncentive)
-				incentive.SetRewardToken("mutated")
-				incentive.SetRewardAmount(2000)
-				incentive.SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
-				incentive.SetDistributedRewardAmount(4000)
-				incentive.SetRefunded(true)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				incentive := m.Response.data["GetIncentive"][0].(*ExternalIncentive)
-				uassert.Equal(t, "reward-token", incentive.RewardToken())
-				uassert.Equal(t, int64(1000), incentive.RewardAmount())
-				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), consts.Q128())
-				uassert.Equal(t, expectedRPSX128.ToString(), incentive.RewardPerSecondX128().ToString())
-				uassert.Equal(t, int64(0), incentive.DistributedRewardAmount())
-				uassert.Equal(t, false, incentive.Refunded())
 			},
 		},
 		{
@@ -181,21 +161,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name:   "GetPoolIncentiveIdList",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIdList", []string{"incentive-1", "incentive-2"}) },
-			getter: func() any { return GetPoolIncentiveIdList("foo:bar:500") },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "incentive-3")
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolIncentiveIdList"][0].([]string)
-				uassert.Equal(t, "incentive-1", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
 			name:   "GetPoolsByTier",
 			setup:  func(m *MockStaker) { m.Response.Set("GetPoolsByTier", []string{"foo:bar:500", "baz:qux:3000"}) },
 			getter: func() any { return GetPoolsByTier(1) },
@@ -244,76 +209,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				uassert.Equal(t, uint64(30), warmups[0].WarmupRatio)
 			},
 		},
-		{
-			name:   "GetPoolRewardCacheIDs",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolRewardCacheIDs", []int64{10, 20}) },
-			getter: func() any { return GetPoolRewardCacheIDs("foo:bar:500", 0, 10) },
-			mutate: func(result any) {
-				values := result.([]int64)
-				values[0] = 99
-				_ = append(values, 100)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolRewardCacheIDs"][0].([]int64)
-				uassert.Equal(t, int64(10), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
-			name:   "GetPoolIncentiveIDs",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIDs", []string{"one", "two"}) },
-			getter: func() any { return GetPoolIncentiveIDs("foo:bar:500", 0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "three")
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolIncentiveIDs"][0].([]string)
-				uassert.Equal(t, "one", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
-			name:   "GetPoolGlobalRewardRatioAccumulationIDs",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulationIDs", []uint64{10, 20}) },
-			getter: func() any { return GetPoolGlobalRewardRatioAccumulationIDs("foo:bar:500", 0, 10) },
-			mutate: func(result any) {
-				values := result.([]uint64)
-				values[0] = 99
-				_ = append(values, 100)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolGlobalRewardRatioAccumulationIDs"][0].([]uint64)
-				uassert.Equal(t, uint64(10), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
-			name:   "GetPoolGlobalRewardRatioAccumulation",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulation", "5000") },
-			getter: func() any { return GetPoolGlobalRewardRatioAccumulation("foo:bar:500", 10) },
-			mutate: func(result any) { result = "6000" },
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				value := m.Response.data["GetPoolGlobalRewardRatioAccumulation"][0].(string)
-				uassert.Equal(t, "5000", value)
-			},
-		},
-		{
-			name:   "GetPoolHistoricalTickIDs",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolHistoricalTickIDs", []int32{-10, 10}) },
-			getter: func() any { return GetPoolHistoricalTickIDs("foo:bar:500", 0, 10) },
-			mutate: func(result any) {
-				values := result.([]int32)
-				values[0] = -99
-				_ = append(values, 99)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolHistoricalTickIDs"][0].([]int32)
-				uassert.Equal(t, int32(-10), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -352,4 +247,77 @@ func TestCollectRewardIsolation(cur realm, t *testing.T) {
 	uassert.Equal(t, int64(20), storedExternalRewards["bonus"])
 	_, ok = storedExternalRewards["new"]
 	uassert.Equal(t, false, ok)
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+		getter func() *rotree.ReadOnlyTree
+	}{
+		{
+			name:   "GetPoolRewardCaches",
+			method: "GetPoolRewardCaches",
+			getter: func() *rotree.ReadOnlyTree { return GetPoolRewardCaches("foo:bar:500") },
+		},
+		{
+			name:   "GetPoolIncentives",
+			method: "GetPoolIncentives",
+			getter: func() *rotree.ReadOnlyTree { return GetPoolIncentives("foo:bar:500") },
+		},
+		{
+			name:   "GetPoolGlobalRewardRatioAccumulations",
+			method: "GetPoolGlobalRewardRatioAccumulations",
+			getter: func() *rotree.ReadOnlyTree { return GetPoolGlobalRewardRatioAccumulations("foo:bar:500") },
+		},
+		{
+			name:   "GetPoolHistoricalTicks",
+			method: "GetPoolHistoricalTicks",
+			getter: func() *rotree.ReadOnlyTree { return GetPoolHistoricalTicks("foo:bar:500") },
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			mockStaker := newMockStaker("v1")
+			implementation = mockStaker
+
+			stored := bptree.NewBPTree32()
+			stored.Set("00000000000000000010", int64(1))
+			stored.Set("00000000000000000020", int64(2))
+			mockStaker.Response.Set(tt.method, rotree.Wrap(stored, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, 2, got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			uassert.Equal(t, "00000000000000000010", keys[0])
+			uassert.Equal(t, "00000000000000000020", keys[1])
+
+			// The view refuses writes, so the stored tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("00000000000000000030", int64(3))
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(keys[0])
+			})
+			uassert.Equal(t, 2, stored.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(t *testing.T) {
+	resetTestState(t)
+	mockStaker := newMockStaker("v1")
+	implementation = mockStaker
+
+	uassert.True(t, GetPoolRewardCaches("foo:bar:500") == nil)
+	uassert.True(t, GetPoolIncentives("foo:bar:500") == nil)
+	uassert.True(t, GetPoolGlobalRewardRatioAccumulations("foo:bar:500") == nil)
+	uassert.True(t, GetPoolHistoricalTicks("foo:bar:500") == nil)
 }

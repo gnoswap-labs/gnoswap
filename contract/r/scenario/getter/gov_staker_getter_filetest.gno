@@ -5,6 +5,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -66,13 +67,20 @@ func setupTestData(cur realm) int64 {
 	// Skip some height for better testing
 	testing.SkipHeights(100)
 
-	// Get the delegation ID from GetDelegationIDs
+	// Get the delegation ID from GetDelegations
 	testing.SetRealm(stakerRealm)
-	delegationIds := staker.GetDelegationIDs(0, 10)
-	if len(delegationIds) == 0 {
+	delegationId := int64(-1)
+	staker.GetDelegations().IterateByOffset(0, 1, func(key string, _ any) bool {
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return true
+		}
+		delegationId = id
+		return true
+	})
+	if delegationId < 0 {
 		panic("no delegations found")
 	}
-	delegationId := delegationIds[0]
 
 	println("[EXPECTED] Delegation created with ID:", delegationId)
 
@@ -103,16 +111,16 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 
 	println()
 
-	// GetDelegationCount
-	delegationCount := staker.GetDelegationCount()
-	println("[EXPECTED] Delegation Count:", delegationCount)
+	// GetDelegations
+	delegations := staker.GetDelegations()
+	println("[EXPECTED] Delegation IDs (offset=0, limit=10):", delegations.Size(), "delegations")
 
-	// GetDelegationIDs
-	delegationIds := staker.GetDelegationIDs(0, 10)
-	println("[EXPECTED] Delegation IDs (offset=0, limit=10):", len(delegationIds), "delegations")
-	for i, id := range delegationIds {
-		ufmt.Printf("[EXPECTED] - Delegation %d: %d\n", i+1, id)
-	}
+	delegationIndex := 0
+	delegations.IterateByOffset(0, 10, func(id string, _ any) bool {
+		delegationIndex++
+		ufmt.Printf("[EXPECTED] - Delegation %d: %s\n", delegationIndex, id)
+		return false
+	})
 
 	println()
 
@@ -120,10 +128,10 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 	exists := staker.ExistsDelegation(delegationId1)
 	println("[EXPECTED] Delegation", delegationId1, "exists:", exists)
 
-	// GetDelegation
-	delegation, err := staker.GetDelegation(delegationId1)
-	if err != nil {
-		panic(err)
+	// GetDelegations entry
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationId1, 10)).(*staker.Delegation)
+	if !ok {
+		panic("delegation not found")
 	}
 	println("[EXPECTED] Delegation details:")
 	println("[EXPECTED] - ID:", delegation.ID())
@@ -134,20 +142,22 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 
 	println()
 
-	// GetDelegatorDelegateeCount
-	delegatorDelegateeCount := staker.GetDelegatorDelegateeCount(delegatorAddr)
-	println("[EXPECTED] Delegator Delegatee Count:", delegatorDelegateeCount)
-
-	// GetDelegatorDelegateeAddresses
-	delegatorDelegateeAddrs := staker.GetDelegatorDelegateeAddresses(delegatorAddr, 0, 10)
-	println("[EXPECTED] Delegator Delegatee Addresses (offset=0, limit=10):", len(delegatorDelegateeAddrs), "delegatees")
-	for i, addr := range delegatorDelegateeAddrs {
-		ufmt.Printf("[EXPECTED] - Delegatee %d: %s\n", i+1, addr)
+	// GetDelegatorDelegations
+	delegatorDelegations := staker.GetDelegatorDelegations(delegatorAddr)
+	delegateeCount := 0
+	if delegatorDelegations != nil {
+		delegateeCount = delegatorDelegations.Size()
 	}
+	println("[EXPECTED] Delegator Delegatee Addresses (offset=0, limit=10):", delegateeCount, "delegatees")
 
-	// GetUserDelegationCount
-	userDelegationCount := staker.GetUserDelegationCount(delegatorAddr, delegateeAddr)
-	println("[EXPECTED] User Delegation Count:", userDelegationCount)
+	if delegatorDelegations != nil {
+		delegateeIndex := 0
+		delegatorDelegations.IterateByOffset(0, 10, func(addr string, _ any) bool {
+			delegateeIndex++
+			ufmt.Printf("[EXPECTED] - Delegatee %d: %s\n", delegateeIndex, addr)
+			return false
+		})
+	}
 
 	// GetUserDelegationIDs
 	userDelegationIds := staker.GetUserDelegationIDs(delegatorAddr, delegateeAddr)
@@ -274,7 +284,6 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 // [EXPECTED] Total Locked Amount: 500000000
 // [EXPECTED] Undelegation Lockup Period: 604800
 //
-// [EXPECTED] Delegation Count: 1
 // [EXPECTED] Delegation IDs (offset=0, limit=10): 1 delegations
 // [EXPECTED] - Delegation 1: 1
 //
@@ -286,10 +295,8 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 // [EXPECTED] - Total Delegated Amount: 500000000
 // [EXPECTED] - Collected Amount: 0
 //
-// [EXPECTED] Delegator Delegatee Count: 1
 // [EXPECTED] Delegator Delegatee Addresses (offset=0, limit=10): 1 delegatees
 // [EXPECTED] - Delegatee 1: g1v3jkcet8v96x2ef3ta047h6lta047h6lcpu3dr
-// [EXPECTED] User Delegation Count: 1
 // [EXPECTED] User Delegation IDs: 1 delegations
 // [EXPECTED] - Delegation 1: 1
 //

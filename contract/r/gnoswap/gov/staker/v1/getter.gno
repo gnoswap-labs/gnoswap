@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"strconv"
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/emission"
@@ -33,29 +33,10 @@ func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
 	return gs.store.GetUnDelegationLockupPeriod()
 }
 
-// GetDelegationCount returns the total number of delegations.
-func (gs *govStakerV1) GetDelegationCount() int {
-	delegations := gs.store.GetAllDelegations()
-	return delegations.Size()
-}
-
-// GetDelegationIDs returns a paginated list of delegation IDs.
-func (gs *govStakerV1) GetDelegationIDs(offset, count int) []int64 {
-	delegations := gs.store.GetAllDelegations()
-
-	ids := make([]int64, 0)
-
-	delegations.IterateByOffset(offset, count, func(key string, _ any) bool {
-		delegationID, err := strconv.ParseInt(key, 10, 64)
-		if err != nil {
-			return false
-		}
-
-		ids = append(ids, delegationID)
-		return false
-	})
-
-	return ids
+// GetDelegations returns a read-only view of every delegation, keyed by the
+// decimal string form of the delegation ID.
+func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
+	return rotree.Wrap(gs.store.GetAllDelegations(), cloneDelegationEntry)
 }
 
 // ExistsDelegation checks if a delegation exists.
@@ -63,52 +44,16 @@ func (gs *govStakerV1) ExistsDelegation(delegationID int64) bool {
 	return gs.store.HasDelegation(delegationID)
 }
 
-// GetDelegation returns the delegation for the given ID.
-func (gs *govStakerV1) GetDelegation(delegationID int64) (*staker.Delegation, error) {
-	delegation, exists := gs.store.GetDelegation(delegationID)
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("delegation not found: %d", delegationID))
-	}
-	return delegation, nil
-}
-
-// GetDelegatorDelegateeCount returns the number of delegatees for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegateeCount(delegator address) int {
+// GetDelegatorDelegations returns a read-only view of a delegator's delegations,
+// keyed by delegatee address with that pair's delegation IDs as the value.
+// nil is returned when the delegator has no delegations.
+func (gs *govStakerV1) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
 	delegationManager := gs.store.GetDelegationManager()
 	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
 	if !exists {
-		return 0
+		return nil
 	}
-
-	return delegatorTree.Size()
-}
-
-// GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	delegationManager := gs.store.GetDelegationManager()
-	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
-	if !exists {
-		return []address{}
-	}
-
-	delegateeAddresses := make([]address, 0)
-
-	delegatorTree.IterateByOffset(offset, count, func(delegatee string, _ any) bool {
-		delegateeAddresses = append(delegateeAddresses, address(delegatee))
-		return false
-	})
-
-	return delegateeAddresses
-}
-
-// GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
-func (gs *govStakerV1) GetUserDelegationCount(delegator address, delegatee address) int {
-	delegationManager := gs.store.GetDelegationManager()
-	delegationIDs, exists := delegationManager.GetDelegationIDs(delegator.String(), delegatee.String())
-	if !exists {
-		return 0
-	}
-	return len(delegationIDs)
+	return rotree.Wrap(delegatorTree, cloneDelegationIDsEntry)
 }
 
 // GetUserDelegationIDs returns a paginated list of delegation IDs for a specific delegator and delegatee.

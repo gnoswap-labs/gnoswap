@@ -3,6 +3,7 @@ package mock
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -215,18 +216,6 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 		func(args ...any) any { return t.instance.ExistsPoolPath(args[0].(string)) },
 		poolPath,
 	).(bool)
-}
-
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	result := t.ExecuteFn(
-		"GetPool",
-		func(args ...any) any {
-			r1, r2 := t.instance.GetPool(args[0].(string), args[1].(string), args[2].(uint32))
-			return []any{r1, r2}
-		},
-		token0Path, token1Path, fee,
-	).([]any)
-	return result[0].(*pool.Pool), result[1].(error)
 }
 
 func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
@@ -545,20 +534,11 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
-		"GetPoolCount",
-		func(args ...any) any { return t.instance.GetPoolCount() },
-	).(int)
-}
-
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	return t.ExecuteFn(
-		"GetPoolPaths",
-		func(args ...any) any { return t.instance.GetPoolPaths(args[0].(int), args[1].(int)) },
-		offset, count,
-	).([]string)
+		"GetPools",
+		func(args ...any) any { return t.instance.GetPools() },
+	).(*rotree.ReadOnlyTree)
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -568,23 +548,14 @@ func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	).(map[uint32]int32)
 }
 
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
-		"GetPoolPositionCount",
-		func(args ...any) any { return t.instance.GetPoolPositionCount(args[0].(string)) },
-		poolPath,
-	).(int)
-}
-
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return t.ExecuteFn(
-		"GetPoolPositionKeys",
+		"GetPoolPositions",
 		func(args ...any) any {
-			return t.instance.GetPoolPositionKeys(args[0].(string), args[1].(int), args[2].(int))
+			return t.instance.GetPoolPositions(args[0].(string))
 		},
-		poolPath, offset, count,
-	).([]string)
+		poolPath,
+	).(*rotree.ReadOnlyTree)
 }
 
 // Tick enumeration
@@ -621,18 +592,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		poolPath, wordPos,
 	).([]any)
 	return result[0].(string), result[1].(error)
-}
-
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	result := t.ExecuteFn(
-		"GetPosition",
-		func(args ...any) any {
-			r1, r2 := t.instance.GetPosition(args[0].(string), args[1].(string))
-			return []any{r1, r2}
-		},
-		poolPath, key,
-	).([]any)
-	return result[0].(pool.PositionInfo), result[1].(error)
 }
 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {

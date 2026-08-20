@@ -71,7 +71,7 @@ func main(cur realm) {
 	foo.Approve(cross(cur), poolAddr, maxApprove)
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 
 	println("[SCENARIO] 1. returns 0 before initialization")
 	println("[EXPECTED] liquidity:", thisPool.Liquidity().ToString(), "expected: 0")
