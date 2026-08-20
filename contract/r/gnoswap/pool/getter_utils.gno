@@ -27,14 +27,6 @@ func cloneFeeAmountTickSpacings(src map[uint32]int32) map[uint32]int32 {
 	return cloned
 }
 
-func cloneObservationState(src *ObservationState) *ObservationState {
-	if src == nil {
-		return nil
-	}
-
-	return src.Clone()
-}
-
 func clonePoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	if src == nil {
 		return bptree.NewBPTreeN(32)

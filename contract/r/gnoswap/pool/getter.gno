@@ -2,6 +2,7 @@ package pool
 
 import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // GetPools returns a read-only view of every pool, keyed by pool path.
@@ -256,5 +257,10 @@ func GetObservationState(poolPath string) (*ObservationState, error) {
 		return nil, err
 	}
 
-	return cloneObservationState(observationState), nil
+	// Implementations may return nil without error after an upgrade.
+	if observationState == nil {
+		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+	}
+
+	return observationState.Clone(), nil
 }

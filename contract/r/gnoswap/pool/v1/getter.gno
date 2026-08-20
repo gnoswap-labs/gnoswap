@@ -327,7 +327,7 @@ func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, err
 
 	observationState := pool.ObservationState()
 	if observationState == nil {
-		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation state not found for pool %s", poolPath))
 	}
 
 	return observationState, nil
