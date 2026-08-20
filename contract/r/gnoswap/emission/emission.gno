@@ -246,16 +246,24 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 // This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
 //
 // Only callable by the staker contract.
-func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) {
+func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) error {
 	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
 
-	onDistributionPctChangeCallback = callback
-
-	if onDistributionPctChangeCallback != nil {
-		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
-		onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
+	if callback == nil {
+		onDistributionPctChangeCallback = nil
+		return nil
 	}
+
+	emissionAmountPerSecond, err := GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		return err
+	}
+
+	onDistributionPctChangeCallback = callback
+	onDistributionPctChangeCallback(cross(cur), emissionAmountPerSecond)
+
+	return nil
 }
 
 // SetDefaultInitialPoolChecker registers the callback that verifies the

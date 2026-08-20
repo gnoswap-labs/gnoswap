@@ -300,24 +300,24 @@ func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 }
 
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
-func GetStakerEmissionAmountPerSecond() int64 {
+func GetStakerEmissionAmountPerSecond() (int64, error) {
 	currentTimestamp := time.Now().Unix()
 	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-	return GetEmissionAmountPerSecondBy(currentTimestamp, pct)
+	return GetEmissionAmountPerSecondBy(currentTimestamp, pct), nil
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
-func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	gnsHalvingBlocks, gnsHalvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
 	halvingBlocks := make([]int64, len(gnsHalvingBlocks))
 	halvingEmissions := make([]int64, len(gnsHalvingEmissions))
 
 	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	for i := range halvingBlocks {
@@ -326,7 +326,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 		halvingEmissions[i] = calculateAmount(gnsHalvingEmissions[i], pct)
 	}
 
-	return halvingBlocks, halvingEmissions
+	return halvingBlocks, halvingEmissions, nil
 }
 
 // ClearDistributedToStaker resets the pending distribution amount for liquidity stakers.

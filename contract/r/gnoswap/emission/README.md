@@ -109,7 +109,10 @@ if err != nil {
     panic(err)
 }
 accumulated := GetAccuDistributedToStaker()
-rate := GetStakerEmissionAmountPerSecond()
+rate, err := GetStakerEmissionAmountPerSecond()
+if err != nil {
+    panic(err)
+}
 ```
 
 ## Security

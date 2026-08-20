@@ -571,6 +571,49 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 	}
 }
 
+func TestDistribution_StakerEmissionGettersReturnDistributionErrors(cur realm, t *testing.T) {
+	resetObject(t)
+
+	distributionBpsPct[LIQUIDITY_STAKER] = 0
+	rate, err := GetStakerEmissionAmountPerSecond()
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), rate)
+
+	_, emissions, err := GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.NoError(t, err)
+	for _, emissionAmount := range emissions {
+		uassert.Equal(t, int64(0), emissionAmount)
+	}
+
+	distributionBpsPct = nil
+	_, err = GetStakerEmissionAmountPerSecond()
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+	_, _, err = GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+
+	distributionBpsPct = make(map[int]int64)
+	_, err = GetStakerEmissionAmountPerSecond()
+	uassert.ErrorContains(t, err, "invalid target(1)")
+	_, _, err = GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.ErrorContains(t, err, "invalid target(1)")
+}
+
+func TestDistribution_SetOnDistributionPctChangeCallbackDoesNotPersistOnGetterError(cur realm, t *testing.T) {
+	resetObject(t)
+	callbackCalled := false
+	onDistributionPctChangeCallback = func(cur realm, amount int64) {
+		callbackCalled = true
+	}
+	distributionBpsPct = nil
+	testing.SetRealm(stakerRealm)
+
+	err := SetOnDistributionPctChangeCallback(cross(cur), func(cur realm, amount int64) {})
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+
+	onDistributionPctChangeCallback(cross(cur), 1)
+	uassert.True(t, callbackCalled)
+}
+
 func TestDistribution_GetDistributionBpsPct_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
