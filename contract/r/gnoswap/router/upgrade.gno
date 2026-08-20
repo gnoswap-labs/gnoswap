@@ -17,7 +17,7 @@ import (
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, routerStore IRouterStore) IRouter) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		if !rlm.IsCurrent() {
-			return errors.New(errSpoofedRealm)
+			panic(errors.New(errSpoofedRealm))
 		}
 
 		currentRouterStore, ok := domainStore.(IRouterStore)

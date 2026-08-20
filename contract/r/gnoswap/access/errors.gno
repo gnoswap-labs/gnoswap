@@ -8,5 +8,4 @@ const (
 	errUnauthorizedAnyRole    = "unauthorized: caller %s is not any of the roles %v"
 	errUnauthorizedRBAC       = "unauthorized: caller %s is not rbac"
 	errInvalidAddressShort    = "invalid address: %s"
-	errCallerNotUser          = "caller is not user"
 )
