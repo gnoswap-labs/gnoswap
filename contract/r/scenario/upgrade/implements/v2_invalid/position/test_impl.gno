@@ -129,26 +129,11 @@ func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, 
 	t.instance.SetPositionOperator(0, rlm, positionId, operator)
 }
 
-// IPositionGetter interface
-func (t *TestPosition) GetPositionCount() int {
-	if !t.isActive("GetPositionCount") {
-		panic("test implementation: GetPositionCount not supported")
-	}
-	return t.instance.GetPositionCount()
-}
-
 func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
 	if !t.isActive("GetPositions") {
 		panic("test implementation: GetPositions not supported")
 	}
 	return t.instance.GetPositions()
-}
-
-func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
-	if !t.isActive("GetPosition") {
-		panic("test implementation: GetPosition not supported")
-	}
-	return t.instance.GetPosition(positionId)
 }
 
 func (t *TestPosition) IsBurned(positionId uint64) bool {

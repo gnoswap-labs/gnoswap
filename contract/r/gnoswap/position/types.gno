@@ -78,9 +78,7 @@ type IPositionManager interface {
 }
 
 type IPositionGetter interface {
-	GetPositionCount() int
 	GetPositions() *rotree.ReadOnlyTree
-	GetPosition(positionId uint64) (Position, bool)
 	IsBurned(positionId uint64) bool
 	IsInRange(positionId uint64) bool
 	GetPositionOperator(positionId uint64) address

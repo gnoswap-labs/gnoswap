@@ -162,31 +162,11 @@ func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, 
 	)
 }
 
-// IPositionGetter interface
-func (t *TestPosition) GetPositionCount() int {
-	return t.ExecuteFn(
-		"GetPositionCount",
-		func(args ...any) any { return t.instance.GetPositionCount() },
-	).(int)
-}
-
 func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetPositions",
 		func(args ...any) any { return t.instance.GetPositions() },
 	).(*rotree.ReadOnlyTree)
-}
-
-func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
-	result := t.ExecuteFn(
-		"GetPosition",
-		func(args ...any) any {
-			r1, r2 := t.instance.GetPosition(args[0].(uint64))
-			return []any{r1, r2}
-		},
-		positionId,
-	).([]any)
-	return result[0].(position.Position), result[1].(bool)
 }
 
 func (t *TestPosition) IsBurned(positionId uint64) bool {

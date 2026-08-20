@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -110,7 +111,7 @@ func testMintAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] BAR balance decreased by %d\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance decreased by %d\n", fooChange)
 
-	pos, _ := position.GetPosition(positionId)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(positionId)).(position.Position)
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(positionId))
 	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(positionId))

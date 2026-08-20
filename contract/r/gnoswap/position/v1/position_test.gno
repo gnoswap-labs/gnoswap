@@ -230,7 +230,7 @@ func TestRemovePosition(cur realm, t *testing.T) {
 
 			mockInstance.store.RemovePosition(0, cur, tt.inputPositionId)
 
-			_, found := mockInstance.GetPosition(tt.inputPositionId)
+			_, found := mockInstance.store.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
 		})
 	}
@@ -1767,7 +1767,7 @@ func TestReposition_DeadlineValidation(cur realm, t *testing.T) {
 			)
 
 			// Step 2: Get position liquidity and decrease 100% to clear for reposition
-			position, _ := mockInstance.GetPosition(1)
+			position, _ := mockInstance.store.GetPosition(1)
 			liquidity := position.Liquidity()
 
 			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,

@@ -24,66 +24,6 @@ func newStoredPosition() *Position {
 	)
 }
 
-func mutatePosition(position *Position) {
-	position.SetPoolKey("mutated:pool:500")
-	position.SetTickLower(-200)
-	position.SetTickUpper(200)
-	position.SetBurned(true)
-	position.SetLiquidity("1100")
-	position.SetFeeGrowthInside0LastX128("2200")
-	position.SetFeeGrowthInside1LastX128("3300")
-	position.SetTokensOwed0(4400)
-	position.SetTokensOwed1(5500)
-}
-
-func assertPositionUnchanged(t *testing.T, position *Position) {
-	t.Helper()
-	uassert.Equal(t, adminAddr, position.Operator())
-	uassert.Equal(t, "foo:bar:3000", position.PoolKey())
-	uassert.Equal(t, int32(-100), position.TickLower())
-	uassert.Equal(t, int32(100), position.TickUpper())
-	uassert.Equal(t, false, position.Burned())
-	uassert.Equal(t, "1000", position.Liquidity())
-	uassert.Equal(t, "2000", position.FeeGrowthInside0LastX128())
-	uassert.Equal(t, "3000", position.FeeGrowthInside1LastX128())
-	uassert.Equal(t, int64(4000), position.TokensOwed0())
-	uassert.Equal(t, int64(5000), position.TokensOwed1())
-}
-
-func TestGetPositionIsolation(t *testing.T) {
-	resetTestState(t)
-	mockPosition := newMockPosition("v1")
-	implementation = mockPosition
-	storedPosition := newStoredPosition()
-	mockPosition.Response.Set("GetPosition", *storedPosition, true)
-	result, err := GetPosition(1)
-	if err != nil {
-		t.Fatalf("GetPosition() unexpected error: %v", err)
-	}
-
-	mutatePosition(&result)
-
-	assertPositionUnchanged(t, storedPosition)
-	uassert.Equal(t, adminAddr, result.Operator())
-	uassert.Equal(t, "mutated:pool:500", result.PoolKey())
-	uassert.Equal(t, int32(-200), result.TickLower())
-	uassert.Equal(t, int32(200), result.TickUpper())
-	uassert.Equal(t, true, result.Burned())
-	uassert.Equal(t, "1100", result.Liquidity())
-	uassert.Equal(t, "2200", result.FeeGrowthInside0LastX128())
-	uassert.Equal(t, "3300", result.FeeGrowthInside1LastX128())
-	uassert.Equal(t, int64(4400), result.TokensOwed0())
-	uassert.Equal(t, int64(5500), result.TokensOwed1())
-
-	if storedPosition.Liquidity() == result.Liquidity() ||
-		storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
-		storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
-		storedPosition.TokensOwed0() == result.TokensOwed0() ||
-		storedPosition.TokensOwed1() == result.TokensOwed1() {
-		t.Fatal("GetPosition() returned aliased nested mutable state")
-	}
-}
-
 func TestGetPositionsIsolation(cur realm, t *testing.T) {
 	resetTestState(t)
 	mockPosition := newMockPosition("v1")
@@ -180,7 +120,9 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			name: "GetPositionFeeGrowthInsideLastX128",
 			setup: func(m *MockPosition) *Position {
 				stored := newStoredPosition()
-				m.Response.Set("GetPosition", *stored, true)
+				tree := bptree.NewBPTree32()
+				tree.Set("1", *stored)
+				m.Response.Set("GetPositions", rotree.Wrap(tree, nil))
 				return stored
 			},
 			getter: func() any {
@@ -245,7 +187,9 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			name: "GetPositionTokensOwed",
 			setup: func(m *MockPosition) *Position {
 				stored := newStoredPosition()
-				m.Response.Set("GetPosition", *stored, true)
+				tree := bptree.NewBPTree32()
+				tree.Set("1", *stored)
+				m.Response.Set("GetPositions", rotree.Wrap(tree, nil))
 				return stored
 			},
 			getter: func() any {

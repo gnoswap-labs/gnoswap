@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -30,8 +31,8 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	_, err := position.GetPosition(p.positionId)
-	if err != nil {
+	_, ok := position.GetPositions().Get(utils.Uint64ToString(p.positionId)).(position.Position)
+	if !ok {
 		return false
 	}
 

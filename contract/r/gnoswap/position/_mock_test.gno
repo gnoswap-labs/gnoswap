@@ -140,15 +140,6 @@ func (m *MockPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, 
 	m.Response.Get("SetPositionOperator")
 }
 
-func (m *MockPosition) GetPositionCount() int {
-	res, ok := m.Response.Get("GetPositionCount")
-	if !ok {
-		return 0
-	}
-
-	return res[0].(int)
-}
-
 func (m *MockPosition) GetPositions() *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetPositions")
 	if !ok {
@@ -156,15 +147,6 @@ func (m *MockPosition) GetPositions() *rotree.ReadOnlyTree {
 	}
 
 	return res[0].(*rotree.ReadOnlyTree)
-}
-
-func (m *MockPosition) GetPosition(positionId uint64) (Position, bool) {
-	res, ok := m.Response.Get("GetPosition")
-	if !ok {
-		return Position{}, false
-	}
-
-	return res[0].(Position), res[1].(bool)
 }
 
 func (m *MockPosition) IsBurned(positionId uint64) bool {

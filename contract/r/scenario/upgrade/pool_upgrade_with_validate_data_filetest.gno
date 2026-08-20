@@ -5,6 +5,7 @@ package main
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	"math"
 	"testing"
 	"time"
@@ -174,7 +175,7 @@ func checkPositionData(cur realm, positionId uint64) {
 	println("[INFO] Check position data")
 	testing.SetRealm(adminRealm)
 
-	positionData, _ := position.GetPosition(positionId)
+	positionData, _ := position.GetPositions().Get(utils.Uint64ToString(positionId)).(position.Position)
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] PoolKey:", positionData.PoolKey())
 	println("[EXPECTED] Liquidity:", positionData.Liquidity())

@@ -569,51 +569,6 @@ func TestSetPositionOperator(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetPosition tests the GetPosition proxy function
-func TestGetPosition(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		setup           func(cur realm, t *testing.T)
-		positionId      uint64
-		callerRealmPath string
-		callerAddress   address
-	}{
-		{
-			name: "get position is success",
-			setup: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
-			},
-			positionId:      1,
-			callerRealmPath: "gno.land/r/gnoswap/position",
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(cur, t)
-		}
-
-		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("GetPosition", Position{}, false)
-
-		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
-
-		// Action
-		GetPosition(tt.positionId)
-
-		// Assert
-		if mockPosition.Response.CallCount("GetPosition") != 1 {
-			t.Error("GetPosition was not called on the implementation")
-		}
-	}
-}
-
 // TestIsBurned tests the IsBurned proxy function
 func TestIsBurned(cur realm, t *testing.T) {
 	tests := []struct {

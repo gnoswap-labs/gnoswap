@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -101,7 +102,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityBefore := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance before increase should be %d\n", barBalanceBefore)
@@ -128,7 +129,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceAfter := bar.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)
-	pos, _ = position.GetPosition(1)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityAfter := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance after increase should be %d\n", barBalanceAfter)
