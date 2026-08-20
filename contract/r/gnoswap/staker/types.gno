@@ -83,7 +83,6 @@ type IStakerGetter interface {
 	GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64
 	GetMinimumRewardAmount() int64
 	GetMinimumRewardAmountForToken(tokenPath string) int64
-	GetPoolIncentiveIdList(poolPath string) []string
 	GetPoolStakedLiquidity(poolPath string) string
 	GetPoolsByTier(tier uint64) []string
 	GetPoolReward(tier uint64) int64

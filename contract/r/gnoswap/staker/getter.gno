@@ -203,11 +203,6 @@ func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return getImplementation().GetMinimumRewardAmountForToken(tokenPath)
 }
 
-// GetPoolIncentiveIdList returns all incentive IDs for a pool.
-func GetPoolIncentiveIdList(poolPath string) []string {
-	return cloneStringSlice(getImplementation().GetPoolIncentiveIdList(poolPath))
-}
-
 // GetPoolStakedLiquidity returns the current total staked liquidity of a pool.
 func GetPoolStakedLiquidity(poolPath string) string {
 	return getImplementation().GetPoolStakedLiquidity(poolPath)

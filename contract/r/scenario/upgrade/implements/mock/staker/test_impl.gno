@@ -504,14 +504,6 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	).(int64)
 }
 
-func (t *TestStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	return t.ExecuteFn(
-		"GetPoolIncentiveIdList",
-		func(args ...any) any { return t.instance.GetPoolIncentiveIdList(args[0].(string)) },
-		poolPath,
-	).([]string)
-}
-
 func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
 	return t.ExecuteFn(
 		"GetPoolStakedLiquidity",

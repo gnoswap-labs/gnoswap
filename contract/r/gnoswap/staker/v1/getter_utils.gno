@@ -20,3 +20,34 @@ func cloneExternalIncentiveEntry(value any) any {
 
 	return incentive.Clone()
 }
+
+// rewardCacheEntry, accumulationEntry, and historicalTickEntry are the
+// transformations for the UintTree-backed views. Their values are immutable
+// scalars, so nothing needs copying; they type-check instead, which keeps the
+// filtering the replaced slice getters did when an entry failed its cast.
+func rewardCacheEntry(value any) any {
+	reward, ok := value.(int64)
+	if !ok {
+		return nil
+	}
+
+	return reward
+}
+
+func accumulationEntry(value any) any {
+	accumulation, ok := value.(string)
+	if !ok {
+		return nil
+	}
+
+	return accumulation
+}
+
+func historicalTickEntry(value any) any {
+	tick, ok := value.(int32)
+	if !ok {
+		return nil
+	}
+
+	return tick
+}

@@ -416,13 +416,6 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return t.instance.GetMinimumRewardAmountForToken(tokenPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	if !t.isActive("GetPoolIncentiveIdList") {
-		panic("test implementation: GetPoolIncentiveIdList not supported")
-	}
-	return t.instance.GetPoolIncentiveIdList(poolPath)
-}
-
 func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
 	if !t.isActive("GetPoolStakedLiquidity") {
 		panic("test implementation: GetPoolStakedLiquidity not supported")

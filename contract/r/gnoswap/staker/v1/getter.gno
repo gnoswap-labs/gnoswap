@@ -12,6 +12,23 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 )
 
+// findPoolByPoolPath retrieves the pool by its path, or nil when it does not
+// exist. Read-only views use it so a missing pool reads as nil rather than
+// aborting the caller's transaction.
+func (s *stakerV1) findPoolByPoolPath(poolPath string) *sr.Pool {
+	result := s.store.GetPools().Get(poolPath)
+	if result == nil {
+		return nil
+	}
+
+	pool, ok := result.(*sr.Pool)
+	if !ok {
+		return nil
+	}
+
+	return pool
+}
+
 // getPoolByPoolPath retrieves the pool by its path.
 func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
 	result := s.store.GetPools().Get(poolPath)
@@ -36,21 +53,6 @@ func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
 // GetPool returns the pool for the given path.
 func (s *stakerV1) GetPool(poolPath string) *sr.Pool {
 	return s.getPoolByPoolPath(poolPath)
-}
-
-// GetPoolIncentiveIdList returns all incentive IDs for a pool.
-func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
-	pool := s.getPoolByPoolPath(poolPath)
-
-	incentives := pool.Incentives()
-
-	ids := []string{}
-	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		ids = append(ids, key)
-		return false
-	})
-
-	return ids
 }
 
 // getIncentive retrieves an external incentive by ID.
@@ -422,38 +424,47 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 }
 
 // GetPoolRewardCaches returns a read-only view of a pool's reward cache, keyed
-// by the encoded block timestamp.
+// by the encoded block timestamp. nil is returned when the pool does not exist.
 func (s *stakerV1) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
-	pool := s.getPoolByPoolPath(poolPath)
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
+	}
 
-	// makeEntrySafeFn is a function that makes an entry safe to read.
-	// But the cached rewards are plain int64 values, so we can return them as is.
-	return pool.RewardCache().ReadOnly(nil)
+	return pool.RewardCache().ReadOnly(rewardCacheEntry)
 }
 
 // GetPoolIncentives returns a read-only view of a pool's external incentives,
-// keyed by incentive ID.
+// keyed by incentive ID. nil is returned when the pool does not exist.
 func (s *stakerV1) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
-	pool := s.getPoolByPoolPath(poolPath)
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
+	}
+
 	return rotree.Wrap(pool.Incentives().IncentiveTrees(), cloneExternalIncentiveEntry)
 }
 
 // GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's
 // global reward ratio accumulation, keyed by the encoded block timestamp.
+// nil is returned when the pool does not exist.
 func (s *stakerV1) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
-	pool := s.getPoolByPoolPath(poolPath)
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
+	}
 
-	// makeEntrySafeFn is a function that makes an entry safe to read.
-	// But the accumulations are plain strings, so we can return them as is.
-	return pool.GlobalRewardRatioAccumulation().ReadOnly(nil)
+	return pool.GlobalRewardRatioAccumulation().ReadOnly(accumulationEntry)
 }
 
 // GetPoolHistoricalTicks returns a read-only view of a pool's historical ticks,
 // keyed by the encoded block timestamp with the int32 tick as the value.
+// nil is returned when the pool does not exist.
 func (s *stakerV1) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
-	pool := s.getPoolByPoolPath(poolPath)
+	pool := s.findPoolByPoolPath(poolPath)
+	if pool == nil {
+		return nil
+	}
 
-	// makeEntrySafeFn is a function that makes an entry safe to read.
-	// But the ticks are plain int32 values, so we can return them as is.
-	return pool.HistoricalTick().ReadOnly(nil)
+	return pool.HistoricalTick().ReadOnly(historicalTickEntry)
 }

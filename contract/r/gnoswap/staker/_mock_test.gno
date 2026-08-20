@@ -425,14 +425,6 @@ func (m *MockStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	res, ok := m.Response.Get("GetPoolIncentiveIdList")
-	if !ok {
-		return []string{}
-	}
-	return res[0].([]string)
-}
-
 func (m *MockStaker) GetPoolStakedLiquidity(poolPath string) string {
 	res, ok := m.Response.Get("GetPoolStakedLiquidity")
 	if !ok {

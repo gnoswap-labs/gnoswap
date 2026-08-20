@@ -254,9 +254,7 @@ func TestGetterPoolIncentiveIdList(cur realm, t *testing.T) {
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 
-	ids := state.instance.GetPoolIncentiveIdList(state.poolPath)
-
-	uassert.Equal(t, 2, len(ids))
+	uassert.Equal(t, 2, state.instance.GetPoolIncentives(state.poolPath).Size())
 }
 
 func TestGetterExternalIncentiveByPoolPath(cur realm, t *testing.T) {
@@ -513,9 +511,11 @@ func TestGetterNonExistentDeposit(cur realm, t *testing.T) {
 func TestGetterNonExistentPool(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, cur, "does not exist", func() {
-		state.instance.GetPoolIncentiveIdList("non-existent-pool")
-	})
+	// The read-only views read a missing pool as nil rather than aborting.
+	uassert.True(t, state.instance.GetPoolIncentives("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolRewardCaches("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolGlobalRewardRatioAccumulations("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolHistoricalTicks("non-existent-pool") == nil)
 }
 
 func TestGetterPoolTierForUntieredPool(cur realm, t *testing.T) {

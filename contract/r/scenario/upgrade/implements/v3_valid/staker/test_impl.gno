@@ -239,10 +239,6 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return t.instance.GetMinimumRewardAmountForToken(tokenPath)
 }
 
-func (t *TestStaker) GetPoolIncentiveIdList(poolPath string) []string {
-	return t.instance.GetPoolIncentiveIdList(poolPath)
-}
-
 func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
 	return t.instance.GetPoolStakedLiquidity(poolPath)
 }

@@ -161,21 +161,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name:   "GetPoolIncentiveIdList",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolIncentiveIdList", []string{"incentive-1", "incentive-2"}) },
-			getter: func() any { return GetPoolIncentiveIdList("foo:bar:500") },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "incentive-3")
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetPoolIncentiveIdList"][0].([]string)
-				uassert.Equal(t, "incentive-1", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
 			name:   "GetPoolsByTier",
 			setup:  func(m *MockStaker) { m.Response.Set("GetPoolsByTier", []string{"foo:bar:500", "baz:qux:3000"}) },
 			getter: func() any { return GetPoolsByTier(1) },
