@@ -136,14 +136,38 @@ func main(cur realm) {
 
 func captureV1Snapshot() {
 	var err error
-	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
-	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
-	v1PositionOwner = position.GetPositionOwner(positionId)
-	v1PositionTickLower = position.GetPositionTickLower(positionId)
-	v1PositionTickUpper = position.GetPositionTickUpper(positionId)
-	v1PositionFeeGrowth0, v1PositionFeeGrowth1 = position.GetPositionFeeGrowthInsideLastX128(positionId)
-	v1PositionTokensOwed0, v1PositionTokensOwed1 = position.GetPositionTokensOwed(positionId)
-	v1PositionUnclaimed0, v1PositionUnclaimed1 = position.GetUnclaimedFee(positionId)
+	v1PositionLiquidity, err = position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionPoolKey, err = position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionOwner, err = position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickLower, err = position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickUpper, err = position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionFeeGrowth0, v1PositionFeeGrowth1, err = position.GetPositionFeeGrowthInsideLastX128(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTokensOwed0, v1PositionTokensOwed1, err = position.GetPositionTokensOwed(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionUnclaimed0, v1PositionUnclaimed1, err = position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
 	v1PoolFeeGrowth0, v1PoolFeeGrowth1, err = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
 	if err != nil {
 		panic(err)
@@ -197,15 +221,48 @@ func validateExactAfterUpgrade() {
 	if err != nil {
 		panic(err)
 	}
-	positionFeeGrowth0, positionFeeGrowth1 := position.GetPositionFeeGrowthInsideLastX128(positionId)
-	tokensOwed0, tokensOwed1 := position.GetPositionTokensOwed(positionId)
-	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+	positionFeeGrowth0, positionFeeGrowth1, err := position.GetPositionFeeGrowthInsideLastX128(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tokensOwed0, tokensOwed1, err := position.GetPositionTokensOwed(positionId)
+	if err != nil {
+		panic(err)
+	}
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
-	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
-	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
-	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionOwner, positionOwner)
+	uassert.Equal(t, v1PositionTickLower, positionTickLower)
+	uassert.Equal(t, v1PositionTickUpper, positionTickUpper)
 	uassert.Equal(t, v1PositionFeeGrowth0, positionFeeGrowth0)
 	uassert.Equal(t, v1PositionFeeGrowth1, positionFeeGrowth1)
 	uassert.Equal(t, v1PositionTokensOwed0, tokensOwed0)
@@ -218,7 +275,7 @@ func validateExactAfterUpgrade() {
 	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
 	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
 	uassert.Equal(t, v1PoolTick, poolTick)
-	uassert.False(t, position.IsBurned(positionId))
+	uassert.False(t, positionBurned)
 
 	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
 	println("[EXPECTED] Position fee growth inside last:", positionFeeGrowth0, positionFeeGrowth1)
@@ -245,15 +302,34 @@ func validateAccrualAfterUpgrade() {
 	if err != nil {
 		panic(err)
 	}
-	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
-	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionOwner, positionOwner)
 	// no mint / burn happened, so the in-range liquidity is unchanged; the tick
 	// may have moved because of the post-upgrade swap
 	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
-	uassert.False(t, position.IsBurned(positionId))
+	uassert.False(t, positionBurned)
 
 	uassert.True(t, feeGrowth0 >= v1PoolFeeGrowth0)
 	uassert.True(t, feeGrowth1 >= v1PoolFeeGrowth1)
