@@ -165,9 +165,14 @@ func (p *SwapProcessor) AddSwapResults(
 // Returns:
 //   - amountIn: Expected input amount as string
 //   - amountOut: Expected output amount as string
-//   - success: true if swap would succeed, false if slippage/validation fails
+//   - success: true if the simulated swap would succeed, false only when
+//     liquidity or slippage (tokenAmountLimit) constraints are not met.
+//     Invalid input or route validation errors revert the call instead.
 //
 // Note: Does not validate deadline or execute actual transfers.
+// Route paths are validated the same way as real swaps: every route must
+// start with inputToken, end with outputToken, remain hop-connected, and
+// reference existing pools. Invalid routes revert instead of returning a quote.
 func (r *routerV1) DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
@@ -197,6 +202,9 @@ func (r *routerV1) drySwapRoute(
 	tokenAmountLimit int64,
 ) (int64, int64, bool) {
 	common.MustRegistered(inputToken, outputToken)
+	assertIsValidRoutePaths(strRouteArr, inputToken, outputToken)
+	assertIsExistsPools(strRouteArr)
+
 	// initialize components
 	validator := &SwapValidator{}
 	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}

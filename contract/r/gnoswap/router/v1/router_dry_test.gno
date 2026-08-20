@@ -947,3 +947,119 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 		})
 	}
 }
+
+// TestDrySwapRoute_InvalidRoutePaths asserts that DrySwapRoute validates route
+// paths the same way real swaps do: the first token of every route must match
+// inputToken, the last token must match outputToken, multi-hop routes must be
+// hop-connected, and every referenced pool must exist. Before this fix,
+// DrySwapRoute happily quoted an unrelated (but existing) pool, so callers
+// could receive a successful quote for a route that real swaps would reject.
+func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
+	initRouterTest(cur, t)
+
+	tests := []DrySwapTestCase{
+		{
+			name:    "ExactIn - route first token does not match inputToken",
+			setupFn: setupMultiRoutePools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(bazPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route(barPath + ":" + bazPath + ":100").
+				TokenAmountLimit("1").
+				Build(),
+			expectPanic:      true,
+			expectedPanicMsg: errInvalidRouteFirstToken,
+		},
+		{
+			name:    "ExactIn - route last token does not match outputToken",
+			setupFn: setupMultiRoutePools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route(barPath + ":" + bazPath + ":100").
+				TokenAmountLimit("1").
+				Build(),
+			expectPanic:      true,
+			expectedPanicMsg: errInvalidRouteLastToken,
+		},
+		{
+			name:    "ExactOut - route last token does not match outputToken",
+			setupFn: setupMultiRoutePools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_OUT").
+				Route(barPath + ":" + bazPath + ":100").
+				TokenAmountLimit("100000").
+				Build(),
+			expectPanic:      true,
+			expectedPanicMsg: errInvalidRouteLastToken,
+		},
+		{
+			name:    "ExactIn - multi-hop route hops disconnected",
+			setupFn: setupMultiRoutePools,
+			// Route starts with barPath and ends with quxPath (matching
+			// inputToken/outputToken) but hop 1 output (baz) != hop 2 input
+			// (qux), isolating hop-connectivity validation from the
+			// first/last-token checks.
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route(barPath + ":" + bazPath + ":100*POOL*" + quxPath + ":" + barPath + ":100*POOL*" + barPath + ":" + quxPath + ":100").
+				TokenAmountLimit("1").
+				Build(),
+			expectPanic:      true,
+			expectedPanicMsg: errRouteHopDisconnected,
+		},
+		{
+			name:    "ExactIn - pool does not exist",
+			setupFn: setupMultiRoutePools,
+			// fee10000 pools are never created in this test package, so
+			// bar:baz:10000 reliably does not exist regardless of shared state.
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(bazPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route(barPath + ":" + bazPath + ":10000").
+				TokenAmountLimit("1").
+				Build(),
+			expectPanic:      true,
+			expectedPanicMsg: "pool does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(adminRealm)
+			env := NewTestEnv(cur, t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(cur, env)
+			}
+
+			testing.SetRealm(routerRealm)
+
+			router := mockRouter()
+
+			uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
+				router.DrySwapRoute(
+					tt.swapParams.inputToken,
+					tt.swapParams.outputToken,
+					tt.swapParams.specifiedAmount,
+					tt.swapParams.swapTypeStr,
+					tt.swapParams.strRouteArr,
+					tt.swapParams.quoteArr,
+					tt.swapParams.tokenAmountLimit,
+				)
+			})
+		})
+	}
+}
