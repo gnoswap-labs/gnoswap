@@ -2,6 +2,7 @@ package position
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse is a simple mock response helper
@@ -148,13 +149,13 @@ func (m *MockPosition) GetPositionCount() int {
 	return res[0].(int)
 }
 
-func (m *MockPosition) GetPositionIDs(offset, count int) []uint64 {
-	res, ok := m.Response.Get("GetPositionIDs")
+func (m *MockPosition) GetPositions() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPositions")
 	if !ok {
-		return []uint64{}
+		return nil
 	}
 
-	return res[0].([]uint64)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockPosition) GetPosition(positionId uint64) (Position, bool) {

@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
@@ -102,8 +103,8 @@ func (t *TestPosition) GetPositionCount() int {
 	return t.instance.GetPositionCount()
 }
 
-func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
-	return t.instance.GetPositionIDs(offset, count)
+func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
+	return t.instance.GetPositions()
 }
 
 func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {

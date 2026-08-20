@@ -1,10 +1,9 @@
 package position
 
 import (
-	"strconv"
-
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	pl "gno.land/r/gnoswap/pool"
@@ -30,23 +29,12 @@ func (p *positionV1) GetPositionCount() int {
 	return p.store.GetPositions().Size()
 }
 
-// GetPositionIDs returns a paginated list of position IDs.
-func (p *positionV1) GetPositionIDs(offset, count int) []uint64 {
-	positions := p.store.GetPositions()
-	positionIDs := make([]uint64, 0)
-
-	positions.IterateByOffset(offset, count, func(key string, _ any) bool {
-		id, err := strconv.ParseUint(key, 10, 64)
-		if err != nil {
-			return false
-		}
-
-		positionIDs = append(positionIDs, id)
-
-		return false
-	})
-
-	return positionIDs
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID.
+func (p *positionV1) GetPositions() *rotree.ReadOnlyTree {
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But Position is immutable, so we can just return the entry as is.
+	return rotree.Wrap(p.store.GetPositions(), nil)
 }
 
 // GetPosition returns a position for a given position ID.

@@ -1,6 +1,7 @@
 package position
 
 import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -9,9 +10,11 @@ func GetPositionCount() int {
 	return getImplementation().GetPositionCount()
 }
 
-// GetPositionIDs returns a paginated list of position IDs.
-func GetPositionIDs(offset, count int) []uint64 {
-	return cloneUint64Slice(getImplementation().GetPositionIDs(offset, count))
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID. Callers paginate it themselves through
+// IterateByOffset.
+func GetPositions() *rotree.ReadOnlyTree {
+	return getImplementation().GetPositions()
 }
 
 // GetPosition returns the position data for a given position ID.

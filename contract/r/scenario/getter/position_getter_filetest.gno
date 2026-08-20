@@ -74,8 +74,8 @@ func main(cur realm) {
 	getPositionCount(cur)
 	println()
 
-	println("[SCENARIO] 2.2. GetPositionIDs")
-	getPositionIDs(cur)
+	println("[SCENARIO] 2.2. GetPositions")
+	getPositions(cur)
 	println()
 
 	println("[SCENARIO] 2.3. GetPosition")
@@ -243,15 +243,19 @@ func getPositionCount(cur realm) {
 	ufmt.Printf("[EXPECTED] position count: %d\n", positionCount)
 }
 
-func getPositionIDs(cur realm) {
-	println("[INFO] Check GetPositionIDs method")
+func getPositions(cur realm) {
+	println("[INFO] Check GetPositions method")
 	testing.SetRealm(adminRealm)
 
-	positionIDs := pn.GetPositionIDs(0, 10)
-	ufmt.Printf("[EXPECTED] position IDs count: %d\n", len(positionIDs))
-	for i, id := range positionIDs {
-		ufmt.Printf("[EXPECTED] position ID[%d]: %d\n", i, id)
-	}
+	positions := pn.GetPositions()
+	ufmt.Printf("[EXPECTED] position IDs count: %d\n", positions.Size())
+
+	index := 0
+	positions.IterateByOffset(0, 10, func(id string, _ any) bool {
+		ufmt.Printf("[EXPECTED] position ID[%d]: %s\n", index, id)
+		index++
+		return false
+	})
 }
 
 func getPosition(cur realm) {
@@ -467,8 +471,8 @@ func getPositionOwner(cur realm) {
 // [INFO] Check GetPositionCount method
 // [EXPECTED] position count: 1
 //
-// [SCENARIO] 2.2. GetPositionIDs
-// [INFO] Check GetPositionIDs method
+// [SCENARIO] 2.2. GetPositions
+// [INFO] Check GetPositions method
 // [EXPECTED] position IDs count: 1
 // [EXPECTED] position ID[0]: 1
 //

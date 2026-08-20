@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -82,22 +84,43 @@ func TestGetPositionIsolation(t *testing.T) {
 	}
 }
 
-func TestGetPositionIDsIsolation(t *testing.T) {
+func TestGetPositionsIsolation(cur realm, t *testing.T) {
 	resetTestState(t)
 	mockPosition := newMockPosition("v1")
 	implementation = mockPosition
-	stored := []uint64{1, 2, 3}
-	mockPosition.Response.Set("GetPositionIDs", stored)
 
-	result := GetPositionIDs(0, 10)
-	result[0] = 99
-	result = append(result, 100)
+	stored := bptree.NewBPTree32()
+	stored.Set("1", uint64(1))
+	stored.Set("2", uint64(2))
+	mockPosition.Response.Set("GetPositions", rotree.Wrap(stored, nil))
 
-	uassert.Equal(t, uint64(1), stored[0])
-	uassert.Equal(t, 3, len(stored))
-	if len(stored) > 0 && len(result) > 0 && &stored[0] == &result[0] {
-		t.Fatal("GetPositionIDs() returned aliased slice backing array")
-	}
+	result := GetPositions()
+	uassert.Equal(t, 2, result.Size())
+
+	keys := make([]string, 0, result.Size())
+	result.IterateByOffset(0, result.Size(), func(key string, _ any) bool {
+		keys = append(keys, key)
+		return false
+	})
+	uassert.Equal(t, "1", keys[0])
+	uassert.Equal(t, "2", keys[1])
+
+	// The view refuses writes, so the stored tree stays untouched.
+	uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+		result.Set("3", uint64(3))
+	})
+	uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+		result.Remove("1")
+	})
+	uassert.Equal(t, 2, stored.Size())
+}
+
+func TestGetPositions_NoImplementationResponse(t *testing.T) {
+	resetTestState(t)
+	mockPosition := newMockPosition("v1")
+	implementation = mockPosition
+
+	uassert.True(t, GetPositions() == nil)
 }
 
 func TestPositionTokenBalanceGetterComposition(t *testing.T) {

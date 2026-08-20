@@ -3,6 +3,7 @@ package position
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 type IPosition interface {
@@ -78,7 +79,7 @@ type IPositionManager interface {
 
 type IPositionGetter interface {
 	GetPositionCount() int
-	GetPositionIDs(offset, count int) []uint64
+	GetPositions() *rotree.ReadOnlyTree
 	GetPosition(positionId uint64) (Position, bool)
 	IsBurned(positionId uint64) bool
 	IsInRange(positionId uint64) bool

@@ -6,6 +6,7 @@ import (
 
 	grc721 "gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	gnft "gno.land/r/gnoswap/gnft"
 	position "gno.land/r/gnoswap/position"
@@ -136,11 +137,11 @@ func (t *TestPosition) GetPositionCount() int {
 	return t.instance.GetPositionCount()
 }
 
-func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
-	if !t.isActive("GetPositionIDs") {
-		panic("test implementation: GetPositionIDs not supported")
+func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
+	if !t.isActive("GetPositions") {
+		panic("test implementation: GetPositions not supported")
 	}
-	return t.instance.GetPositionIDs(offset, count)
+	return t.instance.GetPositions()
 }
 
 func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
