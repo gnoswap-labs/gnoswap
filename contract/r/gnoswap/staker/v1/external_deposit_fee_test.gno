@@ -72,7 +72,8 @@ func TestSetDepositGnsAmount(cur realm, t *testing.T) {
 		},
 	}, mockInstanceSetDepositGnsAmount, func() int64 {
 		testing.SetRealm(adminRealm)
-		return getMockInstance().GetDepositGnsAmount()
+		amount := getMockInstance().GetDepositGnsAmount()
+		return amount
 	})
 }
 
@@ -103,7 +104,8 @@ func TestSetMinimumRewardAmount(cur realm, t *testing.T) {
 		},
 	}, mockInstanceSetMinimumRewardAmount, func() int64 {
 		testing.SetRealm(adminRealm)
-		return getMockInstance().GetMinimumRewardAmount()
+		amount := getMockInstance().GetMinimumRewardAmount()
+		return amount
 	})
 }
 

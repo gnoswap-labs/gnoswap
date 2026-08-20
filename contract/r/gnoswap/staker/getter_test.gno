@@ -39,7 +39,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		{
 			name:   "GetPool",
 			setup:  func(m *MockStaker) { m.Response.Set("GetPool", newStakerPool()) },
-			getter: func() any { return GetPool("foo:bar:500") },
+			getter: func() any { value, err := GetPool("foo:bar:500"); uassert.NoError(t, err); return value },
 			mutate: func(result any) {
 				pool := result.(*Pool)
 				pool.SetPoolPath("mutated:pool")
@@ -56,7 +56,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		{
 			name:   "GetDeposit",
 			setup:  func(m *MockStaker) { m.Response.Set("GetDeposit", newStakerDeposit()) },
-			getter: func() any { return GetDeposit(1) },
+			getter: func() any { value, err := GetDeposit(1); uassert.NoError(t, err); return value },
 			mutate: func(result any) {
 				deposit := result.(*Deposit)
 				deposit.SetTargetPoolPath("mutated:pool")
@@ -85,7 +85,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		{
 			name:   "GetDepositLiquidity",
 			setup:  func(m *MockStaker) { m.Response.Set("GetDepositLiquidity", u256.MustFromDecimal("1000")) },
-			getter: func() any { return GetDepositLiquidity(1) },
+			getter: func() any { value, err := GetDepositLiquidity(1); uassert.NoError(t, err); return value },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
 			assertRaw: func(t *testing.T, m *MockStaker) {
 				value := m.Response.data["GetDepositLiquidity"][0].(*u256.Uint)
@@ -97,7 +97,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			setup: func(m *MockStaker) {
 				m.Response.Set("GetDepositWarmUp", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}})
 			},
-			getter: func() any { return GetDepositWarmUp(1) },
+			getter: func() any { value, err := GetDepositWarmUp(1); uassert.NoError(t, err); return value },
 			mutate: func(result any) {
 				warmups := result.([]Warmup)
 				warmups[0].TimeDuration = 99
@@ -114,7 +114,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		{
 			name:   "GetDepositExternalIncentiveIdList",
 			setup:  func(m *MockStaker) { m.Response.Set("GetDepositExternalIncentiveIdList", []string{"a", "b"}) },
-			getter: func() any { return GetDepositExternalIncentiveIdList(1) },
+			getter: func() any { value, err := GetDepositExternalIncentiveIdList(1); uassert.NoError(t, err); return value },
 			mutate: func(result any) {
 				values := result.([]string)
 				values[0] = "mutated"
@@ -131,7 +131,11 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			setup: func(m *MockStaker) {
 				m.Response.Set("GetExternalIncentiveByPoolPath", []ExternalIncentive{newExternalIncentive()})
 			},
-			getter: func() any { return GetExternalIncentiveByPoolPath("foo:bar:500") },
+			getter: func() any {
+				value, err := GetExternalIncentiveByPoolPath("foo:bar:500")
+				uassert.NoError(t, err)
+				return value
+			},
 			mutate: func(result any) {
 				values := result.([]ExternalIncentive)
 				values[0].SetRewardToken("mutated")
@@ -151,9 +155,13 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name:   "GetIncentiveRewardAmount",
-			setup:  func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", u256.MustFromDecimal("3000")) },
-			getter: func() any { return GetIncentiveRewardAmount("foo:bar:500", "incentive-1") },
+			name:  "GetIncentiveRewardAmount",
+			setup: func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", u256.MustFromDecimal("3000")) },
+			getter: func() any {
+				value, err := GetIncentiveRewardAmount("foo:bar:500", "incentive-1")
+				uassert.NoError(t, err)
+				return value
+			},
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
 			assertRaw: func(t *testing.T, m *MockStaker) {
 				value := m.Response.data["GetIncentiveRewardAmount"][0].(*u256.Uint)
@@ -163,7 +171,7 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		{
 			name:   "GetPoolsByTier",
 			setup:  func(m *MockStaker) { m.Response.Set("GetPoolsByTier", []string{"foo:bar:500", "baz:qux:3000"}) },
-			getter: func() any { return GetPoolsByTier(1) },
+			getter: func() any { value, err := GetPoolsByTier(1); uassert.NoError(t, err); return value },
 			mutate: func(result any) {
 				values := result.([]string)
 				values[0] = "mutated"
