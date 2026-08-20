@@ -2,7 +2,6 @@ package router
 
 import (
 	"chain"
-	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -44,9 +43,7 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Fee > 1000 bps (10%)
 //   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()

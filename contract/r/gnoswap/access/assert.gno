@@ -11,6 +11,13 @@ import (
 // Used to verify that role management functions are called only by RBAC
 const rbacPackagePath = "gno.land/r/gnoswap/rbac"
 
+// AssertIsRlmCurrent panics if the realm token is not the current crossing frame.
+func AssertIsRlmCurrent(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+}
+
 // AssertIsAdminOrGovernance panics if the caller is not admin or governance.
 // Used for functions that require elevated privileges.
 func AssertIsAdminOrGovernance(caller address) {

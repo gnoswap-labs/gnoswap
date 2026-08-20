@@ -2,7 +2,6 @@ package staker
 
 import (
 	"chain"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -45,9 +44,7 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -72,9 +69,7 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -99,9 +94,7 @@ func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 // SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 

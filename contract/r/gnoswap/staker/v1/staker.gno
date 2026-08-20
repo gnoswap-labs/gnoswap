@@ -3,7 +3,6 @@ package staker
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -203,9 +202,7 @@ func stakeScanLowerBound(currentTime int64) int64 {
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
 func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -419,9 +416,7 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -712,9 +707,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 //   - Caller must be the depositor
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { // poolPath
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	caller := rlm.Previous().Address()
 	halt.AssertIsNotHaltedWithdraw()

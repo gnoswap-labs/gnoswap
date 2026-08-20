@@ -22,9 +22,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	prev := rlm.Previous()
 	assertIsAdminOrGovStaker(prev.Address())
@@ -51,9 +49,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 
 // DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
 func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	prev := rlm.Previous()
 	assertIsAdminOrGovStaker(prev.Address())
@@ -146,9 +142,7 @@ func containsString(values []string, target string) bool {
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -185,9 +179,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 

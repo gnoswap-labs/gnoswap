@@ -1,6 +1,7 @@
 package access
 
 const (
+	errSpoofedRealm           = "rlm does not match the current crossing frame"
 	errInvalidAddress         = "invalid address for role %s: %s"
 	errRoleNotFound           = "role %s not found"
 	errUnauthorized           = "unauthorized: caller %s is not %s"

@@ -1,8 +1,6 @@
 package staker
 
 import (
-	"errors"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -21,9 +19,7 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, govStaker
 	// initializer performs run under the proxy's identity rather than the
 	// version package's, which would fail the kvStore ACL.
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
-		if !rlm.IsCurrent() {
-			panic(errors.New(ErrSpoofedRealm))
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		currentGovStakerStore, ok := domainStore.(IGovStakerStore)
 		if !ok {
