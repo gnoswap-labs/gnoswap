@@ -64,7 +64,10 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 	}
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	if err != nil {
+		return 0, "", "", "", "", "", position.PoolKey(), err
+	}
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0 := gnsmath.SafeAddInt64(position.TokensOwed0(), burnedAmount0)

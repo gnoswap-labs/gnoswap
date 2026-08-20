@@ -150,7 +150,8 @@ func exactInSingleSwapRouteByAdmin(cur realm,
 		"",
 	)
 
-	ufmt.Printf("[EXPECTED] pool current tick: %d\n", pool.GetSlot0Tick(routeQueryString))
+	poolTick, _ := pool.GetSlot0Tick(routeQueryString)
+	ufmt.Printf("[EXPECTED] pool current tick: %d\n", poolTick)
 	ufmt.Printf("[EXPECTED] inputTokenAmount(%s): %s\n", inputToken, inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(%s): %s\n", outputToken, outputTokenAmount)
 }
