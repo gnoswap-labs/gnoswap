@@ -21,9 +21,11 @@ func NewInsecureStakerCallback(store staker.IStakerStore, poolAccessor staker.Po
 func init(cur realm) {
 	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
 		instance := NewInsecureStakerCallback(store, poolAccessor, emissionAccessor, nftAccessor)
-		emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, func(_ int, callbackRealm realm, emissionAmountPerSecond int64) {
+		if err := emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, func(_ int, callbackRealm realm, emissionAmountPerSecond int64) {
 			gns.InitEmissionState(cross(callbackRealm), 0, 100)
-		})
+		}); err != nil {
+			panic(err)
+		}
 		return instance
 	})
 }

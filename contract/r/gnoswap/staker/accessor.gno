@@ -72,9 +72,9 @@ func newPoolAccessor() PoolAccessor {
 
 type EmissionAccessor interface {
 	MintAndDistributeGns(_ int, rlm realm) (int64, bool)
-	GetStakerEmissionAmountPerSecond() int64
-	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64)
-	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64))
+	GetStakerEmissionAmountPerSecond() (int64, error)
+	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error)
+	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) error
 }
 
 type emissionAccessor struct{}
@@ -85,15 +85,15 @@ func (e *emissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) 
 	return emission.MintAndDistributeGns(cross(rlm))
 }
 
-func (e *emissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
+func (e *emissionAccessor) GetStakerEmissionAmountPerSecond() (int64, error) {
 	return emission.GetStakerEmissionAmountPerSecond()
 }
 
-func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
+func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) error {
 	access.AssertIsRlmCurrent(0, rlm)
 
 	// Wrap the caller-provided callback in an adapter constructed HERE, inside
@@ -103,7 +103,7 @@ func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, 
 	// hook accessors above and lets emission persist the callback into its
 	// package-level var without hitting "cannot persist realm value" (which
 	// fired when a v1-constructed closure was stored there directly).
-	emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
+	return emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
 		callback(0, cur, emissionAmountPerSecond)
 	})
 }

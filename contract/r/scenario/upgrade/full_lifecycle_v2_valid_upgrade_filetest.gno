@@ -1081,7 +1081,10 @@ func govStakerLifecycle(cur realm) {
 // ---------------------------------------------------------------------------
 
 func governanceLifecycle(cur realm) {
-	config := govGovernance.GetLatestConfig()
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] governance config version:", govGovernance.GetLatestConfigVersion())
 	println("[EXPECTED] voting period:", config.VotingPeriod, "quorum:", config.Quorum)
 
@@ -1376,6 +1379,10 @@ func captureSnapshot() upgradeSnapshot {
 	projectRecipient, _ := launchpad.GetProjectRecipient(launchpadProjectId)
 	projectTier30Total, _ := launchpad.GetProjectTierTotalDistributeAmount(launchpadProjectId, 30)
 	launchpadDepositAmount, _ := launchpad.GetDepositAmount(launchpadDepositId)
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	return upgradeSnapshot{
 		poolLiquidity:      poolLiquidity,
@@ -1438,7 +1445,7 @@ func captureSnapshot() upgradeSnapshot {
 		textProposalState:  textStatus,
 		adminVoteWeight:    adminVoteWeight,
 		configVersion:      govGovernance.GetLatestConfigVersion(),
-		configVotingPeriod: govGovernance.GetLatestConfig().VotingPeriod,
+		configVotingPeriod: config.VotingPeriod,
 		projectCount:       launchpad.GetProjects().Size(),
 		projectActive:      projectActive,
 		projectRecipient:   projectRecipient,

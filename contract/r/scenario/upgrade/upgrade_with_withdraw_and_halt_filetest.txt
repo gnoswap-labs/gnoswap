@@ -422,9 +422,12 @@ func updateRoleAddresses() {
 	updatedLaunchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	testing.SetRealm(testing.NewUserRealm(stakerV2Addr))
-	emission.SetOnDistributionPctChangeCallback(cross, func(emissionAmountPerSecond int64) {
+	err := emission.SetOnDistributionPctChangeCallback(cross, func(emissionAmountPerSecond int64) {
 		ufmt.Printf("[INFO] emission amount per second should be %d\n", emissionAmountPerSecond)
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] community_pool should be changed %s to %s\n", previousCommunityPoolAddr, updatedCommunityPoolAddr)
 	ufmt.Printf("[EXPECTED] gov_governance should be changed %s to %s\n", previousGovGovernanceAddr, updatedGovGovernanceAddr)

@@ -57,10 +57,21 @@ func TestChangeDistributionPct(cur realm, t *testing.T) {
 			communityPoolPct:   3000,
 			govStakerPct:       4000,
 			verify: func() {
-				uassert.Equal(t, int64(1000), GetDistributionBpsPct(LIQUIDITY_STAKER))
-				uassert.Equal(t, int64(2000), GetDistributionBpsPct(DEVOPS))
-				uassert.Equal(t, int64(3000), GetDistributionBpsPct(COMMUNITY_POOL))
-				uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
+				pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), pct)
+
+				pct, err = GetDistributionBpsPct(DEVOPS)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(2000), pct)
+
+				pct, err = GetDistributionBpsPct(COMMUNITY_POOL)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(3000), pct)
+
+				pct, err = GetDistributionBpsPct(GOV_STAKER)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(4000), pct)
 			},
 		},
 	}
@@ -105,10 +116,22 @@ func TestChangeDistributionPcts(cur realm, t *testing.T) {
 	resetObject(t)
 
 	changeDistributionPcts(1000, 2000, 3000, 4000)
-	uassert.Equal(t, int64(1000), GetDistributionBpsPct(LIQUIDITY_STAKER))
-	uassert.Equal(t, int64(2000), GetDistributionBpsPct(DEVOPS))
-	uassert.Equal(t, int64(3000), GetDistributionBpsPct(COMMUNITY_POOL))
-	uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
+
+	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000), pct)
+
+	pct, err = GetDistributionBpsPct(DEVOPS)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(2000), pct)
+
+	pct, err = GetDistributionBpsPct(COMMUNITY_POOL)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(3000), pct)
+
+	pct, err = GetDistributionBpsPct(GOV_STAKER)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(4000), pct)
 }
 
 func TestCalculateAmount(cur realm, t *testing.T) {
@@ -548,6 +571,49 @@ func TestDistribution_SetOnDistributionPctChangeCallback(cur realm, t *testing.T
 	}
 }
 
+func TestDistribution_StakerEmissionGettersReturnDistributionErrors(cur realm, t *testing.T) {
+	resetObject(t)
+
+	distributionBpsPct[LIQUIDITY_STAKER] = 0
+	rate, err := GetStakerEmissionAmountPerSecond()
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), rate)
+
+	_, emissions, err := GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.NoError(t, err)
+	for _, emissionAmount := range emissions {
+		uassert.Equal(t, int64(0), emissionAmount)
+	}
+
+	distributionBpsPct = nil
+	_, err = GetStakerEmissionAmountPerSecond()
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+	_, _, err = GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+
+	distributionBpsPct = make(map[int]int64)
+	_, err = GetStakerEmissionAmountPerSecond()
+	uassert.ErrorContains(t, err, "invalid target(1)")
+	_, _, err = GetStakerEmissionAmountPerSecondInRange(0, 1)
+	uassert.ErrorContains(t, err, "invalid target(1)")
+}
+
+func TestDistribution_SetOnDistributionPctChangeCallbackDoesNotPersistOnGetterError(cur realm, t *testing.T) {
+	resetObject(t)
+	callbackCalled := false
+	onDistributionPctChangeCallback = func(cur realm, amount int64) {
+		callbackCalled = true
+	}
+	distributionBpsPct = nil
+	testing.SetRealm(stakerRealm)
+
+	err := SetOnDistributionPctChangeCallback(cross(cur), func(cur realm, amount int64) {})
+	uassert.ErrorContains(t, err, "distributionBpsPct is nil")
+
+	onDistributionPctChangeCallback(cross(cur), 1)
+	uassert.True(t, callbackCalled)
+}
+
 func TestDistribution_GetDistributionBpsPct_EdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
@@ -652,17 +718,16 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(cur realm, t *testing.T) {
 
 			// When - Then
 			if tt.wantErr {
-				uassert.PanicsWithMessage(
-					t, cur, tt.errMsg, func() {
-						GetDistributionBpsPct(tt.target)
-					})
+				_, err := GetDistributionBpsPct(tt.target)
+				uassert.ErrorContains(t, err, tt.errMsg)
 				return
 			}
 
 			// When
-			got := GetDistributionBpsPct(tt.target)
+			got, err := GetDistributionBpsPct(tt.target)
 
 			// Then
+			uassert.NoError(t, err)
 			uassert.Equal(t, tt.want, got)
 		})
 	}
@@ -1063,18 +1128,16 @@ func TestMapBasedDistribution_EdgeCases(cur realm, t *testing.T) {
 			cleanupFunc func(savedMap map[int]int64)
 		}{
 			{
-				name:        "nil map access should panic",
-				description: "GetDistributionBpsPct panics when map is nil",
+				name:        "nil map access should return error",
+				description: "GetDistributionBpsPct returns error when map is nil",
 				setupFunc: func() map[int]int64 {
 					saved := distributionBpsPct
 					distributionBpsPct = nil
 					return saved
 				},
 				testFunc: func(t *testing.T) {
-					uassert.PanicsWithMessage(
-						t, cur, "distributionBpsPct is nil", func() {
-							GetDistributionBpsPct(LIQUIDITY_STAKER)
-						})
+					_, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+					uassert.ErrorContains(t, err, "distributionBpsPct is nil")
 				},
 				cleanupFunc: func(saved map[int]int64) {
 					distributionBpsPct = saved
@@ -1098,8 +1161,8 @@ func TestMapBasedDistribution_EdgeCases(cur realm, t *testing.T) {
 				},
 			},
 			{
-				name:        "partial map missing key access panics",
-				description: "accessing non-existent key after validation panics",
+				name:        "partial map missing key access returns error",
+				description: "accessing non-existent key after validation returns error",
 				setupFunc: func() map[int]int64 {
 					saved := distributionBpsPct
 					distributionBpsPct = make(map[int]int64)
@@ -1107,10 +1170,8 @@ func TestMapBasedDistribution_EdgeCases(cur realm, t *testing.T) {
 					return saved
 				},
 				testFunc: func(t *testing.T) {
-					uassert.PanicsWithMessage(
-						t, cur, "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2)", func() {
-							GetDistributionBpsPct(DEVOPS)
-						})
+					_, err := GetDistributionBpsPct(DEVOPS)
+					uassert.ErrorContains(t, err, "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2)")
 				},
 				cleanupFunc: func(saved map[int]int64) {
 					distributionBpsPct = saved
@@ -1264,7 +1325,8 @@ func TestMapBasedDistribution_EdgeCases(cur realm, t *testing.T) {
 
 				// Multiple reads
 				for i := 0; i < tt.readCount; i++ {
-					pct := GetDistributionBpsPct(tt.target)
+					pct, err := GetDistributionBpsPct(tt.target)
+					uassert.NoError(t, err)
 					uassert.Equal(t, tt.initialValue, pct)
 				}
 

@@ -25,7 +25,7 @@ func newTestPoolTier(poolPath string, tier uint64, counts [AllTierCount]uint64, 
 	}
 	ratio := TierRatioFromCounts(counts[Tier1], counts[Tier2], counts[Tier3])
 
-	getHalvings := func(start, end int64) ([]int64, []int64) {
+	getHalvings := func(start, end int64) ([]int64, []int64, error) {
 		ts := make([]int64, 0)
 		em := make([]int64, 0)
 		for _, h := range halvings {
@@ -34,10 +34,10 @@ func newTestPoolTier(poolPath string, tier uint64, counts [AllTierCount]uint64, 
 				em = append(em, h.emission)
 			}
 		}
-		return ts, em
+		return ts, em, nil
 	}
 
-	return NewPoolTierBy(membership, ratio, counts, 0, 0, func() int64 { return 0 }, getHalvings)
+	return NewPoolTierBy(membership, ratio, counts, 0, 0, func() (int64, error) { return 0, nil }, getHalvings)
 }
 
 // newLinearAccPool builds a pool with constant staked liquidity and one global-accumulation checkpoint at
@@ -207,7 +207,9 @@ func TestResolveInternalRewardSegments(cur realm, t *testing.T) {
 
 			poolTier := newTestPoolTier("test_pool", tt.tier, tt.counts, tt.halvings)
 
-			got := nonEmptySegments(resolver.resolveInternalRewardSegments(poolTier, "test_pool", tt.start, tt.end))
+			segments, err := resolver.resolveInternalRewardSegments(poolTier, "test_pool", tt.start, tt.end)
+			uassert.NoError(t, err)
+			got := nonEmptySegments(segments)
 
 			uassert.Equal(t, len(tt.want), len(got))
 			for i := range tt.want {
@@ -242,14 +244,16 @@ func TestResolveInternalRewardSegments_EmissionMatchesMaterializedCache(cur real
 	refResolver := newLinearAccPool("pool_ref", createTime, poolLiq)
 	refResolver.Pool.SetRewardCacheAt(createTime, emission0)
 	refResolver.Pool.SetRewardCacheAt(halveTime, emission1)
-	refSegments := refResolver.resolveInternalRewardSegments(poolTier, "pool_ref", createTime, endTime)
+	refSegments, err := refResolver.resolveInternalRewardSegments(poolTier, "pool_ref", createTime, endTime)
+	uassert.NoError(t, err)
 	refRewards, refPenalties := refResolver.RewardStateOf(deposit).calculateInternalReward(refSegments)
 
 	// Emission path: only the base entry is cached; the halving comes from the schedule.
 	emResolver := newLinearAccPool("pool_emission", createTime, poolLiq)
 	emResolver.Pool.SetRewardCacheAt(createTime, emission0)
 	cacheSizeBefore := emResolver.Pool.RewardCache().Size()
-	emSegments := emResolver.resolveInternalRewardSegments(poolTier, "pool_emission", createTime, endTime)
+	emSegments, err := emResolver.resolveInternalRewardSegments(poolTier, "pool_emission", createTime, endTime)
+	uassert.NoError(t, err)
 	emRewards, emPenalties := emResolver.RewardStateOf(deposit).calculateInternalReward(emSegments)
 	cacheSizeAfter := emResolver.Pool.RewardCache().Size()
 

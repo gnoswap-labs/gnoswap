@@ -30,8 +30,8 @@ type MockStakerStore struct {
 	poolTierCounts                   [sr.AllTierCount]uint64
 	poolTierLastRewardCacheTimestamp int64
 	poolTierCurrentEmission          int64
-	poolTierGetEmission              func() int64
-	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
+	poolTierGetEmission              func() (int64, error)
+	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64, error)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
 }
@@ -302,11 +302,11 @@ func (s *MockStakerStore) HasPoolTierGetEmissionStoreKey() bool {
 	return s.poolTierGetEmission != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetEmission() func() int64 {
+func (s *MockStakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	return s.poolTierGetEmission
 }
 
-func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error {
 	s.poolTierGetEmission = fn
 	return nil
 }
@@ -316,11 +316,11 @@ func (s *MockStakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
 	return s.poolTierGetHalvingBlocksInRange != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64) {
+func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error) {
 	return s.poolTierGetHalvingBlocksInRange
 }
 
-func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error {
 	s.poolTierGetHalvingBlocksInRange = fn
 	return nil
 }
@@ -373,8 +373,8 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,
 		poolTierCurrentEmission:          0,
-		poolTierGetEmission:              func() int64 { return 0 },
-		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64) { return nil, nil },
+		poolTierGetEmission:              func() (int64, error) { return 0, nil },
+		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil },
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
 		currentSwapBatch:                 swapBatch,
 	}
@@ -441,18 +441,18 @@ func (e *mockEmissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bo
 	return emission.MintAndDistributeGns(cross(rlm))
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() (int64, error) {
 	return emission.GetStakerEmissionAmountPerSecond()
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
-func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
+func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) error {
 	access.AssertIsRlmCurrent(0, rlm)
 
-	emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
+	return emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
 		callback(0, cur, emissionAmountPerSecond)
 	})
 }

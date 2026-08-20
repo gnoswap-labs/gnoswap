@@ -34,7 +34,9 @@ func registerStakerV1(cur realm) {
 
 		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
 		instance.setupSwapHooks(0, rlm)
-		emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, instance.emissionCacheUpdateHook)
+		if err := emissionAccessor.SetOnDistributionPctChangeCallback(0, rlm, instance.emissionCacheUpdateHook); err != nil {
+			panic(err)
+		}
 
 		return instance
 	})
@@ -179,7 +181,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetEmissionStoreKey() {
-		getEmissionFn := func() int64 {
+		getEmissionFn := func() (int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecond()
 		}
 
@@ -190,7 +192,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetHalvingBlocksInRangeStoreKey() {
-		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64) {
+		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
 		}
 
