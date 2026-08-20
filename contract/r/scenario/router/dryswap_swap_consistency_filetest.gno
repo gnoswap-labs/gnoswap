@@ -217,9 +217,10 @@ func testExactIn_Small(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact In - Small amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -241,9 +242,10 @@ func testExactIn_Medium(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact In - Medium amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -265,9 +267,10 @@ func testExactIn_Large(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact In - Large amount")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -289,9 +292,10 @@ func testExactIn_AlmostAll(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact In - Almost all liquidity")
 	dryIn, dryOut, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_IN", route, "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -315,9 +319,10 @@ func testExactOut_Small(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact Out - Small amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -344,9 +349,10 @@ func testExactOut_Medium(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact Out - Medium amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -373,9 +379,10 @@ func testExactOut_Large(cur realm) {
 
 	ufmt.Println("[INFO] Testing Exact Out - Large amount")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -402,9 +409,10 @@ func testExactOut_BugScenario(cur realm) {
 
 	ufmt.Println("[INFO] Testing Bug Scenario - Large exact out")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -429,9 +437,10 @@ func testExactOut_JustBelowOverflow(cur realm) {
 
 	ufmt.Println("[INFO] Testing overflow boundary - amount 10983000000")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -446,9 +455,10 @@ func testExactOut_JustAtOverflow(cur realm) {
 
 	ufmt.Println("[INFO] Testing overflow trigger - amount 10982000000")
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
@@ -473,35 +483,23 @@ func testZeroAmount(cur realm) {
 
 	ufmt.Println("[INFO] Testing zero amount validation")
 
-	// Test exact in with zero - should abort
-	result := uassert.AbortsContains(t, cur, "must be positive", func() {
-		func(cur realm) {
-			router.DrySwapRoute(
-				barPath, fooPath, "0", "EXACT_IN",
-				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
-			)
-		}(cross(cur))
-	})
-	if result {
-		ufmt.Println("[EXPECTED] Zero exact in - Correctly aborted with expected message")
-	} else {
-		panic("[FAIL] Zero exact in - Did not abort as expected")
-	}
+	_, _, err := func(cur realm) (string, string, error) {
+		return router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_IN",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
+		)
+	}(cross(cur))
+	uassert.ErrorContains(t, err, "must be positive")
+	ufmt.Println("[EXPECTED] Zero exact in - Returned expected error")
 
-	// Test exact out with zero - should abort
-	result = uassert.AbortsContains(t, cur, "must be positive", func() {
-		func(cur realm) {
-			router.DrySwapRoute(
-				barPath, fooPath, "0", "EXACT_OUT",
-				"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999999999",
-			)
-		}(cross(cur))
-	})
-	if result {
-		ufmt.Println("[EXPECTED] Zero exact out - Correctly aborted with expected message")
-	} else {
-		panic("[FAIL] Zero exact out - Did not abort as expected")
-	}
+	_, _, err = func(cur realm) (string, string, error) {
+		return router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_OUT",
+			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999999999",
+		)
+	}(cross(cur))
+	uassert.ErrorContains(t, err, "must be positive")
+	ufmt.Println("[EXPECTED] Zero exact out - Returned expected error")
 }
 
 func testReverseDirection(cur realm) {
@@ -513,9 +511,10 @@ func testReverseDirection(cur realm) {
 
 	// Forward: BAR -> FOO
 	dryInFwd, dryOutFwd, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000)
 	actualInFwd, actualOutFwd := router.ExactInSwapRoute(
@@ -527,9 +526,10 @@ func testReverseDirection(cur realm) {
 
 	// Reverse: FOO -> BAR
 	dryInRev, dryOutRev, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath, barPath, amount, "EXACT_IN", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
@@ -550,9 +550,10 @@ func testMaxSlippage(cur realm) {
 
 	// Test with very tight slippage (should fail)
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] Tight slippage - DrySwap returns in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
@@ -603,9 +604,10 @@ func printExactOutTolerance(cur realm, requested string, dryOut string, toleranc
 func drySwapExactOutForAmount(cur realm, inputToken, outputToken string, amount int64, route, quote, amountLimit string) (string, bool, int64, bool) {
 	amountStr := strconv.FormatInt(amount, 10)
 	_, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			inputToken, outputToken, amountStr, "EXACT_OUT", route, quote, amountLimit,
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	dryOutAmount, okDryOut := parseInt64(cur, dryOut)
@@ -660,9 +662,10 @@ func testMultiHop_TwoHop_ExactIn_Success(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact In")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, quote, "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
@@ -689,9 +692,10 @@ func testMultiHop_TwoHop_ExactOut_Success(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_OUT", route, quote, "999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 2)
@@ -713,7 +717,8 @@ func testMultiHop_TwoHop_ExactOut_Fail(cur realm) {
 
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	amountLimit := "999999999"
-	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		cur,
 		barPath, fooPath, route, "100", amountLimit,
 		663, 1000000000,
 	)
@@ -722,9 +727,10 @@ func testMultiHop_TwoHop_ExactOut_Fail(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_OUT", route, "100", amountLimit,
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 2)
@@ -751,9 +757,10 @@ func testMultiHop_TwoRoute_TwoHop_ExactIn(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact In")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, quote, "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactIn - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
@@ -779,9 +786,10 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Success(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_OUT", route, quote, "999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 4)
@@ -804,7 +812,8 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail(cur realm) {
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500"
 	quote := "50,50"
 	amountLimit := "999999999"
-	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		cur,
 		barPath, fooPath, route, quote, amountLimit,
 		1000, 1000000000,
 	)
@@ -813,9 +822,10 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_OUT", route, quote, amountLimit,
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 4)
@@ -841,9 +851,10 @@ func testMultiHop_ThreeHop_ExactIn_Success(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
@@ -868,9 +879,10 @@ func testMultiHop_ThreeHop_ExactOut_Success(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, quxPath, amount, "EXACT_OUT", route, "100", "999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 3)
@@ -896,9 +908,10 @@ func testMultiHop_ThreeHop_ExactOut_Fail(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, quxPath, amount, "EXACT_OUT", route, "100", "999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 3)
@@ -925,9 +938,10 @@ func testMultiHop_TwoRoute_ThreeHop_ExactIn(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact In")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, quxPath, amount, "EXACT_IN", route, quote, "1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactIn - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
@@ -951,9 +965,10 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Success(cur realm) {
 	amount := "2"
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, quxPath, amount, "EXACT_OUT", route, quote, "999999999",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Success")
@@ -978,7 +993,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500,gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500"
 	quote := "90,10"
 	amountLimit := "999999999"
-	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(cur,
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		cur,
 		barPath, quxPath, route, quote, amountLimit,
 		2, 1000000,
 	)
@@ -987,9 +1003,10 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath, quxPath, amount, "EXACT_OUT", route, quote, amountLimit,
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 4)
@@ -1080,8 +1097,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 //
 // [SCENARIO] 5. Test Additional Edge Cases
 // [INFO] Testing zero amount validation
-// [EXPECTED] Zero exact in - Correctly aborted with expected message
-// [EXPECTED] Zero exact out - Correctly aborted with expected message
+// [EXPECTED] Zero exact in - Returned expected error
+// [EXPECTED] Zero exact out - Returned expected error
 //
 // [INFO] Testing reverse direction swap consistency
 // [EXPECTED] Forward swap - Dry: in=1000000 out(with fee)=931857046 | Actual: in=1000000 out=-931857046

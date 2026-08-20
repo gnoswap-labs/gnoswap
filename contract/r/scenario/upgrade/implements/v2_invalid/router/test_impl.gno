@@ -64,7 +64,7 @@ func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string
 	return t.instance.ExactOutSingleSwapRoute(0, rlm, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
 
-func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
+func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, error) {
 	if !t.isActive("DrySwapRoute") {
 		panic("test implementation: DrySwapRoute not supported")
 	}

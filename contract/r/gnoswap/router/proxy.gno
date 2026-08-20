@@ -90,14 +90,14 @@ func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, a
 // Returns:
 //   - string: estimated input amount
 //   - string: estimated output amount
-//   - bool: success status
+//   - error: nil on success
 func DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
-) (string, string, bool) {
+) (string, string, error) {
 	return getImplementation().DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 

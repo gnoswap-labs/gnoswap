@@ -109,7 +109,7 @@ func (r *routerV1) swapDryInner(
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// check possible
-	amount0Str, amount1Str, ok := pl.DrySwap(
+	amount0Str, amount1Str, err := pl.DrySwap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
@@ -117,8 +117,8 @@ func (r *routerV1) swapDryInner(
 		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 	)
-	if !ok {
-		return 0, 0
+	if err != nil {
+		panic(err)
 	}
 
 	amount0 := i256.MustFromDecimal(amount0Str)

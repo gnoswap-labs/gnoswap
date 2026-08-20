@@ -218,13 +218,13 @@ func (m *MockPool) DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (string, string, error) {
 	res, ok := m.Response.Get("DrySwap")
 	if !ok {
-		return "", "", false
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string), res[2].(bool)
+	return res[0].(string), res[1].(string), res[2].(error)
 }
 
 func (m *MockPool) ExistsPoolPath(poolPath string) bool {

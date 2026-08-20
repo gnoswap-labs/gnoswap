@@ -323,8 +323,7 @@ func (i *poolV1) Swap(
 }
 
 // DrySwap simulates a swap without modifying pool state.
-// Returns amount0, amount1 and a success boolean.
-// Returns false if pool has no liquidity or computation fails.
+// Returns amount0, amount1 and an error.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,
@@ -332,10 +331,22 @@ func (i *poolV1) DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (amount0, amount1 string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			amount0 = "0"
+			amount1 = "0"
+			if recoveredErr, ok := r.(error); ok {
+				err = recoveredErr
+			} else {
+				err = ufmt.Errorf("%v", r)
+			}
+		}
+	}()
+
 	amounts := i256.MustFromDecimal(amountSpecified)
 	if amounts.IsZero() {
-		return "0", "0", false
+		return "0", "0", errors.New(errInvalidSwapAmount)
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -343,7 +354,7 @@ func (i *poolV1) DrySwap(
 
 	// no liquidity -> simulation fails
 	if poolSnapshot.Liquidity().IsZero() {
-		return "0", "0", false
+		return "0", "0", errors.New(errZeroLiquidity)
 	}
 
 	slot0Start := poolSnapshot.Slot0()
@@ -366,20 +377,20 @@ func (i *poolV1) DrySwap(
 
 	result, err := i.computeSwap(poolSnapshot, comp, nil)
 	if err != nil {
-		return "0", "0", false
+		return "0", "0", err
 	}
 
 	if zeroForOne {
 		if poolSnapshot.BalanceToken1() < gnsmath.SafeConvertToInt64(result.Amount1.Abs()) {
-			return "0", "0", false
+			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	} else {
 		if poolSnapshot.BalanceToken0() < gnsmath.SafeConvertToInt64(result.Amount0.Abs()) {
-			return "0", "0", false
+			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	}
 
-	return result.Amount0.ToString(), result.Amount1.ToString(), true
+	return result.Amount0.ToString(), result.Amount1.ToString(), nil
 }
 
 // tickCrossHookFn is invoked after an initialized tick is crossed. Swap uses it

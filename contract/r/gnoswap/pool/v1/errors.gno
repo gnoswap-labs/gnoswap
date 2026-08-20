@@ -33,6 +33,7 @@ const (
 	errObservationTooOld         = "[GNOSWAP-POOL-025] target timestamp before oldest observation"
 	errSpoofedRealm              = "[GNOSWAP-POOL-026] rlm does not match the current crossing frame"
 	errObservationBeforeEpoch    = "[GNOSWAP-POOL-027] lookback window starts before unix epoch"
+	errInsufficientPoolBalance   = "[GNOSWAP-POOL-028] insufficient pool balance for swap"
 )
 
 // newErrorWithDetail adds detail to an error message.

@@ -197,7 +197,7 @@ func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 u
 }
 
 // IPoolGetter interface
-func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, bool) {
+func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, error) {
 	result := t.ExecuteFn(
 		"DrySwap",
 		func(args ...any) any {
@@ -206,7 +206,10 @@ func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zer
 		},
 		token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96,
 	).([]any)
-	return result[0].(string), result[1].(string), result[2].(bool)
+	if result[2] == nil {
+		return result[0].(string), result[1].(string), nil
+	}
+	return result[0].(string), result[1].(string), result[2].(error)
 }
 
 func (t *TestPool) ExistsPoolPath(poolPath string) bool {

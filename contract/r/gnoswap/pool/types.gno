@@ -125,7 +125,7 @@ type IPoolSwap interface {
 		zeroForOne bool,
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
-	) (string, string, bool)
+	) (string, string, error)
 
 	SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error)
 

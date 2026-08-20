@@ -18,7 +18,7 @@ import (
 const dryPoolFee uint32 = fee100
 
 var (
-	dryBasicPoolsReady     bool
+	dryBasicPoolsReady      bool
 	dryMultiRoutePoolsReady bool
 )
 
@@ -29,8 +29,29 @@ type DrySwapTestCase struct {
 	expectedAmountIn  string
 	expectedAmountOut string
 	expectedSuccess   bool
-	expectPanic       bool
-	expectedPanicMsg  string
+	expectedErrMsg    string
+}
+
+// assertDrySwap verifies the result of a DrySwapRoute call:
+//   - expectedErrMsg non-empty: expect an error containing the message
+//   - expectedSuccess true: expect nil error and matching amounts
+//   - expectedSuccess false: expect a non-nil error
+func assertDrySwap(t *testing.T, tt DrySwapTestCase, amountIn, amountOut string, err error) {
+	t.Helper()
+
+	if tt.expectedErrMsg != "" {
+		uassert.ErrorContains(t, err, tt.expectedErrMsg)
+		return
+	}
+
+	if tt.expectedSuccess {
+		uassert.NoError(t, err)
+		uassert.Equal(t, tt.expectedAmountIn, amountIn)
+		uassert.Equal(t, tt.expectedAmountOut, amountOut)
+		return
+	}
+
+	uassert.Error(t, err)
 }
 
 type DrySwapParams struct {
@@ -226,7 +247,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			amountIn, amountOut, success := router.DrySwapRoute(
+			amountIn, amountOut, err := router.DrySwapRoute(
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
@@ -235,10 +256,7 @@ func TestDrySwapRoute_Basic(cur realm, t *testing.T) {
 				tt.swapParams.quoteArr,
 				tt.swapParams.tokenAmountLimit,
 			)
-
-			uassert.Equal(t, tt.expectedAmountIn, amountIn)
-			uassert.Equal(t, tt.expectedAmountOut, amountOut)
-			uassert.Equal(t, tt.expectedSuccess, success)
+			assertDrySwap(t, tt, amountIn, amountOut, err)
 		})
 	}
 }
@@ -342,7 +360,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			amountIn, amountOut, success := router.DrySwapRoute(
+			amountIn, amountOut, err := router.DrySwapRoute(
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
@@ -351,10 +369,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(cur realm, t *testing.T) {
 				tt.swapParams.quoteArr,
 				tt.swapParams.tokenAmountLimit,
 			)
-
-			uassert.Equal(t, tt.expectedAmountIn, amountIn)
-			uassert.Equal(t, tt.expectedAmountOut, amountOut)
-			uassert.Equal(t, tt.expectedSuccess, success)
+			assertDrySwap(t, tt, amountIn, amountOut, err)
 		})
 	}
 }
@@ -438,7 +453,7 @@ func TestValidateSwapResults_ExactOutTolerance(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				ExactOut,
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -446,7 +461,11 @@ func TestValidateSwapResults_ExactOutTolerance(cur realm, t *testing.T) {
 				tt.amountLimit,
 				tt.swapCount,
 			)
-			uassert.Equal(t, tt.expectedSuccess, success)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
@@ -554,7 +573,7 @@ func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(cur realm, t
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				ExactOut,
 				1000, // resultAmountIn doesn't matter for this test
 				tt.resultAmountOut,
@@ -562,7 +581,11 @@ func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(cur realm, t
 				999999, // high limit to not trigger slippage check
 				tt.swapCount,
 			)
-			uassert.Equal(t, tt.expectedSuccess, success)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
@@ -610,7 +633,7 @@ func TestValidateSwapResults_ExactIn(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				ExactIn,
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -618,7 +641,11 @@ func TestValidateSwapResults_ExactIn(cur realm, t *testing.T) {
 				tt.amountLimit,
 				tt.swapCount,
 			)
-			uassert.Equal(t, tt.expectedSuccess, success)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
@@ -644,8 +671,7 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectedSuccess:   false,
-			expectPanic:       true,
-			expectedPanicMsg:  "value out of range",
+			expectedErrMsg:    "value out of range",
 		},
 		{
 			name:    "ExactOut - Overflow in calculateSwapAmount",
@@ -660,8 +686,7 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 				Build(),
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectPanic:       true,
-			expectedPanicMsg:  "value out of range",
+			expectedErrMsg:    "value out of range",
 		},
 	}
 
@@ -678,32 +703,16 @@ func TestDrySwapRouteOverflow(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			if tt.expectPanic {
-				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
-					router.DrySwapRoute(
-						tt.swapParams.inputToken,
-						tt.swapParams.outputToken,
-						tt.swapParams.specifiedAmount,
-						tt.swapParams.swapTypeStr,
-						tt.swapParams.strRouteArr,
-						tt.swapParams.quoteArr,
-						tt.swapParams.tokenAmountLimit,
-					)
-				})
-			} else {
-				amountIn, amountOut, success := router.DrySwapRoute(
-					tt.swapParams.inputToken,
-					tt.swapParams.outputToken,
-					tt.swapParams.specifiedAmount,
-					tt.swapParams.swapTypeStr,
-					tt.swapParams.strRouteArr,
-					tt.swapParams.quoteArr,
-					tt.swapParams.tokenAmountLimit,
-				)
-				uassert.Equal(t, amountIn, tt.expectedAmountIn)
-				uassert.Equal(t, amountOut, tt.expectedAmountOut)
-				uassert.Equal(t, success, tt.expectedSuccess)
-			}
+			amountIn, amountOut, err := router.DrySwapRoute(
+				tt.swapParams.inputToken,
+				tt.swapParams.outputToken,
+				tt.swapParams.specifiedAmount,
+				tt.swapParams.swapTypeStr,
+				tt.swapParams.strRouteArr,
+				tt.swapParams.quoteArr,
+				tt.swapParams.tokenAmountLimit,
+			)
+			assertDrySwap(t, tt, amountIn, amountOut, err)
 		})
 	}
 }
@@ -785,8 +794,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectedSuccess:   false,
-			expectPanic:       true,
-			expectedPanicMsg:  "must be positive",
+			expectedErrMsg:    "must be positive",
 		},
 		{
 			name:    "ExactOut - Zero amount should panic",
@@ -801,8 +809,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				Build(),
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectPanic:       true,
-			expectedPanicMsg:  "must be positive",
+			expectedErrMsg:    "must be positive",
 		},
 		{
 			name:    "ExactIn - Negative amount should panic",
@@ -818,8 +825,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectedSuccess:   false,
-			expectPanic:       true,
-			expectedPanicMsg:  "must be positive",
+			expectedErrMsg:    "must be positive",
 		},
 		{
 			name:    "ExactOut - Negative amount should panic",
@@ -834,8 +840,7 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 				Build(),
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
-			expectPanic:       true,
-			expectedPanicMsg:  "must be positive",
+			expectedErrMsg:    "must be positive",
 		},
 	}
 
@@ -852,32 +857,16 @@ func TestDrySwapRouteZeroAmount(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			if tt.expectPanic {
-				uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
-					router.DrySwapRoute(
-						tt.swapParams.inputToken,
-						tt.swapParams.outputToken,
-						tt.swapParams.specifiedAmount,
-						tt.swapParams.swapTypeStr,
-						tt.swapParams.strRouteArr,
-						tt.swapParams.quoteArr,
-						tt.swapParams.tokenAmountLimit,
-					)
-				})
-			} else {
-				amountIn, amountOut, success := router.DrySwapRoute(
-					tt.swapParams.inputToken,
-					tt.swapParams.outputToken,
-					tt.swapParams.specifiedAmount,
-					tt.swapParams.swapTypeStr,
-					tt.swapParams.strRouteArr,
-					tt.swapParams.quoteArr,
-					tt.swapParams.tokenAmountLimit,
-				)
-				uassert.Equal(t, amountIn, tt.expectedAmountIn)
-				uassert.Equal(t, amountOut, tt.expectedAmountOut)
-				uassert.Equal(t, success, tt.expectedSuccess)
-			}
+			amountIn, amountOut, err := router.DrySwapRoute(
+				tt.swapParams.inputToken,
+				tt.swapParams.outputToken,
+				tt.swapParams.specifiedAmount,
+				tt.swapParams.swapTypeStr,
+				tt.swapParams.strRouteArr,
+				tt.swapParams.quoteArr,
+				tt.swapParams.tokenAmountLimit,
+			)
+			assertDrySwap(t, tt, amountIn, amountOut, err)
 		})
 	}
 }
@@ -932,7 +921,7 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			amountIn, amountOut, success := router.DrySwapRoute(
+			_, _, err := router.DrySwapRoute(
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
@@ -942,8 +931,8 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(cur realm, t *testing.T) {
 				tt.swapParams.tokenAmountLimit,
 			)
 
-			uassert.Equal(t, false, success)
-			t.Logf("DrySwap failed as expected: in=%s, out=%s, success=%t", amountIn, amountOut, success)
+			uassert.Error(t, err)
+			t.Logf("DrySwap failed as expected: %v", err)
 		})
 	}
 }
@@ -969,8 +958,7 @@ func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
 				Route(barPath + ":" + bazPath + ":100").
 				TokenAmountLimit("1").
 				Build(),
-			expectPanic:      true,
-			expectedPanicMsg: errInvalidRouteFirstToken,
+			expectedErrMsg: errInvalidRouteFirstToken,
 		},
 		{
 			name:    "ExactIn - route last token does not match outputToken",
@@ -983,8 +971,7 @@ func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
 				Route(barPath + ":" + bazPath + ":100").
 				TokenAmountLimit("1").
 				Build(),
-			expectPanic:      true,
-			expectedPanicMsg: errInvalidRouteLastToken,
+			expectedErrMsg: errInvalidRouteLastToken,
 		},
 		{
 			name:    "ExactOut - route last token does not match outputToken",
@@ -997,8 +984,7 @@ func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
 				Route(barPath + ":" + bazPath + ":100").
 				TokenAmountLimit("100000").
 				Build(),
-			expectPanic:      true,
-			expectedPanicMsg: errInvalidRouteLastToken,
+			expectedErrMsg: errInvalidRouteLastToken,
 		},
 		{
 			name:    "ExactIn - multi-hop route hops disconnected",
@@ -1015,24 +1001,20 @@ func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
 				Route(barPath + ":" + bazPath + ":100*POOL*" + quxPath + ":" + barPath + ":100*POOL*" + barPath + ":" + quxPath + ":100").
 				TokenAmountLimit("1").
 				Build(),
-			expectPanic:      true,
-			expectedPanicMsg: errRouteHopDisconnected,
+			expectedErrMsg: errRouteHopDisconnected,
 		},
 		{
 			name:    "ExactIn - pool does not exist",
 			setupFn: setupMultiRoutePools,
-			// fee10000 pools are never created in this test package, so
-			// bar:baz:10000 reliably does not exist regardless of shared state.
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
 				OutputToken(bazPath).
 				SpecifiedAmount("1000").
 				SwapType("EXACT_IN").
-				Route(barPath + ":" + bazPath + ":10000").
+				Route(barPath + ":" + fooPath + ":10000*POOL*" + fooPath + ":" + bazPath + ":10000").
 				TokenAmountLimit("1").
 				Build(),
-			expectPanic:      true,
-			expectedPanicMsg: "pool does not exist",
+			expectedErrMsg: "pool does not exist",
 		},
 	}
 
@@ -1049,17 +1031,16 @@ func TestDrySwapRoute_InvalidRoutePaths(cur realm, t *testing.T) {
 
 			router := mockRouter()
 
-			uassert.PanicsContains(t, cur, tt.expectedPanicMsg, func() {
-				router.DrySwapRoute(
-					tt.swapParams.inputToken,
-					tt.swapParams.outputToken,
-					tt.swapParams.specifiedAmount,
-					tt.swapParams.swapTypeStr,
-					tt.swapParams.strRouteArr,
-					tt.swapParams.quoteArr,
-					tt.swapParams.tokenAmountLimit,
-				)
-			})
+			amountIn, amountOut, err := router.DrySwapRoute(
+				tt.swapParams.inputToken,
+				tt.swapParams.outputToken,
+				tt.swapParams.specifiedAmount,
+				tt.swapParams.swapTypeStr,
+				tt.swapParams.strRouteArr,
+				tt.swapParams.quoteArr,
+				tt.swapParams.tokenAmountLimit,
+			)
+			assertDrySwap(t, tt, amountIn, amountOut, err)
 		})
 	}
 }
