@@ -216,7 +216,8 @@ func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 	pool := state.instance.GetPool(state.poolPath)
 	uassert.Equal(t, state.poolPath, pool.PoolPath())
 
-	incentive := state.instance.GetIncentive(state.poolPath, state.incentiveId)
+	incentive, ok := state.instance.GetPoolIncentives(state.poolPath).Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
 	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
 	uassert.Equal(t, barPath, incentive.RewardToken())
 
@@ -626,25 +627,22 @@ func TestGetterPoolRewardCache(cur realm, t *testing.T) {
 	state.pool.SetRewardCacheAt(state.fixedTimestamp+100, int64(2000))
 	state.pool.SetRewardCacheAt(state.fixedTimestamp+200, int64(3000))
 
-	// Test count
-	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
-	uassert.Equal(t, uint64(3), count) // NewPool initializes with fixedTimestamp, which gets overwritten
+	rewardCaches := state.instance.GetPoolRewardCaches(state.poolPath)
+
+	// NewPool initializes with fixedTimestamp, which gets overwritten
+	uassert.Equal(t, 3, rewardCaches.Size())
 
 	// Test pagination through the read-only view
-	keys := collectKeys(state.instance.GetPoolRewardCaches(state.poolPath), 0, 2)
+	keys := collectKeys(rewardCaches, 0, 2)
 	uassert.Equal(t, 2, len(keys))
 	uassert.Equal(t, sr.EncodeInt64(state.fixedTimestamp), keys[0])
 
 	// Test get specific cache value
-	cacheValue := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp))
-	uassert.Equal(t, int64(1000), cacheValue)
-
-	cacheValue2 := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+200))
-	uassert.Equal(t, int64(3000), cacheValue2)
+	uassert.Equal(t, int64(1000), rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp)).(int64))
+	uassert.Equal(t, int64(3000), rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp+200)).(int64))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, int64(0), nonExistent)
+	uassert.Equal(t, nil, rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
 }
 
 func TestGetterPoolIncentive(cur realm, t *testing.T) {
@@ -665,12 +663,9 @@ func TestGetterPoolIncentive(cur realm, t *testing.T) {
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 
-	// Test count
-	count := state.instance.GetPoolIncentiveCount(state.poolPath)
-	uassert.Equal(t, uint64(2), count)
-
 	// Test pagination through the read-only view
 	incentives := state.instance.GetPoolIncentives(state.poolPath)
+	uassert.Equal(t, 2, incentives.Size())
 	ids := collectKeys(incentives, 0, 10)
 	uassert.Equal(t, 2, len(ids))
 	uassert.True(t, contains(ids, state.incentiveId))
@@ -700,24 +695,21 @@ func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+200, acc2)
 	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+300, acc3)
 
-	// Test count
-	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
-	uassert.Equal(t, uint64(4), count) // 3 new entries + 1 initial entry from NewPool
+	accumulations := state.instance.GetPoolGlobalRewardRatioAccumulations(state.poolPath)
+
+	// 3 new entries + 1 initial entry from NewPool
+	uassert.Equal(t, 4, accumulations.Size())
 
 	// Test pagination through the read-only view
-	keys := collectKeys(state.instance.GetPoolGlobalRewardRatioAccumulations(state.poolPath), 0, 2)
+	keys := collectKeys(accumulations, 0, 2)
 	uassert.Equal(t, 2, len(keys))
 
 	// Test get specific accumulation value
-	accValue := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+100))
-	uassert.Equal(t, acc1, accValue)
-
-	accValue2 := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+300))
-	uassert.Equal(t, acc3, accValue2)
+	uassert.Equal(t, acc1, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+100)).(string))
+	uassert.Equal(t, acc3, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+300)).(string))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, "0", nonExistent)
+	uassert.Equal(t, nil, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
 }
 
 func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
@@ -728,25 +720,18 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	state.pool.SetHistoricalTickAt(state.fixedTimestamp+100, int32(50))
 	state.pool.SetHistoricalTickAt(state.fixedTimestamp+200, int32(200))
 
-	// Test count
-	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)
-	uassert.Equal(t, uint64(3), count)
+	historicalTicks := state.instance.GetPoolHistoricalTicks(state.poolPath)
+	uassert.Equal(t, 3, historicalTicks.Size())
 
 	// Test pagination through the read-only view
-	historicalTicks := state.instance.GetPoolHistoricalTicks(state.poolPath)
 	uassert.Equal(t, 2, len(collectKeys(historicalTicks, 0, 2)))
-	uassert.Equal(t, int32(-100), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp)).(int32))
 
 	// Test get specific tick value
-	tickValue := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp))
-	uassert.Equal(t, int32(-100), tickValue)
-
-	tickValue2 := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+200))
-	uassert.Equal(t, int32(200), tickValue2)
+	uassert.Equal(t, int32(-100), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp)).(int32))
+	uassert.Equal(t, int32(200), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp+200)).(int32))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, int32(0), nonExistent)
+	uassert.Equal(t, nil, historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
 }
 
 // collectKeys paginates a read-only tree and returns the visited keys.

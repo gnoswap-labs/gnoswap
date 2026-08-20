@@ -186,14 +186,6 @@ func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
 	).(*staker.Pool)
 }
 
-func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
-	return t.ExecuteFn(
-		"GetIncentive",
-		func(args ...any) any { return t.instance.GetIncentive(args[0].(string), args[1].(string)) },
-		poolPath, incentiveId,
-	).(*staker.ExternalIncentive)
-}
-
 func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
 	return t.ExecuteFn(
 		"GetDeposit",
@@ -626,14 +618,6 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	).([]staker.Warmup)
 }
 
-func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
-	return t.ExecuteFn(
-		"GetPoolRewardCacheCount",
-		func(args ...any) any { return t.instance.GetPoolRewardCacheCount(args[0].(string)) },
-		poolPath,
-	).(uint64)
-}
-
 func (t *TestStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetPoolRewardCaches",
@@ -642,22 +626,6 @@ func (t *TestStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 		},
 		poolPath,
 	).(*rotree.ReadOnlyTree)
-}
-
-func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	return t.ExecuteFn(
-		"GetPoolRewardCache",
-		func(args ...any) any { return t.instance.GetPoolRewardCache(args[0].(string), args[1].(uint64)) },
-		poolPath, timestamp,
-	).(int64)
-}
-
-func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
-	return t.ExecuteFn(
-		"GetPoolIncentiveCount",
-		func(args ...any) any { return t.instance.GetPoolIncentiveCount(args[0].(string)) },
-		poolPath,
-	).(uint64)
 }
 
 func (t *TestStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
@@ -670,14 +638,6 @@ func (t *TestStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	).(*rotree.ReadOnlyTree)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	return t.ExecuteFn(
-		"GetPoolGlobalRewardRatioAccumulationCount",
-		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulationCount(args[0].(string)) },
-		poolPath,
-	).(uint64)
-}
-
 func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetPoolGlobalRewardRatioAccumulations",
@@ -688,24 +648,6 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rot
 	).(*rotree.ReadOnlyTree)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	return t.ExecuteFn(
-		"GetPoolGlobalRewardRatioAccumulation",
-		func(args ...any) any {
-			return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64))
-		},
-		poolPath, timestamp,
-	).(string)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	return t.ExecuteFn(
-		"GetPoolHistoricalTickCount",
-		func(args ...any) any { return t.instance.GetPoolHistoricalTickCount(args[0].(string)) },
-		poolPath,
-	).(uint64)
-}
-
 func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetPoolHistoricalTicks",
@@ -714,12 +656,4 @@ func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTre
 		},
 		poolPath,
 	).(*rotree.ReadOnlyTree)
-}
-
-func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	return t.ExecuteFn(
-		"GetPoolHistoricalTick",
-		func(args ...any) any { return t.instance.GetPoolHistoricalTick(args[0].(string), args[1].(uint64)) },
-		poolPath, tick,
-	).(int32)
 }

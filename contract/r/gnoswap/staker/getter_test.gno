@@ -54,28 +54,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name:   "GetIncentive",
-			setup:  func(m *MockStaker) { incentive := newExternalIncentive(); m.Response.Set("GetIncentive", &incentive) },
-			getter: func() any { return GetIncentive("foo:bar:500", "incentive-1") },
-			mutate: func(result any) {
-				incentive := result.(*ExternalIncentive)
-				incentive.SetRewardToken("mutated")
-				incentive.SetRewardAmount(2000)
-				incentive.SetRewardPerSecondX128(u256.NewUintFromInt64(3000))
-				incentive.SetDistributedRewardAmount(4000)
-				incentive.SetRefunded(true)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				incentive := m.Response.data["GetIncentive"][0].(*ExternalIncentive)
-				uassert.Equal(t, "reward-token", incentive.RewardToken())
-				uassert.Equal(t, int64(1000), incentive.RewardAmount())
-				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), consts.Q128())
-				uassert.Equal(t, expectedRPSX128.ToString(), incentive.RewardPerSecondX128().ToString())
-				uassert.Equal(t, int64(0), incentive.DistributedRewardAmount())
-				uassert.Equal(t, false, incentive.Refunded())
-			},
-		},
-		{
 			name:   "GetDeposit",
 			setup:  func(m *MockStaker) { m.Response.Set("GetDeposit", newStakerDeposit()) },
 			getter: func() any { return GetDeposit(1) },
@@ -244,16 +222,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(10), warmups[0].TimeDuration)
 				uassert.Equal(t, int64(20), warmups[0].NextWarmupTime)
 				uassert.Equal(t, uint64(30), warmups[0].WarmupRatio)
-			},
-		},
-		{
-			name:   "GetPoolGlobalRewardRatioAccumulation",
-			setup:  func(m *MockStaker) { m.Response.Set("GetPoolGlobalRewardRatioAccumulation", "5000") },
-			getter: func() any { return GetPoolGlobalRewardRatioAccumulation("foo:bar:500", 10) },
-			mutate: func(result any) { result = "6000" },
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				value := m.Response.data["GetPoolGlobalRewardRatioAccumulation"][0].(string)
-				uassert.Equal(t, "5000", value)
 			},
 		},
 	}

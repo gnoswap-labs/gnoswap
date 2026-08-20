@@ -137,14 +137,6 @@ func (m *MockStaker) GetPool(poolPath string) *Pool {
 	return res[0].(*Pool)
 }
 
-func (m *MockStaker) GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
-	res, ok := m.Response.Get("GetIncentive")
-	if !ok {
-		return nil
-	}
-	return res[0].(*ExternalIncentive)
-}
-
 func (m *MockStaker) GetDeposit(lpTokenId uint64) *Deposit {
 	res, ok := m.Response.Get("GetDeposit")
 	if !ok {
@@ -545,36 +537,12 @@ func (m *MockStaker) GetWarmupTemplate() []Warmup {
 	return res[0].([]Warmup)
 }
 
-func (m *MockStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
-	res, ok := m.Response.Get("GetPoolRewardCacheCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(uint64)
-}
-
 func (m *MockStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetPoolRewardCaches")
 	if !ok {
 		return nil
 	}
 	return res[0].(*rotree.ReadOnlyTree)
-}
-
-func (m *MockStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	res, ok := m.Response.Get("GetPoolRewardCache")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockStaker) GetPoolIncentiveCount(poolPath string) uint64 {
-	res, ok := m.Response.Get("GetPoolIncentiveCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(uint64)
 }
 
 func (m *MockStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
@@ -585,14 +553,6 @@ func (m *MockStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	return res[0].(*rotree.ReadOnlyTree)
 }
 
-func (m *MockStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulationCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(uint64)
-}
-
 func (m *MockStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulations")
 	if !ok {
@@ -601,36 +561,12 @@ func (m *MockStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rot
 	return res[0].(*rotree.ReadOnlyTree)
 }
 
-func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulation")
-	if !ok {
-		return "0"
-	}
-	return res[0].(string)
-}
-
-func (m *MockStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	res, ok := m.Response.Get("GetPoolHistoricalTickCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(uint64)
-}
-
 func (m *MockStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetPoolHistoricalTicks")
 	if !ok {
 		return nil
 	}
 	return res[0].(*rotree.ReadOnlyTree)
-}
-
-func (m *MockStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	res, ok := m.Response.Get("GetPoolHistoricalTick")
-	if !ok {
-		return 0
-	}
-	return res[0].(int32)
 }
 
 func newMockStaker(version string) *MockStaker {

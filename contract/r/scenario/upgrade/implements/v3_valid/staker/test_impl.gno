@@ -95,10 +95,6 @@ func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
 	return t.instance.GetPool(poolPath)
 }
 
-func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
-	return t.instance.GetIncentive(poolPath, incentiveId)
-}
-
 func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
 	return t.instance.GetDeposit(lpTokenId)
 }
@@ -299,46 +295,18 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	return t.instance.GetWarmupTemplate()
 }
 
-func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
-	return t.instance.GetPoolRewardCacheCount(poolPath)
-}
-
 func (t *TestStaker) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolRewardCaches(poolPath)
-}
-
-func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	return t.instance.GetPoolRewardCache(poolPath, timestamp)
-}
-
-func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
-	return t.instance.GetPoolIncentiveCount(poolPath)
 }
 
 func (t *TestStaker) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolIncentives(poolPath)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	return t.instance.GetPoolGlobalRewardRatioAccumulationCount(poolPath)
-}
-
 func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolGlobalRewardRatioAccumulations(poolPath)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
-}
-
-func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	return t.instance.GetPoolHistoricalTickCount(poolPath)
-}
-
 func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolHistoricalTicks(poolPath)
-}
-
-func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	return t.instance.GetPoolHistoricalTick(poolPath, tick)
 }

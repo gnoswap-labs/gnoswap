@@ -16,15 +16,6 @@ func GetPool(poolPath string) *Pool {
 	return pool.Clone()
 }
 
-// GetIncentive returns a copy of the incentive for the given pool and ID.
-func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
-	incentive := getImplementation().GetIncentive(poolPath, incentiveId)
-	if incentive == nil {
-		return nil
-	}
-	return incentive.Clone()
-}
-
 // GetDeposit returns a copy of the deposit for the given position ID.
 func GetDeposit(lpTokenId uint64) *Deposit {
 	deposit := getImplementation().GetDeposit(lpTokenId)
@@ -282,26 +273,11 @@ func GetWarmupTemplate() []Warmup {
 	return cloneWarmups(getImplementation().GetWarmupTemplate())
 }
 
-// GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
-func GetPoolRewardCacheCount(poolPath string) uint64 {
-	return getImplementation().GetPoolRewardCacheCount(poolPath)
-}
-
 // GetPoolRewardCaches returns a read-only view of a pool's reward cache, keyed
 // by the encoded block timestamp. Callers paginate it themselves through
 // IterateByOffset and decode keys with DecodeInt64.
 func GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	return getImplementation().GetPoolRewardCaches(poolPath)
-}
-
-// GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
-func GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	return getImplementation().GetPoolRewardCache(poolPath, timestamp)
-}
-
-// GetPoolIncentiveCount returns the number of incentives for a pool.
-func GetPoolIncentiveCount(poolPath string) uint64 {
-	return getImplementation().GetPoolIncentiveCount(poolPath)
 }
 
 // GetPoolIncentives returns a read-only view of a pool's external incentives,
@@ -311,11 +287,6 @@ func GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	return getImplementation().GetPoolIncentives(poolPath)
 }
 
-// GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
-func GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulationCount(poolPath)
-}
-
 // GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's
 // global reward ratio accumulation, keyed by the encoded block timestamp.
 // Decode keys with DecodeInt64.
@@ -323,24 +294,9 @@ func GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree
 	return getImplementation().GetPoolGlobalRewardRatioAccumulations(poolPath)
 }
 
-// GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
-}
-
-// GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
-func GetPoolHistoricalTickCount(poolPath string) uint64 {
-	return getImplementation().GetPoolHistoricalTickCount(poolPath)
-}
-
 // GetPoolHistoricalTicks returns a read-only view of a pool's historical ticks,
 // keyed by the encoded block timestamp with the int32 tick as the value.
 // Decode keys with DecodeInt64.
 func GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return getImplementation().GetPoolHistoricalTicks(poolPath)
-}
-
-// GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
-func GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	return getImplementation().GetPoolHistoricalTick(poolPath, tick)
 }

@@ -70,11 +70,6 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 	return ictv
 }
 
-// GetIncentive returns the incentive for the given pool and ID.
-func (s *stakerV1) GetIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
-	return s.getIncentive(poolPath, incentiveId)
-}
-
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
 func (s *stakerV1) GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
 	incentive := s.getIncentive(poolPath, incentiveId)
@@ -426,12 +421,6 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	return incentives
 }
 
-// GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
-func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.RewardCache().Size())
-}
-
 // GetPoolRewardCaches returns a read-only view of a pool's reward cache, keyed
 // by the encoded block timestamp.
 func (s *stakerV1) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
@@ -442,39 +431,11 @@ func (s *stakerV1) GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree {
 	return pool.RewardCache().ReadOnly(nil)
 }
 
-// GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.RewardCache().Get(int64(timestamp))
-	if !ok {
-		return 0
-	}
-
-	rewardCache, ok := value.(int64)
-	if !ok {
-		panic("failed to cast reward cache value to int64")
-	}
-
-	return rewardCache
-}
-
-// GetPoolIncentiveCount returns the number of incentives for a pool.
-func (s *stakerV1) GetPoolIncentiveCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.Incentives().IncentiveTrees().Size())
-}
-
 // GetPoolIncentives returns a read-only view of a pool's external incentives,
 // keyed by incentive ID.
 func (s *stakerV1) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 	pool := s.getPoolByPoolPath(poolPath)
 	return rotree.Wrap(pool.Incentives().IncentiveTrees(), cloneExternalIncentiveEntry)
-}
-
-// GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.GlobalRewardRatioAccumulation().Size())
 }
 
 // GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's
@@ -487,28 +448,6 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotre
 	return pool.GlobalRewardRatioAccumulation().ReadOnly(nil)
 }
 
-// GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
-	if !ok {
-		return "0"
-	}
-
-	accumulationStr, ok := value.(string)
-	if !ok {
-		panic("failed to cast global reward ratio accumulation to string")
-	}
-
-	return accumulationStr
-}
-
-// GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
-func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.HistoricalTick().Size())
-}
-
 // GetPoolHistoricalTicks returns a read-only view of a pool's historical ticks,
 // keyed by the encoded block timestamp with the int32 tick as the value.
 func (s *stakerV1) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
@@ -517,20 +456,4 @@ func (s *stakerV1) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree 
 	// makeEntrySafeFn is a function that makes an entry safe to read.
 	// But the ticks are plain int32 values, so we can return them as is.
 	return pool.HistoricalTick().ReadOnly(nil)
-}
-
-// GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.HistoricalTick().Get(int64(tick))
-	if !ok {
-		return 0
-	}
-
-	tickId, ok := value.(int32)
-	if !ok {
-		panic("failed to cast historical tick value to int32")
-	}
-
-	return tickId
 }

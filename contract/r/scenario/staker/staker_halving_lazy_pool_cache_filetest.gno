@@ -166,23 +166,24 @@ func assertHalvingReducedPoolReward(before, after int64) {
 }
 
 func latestPoolRewardCache() int64 {
-	count := int(sr.GetPoolRewardCacheCount(halvingCachePoolPath))
-	if count == 0 {
+	rewardCaches := sr.GetPoolRewardCaches(halvingCachePoolPath)
+	if rewardCaches.Size() == 0 {
 		panic("pool reward cache is empty")
 	}
 
 	// Cache keys are zero-padded timestamps, so the last entry is the latest one.
-	latestId := int64(-1)
-	sr.GetPoolRewardCaches(halvingCachePoolPath).ReverseIterateByOffset(0, 1, func(key string, _ any) bool {
-		latestId = sr.DecodeInt64(key)
+	latest := int64(0)
+	found := false
+	rewardCaches.ReverseIterateByOffset(0, 1, func(_ string, value any) bool {
+		latest, found = value.(int64)
 		return true
 	})
 
-	if latestId < 0 {
+	if !found {
 		panic("pool reward cache ids not found")
 	}
 
-	return sr.GetPoolRewardCache(halvingCachePoolPath, uint64(latestId))
+	return latest
 }
 
 func halvingCachePositionIdFrom(positionId uint64) grc721.TokenID {
