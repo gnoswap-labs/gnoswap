@@ -133,6 +133,10 @@ func (p *positionV1) Reposition(
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Reposition",
@@ -148,7 +152,7 @@ func (p *positionV1) Reposition(
 		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
+		"positionLiquidity", positionLiquidity,
 		"poolLiquidity", poolLiquidity,
 		"token0Balance", utils.FormatInt(poolToken0Balance),
 		"token1Balance", utils.FormatInt(poolToken1Balance),

@@ -3,6 +3,7 @@ package position
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // MockResponse is a simple mock response helper
@@ -149,58 +150,58 @@ func (m *MockPosition) GetPositions() *rotree.ReadOnlyTree {
 	return res[0].(*rotree.ReadOnlyTree)
 }
 
-func (m *MockPosition) IsBurned(positionId uint64) bool {
+func (m *MockPosition) IsBurned(positionId uint64) (bool, error) {
 	res, ok := m.Response.Get("IsBurned")
 	if !ok {
-		return false
+		return false, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(bool)
+	return res[0].(bool), nil
 }
 
-func (m *MockPosition) IsInRange(positionId uint64) bool {
+func (m *MockPosition) IsInRange(positionId uint64) (bool, error) {
 	res, ok := m.Response.Get("IsInRange")
 	if !ok {
-		return false
+		return false, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(bool)
+	return res[0].(bool), nil
 }
 
-func (m *MockPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
+func (m *MockPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside0LastX128")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
+func (m *MockPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside1LastX128")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPosition) GetPositionLiquidity(positionId uint64) string {
+func (m *MockPosition) GetPositionLiquidity(positionId uint64) (string, error) {
 	res, ok := m.Response.Get("GetPositionLiquidity")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+func (m *MockPosition) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	res, ok := m.Response.Get("GetPositionTokenBalances")
 	if !ok {
-		return 0, 0
+		return 0, 0, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(int64), res[1].(int64)
+	return res[0].(int64), res[1].(int64), nil
 }
 
 func (m *MockPosition) GetPositionToken0Balance(positionId uint64) *u256.Uint {
@@ -221,76 +222,76 @@ func (m *MockPosition) GetPositionToken1Balance(positionId uint64) *u256.Uint {
 	return res[0].(*u256.Uint)
 }
 
-func (m *MockPosition) GetPositionOperator(positionId uint64) address {
+func (m *MockPosition) GetPositionOperator(positionId uint64) (address, error) {
 	res, ok := m.Response.Get("GetPositionOperator")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(address)
+	return res[0].(address), nil
 }
 
-func (m *MockPosition) GetPositionPoolKey(positionId uint64) string {
+func (m *MockPosition) GetPositionPoolKey(positionId uint64) (string, error) {
 	res, ok := m.Response.Get("GetPositionPoolKey")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPosition) GetPositionTickLower(positionId uint64) int32 {
+func (m *MockPosition) GetPositionTickLower(positionId uint64) (int32, error) {
 	res, ok := m.Response.Get("GetPositionTickLower")
 	if !ok {
-		return 0
+		return 0, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(int32)
+	return res[0].(int32), nil
 }
 
-func (m *MockPosition) GetPositionTickUpper(positionId uint64) int32 {
+func (m *MockPosition) GetPositionTickUpper(positionId uint64) (int32, error) {
 	res, ok := m.Response.Get("GetPositionTickUpper")
 	if !ok {
-		return 0
+		return 0, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(int32)
+	return res[0].(int32), nil
 }
 
-func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) int64 {
+func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	res, ok := m.Response.Get("GetPositionTokensOwed0")
 	if !ok {
-		return 0
+		return 0, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) int64 {
+func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	res, ok := m.Response.Get("GetPositionTokensOwed1")
 	if !ok {
-		return 0
+		return 0, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
 	res, ok := m.Response.Get("GetUnclaimedFee")
 	if !ok {
-		return u256.Zero(), u256.Zero()
+		return u256.Zero(), u256.Zero(), ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(*u256.Uint), res[1].(*u256.Uint), nil
 }
 
-func (m *MockPosition) GetPositionOwner(positionId uint64) address {
+func (m *MockPosition) GetPositionOwner(positionId uint64) (address, error) {
 	res, ok := m.Response.Get("GetPositionOwner")
 	if !ok {
-		return ""
+		return "", ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return res[0].(address)
+	return res[0].(address), nil
 }
 
 func newMockPosition(version string) *MockPosition {

@@ -79,20 +79,20 @@ type IPositionManager interface {
 
 type IPositionGetter interface {
 	GetPositions() *rotree.ReadOnlyTree
-	IsBurned(positionId uint64) bool
-	IsInRange(positionId uint64) bool
-	GetPositionOperator(positionId uint64) address
-	GetPositionPoolKey(positionId uint64) string
-	GetPositionTickLower(positionId uint64) int32
-	GetPositionTickUpper(positionId uint64) int32
-	GetPositionLiquidity(positionId uint64) string
-	GetPositionTokenBalances(positionId uint64) (int64, int64)
-	GetPositionFeeGrowthInside0LastX128(positionId uint64) string
-	GetPositionFeeGrowthInside1LastX128(positionId uint64) string
-	GetPositionTokensOwed0(positionId uint64) int64
-	GetPositionTokensOwed1(positionId uint64) int64
-	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
-	GetPositionOwner(positionId uint64) address
+	IsBurned(positionId uint64) (bool, error)
+	IsInRange(positionId uint64) (bool, error)
+	GetPositionOperator(positionId uint64) (address, error)
+	GetPositionPoolKey(positionId uint64) (string, error)
+	GetPositionTickLower(positionId uint64) (int32, error)
+	GetPositionTickUpper(positionId uint64) (int32, error)
+	GetPositionLiquidity(positionId uint64) (string, error)
+	GetPositionTokenBalances(positionId uint64) (int64, int64, error)
+	GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error)
+	GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error)
+	GetPositionTokensOwed0(positionId uint64) (int64, error)
+	GetPositionTokensOwed1(positionId uint64) (int64, error)
+	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error)
+	GetPositionOwner(positionId uint64) (address, error)
 }
 
 type IPositionStore interface {
