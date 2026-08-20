@@ -109,6 +109,10 @@ func (p *positionV1) Mint(
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := p.GetPositionLiquidity(id)
+	if err != nil {
+		panic(err)
+	}
 	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
 	if err != nil {
 		panic(err)
@@ -128,7 +132,7 @@ func (p *positionV1) Mint(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(id),
+		"positionLiquidity", positionLiquidity,
 		"poolLiquidity", poolLiquidity,
 		"token0Balance", utils.FormatInt(poolBalanceToken0),
 		"token1Balance", utils.FormatInt(poolBalanceToken1),
@@ -237,6 +241,10 @@ func (p *positionV1) IncreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"IncreaseLiquidity",
@@ -251,7 +259,7 @@ func (p *positionV1) IncreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
+		"positionLiquidity", positionLiquidity,
 		"poolLiquidity", poolLiquidity,
 		"token0Balance", utils.FormatInt(poolBalanceToken0),
 		"token1Balance", utils.FormatInt(poolBalanceToken1),
@@ -345,6 +353,10 @@ func (p *positionV1) DecreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"DecreaseLiquidity",
@@ -360,7 +372,7 @@ func (p *positionV1) DecreaseLiquidity(
 		"amount0", amount0,
 		"amount1", amount1,
 		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
+		"positionLiquidity", positionLiquidity,
 		"poolLiquidity", poolLiquidity,
 		"token0Balance", utils.FormatInt(poolBalanceToken0),
 		"token1Balance", utils.FormatInt(poolBalanceToken1),

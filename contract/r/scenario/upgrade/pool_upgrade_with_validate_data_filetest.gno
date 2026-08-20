@@ -239,14 +239,38 @@ func captureV1Snapshot() {
 	v1WithdrawalFee = pool.GetWithdrawalFee()
 
 	v1PositionCount = position.GetPositions().Size()
-	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
-	v1PositionOwner = position.GetPositionOwner(positionId)
-	v1PositionTickLower = position.GetPositionTickLower(positionId)
-	v1PositionTickUpper = position.GetPositionTickUpper(positionId)
-	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
-	v1PositionIsBurned = position.IsBurned(positionId)
-	v1PositionIsInRange = position.IsInRange(positionId)
-	v1PositionTokensOwed = position.GetPositionTokensOwed0(positionId)
+	v1PositionLiquidity, err = position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionOwner, err = position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickLower, err = position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickUpper, err = position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionPoolKey, err = position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionIsBurned, err = position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionIsInRange, err = position.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTokensOwed, err = position.GetPositionTokensOwed0(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] pool liquidity:", v1PoolLiquidity)
 	println("[EXPECTED] pool balances:", v1PoolBalance0, v1PoolBalance1)
@@ -330,6 +354,38 @@ func validateV1Snapshot() {
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionIsBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionIsInRange, err := position.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTokensOwed, err := position.GetPositionTokensOwed0(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
 	uassert.Equal(t, v1PoolSqrtPriceX96, poolSqrtPriceX96)
@@ -355,14 +411,14 @@ func validateV1Snapshot() {
 	uassert.Equal(t, v1WithdrawalFee, pool.GetWithdrawalFee())
 
 	uassert.Equal(t, v1PositionCount, position.GetPositions().Size())
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
-	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
-	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
-	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
-	uassert.Equal(t, v1PositionIsBurned, position.IsBurned(positionId))
-	uassert.Equal(t, v1PositionIsInRange, position.IsInRange(positionId))
-	uassert.Equal(t, v1PositionTokensOwed, position.GetPositionTokensOwed0(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionOwner, positionOwner)
+	uassert.Equal(t, v1PositionTickLower, positionTickLower)
+	uassert.Equal(t, v1PositionTickUpper, positionTickUpper)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionIsBurned, positionIsBurned)
+	uassert.Equal(t, v1PositionIsInRange, positionIsInRange)
+	uassert.Equal(t, v1PositionTokensOwed, positionTokensOwed)
 	uassert.True(t, pool.ExistsPoolPath(barFoo500PoolPath))
 
 	println("[EXPECTED] every pool and position getter still returns the v1 value")
@@ -382,6 +438,10 @@ func validateAfterSecondMint(cur realm) {
 	if err != nil {
 		panic(err)
 	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] pool liquidity after the second mint:", poolLiquidity)
 	println("[EXPECTED] pool-side position liquidity:", poolPositionLiquidity)
@@ -392,7 +452,7 @@ func validateAfterSecondMint(cur realm) {
 	// the two positions share the same tick range, so the pool-side position
 	// entry is the sum of both and the first position is untouched
 	uassert.Equal(t, v1PositionCount+1, position.GetPositions().Size())
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
 	uassert.Equal(t, poolLiquidity, poolPositionLiquidity)
 	uassert.Equal(t, poolLiquidity, tickLowerGross)
 }

@@ -183,11 +183,11 @@ func testPositionCreationAndRetrieval(cur realm) {
 
 	println("[INFO] Retrieving position details")
 	testing.SetRealm(bobRealm)
-	poolKey := pn.GetPositionPoolKey(positionId)
-	tickLower := pn.GetPositionTickLower(positionId)
-	tickUpper := pn.GetPositionTickUpper(positionId)
-	positionLiquidity := pn.GetPositionLiquidity(positionId)
-	operator := pn.GetPositionOperator(positionId)
+	poolKey, _ := pn.GetPositionPoolKey(positionId)
+	tickLower, _ := pn.GetPositionTickLower(positionId)
+	tickUpper, _ := pn.GetPositionTickUpper(positionId)
+	positionLiquidity, _ := pn.GetPositionLiquidity(positionId)
+	operator, _ := pn.GetPositionOperator(positionId)
 
 	// then
 	println("[EXPECTED] Position created successfully with ID:", positionId)
@@ -196,8 +196,10 @@ func testPositionCreationAndRetrieval(cur realm) {
 	println("[EXPECTED] Position tick upper:", tickUpper)
 	println("[EXPECTED] Position liquidity:", positionLiquidity)
 	println("[EXPECTED] Position operator: zero address", operator)
-	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
+	burned, _ := pn.IsBurned(positionId)
+	inRange, _ := pn.IsInRange(positionId)
+	println("[EXPECTED] Position is not burned:", !burned)
+	println("[EXPECTED] Position is in range:", inRange)
 }
 
 func testPositionModification(cur realm) {
@@ -235,9 +237,9 @@ func testPositionModification(cur realm) {
 	)
 
 	println("[INFO] Retrieving modified position details")
-	modifiedLiquidity := pn.GetPositionLiquidity(positionId)
-	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
-	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
+	modifiedLiquidity, _ := pn.GetPositionLiquidity(positionId)
+	tokensOwed0, _ := pn.GetPositionTokensOwed0(positionId)
+	tokensOwed1, _ := pn.GetPositionTokensOwed1(positionId)
 
 	// then
 	println("[EXPECTED] Position modified successfully")
@@ -274,7 +276,7 @@ func testPositionDeletion(cur realm) {
 	)
 
 	println("[INFO] Verifying position exists before deletion")
-	existsBefore := pn.IsBurned(positionId)
+	existsBefore, _ := pn.IsBurned(positionId)
 
 	// need to add gnft approve
 	// by doing this, we can manage position
@@ -292,7 +294,7 @@ func testPositionDeletion(cur realm) {
 	)
 
 	println("[INFO] Verifying position is burned after deletion")
-	existsAfter := pn.IsBurned(positionId)
+	existsAfter, _ := pn.IsBurned(positionId)
 
 	// then
 	println("[EXPECTED] Position existed before deletion:", !existsBefore)

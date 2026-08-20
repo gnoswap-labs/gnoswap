@@ -140,10 +140,10 @@ func removePosition(cur realm, positionId uint64) {
 	ufmt.Printf("[EXPECTED] decreased liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] decreased amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] decreased amount1: %s\n", amount1)
-	balance0, _ := pool.GetBalanceToken0(poolPath)
-	balance1, _ := pool.GetBalanceToken1(poolPath)
-	ufmt.Printf("[EXPECTED] pool token0 balance: %d\n", balance0)
-	ufmt.Printf("[EXPECTED] pool token1 balance: %d\n", balance1)
+	balanceToken0, _ := pool.GetBalanceToken0(poolPath)
+	balanceToken1, _ := pool.GetBalanceToken1(poolPath)
+	ufmt.Printf("[EXPECTED] pool token0 balance: %d\n", balanceToken0)
+	ufmt.Printf("[EXPECTED] pool token1 balance: %d\n", balanceToken1)
 }
 
 // Output:

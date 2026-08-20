@@ -548,7 +548,11 @@ func mockNFTApprove(cur realm, approved address, positionId uint64) {
 
 func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
-	return pn.GetPositionOperator(positionId)
+	operator, err := pn.GetPositionOperator(positionId)
+	if err != nil {
+		panic(err)
+	}
+	return operator
 }
 
 // rewardPerSecondFromX128 returns the floored integer reward-per-second

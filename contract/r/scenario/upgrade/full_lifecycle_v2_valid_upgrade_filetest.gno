@@ -539,11 +539,35 @@ func positionLifecycle(cur realm) {
 	)
 	testing.SkipHeights(1)
 	println("[EXPECTED] minted position:", positionId, "liquidity:", liquidity, "amount0:", amount0, "amount1:", amount1)
-	println("[EXPECTED] position owner:", position.GetPositionOwner(positionId))
-	println("[EXPECTED] position pool key:", position.GetPositionPoolKey(positionId))
-	println("[EXPECTED] position ticks:", position.GetPositionTickLower(positionId), position.GetPositionTickUpper(positionId))
-	println("[EXPECTED] position in range:", position.IsInRange(positionId))
-	println("[EXPECTED] position burned:", position.IsBurned(positionId))
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionInRange, err := position.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position owner:", positionOwner)
+	println("[EXPECTED] position pool key:", positionPoolKey)
+	println("[EXPECTED] position ticks:", positionTickLower, positionTickUpper)
+	println("[EXPECTED] position in range:", positionInRange)
+	println("[EXPECTED] position burned:", positionBurned)
 
 	// second position with a wider range, used for Reposition later
 	secondId, secondLiquidity, _, _ := position.Mint(
@@ -559,7 +583,11 @@ func positionLifecycle(cur realm) {
 	)
 	testing.SkipHeights(1)
 	println("[EXPECTED] increased liquidity:", increasedLiquidity, "amount0:", increased0, "amount1:", increased1)
-	println("[EXPECTED] position liquidity now:", position.GetPositionLiquidity(positionId))
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position liquidity now:", positionLiquidity)
 
 	// Trade both ways so the position actually accrues swap fees. Without this
 	// the DecreaseLiquidity below would collect a zero fee and the withdrawal
@@ -568,11 +596,17 @@ func positionLifecycle(cur realm) {
 
 	// DecreaseLiquidity collects the accrued fees first, so the gross fee is
 	// what the position holds right before the call.
-	grossFee0, grossFee1 := position.GetUnclaimedFee(positionId)
+	grossFee0, grossFee1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] fees accrued before decrease (gross):", grossFee0, grossFee1)
 
 	// decrease half of the liquidity; the withdrawal fee is routed to protocol fee
-	decreaseAmount := position.GetPositionLiquidity(positionId)
+	decreaseAmount, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	beforeBarAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(barPath) +
 		protocolFee.GetAccuTransferToDevOpsByTokenPath(barPath)
 	beforeFooAccu := protocolFee.GetAccuTransferToGovStakerByTokenPath(fooPath) +
@@ -596,7 +630,11 @@ func positionLifecycle(cur realm) {
 	println("[EXPECTED] principal returned:", removed0, removed1)
 	println("[EXPECTED] fees returned with the principal (net):", fee0, fee1)
 	println("[EXPECTED] withdrawal fee accrued (BAR / FOO):", withdrawalFee0, withdrawalFee1)
-	println("[EXPECTED] position liquidity after decrease:", position.GetPositionLiquidity(positionId))
+	positionLiquidityAfterDecrease, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position liquidity after decrease:", positionLiquidityAfterDecrease)
 	println("[EXPECTED] position count:", position.GetPositions().Size())
 
 	// withdrawal fee is withdrawalFeeBPS of the gross fee, and the caller keeps
@@ -612,10 +650,26 @@ func positionLifecycle(cur realm) {
 	uassert.Equal(t, parseInt64(grossFee0)-expectedWithdrawalFee0, parseInt64(fee0))
 	uassert.Equal(t, parseInt64(grossFee1)-expectedWithdrawalFee1, parseInt64(fee1))
 
-	uassert.Equal(t, adminAddr, position.GetPositionOwner(positionId))
-	uassert.Equal(t, barFoo500PoolPath, position.GetPositionPoolKey(positionId))
-	uassert.True(t, position.IsInRange(positionId))
-	uassert.False(t, position.IsBurned(positionId))
+	positionOwner, err = position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err = position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionInRange, err = position.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err = position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	uassert.Equal(t, adminAddr, positionOwner)
+	uassert.Equal(t, barFoo500PoolPath, positionPoolKey)
+	uassert.True(t, positionInRange)
+	uassert.False(t, positionBurned)
 	uassert.Equal(t, 2, position.GetPositions().Size())
 }
 
@@ -731,7 +785,10 @@ func routerSwaps(cur realm) {
 func collectPositionFee(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
-	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] unclaimed fee before collect:", unclaimed0, unclaimed1)
 
 	_, collected0, collected1, poolPath, token0, token1 := position.CollectFee(cross(cur), positionId)
@@ -739,7 +796,10 @@ func collectPositionFee(cur realm, positionId uint64) {
 	println("[EXPECTED] collected fee:", collected0, collected1, "pool:", poolPath)
 	println("[EXPECTED] fee tokens:", token0, token1)
 
-	after0, after1 := position.GetUnclaimedFee(positionId)
+	after0, after1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] unclaimed fee after collect:", after0, after1)
 
 	uassert.Equal(t, barFoo500PoolPath, poolPath)
@@ -748,12 +808,19 @@ func collectPositionFee(cur realm, positionId uint64) {
 func repositionPosition(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 
-	liquidity := position.GetPositionLiquidity(positionId)
+	liquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	_, _, _, _, _, _, _ = position.DecreaseLiquidity(
 		cross(cur), positionId, liquidity, "0", "0", time.Now().Unix()+3600,
 	)
 	testing.SkipHeights(1)
-	println("[EXPECTED] liquidity before reposition:", position.GetPositionLiquidity(positionId))
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] liquidity before reposition:", positionLiquidity)
 
 	_, newLiquidity, tickLower, tickUpper, used0, used1 := position.Reposition(
 		cross(cur), positionId, -600, 600, "20000000", "20000000", "0", "0", time.Now().Unix()+3600,
@@ -761,10 +828,18 @@ func repositionPosition(cur realm, positionId uint64) {
 	testing.SkipHeights(1)
 	println("[EXPECTED] repositioned liquidity:", newLiquidity, "ticks:", tickLower, tickUpper)
 	println("[EXPECTED] amounts used:", used0, used1)
-	println("[EXPECTED] position ticks from getter:", position.GetPositionTickLower(positionId), position.GetPositionTickUpper(positionId))
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position ticks from getter:", positionTickLower, positionTickUpper)
 
-	uassert.Equal(t, int32(-600), position.GetPositionTickLower(positionId))
-	uassert.Equal(t, int32(600), position.GetPositionTickUpper(positionId))
+	uassert.Equal(t, int32(-600), positionTickLower)
+	uassert.Equal(t, int32(600), positionTickUpper)
 }
 
 // ---------------------------------------------------------------------------
@@ -808,13 +883,17 @@ func stakerSetup(cur realm) {
 	println("[EXPECTED] deposit target pool:", staker.GetDepositTargetPoolPath(1))
 	// StakeToken routes position.SetPositionOperator (staker-only entry point)
 	// and records the staking caller as the position operator.
-	println("[EXPECTED] position operator after stake is the staker caller:", position.GetPositionOperator(1) == adminAddr)
+	positionOperator, err := position.GetPositionOperator(1)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position operator after stake is the staker caller:", positionOperator == adminAddr)
 	println("[EXPECTED] pool staked liquidity:", staker.GetPoolStakedLiquidity(barFoo500PoolPath))
 
 	uassert.Equal(t, uint64(1), staker.GetPoolTier(barFoo500PoolPath))
 	uassert.True(t, staker.IsStaked(1))
 	uassert.Equal(t, adminAddr, staker.GetDepositOwner(1))
-	uassert.Equal(t, adminAddr, position.GetPositionOperator(1))
+	uassert.Equal(t, adminAddr, positionOperator)
 	uassert.Equal(t, incentiveReward, staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId))
 }
 
@@ -1165,9 +1244,46 @@ func captureSnapshot() upgradeSnapshot {
 	if err != nil {
 		panic(err)
 	}
-	positionFeeGrowth0, positionFeeGrowth1 := position.GetPositionFeeGrowthInsideLastX128(1)
-	positionOwed0, positionOwed1 := position.GetPositionTokensOwed(1)
-	positionUnclaimed0, positionUnclaimed1 := position.GetUnclaimedFee(1)
+	positionFeeGrowth0, positionFeeGrowth1, err := position.GetPositionFeeGrowthInsideLastX128(1)
+	if err != nil {
+		panic(err)
+	}
+	positionOwed0, positionOwed1, err := position.GetPositionTokensOwed(1)
+	if err != nil {
+		panic(err)
+	}
+	positionUnclaimed0, positionUnclaimed1, err := position.GetUnclaimedFee(1)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(1)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(1)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(1)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(1)
+	if err != nil {
+		panic(err)
+	}
+	positionOperator, err := position.GetPositionOperator(1)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(1)
+	if err != nil {
+		panic(err)
+	}
+	positionInRange, err := position.IsInRange(1)
+	if err != nil {
+		panic(err)
+	}
 	paramStatus, _ := govGovernance.GetProposalStatusByProposalId(paramProposalId)
 	spendStatus, _ := govGovernance.GetProposalStatusByProposalId(spendProposalId)
 	textStatus, _ := govGovernance.GetProposalStatusByProposalId(textProposalId)
@@ -1191,19 +1307,19 @@ func captureSnapshot() upgradeSnapshot {
 		withdrawalFee:      pool.GetWithdrawalFee(),
 		swapFee:            router.GetSwapFee(),
 		positionCount:      position.GetPositions().Size(),
-		positionLiquidity:  position.GetPositionLiquidity(1),
-		positionTickLower:  position.GetPositionTickLower(1),
-		positionTickUpper:  position.GetPositionTickUpper(1),
-		positionOwner:      position.GetPositionOwner(1),
-		positionOperator:   position.GetPositionOperator(1),
+		positionLiquidity:  positionLiquidity,
+		positionTickLower:  positionTickLower,
+		positionTickUpper:  positionTickUpper,
+		positionOwner:      positionOwner,
+		positionOperator:   positionOperator,
 		positionFeeGrowth0: positionFeeGrowth0,
 		positionFeeGrowth1: positionFeeGrowth1,
 		positionOwed0:      positionOwed0,
 		positionOwed1:      positionOwed1,
 		positionUnclaimed0: positionUnclaimed0,
 		positionUnclaimed1: positionUnclaimed1,
-		positionBurned:     position.IsBurned(1),
-		positionInRange:    position.IsInRange(1),
+		positionBurned:     positionBurned,
+		positionInRange:    positionInRange,
 		stakerPoolTier:     staker.GetPoolTier(barFoo500PoolPath),
 		stakerPoolTierRat:  staker.GetPoolTierRatio(barFoo500PoolPath),
 		stakerUnstakingFee: staker.GetUnstakingFee(),
@@ -1505,8 +1621,16 @@ func windDown(cur realm) {
 	staker.UnStakeToken(cross(cur), 1)
 	testing.SkipHeights(1)
 	println("[EXPECTED] position 1 staked after unstake:", staker.IsStaked(1))
-	println("[EXPECTED] position 1 owner after unstake:", position.GetPositionOwner(1))
-	println("[EXPECTED] position 1 operator cleared:", position.GetPositionOperator(1) == zeroAddress)
+	positionOwner, err := position.GetPositionOwner(1)
+	if err != nil {
+		panic(err)
+	}
+	positionOperator, err := position.GetPositionOperator(1)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] position 1 owner after unstake:", positionOwner)
+	println("[EXPECTED] position 1 operator cleared:", positionOperator == zeroAddress)
 
 	staker.RemoveToken(cross(cur), barPath)
 	println("[EXPECTED] allowed token count after removal:", len(staker.GetAllowedTokens()))
@@ -1546,7 +1670,7 @@ func windDown(cur realm) {
 	println("[EXPECTED] launchpad leftover transferred:", left)
 
 	uassert.False(t, staker.IsStaked(1))
-	uassert.Equal(t, adminAddr, position.GetPositionOwner(1))
+	uassert.Equal(t, adminAddr, positionOwner)
 	uassert.Equal(t, uint64(0), staker.GetPoolTier(barFoo500PoolPath))
 	uassert.Equal(t, int64(0), after0)
 	uassert.Equal(t, int64(0), after1)

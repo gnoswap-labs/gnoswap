@@ -25,7 +25,10 @@ func (p *positionCollectFeeParams) IsValid() bool {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" {
 		return false
 	}
@@ -76,7 +79,10 @@ func NewRandomizedPositionCollectFeeParams(t *fuzz.T, existingPositionId uint64)
 }
 
 func newExistingPositionCollectFeeParams(positionId uint64) *positionCollectFeeParams {
-	poolPath := position.GetPositionPoolKey(positionId)
+	poolPath, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
 	return &positionCollectFeeParams{
 		positionId: positionId,
 		poolPath:   poolPath,

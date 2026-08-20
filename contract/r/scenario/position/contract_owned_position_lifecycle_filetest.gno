@@ -128,7 +128,8 @@ func setupPoolAndFundVault(cur realm) {
 	foo.Transfer(cross(cur), vaultAddr, 150000000)
 
 	ufmt.Printf("[EXPECTED] pool path: %s\n", poolPath)
-	ufmt.Printf("[EXPECTED] pool tier after setup: %d\n", staker.GetPoolTier(poolPath))
+	tier := staker.GetPoolTier(poolPath)
+	ufmt.Printf("[EXPECTED] pool tier after setup: %d\n", tier)
 	ufmt.Printf("[EXPECTED] vault bar balance after funding: %d\n", bar.BalanceOf(vaultAddr))
 	ufmt.Printf("[EXPECTED] vault foo balance after funding: %d\n", foo.BalanceOf(vaultAddr))
 }
@@ -168,7 +169,7 @@ func vaultMintPosition(cur realm) {
 }
 
 func verifyVaultOwnership(cur realm) {
-	owner := position.GetPositionOwner(positionID)
+	owner, _ := position.GetPositionOwner(positionID)
 
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner.String())
 	ufmt.Printf("[EXPECTED] vault contract address: %s\n", vaultAddr.String())
@@ -207,12 +208,12 @@ func generateFees(cur realm) {
 	)
 
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee)
-	poolTick, _ := pool.GetSlot0Tick(poolPath)
-	balance0, _ := pool.GetBalanceToken0(poolPath)
-	balance1, _ := pool.GetBalanceToken1(poolPath)
-	ufmt.Printf("[EXPECTED] pool tick after swaps: %d\n", poolTick)
-	ufmt.Printf("[EXPECTED] pool token0 balance after swaps: %d\n", balance0)
-	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", balance1)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	balanceToken0, _ := pool.GetBalanceToken0(poolPath)
+	balanceToken1, _ := pool.GetBalanceToken1(poolPath)
+	ufmt.Printf("[EXPECTED] pool tick after swaps: %d\n", currentTick)
+	ufmt.Printf("[EXPECTED] pool token0 balance after swaps: %d\n", balanceToken0)
+	ufmt.Printf("[EXPECTED] pool token1 balance after swaps: %d\n", balanceToken1)
 }
 
 func vaultCollectFees(cur realm) {
@@ -241,7 +242,7 @@ func vaultCollectFees(cur realm) {
 }
 
 func vaultIncreaseLiquidity(cur realm) {
-	liquidityBefore := position.GetPositionLiquidity(positionID)
+	liquidityBefore, _ := position.GetPositionLiquidity(positionID)
 
 	testing.SetRealm(vaultRealm)
 	bar.Approve(cross(cur), poolAddr, INT64_MAX)
@@ -263,15 +264,16 @@ func vaultIncreaseLiquidity(cur realm) {
 		)
 	}(cross(cur))
 
-	liquidityAfter := position.GetPositionLiquidity(positionID)
+	liquidityAfter, _ := position.GetPositionLiquidity(positionID)
 
 	ufmt.Printf("[EXPECTED] liquidity before increase: %s\n", liquidityBefore)
 	ufmt.Printf("[EXPECTED] liquidity after increase: %s\n", liquidityAfter)
-	ufmt.Printf("[EXPECTED] owner after increase: %s\n", position.GetPositionOwner(positionID).String())
+	owner, _ := position.GetPositionOwner(positionID)
+	ufmt.Printf("[EXPECTED] owner after increase: %s\n", owner.String())
 }
 
 func vaultDecreaseAllLiquidity(cur realm) {
-	liquidityBefore := position.GetPositionLiquidity(positionID)
+	liquidityBefore, _ := position.GetPositionLiquidity(positionID)
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -289,12 +291,13 @@ func vaultDecreaseAllLiquidity(cur realm) {
 		)
 	}(cross(cur))
 
-	liquidityAfter := position.GetPositionLiquidity(positionID)
+	liquidityAfter, _ := position.GetPositionLiquidity(positionID)
 
 	ufmt.Printf("[EXPECTED] liquidity before decrease: %s\n", liquidityBefore)
 	ufmt.Printf("[EXPECTED] removed liquidity: %s\n", removedLiquidity)
 	ufmt.Printf("[EXPECTED] liquidity after decrease: %s\n", liquidityAfter)
-	ufmt.Printf("[EXPECTED] owner after decrease: %s\n", position.GetPositionOwner(positionID).String())
+	owner, _ := position.GetPositionOwner(positionID)
+	ufmt.Printf("[EXPECTED] owner after decrease: %s\n", owner.String())
 }
 
 func vaultReposition(cur realm) {
@@ -325,7 +328,8 @@ func vaultReposition(cur realm) {
 
 	ufmt.Printf("[EXPECTED] repositioned liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] repositioned tick range: [%d, %d]\n", tickLower, tickUpper)
-	ufmt.Printf("[EXPECTED] owner after reposition: %s\n", position.GetPositionOwner(positionID).String())
+	owner, _ := position.GetPositionOwner(positionID)
+	ufmt.Printf("[EXPECTED] owner after reposition: %s\n", owner.String())
 }
 
 func vaultStakePosition(cur realm) {
@@ -339,12 +343,13 @@ func vaultStakePosition(cur realm) {
 		poolPath = staker.StakeToken(cross(cur), positionID, "")
 	}(cross(cur))
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionID))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionID))
 
 	ufmt.Printf("[EXPECTED] staked pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] position owner after stake: %s\n", owner.String())
 	ufmt.Printf("[EXPECTED] staker contract address: %s\n", stakerAddr.String())
-	ufmt.Printf("[EXPECTED] deposit owner after stake: %s\n", staker.GetDepositOwner(positionID).String())
+	depositOwner := staker.GetDepositOwner(positionID)
+	ufmt.Printf("[EXPECTED] deposit owner after stake: %s\n", depositOwner.String())
 }
 
 func vaultCollectFeesWhileStaked(cur realm) {
@@ -389,7 +394,7 @@ func vaultUnstakePosition(cur realm) {
 		poolPath = staker.UnStakeToken(cross(cur), positionID)
 	}(cross(cur))
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionID))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionID))
 
 	ufmt.Printf("[EXPECTED] unstaked pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", owner.String())
@@ -411,6 +416,14 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	}
 
 	return nil
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
