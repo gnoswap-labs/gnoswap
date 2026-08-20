@@ -49,9 +49,6 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now()
 
-	// Mint and distribute GNS tokens as part of the voting process
-	emission.MintAndDistributeGns(cross(rlm))
-
 	// Extract voter address from realm context
 	voterRealm := rlm.Previous()
 	voter := voterRealm.Address()
@@ -135,6 +132,9 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
+
+	// Mint and distribute GNS tokens after vote validation
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Create or update voting info for this user
 	if userVote == nil {
