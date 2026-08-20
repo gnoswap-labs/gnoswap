@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -52,28 +53,10 @@ func (gv *governanceV1) GetProposalCount() int {
 	return gv.store.GetProposals().Size()
 }
 
-// GetProposalIDs returns a paginated list of proposal IDs.
-func (gv *governanceV1) GetProposalIDs(offset, count int) []int64 {
-	proposals := gv.store.GetProposals()
-	size := proposals.Size()
-
-	if offset >= size {
-		return []int64{}
-	}
-
-	end := offset + count
-	if end > size {
-		end = size
-	}
-
-	ids := make([]int64, 0, end-offset)
-	proposals.IterateByOffset(offset, end-offset, func(key string, value any) bool {
-		proposal := value.(*governance.Proposal)
-		ids = append(ids, proposal.ID())
-		return false
-	})
-
-	return ids
+// GetProposals returns a read-only view of every proposal, keyed by the decimal
+// string form of the proposal ID.
+func (gv *governanceV1) GetProposals() *rotree.ReadOnlyTree {
+	return rotree.Wrap(gv.store.GetProposals(), cloneProposalEntry)
 }
 
 // ExistsProposal checks if a proposal exists.
@@ -198,30 +181,14 @@ func (gv *governanceV1) GetVotingInfoCount(proposalID int64) int {
 	return votingInfos.Size()
 }
 
-// GetVotingInfoAddresses returns a paginated list of voter addresses for a proposal.
-func (gv *governanceV1) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
+// GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
+// voter address. nil is returned when the proposal has no votes.
+func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
 	if !exists {
-		return []address{}
+		return nil
 	}
-
-	size := votingInfos.Size()
-	if offset >= size {
-		return []address{}
-	}
-
-	end := offset + count
-	if end > size {
-		end = size
-	}
-
-	addrs := make([]address, 0, end-offset)
-	votingInfos.IterateByOffset(offset, end-offset, func(key string, value any) bool {
-		addrs = append(addrs, address(key))
-		return false
-	})
-
-	return addrs
+	return rotree.Wrap(votingInfos, cloneVotingInfoEntry)
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
@@ -275,24 +242,10 @@ func (gv *governanceV1) GetUserProposalCount(user address) int {
 	return len(proposalIDs)
 }
 
-// GetUserProposalIDs returns a paginated list of proposal IDs created by a user.
-func (gv *governanceV1) GetUserProposalIDs(user address, offset, count int) []int64 {
-	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
-	if !exists {
-		return []int64{}
-	}
-
-	size := len(proposalIDs)
-	if offset >= size {
-		return []int64{}
-	}
-
-	end := offset + count
-	if end > size {
-		end = size
-	}
-
-	return proposalIDs[offset:end]
+// GetUserProposals returns a read-only view of the proposals created per user,
+// keyed by creator address with the creator's proposal IDs as the value.
+func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
+	return rotree.Wrap(gv.store.GetUserProposals(), cloneProposalIDsEntry)
 }
 
 // GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.

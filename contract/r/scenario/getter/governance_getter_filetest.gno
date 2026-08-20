@@ -160,12 +160,16 @@ func testProposalGetters(cur realm, proposalId int64) {
 	proposalCount := governance.GetProposalCount()
 	println("[EXPECTED] Proposal count:", proposalCount)
 
-	// GetProposalIDs
-	proposalIDs := governance.GetProposalIDs(0, 10)
-	println("[EXPECTED] Proposal IDs (offset=0, limit=10):", len(proposalIDs), "proposals")
-	for i, id := range proposalIDs {
-		ufmt.Printf("[EXPECTED] - Proposal %d: %d\n", i+1, id)
-	}
+	// GetProposals
+	proposals := governance.GetProposals()
+	println("[EXPECTED] Proposal IDs (offset=0, limit=10):", proposals.Size(), "proposals")
+
+	proposalIndex := 0
+	proposals.IterateByOffset(0, 10, func(id string, _ any) bool {
+		proposalIndex++
+		ufmt.Printf("[EXPECTED] - Proposal %d: %s\n", proposalIndex, id)
+		return false
+	})
 
 	// ExistsProposal
 	exists1 := governance.ExistsProposal(proposalId)
@@ -285,12 +289,16 @@ func testVoteGetters(cur realm, proposalId int64) {
 	votingInfoCount := governance.GetVotingInfoCount(proposalId)
 	println("[EXPECTED] Voting info count:", votingInfoCount)
 
-	// GetVotingInfoAddresses
-	votingInfoAddresses := governance.GetVotingInfoAddresses(proposalId, 0, 10)
-	println("[EXPECTED] Voting info addresses (offset=0, limit=10):", len(votingInfoAddresses), "voters")
-	for i, addr := range votingInfoAddresses {
-		ufmt.Printf("[EXPECTED] - Voter %d: %s\n", i+1, addr)
-	}
+	// GetVotingInfos
+	votingInfos := governance.GetVotingInfos(proposalId)
+	println("[EXPECTED] Voting info addresses (offset=0, limit=10):", votingInfos.Size(), "voters")
+
+	voterIndex := 0
+	votingInfos.IterateByOffset(0, 10, func(addr string, _ any) bool {
+		voterIndex++
+		ufmt.Printf("[EXPECTED] - Voter %d: %s\n", voterIndex, addr)
+		return false
+	})
 
 	// ExistsVotingInfo
 	existsVoting := governance.ExistsVotingInfo(proposalId, adminAddr)
@@ -363,8 +371,11 @@ func testUserProposalGetters(cur realm) {
 	userProposalCount := governance.GetUserProposalCount(adminAddr)
 	println("[EXPECTED] Admin proposal count:", userProposalCount)
 
-	// GetUserProposalIDs
-	userProposalIDs := governance.GetUserProposalIDs(adminAddr, 0, 10)
+	// GetUserProposals
+	userProposalIDs := []int64{}
+	if value := governance.GetUserProposals().Get(adminAddr.String()); value != nil {
+		userProposalIDs = value.([]int64)
+	}
 	println("[EXPECTED] Admin proposal IDs (offset=0, limit=10):", len(userProposalIDs), "proposals")
 	for i, id := range userProposalIDs {
 		ufmt.Printf("[EXPECTED] - Proposal %d: %d\n", i+1, id)

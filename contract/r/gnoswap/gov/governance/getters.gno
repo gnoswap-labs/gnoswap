@@ -1,6 +1,9 @@
 package governance
 
-import ufmt "gno.land/p/nt/ufmt/v0"
+import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
+	ufmt "gno.land/p/nt/ufmt/v0"
+)
 
 // ==================================
 // Store Data Getters
@@ -44,9 +47,12 @@ func GetProposalCount() int {
 	return getImplementation().GetProposalCount()
 }
 
-// GetProposalIDs returns a paginated list of proposal IDs.
-func GetProposalIDs(offset, count int) []int64 {
-	return cloneInt64Slice(getImplementation().GetProposalIDs(offset, count))
+// GetProposals returns a read-only view of every proposal, keyed by the decimal
+// string form of the proposal ID. Callers paginate it themselves through
+// IterateByOffset. Reading an entry yields a clone, so the view cannot mutate
+// realm state.
+func GetProposals() *rotree.ReadOnlyTree {
+	return getImplementation().GetProposals()
 }
 
 // ExistsProposal checks if a proposal exists.
@@ -149,9 +155,11 @@ func GetVotingInfoCount(proposalID int64) int {
 	return getImplementation().GetVotingInfoCount(proposalID)
 }
 
-// GetVotingInfoAddresses returns a paginated list of voter addresses for a proposal.
-func GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
-	return cloneAddressSlice(getImplementation().GetVotingInfoAddresses(proposalID, offset, count))
+// GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
+// voter address. Reading an entry yields a clone, so the view cannot mutate
+// realm state. nil is returned when the proposal has no votes.
+func GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
+	return getImplementation().GetVotingInfos(proposalID)
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
@@ -224,9 +232,12 @@ func GetUserProposalCount(user address) int {
 	return getImplementation().GetUserProposalCount(user)
 }
 
-// GetUserProposalIDs returns a paginated list of proposal IDs created by a user.
-func GetUserProposalIDs(user address, offset, count int) []int64 {
-	return cloneInt64Slice(getImplementation().GetUserProposalIDs(user, offset, count))
+// GetUserProposals returns a read-only view of the proposals created per user,
+// keyed by creator address with the creator's proposal IDs as the value.
+// Reading an entry yields a copy of the ID slice, so the view cannot mutate
+// realm state.
+func GetUserProposals() *rotree.ReadOnlyTree {
+	return getImplementation().GetUserProposals()
 }
 
 // ==================================

@@ -575,16 +575,12 @@ func TestUpgrade_GetProposalCount(cur realm, t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalIDs(cur realm, t *testing.T) {
+func TestUpgrade_GetProposals(cur realm, t *testing.T) {
 	tests := []struct {
-		name   string
-		offset int
-		count  int
+		name string
 	}{
 		{
-			name:   "get proposal ids is success",
-			offset: 0,
-			count:  10,
+			name: "get proposals is success",
 		},
 	}
 
@@ -597,12 +593,12 @@ func TestUpgrade_GetProposalIDs(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetProposalIDs(tt.offset, tt.count)
+			GetProposals()
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposalIDs") != 1 {
-				t.Error("GetProposalIDs was not called on the implementation")
+			if mockGovernance.Response.CallCount("GetProposals") != 1 {
+				t.Error("GetProposals was not called on the implementation")
 			}
 		})
 	}

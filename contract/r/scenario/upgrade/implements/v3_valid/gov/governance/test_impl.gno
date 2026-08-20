@@ -2,6 +2,7 @@
 package v3_valid
 
 import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	"gno.land/r/gnoswap/gov/governance"
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
@@ -79,8 +80,8 @@ func (t *TestGovernance) GetProposalCount() int {
 	return t.instance.GetProposalCount()
 }
 
-func (t *TestGovernance) GetProposalIDs(offset, count int) []int64 {
-	return t.instance.GetProposalIDs(offset, count)
+func (t *TestGovernance) GetProposals() *rotree.ReadOnlyTree {
+	return t.instance.GetProposals()
 }
 
 func (t *TestGovernance) ExistsProposal(proposalID int64) bool {
@@ -136,8 +137,8 @@ func (t *TestGovernance) GetVotingInfoCount(proposalID int64) int {
 	return t.instance.GetVotingInfoCount(proposalID)
 }
 
-func (t *TestGovernance) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
-	return t.instance.GetVotingInfoAddresses(proposalID, offset, count)
+func (t *TestGovernance) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
+	return t.instance.GetVotingInfos(proposalID)
 }
 
 func (t *TestGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
@@ -165,8 +166,8 @@ func (t *TestGovernance) GetUserProposalCount(user address) int {
 	return t.instance.GetUserProposalCount(user)
 }
 
-func (t *TestGovernance) GetUserProposalIDs(user address, offset, count int) []int64 {
-	return t.instance.GetUserProposalIDs(user, offset, count)
+func (t *TestGovernance) GetUserProposals() *rotree.ReadOnlyTree {
+	return t.instance.GetUserProposals()
 }
 
 // Active proposal query

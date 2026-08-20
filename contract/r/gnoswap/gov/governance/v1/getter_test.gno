@@ -211,7 +211,7 @@ func TestGetProposalCount(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProposalIDs(cur realm, t *testing.T) {
+func TestGetProposals(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
@@ -251,10 +251,31 @@ func TestGetProposalIDs(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			ids := gv.GetProposalIDs(tc.offset, tc.count)
+
+			ids := make([]string, 0)
+			gv.GetProposals().IterateByOffset(tc.offset, tc.count, func(key string, value any) bool {
+				_, ok := value.(*governance.Proposal)
+				uassert.True(t, ok)
+				ids = append(ids, key)
+				return false
+			})
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
+}
+
+func TestGetProposals_EntriesAreCloned(cur realm, t *testing.T) {
+	gv := setupGetterTestWithProposal(cur, t)
+	proposals := gv.GetProposals()
+
+	first, ok := proposals.Get("1").(*governance.Proposal)
+	uassert.True(t, ok)
+	second, ok := proposals.Get("1").(*governance.Proposal)
+	uassert.True(t, ok)
+
+	// Each read hands out a distinct clone, so a reader cannot reach the stored
+	// proposal nor any other reader's copy.
+	uassert.False(t, first == second)
 }
 
 func TestExistsProposal(cur realm, t *testing.T) {
@@ -662,7 +683,7 @@ func TestGetVotingInfoCount(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
+func TestGetVotingInfos(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
@@ -696,7 +717,18 @@ func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			addrs := gv.GetVotingInfoAddresses(tc.proposalID, tc.offset, tc.count)
+
+			votingInfos := gv.GetVotingInfos(tc.proposalID)
+			if votingInfos == nil {
+				uassert.Equal(t, tc.expectedLength, 0)
+				return
+			}
+
+			addrs := make([]string, 0)
+			votingInfos.IterateByOffset(tc.offset, tc.count, func(key string, _ any) bool {
+				addrs = append(addrs, key)
+				return false
+			})
 			uassert.Equal(t, tc.expectedLength, len(addrs))
 		})
 	}
@@ -800,13 +832,11 @@ func TestGetUserProposalCount(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetUserProposalIDs(cur realm, t *testing.T) {
+func TestGetUserProposals(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
 		user           address
-		offset         int
-		count          int
 		expectedLength int
 	}{
 		{
@@ -815,28 +845,14 @@ func TestGetUserProposalIDs(cur realm, t *testing.T) {
 				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1proposer"),
-			offset:         0,
-			count:          10,
 			expectedLength: 1,
 		},
 		{
-			name: "returns empty for user without proposals",
+			name: "returns nothing for user without proposals",
 			setup: func(cur realm, t *testing.T) *governanceV1 {
 				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1unknown"),
-			offset:         0,
-			count:          10,
-			expectedLength: 0,
-		},
-		{
-			name: "offset beyond range returns empty",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(cur, t)
-			},
-			user:           address("g1proposer"),
-			offset:         100,
-			count:          10,
 			expectedLength: 0,
 		},
 	}
@@ -844,10 +860,32 @@ func TestGetUserProposalIDs(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			ids := gv.GetUserProposalIDs(tc.user, tc.offset, tc.count)
+
+			value := gv.GetUserProposals().Get(tc.user.String())
+			if value == nil {
+				uassert.Equal(t, tc.expectedLength, 0)
+				return
+			}
+
+			ids, ok := value.([]int64)
+			uassert.True(t, ok)
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
+}
+
+func TestGetUserProposals_EntriesAreCopied(cur realm, t *testing.T) {
+	gv := setupGetterTestWithProposal(cur, t)
+	userProposals := gv.GetUserProposals()
+
+	first, ok := userProposals.Get("g1proposer").([]int64)
+	uassert.True(t, ok)
+	first[0] = 9999
+
+	// The stored slice is copied on read, so the write above is not visible.
+	second, ok := userProposals.Get("g1proposer").([]int64)
+	uassert.True(t, ok)
+	uassert.NotEqual(t, int64(9999), second[0])
 }
 
 // ==================================

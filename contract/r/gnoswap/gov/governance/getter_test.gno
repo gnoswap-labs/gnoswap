@@ -3,6 +3,8 @@ package governance
 import (
 	"testing"
 
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -34,21 +36,6 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 		mutate    func(result any)
 		assertRaw func(t *testing.T, m *MockGovernance)
 	}{
-		{
-			name:   "GetProposalIDs",
-			setup:  func(m *MockGovernance) { m.Response.Set("GetProposalIDs", []int64{1, 2}) },
-			getter: func(t *testing.T) any { return GetProposalIDs(0, 10) },
-			mutate: func(result any) {
-				values := result.([]int64)
-				values[0] = 99
-				_ = append(values, 100)
-			},
-			assertRaw: func(t *testing.T, m *MockGovernance) {
-				values := m.Response.data["GetProposalIDs"][0].([]int64)
-				uassert.Equal(t, int64(1), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
 		{
 			name:  "GetProposal",
 			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
@@ -84,21 +71,6 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				uassert.Equal(t, "msg1", proposal.data.execution.msgs[0])
 				uassert.Equal(t, 2, len(proposal.data.execution.msgs))
 				uassert.Equal(t, int64(70), proposal.data.communityPoolSpend.amount)
-			},
-		},
-		{
-			name:   "GetVotingInfoAddresses",
-			setup:  func(m *MockGovernance) { m.Response.Set("GetVotingInfoAddresses", []address{adminAddr}) },
-			getter: func(t *testing.T) any { return GetVotingInfoAddresses(1, 0, 10) },
-			mutate: func(result any) {
-				values := result.([]address)
-				values[0] = address("g1test")
-				values = append(values, adminAddr)
-			},
-			assertRaw: func(t *testing.T, m *MockGovernance) {
-				values := m.Response.data["GetVotingInfoAddresses"][0].([]address)
-				uassert.Equal(t, adminAddr, values[0])
-				uassert.Equal(t, 1, len(values))
 			},
 		},
 		{
@@ -168,21 +140,6 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				uassert.Equal(t, 2, len(info.msgs))
 			},
 		},
-		{
-			name:   "GetUserProposalIDs",
-			setup:  func(m *MockGovernance) { m.Response.Set("GetUserProposalIDs", []int64{7, 8}) },
-			getter: func(t *testing.T) any { return GetUserProposalIDs(adminAddr, 0, 10) },
-			mutate: func(result any) {
-				values := result.([]int64)
-				values[0] = 66
-				_ = append(values, 77)
-			},
-			assertRaw: func(t *testing.T, m *MockGovernance) {
-				values := m.Response.data["GetUserProposalIDs"][0].([]int64)
-				uassert.Equal(t, int64(7), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -196,4 +153,77 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(t, mockGovernance)
 		})
 	}
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		getter   func() *rotree.ReadOnlyTree
+		wantKeys []string
+	}{
+		{
+			name:     "GetProposals",
+			method:   "GetProposals",
+			getter:   func() *rotree.ReadOnlyTree { return GetProposals() },
+			wantKeys: []string{"1", "2"},
+		},
+		{
+			name:     "GetVotingInfos",
+			method:   "GetVotingInfos",
+			getter:   func() *rotree.ReadOnlyTree { return GetVotingInfos(1) },
+			wantKeys: []string{adminAddr.String()},
+		},
+		{
+			name:     "GetUserProposals",
+			method:   "GetUserProposals",
+			getter:   func() *rotree.ReadOnlyTree { return GetUserProposals() },
+			wantKeys: []string{adminAddr.String()},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			mockGovernance := newMockGovernance("v1")
+			implementation = mockGovernance
+
+			stored := bptree.NewBPTree32()
+			for i, key := range tt.wantKeys {
+				stored.Set(key, i)
+			}
+			mockGovernance.Response.Set(tt.method, rotree.Wrap(stored, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, len(tt.wantKeys), got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			for i, want := range tt.wantKeys {
+				uassert.Equal(t, want, keys[i])
+			}
+
+			// The view refuses writes, so the stored tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("mutated", 0)
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(tt.wantKeys[0])
+			})
+			uassert.Equal(t, len(tt.wantKeys), stored.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
+	resetTestState(t)
+	mockGovernance := newMockGovernance("v1")
+	implementation = mockGovernance
+
+	uassert.True(t, GetProposals() == nil)
+	uassert.True(t, GetVotingInfos(1) == nil)
+	uassert.True(t, GetUserProposals() == nil)
 }
