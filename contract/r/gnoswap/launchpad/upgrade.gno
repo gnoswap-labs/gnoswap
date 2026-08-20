@@ -1,8 +1,6 @@
 package launchpad
 
 import (
-	"errors"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -17,9 +15,7 @@ import (
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, launchpadStore ILaunchpadStore) ILaunchpad) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
-		if !rlm.IsCurrent() {
-			panic(errors.New(ErrSpoofedRealm))
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		currentLaunchpadStore, ok := domainStore.(ILaunchpadStore)
 		if !ok {

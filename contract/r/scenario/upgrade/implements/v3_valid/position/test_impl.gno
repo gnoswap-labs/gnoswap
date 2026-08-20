@@ -4,6 +4,8 @@ package v3_valid
 import (
 	"errors"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -24,17 +26,13 @@ func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.To
 }
 
 func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
-	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return gnft.Mint(cross(rlm), to, tid)
 }
 
 func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
-	if !rlm.IsCurrent() {
-		panic(position.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	gnft.Burn(cross(rlm), tid)
 }

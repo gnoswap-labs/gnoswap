@@ -2,7 +2,8 @@ package router
 
 import (
 	"chain"
-	"errors"
+
+	"gno.land/r/gnoswap/access"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -52,9 +53,7 @@ func (r *routerV1) ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 
@@ -119,9 +118,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 

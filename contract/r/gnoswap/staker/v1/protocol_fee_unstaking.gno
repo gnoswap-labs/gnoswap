@@ -100,9 +100,7 @@ func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 

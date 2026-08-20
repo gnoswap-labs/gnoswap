@@ -11,6 +11,21 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
+func TestAssertIsRlmCurrent(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
+		func(cur realm) {
+			AssertIsRlmCurrent(0, cur)
+		}(cross(cur))
+	})
+
+	stale := cur
+	uassert.AbortsContains(t, cur, errSpoofedRealm, func() {
+		func(cur realm) {
+			AssertIsRlmCurrent(0, stale)
+		}(cross(cur))
+	})
+}
+
 func TestAssertIsAdminOrGovernance(cur realm, t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)

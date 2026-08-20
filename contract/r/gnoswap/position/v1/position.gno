@@ -2,7 +2,6 @@ package position
 
 import (
 	"chain"
-	"errors"
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -48,9 +47,7 @@ func (p *positionV1) Mint(
 	mintTo address,
 	referrer string,
 ) (uint64, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 	access.AssertIsValidAddress(mintTo)
@@ -161,9 +158,7 @@ func (p *positionV1) IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 
@@ -262,9 +257,7 @@ func (p *positionV1) DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -345,9 +338,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -453,9 +444,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	previousRealm := rlm.Previous()
 	access.AssertIsStaker(previousRealm.Address())

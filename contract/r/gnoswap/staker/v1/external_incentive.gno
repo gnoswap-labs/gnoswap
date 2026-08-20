@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"errors"
 	"chain"
 	"chain/runtime"
 	"time"
@@ -38,9 +37,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -140,9 +137,7 @@ func (s *stakerV1) CreateExternalIncentive(
 //
 // Only callable by Creator or Admin.
 func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -306,9 +301,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	incentiveId string,
 	refundAddress address,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 

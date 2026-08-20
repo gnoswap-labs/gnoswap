@@ -2,7 +2,9 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/pool"
@@ -33,9 +35,7 @@ func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 }
 
 func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
@@ -43,9 +43,7 @@ func (p *poolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm r
 }
 
 func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
 		hook(0, cur, poolPath, timestamp)
@@ -53,9 +51,7 @@ func (p *poolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm r
 }
 
 func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
 		return hook(0, cur, poolPath)
@@ -76,9 +72,7 @@ type EmissionAccessor interface {
 type emissionAccessor struct{}
 
 func (e *emissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return emission.MintAndDistributeGns(cross(rlm))
 }
@@ -92,9 +86,7 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 }
 
 func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	// Wrap the caller-provided callback in an adapter constructed HERE, inside
 	// the /r/gnoswap/staker domain package. By borrow rule #3 the wrapper
@@ -134,17 +126,13 @@ func (n *gnftAccessor) Approve(_ int, rlm realm, approved address, tid grc721.To
 }
 
 func (n *gnftAccessor) Mint(_ int, rlm realm, to address, tid grc721.TokenID) grc721.TokenID {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return gnft.Mint(cross(rlm), to, tid)
 }
 
 func (n *gnftAccessor) Burn(_ int, rlm realm, tid grc721.TokenID) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(ErrSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	gnft.Burn(cross(rlm), tid)
 }
