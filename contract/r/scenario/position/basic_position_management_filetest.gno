@@ -183,11 +183,26 @@ func testPositionCreationAndRetrieval(cur realm) {
 
 	println("[INFO] Retrieving position details")
 	testing.SetRealm(bobRealm)
-	poolKey := pn.GetPositionPoolKey(positionId)
-	tickLower := pn.GetPositionTickLower(positionId)
-	tickUpper := pn.GetPositionTickUpper(positionId)
-	positionLiquidity := pn.GetPositionLiquidity(positionId)
-	operator := pn.GetPositionOperator(positionId)
+	poolKey, err := pn.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickLower, err := pn.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickUpper, err := pn.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	operator, err := pn.GetPositionOperator(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// then
 	println("[EXPECTED] Position created successfully with ID:", positionId)
@@ -196,8 +211,16 @@ func testPositionCreationAndRetrieval(cur realm) {
 	println("[EXPECTED] Position tick upper:", tickUpper)
 	println("[EXPECTED] Position liquidity:", positionLiquidity)
 	println("[EXPECTED] Position operator: zero address", operator)
-	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
+	burned, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] Position is not burned:", !burned)
+	println("[EXPECTED] Position is in range:", inRange)
 }
 
 func testPositionModification(cur realm) {
@@ -235,9 +258,18 @@ func testPositionModification(cur realm) {
 	)
 
 	println("[INFO] Retrieving modified position details")
-	modifiedLiquidity := pn.GetPositionLiquidity(positionId)
-	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
-	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
+	modifiedLiquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tokensOwed0, err := pn.GetPositionTokensOwed0(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tokensOwed1, err := pn.GetPositionTokensOwed1(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// then
 	println("[EXPECTED] Position modified successfully")
@@ -274,7 +306,10 @@ func testPositionDeletion(cur realm) {
 	)
 
 	println("[INFO] Verifying position exists before deletion")
-	existsBefore := pn.IsBurned(positionId)
+	existsBefore, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// need to add gnft approve
 	// by doing this, we can manage position
@@ -292,7 +327,10 @@ func testPositionDeletion(cur realm) {
 	)
 
 	println("[INFO] Verifying position is burned after deletion")
-	existsAfter := pn.IsBurned(positionId)
+	existsAfter, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// then
 	println("[EXPECTED] Position existed before deletion:", !existsBefore)

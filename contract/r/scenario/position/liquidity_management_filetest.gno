@@ -176,7 +176,11 @@ func testAddLiquiditySuccess(cur realm) {
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
 	println("[EXPECTED] Pool path:", poolPath)
-	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId))
+	liquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] Total liquidity after addition:", liquidity)
 }
 
 func testAddLiquidityWithInvalidSlippage(cur realm) {
@@ -374,7 +378,10 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	)
 
 	println("[INFO] Verifying position exists before decrease")
-	existsBefore := pn.IsBurned(positionId)
+	existsBefore, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// alice is position owner, so she can approve gnft
 	testing.SetRealm(aliceRealm)
@@ -392,7 +399,10 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	)
 
 	println("[INFO] Verifying position after decrease")
-	existsAfter := pn.IsBurned(positionId)
+	existsAfter, err := pn.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// then
 	println("[EXPECTED] Liquidity decreased successfully")
@@ -402,7 +412,11 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	println("[EXPECTED] Collected fee1:", fee1)
 	println("[EXPECTED] Collected amount0:", amount0)
 	println("[EXPECTED] Collected amount1:", amount1)
-	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId))
+	liquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	println("[EXPECTED] Remaining liquidity:", liquidity)
 }
 
 func testDecreaseLiquidityWithOverRemoval(cur realm) {

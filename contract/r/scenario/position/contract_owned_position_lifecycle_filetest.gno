@@ -168,7 +168,10 @@ func vaultMintPosition(cur realm) {
 }
 
 func verifyVaultOwnership(cur realm) {
-	owner := position.GetPositionOwner(positionID)
+	owner, err := position.GetPositionOwner(positionID)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner.String())
 	ufmt.Printf("[EXPECTED] vault contract address: %s\n", vaultAddr.String())
@@ -241,7 +244,10 @@ func vaultCollectFees(cur realm) {
 }
 
 func vaultIncreaseLiquidity(cur realm) {
-	liquidityBefore := position.GetPositionLiquidity(positionID)
+	liquidityBefore, err := position.GetPositionLiquidity(positionID)
+	if err != nil {
+		panic(err)
+	}
 
 	testing.SetRealm(vaultRealm)
 	bar.Approve(cross(cur), poolAddr, INT64_MAX)
@@ -263,15 +269,25 @@ func vaultIncreaseLiquidity(cur realm) {
 		)
 	}(cross(cur))
 
-	liquidityAfter := position.GetPositionLiquidity(positionID)
+	liquidityAfter, err := position.GetPositionLiquidity(positionID)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] liquidity before increase: %s\n", liquidityBefore)
 	ufmt.Printf("[EXPECTED] liquidity after increase: %s\n", liquidityAfter)
-	ufmt.Printf("[EXPECTED] owner after increase: %s\n", position.GetPositionOwner(positionID).String())
+	owner, err := position.GetPositionOwner(positionID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] owner after increase: %s\n", owner.String())
 }
 
 func vaultDecreaseAllLiquidity(cur realm) {
-	liquidityBefore := position.GetPositionLiquidity(positionID)
+	liquidityBefore, err := position.GetPositionLiquidity(positionID)
+	if err != nil {
+		panic(err)
+	}
 
 	testing.SetRealm(originRealm)
 	testing.SetOriginCaller(originAddr)
@@ -289,12 +305,19 @@ func vaultDecreaseAllLiquidity(cur realm) {
 		)
 	}(cross(cur))
 
-	liquidityAfter := position.GetPositionLiquidity(positionID)
+	liquidityAfter, err := position.GetPositionLiquidity(positionID)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] liquidity before decrease: %s\n", liquidityBefore)
 	ufmt.Printf("[EXPECTED] removed liquidity: %s\n", removedLiquidity)
 	ufmt.Printf("[EXPECTED] liquidity after decrease: %s\n", liquidityAfter)
-	ufmt.Printf("[EXPECTED] owner after decrease: %s\n", position.GetPositionOwner(positionID).String())
+	owner, err := position.GetPositionOwner(positionID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] owner after decrease: %s\n", owner.String())
 }
 
 func vaultReposition(cur realm) {
@@ -325,7 +348,11 @@ func vaultReposition(cur realm) {
 
 	ufmt.Printf("[EXPECTED] repositioned liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] repositioned tick range: [%d, %d]\n", tickLower, tickUpper)
-	ufmt.Printf("[EXPECTED] owner after reposition: %s\n", position.GetPositionOwner(positionID).String())
+	owner, err := position.GetPositionOwner(positionID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] owner after reposition: %s\n", owner.String())
 }
 
 func vaultStakePosition(cur realm) {
