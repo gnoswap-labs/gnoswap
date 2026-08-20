@@ -2,6 +2,7 @@ package pool
 
 import (
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -225,11 +226,11 @@ type IPoolGetter interface {
 	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
 	GetPoolCount() int
-	GetPoolPaths(offset, count int) []string
+	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32
 
 	GetPoolPositionCount(poolPath string) int
-	GetPoolPositionKeys(poolPath string, offset, count int) []string
+	GetPoolPositions(poolPath string) *rotree.ReadOnlyTree
 
 	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32
 

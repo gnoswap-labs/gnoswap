@@ -3,6 +3,7 @@ package mock
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -553,12 +554,11 @@ func (t *TestPool) GetPoolCount() int {
 	).(int)
 }
 
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
-		"GetPoolPaths",
-		func(args ...any) any { return t.instance.GetPoolPaths(args[0].(int), args[1].(int)) },
-		offset, count,
-	).([]string)
+		"GetPools",
+		func(args ...any) any { return t.instance.GetPools() },
+	).(*rotree.ReadOnlyTree)
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -577,14 +577,14 @@ func (t *TestPool) GetPoolPositionCount(poolPath string) int {
 	).(int)
 }
 
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
-		"GetPoolPositionKeys",
+		"GetPoolPositions",
 		func(args ...any) any {
-			return t.instance.GetPoolPositionKeys(args[0].(string), args[1].(int), args[2].(int))
+			return t.instance.GetPoolPositions(args[0].(string))
 		},
-		poolPath, offset, count,
-	).([]string)
+		poolPath,
+	).(*rotree.ReadOnlyTree)
 }
 
 // Tick enumeration

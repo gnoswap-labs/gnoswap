@@ -75,8 +75,8 @@ func main(cur realm) {
 	getPoolCount(cur)
 	println()
 
-	println("[SCENARIO] 2.2. GetPoolPaths")
-	getPoolPaths(cur)
+	println("[SCENARIO] 2.2. GetPools")
+	getPools(cur)
 	println()
 
 	println("[SCENARIO] 2.3. ExistsPoolPath")
@@ -155,8 +155,8 @@ func main(cur realm) {
 	getPoolPositionCount(cur)
 	println()
 
-	println("[SCENARIO] 2.23. GetPoolPositionKeys")
-	getPoolPositionKeys(cur)
+	println("[SCENARIO] 2.23. GetPoolPositions")
+	getPoolPositions(cur)
 	println()
 
 	println("[SCENARIO] 2.24. GetPositionLiquidity")
@@ -379,15 +379,19 @@ func getPoolCount(cur realm) {
 	ufmt.Printf("[EXPECTED] pool count: %d\n", poolCount)
 }
 
-func getPoolPaths(cur realm) {
-	println("[INFO] Check GetPoolPaths method")
+func getPools(cur realm) {
+	println("[INFO] Check GetPools method")
 	testing.SetRealm(adminRealm)
 
-	poolPaths := pl.GetPoolPaths(0, 10)
-	ufmt.Printf("[EXPECTED] pool paths count: %d\n", len(poolPaths))
-	for i, path := range poolPaths {
-		ufmt.Printf("[EXPECTED] pool path[%d]: %s\n", i, path)
-	}
+	pools := pl.GetPools()
+	ufmt.Printf("[EXPECTED] pool paths count: %d\n", pools.Size())
+
+	index := 0
+	pools.IterateByOffset(0, 10, func(path string, _ any) bool {
+		ufmt.Printf("[EXPECTED] pool path[%d]: %s\n", index, path)
+		index++
+		return false
+	})
 }
 
 func existsPoolPath(cur realm) {
@@ -554,15 +558,19 @@ func getPoolPositionCount(cur realm) {
 	ufmt.Printf("[EXPECTED] position count: %d\n", positionCount)
 }
 
-func getPoolPositionKeys(cur realm) {
-	println("[INFO] Check GetPoolPositionKeys method")
+func getPoolPositions(cur realm) {
+	println("[INFO] Check GetPoolPositions method")
 	testing.SetRealm(adminRealm)
 
-	positionKeys := pl.GetPoolPositionKeys(poolPath, 0, 10)
-	ufmt.Printf("[EXPECTED] position keys count: %d\n", len(positionKeys))
-	for i, key := range positionKeys {
-		ufmt.Printf("[EXPECTED] position key[%d]: %s\n", i, key)
-	}
+	positions := pl.GetPoolPositions(poolPath)
+	ufmt.Printf("[EXPECTED] position keys count: %d\n", positions.Size())
+
+	index := 0
+	positions.IterateByOffset(0, 10, func(key string, _ any) bool {
+		ufmt.Printf("[EXPECTED] position key[%d]: %s\n", index, key)
+		index++
+		return false
+	})
 }
 
 func getPositionLiquidity(cur realm) {
@@ -899,8 +907,8 @@ func getObservationState(cur realm) {
 // [INFO] Check GetPoolCount method
 // [EXPECTED] pool count: 1
 //
-// [SCENARIO] 2.2. GetPoolPaths
-// [INFO] Check GetPoolPaths method
+// [SCENARIO] 2.2. GetPools
+// [INFO] Check GetPools method
 // [EXPECTED] pool paths count: 1
 // [EXPECTED] pool path[0]: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
@@ -991,8 +999,8 @@ func getObservationState(cur realm) {
 // [INFO] Check GetPoolPositionCount method
 // [EXPECTED] position count: 1
 //
-// [SCENARIO] 2.23. GetPoolPositionKeys
-// [INFO] Check GetPoolPositionKeys method
+// [SCENARIO] 2.23. GetPoolPositions
+// [INFO] Check GetPoolPositions method
 // [EXPECTED] position keys count: 1
 // [EXPECTED] position key[0]: 00000000520001774492
 //

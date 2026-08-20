@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -52,21 +54,6 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 		mutate    func(result any)
 		assertRaw func(cur realm, t *testing.T)
 	}{
-		{
-			name:   "GetPoolPaths",
-			setup:  func(m *MockPool) { m.Response.Set("GetPoolPaths", []string{"foo", "bar"}) },
-			getter: func() any { return GetPoolPaths(0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "baz")
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				values := implementation.(*MockPool).Response.responses["GetPoolPaths"][0].([]string)
-				uassert.Equal(t, "foo", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
 		{
 			name:   "GetFeeAmountTickSpacings",
 			setup:  func(m *MockPool) { m.Response.Set("GetFeeAmountTickSpacings", map[uint32]int32{500: 10}) },
@@ -186,21 +173,6 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 				uassert.Equal(t, int32(11), pool.Slot0Tick())
 				uassert.Equal(t, uint8(12), pool.Slot0FeeProtocol())
 				uassert.Equal(t, true, pool.Slot0Unlocked())
-			},
-		},
-		{
-			name:   "GetPoolPositionKeys",
-			setup:  func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
-			getter: func() any { return GetPoolPositionKeys("foo:bar:500", 0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "pos2")
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				values := implementation.(*MockPool).Response.responses["GetPoolPositionKeys"][0].([]string)
-				uassert.Equal(t, "pos0", values[0])
-				uassert.Equal(t, 2, len(values))
 			},
 		},
 		{
@@ -360,4 +332,74 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(cur, t)
 		})
 	}
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		getter   func() *rotree.ReadOnlyTree
+		wantKeys []string
+	}{
+		{
+			name:     "GetPools",
+			method:   "GetPools",
+			getter:   func() *rotree.ReadOnlyTree { return GetPools() },
+			wantKeys: []string{"foo:bar:500", "foo:baz:3000"},
+		},
+		{
+			name:     "GetPoolPositions",
+			method:   "GetPoolPositions",
+			getter:   func() *rotree.ReadOnlyTree { return GetPoolPositions("foo:bar:500") },
+			wantKeys: []string{"pos0", "pos1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			mockPool := newMockPool("v1")
+			implementation = mockPool
+
+			tree := bptree.NewBPTree32()
+			for i, key := range tt.wantKeys {
+				tree.Set(key, i)
+			}
+			mockPool.Response.Set(tt.method, rotree.Wrap(tree, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, len(tt.wantKeys), got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, value any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			uassert.Equal(t, len(tt.wantKeys), len(keys))
+			for i, want := range tt.wantKeys {
+				uassert.Equal(t, want, keys[i])
+			}
+
+			uassert.True(t, got.Has(tt.wantKeys[0]))
+			uassert.Equal(t, 0, got.Get(tt.wantKeys[0]).(int))
+
+			// The view refuses writes, so the underlying tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("mutated", 0)
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(tt.wantKeys[0])
+			})
+			uassert.Equal(t, len(tt.wantKeys), tree.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
+	resetTestState(t)
+	mockPool := newMockPool("v1")
+	implementation = mockPool
+
+	uassert.True(t, GetPools() == nil)
+	uassert.True(t, GetPoolPositions("foo:bar:500") == nil)
 }

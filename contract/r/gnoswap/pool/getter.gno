@@ -1,13 +1,18 @@
 package pool
 
+import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
+)
+
 // GetPoolCount returns the total number of pools.
 func GetPoolCount() int {
 	return getImplementation().GetPoolCount()
 }
 
-// GetPoolPaths returns a paginated list of pool paths.
-func GetPoolPaths(offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetPoolPaths(offset, count))
+// GetPools returns a read-only view of every pool, keyed by pool path.
+// Reading an entry yields a clone, so the view cannot mutate realm state.
+func GetPools() *rotree.ReadOnlyTree {
+	return getImplementation().GetPools()
 }
 
 // ExistsPoolPath checks if a pool exists at the given path.
@@ -96,9 +101,10 @@ func GetPoolPositionCount(poolPath string) int {
 	return getImplementation().GetPoolPositionCount(poolPath)
 }
 
-// GetPoolPositionKeys returns a paginated list of position keys in a pool.
-func GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetPoolPositionKeys(poolPath, offset, count))
+// GetPoolPositions returns a read-only view of a pool's positions, keyed by
+// position key. nil is returned when the pool does not exist.
+func GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	return getImplementation().GetPoolPositions(poolPath)
 }
 
 // GetPositionLiquidity returns the liquidity of a position.

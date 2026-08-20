@@ -6,16 +6,6 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
-func cloneStringSlice(src []string) []string {
-	if src == nil {
-		return nil
-	}
-
-	cloned := make([]string, len(src))
-	copy(cloned, src)
-	return cloned
-}
-
 func cloneInt32Slice(src []int32) []int32 {
 	if src == nil {
 		return nil

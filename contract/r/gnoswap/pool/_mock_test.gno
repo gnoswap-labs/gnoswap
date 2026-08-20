@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse tracks method calls for testing purposes
@@ -603,13 +604,13 @@ func (m *MockPool) GetPoolCount() int {
 	return res[0].(int)
 }
 
-func (m *MockPool) GetPoolPaths(offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPaths")
+func (m *MockPool) GetPools() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPools")
 	if !ok {
-		return []string{}
+		return nil
 	}
 
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -631,13 +632,13 @@ func (m *MockPool) GetPoolPositionCount(poolPath string) int {
 	return res[0].(int)
 }
 
-func (m *MockPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPositionKeys")
+func (m *MockPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPoolPositions")
 	if !ok {
-		return []string{}
+		return nil
 	}
 
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 // Tick enumeration

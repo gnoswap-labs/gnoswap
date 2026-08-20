@@ -2,6 +2,7 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -258,17 +259,10 @@ func (i *poolV1) GetPoolCount() int {
 	return pools.Size()
 }
 
-// GetPoolPaths returns a paginated list of pool paths.
-func (i *poolV1) GetPoolPaths(offset, count int) []string {
-	pools := i.store.GetPools()
-	poolPaths := make([]string, 0)
-
-	pools.IterateByOffset(offset, count, func(key string, _ any) bool {
-		poolPaths = append(poolPaths, key)
-		return false
-	})
-
-	return poolPaths
+// GetPools returns a read-only view of every pool, keyed by pool path.
+// Callers paginate it themselves through IterateByOffset.
+func (i *poolV1) GetPools() *rotree.ReadOnlyTree {
+	return rotree.Wrap(i.store.GetPools(), clonePoolEntry)
 }
 
 // GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
@@ -286,21 +280,18 @@ func (i *poolV1) GetPoolPositionCount(poolPath string) int {
 	return pool.Positions().Size()
 }
 
-// GetPoolPositionKeys returns a paginated list of position keys in a pool.
-func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+// GetPoolPositions returns a read-only view of a pool's positions, keyed by
+// position key. Callers paginate it themselves through IterateByOffset.
+// nil is returned when the pool does not exist.
+func (i *poolV1) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return []string{}
+		return nil
 	}
 
-	positionKeys := make([]string, 0)
-
-	pool.Positions().IterateByOffset(offset, count, func(key string, _ any) bool {
-		positionKeys = append(positionKeys, key)
-		return false
-	})
-
-	return positionKeys
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But PositionInfo is immutable, so we can just return the entry as is.
+	return rotree.Wrap(pool.Positions(), nil)
 }
 
 // Tick enumeration

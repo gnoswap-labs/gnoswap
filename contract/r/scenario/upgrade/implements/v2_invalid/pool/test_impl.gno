@@ -3,6 +3,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -421,11 +422,11 @@ func (t *TestPool) GetPoolCount() int {
 	return t.instance.GetPoolCount()
 }
 
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	if !t.isActive("GetPoolPaths") {
-		panic("test implementation: GetPoolPaths not supported")
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
+	if !t.isActive("GetPools") {
+		panic("test implementation: GetPools not supported")
 	}
-	return t.instance.GetPoolPaths(offset, count)
+	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -443,11 +444,11 @@ func (t *TestPool) GetPoolPositionCount(poolPath string) int {
 	return t.instance.GetPoolPositionCount(poolPath)
 }
 
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	if !t.isActive("GetPoolPositionKeys") {
-		panic("test implementation: GetPoolPositionKeys not supported")
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolPositions") {
+		panic("test implementation: GetPoolPositions not supported")
 	}
-	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+	return t.instance.GetPoolPositions(poolPath)
 }
 
 // Tick enumeration
