@@ -1007,14 +1007,16 @@ func TestStoreSetAndGetPoolTierGetEmission(cur realm, t *testing.T) {
 		{
 			name: "set and get pool tier get emission successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-				emissionFunc := func() int64 { return 1000 }
+			emissionFunc := func() (int64, error) { return 1000, nil }
 				ss.SetPoolTierGetEmission(0, cur, emissionFunc)
 			},
 			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierGetEmissionStoreKey(), "should have pool tier get emission after setting")
 				retrieved := ss.GetPoolTierGetEmission()
 				uassert.NotEqual(t, nil, retrieved)
-				uassert.Equal(t, int64(1000), retrieved())
+				amount, err := retrieved()
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), amount)
 			},
 		},
 		{
@@ -1065,8 +1067,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 		{
 			name: "set and get pool tier get halving blocks in range successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-				halvingFunc := func(start, end int64) ([]int64, []int64) {
-					return []int64{100, 200}, []int64{10, 20}
+			halvingFunc := func(start, end int64) ([]int64, []int64, error) {
+				return []int64{100, 200}, []int64{10, 20}, nil
 				}
 				ss.SetPoolTierGetHalvingBlocksInRange(0, cur, halvingFunc)
 			},
@@ -1075,7 +1077,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 				retrieved := ss.GetPoolTierGetHalvingBlocksInRange()
 				uassert.NotEqual(t, nil, retrieved)
 
-				blocks, heights := retrieved(0, 1000)
+				blocks, heights, err := retrieved(0, 1000)
+				uassert.NoError(t, err)
 				uassert.Equal(t, 2, len(blocks))
 				uassert.Equal(t, 2, len(heights))
 				uassert.Equal(t, int64(100), blocks[0])
