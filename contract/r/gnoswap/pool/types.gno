@@ -225,20 +225,15 @@ type IPoolGetter interface {
 
 	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
-	GetPoolCount() int
 	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32
 
-	GetPoolPositionCount(poolPath string) int
 	GetPoolPositions(poolPath string) *rotree.ReadOnlyTree
 
 	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32
 
-	// Structure getters
-	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
-	GetPosition(poolPath, key string) (PositionInfo, error)
 	GetObservationState(poolPath string) (*ObservationState, error)
 }
 

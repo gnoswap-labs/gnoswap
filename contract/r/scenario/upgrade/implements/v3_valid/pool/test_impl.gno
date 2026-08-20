@@ -94,10 +94,6 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	return t.instance.GetPool(token0Path, token1Path, fee)
-}
-
 func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	return t.instance.GetBalanceToken0(poolPath)
 }
@@ -242,22 +238,12 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	return t.instance.GetPoolCount()
-}
-
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
 	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return t.instance.GetFeeAmountTickSpacings()
-}
-
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	return t.instance.GetPoolPositionCount(poolPath)
 }
 
 func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
@@ -276,10 +262,6 @@ func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, erro
 
 func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
-}
-
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	return t.instance.GetPosition(poolPath, key)
 }
 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {

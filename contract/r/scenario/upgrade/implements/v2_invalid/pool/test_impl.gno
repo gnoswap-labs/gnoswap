@@ -155,13 +155,6 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	if !t.isActive("GetPool") {
-		panic("test implementation: GetPool not supported")
-	}
-	return t.instance.GetPool(token0Path, token1Path, fee)
-}
-
 func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	if !t.isActive("GetBalanceToken0") {
 		panic("test implementation: GetBalanceToken0 not supported")
@@ -414,14 +407,6 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	if !t.isActive("GetPoolCount") {
-		panic("test implementation: GetPoolCount not supported")
-	}
-	return t.instance.GetPoolCount()
-}
-
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
 	if !t.isActive("GetPools") {
 		panic("test implementation: GetPools not supported")
@@ -434,14 +419,6 @@ func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 		panic("test implementation: GetFeeAmountTickSpacings not supported")
 	}
 	return t.instance.GetFeeAmountTickSpacings()
-}
-
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	if !t.isActive("GetPoolPositionCount") {
-		panic("test implementation: GetPoolPositionCount not supported")
-	}
-	return t.instance.GetPoolPositionCount(poolPath)
 }
 
 func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
@@ -472,13 +449,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		panic("test implementation: GetTickBitmaps not supported")
 	}
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
-}
-
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	if !t.isActive("GetPosition") {
-		panic("test implementation: GetPosition not supported")
-	}
-	return t.instance.GetPosition(poolPath, key)
 }
 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {

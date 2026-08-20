@@ -83,7 +83,7 @@ func main(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: 99962")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
-	pool, _ := pl.GetPool(barPath, bazPath, fee500)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, fee500)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 

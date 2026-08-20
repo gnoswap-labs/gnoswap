@@ -12,12 +12,6 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return pl.GetPoolPath(token0Path, token1Path, fee)
 }
 
-// GetPool retrieves a pool instance based on the provided token paths and fee tier.
-func (i *poolV1) GetPool(token0Path, token1Path string, fee uint32) (*pl.Pool, error) {
-	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-	return i.getPool(poolPath)
-}
-
 // GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
 func (i *poolV1) GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
@@ -253,12 +247,6 @@ func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint,
 	return tick, liquidity, nil
 }
 
-// GetPoolCount returns the total number of pools.
-func (i *poolV1) GetPoolCount() int {
-	pools := i.store.GetPools()
-	return pools.Size()
-}
-
 // GetPools returns a read-only view of every pool, keyed by pool path.
 // Callers paginate it themselves through IterateByOffset.
 func (i *poolV1) GetPools() *rotree.ReadOnlyTree {
@@ -268,16 +256,6 @@ func (i *poolV1) GetPools() *rotree.ReadOnlyTree {
 // GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
 func (i *poolV1) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return i.store.GetFeeAmountTickSpacing()
-}
-
-// GetPoolPositionCount returns the number of positions in a pool.
-func (i *poolV1) GetPoolPositionCount(poolPath string) int {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return 0
-	}
-
-	return pool.Positions().Size()
 }
 
 // GetPoolPositions returns a read-only view of a pool's positions, keyed by
@@ -338,26 +316,6 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 	}
 
 	return tickBitmap, nil
-}
-
-// GetPosition returns the position info for a given key.
-func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return pl.NewPositionInfo(), err
-	}
-
-	iPositionInfo := pool.Positions().Get(key)
-	if iPositionInfo == nil {
-		return pl.NewPositionInfo(), ufmt.Errorf("position %s not found", key)
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		return pl.NewPositionInfo(), ufmt.Errorf("failed to cast positionInfo: %T", iPositionInfo)
-	}
-
-	return positionInfo, nil
 }
 
 // GetObservationState returns the observation state for a pool.

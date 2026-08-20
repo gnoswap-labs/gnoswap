@@ -4,11 +4,6 @@ import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
-// GetPoolCount returns the total number of pools.
-func GetPoolCount() int {
-	return getImplementation().GetPoolCount()
-}
-
 // GetPools returns a read-only view of every pool, keyed by pool path.
 // Reading an entry yields a clone, so the view cannot mutate realm state.
 func GetPools() *rotree.ReadOnlyTree {
@@ -94,11 +89,6 @@ func GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
 func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	return getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
-}
-
-// GetPoolPositionCount returns the number of positions in a pool.
-func GetPoolPositionCount(poolPath string) int {
-	return getImplementation().GetPoolPositionCount(poolPath)
 }
 
 // GetPoolPositions returns a read-only view of a pool's positions, keyed by
@@ -244,16 +234,6 @@ func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 
 // Structure getters
 
-// GetPool returns a copy of the pool for the given token pair and fee tier.
-func GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
-	pool, err := getImplementation().GetPool(token0Path, token1Path, fee)
-	if err != nil {
-		return nil, err
-	}
-
-	return clonePool(pool), nil
-}
-
 // GetTickInfo returns the tick info for a given tick.
 func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 	tickInfo, err := getImplementation().GetTickInfo(poolPath, tick)
@@ -267,16 +247,6 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 // GetTickBitmaps returns the tick bitmap for a given word position.
 func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return getImplementation().GetTickBitmaps(poolPath, wordPos)
-}
-
-// GetPosition returns the position info for a given key.
-func GetPosition(poolPath, key string) (PositionInfo, error) {
-	positionInfo, err := getImplementation().GetPosition(poolPath, key)
-	if err != nil {
-		return PositionInfo{}, err
-	}
-
-	return clonePositionInfo(positionInfo), nil
 }
 
 // GetObservationState returns the observation state for a given pool path.

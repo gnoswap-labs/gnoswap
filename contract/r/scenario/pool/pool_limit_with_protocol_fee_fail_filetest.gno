@@ -84,7 +84,7 @@ func main(cur realm) {
 	foo.Approve(cross(cur), poolAddr, maxApprove)
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 
 	println("[SCENARIO] 1. Minting position spanning current tick")
 	testing.SetRealm(posRealm)
@@ -156,7 +156,7 @@ func main(cur realm) {
 	println("[EXPECTED] collect1:", collect1, "expected: 0")
 	println()
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: < -120")
 	uassert.True(t, slotTick < -120, ufmt.Sprintf("tick(%d) should be < -120", slotTick))

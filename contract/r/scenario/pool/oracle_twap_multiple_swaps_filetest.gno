@@ -83,7 +83,7 @@ func main(cur realm) {
 	println("[INFO] Increasing observation cardinality limit to 200")
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 200)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityNext())
 	println()
 
@@ -102,7 +102,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -132,7 +132,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after first swap:", thisPool.Slot0Tick())
 	println()
 
@@ -157,7 +157,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool liquidity after mint:", thisPool.Liquidity().ToString())
 	println()
 
@@ -180,7 +180,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after second swap:", thisPool.Slot0Tick())
 	println()
 
@@ -209,7 +209,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after third swap:", thisPool.Slot0Tick())
 	println()
 

@@ -226,7 +226,7 @@ func verifyExtremeSwapWithPriceLimit(cur realm) {
 	println("[SCENARIO] 5. Verify Extreme Swap with Price Limit")
 
 	testing.SetRealm(adminRealm)
-	pools, _ := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	currentPrice := pools.Slot0SqrtPriceX96()
 	println("[INFO] Current price:", currentPrice)
 
@@ -276,7 +276,7 @@ func verifyExtremeSwapWithPriceLimit(cur realm) {
 	println("[INFO] - amount0:", amount0)
 	println("[INFO] - amount1:", amount1)
 
-	pools, _ = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	endPrice := pools.Slot0SqrtPriceX96()
 	println("[INFO] End price:", endPrice)
 

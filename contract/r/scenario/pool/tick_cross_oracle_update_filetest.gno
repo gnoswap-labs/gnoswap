@@ -86,7 +86,7 @@ func main(cur realm) {
 	println("[EXPECTED] Position created with amounts:", amount0, amount1)
 
 	// Check initial pool state
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println()
@@ -141,7 +141,7 @@ func main(cur realm) {
 	println("[EXPECTED] Swap completed with amounts:", amount0Out, amount1Out)
 
 	// Check current pool tick to confirm we crossed testTick
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 
@@ -214,7 +214,7 @@ func main(cur realm) {
 	println("[EXPECTED] Reverse swap completed:", amount0Out2, amount1Out2)
 
 	// Check current pool tick after reverse swap
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after reverse swap:", thisPool.Slot0Tick())
 	println()
 

@@ -237,17 +237,6 @@ func (m *MockPool) ExistsPoolPath(poolPath string) bool {
 	return res[0].(bool)
 }
 
-func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
-	res, ok := m.Response.Get("GetPool")
-	if !ok {
-		return nil, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*Pool), nil
-	}
-	return res[0].(*Pool), res[1].(error)
-}
-
 func (m *MockPool) GetBalanceToken0(poolPath string) int64 {
 	res, ok := m.Response.Get("GetBalanceToken0")
 	if !ok {
@@ -594,16 +583,6 @@ func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
-// Pool enumeration
-func (m *MockPool) GetPoolCount() int {
-	res, ok := m.Response.Get("GetPoolCount")
-	if !ok {
-		return 0
-	}
-
-	return res[0].(int)
-}
-
 func (m *MockPool) GetPools() *rotree.ReadOnlyTree {
 	res, ok := m.Response.Get("GetPools")
 	if !ok {
@@ -620,16 +599,6 @@ func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	}
 
 	return res[0].(map[uint32]int32)
-}
-
-// Position enumeration
-func (m *MockPool) GetPoolPositionCount(poolPath string) int {
-	res, ok := m.Response.Get("GetPoolPositionCount")
-	if !ok {
-		return 0
-	}
-
-	return res[0].(int)
 }
 
 func (m *MockPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
@@ -672,17 +641,6 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		return res[0].(string), nil
 	}
 	return res[0].(string), res[1].(error)
-}
-
-func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
-	res, ok := m.Response.Get("GetPosition")
-	if !ok {
-		return PositionInfo{}, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(PositionInfo), nil
-	}
-	return res[0].(PositionInfo), res[1].(error)
 }
 
 func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {

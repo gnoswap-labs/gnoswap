@@ -81,7 +81,7 @@ func main(cur realm) {
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
 	pool.CreatePool(cross(cur), barPath, fooPath, fee100, testSqrt.ToString())
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 
 	println("[EXPECTED] Initial pool liquidity:", thisPool.Liquidity().ToString(), "expected: 0")
 	println("[EXPECTED] Initial pool tick:", thisPool.Slot0Tick(), "expected: -24081")
@@ -103,7 +103,7 @@ func main(cur realm) {
 		liqToMint,
 		adminAddr,
 	)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 	println("[EXPECTED] Pool liquidity after first mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -119,7 +119,7 @@ func main(cur realm) {
 		liqToMint,
 		adminAddr,
 	)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 	println("[EXPECTED] Pool liquidity after second mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -161,7 +161,7 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected: 23768044726356341008264205109")
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")
