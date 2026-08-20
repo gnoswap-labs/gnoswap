@@ -171,14 +171,6 @@ Panics if the address is invalid.
 access.AssertIsValidAddress(addr)
 ```
 
-#### `AssertIsUser`
-
-Panics if the caller is not a user realm (i.e., a contract is calling).
-
-```go
-access.AssertIsUser(r)
-```
-
 ## Usage Examples
 
 ### Example 1: Protecting Admin Functions
@@ -290,7 +282,6 @@ Authorization failures result in panics with descriptive error messages:
 - `"unauthorized: caller X is not Y"` - Caller doesn't have required role
 - `"role X does not exist"` - Role hasn't been registered
 - `"invalid address: X"` - Address validation failed
-- `"caller is not user"` - Contract called user-only function
 
 ## Limitations
 

@@ -2,7 +2,6 @@ package access
 
 import (
 	"chain"
-	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -122,14 +121,6 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(ufmt.Errorf(errInvalidAddressShort, addr))
-	}
-}
-
-// AssertIsUser panics if the caller is not a user realm.
-// Used to ensure calls come from user accounts, not other contracts.
-func AssertIsUser(_ int, rlm realm) {
-	if !rlm.IsUser() {
-		panic(errors.New(errCallerNotUser))
 	}
 }
 
