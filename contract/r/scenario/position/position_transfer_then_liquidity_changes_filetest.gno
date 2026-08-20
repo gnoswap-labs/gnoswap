@@ -169,7 +169,10 @@ func bobIncreases(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	liquidityBefore := position.GetPositionLiquidity(positionId)
+	liquidityBefore, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	_, liquidityAdded, _, _, _ := position.IncreaseLiquidity(
 		cross(cur),
 		positionId,
@@ -177,7 +180,10 @@ func bobIncreases(cur realm) {
 		"0", "0",
 		maxTimeout,
 	)
-	liquidityAfter := position.GetPositionLiquidity(positionId)
+	liquidityAfter, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] Liquidity before:", liquidityBefore)
 	println("[EXPECTED] Liquidity added:", liquidityAdded)
@@ -187,7 +193,10 @@ func bobIncreases(cur realm) {
 func bobDecreases(cur realm) {
 	testing.SetRealm(bobRealm)
 
-	liquidityBefore := position.GetPositionLiquidity(positionId)
+	liquidityBefore, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	_, liquidityRemoved, _, _, _, _, _ := position.DecreaseLiquidity(
 		cross(cur),
 		positionId,
@@ -195,7 +204,10 @@ func bobDecreases(cur realm) {
 		"0", "0",
 		maxTimeout,
 	)
-	liquidityAfter := position.GetPositionLiquidity(positionId)
+	liquidityAfter, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] Liquidity before:", liquidityBefore)
 	println("[EXPECTED] Liquidity removed:", liquidityRemoved)

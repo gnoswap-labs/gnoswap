@@ -183,7 +183,10 @@ func mintUpperRangePosition(cur realm) {
 
 func checkUnclaimedFeesBeforeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, err := position.GetUnclaimedFee(1)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -216,7 +219,10 @@ func executeFirstSwap(cur realm) {
 
 func checkUnclaimedFeesAfterFirstSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, err := position.GetUnclaimedFee(1)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -249,7 +255,10 @@ func executeSecondSwap(cur realm) {
 
 func checkUnclaimedFeesAfterSecondSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, err := position.GetUnclaimedFee(1)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -282,7 +291,10 @@ func executeThirdSwap(cur realm) {
 
 func checkFinalUnclaimedFees(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, err := position.GetUnclaimedFee(1)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Final unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Final unclaimed fee1 should be %s\n", amount1)
