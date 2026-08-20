@@ -203,6 +203,31 @@ func NewProject(
 	}
 }
 
+// CloneShallow copies a project without its collections: conditions, tiers,
+// and tiersRatios are left nil.
+//
+// It exists for the getter path only. Getters hand out a copy so a caller
+// cannot reach realm-owned state, but the read-only project view applies this
+// transformation to every entry it visits, so copying the maps would mean
+// deep-copying every condition and tier of every project on a page.
+//
+// The omitted collections are reachable through their own lookups instead:
+// GetProjectCondition, GetProjectTier, and GetProjectTiersRatios.
+func (p Project) CloneShallow() *Project {
+	return &Project{
+		id:            p.id,
+		name:          p.name,
+		tokenPath:     p.tokenPath,
+		depositAmount: p.depositAmount,
+		recipient:     p.recipient,
+		conditions:    nil,
+		tiers:         nil,
+		tiersRatios:   nil,
+		createdHeight: p.createdHeight,
+		createdAt:     p.createdAt,
+	}
+}
+
 func (p Project) Clone() *Project {
 	conditions := make(map[string]*ProjectCondition)
 	for k, v := range p.conditions {
