@@ -77,6 +77,25 @@ func TestUpgrade_RegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokeGovernanceInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokeGovernanceInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 func TestUpgrade_UpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string

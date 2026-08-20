@@ -3,8 +3,9 @@ package launchpad
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
@@ -27,9 +28,7 @@ import (
 //
 // Returns deposit ID.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 

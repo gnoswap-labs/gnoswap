@@ -170,6 +170,8 @@ type IPoolGetter interface {
 
 	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
 
+	GetPendingProtocolFees() map[string]int64
+
 	GetPoolCreationFee() int64
 
 	GetPositionFeeGrowthInside0LastX128(poolPath, key string) string

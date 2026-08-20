@@ -25,9 +25,13 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
+	if internal {
+		tokenPath = GNS_TOKEN_KEY
+	}
+
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
-		s.addToProtocolFee(0, rlm)
+		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
@@ -38,18 +42,18 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
-		s.addToProtocolFee(0, rlm)
+		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
-	if internal {
-		tokenPath = GNS_TOKEN_KEY
-	}
-
-	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
-	s.addToProtocolFee(0, rlm)
+	s.settleProtocolFee(0, rlm, tokenPath, feeAmount)
 
 	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
+}
+
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func (s *stakerV1) GetPendingProtocolFees() map[string]int64 {
+	return s.store.GetPendingProtocolFees()
 }
 
 func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
@@ -57,6 +61,7 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 		return
 	}
 
+	// The stored map is readonly tainted here, so it is copied before being updated.
 	existingProtocolFees := s.store.GetPendingProtocolFees()
 	pendingProtocolFees := make(map[string]int64)
 	for pendingTokenPath, pendingAmount := range existingProtocolFees {
@@ -68,28 +73,47 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	}
 }
 
-// addToProtocolFee sends pending staker protocol fees to the protocol fee realm.
-// It is best-effort: when protocol fee collection is halted, it keeps pending
-// storage unchanged; otherwise it rebuilds pending storage with only entries
-// that could not be added, removing successful and non-positive entries.
-func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
-	pendingProtocolFees := s.store.GetPendingProtocolFees()
-	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
+// every fee path makes even when the fee is zero.
+//
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
+func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
+	if halt.IsHaltedProtocolFee() {
+		s.addPendingProtocolFee(0, rlm, tokenPath, amount)
 		return
 	}
 
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	pendingProtocolFees := s.store.GetPendingProtocolFees()
+	pendingAmount, hasPending := pendingProtocolFees[tokenPath]
+	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
+
+	if totalAmount > 0 {
+		protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, totalAmount)
+
+		// AddToProtocolFee only reports an error for a halted realm, which is handled
+		// above. The branch keeps the amount pending should that ever change.
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			s.addPendingProtocolFee(0, rlm, tokenPath, amount)
+			return
+		}
+	}
+
+	if !hasPending {
+		return
+	}
+
 	remainingProtocolFees := make(map[string]int64)
-	for tokenPath, amount := range pendingProtocolFees {
-		if amount <= 0 {
+	for pendingTokenPath, pending := range pendingProtocolFees {
+		if pendingTokenPath == tokenPath {
 			continue
 		}
 
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
-			remainingProtocolFees[tokenPath] = amount
-			continue
-		}
+		remainingProtocolFees[pendingTokenPath] = pending
 	}
 
 	if err := s.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
@@ -100,9 +124,7 @@ func (s *stakerV1) addToProtocolFee(_ int, rlm realm) {
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 

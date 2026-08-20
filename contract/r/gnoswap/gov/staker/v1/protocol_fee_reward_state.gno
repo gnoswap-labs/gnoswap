@@ -237,12 +237,28 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 		return err
 	}
 
-	// Update reward debt for all tokens
-	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
-
-	// Add newly calculated rewards to accumulated amounts
+	// Persist only the tokens whose value actually changed instead of replacing the maps.
+	// SetRewardDebtX128 allocates a fresh map plus one u256 per token on every stake
+	// change, so replacing it costs one persisted entry per registered token regardless
+	// of how many actually earned anything (gas report issue 1 / §1.2).
+	//
+	// Registered protocol-fee tokens are monotonic and accumulatedProtocolFeeX128PerStake
+	// always covers the full registered set, so writing per token cannot drop an entry.
 	accumulatedRewards := p.GetAccumulatedRewards()
-	for token, rewardAmount := range rewardAmounts {
+	for token, accumulatedFeeX128PerStake := range accumulatedProtocolFeeX128PerStake {
+		existingRewardDebtX128 := p.GetRewardDebtX128ForToken(token)
+		if existingRewardDebtX128 == nil || !existingRewardDebtX128.Eq(accumulatedFeeX128PerStake) {
+			p.SetRewardDebtX128ForToken(token, accumulatedFeeX128PerStake)
+		}
+
+		// Adding zero to an existing entry leaves it unchanged. A token seen for the first
+		// time is still written at zero: callers read token presence, not only amounts.
+		rewardAmount := rewardAmounts[token]
+		_, alreadyAccumulated := accumulatedRewards[token]
+		if rewardAmount == 0 && alreadyAccumulated {
+			continue
+		}
+
 		p.SetAccumulatedRewardForToken(token, gnsmath.SafeAddInt64(accumulatedRewards[token], rewardAmount))
 	}
 

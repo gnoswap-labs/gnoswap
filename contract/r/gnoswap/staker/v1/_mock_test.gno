@@ -3,6 +3,8 @@ package staker
 import (
 	"testing"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/p/demo/tokens/grc721"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -396,9 +398,7 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 }
 
 func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
@@ -406,9 +406,7 @@ func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, r
 }
 
 func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
 		hook(0, cur, poolPath, timestamp)
@@ -416,9 +414,7 @@ func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, r
 }
 
 func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
 		return hook(0, cur, poolPath)
@@ -432,9 +428,7 @@ func newMockPoolAccessor() sr.PoolAccessor {
 type mockEmissionAccessor struct{}
 
 func (e *mockEmissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return emission.MintAndDistributeGns(cross(rlm))
 }
@@ -448,9 +442,7 @@ func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, en
 }
 
 func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
 		callback(0, cur, emissionAmountPerSecond)

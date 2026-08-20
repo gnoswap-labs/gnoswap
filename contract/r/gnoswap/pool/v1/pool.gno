@@ -53,9 +53,7 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -134,9 +132,7 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -215,9 +211,7 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -293,9 +287,7 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -417,9 +409,7 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()

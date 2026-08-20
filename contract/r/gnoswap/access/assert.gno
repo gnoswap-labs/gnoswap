@@ -2,7 +2,6 @@ package access
 
 import (
 	"chain"
-	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -11,6 +10,13 @@ import (
 // rbacPackagePath is the package path of the RBAC contract
 // Used to verify that role management functions are called only by RBAC
 const rbacPackagePath = "gno.land/r/gnoswap/rbac"
+
+// AssertIsRlmCurrent panics if the realm token is not the current crossing frame.
+func AssertIsRlmCurrent(_ int, rlm realm) {
+	if !rlm.IsCurrent() {
+		panic(errSpoofedRealm)
+	}
+}
 
 // AssertIsAdminOrGovernance panics if the caller is not admin or governance.
 // Used for functions that require elevated privileges.
@@ -122,14 +128,6 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(ufmt.Errorf(errInvalidAddressShort, addr))
-	}
-}
-
-// AssertIsUser panics if the caller is not a user realm.
-// Used to ensure calls come from user accounts, not other contracts.
-func AssertIsUser(_ int, rlm realm) {
-	if !rlm.IsUser() {
-		panic(errors.New(errCallerNotUser))
 	}
 }
 

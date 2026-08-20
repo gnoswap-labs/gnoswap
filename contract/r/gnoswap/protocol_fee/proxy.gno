@@ -35,6 +35,18 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
 	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }
 
+// ConsumeAccrualPendingProtocolFees returns the fees collected since the last call and
+// clears the pending list. Only gov/staker may call it.
+func ConsumeAccrualPendingProtocolFees(cur realm) map[string]int64 {
+	return getImplementation().ConsumeAccrualPendingProtocolFees(0, cur)
+}
+
+// ConsumeAccrualPendingProtocolFeeByTokenPath is the single-token counterpart of
+// ConsumeAccrualPendingProtocolFees. Only gov/staker may call it.
+func ConsumeAccrualPendingProtocolFeeByTokenPath(cur realm, tokenPath string) int64 {
+	return getImplementation().ConsumeAccrualPendingProtocolFeeByTokenPath(0, cur, tokenPath)
+}
+
 // GetDevOpsPct returns the DevOps fee percentage.
 func GetDevOpsPct() int64 {
 	return getImplementation().GetDevOpsPct()
@@ -43,6 +55,11 @@ func GetDevOpsPct() int64 {
 // GetGovStakerPct returns the GovStaker fee percentage.
 func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
+}
+
+// GetAccrualPendingProtocolFees returns the same amounts without clearing the list.
+func GetAccrualPendingProtocolFees() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetAccrualPendingProtocolFees())
 }
 
 // GetReservedTokens returns token paths reserved for distribution.

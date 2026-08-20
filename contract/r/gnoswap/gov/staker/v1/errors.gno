@@ -15,7 +15,6 @@ const (
 	errInvalidSnapshotTime    = "[GNOSWAP-GOV_STAKER-008] invalid snapshot time"
 	errSameDelegatee          = "[GNOSWAP-GOV_STAKER-009] cannot redelegate to same address"
 	errWithdrawNotCollectable = "[GNOSWAP-GOV_STAKER-010] withdraw is not collectable"
-	errSpoofedRealm           = "[GNOSWAP-GOV_STAKER-011] rlm does not match the current crossing frame"
 )
 
 func makeErrorWithDetails(message string, detail string) error {

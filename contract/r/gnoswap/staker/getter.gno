@@ -333,3 +333,8 @@ func GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
 func GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
 	return getImplementation().GetPoolHistoricalTick(poolPath, tick)
 }
+
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func GetPendingProtocolFees() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetPendingProtocolFees())
+}

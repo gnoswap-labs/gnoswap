@@ -3,8 +3,9 @@ package launchpad
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
@@ -22,9 +23,7 @@ import (
 // Returns amount of reward collected.
 // Only callable by deposit owner.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 

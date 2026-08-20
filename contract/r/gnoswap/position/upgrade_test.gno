@@ -4,6 +4,8 @@ import (
 	"chain/runtime"
 	"testing"
 
+	"gno.land/r/gnoswap/access"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -86,14 +88,31 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokePositionInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokePositionInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 func TestRegisterInitializerLiveRealmBootstrap(cur realm, t *testing.T) {
 	resetTestState(t)
 
 	initializerCalls := 0
 	initializer := func(_ int, rlm realm, s IPositionStore) IPosition {
-		if !rlm.IsCurrent() {
-			panic(ErrSpoofedRealm)
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		initializerCalls++
 		err := s.SetPositionNextID(0, rlm, uint64(initializerCalls))

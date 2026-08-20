@@ -284,3 +284,7 @@ func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
 	return t.instance.GetObservationState(poolPath)
 }
+
+func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
+	return t.instance.GetPendingProtocolFees()
+}

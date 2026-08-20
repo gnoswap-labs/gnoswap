@@ -2,7 +2,6 @@ package staker
 
 import (
 	"chain"
-	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
@@ -19,9 +18,7 @@ import (
 // Panics:
 //   - If the caller is not the admin
 func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -56,9 +53,7 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 

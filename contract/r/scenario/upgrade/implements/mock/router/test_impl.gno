@@ -137,3 +137,10 @@ func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 		fee,
 	)
 }
+
+func (t *TestRouter) GetPendingProtocolFees() map[string]int64 {
+	return t.ExecuteFn(
+		"GetPendingProtocolFees",
+		func(args ...any) any { return t.instance.GetPendingProtocolFees() },
+	).(map[string]int64)
+}

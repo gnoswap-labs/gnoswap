@@ -55,9 +55,7 @@ func (gs *govStakerV1) Delegate(
 	amount int64,
 	referrer string,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovStaker()
 
@@ -141,9 +139,7 @@ func (gs *govStakerV1) Undelegate(
 	from address,
 	amount int64,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -220,9 +216,7 @@ func (gs *govStakerV1) Redelegate(
 	newDelegatee address,
 	amount int64,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovStaker()
 
@@ -284,9 +278,7 @@ func (gs *govStakerV1) Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 

@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -17,9 +19,7 @@ import (
 // Returns amount of reward collected.
 // Only callable by deposit owner.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
-	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()

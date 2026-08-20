@@ -139,6 +139,15 @@ func (m *MockPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetWithdrawalFee")
 }
 
+func (m *MockPool) GetPendingProtocolFees() map[string]int64 {
+	res, ok := m.Response.Get("GetPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+
+	return res[0].(map[string]int64)
+}
+
 func (m *MockPool) HandleWithdrawalFee(
 	_ int,
 	rlm realm,
