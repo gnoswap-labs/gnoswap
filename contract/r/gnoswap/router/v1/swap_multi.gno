@@ -27,12 +27,13 @@ func (r *routerV1) multiSwap(_ int, rlm realm, sp SwapParams, numPools int, swap
 			firstAmountIn = amountIn
 		}
 
-		if currentPoolIndex+1 >= numPools {
+		nextPoolIndex := currentPoolIndex + 1
+		if nextPoolIndex >= numPools {
 			return firstAmountIn, amountOut
 		}
 
 		payer = routerAddr
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex+1)
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
 		sp.tokenIn = nextInput
 		sp.tokenOut = nextOutput
 		sp.fee = nextFee
@@ -63,12 +64,13 @@ func (r *routerV1) multiDrySwap(payer address, sp SingleSwapParams, numPools int
 			firstAmountIn = amountIn
 		}
 
-		if currentPoolIndex+1 >= numPools {
+		nextPoolIndex := currentPoolIndex + 1
+		if nextPoolIndex >= numPools {
 			return firstAmountIn, amountOut, nil
 		}
 
 		payer = routerAddr
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex+1)
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
 		sp.tokenIn = nextInput
 		sp.tokenOut = nextOutput
 		sp.fee = nextFee
@@ -90,13 +92,11 @@ func (r *routerV1) multiDrySwapNegative(sp SingleSwapParams, numPools int, swapP
 
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
-		}
-
-		if currentPoolIndex == 0 {
 			return firstAmountIn, amountOut, nil
 		}
 
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex-1)
+		nextPoolIndex := currentPoolIndex - 1
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
 		sp.amountSpecified = -amountIn
 		sp.tokenIn = nextInput
 		sp.tokenOut = nextOutput
@@ -116,7 +116,8 @@ func (r *routerV1) collectBackwardDrySwapInfo(payer address, sp SingleSwapParams
 			break
 		}
 
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex-1)
+		nextPoolIndex := currentPoolIndex - 1
+		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
 		sp.tokenIn = nextInput
 		sp.tokenOut = nextOutput
 		sp.fee = nextFee
@@ -150,7 +151,8 @@ func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwap
 			return firstAmountIn, amountOut
 		}
 
-		swapInfo[currentPoolIndex-1].amountSpecified = amountOut
+		nextPoolIndex := currentPoolIndex - 1
+		swapInfo[nextPoolIndex].amountSpecified = amountOut
 		payer = routerAddr
 	}
 
