@@ -224,7 +224,8 @@ func collectReward(cur realm, positionId uint64) {
 func unStakePosition(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	staker.UnStakeToken(cross(cur), positionId)
-	println("[EXPECTED] UnStaked position ID:", positionId, "isStaked now:", staker.IsStaked(positionId))
+	isStaked := staker.IsStaked(positionId)
+	println("[EXPECTED] UnStaked position ID:", positionId, "isStaked now:", isStaked)
 }
 
 func checkStakingInfo(cur realm, positionId uint64) {
@@ -232,52 +233,62 @@ func checkStakingInfo(cur realm, positionId uint64) {
 	isStaked := staker.IsStaked(positionId)
 	println("[EXPECTED] pos", positionId, "isStaked:", isStaked)
 	if isStaked {
-		println("[EXPECTED] pos", positionId, "targetPool:", staker.GetDepositTargetPoolPath(positionId))
-		println("[EXPECTED] pos", positionId, "liquidity:", staker.GetDepositLiquidityAsString(positionId))
-		println("[EXPECTED] pos", positionId, "stakeTime:", staker.GetDepositStakeTime(positionId))
+		targetPoolPath, _ := staker.GetDepositTargetPoolPath(positionId)
+		liquidity, _ := staker.GetDepositLiquidityAsString(positionId)
+		stakeTime, _ := staker.GetDepositStakeTime(positionId)
+		println("[EXPECTED] pos", positionId, "targetPool:", targetPoolPath)
+		println("[EXPECTED] pos", positionId, "liquidity:", liquidity)
+		println("[EXPECTED] pos", positionId, "stakeTime:", stakeTime)
 	}
 }
 
 func changePoolTier(cur realm, poolPath string, tier uint64) {
 	testing.SetRealm(adminRealm)
 	staker.ChangePoolTier(cross(cur), poolPath, tier)
-	println("[EXPECTED] ChangePoolTier", poolPath, "-> tier:", staker.GetPoolTier(poolPath))
+	currentTier := staker.GetPoolTier(poolPath)
+	println("[EXPECTED] ChangePoolTier", poolPath, "-> tier:", currentTier)
 }
 
 func removePoolTier(cur realm, poolPath string) {
 	testing.SetRealm(adminRealm)
 	staker.RemovePoolTier(cross(cur), poolPath)
-	println("[EXPECTED] RemovePoolTier", poolPath, "-> tier:", staker.GetPoolTier(poolPath))
+	currentTier := staker.GetPoolTier(poolPath)
+	println("[EXPECTED] RemovePoolTier", poolPath, "-> tier:", currentTier)
 }
 
 func addToken(cur realm, tokenPath string) {
 	testing.SetRealm(adminRealm)
 	staker.AddToken(cross(cur), tokenPath)
-	println("[EXPECTED] AddToken", tokenPath, "allowedCount:", len(staker.GetAllowedTokens()))
+	allowedTokens := staker.GetAllowedTokens()
+	println("[EXPECTED] AddToken", tokenPath, "allowedCount:", len(allowedTokens))
 }
 
 func removeToken(cur realm, tokenPath string) {
 	testing.SetRealm(adminRealm)
 	staker.RemoveToken(cross(cur), tokenPath)
-	println("[EXPECTED] RemoveToken", tokenPath, "allowedCount:", len(staker.GetAllowedTokens()))
+	allowedTokens := staker.GetAllowedTokens()
+	println("[EXPECTED] RemoveToken", tokenPath, "allowedCount:", len(allowedTokens))
 }
 
 func setUnStakingFee(cur realm, fee uint64) {
 	testing.SetRealm(adminRealm)
 	staker.SetUnStakingFee(cross(cur), fee)
-	println("[EXPECTED] SetUnStakingFee ->", staker.GetUnstakingFee())
+	unstakingFee := staker.GetUnstakingFee()
+	println("[EXPECTED] SetUnStakingFee ->", unstakingFee)
 }
 
 func setDepositGnsAmount(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
 	staker.SetDepositGnsAmount(cross(cur), amount)
-	println("[EXPECTED] SetDepositGnsAmount ->", staker.GetDepositGnsAmount())
+	depositGnsAmount := staker.GetDepositGnsAmount()
+	println("[EXPECTED] SetDepositGnsAmount ->", depositGnsAmount)
 }
 
 func setMinimumRewardAmount(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
 	staker.SetMinimumRewardAmount(cross(cur), amount)
-	println("[EXPECTED] SetMinimumRewardAmount ->", staker.GetMinimumRewardAmount())
+	minimumRewardAmount := staker.GetMinimumRewardAmount()
+	println("[EXPECTED] SetMinimumRewardAmount ->", minimumRewardAmount)
 }
 
 func setTokenMinimumRewardAmount(cur realm, tokenPath string, amount int64) {
@@ -290,7 +301,8 @@ func setTokenMinimumRewardAmount(cur realm, tokenPath string, amount int64) {
 func setWarmUp(cur realm, pct, timeDuration int64) {
 	testing.SetRealm(adminRealm)
 	staker.SetWarmUp(cross(cur), pct, timeDuration)
-	println("[EXPECTED] SetWarmUp warmupTiers:", len(staker.GetWarmupTemplate()))
+	warmupTemplate := staker.GetWarmupTemplate()
+	println("[EXPECTED] SetWarmUp warmupTiers:", len(warmupTemplate))
 }
 
 func createExternalIncentive(cur realm) {
@@ -314,8 +326,10 @@ func createExternalIncentive(cur realm) {
 		endTime,
 	)
 	println("[EXPECTED] CreateExternalIncentive id:", externalIncentiveId)
-	println("[EXPECTED] incentive rewardToken:", staker.GetIncentiveRewardToken(barFoo500PoolPath, externalIncentiveId))
-	println("[EXPECTED] incentive totalReward:", staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId))
+	rewardToken, _ := staker.GetIncentiveRewardToken(barFoo500PoolPath, externalIncentiveId)
+	totalReward, _ := staker.GetIncentiveTotalRewardAmount(barFoo500PoolPath, externalIncentiveId)
+	println("[EXPECTED] incentive rewardToken:", rewardToken)
+	println("[EXPECTED] incentive totalReward:", totalReward)
 }
 
 func skipPastIncentiveEnd(cur realm) {
@@ -328,7 +342,8 @@ func skipPastIncentiveEnd(cur realm) {
 func endExternalIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 	staker.EndExternalIncentive(cross(cur), barFoo500PoolPath, externalIncentiveId, adminAddr)
-	println("[EXPECTED] EndExternalIncentive refunded:", staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId))
+	refunded, _ := staker.GetIncentiveRefunded(barFoo500PoolPath, externalIncentiveId)
+	println("[EXPECTED] EndExternalIncentive refunded:", refunded)
 }
 
 func collectExternalIncentivePenalty(cur realm) {

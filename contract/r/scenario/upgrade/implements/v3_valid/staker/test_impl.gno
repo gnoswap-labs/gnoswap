@@ -91,59 +91,59 @@ func (t *TestStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 }
 
 // IStakerGetter interface
-func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
+func (t *TestStaker) GetPool(poolPath string) (*staker.Pool, error) {
 	return t.instance.GetPool(poolPath)
 }
 
-func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
+func (t *TestStaker) GetDeposit(lpTokenId uint64) (*staker.Deposit, error) {
 	return t.instance.GetDeposit(lpTokenId)
 }
 
-func (t *TestStaker) CollectableEmissionReward(positionId uint64) int64 {
+func (t *TestStaker) CollectableEmissionReward(positionId uint64) (int64, error) {
 	return t.instance.CollectableEmissionReward(positionId)
 }
 
-func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	return t.instance.CollectableExternalIncentiveReward(positionId, incentiveId)
 }
 
-func (t *TestStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetCreatedHeightOfIncentive(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveCreatedTimestamp(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveTotalRewardAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveDistributedRewardAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveAccumulatedPenaltyAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveDepositGnsAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRefunded(poolPath string, incentiveId string) bool {
+func (t *TestStaker) GetIncentiveRefunded(poolPath string, incentiveId string) (bool, error) {
 	return t.instance.GetIncentiveRefunded(poolPath, incentiveId)
 }
 
-func (t *TestStaker) IsIncentiveActive(poolPath string, incentiveId string) bool {
+func (t *TestStaker) IsIncentiveActive(poolPath string, incentiveId string) (bool, error) {
 	return t.instance.IsIncentiveActive(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
+func (t *TestStaker) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) (int64, error) {
 	return t.instance.GetDepositExternalRewardLastCollectTimestamp(lpTokenId, incentiveId)
 }
 
@@ -151,83 +151,83 @@ func (t *TestStaker) GetDepositGnsAmount() int64 {
 	return t.instance.GetDepositGnsAmount()
 }
 
-func (t *TestStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
+func (t *TestStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) (int64, error) {
 	return t.instance.GetDepositInternalRewardLastCollectTimestamp(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
+func (t *TestStaker) GetDepositCollectedInternalReward(lpTokenId uint64) (int64, error) {
 	return t.instance.GetDepositCollectedInternalReward(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64 {
+func (t *TestStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) (int64, error) {
 	return t.instance.GetDepositCollectedExternalReward(lpTokenId, incentiveId)
 }
 
-func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) (*u256.Uint, error) {
 	return t.instance.GetDepositLiquidity(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
+func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) (string, error) {
 	return t.instance.GetDepositLiquidityAsString(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositOwner(lpTokenId uint64) address {
+func (t *TestStaker) GetDepositOwner(lpTokenId uint64) (address, error) {
 	return t.instance.GetDepositOwner(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
+func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) (int64, error) {
 	return t.instance.GetDepositStakeTime(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositTargetPoolPath(lpTokenId uint64) string {
+func (t *TestStaker) GetDepositTargetPoolPath(lpTokenId uint64) (string, error) {
 	return t.instance.GetDepositTargetPoolPath(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositTickLower(lpTokenId uint64) int32 {
+func (t *TestStaker) GetDepositTickLower(lpTokenId uint64) (int32, error) {
 	return t.instance.GetDepositTickLower(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositTickUpper(lpTokenId uint64) int32 {
+func (t *TestStaker) GetDepositTickUpper(lpTokenId uint64) (int32, error) {
 	return t.instance.GetDepositTickUpper(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositWarmUp(lpTokenId uint64) []staker.Warmup {
+func (t *TestStaker) GetDepositWarmUp(lpTokenId uint64) ([]staker.Warmup, error) {
 	return t.instance.GetDepositWarmUp(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositExternalIncentiveIdList(lpTokenId uint64) []string {
+func (t *TestStaker) GetDepositExternalIncentiveIdList(lpTokenId uint64) ([]string, error) {
 	return t.instance.GetDepositExternalIncentiveIdList(lpTokenId)
 }
 
-func (t *TestStaker) GetExternalIncentiveByPoolPath(poolPath string) []staker.ExternalIncentive {
+func (t *TestStaker) GetExternalIncentiveByPoolPath(poolPath string) ([]staker.ExternalIncentive, error) {
 	return t.instance.GetExternalIncentiveByPoolPath(poolPath)
 }
 
-func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) (address, error) {
 	return t.instance.GetIncentiveCreator(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, error) {
 	return t.instance.GetIncentiveRewardAmount(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
+func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (string, error) {
 	return t.instance.GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) *u256.Uint {
+func (t *TestStaker) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (*u256.Uint, error) {
 	return t.instance.GetIncentiveRewardPerSecondX128(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardToken(poolPath string, incentiveId string) string {
+func (t *TestStaker) GetIncentiveRewardToken(poolPath string, incentiveId string) (string, error) {
 	return t.instance.GetIncentiveRewardToken(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
+func (t *TestStaker) GetIncentiveStartTimestamp(poolPath string, incentiveId string) (int64, error) {
 	return t.instance.GetIncentiveStartTimestamp(poolPath, incentiveId)
 }
 
@@ -239,15 +239,15 @@ func (t *TestStaker) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return t.instance.GetMinimumRewardAmountForToken(tokenPath)
 }
 
-func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) string {
+func (t *TestStaker) GetPoolStakedLiquidity(poolPath string) (string, error) {
 	return t.instance.GetPoolStakedLiquidity(poolPath)
 }
 
-func (t *TestStaker) GetPoolsByTier(tier uint64) []string {
+func (t *TestStaker) GetPoolsByTier(tier uint64) ([]string, error) {
 	return t.instance.GetPoolsByTier(tier)
 }
 
-func (t *TestStaker) GetPoolReward(tier uint64) int64 {
+func (t *TestStaker) GetPoolReward(tier uint64) (int64, error) {
 	return t.instance.GetPoolReward(tier)
 }
 
@@ -259,7 +259,7 @@ func (t *TestStaker) GetPoolTierCount(tier uint64) uint64 {
 	return t.instance.GetPoolTierCount(tier)
 }
 
-func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
+func (t *TestStaker) GetPoolTierRatio(poolPath string) (uint64, error) {
 	return t.instance.GetPoolTierRatio(poolPath)
 }
 
@@ -267,7 +267,7 @@ func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int6
 	return t.instance.GetSpecificTokenMinimumRewardAmount(tokenPath)
 }
 
-func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string {
+func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) (string, error) {
 	return t.instance.GetTargetPoolPathByIncentiveId(poolPath, incentiveId)
 }
 

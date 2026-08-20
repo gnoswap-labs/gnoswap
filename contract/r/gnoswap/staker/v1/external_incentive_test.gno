@@ -2142,7 +2142,8 @@ func TestEndExternalIncentive_RewardAmountInvariantAfterRefund(cur realm, t *tes
 
 	// GetIncentiveRemainingRewardAmount must reflect the post-refund value, not the stale
 	// pre-refund one.
-	remaining := s.GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
+	remaining, err := s.GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, updated.RewardAmount(), remaining)
 }
 
