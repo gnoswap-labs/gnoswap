@@ -5,10 +5,10 @@
 // Projects, tiers, deposits and reward managers all live in the shared KV
 // store, so an upgrade must leave them untouched. This test creates a project
 // and a deposit with v1, snapshots everything the public getters expose,
-// upgrades v1 -> v2_valid, asserts the snapshot is unchanged, and keeps
-// operating on the v1-created data through the new implementation (second
-// deposit, reward collection, principal withdrawal and the admin leftover
-// sweep).
+// upgrades v1 -> v2_invalid (proving the calls are blocked) -> v2_valid,
+// asserts the snapshot is unchanged, and keeps operating on the v1-created data
+// through the new implementation (second deposit, reward collection, principal
+// withdrawal and the admin leftover sweep).
 //
 // v2_valid is a copy of the v1 sources under a v2_valid module path, so it must
 // behave identically. (launchpad/v3_valid is deliberately NOT used here: it is a
@@ -33,6 +33,7 @@ import (
 
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/launchpad/v1"
+	_ "gno.land/r/gnoswap/launchpad/v2_invalid"
 	_ "gno.land/r/gnoswap/launchpad/v2_valid"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/rbac"
@@ -41,8 +42,9 @@ import (
 var t *testing.T
 
 const (
-	launchpadV1Path      = "gno.land/r/gnoswap/launchpad/v1"
-	launchpadV2ValidPath = "gno.land/r/gnoswap/launchpad/v2_valid"
+	launchpadV1Path        = "gno.land/r/gnoswap/launchpad/v1"
+	launchpadV2InvalidPath = "gno.land/r/gnoswap/launchpad/v2_invalid"
+	launchpadV2ValidPath   = "gno.land/r/gnoswap/launchpad/v2_valid"
 
 	oblPath = "gno.land/r/onbloc/obl.OBL"
 
@@ -116,7 +118,22 @@ func main(cur realm) {
 	captureV1Snapshot()
 	println()
 
-	println("[SCENARIO] 6. Upgrade to v2_valid and validate the v1 data")
+	println("[SCENARIO] 6. Upgrade to v2_invalid and prove the calls are blocked")
+	upgradeTo(cur, launchpadV2InvalidPath)
+	assertAborts(cur, func() {
+		testing.SetRealm(aliceRealm)
+		launchpad.DepositGns(cross(cur), tier30Id, depositAmount, "")
+	}, "[EXPECTED] DepositGns is blocked by v2_invalid")
+	assertAborts(cur, func() {
+		testing.SetRealm(aliceRealm)
+		launchpad.CollectRewardByDepositId(cross(cur), depositId)
+	}, "[EXPECTED] CollectRewardByDepositId is blocked by v2_invalid")
+	assertAborts(cur, func() {
+		launchpad.GetTotalGNSStakedAmount()
+	}, "[EXPECTED] the getters are blocked by v2_invalid too")
+	println()
+
+	println("[SCENARIO] 6-1. Upgrade to v2_valid and validate the v1 data")
 	upgradeTo(cur, launchpadV2ValidPath)
 	validateSnapshot()
 	println()
@@ -295,7 +312,10 @@ func validateSnapshot() {
 	depositValue, _ := launchpad.GetDepositAmount(depositId)
 	depositTier, _ := launchpad.GetDepositTier(depositId)
 	depositProject, _ := launchpad.GetDepositProjectID(depositId)
-	rewardTotal, _ := launchpad.GetProjectTierRewardTotalDistributeAmount(tier30Id)
+	rewardTotal, err := launchpad.GetProjectTierRewardTotalDistributeAmount(tier30Id)
+	uassert.NoError(t, err)
+	projectActive, err := launchpad.GetProjectActiveStatus(projectId)
+	uassert.NoError(t, err)
 
 	uassert.Equal(t, v1ProjectCount, launchpad.GetProjectCount())
 	uassert.Equal(t, v1ProjectName, projectName)
@@ -312,6 +332,7 @@ func validateSnapshot() {
 	uassert.Equal(t, v1DepositProjectID, depositProject)
 	uassert.Equal(t, v1RewardManagers, launchpad.GetProjectTierRewardManagerCount())
 	uassert.Equal(t, v1RewardTotalAmount, rewardTotal)
+	uassert.Equal(t, v1ProjectActive, projectActive)
 
 	println("[EXPECTED] project / tier / deposit / reward-manager data is unchanged")
 	println("[EXPECTED] project deposit amount:", deposit)
@@ -401,6 +422,11 @@ func transferLeftAfterUpgrade(cur realm) {
 	uassert.True(t, left+tier30Collected <= rewardAmount)
 }
 
+func assertAborts(cur realm, callback func(), logMessage string) {
+	uassert.AbortsContains(t, cur, "implementation", callback)
+	println(logMessage)
+}
+
 // Output:
 // [SCENARIO] 1. Initialize launchpad contract with v1
 // [EXPECTED] implementation: gno.land/r/gnoswap/launchpad/v1
@@ -436,7 +462,13 @@ func transferLeftAfterUpgrade(cur realm) {
 // [EXPECTED] snapshot tier 30 reward total: 100000000
 // [EXPECTED] snapshot project active: true
 //
-// [SCENARIO] 6. Upgrade to v2_valid and validate the v1 data
+// [SCENARIO] 6. Upgrade to v2_invalid and prove the calls are blocked
+// [EXPECTED] implementation: gno.land/r/gnoswap/launchpad/v2_invalid
+// [EXPECTED] DepositGns is blocked by v2_invalid
+// [EXPECTED] CollectRewardByDepositId is blocked by v2_invalid
+// [EXPECTED] the getters are blocked by v2_invalid too
+//
+// [SCENARIO] 6-1. Upgrade to v2_valid and validate the v1 data
 // [EXPECTED] implementation: gno.land/r/gnoswap/launchpad/v2_valid
 // [EXPECTED] project / tier / deposit / reward-manager data is unchanged
 // [EXPECTED] project deposit amount: 1000000000
