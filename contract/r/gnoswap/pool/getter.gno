@@ -264,3 +264,8 @@ func GetObservationState(poolPath string) (*ObservationState, error) {
 
 	return observationState.Clone(), nil
 }
+
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func GetPendingProtocolFees() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetPendingProtocolFees())
+}

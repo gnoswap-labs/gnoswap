@@ -649,3 +649,10 @@ func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTre
 		poolPath,
 	).(*rotree.ReadOnlyTree)
 }
+
+func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {
+	return t.ExecuteFn(
+		"GetPendingProtocolFees",
+		func(args ...any) any { return t.instance.GetPendingProtocolFees() },
+	).(map[string]int64)
+}

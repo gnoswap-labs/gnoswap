@@ -457,3 +457,10 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 	}
 	return t.instance.GetObservationState(poolPath)
 }
+
+func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
+	if !t.isActive("GetPendingProtocolFees") {
+		panic("test implementation: GetPendingProtocolFees not supported")
+	}
+	return t.instance.GetPendingProtocolFees()
+}

@@ -12,7 +12,8 @@ type mockProtocolFeeStore struct {
 	accuToDevOps         *bptree.BPTree
 	distributedToGovStakerHistory *bptree.BPTree
 	distributedToDevOpsHistory    *bptree.BPTree
-	reservedTokens []string
+	reservedTokens       []string
+	accrualPendingTokens []string
 }
 
 // handle devOpsPct store data
@@ -206,6 +207,58 @@ func (s *mockProtocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath s
 	return s.SetReservedTokens(0, rlm, filteredReservedTokens)
 }
 
+// handle accrualPendingTokens store data
+func (s *mockProtocolFeeStore) HasAccrualPendingTokensStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeAccrualPendingTokens(_ int, rlm realm) error {
+	s.accrualPendingTokens = []string{}
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetAccrualPendingTokens() []string {
+	return s.accrualPendingTokens
+}
+
+func (s *mockProtocolFeeStore) SetAccrualPendingTokens(_ int, rlm realm, accrualPendingTokens []string) error {
+	s.accrualPendingTokens = accrualPendingTokens
+	return nil
+}
+
+func (s *mockProtocolFeeStore) AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	for _, accrualPendingToken := range s.accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			return nil
+		}
+	}
+	s.accrualPendingTokens = append(s.accrualPendingTokens, tokenPath)
+	return nil
+}
+
+func (s *mockProtocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	filtered := make([]string, 0, len(s.accrualPendingTokens))
+	listed := false
+	for _, accrualPendingToken := range s.accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			listed = true
+			continue
+		}
+
+		filtered = append(filtered, accrualPendingToken)
+	}
+
+	if !listed {
+		return nil
+	}
+
+	return s.SetAccrualPendingTokens(0, rlm, filtered)
+}
+
+func (s *mockProtocolFeeStore) ClearAccrualPendingTokens(_ int, rlm realm) error {
+	return s.SetAccrualPendingTokens(0, rlm, []string{})
+}
+
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
@@ -214,5 +267,6 @@ func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 		distributedToGovStakerHistory: protocol_fee.NewBPTreeN(16),
 		distributedToDevOpsHistory:    protocol_fee.NewBPTreeN(16),
 		reservedTokens:                []string{},
+		accrualPendingTokens:          []string{},
 	}
 }

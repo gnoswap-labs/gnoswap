@@ -135,7 +135,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 				{timestamp: 0, tickCumulative: 0},
 				{timestamp: 10, tickCumulative: 120},
 			},
-			wantErr: "[GNOSWAP-POOL-027]",
+			wantErr: "[GNOSWAP-POOL-026]",
 		},
 		{
 			// Timestamps are int64. A uint32-based comparison would sort

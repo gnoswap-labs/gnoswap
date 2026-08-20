@@ -605,3 +605,10 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 	).([]any)
 	return result[0].(*pool.ObservationState), result[1].(error)
 }
+
+func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
+	return t.ExecuteFn(
+		"GetPendingProtocolFees",
+		func(args ...any) any { return t.instance.GetPendingProtocolFees() },
+	).(map[string]int64)
+}

@@ -62,9 +62,7 @@ func (i *poolV1) CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -117,7 +115,6 @@ func (i *poolV1) CreatePool(
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 		gns.TransferFrom(cross(rlm), previousRealmAddr, poolAddr, poolCreationFee)
-		i.addPendingProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
@@ -128,7 +125,8 @@ func (i *poolV1) CreatePool(
 			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}
-	i.addToProtocolFee(0, rlm)
+
+	i.settleProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -152,9 +150,7 @@ func (i *poolV1) CreatePool(
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()

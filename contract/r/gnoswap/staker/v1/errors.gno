@@ -27,7 +27,6 @@ const (
 	errAddExistingToken              = "[GNOSWAP-STAKER-020] cannot add existing token"
 	errInvalidAddress                = "[GNOSWAP-STAKER-021] invalid address"
 	errIsNotEndedIncentive           = "[GNOSWAP-STAKER-022] incentive is not ended yet"
-	errSpoofedRealm                  = "[GNOSWAP-STAKER-023] rlm does not match the current crossing frame"
 )
 
 func makeErrorWithDetails(message string, details string) error {

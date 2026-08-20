@@ -181,10 +181,10 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map
 		return 0, make(map[string]int64), err
 	}
 
-	protocolFeeDistributedAmounts := gs.getDistributedProtocolFees()
+	protocolFeeAccruedAmounts := gs.getAccrualPendingProtocolFees()
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	protocolFeeResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
-	protocolFeeRewards, err := protocolFeeResolver.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	protocolFeeRewards, err := protocolFeeResolver.GetClaimableRewardAmounts(protocolFeeAccruedAmounts, rewardID, time.Now().Unix())
 	if err != nil {
 		return 0, make(map[string]int64), err
 	}

@@ -4,11 +4,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
 	"math"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -39,6 +40,43 @@ var (
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
+
+	tickLower = int32(-960)
+	tickUpper = int32(960)
+
+	// snapshot of every getter value written by v1; the KV store is shared
+	// across implementations, so each of these must survive both upgrades
+	v1PoolLiquidity      string
+	v1PoolSqrtPriceX96   string
+	v1PoolTick           int32
+	v1PoolFeeGrowth0     string
+	v1PoolFeeGrowth1     string
+	v1PoolTickSpacing    int32
+	v1PoolFee            uint32
+	v1PoolToken0         string
+	v1PoolToken1         string
+	v1PoolBalance0       int64
+	v1PoolBalance1       int64
+	v1PoolProtocolFee0   int64
+	v1PoolProtocolFee1   int64
+	v1PoolPositionCount  int
+	v1TickLowerGross     string
+	v1TickLowerNet       string
+	v1TickUpperGross     string
+	v1TickUpperNet       string
+	v1TickLowerInit      bool
+	v1PoolPosLiquidity   string
+	v1PoolCreationFee    int64
+	v1WithdrawalFee      uint64
+	v1PositionCount      int
+	v1PositionLiquidity  string
+	v1PositionOwner      address
+	v1PositionTickLower  int32
+	v1PositionTickUpper  int32
+	v1PositionPoolKey    string
+	v1PositionIsBurned   bool
+	v1PositionIsInRange  bool
+	v1PositionTokensOwed int64
 )
 
 const (
@@ -68,22 +106,28 @@ func main(cur realm) {
 	checkPositionData(cur, positionId)
 	println()
 
+	println("[SCENARIO] 5-1. Snapshot every pool / position getter written by v1")
+	captureV1Snapshot()
+	println()
+
 	println("[SCENARIO] 6. Pool Contract Upgrade to v2_invalid")
 	upgradePoolContractToV2Invalid(cur)
 	println()
 
 	println("[SCENARIO] 7. Mint position with v2_invalid (should panic)")
-	withAbortsWithMessage(cur, func() {
-		mintPosition(cur, barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			mintPosition(cur, barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+		},
 		"[EXPECTED] Mint position panics correctly with v2_invalid", // log message when success panic
 	)
 	println()
 
 	println("[SCENARIO] 8. Check pool data with v2_invalid (should panic):", barFoo500PoolPath)
-	withAbortsWithMessage(cur, func() {
-		checkPoolData(cur, barFoo500PoolPath)
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			checkPoolData(cur, barFoo500PoolPath)
+		},
 		"[EXPECTED] Check pool data panics correctly with v2_invalid", // log message when success panic
 	)
 	println()
@@ -104,9 +148,131 @@ func main(cur realm) {
 	checkPositionData(cur, positionId)
 	println()
 
-	println("[SCENARIO] 13. Mint position with v3_valid after upgrade")
+	println("[SCENARIO] 13. Validate every v1 getter value after the upgrades")
+	validateV1Snapshot()
+	println()
+
+	println("[SCENARIO] 14. Mint position with v3_valid after upgrade")
 	mintPosition(cur, barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
+
+	println("[SCENARIO] 15. The new mint must only add liquidity, not reshape v1 data")
+	validateAfterSecondMint(cur)
+	println()
+}
+
+// positionKey mirrors the pool-side position key for the tick range used here.
+func positionKey() string {
+	return pool.EncodePositionKey(tickLower, tickUpper)
+}
+
+func captureV1Snapshot() {
+	key := positionKey()
+
+	v1PoolLiquidity = pool.GetLiquidity(barFoo500PoolPath)
+	v1PoolSqrtPriceX96 = pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
+	v1PoolTick = pool.GetSlot0Tick(barFoo500PoolPath)
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1 = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	v1PoolTickSpacing = pool.GetTickSpacing(barFoo500PoolPath)
+	v1PoolFee = pool.GetFee(barFoo500PoolPath)
+	v1PoolToken0 = pool.GetToken0Path(barFoo500PoolPath)
+	v1PoolToken1 = pool.GetToken1Path(barFoo500PoolPath)
+	v1PoolBalance0, v1PoolBalance1 = pool.GetBalances(barFoo500PoolPath)
+	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	v1PoolPositionCount = pool.GetPoolPositionCount(barFoo500PoolPath)
+	v1TickLowerGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
+	v1TickLowerNet = pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower)
+	v1TickUpperGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper)
+	v1TickUpperNet = pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper)
+	v1TickLowerInit = pool.GetTickInitialized(barFoo500PoolPath, tickLower)
+	v1PoolPosLiquidity = pool.GetPositionLiquidity(barFoo500PoolPath, key)
+	v1PoolCreationFee = pool.GetPoolCreationFee()
+	v1WithdrawalFee = pool.GetWithdrawalFee()
+
+	v1PositionCount = position.GetPositionCount()
+	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
+	v1PositionOwner = position.GetPositionOwner(positionId)
+	v1PositionTickLower = position.GetPositionTickLower(positionId)
+	v1PositionTickUpper = position.GetPositionTickUpper(positionId)
+	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
+	v1PositionIsBurned = position.IsBurned(positionId)
+	v1PositionIsInRange = position.IsInRange(positionId)
+	v1PositionTokensOwed = position.GetPositionTokensOwed0(positionId)
+
+	println("[EXPECTED] pool liquidity:", v1PoolLiquidity)
+	println("[EXPECTED] pool balances:", v1PoolBalance0, v1PoolBalance1)
+	println("[EXPECTED] pool position count:", v1PoolPositionCount)
+	println("[EXPECTED] tick liquidity gross (lower / upper):", v1TickLowerGross, v1TickUpperGross)
+	println("[EXPECTED] tick liquidity net (lower / upper):", v1TickLowerNet, v1TickUpperNet)
+	println("[EXPECTED] pool-side position liquidity:", v1PoolPosLiquidity)
+	println("[EXPECTED] position-side liquidity:", v1PositionLiquidity)
+	println("[EXPECTED] position count:", v1PositionCount)
+
+	// the pool-side and position-side ledgers must agree
+	uassert.Equal(t, v1PoolLiquidity, v1PositionLiquidity)
+	uassert.Equal(t, v1PoolLiquidity, v1PoolPosLiquidity)
+	uassert.Equal(t, v1PoolLiquidity, v1TickLowerGross)
+	uassert.True(t, v1TickLowerInit)
+}
+
+func validateV1Snapshot() {
+	key := positionKey()
+	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
+	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+
+	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolSqrtPriceX96, pool.GetSlot0SqrtPriceX96(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolFeeGrowth0, feeGrowth0)
+	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
+	uassert.Equal(t, v1PoolTickSpacing, pool.GetTickSpacing(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolFee, pool.GetFee(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolToken0, pool.GetToken0Path(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolToken1, pool.GetToken1Path(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolBalance0, balance0)
+	uassert.Equal(t, v1PoolBalance1, balance1)
+	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
+	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
+	uassert.Equal(t, v1PoolPositionCount, pool.GetPoolPositionCount(barFoo500PoolPath))
+	uassert.Equal(t, v1TickLowerGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
+	uassert.Equal(t, v1TickLowerNet, pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower))
+	uassert.Equal(t, v1TickUpperGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper))
+	uassert.Equal(t, v1TickUpperNet, pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper))
+	uassert.Equal(t, v1TickLowerInit, pool.GetTickInitialized(barFoo500PoolPath, tickLower))
+	uassert.Equal(t, v1PoolPosLiquidity, pool.GetPositionLiquidity(barFoo500PoolPath, key))
+	uassert.Equal(t, v1PoolCreationFee, pool.GetPoolCreationFee())
+	uassert.Equal(t, v1WithdrawalFee, pool.GetWithdrawalFee())
+
+	uassert.Equal(t, v1PositionCount, position.GetPositionCount())
+	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
+	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
+	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
+	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
+	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
+	uassert.Equal(t, v1PositionIsBurned, position.IsBurned(positionId))
+	uassert.Equal(t, v1PositionIsInRange, position.IsInRange(positionId))
+	uassert.Equal(t, v1PositionTokensOwed, position.GetPositionTokensOwed0(positionId))
+	uassert.True(t, pool.ExistsPoolPath(barFoo500PoolPath))
+
+	println("[EXPECTED] every pool and position getter still returns the v1 value")
+}
+
+func validateAfterSecondMint(cur realm) {
+	key := positionKey()
+
+	println("[EXPECTED] pool liquidity after the second mint:", pool.GetLiquidity(barFoo500PoolPath))
+	println("[EXPECTED] pool-side position liquidity:", pool.GetPositionLiquidity(barFoo500PoolPath, key))
+	println("[EXPECTED] pool position count:", pool.GetPoolPositionCount(barFoo500PoolPath))
+	println("[EXPECTED] position count:", position.GetPositionCount())
+	println("[EXPECTED] tick liquidity gross (lower):", pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
+
+	// the two positions share the same tick range, so the pool-side position
+	// entry is the sum of both and the first position is untouched
+	uassert.Equal(t, v1PositionCount+1, position.GetPositionCount())
+	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
+	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetPositionLiquidity(barFoo500PoolPath, key))
+	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
 }
 
 func initialize(cur realm) {
@@ -223,6 +389,16 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] TickLower: -960
 // [EXPECTED] TickUpper: 960
 //
+// [SCENARIO] 5-1. Snapshot every pool / position getter written by v1
+// [EXPECTED] pool liquidity: 1066918731
+// [EXPECTED] pool balances: 50000000 50000000
+// [EXPECTED] pool position count: 1
+// [EXPECTED] tick liquidity gross (lower / upper): 1066918731 1066918731
+// [EXPECTED] tick liquidity net (lower / upper): 1066918731 -1066918731
+// [EXPECTED] pool-side position liquidity: 1066918731
+// [EXPECTED] position-side liquidity: 1066918731
+// [EXPECTED] position count: 1
+//
 // [SCENARIO] 6. Pool Contract Upgrade to v2_invalid
 // [INFO] Upgrade pool contract to v2_invalid
 // [EXPECTED] Upgraded pool contract to v2_invalid: gno.land/r/gnoswap/pool/v2_invalid
@@ -265,9 +441,19 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] TickLower: -960
 // [EXPECTED] TickUpper: 960
 //
-// [SCENARIO] 13. Mint position with v3_valid after upgrade
+// [SCENARIO] 13. Validate every v1 getter value after the upgrades
+// [EXPECTED] every pool and position getter still returns the v1 value
+//
+// [SCENARIO] 14. Mint position with v3_valid after upgrade
 // [INFO] Mint position
 // [EXPECTED] Position ID: 2
 // [EXPECTED] Liquidity: 640151238
 // [EXPECTED] Amount0: 30000000
 // [EXPECTED] Amount1: 30000000
+//
+// [SCENARIO] 15. The new mint must only add liquidity, not reshape v1 data
+// [EXPECTED] pool liquidity after the second mint: 1707069969
+// [EXPECTED] pool-side position liquidity: 1707069969
+// [EXPECTED] pool position count: 1
+// [EXPECTED] position count: 2
+// [EXPECTED] tick liquidity gross (lower): 1707069969

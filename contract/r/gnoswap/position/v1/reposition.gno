@@ -2,7 +2,8 @@ package position
 
 import (
 	"chain"
-	"errors"
+
+	"gno.land/r/gnoswap/access"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
@@ -36,9 +37,7 @@ func (p *positionV1) Reposition(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 

@@ -295,3 +295,8 @@ func GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree
 func GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return getImplementation().GetPoolHistoricalTicks(poolPath)
 }
+
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func GetPendingProtocolFees() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetPendingProtocolFees())
+}

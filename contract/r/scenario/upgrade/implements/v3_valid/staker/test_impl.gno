@@ -306,3 +306,7 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rot
 func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolHistoricalTicks(poolPath)
 }
+
+func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {
+	return t.instance.GetPendingProtocolFees()
+}

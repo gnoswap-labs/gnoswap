@@ -462,7 +462,7 @@ func TestMakeLaunchpadRewardID(cur realm, t *testing.T) {
 	}
 }
 
-func TestClaimDistributedProtocolFeeRewardByTokenPath_NoDistributionDoesNotMaterializeTokenState(cur realm, t *testing.T) {
+func TestClaimAccruedProtocolFeeRewardByTokenPath_NoAccrualDoesNotMaterializeTokenState(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
 	caller := makeFakeAddress("f2-no-distribution")
 	stakerAddress := caller.String()
@@ -473,7 +473,7 @@ func TestClaimDistributedProtocolFeeRewardByTokenPath_NoDistributionDoesNotMater
 	err := managerResolver.addStake(stakerAddress, 100, 10)
 	uassert.NoError(t, err)
 
-	processedManager, reward, processed, err := gs.claimDistributedProtocolFeeRewardByTokenPath(stakerAddress, tokenPath, 0, 20)
+	processedManager, reward, processed, err := gs.claimAccruedProtocolFeeRewardByTokenPath(stakerAddress, tokenPath, 0, 20)
 
 	uassert.NoError(t, err)
 	uassert.False(t, processed)

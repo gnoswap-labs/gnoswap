@@ -15,6 +15,12 @@ func (pf *protocolFeeV1) GetReservedTokens() []string {
 	return pf.getProtocolFeeState().ReservedTokens()
 }
 
+// GetAccrualPendingProtocolFees returns the same amounts as
+// ConsumeAccrualPendingProtocolFees without clearing the pending list.
+func (pf *protocolFeeV1) GetAccrualPendingProtocolFees() map[string]int64 {
+	return pf.accrualPendingProtocolFees(pf.getProtocolFeeState())
+}
+
 // GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.
 func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)

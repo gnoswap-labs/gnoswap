@@ -145,7 +145,8 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	router.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	router.addToProtocolFee(0, cur)
+	router.settleProtocolFee(0, cur, barPath, 0)
+	router.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := router.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
