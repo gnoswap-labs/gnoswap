@@ -54,17 +54,7 @@ func cloneObservationState(src *ObservationState) *ObservationState {
 		return nil
 	}
 
-	observations := make(map[uint16]*Observation)
-	for index, observation := range src.observations {
-		observations[index] = observation.Clone()
-	}
-
-	return &ObservationState{
-		observations:    observations,
-		index:           src.index,
-		cardinality:     src.cardinality,
-		cardinalityNext: src.cardinalityNext,
-	}
+	return src.Clone()
 }
 
 func clonePool(src *Pool) *Pool {

@@ -35,6 +35,21 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 	os.observations = observations
 }
 
+func (os *ObservationState) Clone() *ObservationState {
+	observations := make(map[uint16]*Observation)
+
+	for index, observation := range os.observations {
+		observations[index] = observation.Clone()
+	}
+
+	return &ObservationState{
+		index:           os.index,
+		cardinality:     os.cardinality,
+		cardinalityNext: os.cardinalityNext,
+		observations:    observations,
+	}
+}
+
 type Observation struct {
 	blockTimestamp                    int64  // timestamp of the observation
 	tickCumulative                    int64  // cumulative tick up to this timestamp
@@ -43,8 +58,8 @@ type Observation struct {
 }
 
 // Observation Getters methods
-func (o *Observation) BlockTimestamp() int64       { return o.blockTimestamp }
-func (o *Observation) TickCumulative() int64       { return o.tickCumulative }
+func (o *Observation) BlockTimestamp() int64 { return o.blockTimestamp }
+func (o *Observation) TickCumulative() int64 { return o.tickCumulative }
 func (o *Observation) SecondsPerLiquidityCumulativeX128() string {
 	return o.secondsPerLiquidityCumulativeX128
 }
