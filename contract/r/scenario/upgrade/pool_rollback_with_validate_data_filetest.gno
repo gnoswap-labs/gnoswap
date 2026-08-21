@@ -5,6 +5,7 @@ package main
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	"math"
 	"testing"
 	"time"
@@ -157,7 +158,7 @@ func checkPoolData(cur realm, poolPath string) {
 	println("[INFO] Check pool data")
 	testing.SetRealm(adminRealm)
 
-	poolData, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolData, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 
 	println("[EXPECTED] Pool data:", poolData.PoolPath())
 	println("[EXPECTED] Token0 path:", poolData.Token0Path())
@@ -172,7 +173,7 @@ func checkPositionData(cur realm, positionId uint64) {
 	println("[INFO] Check position data")
 	testing.SetRealm(adminRealm)
 
-	positionData, _ := position.GetPosition(positionId)
+	positionData, _ := position.GetPositions().Get(utils.Uint64ToString(positionId)).(position.Position)
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] PoolKey:", positionData.PoolKey())
 	println("[EXPECTED] Liquidity:", positionData.Liquidity())

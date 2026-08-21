@@ -232,7 +232,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetPool(cur realm, t *testing.T) {
+func TestGetPoolsGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func(cur realm, t *testing.T)
@@ -280,10 +280,13 @@ func TestGetPool(cur realm, t *testing.T) {
 				tt.setupFn(cur, t)
 			}
 
-			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
+			poolPath := GetPoolPath(barPath, fooPath, fee500)
+			value := getMockInstance().GetPools().Get(poolPath)
 			if tt.shouldError {
-				uassert.Error(t, err, "expected error")
+				uassert.True(t, value == nil, "expected missing pool")
 			} else {
+				pool, ok := value.(*pl.Pool)
+				uassert.True(t, ok)
 				if tt.verifyFn != nil {
 					tt.verifyFn(t, pool)
 				}

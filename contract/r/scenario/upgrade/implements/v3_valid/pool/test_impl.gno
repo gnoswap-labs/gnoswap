@@ -3,6 +3,7 @@ package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -91,10 +92,6 @@ func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zer
 
 func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
-}
-
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	return t.instance.GetPool(token0Path, token1Path, fee)
 }
 
 func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
@@ -241,26 +238,16 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	return t.instance.GetPoolCount()
-}
-
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	return t.instance.GetPoolPaths(offset, count)
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
+	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return t.instance.GetFeeAmountTickSpacings()
 }
 
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	return t.instance.GetPoolPositionCount(poolPath)
-}
-
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolPositions(poolPath)
 }
 
 // Tick enumeration
@@ -275,10 +262,6 @@ func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, erro
 
 func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
-}
-
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	return t.instance.GetPosition(poolPath, key)
 }
 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {

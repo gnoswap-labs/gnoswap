@@ -88,7 +88,7 @@ func mintPosition(cur realm) {
 
 	pn.Mint(cross(cur), barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }

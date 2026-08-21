@@ -11,6 +11,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -203,7 +204,7 @@ func createAndVoteParameterChangeProposal(cur realm) {
 	println("[EXPECTED] yea / nay:", yea, nay)
 	println("[EXPECTED] quorum / max / yes / no:", quorum, maxVotingWeight, yesWeight, noWeight)
 	println("[EXPECTED] admin vote weight:", voteWeight)
-	println("[EXPECTED] voting info count:", govGovernance.GetVotingInfoCount(paramProposalId))
+	println("[EXPECTED] voting info count:", govGovernance.GetVotingInfos(paramProposalId).Size())
 	println("[EXPECTED] admin has voted:", govGovernance.ExistsVotingInfo(paramProposalId, adminAddr))
 
 	// the whole delegated stake voted yes, so the quorum is met
@@ -214,8 +215,8 @@ func createAndVoteParameterChangeProposal(cur realm) {
 }
 
 func captureV1Snapshot() {
-	v1ProposalCount = govGovernance.GetProposalCount()
-	v1ProposalIDs = govGovernance.GetProposalIDs(0, 10)
+	v1ProposalCount = govGovernance.GetProposals().Size()
+	v1ProposalIDs = collectProposalIDs(0, 10)
 	v1TextStatus, _ = govGovernance.GetProposalStatusByProposalId(textProposalId)
 	v1ParamProposer, _ = govGovernance.GetProposerByProposalId(paramProposalId)
 	v1ParamTitle, _ = govGovernance.GetTitleByProposalId(paramProposalId)
@@ -229,7 +230,7 @@ func captureV1Snapshot() {
 	v1ParamConfigVer, _ = govGovernance.GetConfigVersionByProposalId(paramProposalId)
 	v1AdminVoteWeight, _ = govGovernance.GetVoteWeight(paramProposalId, adminAddr)
 	v1AdminVotedAt, _ = govGovernance.GetVotedAt(paramProposalId, adminAddr)
-	v1UserProposalCount = govGovernance.GetUserProposalCount(adminAddr)
+	v1UserProposalCount = userProposalCount(adminAddr)
 	v1LatestConfigVer = govGovernance.GetLatestConfigVersion()
 	v1VotingPeriod = govGovernance.GetLatestConfig().VotingPeriod
 
@@ -285,8 +286,8 @@ func validateSnapshot() {
 	uassert.NoError(t, err)
 
 	// compare the proposal ids themselves, not only how many there are
-	proposalIDs := govGovernance.GetProposalIDs(0, 10)
-	uassert.Equal(t, v1ProposalCount, govGovernance.GetProposalCount())
+	proposalIDs := collectProposalIDs(0, 10)
+	uassert.Equal(t, v1ProposalCount, govGovernance.GetProposals().Size())
 	uassert.Equal(t, len(v1ProposalIDs), len(proposalIDs))
 	for i, id := range v1ProposalIDs {
 		uassert.Equal(t, id, proposalIDs[i])
@@ -303,14 +304,14 @@ func validateSnapshot() {
 	uassert.Equal(t, v1ParamConfigVer, configVer)
 	uassert.Equal(t, v1AdminVoteWeight, voteWeight)
 	uassert.Equal(t, v1AdminVotedAt, votedAt)
-	uassert.Equal(t, v1UserProposalCount, govGovernance.GetUserProposalCount(adminAddr))
+	uassert.Equal(t, v1UserProposalCount, userProposalCount(adminAddr))
 	uassert.Equal(t, v1LatestConfigVer, govGovernance.GetLatestConfigVersion())
 	uassert.Equal(t, v1VotingPeriod, govGovernance.GetLatestConfig().VotingPeriod)
 	uassert.True(t, govGovernance.ExistsProposal(paramProposalId))
 	uassert.True(t, govGovernance.ExistsVotingInfo(paramProposalId, adminAddr))
 	uassert.False(t, govGovernance.ExistsVotingInfo(paramProposalId, aliceAddr))
 
-	println("[EXPECTED] proposal count:", govGovernance.GetProposalCount())
+	println("[EXPECTED] proposal count:", govGovernance.GetProposals().Size())
 	for _, id := range proposalIDs {
 		println("[EXPECTED] proposal id after upgrade:", id)
 	}
@@ -425,3 +426,32 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] staker unstaking fee before / after: 100 150
 // [EXPECTED] config version after reconfigure: 2
 // [EXPECTED] latest config voting period: 604800
+
+// collectProposalIDs pages the read-only proposal view and returns the IDs its
+// keys encode.
+func collectProposalIDs(offset, count int) []int64 {
+	ids := []int64{}
+	govGovernance.GetProposals().IterateByOffset(offset, count, func(key string, _ any) bool {
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
+		return false
+	})
+
+	return ids
+}
+
+// userProposalCount reads how many proposals a user created through the
+// read-only view.
+func userProposalCount(user address) int {
+	proposalIDs, ok := govGovernance.GetUserProposals().Get(user.String()).([]int64)
+	if !ok {
+		return 0
+	}
+
+	return len(proposalIDs)
+}

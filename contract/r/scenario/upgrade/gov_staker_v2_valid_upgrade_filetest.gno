@@ -217,7 +217,7 @@ func redelegate(cur realm, from, delegatee, newDelegatee address, amount int64) 
 	testing.SetRealm(testing.NewUserRealm(from))
 	redelegated := govStaker.Redelegate(cross(cur), delegatee, newDelegatee, amount)
 	ufmt.Printf("[EXPECTED] v2_valid redelegated %d GNS from admin to bob\n", redelegated)
-	ufmt.Printf("[EXPECTED] alice->bob delegation count: %d\n", govStaker.GetUserDelegationCount(from, newDelegatee))
+	ufmt.Printf("[EXPECTED] alice->bob delegation count: %d\n", len(govStaker.GetUserDelegationIDs(from, newDelegatee)))
 }
 
 func collectUndelegatedGns(cur realm, addr address) {

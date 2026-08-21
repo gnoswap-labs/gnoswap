@@ -2,29 +2,14 @@ package launchpad
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
-// GetProjectCount returns the total number of projects.
-func GetProjectCount() int {
-	return getImplementation().GetProjectCount()
-}
-
-// GetProjectIDs returns a paginated list of project IDs.
-func GetProjectIDs(offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetProjectIDs(offset, count))
-}
-
-// GetProject retrieves a project by its ID.
-// Returns a cloned project to prevent external modification.
-func GetProject(projectId string) (*Project, error) {
-	project, err := getImplementation().GetProject(projectId)
-	if err != nil {
-		return nil, err
-	}
-	if project == nil {
-		return nil, nil
-	}
-	return project.Clone(), nil
+// GetProjects returns a read-only view of every project, keyed by project ID.
+// Callers paginate it themselves through IterateByOffset. Reading an entry
+// yields a clone, so the view cannot mutate realm state.
+func GetProjects() *rotree.ReadOnlyTree {
+	return getImplementation().GetProjects()
 }
 
 // GetProjectName returns the name of a project by its ID.
@@ -154,14 +139,12 @@ func GetCurrentDepositId() int64 {
 	return getImplementation().GetCurrentDepositId()
 }
 
-// GetProjectTierDepositCount returns the total number of deposits for a project tier.
-func GetProjectTierDepositCount(projectId string, tier int64) int {
-	return getImplementation().GetProjectTierDepositCount(projectId, tier)
-}
-
-// GetProjectTierDepositIDs returns a paginated list of deposit IDs for a project tier.
-func GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetProjectTierDepositIDs(projectId, tier, offset, count))
+// GetProjectTierRewards returns a read-only view of a project tier's reward
+// states, keyed by deposit ID. Reading an entry yields a clone, so the view
+// cannot mutate realm state. nil is returned when the project tier does not
+// exist.
+func GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
+	return getImplementation().GetProjectTierRewards(projectId, tier)
 }
 
 // GetDeposit retrieves a deposit by its ID.

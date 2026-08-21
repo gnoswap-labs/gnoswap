@@ -2,6 +2,7 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -9,12 +10,6 @@ import (
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return pl.GetPoolPath(token0Path, token1Path, fee)
-}
-
-// GetPool retrieves a pool instance based on the provided token paths and fee tier.
-func (i *poolV1) GetPool(token0Path, token1Path string, fee uint32) (*pl.Pool, error) {
-	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-	return i.getPool(poolPath)
 }
 
 // GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
@@ -252,23 +247,10 @@ func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint,
 	return tick, liquidity, nil
 }
 
-// GetPoolCount returns the total number of pools.
-func (i *poolV1) GetPoolCount() int {
-	pools := i.store.GetPools()
-	return pools.Size()
-}
-
-// GetPoolPaths returns a paginated list of pool paths.
-func (i *poolV1) GetPoolPaths(offset, count int) []string {
-	pools := i.store.GetPools()
-	poolPaths := make([]string, 0)
-
-	pools.IterateByOffset(offset, count, func(key string, _ any) bool {
-		poolPaths = append(poolPaths, key)
-		return false
-	})
-
-	return poolPaths
+// GetPools returns a read-only view of every pool, keyed by pool path.
+// Callers paginate it themselves through IterateByOffset.
+func (i *poolV1) GetPools() *rotree.ReadOnlyTree {
+	return rotree.Wrap(i.store.GetPools(), clonePoolEntry)
 }
 
 // GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
@@ -276,31 +258,18 @@ func (i *poolV1) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return i.store.GetFeeAmountTickSpacing()
 }
 
-// GetPoolPositionCount returns the number of positions in a pool.
-func (i *poolV1) GetPoolPositionCount(poolPath string) int {
+// GetPoolPositions returns a read-only view of a pool's positions, keyed by
+// position key. Callers paginate it themselves through IterateByOffset.
+// nil is returned when the pool does not exist.
+func (i *poolV1) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return 0
+		return nil
 	}
 
-	return pool.Positions().Size()
-}
-
-// GetPoolPositionKeys returns a paginated list of position keys in a pool.
-func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return []string{}
-	}
-
-	positionKeys := make([]string, 0)
-
-	pool.Positions().IterateByOffset(offset, count, func(key string, _ any) bool {
-		positionKeys = append(positionKeys, key)
-		return false
-	})
-
-	return positionKeys
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But PositionInfo is immutable, so we can just return the entry as is.
+	return rotree.Wrap(pool.Positions(), nil)
 }
 
 // Tick enumeration
@@ -349,26 +318,6 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 	return tickBitmap, nil
 }
 
-// GetPosition returns the position info for a given key.
-func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return pl.NewPositionInfo(), err
-	}
-
-	iPositionInfo := pool.Positions().Get(key)
-	if iPositionInfo == nil {
-		return pl.NewPositionInfo(), ufmt.Errorf("position %s not found", key)
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		return pl.NewPositionInfo(), ufmt.Errorf("failed to cast positionInfo: %T", iPositionInfo)
-	}
-
-	return positionInfo, nil
-}
-
 // GetObservationState returns the observation state for a pool.
 func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
 	pool, err := i.getPool(poolPath)
@@ -378,7 +327,7 @@ func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, err
 
 	observationState := pool.ObservationState()
 	if observationState == nil {
-		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation state not found for pool %s", poolPath))
 	}
 
 	return observationState, nil

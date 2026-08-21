@@ -263,7 +263,7 @@ func collectRewardWithV1(cur realm) {
 }
 
 func captureV1Snapshot() {
-	v1ProjectCount = launchpad.GetProjectCount()
+	v1ProjectCount = launchpad.GetProjects().Size()
 	v1ProjectName, _ = launchpad.GetProjectName(projectId)
 	v1ProjectTokenPath, _ = launchpad.GetProjectTokenPath(projectId)
 	v1ProjectRecipient, _ = launchpad.GetProjectRecipient(projectId)
@@ -317,7 +317,7 @@ func validateSnapshot() {
 	projectActive, err := launchpad.GetProjectActiveStatus(projectId)
 	uassert.NoError(t, err)
 
-	uassert.Equal(t, v1ProjectCount, launchpad.GetProjectCount())
+	uassert.Equal(t, v1ProjectCount, launchpad.GetProjects().Size())
 	uassert.Equal(t, v1ProjectName, projectName)
 	uassert.Equal(t, v1ProjectTokenPath, tokenPath)
 	uassert.Equal(t, v1ProjectRecipient, recipient)
@@ -352,7 +352,7 @@ func depositWithV2Valid(cur realm) {
 	println("[EXPECTED] second deposit id:", depositId2)
 	println("[EXPECTED] deposit count:", launchpad.GetDepositCount())
 	println("[EXPECTED] total GNS staked:", launchpad.GetTotalGNSStakedAmount())
-	println("[EXPECTED] tier 30 deposit count:", launchpad.GetProjectTierDepositCount(projectId, 30))
+	println("[EXPECTED] tier 30 deposit count:", launchpad.GetProjectTierRewards(projectId, 30).Size())
 
 	uassert.Equal(t, v1DepositCount+1, launchpad.GetDepositCount())
 	uassert.Equal(t, v1TotalGNSStaked+depositAmount, launchpad.GetTotalGNSStakedAmount())

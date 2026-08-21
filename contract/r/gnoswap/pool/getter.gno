@@ -1,13 +1,14 @@
 package pool
 
-// GetPoolCount returns the total number of pools.
-func GetPoolCount() int {
-	return getImplementation().GetPoolCount()
-}
+import (
+	rotree "gno.land/p/nt/bptree/v0/rotree"
+	ufmt "gno.land/p/nt/ufmt/v0"
+)
 
-// GetPoolPaths returns a paginated list of pool paths.
-func GetPoolPaths(offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetPoolPaths(offset, count))
+// GetPools returns a read-only view of every pool, keyed by pool path.
+// Reading an entry yields a clone, so the view cannot mutate realm state.
+func GetPools() *rotree.ReadOnlyTree {
+	return getImplementation().GetPools()
 }
 
 // ExistsPoolPath checks if a pool exists at the given path.
@@ -91,14 +92,10 @@ func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	return getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-// GetPoolPositionCount returns the number of positions in a pool.
-func GetPoolPositionCount(poolPath string) int {
-	return getImplementation().GetPoolPositionCount(poolPath)
-}
-
-// GetPoolPositionKeys returns a paginated list of position keys in a pool.
-func GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return cloneStringSlice(getImplementation().GetPoolPositionKeys(poolPath, offset, count))
+// GetPoolPositions returns a read-only view of a pool's positions, keyed by
+// position key. nil is returned when the pool does not exist.
+func GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	return getImplementation().GetPoolPositions(poolPath)
 }
 
 // GetPositionLiquidity returns the liquidity of a position.
@@ -238,16 +235,6 @@ func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 
 // Structure getters
 
-// GetPool returns a copy of the pool for the given token pair and fee tier.
-func GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
-	pool, err := getImplementation().GetPool(token0Path, token1Path, fee)
-	if err != nil {
-		return nil, err
-	}
-
-	return clonePool(pool), nil
-}
-
 // GetTickInfo returns the tick info for a given tick.
 func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 	tickInfo, err := getImplementation().GetTickInfo(poolPath, tick)
@@ -263,16 +250,6 @@ func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return getImplementation().GetTickBitmaps(poolPath, wordPos)
 }
 
-// GetPosition returns the position info for a given key.
-func GetPosition(poolPath, key string) (PositionInfo, error) {
-	positionInfo, err := getImplementation().GetPosition(poolPath, key)
-	if err != nil {
-		return PositionInfo{}, err
-	}
-
-	return clonePositionInfo(positionInfo), nil
-}
-
 // GetObservationState returns the observation state for a given pool path.
 func GetObservationState(poolPath string) (*ObservationState, error) {
 	observationState, err := getImplementation().GetObservationState(poolPath)
@@ -280,7 +257,12 @@ func GetObservationState(poolPath string) (*ObservationState, error) {
 		return nil, err
 	}
 
-	return cloneObservationState(observationState), nil
+	// Implementations may return nil without error after an upgrade.
+	if observationState == nil {
+		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+	}
+
+	return observationState.Clone(), nil
 }
 
 // GetPendingProtocolFees returns the pending protocol fee amount per token path.

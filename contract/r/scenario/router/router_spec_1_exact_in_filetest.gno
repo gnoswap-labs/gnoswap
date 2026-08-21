@@ -99,7 +99,7 @@ func testPositionMint(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: 100000000")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000000")
 
-	pool, _ := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 

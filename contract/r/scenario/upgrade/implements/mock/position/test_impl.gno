@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
@@ -159,32 +160,11 @@ func (t *TestPosition) SetPositionOperator(_ int, rlm realm, positionId uint64, 
 	)
 }
 
-// IPositionGetter interface
-func (t *TestPosition) GetPositionCount() int {
+func (t *TestPosition) GetPositions() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
-		"GetPositionCount",
-		func(args ...any) any { return t.instance.GetPositionCount() },
-	).(int)
-}
-
-func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
-	return t.ExecuteFn(
-		"GetPositionIDs",
-		func(args ...any) any { return t.instance.GetPositionIDs(args[0].(int), args[1].(int)) },
-		offset, count,
-	).([]uint64)
-}
-
-func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
-	result := t.ExecuteFn(
-		"GetPosition",
-		func(args ...any) any {
-			r1, r2 := t.instance.GetPosition(args[0].(uint64))
-			return []any{r1, r2}
-		},
-		positionId,
-	).([]any)
-	return result[0].(position.Position), result[1].(bool)
+		"GetPositions",
+		func(args ...any) any { return t.instance.GetPositions() },
+	).(*rotree.ReadOnlyTree)
 }
 
 func (t *TestPosition) IsBurned(positionId uint64) bool {

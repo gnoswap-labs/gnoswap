@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -342,7 +343,7 @@ func (i *poolV1) DrySwap(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	poolSnapshot := pool.Clone()
+	poolSnapshot := newDrySwapSnapshot(pool)
 
 	// no liquidity -> simulation fails
 	if poolSnapshot.Liquidity().IsZero() {
@@ -401,6 +402,48 @@ type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestam
 // The optional `onTickCross` callback is invoked when an initialized tick is
 // crossed; Swap supplies a hook that performs a cross-realm call into the
 // configured tick-cross hook, while DrySwap passes nil.
+// newDrySwapSnapshot builds the pool DrySwap simulates against.
+//
+// The swap loop writes through the pool it is given -- tickCross rewrites each
+// tick it crosses -- so the simulation must not run against stored state.
+// Pool.Clone copies the pool's own fields and leaves its collections nil, so
+// assemble the two the loop reads: the tick tree (crossed and rewritten) and
+// the tick bitmaps (scanned for the next initialized tick). The oracle state is
+// a fresh one, because the simulation must not extend the stored observations.
+func newDrySwapSnapshot(pool *pl.Pool) *pl.Pool {
+	snapshot := pool.Clone()
+	snapshot.SetTicks(copyPoolTicks(pool.Ticks()))
+	snapshot.SetTickBitmaps(copyPoolTickBitmaps(pool.TickBitmaps()))
+	snapshot.SetObservationState(pl.NewObservationState(time.Now().Unix()))
+
+	return snapshot
+}
+
+// copyPoolTicks copies a tick tree slot by slot. TickInfo is a value type, so
+// the snapshot's writes replace its own slots and leave the source untouched.
+func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
+	copied := pl.NewPoolTicksTree()
+	if src == nil {
+		return copied
+	}
+
+	src.Iterate("", "", func(key string, value any) bool {
+		copied.Set(key, value)
+		return false
+	})
+
+	return copied
+}
+
+func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
+	copied := make(map[int16]string, len(src))
+	for wordPos, bitmap := range src {
+		copied[wordPos] = bitmap
+	}
+
+	return copied
+}
+
 func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error

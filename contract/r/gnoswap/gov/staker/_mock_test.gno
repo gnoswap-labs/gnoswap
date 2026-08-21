@@ -2,6 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse is a simple mock response helper
@@ -135,20 +136,12 @@ func (m *MockGovStaker) GetTotalLockedAmount() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetDelegationCount() int {
-	res, ok := m.Response.Get("GetDelegationCount")
+func (m *MockGovStaker) GetDelegations() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetDelegations")
 	if !ok {
-		return 0
+		return nil
 	}
-	return res[0].(int)
-}
-
-func (m *MockGovStaker) GetDelegationIDs(offset, count int) []int64 {
-	res, ok := m.Response.Get("GetDelegationIDs")
-	if !ok {
-		return []int64{}
-	}
-	return res[0].([]int64)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovStaker) ExistsDelegation(delegationID int64) bool {
@@ -159,39 +152,12 @@ func (m *MockGovStaker) ExistsDelegation(delegationID int64) bool {
 	return res[0].(bool)
 }
 
-func (m *MockGovStaker) GetDelegation(delegationID int64) (*Delegation, error) {
-	res, ok := m.Response.Get("GetDelegation")
+func (m *MockGovStaker) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetDelegatorDelegations")
 	if !ok {
-		return nil, nil
+		return nil
 	}
-	if res[1] != nil {
-		return nil, res[1].(error)
-	}
-	return res[0].(*Delegation), nil
-}
-
-func (m *MockGovStaker) GetDelegatorDelegateeCount(delegator address) int {
-	res, ok := m.Response.Get("GetDelegatorDelegateeCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
-}
-
-func (m *MockGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	res, ok := m.Response.Get("GetDelegatorDelegateeAddresses")
-	if !ok {
-		return []address{}
-	}
-	return res[0].([]address)
-}
-
-func (m *MockGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
-	res, ok := m.Response.Get("GetUserDelegationCount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {

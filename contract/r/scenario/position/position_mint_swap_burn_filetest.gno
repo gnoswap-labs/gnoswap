@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -144,7 +145,7 @@ func mintPosition(cur realm) {
 
 func checkInitialState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial token0 balance should be %d\n", position.GetPositionToken0Balance(1))
@@ -230,7 +231,7 @@ func burnPosition(cur realm) {
 
 func verifyFinalState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position should be burned\n")
 	ufmt.Printf("[EXPECTED] Final liquidity should be %s\n", pos.Liquidity())

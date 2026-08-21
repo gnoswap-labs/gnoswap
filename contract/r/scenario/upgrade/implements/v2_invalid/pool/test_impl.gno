@@ -3,6 +3,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -152,13 +153,6 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 		panic("test implementation: ExistsPoolPath not supported")
 	}
 	return t.instance.ExistsPoolPath(poolPath)
-}
-
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	if !t.isActive("GetPool") {
-		panic("test implementation: GetPool not supported")
-	}
-	return t.instance.GetPool(token0Path, token1Path, fee)
 }
 
 func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
@@ -413,19 +407,11 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	if !t.isActive("GetPoolCount") {
-		panic("test implementation: GetPoolCount not supported")
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
+	if !t.isActive("GetPools") {
+		panic("test implementation: GetPools not supported")
 	}
-	return t.instance.GetPoolCount()
-}
-
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	if !t.isActive("GetPoolPaths") {
-		panic("test implementation: GetPoolPaths not supported")
-	}
-	return t.instance.GetPoolPaths(offset, count)
+	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -435,19 +421,11 @@ func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return t.instance.GetFeeAmountTickSpacings()
 }
 
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	if !t.isActive("GetPoolPositionCount") {
-		panic("test implementation: GetPoolPositionCount not supported")
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolPositions") {
+		panic("test implementation: GetPoolPositions not supported")
 	}
-	return t.instance.GetPoolPositionCount(poolPath)
-}
-
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	if !t.isActive("GetPoolPositionKeys") {
-		panic("test implementation: GetPoolPositionKeys not supported")
-	}
-	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+	return t.instance.GetPoolPositions(poolPath)
 }
 
 // Tick enumeration
@@ -471,13 +449,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		panic("test implementation: GetTickBitmaps not supported")
 	}
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
-}
-
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	if !t.isActive("GetPosition") {
-		panic("test implementation: GetPosition not supported")
-	}
-	return t.instance.GetPosition(poolPath, key)
 }
 
 func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {

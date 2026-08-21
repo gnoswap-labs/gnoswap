@@ -141,7 +141,7 @@ func setupPoolWithMixedPositions(cur realm) BalanceSnapshot {
 		adminAddr,
 	)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	currentLiquidity := pools.Liquidity().ToString()
 
 	println("[INFO] In-range position (-1000 to 1000):", inRangeAmount0, inRangeAmount1)
@@ -154,7 +154,7 @@ func setupPoolWithMixedPositions(cur realm) BalanceSnapshot {
 func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -177,7 +177,7 @@ func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) Balance
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -191,7 +191,7 @@ func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) Balance
 func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -214,7 +214,7 @@ func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) Balanc
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 

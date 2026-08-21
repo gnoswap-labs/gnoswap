@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse tracks method calls for testing purposes
@@ -243,17 +244,6 @@ func (m *MockPool) ExistsPoolPath(poolPath string) bool {
 	}
 
 	return res[0].(bool)
-}
-
-func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
-	res, ok := m.Response.Get("GetPool")
-	if !ok {
-		return nil, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*Pool), nil
-	}
-	return res[0].(*Pool), res[1].(error)
 }
 
 func (m *MockPool) GetBalanceToken0(poolPath string) int64 {
@@ -602,23 +592,13 @@ func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
-// Pool enumeration
-func (m *MockPool) GetPoolCount() int {
-	res, ok := m.Response.Get("GetPoolCount")
+func (m *MockPool) GetPools() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPools")
 	if !ok {
-		return 0
+		return nil
 	}
 
-	return res[0].(int)
-}
-
-func (m *MockPool) GetPoolPaths(offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPaths")
-	if !ok {
-		return []string{}
-	}
-
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -630,23 +610,13 @@ func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return res[0].(map[uint32]int32)
 }
 
-// Position enumeration
-func (m *MockPool) GetPoolPositionCount(poolPath string) int {
-	res, ok := m.Response.Get("GetPoolPositionCount")
+func (m *MockPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPoolPositions")
 	if !ok {
-		return 0
+		return nil
 	}
 
-	return res[0].(int)
-}
-
-func (m *MockPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPositionKeys")
-	if !ok {
-		return []string{}
-	}
-
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 // Tick enumeration
@@ -680,17 +650,6 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		return res[0].(string), nil
 	}
 	return res[0].(string), res[1].(error)
-}
-
-func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
-	res, ok := m.Response.Get("GetPosition")
-	if !ok {
-		return PositionInfo{}, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(PositionInfo), nil
-	}
-	return res[0].(PositionInfo), res[1].(error)
 }
 
 func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {

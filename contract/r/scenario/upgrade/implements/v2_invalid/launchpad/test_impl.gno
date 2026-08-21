@@ -7,6 +7,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 
 	"gno.land/r/gnoswap/launchpad"
 	v1 "gno.land/r/gnoswap/launchpad/v1"
@@ -98,26 +99,11 @@ func (t *TestLaunchpad) CollectRewardByDepositId(_ int, rlm realm, depositID str
 	return t.instance.CollectRewardByDepositId(0, rlm, depositID)
 }
 
-// ILaunchpadGetter interface
-func (t *TestLaunchpad) GetProjectCount() int {
-	if !t.isActive("GetProjectCount") {
-		panic("test implementation: GetProjectCount not supported")
+func (t *TestLaunchpad) GetProjects() *rotree.ReadOnlyTree {
+	if !t.isActive("GetProjects") {
+		panic("test implementation: GetProjects not supported")
 	}
-	return t.instance.GetProjectCount()
-}
-
-func (t *TestLaunchpad) GetProjectIDs(offset, count int) []string {
-	if !t.isActive("GetProjectIDs") {
-		panic("test implementation: GetProjectIDs not supported")
-	}
-	return t.instance.GetProjectIDs(offset, count)
-}
-
-func (t *TestLaunchpad) GetProject(projectId string) (*launchpad.Project, error) {
-	if !t.isActive("GetProject") {
-		panic("test implementation: GetProject not supported")
-	}
-	return t.instance.GetProject(projectId)
+	return t.instance.GetProjects()
 }
 
 func (t *TestLaunchpad) GetProjectName(projectId string) (string, error) {
@@ -260,18 +246,11 @@ func (t *TestLaunchpad) GetCurrentDepositId() int64 {
 	return t.instance.GetCurrentDepositId()
 }
 
-func (t *TestLaunchpad) GetProjectTierDepositCount(projectId string, tier int64) int {
-	if !t.isActive("GetProjectTierDepositCount") {
-		panic("test implementation: GetProjectTierDepositCount not supported")
+func (t *TestLaunchpad) GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
+	if !t.isActive("GetProjectTierRewards") {
+		panic("test implementation: GetProjectTierRewards not supported")
 	}
-	return t.instance.GetProjectTierDepositCount(projectId, tier)
-}
-
-func (t *TestLaunchpad) GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
-	if !t.isActive("GetProjectTierDepositIDs") {
-		panic("test implementation: GetProjectTierDepositIDs not supported")
-	}
-	return t.instance.GetProjectTierDepositIDs(projectId, tier, offset, count)
+	return t.instance.GetProjectTierRewards(projectId, tier)
 }
 
 func (t *TestLaunchpad) GetDeposit(depositId string) (*launchpad.Deposit, error) {

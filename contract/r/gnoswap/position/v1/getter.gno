@@ -1,10 +1,9 @@
 package position
 
 import (
-	"strconv"
-
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	pl "gno.land/r/gnoswap/pool"
@@ -14,7 +13,7 @@ import (
 // MustGetPosition returns a position for a given position ID.
 // panics if position doesn't exist
 func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
-	pos, exist := p.GetPosition(positionId)
+	pos, exist := p.store.GetPosition(positionId)
 	if !exist {
 		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
@@ -25,34 +24,12 @@ func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
 	return &pos
 }
 
-// GetPositionCount returns the total number of positions.
-func (p *positionV1) GetPositionCount() int {
-	return p.store.GetPositions().Size()
-}
-
-// GetPositionIDs returns a paginated list of position IDs.
-func (p *positionV1) GetPositionIDs(offset, count int) []uint64 {
-	positions := p.store.GetPositions()
-	positionIDs := make([]uint64, 0)
-
-	positions.IterateByOffset(offset, count, func(key string, _ any) bool {
-		id, err := strconv.ParseUint(key, 10, 64)
-		if err != nil {
-			return false
-		}
-
-		positionIDs = append(positionIDs, id)
-
-		return false
-	})
-
-	return positionIDs
-}
-
-// GetPosition returns a position for a given position ID.
-// Returns false if position doesn't exist
-func (p *positionV1) GetPosition(id uint64) (position.Position, bool) {
-	return p.store.GetPosition(id)
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID.
+func (p *positionV1) GetPositions() *rotree.ReadOnlyTree {
+	// makeEntrySafeFn is a function that makes an entry safe to read.
+	// But Position is immutable, so we can just return the entry as is.
+	return rotree.Wrap(p.store.GetPositions(), nil)
 }
 
 // ExistPosition checks if a position exists for a given position ID

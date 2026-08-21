@@ -3,6 +3,7 @@ package staker
 import (
 	"chain/runtime"
 	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -118,19 +119,16 @@ func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 	result := staker.Delegate(cross(cur), validator, amount, "")
 	uassert.Equal(t, result, amount)
 
-	delegationCount := staker.GetUserDelegationCount(contractCaller, validator)
-	uassert.Equal(t, delegationCount, 1)
-
 	delegationIDs := staker.GetUserDelegationIDs(contractCaller, validator)
 	uassert.Equal(t, len(delegationIDs), 1)
 
-	delegation, err := staker.GetDelegation(delegationIDs[0])
-	uassert.NoError(t, err)
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationIDs[0], 10)).(*staker.Delegation)
+	uassert.True(t, ok)
 	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
 	uassert.Equal(t, delegation.DelegateTo(), validator)
 	uassert.Equal(t, delegation.TotalDelegatedAmount(), amount)
 
-	uassert.Equal(t, staker.GetUserDelegationCount(originCaller, validator), 0)
+	uassert.Equal(t, len(staker.GetUserDelegationIDs(originCaller, validator)), 0)
 }
 
 // Test Undelegate function
@@ -297,8 +295,8 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 				totalUndelegated := int64(0)
 
 				for _, delegationID := range delegationIDs {
-					delegation, err := staker.GetDelegation(delegationID)
-					if err == nil && delegation != nil {
+					delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*staker.Delegation)
+					if ok && delegation != nil {
 						totalWithdraws += staker.GetDelegationWithdrawCount(delegationID)
 						totalUndelegated += delegation.UnDelegatedAmount()
 					}

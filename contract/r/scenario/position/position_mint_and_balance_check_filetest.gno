@@ -195,7 +195,7 @@ func checkPoolBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking pool balances")
-	poolInfo, _ := pool.GetPool(token0Path, token1Path, fee)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(token0Path, token1Path, fee)).(*pool.Pool)
 
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())

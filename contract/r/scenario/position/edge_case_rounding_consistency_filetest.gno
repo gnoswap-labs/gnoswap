@@ -6,6 +6,7 @@ package main
 
 import (
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -270,7 +271,7 @@ func testRoundingConsistency(cur realm) {
 
 	// Now burn all positions
 	for _, posId := range positions {
-		pos, _ := pn.GetPosition(posId)
+		pos, _ := pn.GetPositions().Get(utils.Uint64ToString(posId)).(pn.Position)
 
 		_, _, _, _, amt0, amt1, _ := pn.DecreaseLiquidity(
 			cross(cur),

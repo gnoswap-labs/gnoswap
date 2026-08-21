@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	"testing"
@@ -63,53 +64,6 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 		mutate    func(result any)
 		assertRaw func(t *testing.T, m *MockLaunchpad)
 	}{
-		{
-			name: "GetProjectIDs",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectIDs", []string{"project-1", "project-2"}) },
-			getter: func(t *testing.T) any { return GetProjectIDs(0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "project-3")
-			},
-			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				values := m.Response.data["GetProjectIDs"][0].([]string)
-				uassert.Equal(t, "project-1", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
-			name: "GetProject",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProject", newLaunchpadProject(), nil) },
-			getter: func(t *testing.T) any {
-				value, err := GetProject("project-1")
-				uassert.NoError(t, err)
-				return value
-			},
-			mutate: func(result any) {
-				project := result.(*Project)
-				project.SetID("mutated-project")
-				project.SetName("mutated-name")
-				project.SetTokenPath("mutated-token")
-				project.SetDepositAmount(2000)
-				project.SetCreatedHeight(99)
-				project.SetCreatedAt(88)
-				project.SetTiersRatios(map[int64]int64{30: 100})
-				project.Conditions()["token-path"].minimumAmount = 999
-				project.Tiers()[30].SetTotalDepositAmount(777)
-			},
-			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				project := m.Response.data["GetProject"][0].(*Project)
-				uassert.Equal(t, "project-name", project.Name())
-				uassert.Equal(t, "token-path", project.TokenPath())
-				uassert.Equal(t, int64(1000), project.DepositAmount())
-				uassert.Equal(t, int64(10), project.CreatedHeight())
-				uassert.Equal(t, int64(20), project.CreatedAt())
-				uassert.Equal(t, int64(500), project.conditions["token-path"].MinimumAmount())
-				uassert.Equal(t, int64(0), project.tiers[30].TotalDepositAmount())
-				uassert.Equal(t, int64(25), project.tiersRatios[30])
-			},
-		},
 		{
 			name: "GetProjectCondition",
 			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectCondition", NewProjectCondition("token-path", 500), nil) },
@@ -192,21 +146,6 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
 				value := m.Response.data["GetProjectTierDistributeAmountPerSecondX128"][0].(*u256.Uint)
 				uassert.Equal(t, "100", value.ToString())
-			},
-		},
-		{
-			name: "GetProjectTierDepositIDs",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierDepositIDs", []string{"deposit-1", "deposit-2"}) },
-			getter: func(t *testing.T) any { return GetProjectTierDepositIDs("project-1", 30, 0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "deposit-3")
-			},
-			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				values := m.Response.data["GetProjectTierDepositIDs"][0].([]string)
-				uassert.Equal(t, "deposit-1", values[0])
-				uassert.Equal(t, 2, len(values))
 			},
 		},
 		{
@@ -365,4 +304,70 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(t, mockLaunchpad)
 		})
 	}
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		getter   func() *rotree.ReadOnlyTree
+		wantKeys []string
+	}{
+		{
+			name:     "GetProjects",
+			method:   "GetProjects",
+			getter:   func() *rotree.ReadOnlyTree { return GetProjects() },
+			wantKeys: []string{"project-1", "project-2"},
+		},
+		{
+			name:     "GetProjectTierRewards",
+			method:   "GetProjectTierRewards",
+			getter:   func() *rotree.ReadOnlyTree { return GetProjectTierRewards("project-1", 30) },
+			wantKeys: []string{"deposit-1", "deposit-2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			mockLaunchpad := newMockLaunchpad("v1")
+			implementation = mockLaunchpad
+
+			stored := bptree.NewBPTree32()
+			for i, key := range tt.wantKeys {
+				stored.Set(key, i)
+			}
+			mockLaunchpad.Response.Set(tt.method, rotree.Wrap(stored, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, len(tt.wantKeys), got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			for i, want := range tt.wantKeys {
+				uassert.Equal(t, want, keys[i])
+			}
+
+			// The view refuses writes, so the stored tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("mutated", 0)
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(tt.wantKeys[0])
+			})
+			uassert.Equal(t, len(tt.wantKeys), stored.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
+	resetTestState(cur, t)
+	mockLaunchpad := newMockLaunchpad("v1")
+	implementation = mockLaunchpad
+
+	uassert.True(t, GetProjects() == nil)
+	uassert.True(t, GetProjectTierRewards("project-1", 30) == nil)
 }
