@@ -65,6 +65,8 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
 				AndPositionMinted(cur)
 			if tt.numPools == 2 {
+				TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(cur, t, quxPath, adminAddr, poolAddr, maxApprove)
 				env.GivenPoolCreated(cur, bazPath, quxPath, 3000, "79228162514264337593543950336").
 					AndLiquidityProvided(cur, adminAddr, NewPositionBuilder().
 						Tokens(bazPath, quxPath).
