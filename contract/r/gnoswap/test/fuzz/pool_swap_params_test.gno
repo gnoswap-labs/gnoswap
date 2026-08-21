@@ -235,8 +235,9 @@ func (p *poolSwapParams) hasEnoughBalance(tokenPath string, requiredAmount *u256
 
 // drySwap calls pool.DrySwap with panic recovery
 func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success bool) {
+	var err error
 	revive(func() {
-		amountIn, amountOut, success = pool.DrySwap(
+		amountIn, amountOut, err = pool.DrySwap(
 			p.token0Path,
 			p.token1Path,
 			p.fee,
@@ -245,12 +246,15 @@ func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success b
 			p.sqrtPriceLimitX96,
 		)
 	})
-
-	if amountIn == "0" || amountOut == "0" {
+	if err != nil {
 		return "0", "0", false
 	}
 
-	return amountIn, amountOut, success
+	if amountIn == "" || amountOut == "" || amountIn == "0" || amountOut == "0" {
+		return "0", "0", false
+	}
+
+	return amountIn, amountOut, true
 }
 
 // generatePriceLimitFromCurrent generates a valid price limit based on the current price

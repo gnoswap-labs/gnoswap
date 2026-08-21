@@ -7,7 +7,6 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256"
-	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 
@@ -109,7 +108,7 @@ func (r *routerV1) swapDryInner(
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// check possible
-	amount0Str, amount1Str, ok := pl.DrySwap(
+	amount0Str, amount1Str, err := pl.DrySwap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
@@ -117,8 +116,8 @@ func (r *routerV1) swapDryInner(
 		utils.FormatInt(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 	)
-	if !ok {
-		return 0, 0
+	if err != nil {
+		panic(err)
 	}
 
 	amount0 := i256.MustFromDecimal(amount0Str)
@@ -130,44 +129,6 @@ func (r *routerV1) swapDryInner(
 	}
 
 	return poolRecv.Int64(), poolOut.Int64()
-}
-
-// RealSwapExecutor implements SwapExecutor for actual swaps.
-type RealSwapExecutor struct {
-	rlm    realm
-	router *routerV1
-}
-
-// execute performs the actual swap execution.
-func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
-	caller := e.rlm.Previous().Address()
-	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
-
-	return e.router.swapInner(
-		0,
-		e.rlm,
-		p.amountSpecified,
-		recipient,             // if single swap => user will receive
-		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
-		newSwapCallbackData(p, caller),
-	)
-}
-
-// DrySwapExecutor implements SwapExecutor for dry swaps.
-type DrySwapExecutor struct {
-	router *routerV1
-	// payer is the user's address resolved at the entry point (DrySwapRoute),
-	// since dry-run paths do not have a realm value to read PreviousRealm from.
-	payer address
-}
-
-// execute performs the dry swap execution.
-func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
-	return e.router.swapDryInner(
-		p.amountSpecified,
-		u256.Zero(),
-		newSwapCallbackData(p, e.payer),
-	)
 }
 
 // calculateSqrtPriceLimitForSwap returns the price limit for a swap operation.

@@ -139,7 +139,7 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 
 	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			gnsPath,    // inputToken
 			barPath,    // outputToken
 			"1000",     // amountSpecified
@@ -148,6 +148,7 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 			"100", // quoteArr
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7317")
 	println()

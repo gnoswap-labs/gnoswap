@@ -1304,7 +1304,7 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				tt.swapType,
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -1313,7 +1313,11 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 				tt.swapCount,
 			)
 
-			uassert.Equal(t, success, tt.expectedSuccess)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
