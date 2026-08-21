@@ -14,6 +14,7 @@ const (
 	TIMESTAMP_365DAYS = int64(31536000)
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
+	SECONDS_PER_DAY     = int64(24 * 60 * 60)
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -139,7 +140,7 @@ func assertIsValidFeeRate(fee uint64) {
 	}
 }
 
-// assertIsValidIncentiveStartTime ensures the incentive starts at midnight of a future date.
+// assertIsValidIncentiveStartTime ensures the incentive starts at midnight at least 24 hours after creation.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -152,12 +153,12 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
+	// must be at least 24 hours from now and at the closest midnight after that.
+	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
+	if startTimestamp < minimumStartTimestamp {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
+			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later at midnight(%d)", startTimestamp, minimumStartTimestamp),
 		))
 	}
 
@@ -169,6 +170,17 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
 		))
 	}
+}
+
+// getMinimumIncentiveStartTimestamp returns the first midnight at or after 24 hours from now.
+func getMinimumIncentiveStartTimestamp() int64 {
+	minimumStartTimestamp := time.Now().Add(24 * time.Hour).Unix()
+	remainingSeconds := minimumStartTimestamp % SECONDS_PER_DAY
+	if remainingSeconds != 0 {
+		minimumStartTimestamp += SECONDS_PER_DAY - remainingSeconds
+	}
+
+	return minimumStartTimestamp
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
