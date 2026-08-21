@@ -427,6 +427,100 @@ func TestEndExternalIncentiveInternal(cur realm, t *testing.T) {
 	}
 }
 
+func TestCancelExternalIncentive(cur realm, t *testing.T) {
+	creator := testutils.TestAddress("creator")
+	refundee := testutils.TestAddress("refundee")
+
+	tests := []struct {
+		name   string
+		caller address
+	}{
+		{name: "creator cancels before start", caller: creator},
+		{name: "admin cancels before start", caller: adminAddr},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
+			s := getMockInstance()
+
+			poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+			incentiveId := "cancel-test"
+			rewardAmount := int64(10_000_000_000)
+			depositGnsAmount := int64(100_000_000)
+			currentTime := time.Now().Unix()
+			startTime := currentTime + 86400
+
+			testing.SetRealm(adminRealm)
+			gns.Approve(cross(cur), poolAddr, math.MaxInt)
+			CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+
+			pool := sr.NewPool(poolPath, currentTime)
+			s.getPools().set(poolPath, pool)
+			incentive := sr.NewExternalIncentive(
+				incentiveId, poolPath, barPath, rewardAmount,
+				startTime, startTime+86400, creator, depositGnsAmount,
+				runtime.ChainHeight(), currentTime,
+			)
+			poolResolver := NewPoolResolver(pool)
+			poolResolver.IncentivesResolver().create(incentive)
+
+			gns.Transfer(cross(cur), stakerAddr, depositGnsAmount)
+			bar.Transfer(cross(cur), stakerAddr, rewardAmount)
+			rewardBefore := bar.BalanceOf(refundee)
+			gnsBefore := gns.BalanceOf(refundee)
+
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+			sr.CancelExternalIncentive(cross(cur), poolPath, incentiveId, refundee)
+
+			updated, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+			uassert.True(t, exists)
+			uassert.True(t, updated.Refunded())
+			uassert.Equal(t, int64(0), updated.RewardAmount())
+			uassert.Equal(t, rewardAmount, updated.DistributedRewardAmount())
+			uassert.Equal(t, rewardAmount, bar.BalanceOf(refundee)-rewardBefore)
+			uassert.Equal(t, depositGnsAmount, gns.BalanceOf(refundee)-gnsBefore)
+			uassert.Equal(t, updated.TotalRewardAmount(), updated.RewardAmount()+updated.DistributedRewardAmount()+updated.AccumulatedPenaltyAmount())
+		})
+	}
+}
+
+func TestCancelExternalIncentiveRejections(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	s := getMockInstance()
+
+	creator := testutils.TestAddress("creator")
+	stranger := testutils.TestAddress("stranger")
+	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+	incentiveId := "cancel-rejections"
+	currentTime := time.Now().Unix()
+	startTime := currentTime + 86400
+
+	testing.SetRealm(adminRealm)
+	gns.Approve(cross(cur), poolAddr, math.MaxInt)
+	CreatePool(cur, barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+
+	pool := sr.NewPool(poolPath, currentTime)
+	s.getPools().set(poolPath, pool)
+	incentive := sr.NewExternalIncentive(
+		incentiveId, poolPath, barPath, 10_000_000_000,
+		startTime, startTime+86400, creator, 100_000_000,
+		runtime.ChainHeight(), currentTime,
+	)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(incentive)
+
+	testing.SetRealm(testing.NewUserRealm(stranger))
+	uassert.AbortsContains(t, cur, "only creator", func() {
+		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveId, creator)
+	})
+
+	incentiveResolver, exists := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+	uassert.True(t, exists)
+	_, _, err := s.cancelExternalIncentive(incentiveResolver, creator, startTime)
+	uassert.ErrorContains(t, err, "cannot cancel incentive at or after startTime")
+}
+
 func TestEndExternalIncentiveRefundAddressValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string

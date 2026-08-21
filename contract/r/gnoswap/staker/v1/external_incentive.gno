@@ -118,6 +118,98 @@ func (s *stakerV1) CreateExternalIncentive(
 	)
 }
 
+// CancelExternalIncentive cancels an external incentive before its start timestamp.
+//
+// It refunds the full stored reward amount and the GNS deposit to refundAddress.
+// Only callable by the incentive creator or an admin.
+func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	assertIsPoolExists(s, targetPoolPath)
+	assertIsValidAddress(refundAddress)
+
+	pool, ok := s.getPools().Get(targetPoolPath)
+	if !ok {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
+		))
+	}
+
+	poolResolver := NewPoolResolver(pool)
+	incentivesResolver := poolResolver.IncentivesResolver()
+	incentiveResolver, exists := incentivesResolver.GetIncentiveResolver(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot cancel non existent incentive(%s)", incentiveId),
+		))
+	}
+
+	if incentiveResolver.Refunded() {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveId),
+		))
+	}
+
+	cancelledIncentive, refund, err := s.cancelExternalIncentive(
+		incentiveResolver,
+		rlm.Previous().Address(),
+		time.Now().Unix(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	incentiveResolver.SetRefunded(true)
+	incentiveResolver.SetRewardAmount(0)
+	incentiveResolver.addDistributedRewardAmount(refund)
+	incentivesResolver.update(cancelledIncentive)
+
+	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, refund)
+	gns.Transfer(cross(rlm), refundAddress, incentiveResolver.DepositGnsAmount())
+
+	previousRealm := rlm.Previous()
+	chain.Emit(
+		"EndExternalIncentive",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"incentiveId", incentiveId,
+		"targetPoolPath", targetPoolPath,
+		"refundee", refundAddress.String(),
+		"refundToken", incentiveResolver.RewardToken(),
+		"refundAmount", utils.FormatInt(refund),
+		"refundGnsAmount", utils.FormatInt(incentiveResolver.DepositGnsAmount()),
+		"externalIncentiveEndBy", previousRealm.Address().String(),
+		"creator", incentiveResolver.Creator().String(),
+	)
+}
+
+func (s *stakerV1) cancelExternalIncentive(incentiveResolver *ExternalIncentiveResolver, caller address, currentTime int64) (*sr.ExternalIncentive, int64, error) {
+	if currentTime >= incentiveResolver.StartTimestamp() {
+		return nil, 0, makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot cancel incentive at or after startTime(%d), current(%d)", incentiveResolver.StartTimestamp(), currentTime),
+		)
+	}
+
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Creator() {
+		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+		return nil, 0, makeErrorWithDetails(
+			errNoPermission,
+			ufmt.Sprintf(
+				"only creator(%s) or admin(%s) can cancel incentive, but called from %s",
+				incentiveResolver.Creator(), adminAddr.String(), caller,
+			),
+		)
+	}
+
+	return incentiveResolver.ExternalIncentive, incentiveResolver.RewardAmount(), nil
+}
+
 // EndExternalIncentive ends an external incentive and refunds remaining rewards.
 //
 // Finalizes incentive program after end timestamp.

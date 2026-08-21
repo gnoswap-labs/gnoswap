@@ -30,6 +30,7 @@ type IStakerManager interface {
 		endTimestamp int64,
 	)
 	EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address)
+	CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address)
 	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
 	AddToken(_ int, rlm realm, tokenPath string)
 	RemoveToken(_ int, rlm realm, tokenPath string)
