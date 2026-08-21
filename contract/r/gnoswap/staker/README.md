@@ -8,7 +8,7 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 
 ## Configuration
 
-- **Deposit GNS Amount**: 1,000 GNS for external incentives (default)
+- **Deposit GNS Amount**: 100,000 GNS for external incentives (default)
 - **Minimum Reward Amount**: 1,000 tokens (default)
 - **Unstaking Fee**: 1% (default)
 - **Pool Tiers**: 1, 2, or 3 (assigned per pool)
