@@ -6,6 +6,7 @@ import (
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 const (
@@ -126,6 +127,30 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 		errNotAllowedForExternalReward,
 		ufmt.Sprintf("tokenPath(%s) is not allowed for external reward for poolPath(%s)", tokenPath, poolPath),
 	))
+}
+
+// assertIsExternalRewardTokenAvailable ensures a pool has no unfinished incentive for the token.
+func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath string, currentTime int64) {
+	pool := s.getPools().GetPoolOrNil(poolPath)
+	if pool == nil || pool.Incentives() == nil {
+		return
+	}
+
+	pool.Incentives().IterateIncentives(func(incentiveID string, incentive *sr.ExternalIncentive) bool {
+		if incentive.RewardToken() != tokenPath || NewExternalIncentiveResolver(incentive).IsEnded(currentTime) {
+			return false
+		}
+
+		panic(makeErrorWithDetails(
+			errIncentiveAlreadyExists,
+			ufmt.Sprintf(
+				"rewardToken(%s) already has unfinished incentive(%s) for poolPath(%s)",
+				tokenPath,
+				incentiveID,
+				poolPath,
+			),
+		))
+	})
 }
 
 const maxUnstakingFee = uint64(1000) // 10%

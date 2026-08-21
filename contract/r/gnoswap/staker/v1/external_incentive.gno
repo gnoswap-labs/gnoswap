@@ -43,11 +43,13 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
+	currentTime := time.Now().Unix()
 
 	assertIsPoolExists(s, targetPoolPath)
 
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
+	assertIsExternalRewardTokenAvailable(s, targetPoolPath, rewardToken, currentTime)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
@@ -66,7 +68,6 @@ func (s *stakerV1) CreateExternalIncentive(
 	// deposit gns amount
 	gns.TransferFrom(cross(rlm), caller, stakerAddr, depositGnsAmount)
 
-	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 	incentiveId := s.store.NextIncentiveID(caller, currentTime)
 	pool := s.getPools().GetPoolOrNil(targetPoolPath)
