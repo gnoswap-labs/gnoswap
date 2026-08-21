@@ -144,6 +144,8 @@ type IPoolSwap interface {
 type IPoolOracle interface {
 	GetSlot0(poolPath string) Slot0
 
+	GetObservationAt(poolPath string, index uint16) (Observation, error)
+
 	IncreaseObservationCardinalityNext(
 		_ int,
 		rlm realm,
