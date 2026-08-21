@@ -101,6 +101,10 @@ func (i *poolV1) GetSlot0Unlocked(poolPath string) (bool, error) {
 	return pool.Slot0Unlocked(), nil
 }
 
+func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
+	return i.mustGetPool(poolPath).Slot0()
+}
+
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
