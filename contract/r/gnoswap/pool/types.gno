@@ -18,8 +18,8 @@ type IPool interface {
 	IPoolManager
 	IPoolPosition
 	IPoolSwap
+	IPoolOracle
 	IPoolGetter
-	IOracleGetter
 }
 
 // IPoolManager interface defines pool management operations.
@@ -37,15 +37,6 @@ type IPoolManager interface {
 
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(_ int, rlm realm, fee int64)
-
-	IncreaseObservationCardinalityNext(
-		_ int,
-		rlm realm,
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		cardinalityNext uint16,
-	)
 }
 
 // IPoolPosition interface defines position management operations.
@@ -149,6 +140,20 @@ type IPoolSwap interface {
 	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
 }
 
+// IPoolOracle interface defines the pool's Uniswap-V3-aligned oracle surface.
+type IPoolOracle interface {
+	GetSlot0(poolPath string) Slot0
+
+	IncreaseObservationCardinalityNext(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		cardinalityNext uint16,
+	)
+}
+
 // IPoolGetter interface defines data retrieval operations.
 // These methods provide read-only access to pool state and data.
 type IPoolGetter interface {
@@ -238,13 +243,6 @@ type IPoolGetter interface {
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
 	GetObservationState(poolPath string) (*ObservationState, error)
-}
-
-// IOracleGetter interface defines read-only access to the pool's Uniswap-V3-aligned
-// oracle surface. Methods migrate here one at a time from IPoolGetter as each
-// surface function is aligned.
-type IOracleGetter interface {
-	GetSlot0(poolPath string) Slot0
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.
