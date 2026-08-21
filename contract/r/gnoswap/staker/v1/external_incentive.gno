@@ -27,7 +27,7 @@ import (
 //   - rewardAmount: total reward amount
 //   - startTimestamp, endTimestamp: incentive period
 //
-// Only callable by admin.
+// Any caller with the required reward tokens and GNS deposit may create an incentive.
 func (s *stakerV1) CreateExternalIncentive(
 	_ int,
 	rlm realm,
@@ -43,12 +43,13 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
-	access.AssertIsAdmin(caller)
+	currentTime := time.Now().Unix()
 
 	assertIsPoolExists(s, targetPoolPath)
 
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
+	assertIsExternalRewardTokenAvailable(s, targetPoolPath, rewardToken, currentTime)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
@@ -67,7 +68,6 @@ func (s *stakerV1) CreateExternalIncentive(
 	// deposit gns amount
 	gns.TransferFrom(cross(rlm), caller, stakerAddr, depositGnsAmount)
 
-	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 	incentiveId := s.store.NextIncentiveID(caller, currentTime)
 	pool := s.getPools().GetPoolOrNil(targetPoolPath)
@@ -132,7 +132,7 @@ func (s *stakerV1) CreateExternalIncentive(
 //  1. Validates incentive end time reached
 //  2. Calculates remaining and unclaimable rewards
 //  3. Refunds rewards to original creator
-//  4. Returns 100 GNS deposit
+//  4. Returns the deposited GNS amount
 //  5. Removes incentive from active list
 //
 // Only callable by Creator or Admin.

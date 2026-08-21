@@ -357,7 +357,7 @@ func newMockStakerStore() *MockStakerStore {
 	swapBatch := sr.NewSwapBatchProcessor("", nil, 0)
 	swapBatch.SetIsActive(false)
 	return &MockStakerStore{
-		depositGnsAmount:                 1_000_000_000,
+		depositGnsAmount:                 100_000_000_000,
 		minimumRewardAmount:              1_000_000_000,
 		deposits:                         sr.NewBPTreeN(16),
 		externalIncentives:               sr.NewBPTreeN(16),

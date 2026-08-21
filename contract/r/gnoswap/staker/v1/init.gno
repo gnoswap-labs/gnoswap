@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultDepositGnsAmount    = int64(1_000_000_000)
+	defaultDepositGnsAmount    = int64(100_000_000_000)
 	defaultMinimumRewardAmount = int64(1_000_000_000)
 
 	// unstakingFee is the fee charged when unstaking positions.

@@ -66,7 +66,7 @@ func setupExternalRewardPool(cur realm, ft *fuzz.T) (string, string) {
 
 	stakerAddr := access.MustGetAddress(prabc.ROLE_STAKER.String())
 	obl.Approve(cross(cur), stakerAddr, incentivizeAmount)
-	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	incentiveEndTimestamp := incentiveStartTimestamp + 180*24*60*60
 
 	staker.CreateExternalIncentive(
