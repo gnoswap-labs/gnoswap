@@ -204,16 +204,11 @@ func (p *Pool) Clone() *Pool {
 	}
 
 	return &Pool{
-		token0Path:  p.token0Path,
-		token1Path:  p.token1Path,
-		fee:         p.fee,
-		tickSpacing: p.tickSpacing,
-		slot0: Slot0{
-			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
-			tick:         p.slot0.tick,
-			feeProtocol:  p.slot0.feeProtocol,
-			unlocked:     p.slot0.unlocked,
-		},
+		token0Path:           p.token0Path,
+		token1Path:           p.token1Path,
+		fee:                  p.fee,
+		tickSpacing:          p.tickSpacing,
+		slot0:                p.slot0.Clone(),
 		balances:             p.balances,
 		protocolFees:         p.protocolFees,
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
@@ -298,6 +293,18 @@ func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96.Clone() }
 func (s *Slot0) Tick() int32              { return s.tick }
 func (s *Slot0) FeeProtocol() uint8       { return s.feeProtocol }
 func (s *Slot0) Unlocked() bool           { return s.unlocked }
+
+// Clone returns a value-type copy of Slot0 that shares no mutable state with
+// the original, so callers cannot reach back into pool internals through the
+// returned sqrtPriceX96 pointer.
+func (s *Slot0) Clone() Slot0 {
+	return Slot0{
+		sqrtPriceX96: s.sqrtPriceX96.Clone(),
+		tick:         s.tick,
+		feeProtocol:  s.feeProtocol,
+		unlocked:     s.unlocked,
+	}
+}
 
 func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96.Clone() }
 func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }

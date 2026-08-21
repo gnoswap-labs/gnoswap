@@ -153,6 +153,15 @@ func GetSlot0Unlocked(poolPath string) bool {
 	return getImplementation().GetSlot0Unlocked(poolPath)
 }
 
+// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick, protocol fee, lock state).
+// The clone happens here, at the proxy boundary, so every implementation
+// version can return its internal Slot0 by value without each one having to
+// remember to defend against callers mutating the shared sqrtPriceX96.
+func GetSlot0(poolPath string) Slot0 {
+	slot0 := getImplementation().GetSlot0(poolPath)
+	return slot0.Clone()
+}
+
 // GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 func GetTickCumulativeOutside(poolPath string, tick int32) int64 {
 	return getImplementation().GetTickCumulativeOutside(poolPath, tick)

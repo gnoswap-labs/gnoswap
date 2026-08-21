@@ -462,6 +462,15 @@ func (m *MockPool) GetSlot0Unlocked(poolPath string) bool {
 	return res[0].(bool)
 }
 
+func (m *MockPool) GetSlot0(poolPath string) Slot0 {
+	res, ok := m.Response.Get("GetSlot0")
+	if !ok {
+		return NewSlot0(u256.Zero(), 0, 0, false)
+	}
+
+	return res[0].(Slot0)
+}
+
 func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
 	res, ok := m.Response.Get("GetTickCumulativeOutside")
 	if !ok {

@@ -19,6 +19,7 @@ type IPool interface {
 	IPoolPosition
 	IPoolSwap
 	IPoolGetter
+	IOracleGetter
 }
 
 // IPoolManager interface defines pool management operations.
@@ -237,6 +238,13 @@ type IPoolGetter interface {
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
 	GetObservationState(poolPath string) (*ObservationState, error)
+}
+
+// IOracleGetter interface defines read-only access to the pool's Uniswap-V3-aligned
+// oracle surface. Methods migrate here one at a time from IPoolGetter as each
+// surface function is aligned.
+type IOracleGetter interface {
+	GetSlot0(poolPath string) Slot0
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.

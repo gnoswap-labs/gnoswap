@@ -63,6 +63,10 @@ func (i *poolV1) GetSlot0Unlocked(poolPath string) bool {
 	return i.mustGetPool(poolPath).Slot0Unlocked()
 }
 
+func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
+	return i.mustGetPool(poolPath).Slot0()
+}
+
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	return i.mustGetPool(poolPath).FeeGrowthGlobal0X128()
 }
