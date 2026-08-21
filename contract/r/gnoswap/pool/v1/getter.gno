@@ -105,6 +105,25 @@ func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
 	return i.mustGetPool(poolPath).Slot0()
 }
 
+func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return pl.Observation{}, err
+	}
+
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		return pl.Observation{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation state not found for pool %s", poolPath))
+	}
+
+	observation, ok := observationState.ObservationAt(index)
+	if !ok {
+		return pl.Observation{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation not found at index %d for pool %s", index, poolPath))
+	}
+
+	return *observation, nil
+}
+
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {

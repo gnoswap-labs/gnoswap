@@ -473,6 +473,19 @@ func (m *MockPool) GetSlot0(poolPath string) Slot0 {
 	return res[0].(Slot0)
 }
 
+func (m *MockPool) GetObservationAt(poolPath string, index uint16) (Observation, error) {
+	res, ok := m.Response.Get("GetObservationAt")
+	if !ok {
+		return Observation{}, errors.New("not found")
+	}
+
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(Observation), nil
+	}
+
+	return res[0].(Observation), res[1].(error)
+}
+
 func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	res, ok := m.Response.Get("GetTickCumulativeOutside")
 	if !ok {

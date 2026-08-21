@@ -205,6 +205,18 @@ func GetSlot0(poolPath string) Slot0 {
 	return slot0.Clone()
 }
 
+// GetObservationAt returns a safe copy of the observation stored at index.
+//
+// ref: uniswap v3 IUniswapV3PoolState.observations(uint256 index)
+func GetObservationAt(poolPath string, index uint16) (Observation, error) {
+	observation, err := getImplementation().GetObservationAt(poolPath, index)
+	if err != nil {
+		return Observation{}, err
+	}
+
+	return *observation.Clone(), nil
+}
+
 // GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 func GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	return getImplementation().GetTickCumulativeOutside(poolPath, tick)
