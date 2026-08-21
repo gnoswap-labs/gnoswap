@@ -27,7 +27,7 @@ import (
 //   - rewardAmount: total reward amount
 //   - startTimestamp, endTimestamp: incentive period
 //
-// Only callable by admin.
+// Any caller with the required reward tokens and GNS deposit may create an incentive.
 func (s *stakerV1) CreateExternalIncentive(
 	_ int,
 	rlm realm,
@@ -43,7 +43,6 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
-	access.AssertIsAdmin(caller)
 
 	assertIsPoolExists(s, targetPoolPath)
 

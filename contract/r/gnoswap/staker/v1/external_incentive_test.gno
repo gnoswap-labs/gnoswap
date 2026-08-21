@@ -2311,15 +2311,29 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	uassert.Equal(t, totalRewardAmount, sum)
 }
 
-func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
+func TestCreateExternalIncentive_NonAdminAllowed(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	createDefaultInitialPoolForStakerTest(cur, t)
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 
+	gnsTransfer(cur, t, addr01, 101_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.AbortsContains(t, cur, "is not admin", func() {
-		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
+	sr.CreateExternalIncentive(cross(cur), poolPath, gnsPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+
+	incentives := getMockInstance().getExternalIncentives()
+	incentiveID := ""
+	var incentive *sr.ExternalIncentive
+	incentives.tree.Iterate("", "", func(key string, value any) bool {
+		incentiveID = key
+		incentive = value.(*sr.ExternalIncentive)
+		return true
 	})
+
+	uassert.NotEqual(t, "", incentiveID)
+	uassert.Equal(t, addr01, incentive.Creator())
+	uassert.Equal(t, gnsPath, incentive.RewardToken())
 }
 
 // TestIncentiveIndexKeyedByStartTimestamp verifies discovery is keyed by the
