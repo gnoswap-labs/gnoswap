@@ -287,6 +287,119 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	return incentiveResolver.ExternalIncentive, refund, nil
 }
 
+// CancelExternalIncentive cancels an external incentive before it starts and
+// removes it entirely.
+//
+// EndExternalIncentive is the counterpart for an incentive whose end timestamp
+// has passed: it keeps the record so the penalty accounting and the deposits
+// that already collected from it stay resolvable. Cancelling is only allowed
+// strictly before startTimestamp, where nothing has accrued yet - no deposit
+// references the incentive (both StakeToken and the lazy reward discovery only
+// look at incentives whose start timestamp is already in the past), so the
+// record can be dropped from the incentive tree and the start-time index
+// instead of being marked refunded.
+//
+// Parameters:
+//   - targetPoolPath: pool the incentive was created for
+//   - incentiveId: unique incentive identifier
+//   - refundAddress: recipient of the reward tokens and the GNS deposit
+//
+// Process:
+//  1. Validates the incentive exists and has not started
+//  2. Removes it from the incentive tree and the start-time index
+//  3. Refunds the full reward amount and the GNS deposit to refundAddress
+//
+// Only callable by admin or governance.
+func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	assertIsPoolExists(s, targetPoolPath)
+	assertIsValidAddress(refundAddress)
+
+	prevRealm := rlm.Previous()
+	caller := prevRealm.Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	pool, ok := s.getPools().Get(targetPoolPath)
+	if !ok {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
+		))
+	}
+
+	poolResolver := NewPoolResolver(pool)
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	incentiveResolver, exists := incentivesResolver.GetIncentiveResolver(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf("cannot cancel non existent incentive(%s)", incentiveId),
+		))
+	}
+
+	currentTime := time.Now().Unix()
+	assertIsNotStartedIncentive(incentiveResolver, currentTime)
+
+	rewardToken := incentiveResolver.RewardToken()
+	depositGnsAmount := incentiveResolver.DepositGnsAmount()
+	refundAmount := incentiveResolver.RewardAmount()
+
+	// Cap the refund by the balance actually held, mirroring
+	// EndExternalIncentive: a short balance must not abort the cancellation and
+	// strand the GNS deposit as well.
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	rewardBalance := common.BalanceOf(rewardToken, stakerAddr)
+	if rewardBalance < refundAmount {
+		chain.Emit(
+			"CancelExternalIncentiveShortfall",
+			"prevAddr", caller.String(),
+			"prevRealm", prevRealm.PkgPath(),
+			"incentiveId", incentiveId,
+			"targetPoolPath", targetPoolPath,
+			"refundee", refundAddress.String(),
+			"refundToken", rewardToken,
+			"expectedRefundAmount", utils.FormatInt(refundAmount),
+			"actualRefundAmount", utils.FormatInt(rewardBalance),
+			"creator", incentiveResolver.Creator().String(),
+		)
+		refundAmount = rewardBalance
+	}
+
+	// Effects before interactions: once removed, no stake, collect or discovery
+	// path can resolve the incentive, so the refund cannot be replayed.
+	incentivesResolver.remove(incentiveResolver.ExternalIncentive)
+	s.getExternalIncentives().remove(incentiveId)
+
+	if refundAmount > 0 {
+		common.SafeGRC20Transfer(cross(rlm), rewardToken, refundAddress, refundAmount)
+	}
+
+	if depositGnsAmount > 0 {
+		gns.Transfer(cross(rlm), refundAddress, depositGnsAmount)
+	}
+
+	chain.Emit(
+		"CancelExternalIncentive",
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"incentiveId", incentiveId,
+		"targetPoolPath", targetPoolPath,
+		"refundee", refundAddress.String(),
+		"refundToken", rewardToken,
+		"refundAmount", utils.FormatInt(refundAmount),
+		"refundGnsAmount", utils.FormatInt(depositGnsAmount),
+		"startTimestamp", utils.FormatInt(incentiveResolver.StartTimestamp()),
+		"endTimestamp", utils.FormatInt(incentiveResolver.EndTimestamp()),
+		"externalIncentiveCancelBy", caller.String(),
+		"creator", incentiveResolver.Creator().String(),
+		"currentTime", utils.FormatInt(currentTime),
+	)
+}
+
 // CollectExternalIncentivePenalty collects accumulated warmup penalties
 // for a specific ended external incentive.
 // Penalties are accumulated during CollectReward and stored in the incentive.

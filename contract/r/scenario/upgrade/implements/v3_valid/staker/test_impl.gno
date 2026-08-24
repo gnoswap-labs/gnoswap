@@ -58,6 +58,10 @@ func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, ince
 	t.instance.EndExternalIncentive(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
+func (t *TestStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	t.instance.CancelExternalIncentive(0, rlm, targetPoolPath, incentiveId, refundAddress)
+}
+
 func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	return t.instance.CollectExternalIncentivePenalty(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }

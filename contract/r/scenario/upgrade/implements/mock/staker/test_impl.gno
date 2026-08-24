@@ -111,6 +111,17 @@ func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, ince
 	)
 }
 
+func (t *TestStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+	t.ExecuteFn(
+		"CancelExternalIncentive",
+		func(args ...any) any {
+			t.instance.CancelExternalIncentive(0, rlm, args[0].(string), args[1].(string), args[2].(address))
+			return nil
+		},
+		targetPoolPath, incentiveId, refundAddress,
+	)
+}
+
 func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	return t.ExecuteFn(
 		"CollectExternalIncentivePenalty",

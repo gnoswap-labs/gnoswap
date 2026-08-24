@@ -171,6 +171,45 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	}
 }
 
+// assertIsNotStartedIncentive ensures the incentive can still be cancelled, i.e.
+// it has not started and nothing has been distributed from it. Only such an
+// incentive may be removed outright; anything that already emitted rewards has
+// to be finalized through EndExternalIncentive so the refund accounting and the
+// penalty balance stay reachable.
+func assertIsNotStartedIncentive(incentiveResolver *ExternalIncentiveResolver, currentTime int64) {
+	if incentiveResolver.IsStarted(currentTime) {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf(
+				"incentive(%s) already started at %d, current(%d)",
+				incentiveResolver.IncentiveId(), incentiveResolver.StartTimestamp(), currentTime,
+			),
+		))
+	}
+
+	if incentiveResolver.Refunded() {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveResolver.IncentiveId()),
+		))
+	}
+
+	// Defensive: a not-yet-started incentive can never have distributed a reward
+	// or accrued a warmup penalty. Removing a record that carries either would
+	// strand those tokens in the staker, so refuse instead of dropping it.
+	if incentiveResolver.DistributedRewardAmount() != 0 || incentiveResolver.AccumulatedPenaltyAmount() != 0 {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf(
+				"incentive(%s) has already accrued rewards: distributed(%d), penalty(%d)",
+				incentiveResolver.IncentiveId(),
+				incentiveResolver.DistributedRewardAmount(),
+				incentiveResolver.AccumulatedPenaltyAmount(),
+			),
+		))
+	}
+}
+
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
 func assertIsValidIncentiveEndTime(endTimestamp int64) {
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
