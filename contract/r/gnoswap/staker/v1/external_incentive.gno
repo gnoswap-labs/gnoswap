@@ -14,7 +14,6 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	en "gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -65,7 +64,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	depositGnsAmount := s.store.GetDepositGnsAmount()
 
 	// deposit gns amount
-	gns.TransferFrom(cross(rlm), caller, stakerAddr, depositGnsAmount)
+	common.SafeGRC20TransferFrom(cross(rlm), GNS_TOKEN_KEY, caller, stakerAddr, depositGnsAmount)
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
@@ -213,7 +212,7 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	common.SafeGRC20Transfer(cross(rlm), incentiveResolver.RewardToken(), refundAddress, refund)
 
 	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross(rlm), refundAddress, incentiveResolver.DepositGnsAmount())
+	common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, refundAddress, incentiveResolver.DepositGnsAmount())
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -379,7 +378,7 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 	}
 
 	if depositGnsAmount > 0 {
-		gns.Transfer(cross(rlm), refundAddress, depositGnsAmount)
+		common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, refundAddress, depositGnsAmount)
 	}
 
 	chain.Emit(
