@@ -62,6 +62,10 @@ Creates external reward program for specific pool.
 
 Ends incentive program and returns unused rewards.
 
+### `CancelExternalIncentive`
+
+Removes a not-yet-started incentive and refunds the rewards and GNS deposit.
+
 ## Reward Calculation Logic
 
 ### Tier Ratio Distribution
