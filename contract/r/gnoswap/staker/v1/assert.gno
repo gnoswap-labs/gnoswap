@@ -188,12 +188,12 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least 24 hours from now and at the closest midnight after that.
+	// must be at least 24 hours from now
 	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
 	if startTimestamp < minimumStartTimestamp {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later at midnight(%d)", startTimestamp, minimumStartTimestamp),
+			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later", startTimestamp, minimumStartTimestamp),
 		))
 	}
 
@@ -207,15 +207,9 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	}
 }
 
-// getMinimumIncentiveStartTimestamp returns the first midnight at or after 24 hours from now.
+// getMinimumIncentiveStartTimestamp returns after 24 hours from now.
 func getMinimumIncentiveStartTimestamp() int64 {
-	minimumStartTimestamp := time.Now().Add(24 * time.Hour).Unix()
-	remainingSeconds := minimumStartTimestamp % SECONDS_PER_DAY
-	if remainingSeconds != 0 {
-		minimumStartTimestamp += SECONDS_PER_DAY - remainingSeconds
-	}
-
-	return minimumStartTimestamp
+	return time.Now().Add(24 * time.Hour).Unix()
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
