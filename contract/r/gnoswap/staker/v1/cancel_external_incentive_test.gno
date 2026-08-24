@@ -120,13 +120,23 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-STAKER-023]", // errCannotCancelIncentive
 		},
 		{
-			name:             "incentive already started",
+			name:             "incentive started at current time (boundary)",
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      incentiveId,
 			caller:           adminAddr,
 			setupPool:        true,
 			setupIncentive:   true,
-			startOffset:      0,                      // starts at the current time
+			startOffset:      0,                      // starts exactly at the current time
+			expectedErrorMsg: "[GNOSWAP-STAKER-023]", // errCannotCancelIncentive
+		},
+		{
+			name:             "incentive already started (in the past)",
+			poolPath:         cancelTestPoolPath,
+			incentiveId:      incentiveId,
+			caller:           adminAddr,
+			setupPool:        true,
+			setupIncentive:   true,
+			startOffset:      -86400,                 // started a day ago
 			expectedErrorMsg: "[GNOSWAP-STAKER-023]", // errCannotCancelIncentive
 		},
 		{
@@ -433,4 +443,47 @@ func TestCancelExternalIncentive_RejectsAccruedIncentive(cur realm, t *testing.T
 			})
 		})
 	}
+}
+
+// TestAssertIsNotStartedIncentive_StartBoundary pins the before/at/after-start
+// exception handling of the cancel guard directly: an incentive is cancellable
+// strictly before its start timestamp, and rejected once currentTime reaches or
+// passes it. This isolates the boundary from the full CancelExternalIncentive
+// flow, so an off-by-one in IsStarted would fail here regardless of pool setup.
+func TestAssertIsNotStartedIncentive_StartBoundary(cur realm, t *testing.T) {
+	creator := testutils.TestAddress("cancel-creator")
+
+	startTimestamp := int64(2_000_000_000)
+	endTimestamp := startTimestamp + 86400*30
+
+	newResolver := func() *ExternalIncentiveResolver {
+		incentive := sr.NewExternalIncentive(
+			"boundary-incentive",
+			cancelTestPoolPath,
+			barPath,
+			1_000_000_000,
+			startTimestamp,
+			endTimestamp,
+			creator,
+			100_000_000,
+			runtime.ChainHeight(),
+			startTimestamp-86400,
+		)
+		return NewExternalIncentiveResolver(incentive)
+	}
+
+	// Before start: cancellable (no panic).
+	uassert.NotPanics(t, cur, func() {
+		assertIsNotStartedIncentive(newResolver(), startTimestamp-1)
+	})
+
+	// Exactly at start: rejected (currentTime >= start).
+	uassert.PanicsContains(t, cur, "already started", func() {
+		assertIsNotStartedIncentive(newResolver(), startTimestamp)
+	})
+
+	// After start: rejected.
+	uassert.PanicsContains(t, cur, "already started", func() {
+		assertIsNotStartedIncentive(newResolver(), startTimestamp+1)
+	})
 }
