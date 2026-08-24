@@ -76,7 +76,10 @@ func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64)
 func (t *TestStaker) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.ExecuteFn(
 		"ChangePoolTier",
-		func(args ...any) any { t.instance.ChangePoolTier(0, rlm, args[0].(string), args[1].(uint64)); return nil },
+		func(args ...any) any {
+			t.instance.ChangePoolTier(0, rlm, args[0].(string), args[1].(uint64))
+			return nil
+		},
 		poolPath, tier,
 	)
 }
@@ -111,14 +114,14 @@ func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, ince
 	)
 }
 
-func (t *TestStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+func (t *TestStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string) {
 	t.ExecuteFn(
 		"CancelExternalIncentive",
 		func(args ...any) any {
-			t.instance.CancelExternalIncentive(0, rlm, args[0].(string), args[1].(string), args[2].(address))
+			t.instance.CancelExternalIncentive(0, rlm, args[0].(string), args[1].(string))
 			return nil
 		},
-		targetPoolPath, incentiveId, refundAddress,
+		targetPoolPath, incentiveId,
 	)
 }
 

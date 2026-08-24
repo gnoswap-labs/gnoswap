@@ -87,9 +87,9 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundA
 }
 
 // CancelExternalIncentive cancels an external incentive that has not started yet,
-// removing it and refunding the reward tokens and the GNS deposit.
-func CancelExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundAddress address) {
-	getImplementation().CancelExternalIncentive(0, cur, targetPoolPath, incentiveId, refundAddress)
+// removing it and refunding the reward tokens and the GNS deposit to the creator.
+func CancelExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
+	getImplementation().CancelExternalIncentive(0, cur, targetPoolPath, incentiveId)
 }
 
 // CollectExternalIncentivePenalty collects accumulated warmup penalties for an ended incentive.

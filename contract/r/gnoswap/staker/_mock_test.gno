@@ -95,7 +95,7 @@ func (m *MockStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, ince
 	m.Response.Get("EndExternalIncentive")
 }
 
-func (m *MockStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+func (m *MockStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string) {
 	m.Response.Get("CancelExternalIncentive")
 }
 

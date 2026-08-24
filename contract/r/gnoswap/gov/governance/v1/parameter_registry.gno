@@ -726,20 +726,18 @@ func CreateParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    STAKER_PATH,
 			function:   "CancelExternalIncentive",
-			paramCount: 3,
+			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator,  // targetPoolPath
-				stringValidator,  // incentiveId
-				addressValidator, // refundAddress
+				stringValidator, // targetPoolPath
+				stringValidator, // incentiveId
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
-				// Cancel a not-yet-started external incentive and refund the
-				// reward tokens plus the GNS deposit to refundAddress
+				// Cancel a not-yet-started external incentive; the reward tokens
+				// and the GNS deposit are refunded to the incentive creator
 				sr.CancelExternalIncentive(
 					cross(rlm),
-					params[0],          // targetPoolPath
-					params[1],          // incentiveId
-					address(params[2]), // refundAddress
+					params[0], // targetPoolPath
+					params[1], // incentiveId
 				)
 				return nil
 			},

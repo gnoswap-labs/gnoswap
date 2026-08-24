@@ -301,21 +301,19 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // Parameters:
 //   - targetPoolPath: pool the incentive was created for
 //   - incentiveId: unique incentive identifier
-//   - refundAddress: recipient of the reward tokens and the GNS deposit
 //
 // Process:
 //  1. Validates the incentive exists and has not started
 //  2. Removes it from the incentive tree and the start-time index
-//  3. Refunds the full reward amount and the GNS deposit to refundAddress
+//  3. Refunds the full reward amount and the GNS deposit to the creator
 //
 // Only callable by admin or governance.
-func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
+func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsPoolExists(s, targetPoolPath)
-	assertIsValidAddress(refundAddress)
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
@@ -347,6 +345,11 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 	depositGnsAmount := incentiveResolver.DepositGnsAmount()
 	refundAmount := incentiveResolver.RewardAmount()
 
+	// The reward tokens and the GNS deposit are always returned to the incentive
+	// creator - the address that funded them in CreateExternalIncentive - so the
+	// refund destination is never caller-controlled.
+	creator := incentiveResolver.Creator()
+
 	// Cap the refund by the balance actually held, mirroring
 	// EndExternalIncentive: a short balance must not abort the cancellation and
 	// strand the GNS deposit as well.
@@ -359,11 +362,10 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 			"prevRealm", prevRealm.PkgPath(),
 			"incentiveId", incentiveId,
 			"targetPoolPath", targetPoolPath,
-			"refundee", refundAddress.String(),
 			"refundToken", rewardToken,
 			"expectedRefundAmount", utils.FormatInt(refundAmount),
 			"actualRefundAmount", utils.FormatInt(rewardBalance),
-			"creator", incentiveResolver.Creator().String(),
+			"creator", creator.String(),
 		)
 		refundAmount = rewardBalance
 	}
@@ -374,11 +376,11 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 	s.getExternalIncentives().remove(incentiveId)
 
 	if refundAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardToken, refundAddress, refundAmount)
+		common.SafeGRC20Transfer(cross(rlm), rewardToken, creator, refundAmount)
 	}
 
 	if depositGnsAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, refundAddress, depositGnsAmount)
+		common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, creator, depositGnsAmount)
 	}
 
 	chain.Emit(
@@ -387,14 +389,13 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 		"prevRealm", prevRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
-		"refundee", refundAddress.String(),
 		"refundToken", rewardToken,
 		"refundAmount", utils.FormatInt(refundAmount),
 		"refundGnsAmount", utils.FormatInt(depositGnsAmount),
 		"startTimestamp", utils.FormatInt(incentiveResolver.StartTimestamp()),
 		"endTimestamp", utils.FormatInt(incentiveResolver.EndTimestamp()),
 		"externalIncentiveCancelBy", caller.String(),
-		"creator", incentiveResolver.Creator().String(),
+		"creator", creator.String(),
 		"currentTime", utils.FormatInt(currentTime),
 	)
 }
