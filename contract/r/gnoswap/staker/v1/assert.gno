@@ -15,7 +15,6 @@ const (
 	TIMESTAMP_365DAYS = int64(31536000)
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
-	SECONDS_PER_DAY     = int64(24 * 60 * 60)
 
 	maxUnstakingFee = uint64(1000) // 10%
 )
