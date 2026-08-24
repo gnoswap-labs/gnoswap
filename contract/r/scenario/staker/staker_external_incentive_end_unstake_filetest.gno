@@ -53,7 +53,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive parameters
-	depositGnsAmount     int64 = 1_000_000_000     // 1_000 GNS deposit
+	depositGnsAmount     int64 = 100_000_000_000   // 100_000 GNS deposit
 	externalRewardAmount int64 = 10_000_000_000    // 10_000 reward tokens
 	TIMESTAMP_90DAYS     int64 = 90 * 24 * 60 * 60 // Must be 90, 180, or 365 days
 

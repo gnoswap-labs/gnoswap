@@ -425,6 +425,8 @@ func TestAssertIsValidIncentiveStartTime(cur realm, t *testing.T) {
 	// Calculate reference times
 	now := time.Now()
 	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
+	todayMidnight := now.Truncate(24 * time.Hour)
+	dayAfterTomorrowMidnight := now.AddDate(0, 0, 2).Truncate(24 * time.Hour)
 
 	tests := []struct {
 		name          string
@@ -434,7 +436,7 @@ func TestAssertIsValidIncentiveStartTime(cur realm, t *testing.T) {
 	}{
 		{
 			name:          "valid start time - day after tomorrow midnight",
-			startTime:     minimumStartTimestamp + SECONDS_PER_DAY,
+			startTime:     dayAfterTomorrowMidnight.Unix(),
 			expectPanic:   false,
 			expectedError: "",
 		},
@@ -448,7 +450,7 @@ func TestAssertIsValidIncentiveStartTime(cur realm, t *testing.T) {
 			name:          "invalid start time - today",
 			startTime:     now.Unix(),
 			expectPanic:   true,
-			expectedError: "must be at least 24 hours later at midnight",
+			expectedError: "must be at least 24 hours later",
 		},
 		{
 			name:          "invalid start time - after minimum but not midnight",
@@ -464,9 +466,9 @@ func TestAssertIsValidIncentiveStartTime(cur realm, t *testing.T) {
 		},
 		{
 			name:          "invalid start time - midnight before minimum",
-			startTime:     minimumStartTimestamp - SECONDS_PER_DAY,
+			startTime:     todayMidnight.Unix(),
 			expectPanic:   true,
-			expectedError: "must be at least 24 hours later at midnight",
+			expectedError: "must be at least 24 hours later",
 		},
 	}
 

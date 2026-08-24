@@ -183,6 +183,7 @@ func TestAssertIsExternalRewardTokenAvailable(cur realm, t *testing.T) {
 				currentTime,
 			)
 			NewPoolResolver(pool).IncentivesResolver().create(incentive)
+			getMockInstance().getExternalIncentives().set("existing-incentive", incentive)
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, "incentive already exists", func() {
@@ -209,6 +210,36 @@ func TestCreateExternalIncentive_DuplicateRewardTokenBlocked(cur realm, t *testi
 
 	uassert.AbortsContains(t, cur, "incentive already exists", func() {
 		CreateExternalIncentiveAsAdmin(cur, t, poolPath, gnsPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+}
+
+func TestCreateExternalIncentive_AllowedAfterPreviousIncentiveEnded(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	createDefaultInitialPoolForStakerTest(cur, t)
+
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	getMockInstance().getPools().set(poolPath, pool)
+	endedIncentive := sr.NewExternalIncentive(
+		"ended-incentive",
+		poolPath,
+		gnsPath,
+		rewardMinimumAmount,
+		currentTime-incentiveDuration,
+		currentTime-1,
+		adminAddr,
+		0,
+		runtime.ChainHeight(),
+		currentTime-incentiveDuration,
+	)
+	NewPoolResolver(pool).IncentivesResolver().create(endedIncentive)
+	getMockInstance().getExternalIncentives().set("ended-incentive", endedIncentive)
+
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+	uassert.NotPanics(t, cur, func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, gnsPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	})
 }
 
@@ -2429,7 +2460,11 @@ func TestCreateExternalIncentive_NonAdminAllowed(cur realm, t *testing.T) {
 	gnsTransfer(cur, t, addr01, 101_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
+
+	depositGnsAmount := getMockInstance().GetDepositGnsAmount()
+	balanceBefore := gns.BalanceOf(addr01)
 	sr.CreateExternalIncentive(cross(cur), poolPath, gnsPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	uassert.Equal(t, balanceBefore-depositGnsAmount-rewardMinimumAmount, gns.BalanceOf(addr01))
 
 	incentives := getMockInstance().getExternalIncentives()
 	incentiveID := ""

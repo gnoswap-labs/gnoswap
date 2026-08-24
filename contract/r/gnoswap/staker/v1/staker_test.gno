@@ -226,7 +226,7 @@ func TestCollectReward_NilIncentiveSkipped(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
 
-	startTimestamp := getMinimumIncentiveStartTimestamp() + SECONDS_PER_DAY
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t,
 		poolPath,
 		gnsPath,
