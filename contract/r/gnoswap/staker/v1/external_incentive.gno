@@ -365,6 +365,7 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 			"refundToken", rewardToken,
 			"expectedRefundAmount", utils.FormatInt(refundAmount),
 			"actualRefundAmount", utils.FormatInt(rewardBalance),
+			"refundee", creator.String(),
 			"creator", creator.String(),
 		)
 		refundAmount = rewardBalance
