@@ -13,7 +13,7 @@
 // 2. Admin creates a 90-day external incentive starting at the next midnight
 // 3. A position can be staked while the incentive is pending
 // 4. Admin cancels before the start timestamp; reward tokens and the GNS
-//    deposit both go to the refundee
+//    deposit both go to the creator
 // 5. The incentive is gone from the pool, so a new stake is rejected as
 //    non-incentivized while the existing position can still be unstaked
 // 6. Cancelling the same incentive again aborts
@@ -209,14 +209,15 @@ func userMintThenStake(cur realm) {
 func cancelIncentive(cur realm) {
 	depositGnsAmount := sr.GetDepositGnsAmount()
 
-	barBefore := bar.BalanceOf(refundeeUser)
-	gnsBefore := gns.BalanceOf(refundeeUser)
+	// The refund is returned to the incentive creator (admin created it).
+	barBefore := bar.BalanceOf(adminUser)
+	gnsBefore := gns.BalanceOf(adminUser)
 
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeUser)
+	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 
-	ufmt.Printf("[EXPECTED] refundee BAR delta: %d (reward amount: %d)\n", bar.BalanceOf(refundeeUser)-barBefore, REWARD_AMOUNT)
-	ufmt.Printf("[EXPECTED] refundee GNS delta: %d (deposit amount: %d)\n", gns.BalanceOf(refundeeUser)-gnsBefore, depositGnsAmount)
+	ufmt.Printf("[EXPECTED] creator BAR delta: %d (reward amount: %d)\n", bar.BalanceOf(adminUser)-barBefore, REWARD_AMOUNT)
+	ufmt.Printf("[EXPECTED] creator GNS delta: %d (deposit amount: %d)\n", gns.BalanceOf(adminUser)-gnsBefore, depositGnsAmount)
 }
 
 func checkPoolNotIncentivized(cur realm) {
@@ -267,7 +268,7 @@ func checkSecondCancelAborts(cur realm) {
 
 	// errCannotCancelIncentive
 	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-023]", func() {
-		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeUser)
+		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 	})
 	println("[EXPECTED] second cancel rejected: incentive no longer exists")
 }
@@ -293,8 +294,8 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] user staked position 1
 //
 // [SCENARIO] 5. Admin cancels the incentive before it starts
-// [EXPECTED] refundee BAR delta: 1000000000 (reward amount: 1000000000)
-// [EXPECTED] refundee GNS delta: 1000000000 (deposit amount: 1000000000)
+// [EXPECTED] creator BAR delta: 1000000000 (reward amount: 1000000000)
+// [EXPECTED] creator GNS delta: 1000000000 (deposit amount: 1000000000)
 //
 // [SCENARIO] 6. Pool is no longer incentivized
 // [EXPECTED] remaining incentives for pool: 0

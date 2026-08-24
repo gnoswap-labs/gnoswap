@@ -167,7 +167,7 @@ func stakeWhilePending(cur realm) {
 
 func cancelIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 }

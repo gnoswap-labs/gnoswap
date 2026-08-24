@@ -62,7 +62,6 @@ func createCancelTestIncentive(
 
 func TestCancelExternalIncentive(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("cancel-creator")
-	refundee := testutils.TestAddress("cancel-refundee")
 	stranger := testutils.TestAddress("cancel-stranger")
 
 	rewardAmount := int64(10_000_000_000)
@@ -74,7 +73,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 		poolPath         string
 		incentiveId      string
 		caller           address
-		refundAddress    address
 		setupPool        bool
 		setupIncentive   bool
 		startOffset      int64 // start timestamp relative to the current time
@@ -86,29 +84,16 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:         "gno.land/r/invalid/pool:path:100",
 			incentiveId:      incentiveId,
 			caller:           adminAddr,
-			refundAddress:    refundee,
 			setupPool:        false,
 			setupIncentive:   false,
 			startOffset:      86400,
 			expectedErrorMsg: "[GNOSWAP-STAKER-011]", // errInvalidPoolPath
 		},
 		{
-			name:             "invalid refund address",
-			poolPath:         cancelTestPoolPath,
-			incentiveId:      incentiveId,
-			caller:           adminAddr,
-			refundAddress:    address(""),
-			setupPool:        true,
-			setupIncentive:   true,
-			startOffset:      86400,
-			expectedErrorMsg: "[GNOSWAP-STAKER-021]", // errInvalidAddress
-		},
-		{
 			name:             "caller is neither admin nor governance",
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      incentiveId,
 			caller:           stranger,
-			refundAddress:    refundee,
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      86400,
@@ -119,7 +104,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      incentiveId,
 			caller:           creator,
-			refundAddress:    refundee,
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      86400,
@@ -130,7 +114,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      "nonexistent-id",
 			caller:           adminAddr,
-			refundAddress:    refundee,
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      86400,
@@ -141,7 +124,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      incentiveId,
 			caller:           adminAddr,
-			refundAddress:    refundee,
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      0,                      // starts at the current time
@@ -152,7 +134,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:         cancelTestPoolPath,
 			incentiveId:      incentiveId,
 			caller:           adminAddr,
-			refundAddress:    refundee,
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      86400,
@@ -164,7 +145,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:       cancelTestPoolPath,
 			incentiveId:    incentiveId,
 			caller:         adminAddr,
-			refundAddress:  refundee,
 			setupPool:      true,
 			setupIncentive: true,
 			startOffset:    86400,
@@ -174,7 +154,6 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:       cancelTestPoolPath,
 			incentiveId:    incentiveId,
 			caller:         govGovernanceAddr,
-			refundAddress:  refundee,
 			setupPool:      true,
 			setupIncentive: true,
 			startOffset:    86400,
@@ -211,7 +190,7 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			if tt.expectedErrorMsg != "" {
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
 				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
-					mockInstanceCancelExternalIncentive(cross(cur), tt.poolPath, tt.incentiveId, tt.refundAddress)
+					mockInstanceCancelExternalIncentive(cross(cur), tt.poolPath, tt.incentiveId)
 				})
 				return
 			}
@@ -224,14 +203,15 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			bar.Transfer(cross(cur), stakerV1Addr, rewardAmount)
 			gns.Transfer(cross(cur), stakerV1Addr, depositGnsAmount)
 
-			barBefore := bar.BalanceOf(tt.refundAddress)
-			gnsBefore := gns.BalanceOf(tt.refundAddress)
+			// Funds are always returned to the incentive creator.
+			barBefore := bar.BalanceOf(creator)
+			gnsBefore := gns.BalanceOf(creator)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
-			mockInstanceCancelExternalIncentive(cross(cur), tt.poolPath, tt.incentiveId, tt.refundAddress)
+			mockInstanceCancelExternalIncentive(cross(cur), tt.poolPath, tt.incentiveId)
 
-			uassert.Equal(t, rewardAmount, bar.BalanceOf(tt.refundAddress)-barBefore)
-			uassert.Equal(t, depositGnsAmount, gns.BalanceOf(tt.refundAddress)-gnsBefore)
+			uassert.Equal(t, rewardAmount, bar.BalanceOf(creator)-barBefore)
+			uassert.Equal(t, depositGnsAmount, gns.BalanceOf(creator)-gnsBefore)
 
 			// The incentive is gone from the per-pool tree, the per-pool
 			// start-time index and the global incentive tree.
@@ -258,7 +238,6 @@ func TestCancelExternalIncentive_KeepsSiblingWithSameStartTime(cur realm, t *tes
 	instance := getMockInstance()
 
 	creator := testutils.TestAddress("cancel-creator")
-	refundee := testutils.TestAddress("cancel-refundee")
 
 	rewardAmount := int64(10_000_000_000)
 	depositGnsAmount := int64(100_000_000)
@@ -277,7 +256,7 @@ func TestCancelExternalIncentive_KeepsSiblingWithSameStartTime(cur realm, t *tes
 	gns.Transfer(cross(cur), stakerV1Addr, depositGnsAmount)
 
 	testing.SetRealm(adminRealm)
-	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me", refundee)
+	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me")
 
 	incentivesResolver := NewPoolResolver(pool).IncentivesResolver()
 
@@ -304,7 +283,6 @@ func TestCancelExternalIncentive_PoolNoLongerExternallyIncentivized(cur realm, t
 	initStakerTest(cur, t)
 
 	creator := testutils.TestAddress("cancel-creator")
-	refundee := testutils.TestAddress("cancel-refundee")
 
 	rewardAmount := int64(10_000_000_000)
 	depositGnsAmount := int64(100_000_000)
@@ -325,9 +303,49 @@ func TestCancelExternalIncentive_PoolNoLongerExternallyIncentivized(cur realm, t
 	gns.Transfer(cross(cur), stakerV1Addr, depositGnsAmount)
 
 	testing.SetRealm(adminRealm)
-	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me", refundee)
+	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me")
 
 	uassert.False(t, poolResolver.IsExternallyIncentivizedPool())
+}
+
+// TestCancelExternalIncentive_RefundsCreator verifies the reward tokens and the
+// GNS deposit are returned to the incentive creator, not to the admin/governance
+// caller that triggers the cancel.
+func TestCancelExternalIncentive_RefundsCreator(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	creator := testutils.TestAddress("cancel-creator")
+
+	rewardAmount := int64(10_000_000_000)
+	depositGnsAmount := int64(100_000_000)
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime + 86400
+	endTime := startTime + 86400*30
+
+	pool := setupCancelTestPool(cur, currentTime)
+	createCancelTestIncentive(pool, "cancel-me", creator, rewardAmount, depositGnsAmount, startTime, endTime, currentTime)
+
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), stakerAddr, rewardAmount)
+	bar.Transfer(cross(cur), stakerV1Addr, rewardAmount)
+	gns.Transfer(cross(cur), stakerV1Addr, depositGnsAmount)
+
+	creatorBarBefore := bar.BalanceOf(creator)
+	creatorGnsBefore := gns.BalanceOf(creator)
+	adminBarBefore := bar.BalanceOf(adminAddr)
+	adminGnsBefore := gns.BalanceOf(adminAddr)
+
+	// Admin triggers the cancel, but the refund goes to the creator.
+	testing.SetRealm(adminRealm)
+	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me")
+
+	uassert.Equal(t, rewardAmount, bar.BalanceOf(creator)-creatorBarBefore)
+	uassert.Equal(t, depositGnsAmount, gns.BalanceOf(creator)-creatorGnsBefore)
+
+	// The admin caller receives nothing back.
+	uassert.Equal(t, int64(0), bar.BalanceOf(adminAddr)-adminBarBefore)
+	uassert.Equal(t, int64(0), gns.BalanceOf(adminAddr)-adminGnsBefore)
 }
 
 // TestCancelExternalIncentive_RefundCappedByStakerBalance verifies the refund is
@@ -337,7 +355,6 @@ func TestCancelExternalIncentive_RefundCappedByStakerBalance(cur realm, t *testi
 	initStakerTest(cur, t)
 
 	creator := testutils.TestAddress("cancel-creator")
-	refundee := testutils.TestAddress("cancel-refundee")
 
 	depositGnsAmount := int64(100_000_000)
 
@@ -361,14 +378,14 @@ func TestCancelExternalIncentive_RefundCappedByStakerBalance(cur realm, t *testi
 	rewardAmount := cappedRefund + 1_000_000_000
 	createCancelTestIncentive(pool, "cancel-me", creator, rewardAmount, depositGnsAmount, startTime, endTime, currentTime)
 
-	barBefore := bar.BalanceOf(refundee)
-	gnsBefore := gns.BalanceOf(refundee)
+	barBefore := bar.BalanceOf(creator)
+	gnsBefore := gns.BalanceOf(creator)
 
 	testing.SetRealm(adminRealm)
-	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me", refundee)
+	mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me")
 
-	uassert.Equal(t, cappedRefund, bar.BalanceOf(refundee)-barBefore)
-	uassert.Equal(t, depositGnsAmount, gns.BalanceOf(refundee)-gnsBefore)
+	uassert.Equal(t, cappedRefund, bar.BalanceOf(creator)-barBefore)
+	uassert.Equal(t, depositGnsAmount, gns.BalanceOf(creator)-gnsBefore)
 }
 
 // TestCancelExternalIncentive_RejectsAccruedIncentive verifies the defensive
@@ -376,7 +393,6 @@ func TestCancelExternalIncentive_RefundCappedByStakerBalance(cur realm, t *testi
 // never removed, because dropping the record would strand those tokens.
 func TestCancelExternalIncentive_RejectsAccruedIncentive(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("cancel-creator")
-	refundee := testutils.TestAddress("cancel-refundee")
 
 	rewardAmount := int64(10_000_000_000)
 	depositGnsAmount := int64(100_000_000)
@@ -413,7 +429,7 @@ func TestCancelExternalIncentive_RejectsAccruedIncentive(cur realm, t *testing.T
 
 			testing.SetRealm(adminRealm)
 			uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-023]", func() {
-				mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me", refundee)
+				mockInstanceCancelExternalIncentive(cross(cur), cancelTestPoolPath, "cancel-me")
 			})
 		})
 	}

@@ -180,7 +180,7 @@ func userMintThenStake(cur realm) {
 
 func cancelBarIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, cancelledIncentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, cancelledIncentiveID)
 
 	ufmt.Printf("[INFO] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 	ufmt.Printf("[INFO] surviving incentive reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, activeIncentiveID))

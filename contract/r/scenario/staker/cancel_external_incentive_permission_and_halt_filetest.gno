@@ -12,7 +12,7 @@
 // 3. Safe Mode halts withdrawals, which blocks the cancel just like it blocks
 //    EndExternalIncentive - the refund is a withdrawal
 // 4. Emergency Mode still allows the cancel, matching the other recovery paths
-// 5. The refund reaches the refundee and the incentive is removed
+// 5. The refund reaches the creator and the incentive is removed
 
 package main
 
@@ -123,7 +123,7 @@ func checkStrangerBlocked(cur realm) {
 	testing.SetRealm(strangerRealm)
 
 	uassert.AbortsContains(t, cur, "is not admin or governance", func() {
-		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, strangerAddr)
+		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 	})
 	println("[EXPECTED] stranger rejected: caller is not admin or governance")
 
@@ -136,7 +136,7 @@ func checkSafeModeBlocked(cur realm) {
 	ufmt.Printf("[INFO] withdraw halted: %t\n", halt.IsHaltedWithdraw())
 
 	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
-		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeAddr)
+		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 	})
 	println("[EXPECTED] cancel blocked by withdraw halt")
 }
@@ -146,13 +146,14 @@ func cancelInEmergencyMode(cur realm) {
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
 	ufmt.Printf("[INFO] withdraw halted: %t\n", halt.IsHaltedWithdraw())
 
-	barBefore := bar.BalanceOf(refundeeAddr)
-	gnsBefore := gns.BalanceOf(refundeeAddr)
+	// The refund is returned to the incentive creator (admin created it).
+	barBefore := bar.BalanceOf(adminAddr)
+	gnsBefore := gns.BalanceOf(adminAddr)
 
-	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 
-	ufmt.Printf("[EXPECTED] refundee BAR delta: %d\n", bar.BalanceOf(refundeeAddr)-barBefore)
-	ufmt.Printf("[EXPECTED] refundee GNS delta: %d\n", gns.BalanceOf(refundeeAddr)-gnsBefore)
+	ufmt.Printf("[EXPECTED] creator BAR delta: %d\n", bar.BalanceOf(adminAddr)-barBefore)
+	ufmt.Printf("[EXPECTED] creator GNS delta: %d\n", gns.BalanceOf(adminAddr)-gnsBefore)
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 }
 
@@ -172,7 +173,7 @@ func cancelInEmergencyMode(cur realm) {
 //
 // [SCENARIO] 4. Emergency Mode allows the cancel
 // [INFO] withdraw halted: false
-// [EXPECTED] refundee BAR delta: 1000000000
-// [EXPECTED] refundee GNS delta: 1000000000
+// [EXPECTED] creator BAR delta: 1000000000
+// [EXPECTED] creator GNS delta: 1000000000
 // [EXPECTED] remaining incentives for pool: 0
 //

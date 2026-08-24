@@ -143,12 +143,13 @@ func cancelJustBeforeStart(cur realm) {
 	skipToTimestamp(startTimestamp - 1)
 	ufmt.Printf("[INFO] seconds until start: %d\n", startTimestamp-time.Now().Unix())
 
-	quxBefore := qux.BalanceOf(refundeeAddr)
+	// The cancel refund is returned to the incentive creator (admin created it).
+	quxBefore := qux.BalanceOf(adminAddr)
 
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, spareIncentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, spareIncentiveID)
 
-	ufmt.Printf("[EXPECTED] refundee QUX delta: %d\n", qux.BalanceOf(refundeeAddr)-quxBefore)
+	ufmt.Printf("[EXPECTED] creator QUX delta: %d\n", qux.BalanceOf(adminAddr)-quxBefore)
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 }
 
@@ -159,7 +160,7 @@ func checkCancelRejectedAfterStart(cur realm) {
 	testing.SetRealm(adminRealm)
 	// errCannotCancelIncentive
 	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-023]", func() {
-		sr.CancelExternalIncentive(cross(cur), poolPath, liveIncentiveID, refundeeAddr)
+		sr.CancelExternalIncentive(cross(cur), poolPath, liveIncentiveID)
 	})
 	println("[EXPECTED] cancel rejected: incentive already started")
 }
@@ -170,7 +171,7 @@ func checkCancelRejectedAfterEnd(cur realm) {
 	testing.SetRealm(adminRealm)
 	// errCannotCancelIncentive
 	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-023]", func() {
-		sr.CancelExternalIncentive(cross(cur), poolPath, liveIncentiveID, refundeeAddr)
+		sr.CancelExternalIncentive(cross(cur), poolPath, liveIncentiveID)
 	})
 	println("[EXPECTED] cancel rejected after the end timestamp too")
 }
@@ -211,7 +212,7 @@ func skipToTimestamp(target int64) {
 //
 // [SCENARIO] 3. Cancel the spare incentive on the last block before start
 // [INFO] seconds until start: 5
-// [EXPECTED] refundee QUX delta: 1000000000
+// [EXPECTED] creator QUX delta: 1000000000
 // [EXPECTED] remaining incentives for pool: 1
 //
 // [SCENARIO] 4. Cancel is rejected once the incentive has started

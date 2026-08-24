@@ -160,14 +160,15 @@ func userMintThenStake(cur realm) {
 }
 
 func cancelBarIncentive(cur realm) {
-	barBefore := bar.BalanceOf(refundeeAddr)
-	gnsBefore := gns.BalanceOf(refundeeAddr)
+	// The refund is returned to the incentive creator (admin created it).
+	barBefore := bar.BalanceOf(adminAddr)
+	gnsBefore := gns.BalanceOf(adminAddr)
 
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, cancelledIncentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, cancelledIncentiveID)
 
-	ufmt.Printf("[EXPECTED] refundee BAR delta: %d\n", bar.BalanceOf(refundeeAddr)-barBefore)
-	ufmt.Printf("[EXPECTED] refundee GNS delta: %d\n", gns.BalanceOf(refundeeAddr)-gnsBefore)
+	ufmt.Printf("[EXPECTED] creator BAR delta: %d\n", bar.BalanceOf(adminAddr)-barBefore)
+	ufmt.Printf("[EXPECTED] creator GNS delta: %d\n", gns.BalanceOf(adminAddr)-gnsBefore)
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 	ufmt.Printf("[EXPECTED] surviving incentive reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, survivingIncentiveID))
 }
@@ -255,8 +256,8 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] user staked position 1
 //
 // [SCENARIO] 4. Admin cancels only the BAR incentive
-// [EXPECTED] refundee BAR delta: 1000000000
-// [EXPECTED] refundee GNS delta: 1000000000
+// [EXPECTED] creator BAR delta: 1000000000
+// [EXPECTED] creator GNS delta: 1000000000
 // [EXPECTED] remaining incentives for pool: 1
 // [EXPECTED] surviving incentive reward token: gno.land/r/onbloc/qux.QUX
 //

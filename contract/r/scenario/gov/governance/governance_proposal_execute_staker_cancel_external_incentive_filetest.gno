@@ -71,7 +71,11 @@ const (
 	REWARD_AMOUNT      int64 = 1_000_000_000
 )
 
-var incentiveID string
+var (
+	incentiveID             string
+	creatorBarBeforeExecute int64
+	creatorGnsBeforeExecute int64
+)
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -143,7 +147,7 @@ func createPoolAndIncentive(cur realm) {
 func proposeCancelExternalIncentive(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	params := poolPath + "," + incentiveID + "," + refundeeAddr.String()
+	params := poolPath + "," + incentiveID
 	proposalID := governance.ProposeParameterChange(
 		cross(cur),
 		"staker",
@@ -164,13 +168,18 @@ func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 	ufmt.Printf("[INFO] Voted YES for proposal %d\n", proposalID)
 
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
+
+	// The cancel refunds to the incentive creator (admin); capture its balance
+	// right before execution so the delta isolates the refund.
+	creatorBarBeforeExecute = bar.BalanceOf(adminAddr)
+	creatorGnsBeforeExecute = gns.BalanceOf(adminAddr)
 	governance.Execute(cross(cur), proposalID)
 	ufmt.Printf("[EXPECTED] Proposal %d executed successfully\n", proposalID)
 }
 
 func verifyCancelled(cur realm) {
-	ufmt.Printf("[EXPECTED] refundee BAR balance: %d\n", bar.BalanceOf(refundeeAddr))
-	ufmt.Printf("[EXPECTED] refundee GNS balance: %d\n", gns.BalanceOf(refundeeAddr))
+	ufmt.Printf("[EXPECTED] creator BAR refund delta: %d\n", bar.BalanceOf(adminAddr)-creatorBarBeforeExecute)
+	ufmt.Printf("[EXPECTED] creator GNS refund delta: %d\n", gns.BalanceOf(adminAddr)-creatorGnsBeforeExecute)
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 }
 
@@ -192,7 +201,7 @@ func verifyCancelled(cur realm) {
 // [EXPECTED] Proposal 1 executed successfully
 //
 // [SCENARIO] 6. Verify the refund and the removal
-// [EXPECTED] refundee BAR balance: 1000000000
-// [EXPECTED] refundee GNS balance: 1000000000
+// [EXPECTED] creator BAR refund delta: 1000000000
+// [EXPECTED] creator GNS refund delta: 1000000000
 // [EXPECTED] remaining incentives for pool: 0
 //

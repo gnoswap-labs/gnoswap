@@ -14,7 +14,7 @@
 //  1. Admin creates one pending external incentive
 //  2. User stakes a position while the incentive is pending
 //  3. Admin cancels the incentive before the start timestamp (reward + GNS
-//     deposit refunded to the refundee)
+//     deposit refunded to the creator)
 //  4. User unstakes directly (no separate CollectReward): the NFT returns to the
 //     owner, no reward is paid (the deposit never referenced the incentive), and
 //     the collect-inside-unstake does not panic on the removed incentive
@@ -155,12 +155,16 @@ func stakeWhilePending(cur realm) {
 }
 
 func cancelIncentive(cur realm) {
+	// The refund is returned to the incentive creator (admin created it).
+	creatorBarBefore := bar.BalanceOf(adminAddr)
+	creatorGnsBefore := gns.BalanceOf(adminAddr)
+
 	testing.SetRealm(adminRealm)
-	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID, refundeeAddr)
+	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
-	ufmt.Printf("[EXPECTED] refundee BAR (reward) refunded: %d\n", bar.BalanceOf(refundeeAddr))
-	ufmt.Printf("[EXPECTED] refundee GNS (deposit) refunded: %d\n", gns.BalanceOf(refundeeAddr))
+	ufmt.Printf("[EXPECTED] creator BAR (reward) refunded: %d\n", bar.BalanceOf(adminAddr)-creatorBarBefore)
+	ufmt.Printf("[EXPECTED] creator GNS (deposit) refunded: %d\n", gns.BalanceOf(adminAddr)-creatorGnsBefore)
 }
 
 func unstakeAfterCancel(cur realm) {
@@ -236,8 +240,8 @@ func positionIdFrom(cur realm, id int) grc721.TokenID {
 //
 // [SCENARIO] 3. Admin cancels the incentive before the start timestamp
 // [EXPECTED] remaining incentives for pool: 0
-// [EXPECTED] refundee BAR (reward) refunded: 1000000000
-// [EXPECTED] refundee GNS (deposit) refunded: 1000000000
+// [EXPECTED] creator BAR (reward) refunded: 1000000000
+// [EXPECTED] creator GNS (deposit) refunded: 1000000000
 //
 // [SCENARIO] 4. User unstakes directly after the cancel
 // [EXPECTED] NFT returned to owner after unstake: true

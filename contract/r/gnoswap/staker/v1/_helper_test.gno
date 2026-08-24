@@ -116,7 +116,8 @@ func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
 
-	CreatePool(cur,
+	CreatePool(
+		cur,
 		barPath,
 		bazPath,
 		fee3000,
@@ -532,8 +533,8 @@ func mockInstanceEndExternalIncentive(cur realm, poolPath string, incentiveId st
 	getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 }
 
-func mockInstanceCancelExternalIncentive(cur realm, poolPath string, incentiveId string, refundAddress address) {
-	getMockInstance().CancelExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
+func mockInstanceCancelExternalIncentive(cur realm, poolPath string, incentiveId string) {
+	getMockInstance().CancelExternalIncentive(0, cur, poolPath, incentiveId)
 }
 
 func mockInstanceCollectExternalIncentivePenalty(cur realm, poolPath string, incentiveId string, refundAddress address) int64 {
