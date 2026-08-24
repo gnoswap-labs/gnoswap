@@ -2,6 +2,7 @@ package pool
 
 import (
 	"testing"
+	"time"
 
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -317,10 +318,7 @@ func TestSwapComputation_CoreEngine(cur realm, t *testing.T) {
 					protocolFee:              u256.Zero(),
 					liquidity:                mockPool.Liquidity(),
 				},
-				Cache: &SwapCache{
-					feeProtocol:    0,
-					liquidityStart: mockPool.Liquidity(),
-				},
+				Cache: newSwapCache(0, mockPool.Liquidity(), time.Now().Unix()),
 			}
 
 			// When: Execute swap computation
@@ -358,7 +356,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                new(u256.Uint).Sub(maxUint128, u256.One()),
 		}
-		cache := &SwapCache{}
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -367,7 +365,8 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 		})
 
 		step := StepComputations{initialized: true, tickNext: 1}
-		newState := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+		newState, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+		uassert.NoError(t, err)
 
 		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
 	})
@@ -383,7 +382,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                maxUint128.Clone(),
 		}
-		cache := &SwapCache{}
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -393,9 +392,51 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 
 		step := StepComputations{initialized: true, tickNext: 1}
 		uassert.PanicsContains(t, cur, "result exceeds uint128 range", func() {
-			getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+			_, _ = getMockInstance().tickTransition(step, false, state, pool, cache, nil)
 		})
 	})
+}
+
+func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) {
+	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
+	pool.SetObservationState(pl.NewObservationState(100))
+
+	tickInfo := pl.NewTickInfo()
+	tickInfo.SetInitialized(true)
+	pool.SetTick(20, tickInfo)
+
+	slot0 := pool.Slot0()
+	slot0.SetObservationIndex(0)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(1)
+	pool.SetSlot0(slot0)
+
+	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
+	state.setTick(10) // simulate an earlier uninitialized crossing in this swap
+	cache := newSwapCache(0, u256.NewUint(100), 200)
+	step := StepComputations{initialized: true, tickNext: 20}
+
+	_, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+	uassert.NoError(t, err)
+	tickInfoAfter, err := pool.GetTick(20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), tickInfoAfter.TickCumulativeOutside())
+}
+
+func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
+	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
+	pool.SetObservationState(nil)
+	tickInfo := pl.NewTickInfo()
+	tickInfo.SetInitialized(true)
+	pool.SetTick(20, tickInfo)
+
+	slot0 := pool.Slot0()
+	cache := newSwapCache(0, u256.NewUint(100), time.Now().Unix())
+	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
+	step := StepComputations{initialized: true, tickNext: 20}
+
+	_, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+	uassert.ErrorContains(t, err, "observation state not initialized")
 }
 
 func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {

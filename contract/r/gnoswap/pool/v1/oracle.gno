@@ -19,22 +19,24 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	if p.ObservationState() == nil {
+	observationState := p.ObservationState()
+	if observationState == nil {
 		return 0, nil, errors.New("observation state not initialized")
 	}
+	slot0 := p.Slot0()
 
 	// Get observations for current time and secondsAgo
 	secondsAgos := []uint32{secondsAgo, 0}
 	currentTime := time.Now().Unix()
 
 	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := observe(
-		p.ObservationState(),
+		observationState,
 		currentTime,
 		secondsAgos,
-		p.Slot0Tick(),
-		p.ObservationState().Index(),
+		slot0.Tick(),
+		slot0.ObservationIndex(),
 		p.Liquidity(),
-		p.ObservationState().Cardinality(),
+		slot0.ObservationCardinality(),
 	)
 	if err != nil {
 		return 0, nil, err
@@ -69,14 +71,39 @@ func writeObservationByPool(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	if p.ObservationState() == nil {
-		p.SetObservationState(pl.NewObservationState(currentTime))
+	return writeObservationByPoolWithSlot0(p, p.Slot0(), currentTime, tick, liquidity)
+}
+
+// writeObservationByPoolWithSlot0 writes using the supplied slot0 oracle
+// cursor. Swap passes its immutable swap-start snapshot here, matching
+// Uniswap's use of slot0Start for the final oracle write.
+func writeObservationByPoolWithSlot0(
+	p *pl.Pool,
+	slot0Base pl.Slot0,
+	currentTime int64,
+	tick int32,
+	liquidity *u256.Uint,
+) error {
+	observationState := p.ObservationState()
+	slot0 := p.Slot0()
+	slot0.SetObservationIndex(slot0Base.ObservationIndex())
+	slot0.SetObservationCardinality(slot0Base.ObservationCardinality())
+	slot0.SetObservationCardinalityNext(slot0Base.ObservationCardinalityNext())
+
+	if observationState == nil {
+		observationState = pl.NewObservationState(currentTime)
+		p.SetObservationState(observationState)
+
+		slot0.SetObservationIndex(0)
+		slot0.SetObservationCardinality(1)
+		slot0.SetObservationCardinalityNext(1)
 	}
 
-	err := writeObservation(p.ObservationState(), currentTime, tick, liquidity)
+	err := writeObservation(observationState, &slot0, currentTime, tick, liquidity)
 	if err != nil {
 		return err
 	}
+	p.SetSlot0(slot0)
 
 	return nil
 }
@@ -92,16 +119,18 @@ func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinality
 		return errors.New("observation cardinality next exceeds maximum")
 	}
 
-	if observationCardinalityNext <= observationState.CardinalityNext() {
-		return errors.New("observation cardinality next must be greater than current")
-	}
-
-	observationCardinalityNextNew, err := grow(observationState, observationState.Cardinality(), observationCardinalityNext)
+	slot0 := p.Slot0()
+	observationCardinalityNextNew, err := grow(
+		observationState,
+		slot0.ObservationCardinalityNext(),
+		observationCardinalityNext,
+	)
 	if err != nil {
 		return err
 	}
 
-	observationState.SetCardinalityNext(observationCardinalityNextNew)
+	slot0.SetObservationCardinalityNext(observationCardinalityNextNew)
+	p.SetSlot0(slot0)
 
 	return nil
 }
@@ -143,6 +172,10 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 }
 
 func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (uint16, error) {
+	if os == nil {
+		return currentCardinality, errors.New("observation state not initialized")
+	}
+
 	if currentCardinality <= 0 {
 		return currentCardinality, errors.New("currentCardinality must be greater than 0")
 	}
@@ -167,11 +200,26 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 
 func writeObservation(
 	os *pl.ObservationState,
+	slot0 *pl.Slot0,
 	currentTime int64,
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	lastObservation, err := lastObservation(os)
+	if os == nil {
+		return errors.New("observation state not initialized")
+	}
+	if slot0 == nil {
+		return errors.New("slot0 not initialized")
+	}
+	if slot0.ObservationCardinality() == 0 {
+		return errors.New("observation cardinality must be greater than 0")
+	}
+
+	index := slot0.ObservationIndex()
+	cardinality := slot0.ObservationCardinality()
+	cardinalityNext := slot0.ObservationCardinalityNext()
+
+	lastObservation, err := lastObservation(os, index)
 	if err != nil {
 		return err
 	}
@@ -181,14 +229,14 @@ func writeObservation(
 	}
 
 	// Check if we need to grow the cardinality
-	if os.CardinalityNext() > os.Cardinality() && os.Index() == os.Cardinality()-1 {
-		os.SetCardinality(os.CardinalityNext())
+	if cardinalityNext > cardinality && index == cardinality-1 {
+		cardinality = cardinalityNext
 	}
 
-	nextIndex := (os.Index() + 1) % os.Cardinality()
+	nextIndex := (index + 1) % cardinality
 
 	// Ensure the slot exists before writing
-	if _, ok := os.Observations()[nextIndex]; !ok {
+	if _, ok := os.ObservationAt(nextIndex); !ok {
 		os.SetObservation(nextIndex, pl.NewDefaultObservation())
 	}
 
@@ -198,13 +246,14 @@ func writeObservation(
 	}
 
 	os.SetObservation(nextIndex, observation)
-	os.SetIndex(nextIndex)
+	slot0.SetObservationIndex(nextIndex)
+	slot0.SetObservationCardinality(cardinality)
 
 	return nil
 }
 
-func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
-	observation, ok := os.Observations()[os.Index()]
+func lastObservation(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
+	observation, ok := os.ObservationAt(index)
 	if !ok || observation == nil {
 		return nil, errors.New(errNotInitializedObservation)
 	}
@@ -215,7 +264,7 @@ func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 // observationAt returns the observation at a specific index
 // Returns error if the observation doesn't exist
 func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
-	obs, ok := os.Observations()[index]
+	obs, ok := os.ObservationAt(index)
 	if !ok || obs == nil {
 		return nil, errors.New(errNotInitializedObservation)
 	}

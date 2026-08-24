@@ -196,7 +196,8 @@ func GetSlot0Unlocked(poolPath string) (bool, error) {
 	return getImplementation().GetSlot0Unlocked(poolPath)
 }
 
-// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick, protocol fee, lock state).
+// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick,
+// protocol fee, lock state, and oracle cursor/capacity metadata).
 // The clone happens here, at the proxy boundary, so every implementation
 // version can return its internal Slot0 by value without each one having to
 // remember to defend against callers mutating the shared sqrtPriceX96.
@@ -206,6 +207,8 @@ func GetSlot0(poolPath string) Slot0 {
 }
 
 // GetObservationAt returns a safe copy of the observation stored at index.
+// An in-range but uninitialized slot returns the zero observation, matching
+// Uniswap V3's fixed observation-array getter.
 //
 // ref: uniswap v3 IUniswapV3PoolState.observations(uint256 index)
 func GetObservationAt(poolPath string, index uint16) (Observation, error) {

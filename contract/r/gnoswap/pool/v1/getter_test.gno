@@ -299,6 +299,20 @@ func TestGetters(cur realm, t *testing.T) {
 	})
 }
 
+func TestGetObservationAtReturnsDefaultForUninitializedSlot(cur realm, t *testing.T) {
+	testInitData(cur, t)
+
+	observation, err := getMockInstance().GetObservationAt("token0:token1:3000", 2)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), observation.BlockTimestamp())
+	uassert.Equal(t, int64(0), observation.TickCumulative())
+	uassert.Equal(t, "0", observation.SecondsPerLiquidityCumulativeX128())
+	uassert.Equal(t, false, observation.Initialized())
+
+	_, err = getMockInstance().GetObservationAt("token0:token1:3000", maxObservationCardinality)
+	uassert.ErrorContains(t, err, "out of range")
+}
+
 func TestPositionGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                             string

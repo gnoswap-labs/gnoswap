@@ -33,7 +33,8 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				// We can't use GetTWAP directly because it uses time.Now()
 				// Instead, we'll test the observation data directly
 				observationState := pool.ObservationState()
-				obs, err := lastObservation(observationState)
+				slot0 := pool.Slot0()
+				obs, err := lastObservation(observationState, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
 				firstObs := observationState.Observations()[0]
 
@@ -58,14 +59,15 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				// Query observations to verify seconds per liquidity accumulation
 				secondsAgos := []uint32{0, 300, 600, 900}
 				observationState := pool.ObservationState()
+				slot0 := pool.Slot0()
 				_, secondsPerLiquidityCumulatives, err := observe(
 					observationState,
 					baseTime+900,
 					secondsAgos,
 					pool.Slot0Tick(),
-					observationState.Index(),
+					slot0.ObservationIndex(),
 					pool.Liquidity(),
-					observationState.Cardinality(),
+					slot0.ObservationCardinality(),
 				)
 				uassert.NoError(t, err, "Observe should succeed")
 
@@ -85,7 +87,8 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
 				observationState := pool.ObservationState()
-				obs, err := lastObservation(observationState)
+				slot0 := pool.Slot0()
+				obs, err := lastObservation(observationState, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
 
 				expectedTickCumulative := int64(1500 * 300) // 450000
@@ -101,12 +104,13 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 
 			// Gradually increase cardinality as needed
 			observationState := pool.ObservationState()
-			currentCard := observationState.Cardinality()
+			slot0 := pool.Slot0()
+			currentCard := slot0.ObservationCardinality()
 			neededCard := uint16(len(tt.scenarios) + 1) // +1 for initial observation
 			if neededCard > currentCard {
 				_, err := grow(observationState, currentCard, neededCard)
 				uassert.NoError(t, err, "Should grow cardinality")
-				observationState.SetCardinalityNext(neededCard)
+				slot0.SetObservationCardinalityNext(neededCard)
 			}
 
 			// Process scenarios
@@ -117,9 +121,10 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 
 				// writeObservation will initialize observation state if needed
 				observationState := pool.ObservationState()
-				err := writeObservation(observationState, scenario.time, scenario.tick, pool.Liquidity())
+				err := writeObservation(observationState, &slot0, scenario.time, scenario.tick, pool.Liquidity())
 				uassert.NoError(t, err, ufmt.Sprintf("Observation at %s should succeed", scenario.description))
 			}
+			pool.SetSlot0(slot0)
 
 			// Run verification function
 			tt.verifyFn(t, pool, tt.scenarios)
@@ -133,6 +138,7 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing
 
 	// Create new observation state
 	os := pl.NewObservationState(currentTime)
+	slot0 := testObservationSlot0(0, 1, 1)
 
 	// Test immediate query with secondsAgo=0
 	tick := int32(100)
@@ -143,9 +149,9 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing
 		currentTime,
 		0, // secondsAgo = 0
 		tick,
-		os.Index(),
+		slot0.ObservationIndex(),
 		liquidity,
-		os.Cardinality(),
+		slot0.ObservationCardinality(),
 	)
 
 	uassert.NoError(t, err, "Should not error when querying secondsAgo=0 after init")
@@ -159,9 +165,9 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing
 		newTime,
 		0, // secondsAgo = 0
 		tick,
-		os.Index(),
+		slot0.ObservationIndex(),
 		liquidity,
-		os.Cardinality(),
+		slot0.ObservationCardinality(),
 	)
 
 	uassert.NoError(t, err, "Should create virtual observation for current time")
@@ -222,18 +228,18 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 
 	t.Run("Cardinality=N", func(cur realm, t *testing.T) {
 		os := pl.NewObservationState(currentTime)
+		slot0 := testObservationSlot0(0, 5, 5)
 
 		// Grow to cardinality 5
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
 		// Simulate multiple writes
-		os.SetCardinality(5)
 		liquidity := u256.MustFromDecimal("1000000")
 
 		// Write observations at different times
 		for i := int64(1); i <= 4; i++ {
-			err := writeObservation(os, currentTime+i*100, 100, liquidity)
+			err := writeObservation(os, &slot0, currentTime+i*100, 100, liquidity)
 			uassert.NoError(t, err, "Should write observation")
 		}
 
@@ -243,7 +249,7 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 			os,
 			target,
 			100,
-			os.Index(),
+			slot0.ObservationIndex(),
 			liquidity,
 			5,
 		)
@@ -305,19 +311,19 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 	cardinality := uint16(5)
 	_, err := grow(os, 1, cardinality)
 	uassert.NoError(t, err, "Should grow successfully")
-	os.SetCardinality(cardinality)
+	slot0 := testObservationSlot0(0, cardinality, cardinality)
 
 	liquidity := u256.MustFromDecimal("1000000")
 
 	// Fill all slots to wrap around
 	for i := int64(1); i <= 7; i++ { // More than cardinality to force wrapping
-		err := writeObservation(os, currentTime+i*100, 100, liquidity)
+		err := writeObservation(os, &slot0, currentTime+i*100, 100, liquidity)
 		uassert.NoError(t, err, "Should write observation")
 	}
 
 	// After wrapping, index should be (7 % 5) = 2
 	expectedIndex := uint16(2)
-	uassert.Equal(t, expectedIndex, os.Index(), "Index should wrap correctly")
+	uassert.Equal(t, expectedIndex, slot0.ObservationIndex(), "Index should wrap correctly")
 
 	// Test observation retrieval after wrapping
 	// The circular buffer should contain observations at times:
@@ -329,7 +335,7 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 		os,
 		target,
 		100,
-		os.Index(),
+		slot0.ObservationIndex(),
 		liquidity,
 		cardinality,
 	)
@@ -345,7 +351,7 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 		currentTime+800,
 		secondsAgo,
 		100,
-		os.Index(),
+		slot0.ObservationIndex(),
 		liquidity,
 		cardinality,
 	)
@@ -438,7 +444,8 @@ func TestObservationState_ObservationAt(cur realm, t *testing.T) {
 func TestObservationState_Transform(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-	lastObs, _ := lastObservation(os)
+	slot0 := testObservationSlot0(0, 1, 1)
+	lastObs, _ := lastObservation(os, slot0.ObservationIndex())
 
 	t.Run("Transform with same time", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))

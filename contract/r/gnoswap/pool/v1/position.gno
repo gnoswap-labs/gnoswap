@@ -162,10 +162,15 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
 
+	// Get the current block timestamp once. Uniswap reads block.timestamp for
+	// all oracle work in one position modification; keeping one value here
+	// avoids wall-clock changes between the read and write paths.
+	currentTime := time.Now().Unix()
+
 	// get current state and price bounds
 	tick := p.Slot0Tick()
 	// update position state
-	position, err := updatePosition(p, params, tick)
+	position, err := updatePosition(p, params, tick, currentTime)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -195,8 +200,6 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 	case tick < params.tickUpper:
 		// case 2: Current price is within the position range
 		liquidityBefore := p.Liquidity()
-		currentTime := time.Now().Unix()
-
 		// Update oracle BEFORE liquidity changes
 		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
 		if err != nil {
@@ -259,23 +262,23 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 //	println("Updated Position Info:", updatedPosition)
 //
 // ```
-func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
+func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32, blockTimestamp int64) (pl.PositionInfo, error) {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
 	liquidityDelta := positionParams.liquidityDelta
 
 	var flippedLower, flippedUpper bool
 	if !liquidityDelta.IsZero() {
-		blockTimestamp := time.Now().Unix()
 		observationState := p.ObservationState()
+		slot0 := p.Slot0()
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 			observationState,
 			blockTimestamp,
 			0,
-			tick,
-			observationState.Index(),
+			slot0.Tick(),
+			slot0.ObservationIndex(),
 			p.Liquidity(),
-			observationState.Cardinality(),
+			slot0.ObservationCardinality(),
 		)
 		if err != nil {
 			return pl.NewDefaultPositionInfo(), err
