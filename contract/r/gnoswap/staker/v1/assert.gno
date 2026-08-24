@@ -192,7 +192,7 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	if startTimestamp < minimumStartTimestamp {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later", startTimestamp, minimumStartTimestamp),
+			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later", startTimestamp),
 		))
 	}
 
