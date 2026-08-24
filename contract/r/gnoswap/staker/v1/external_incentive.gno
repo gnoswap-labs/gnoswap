@@ -377,10 +377,12 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 	s.getExternalIncentives().remove(incentiveId)
 
 	if refundAmount > 0 {
+		// transfer reward token back to creator
 		common.SafeGRC20Transfer(cross(rlm), rewardToken, creator, refundAmount)
 	}
 
 	if depositGnsAmount > 0 {
+		// transfer GNS deposit back to creator
 		common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, creator, depositGnsAmount)
 	}
 
