@@ -117,5 +117,5 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetExternalIncentiveByPo
 # stdout '\\"rewardPerSecond\\":\\"128\\"'
 # stdout '\\"creator\\":\\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\\"'
 # stdout '\\"createdHeight\\":[0-9]+'
-# stdout '\\"depositGnsAmount\\":1000000000'
+# stdout '\\"depositGnsAmount\\":100000000000'
 # stdout '\\"refunded\\":false'
