@@ -1,32 +1,16 @@
 package pool
 
-// ObservationState manages the oracle's historical data
+// ObservationState manages only the oracle's circular observation buffer.
+// The active index and buffer capacities are part of Pool.Slot0 so there is
+// one authoritative copy of the oracle cursor state.
 type ObservationState struct {
-	observations    map[uint16]*Observation // circular buffer of observations
-	index           uint16                  // the most-recently updated index of the observations array
-	cardinality     uint16                  // the current maximum number of observations that are being stored
-	cardinalityNext uint16                  // the next maximum number of observations to store, triggered in observations.write
+	observations map[uint16]*Observation // circular buffer of observations
 }
 
 // ObservationState Getters methods
-func (os *ObservationState) Index() uint16                         { return os.index }
-func (os *ObservationState) Cardinality() uint16                   { return os.cardinality }
-func (os *ObservationState) CardinalityNext() uint16               { return os.cardinalityNext }
 func (os *ObservationState) Observations() map[uint16]*Observation { return os.observations }
 
 // ObservationState Setters methods
-func (os *ObservationState) SetIndex(index uint16) {
-	os.index = index
-}
-
-func (os *ObservationState) SetCardinality(cardinality uint16) {
-	os.cardinality = cardinality
-}
-
-func (os *ObservationState) SetCardinalityNext(cardinalityNext uint16) {
-	os.cardinalityNext = cardinalityNext
-}
-
 func (os *ObservationState) SetObservation(index uint16, observation *Observation) {
 	os.observations[index] = observation
 }
@@ -50,10 +34,7 @@ func (os *ObservationState) Clone() *ObservationState {
 	}
 
 	return &ObservationState{
-		index:           os.index,
-		cardinality:     os.cardinality,
-		cardinalityNext: os.cardinalityNext,
-		observations:    observations,
+		observations: observations,
 	}
 }
 
@@ -100,10 +81,7 @@ func (o *Observation) Clone() *Observation {
 
 func NewObservationState(currentTime int64) *ObservationState {
 	state := &ObservationState{
-		index:           0,
-		cardinality:     1,
-		cardinalityNext: 1,
-		observations:    make(map[uint16]*Observation),
+		observations: make(map[uint16]*Observation),
 	}
 
 	state.observations[0] = NewObservation(

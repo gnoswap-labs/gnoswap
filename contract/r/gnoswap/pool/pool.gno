@@ -27,7 +27,8 @@ type Pool struct {
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
 
-	observationState *ObservationState // oracle state with historical observations
+	// Oracle observation buffer; its cursor and capacity live in slot0.
+	observationState *ObservationState
 }
 
 // Pool Getters methods
@@ -282,27 +283,38 @@ func (p *TokenPair) Token1() int64          { return p.token1 }
 func (p *TokenPair) SetToken0(token0 int64) { p.token0 = token0 }
 func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
 
+// Slot0 mirrors Uniswap V3's slot0(): current price/tick/protocol-fee/lock
+// state and the oracle cursor/capacity metadata.
 type Slot0 struct {
-	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
-	tick         int32      // current tick of the pool, i.e according to the last tick transition that was run
-	feeProtocol  uint8      // protocol fee for both tokens of the pool
-	unlocked     bool       // whether the pool is currently locked to reentrancy
+	sqrtPriceX96               *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
+	tick                       int32      // current tick of the pool, i.e according to the last tick transition that was run
+	feeProtocol                uint8      // protocol fee for both tokens of the pool
+	unlocked                   bool       // whether the pool is currently locked to reentrancy
+	observationIndex           uint16     // the index of the most-recently written observation
+	observationCardinality     uint16     // the current maximum number of observations stored
+	observationCardinalityNext uint16     // the next maximum number of observations to store
 }
 
-func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96.Clone() }
-func (s *Slot0) Tick() int32              { return s.tick }
-func (s *Slot0) FeeProtocol() uint8       { return s.feeProtocol }
-func (s *Slot0) Unlocked() bool           { return s.unlocked }
+func (s *Slot0) SqrtPriceX96() *u256.Uint           { return s.sqrtPriceX96.Clone() }
+func (s *Slot0) Tick() int32                        { return s.tick }
+func (s *Slot0) FeeProtocol() uint8                 { return s.feeProtocol }
+func (s *Slot0) Unlocked() bool                     { return s.unlocked }
+func (s *Slot0) ObservationIndex() uint16           { return s.observationIndex }
+func (s *Slot0) ObservationCardinality() uint16     { return s.observationCardinality }
+func (s *Slot0) ObservationCardinalityNext() uint16 { return s.observationCardinalityNext }
 
 // Clone returns a value-type copy of Slot0 that shares no mutable state with
 // the original, so callers cannot reach back into pool internals through the
 // returned sqrtPriceX96 pointer.
 func (s *Slot0) Clone() Slot0 {
 	return Slot0{
-		sqrtPriceX96: s.sqrtPriceX96.Clone(),
-		tick:         s.tick,
-		feeProtocol:  s.feeProtocol,
-		unlocked:     s.unlocked,
+		sqrtPriceX96:               s.sqrtPriceX96.Clone(),
+		tick:                       s.tick,
+		feeProtocol:                s.feeProtocol,
+		unlocked:                   s.unlocked,
+		observationIndex:           s.observationIndex,
+		observationCardinality:     s.observationCardinality,
+		observationCardinalityNext: s.observationCardinalityNext,
 	}
 }
 
@@ -310,6 +322,17 @@ func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrt
 func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
 func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }
+func (s *Slot0) SetObservationIndex(observationIndex uint16) {
+	s.observationIndex = observationIndex
+}
+
+func (s *Slot0) SetObservationCardinality(observationCardinality uint16) {
+	s.observationCardinality = observationCardinality
+}
+
+func (s *Slot0) SetObservationCardinalityNext(observationCardinalityNext uint16) {
+	s.observationCardinalityNext = observationCardinalityNext
+}
 
 func NewSlot0(
 	sqrtPriceX96 *u256.Uint,
@@ -318,10 +341,13 @@ func NewSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96: sqrtPriceX96.Clone(),
-		tick:         tick,
-		feeProtocol:  feeProtocol,
-		unlocked:     unlocked,
+		sqrtPriceX96:               sqrtPriceX96.Clone(),
+		tick:                       tick,
+		feeProtocol:                feeProtocol,
+		unlocked:                   unlocked,
+		observationIndex:           0,
+		observationCardinality:     1,
+		observationCardinalityNext: 1,
 	}
 }
 

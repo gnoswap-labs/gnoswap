@@ -415,6 +415,8 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	halt.AssertIsNotHaltedPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	slot0Before := pool.Slot0()
+	observationCardinalityNextOld := slot0Before.ObservationCardinalityNext()
 
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
@@ -423,13 +425,17 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	if err != nil {
 		panic(err)
 	}
+	slot0After := pool.Slot0()
+	observationCardinalityNextNew := slot0After.ObservationCardinalityNext()
 
-	previousRealm := rlm.Previous()
-	chain.Emit(
-		"IncreaseObservationCardinalityNext",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"poolPath", pool.PoolPath(),
-		"cardinalityNext", utils.FormatUint(cardinalityNext),
-	)
+	if observationCardinalityNextOld != observationCardinalityNextNew {
+		previousRealm := rlm.Previous()
+		chain.Emit(
+			"IncreaseObservationCardinalityNext",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"poolPath", pool.PoolPath(),
+			"cardinalityNext", utils.FormatUint(observationCardinalityNextNew),
+		)
+	}
 }

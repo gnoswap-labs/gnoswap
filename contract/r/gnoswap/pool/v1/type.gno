@@ -65,6 +65,11 @@ type SwapCache struct {
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
+
+	// Uniswap keeps the swap-start slot0 in memory for every oracle read/write
+	// during the swap. Pool storage must not be re-read after callbacks run.
+	slot0Start       pl.Slot0
+	hasSlot0Start    bool
 }
 
 func newSwapCache(

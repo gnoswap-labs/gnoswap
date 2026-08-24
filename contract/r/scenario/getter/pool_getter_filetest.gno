@@ -843,12 +843,13 @@ func getObservationState(cur realm) {
 	println("[INFO] Check GetObservationState method")
 	testing.SetRealm(adminRealm)
 
-	observationState, err := pl.GetObservationState(poolPath)
+	_, err := pl.GetObservationState(poolPath)
 	if err != nil {
 		println("[EXPECTED] GetObservationState error:", err.Error())
 	} else {
-		ufmt.Printf("[EXPECTED] observationState index: %d\n", observationState.Index())
-		ufmt.Printf("[EXPECTED] observationState cardinality: %d\n", observationState.Cardinality())
+		slot0 := pl.GetSlot0(poolPath)
+		ufmt.Printf("[EXPECTED] observationState index: %d\n", slot0.ObservationIndex())
+		ufmt.Printf("[EXPECTED] observationState cardinality: %d\n", slot0.ObservationCardinality())
 	}
 }
 

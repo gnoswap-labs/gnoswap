@@ -385,6 +385,14 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	).(uint8)
 }
 
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	return t.ExecuteFn(
+		"GetSlot0",
+		func(args ...any) any { return t.instance.GetSlot0(args[0].(string)) },
+		poolPath,
+	).(pool.Slot0)
+}
+
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetSlot0SqrtPriceX96",
@@ -604,6 +612,18 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 		poolPath,
 	).([]any)
 	return result[0].(*pool.ObservationState), result[1].(error)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	result := t.ExecuteFn(
+		"GetObservationAt",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetObservationAt(args[0].(string), args[1].(uint16))
+			return []any{r1, r2}
+		},
+		poolPath, index,
+	).([]any)
+	return result[0].(pool.Observation), result[1].(error)
 }
 
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {

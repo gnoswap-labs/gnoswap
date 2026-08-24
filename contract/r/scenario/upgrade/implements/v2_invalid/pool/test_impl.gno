@@ -288,6 +288,13 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	if !t.isActive("GetSlot0") {
+		panic("test implementation: GetSlot0 not supported")
+	}
+	return t.instance.GetSlot0(poolPath)
+}
+
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	if !t.isActive("GetSlot0SqrtPriceX96") {
 		panic("test implementation: GetSlot0SqrtPriceX96 not supported")
@@ -456,6 +463,13 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 		panic("test implementation: GetObservationState not supported")
 	}
 	return t.instance.GetObservationState(poolPath)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	if !t.isActive("GetObservationAt") {
+		panic("test implementation: GetObservationAt not supported")
+	}
+	return t.instance.GetObservationAt(poolPath, index)
 }
 
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
