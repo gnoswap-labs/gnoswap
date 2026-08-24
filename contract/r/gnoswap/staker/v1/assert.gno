@@ -1,12 +1,12 @@
 package staker
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
-	sr "gno.land/r/gnoswap/staker"
 )
 
 const (
@@ -16,6 +16,8 @@ const (
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 	SECONDS_PER_DAY     = int64(24 * 60 * 60)
+
+	maxUnstakingFee = uint64(1000) // 10%
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -136,7 +138,17 @@ func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath strin
 		return
 	}
 
-	pool.Incentives().IterateIncentives(func(incentiveID string, incentive *sr.ExternalIncentive) bool {
+	minimumActiveIncentiveStartTime := currentTime - TIMESTAMP_365DAYS
+	if minimumActiveIncentiveStartTime < 0 {
+		minimumActiveIncentiveStartTime = 0
+	}
+
+	pool.Incentives().IterateIncentiveIdsByTime(minimumActiveIncentiveStartTime, math.MaxInt64, func(incentiveID string) bool {
+		incentive := s.getExternalIncentives().get(incentiveID)
+		if incentive == nil {
+			return false
+		}
+
 		if incentive.RewardToken() != tokenPath || NewExternalIncentiveResolver(incentive).IsEnded(currentTime) {
 			return false
 		}
@@ -152,8 +164,6 @@ func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath strin
 		))
 	})
 }
-
-const maxUnstakingFee = uint64(1000) // 10%
 
 // assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
 func assertIsValidFeeRate(fee uint64) {
