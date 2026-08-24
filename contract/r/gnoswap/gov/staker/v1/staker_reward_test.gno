@@ -472,7 +472,10 @@ func TestStakerReward_transferToken(cur realm, t *testing.T) {
 			tt.setupBalance()
 
 			// When: Transfer token
-			testing.SetRealm(testing.NewUserRealm(tt.from))
+			// Drive the flow as the real on-chain entry (CollectReward) does:
+			// the gov staker realm debits its own tokens, so Previous must be
+			// the staker code realm (govStakerAddr), not an EOA/origin.
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 			err := transferToken(0, cur, tt.tokenPath, tt.from, tt.to, tt.amount)
 
 			// Then: Check result
@@ -591,7 +594,7 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		{
 			name:        "success - normal token transfer",
 			tokenPath:   GNS_PATH,
-			from:        admin,
+			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
 			fromBalance: 500_000_000,
@@ -600,26 +603,28 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		{
 			name:        "success - exact balance transfer",
 			tokenPath:   GNS_PATH,
-			from:        admin,
+			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
-			amount:      100_000_000,
-			fromBalance: 100_000_000,
+			amount:      1_000_000_000,
+			fromBalance: 1_000_000_000,
 			shouldFail:  false,
 		},
 		{
 			name:          "fail - insufficient balance",
 			tokenPath:     GNS_PATH,
-			from:          testutils.TestAddress("from"), // not have balance
+			from:          govStakerAddr,
 			to:            testutils.TestAddress("to"),
-			amount:        200_000_000,
-			fromBalance:   100_000_000,
+			// setup re-runs per subtest, so the funded balance accumulates; pick an
+			// amount that exceeds it under any ordering.
+			amount:        1_000_000_000_000_000,
+			fromBalance:   1_000_000_000,
 			expectedError: "insufficient balance",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - invalid to address",
 			tokenPath:     GNS_PATH,
-			from:          admin,
+			from:          govStakerAddr,
 			to:            address(""),
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
@@ -629,7 +634,7 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		{
 			name:          "fail - negative amount",
 			tokenPath:     GNS_PATH,
-			from:          admin,
+			from:          govStakerAddr,
 			to:            testutils.TestAddress("to"),
 			amount:        -100_000_000,
 			fromBalance:   500_000_000,
@@ -639,7 +644,7 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		{
 			name:        "success - zero amount transfer",
 			tokenPath:   GNS_PATH,
-			from:        admin,
+			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      0,
 			fromBalance: 500_000_000,
@@ -658,7 +663,7 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 		{
 			name:        "success - GRC20 bar token transfer",
 			tokenPath:   barPath,
-			from:        admin,
+			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
 			fromBalance: 500_000_000,
@@ -674,7 +679,11 @@ func TestStakerReward_TokenTransferScenarios(cur realm, t *testing.T) {
 			cleanupStakerRewardTest(cur, t)
 			setupStakerRewardStakerTokenBalance(cur, t)
 
-			testing.SetRealm(adminRealm)
+			// Drive the flow as the real on-chain entry (CollectReward) does:
+			// transferToken debits the caller realm (Previous), whose tokens
+			// were minted to govStakerAddr above. Previous must be the staker
+			// code realm, not an EOA/origin.
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// When: Transfer token
 			err := transferToken(0, cur, tt.tokenPath, tt.from, tt.to, tt.amount)

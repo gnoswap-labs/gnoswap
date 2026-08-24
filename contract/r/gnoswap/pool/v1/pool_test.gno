@@ -10,7 +10,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -977,8 +976,8 @@ func approveTokensForPool(cur realm, t *testing.T, pool *pl.Pool) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), pool.Token0Path(), poolAddr, maxApprove)
-	common.SafeGRC20Approve(cross(cur), pool.Token1Path(), poolAddr, maxApprove)
+	approveToken(cur, pool.Token0Path(), poolAddr, maxApprove)
+	approveToken(cur, pool.Token1Path(), poolAddr, maxApprove)
 }
 
 func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
