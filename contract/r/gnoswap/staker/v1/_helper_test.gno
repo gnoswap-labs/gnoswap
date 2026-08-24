@@ -532,6 +532,10 @@ func mockInstanceEndExternalIncentive(cur realm, poolPath string, incentiveId st
 	getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 }
 
+func mockInstanceCancelExternalIncentive(cur realm, poolPath string, incentiveId string, refundAddress address) {
+	getMockInstance().CancelExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
+}
+
 func mockInstanceCollectExternalIncentivePenalty(cur realm, poolPath string, incentiveId string, refundAddress address) int64 {
 	return getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
 }
