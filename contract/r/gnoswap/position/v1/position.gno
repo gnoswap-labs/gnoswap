@@ -93,22 +93,7 @@ func (p *positionV1) Mint(
 	params := newMintParams(processedInput, mintInput)
 	id, liquidity, amount0, amount1 := p.mint(0, rlm, params)
 
-	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolLiquidity, err := pl.GetLiquidity(processedInput.poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken0, err := pl.GetBalanceToken0(processedInput.poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken1, err := pl.GetBalanceToken1(processedInput.poolPath)
-	if err != nil {
-		panic(err)
-	}
+	pool := mustGetPool(processedInput.poolPath)
 	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
 	if err != nil {
 		panic(err)
@@ -127,11 +112,11 @@ func (p *positionV1) Mint(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(id),
-		"poolLiquidity", poolLiquidity,
-		"token0Balance", utils.FormatInt(poolBalanceToken0),
-		"token1Balance", utils.FormatInt(poolBalanceToken1),
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -217,27 +202,11 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
+	pool := mustGetPool(poolPath)
 	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
 	if err != nil {
 		panic(err)
 	}
-	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolLiquidity, err := pl.GetLiquidity(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken0, err := pl.GetBalanceToken0(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken1, err := pl.GetBalanceToken1(poolPath)
-	if err != nil {
-		panic(err)
-	}
-
 	chain.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
@@ -250,11 +219,11 @@ func (p *positionV1) IncreaseLiquidity(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", poolLiquidity,
-		"token0Balance", utils.FormatInt(poolBalanceToken0),
-		"token1Balance", utils.FormatInt(poolBalanceToken1),
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -325,27 +294,11 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
+	pool := mustGetPool(poolPath)
 	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
 	if err != nil {
 		panic(err)
 	}
-	poolSqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolLiquidity, err := pl.GetLiquidity(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken0, err := pl.GetBalanceToken0(poolPath)
-	if err != nil {
-		panic(err)
-	}
-	poolBalanceToken1, err := pl.GetBalanceToken1(poolPath)
-	if err != nil {
-		panic(err)
-	}
-
 	chain.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
@@ -359,11 +312,11 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", poolLiquidity,
-		"token0Balance", utils.FormatInt(poolBalanceToken0),
-		"token1Balance", utils.FormatInt(poolBalanceToken1),
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
