@@ -307,7 +307,10 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 //  2. Removes it from the incentive tree and the start-time index
 //  3. Refunds the full reward amount and the GNS deposit to the creator
 //
-// Only callable by admin or governance.
+// Only callable by admin, governance, or the incentive creator. The permission
+// check runs after the incentive is resolved because the creator identity comes
+// from the stored record; every step before it is read-only, so no unauthorized
+// side effect can occur ahead of the check.
 func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -317,7 +320,6 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 
 	prevRealm := rlm.Previous()
 	caller := prevRealm.Address()
-	access.AssertIsAdminOrGovernance(caller)
 
 	pool, ok := s.getPools().Get(targetPoolPath)
 	if !ok {
@@ -337,6 +339,9 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 			ufmt.Sprintf("cannot cancel non existent incentive(%s)", incentiveId),
 		))
 	}
+
+	// Admin, governance, or the incentive creator may cancel it.
+	assertIsAdminGovernanceOrCreator(caller, incentiveResolver.Creator())
 
 	currentTime := time.Now().Unix()
 	assertIsNotStartedIncentive(incentiveResolver, currentTime)

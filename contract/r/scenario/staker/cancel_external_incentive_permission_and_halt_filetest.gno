@@ -8,7 +8,7 @@
 // SCENARIO:
 // Verifies the access and halt guards on CancelExternalIncentive:
 // 1. Admin creates a pending external incentive
-// 2. A stranger cannot cancel it (admin or governance only)
+// 2. A stranger cannot cancel it (admin, governance, or creator only)
 // 3. Safe Mode halts withdrawals, which blocks the cancel just like it blocks
 //    EndExternalIncentive - the refund is a withdrawal
 // 4. Emergency Mode still allows the cancel, matching the other recovery paths
@@ -122,10 +122,10 @@ func initialize(cur realm) {
 func checkStrangerBlocked(cur realm) {
 	testing.SetRealm(strangerRealm)
 
-	uassert.AbortsContains(t, cur, "is not admin or governance", func() {
+	uassert.AbortsContains(t, cur, "must be admin, governance, or the incentive creator", func() {
 		sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 	})
-	println("[EXPECTED] stranger rejected: caller is not admin or governance")
+	println("[EXPECTED] stranger rejected: caller is not admin, governance, or creator")
 
 	ufmt.Printf("[EXPECTED] incentive untouched: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
 }
@@ -164,7 +164,7 @@ func cancelInEmergencyMode(cur realm) {
 // [INFO] pending incentives for pool: 1
 //
 // [SCENARIO] 2. Stranger cannot cancel
-// [EXPECTED] stranger rejected: caller is not admin or governance
+// [EXPECTED] stranger rejected: caller is not admin, governance, or creator
 // [EXPECTED] incentive untouched: 1
 //
 // [SCENARIO] 3. Safe Mode blocks the cancel

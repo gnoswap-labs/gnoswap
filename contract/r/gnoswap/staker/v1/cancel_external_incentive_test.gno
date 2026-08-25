@@ -97,17 +97,7 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			setupPool:        true,
 			setupIncentive:   true,
 			startOffset:      86400,
-			expectedErrorMsg: "is not admin or governance",
-		},
-		{
-			name:             "creator cannot cancel",
-			poolPath:         cancelTestPoolPath,
-			incentiveId:      incentiveId,
-			caller:           creator,
-			setupPool:        true,
-			setupIncentive:   true,
-			startOffset:      86400,
-			expectedErrorMsg: "is not admin or governance",
+			expectedErrorMsg: "must be admin, governance, or the incentive creator",
 		},
 		{
 			name:             "incentive not found",
@@ -164,6 +154,15 @@ func TestCancelExternalIncentive(cur realm, t *testing.T) {
 			poolPath:       cancelTestPoolPath,
 			incentiveId:    incentiveId,
 			caller:         govGovernanceAddr,
+			setupPool:      true,
+			setupIncentive: true,
+			startOffset:    86400,
+		},
+		{
+			name:           "creator cancels before start",
+			poolPath:       cancelTestPoolPath,
+			incentiveId:    incentiveId,
+			caller:         creator,
 			setupPool:      true,
 			setupIncentive: true,
 			startOffset:    86400,
@@ -485,5 +484,34 @@ func TestAssertIsNotStartedIncentive_StartBoundary(cur realm, t *testing.T) {
 	// After start: rejected.
 	uassert.PanicsContains(t, cur, "already started", func() {
 		assertIsNotStartedIncentive(newResolver(), startTimestamp+1)
+	})
+}
+
+// TestAssertIsAdminGovernanceOrCreator pins the cancel permission set: admin,
+// governance, and the incentive creator are allowed; anyone else is rejected.
+func TestAssertIsAdminGovernanceOrCreator(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+
+	creator := testutils.TestAddress("cancel-creator")
+	stranger := testutils.TestAddress("cancel-stranger")
+
+	// creator is allowed
+	uassert.NotPanics(t, cur, func() {
+		assertIsAdminGovernanceOrCreator(creator, creator)
+	})
+
+	// admin is allowed
+	uassert.NotPanics(t, cur, func() {
+		assertIsAdminGovernanceOrCreator(adminAddr, creator)
+	})
+
+	// governance is allowed
+	uassert.NotPanics(t, cur, func() {
+		assertIsAdminGovernanceOrCreator(govGovernanceAddr, creator)
+	})
+
+	// an unrelated caller is rejected
+	uassert.PanicsContains(t, cur, "must be admin, governance, or the incentive creator", func() {
+		assertIsAdminGovernanceOrCreator(stranger, creator)
 	})
 }

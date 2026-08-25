@@ -6,7 +6,10 @@ import (
 	"strings"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/access"
 )
 
 const (
@@ -204,6 +207,27 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
 		))
 	}
+}
+
+// assertIsAdminGovernanceOrCreator ensures the caller may act on an incentive:
+// admin and governance are the protocol-level operators, and the creator is the
+// address that funded the incentive in CreateExternalIncentive.
+func assertIsAdminGovernanceOrCreator(caller, creator address) {
+	if caller == creator {
+		return
+	}
+	if access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) ||
+		access.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
+		return
+	}
+
+	panic(makeErrorWithDetails(
+		errNoPermission,
+		ufmt.Sprintf(
+			"caller(%s) must be admin, governance, or the incentive creator(%s)",
+			caller.String(), creator.String(),
+		),
+	))
 }
 
 // assertIsNotStartedIncentive ensures the incentive can still be cancelled, i.e.
