@@ -165,9 +165,9 @@ func (i *poolV1) GetPositionFeeGrowthInside0LastX128(poolPath, key string) (stri
 	if err != nil {
 		return "", err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return "", ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return "", err
 	}
 	return position.FeeGrowthInside0LastX128(), nil
 }
@@ -177,9 +177,9 @@ func (i *poolV1) GetPositionFeeGrowthInside1LastX128(poolPath, key string) (stri
 	if err != nil {
 		return "", err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return "", ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return "", err
 	}
 	return position.FeeGrowthInside1LastX128(), nil
 }
@@ -189,9 +189,9 @@ func (i *poolV1) GetPositionTokensOwed0(poolPath, key string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return 0, ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return 0, err
 	}
 	return position.TokensOwed0(), nil
 }
@@ -201,9 +201,9 @@ func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return 0, ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return 0, err
 	}
 	return position.TokensOwed1(), nil
 }
@@ -355,9 +355,9 @@ func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (strin
 	if err != nil {
 		return "", "", err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return "", "", ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return "", "", err
 	}
 	return position.FeeGrowthInside0LastX128(),
 		position.FeeGrowthInside1LastX128(), nil
@@ -368,9 +368,9 @@ func (i *poolV1) GetPositionLiquidity(poolPath, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	position, exists := GetPositionByPool(pool, key)
-	if !exists {
-		return "", ufmt.Errorf("position %s not found", key)
+	position, err := pool.GetPosition(key)
+	if err != nil {
+		return "", err
 	}
 	return position.Liquidity(), nil
 }

@@ -110,23 +110,6 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// GetPosition returns the position info for a given key.
-func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
-	iPositionInfo := p.Positions().Get(key)
-	if iPositionInfo == nil {
-		newPosition := pl.NewDefaultPositionInfo()
-		return newPosition, false
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		newPosition := pl.NewDefaultPositionInfo()
-		return newPosition, false
-	}
-
-	return positionInfo, true
-}
-
 // positionUpdateWithKey updates a position in the pool and returns the updated position.
 func positionUpdateWithKey(
 	p *pl.Pool,
@@ -138,7 +121,11 @@ func positionUpdateWithKey(
 	//
 	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
 	// so there's no need to check for existence in GetPosition.
-	positionToUpdate, _ := GetPositionByPool(p, positionKey)
+	positionToUpdate, err := p.GetPosition(positionKey)
+	if err != nil {
+		positionToUpdate = pl.NewDefaultPositionInfo()
+	}
+
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), err
@@ -152,19 +139,6 @@ func positionUpdateWithKey(
 // setPosition sets the position info for a given key.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 	p.SetPosition(posKey, positionInfo)
-}
-
-// mustGetPosition returns the position info for a given key.
-func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
-	positionInfo, exist := GetPositionByPool(p, positionKey)
-	if !exist {
-		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
-		))
-	}
-
-	return &positionInfo
 }
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens

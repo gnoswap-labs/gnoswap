@@ -16,6 +16,7 @@ import (
 
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -51,6 +52,19 @@ var (
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
 )
+
+// mustGetPositionByPool returns the position info for a given key.
+func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
+	positionInfo, err := p.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
+
+	return &positionInfo
+}
 
 var (
 	fooToken = common.GetToken(fooPath)
