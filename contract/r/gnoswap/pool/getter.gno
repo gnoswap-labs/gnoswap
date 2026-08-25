@@ -2,7 +2,6 @@ package pool
 
 import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // GetPools returns a read-only view of every pool, keyed by pool path.
@@ -319,21 +318,6 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 // GetTickBitmaps returns the tick bitmap for a given word position.
 func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return getImplementation().GetTickBitmaps(poolPath, wordPos)
-}
-
-// GetObservationState returns the observation state for a given pool path.
-func GetObservationState(poolPath string) (*ObservationState, error) {
-	observationState, err := getImplementation().GetObservationState(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Implementations may return nil without error after an upgrade.
-	if observationState == nil {
-		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
-	}
-
-	return observationState.Clone(), nil
 }
 
 // GetPendingProtocolFees returns the pending protocol fee amount per token path.

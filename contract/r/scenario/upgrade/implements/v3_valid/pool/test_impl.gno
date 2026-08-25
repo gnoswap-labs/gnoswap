@@ -268,10 +268,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	return t.instance.GetObservationState(poolPath)
-}
-
 func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
 	return t.instance.GetObservationAt(poolPath, index)
 }

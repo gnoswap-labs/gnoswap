@@ -275,9 +275,6 @@ func main(cur realm) {
 	getPosition(cur)
 	println()
 
-	println("[SCENARIO] 2.55. GetObservationState")
-	getObservationState(cur)
-	println()
 }
 
 func initializeSetup(cur realm) {
@@ -839,20 +836,6 @@ func getPosition(cur realm) {
 	}
 }
 
-func getObservationState(cur realm) {
-	println("[INFO] Check GetObservationState method")
-	testing.SetRealm(adminRealm)
-
-	_, err := pl.GetObservationState(poolPath)
-	if err != nil {
-		println("[EXPECTED] GetObservationState error:", err.Error())
-	} else {
-		slot0 := pl.GetSlot0(poolPath)
-		ufmt.Printf("[EXPECTED] observationState index: %d\n", slot0.ObservationIndex())
-		ufmt.Printf("[EXPECTED] observationState cardinality: %d\n", slot0.ObservationCardinality())
-	}
-}
-
 // Output:
 // [SCENARIO] 1. Initialize
 // [SCENARIO] 1.1. Initialize Setup
@@ -1114,7 +1097,3 @@ func getObservationState(cur realm) {
 // [EXPECTED] position tokensOwed0: 0
 // [EXPECTED] position tokensOwed1: 0
 //
-// [SCENARIO] 2.55. GetObservationState
-// [INFO] Check GetObservationState method
-// [EXPECTED] observationState index: 0
-// [EXPECTED] observationState cardinality: 1
