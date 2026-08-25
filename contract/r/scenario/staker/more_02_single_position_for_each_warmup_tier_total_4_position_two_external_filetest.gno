@@ -55,7 +55,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_365DAYS int64 = 365 * 24 * 60 * 60
 
@@ -223,8 +223,8 @@ func createExternalIncentives(cur realm) {
 		poolPath,
 		barPath,
 		365_000_000_000, // 365 billion bar tokens
-		1234569600,
-		1234569600+TIMESTAMP_365DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_365DAYS,
 	)
 
 	ufmt.Printf("[INFO] bar external incentive created - reward per block: ~23148\n")
@@ -239,14 +239,14 @@ func createExternalIncentives(cur realm) {
 		poolPath,
 		bazPath,
 		3_650_000_000, // 3650 million baz tokens
-		1234569600,
-		1234569600+TIMESTAMP_365DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_365DAYS,
 	)
 
 	ufmt.Printf("[INFO] baz external incentive created - reward per block: ~23\n")
 
 	// Make external incentives start
-	leftHeight := 978 - runtime.ChainHeight()
+	leftHeight := 35538 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5) // skip 5 blocks more
 	}

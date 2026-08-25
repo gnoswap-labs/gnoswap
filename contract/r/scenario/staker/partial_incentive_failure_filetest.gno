@@ -119,27 +119,19 @@ func createMultipleIncentives(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approve tokens for MULTIPLE external incentives")
-	// Create multiple incentives with same token but different time periods
-	// This simulates multiple reward programs that could have different funding status
-	bar.Approve(cross(cur), stakerAddr, depositAmount*3)
+	// A pool may hold at most one unfinished incentive per reward token, so the
+	// two concurrent reward programs use different tokens.
+	bar.Approve(cross(cur), stakerAddr, depositAmount)
 	baz.Approve(cross(cur), stakerAddr, depositAmount)
 
-	// Each external incentive requires 1000 GNS as deposit
-	gnsDepositPerIncentive := int64(1_000_000_000) // 1000 GNS
-	totalGnsRequired := gnsDepositPerIncentive * 4 // 4 incentives
+	gnsDepositPerIncentive := int64(100_000_000_000) // 100_000 GNS
+	totalGnsRequired := gnsDepositPerIncentive * 2   // 2 incentives
 	gns.Approve(cross(cur), stakerAddr, totalGnsRequired)
 
-	// Different time periods for different incentives
-	startTime1 := int64(1234569600)
+	startTime1 := int64(1234742400)
 	endTime1 := startTime1 + TIMESTAMP_90DAYS
 
-	startTime2 := startTime1 + 86400 // Start 1 day later
-	endTime2 := startTime2 + TIMESTAMP_90DAYS
-
-	startTime3 := startTime1 + 172800 // Start 2 days later
-	endTime3 := startTime3 + TIMESTAMP_90DAYS
-
-	println("[INFO] Create external incentive #1: bar token (period 1)")
+	println("[INFO] Create external incentive #1: bar token")
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
@@ -150,29 +142,7 @@ func createMultipleIncentives(cur realm) {
 		endTime1,
 	)
 
-	println("[INFO] Create external incentive #2: bar token (period 2)")
-	testing.SetRealm(adminRealm)
-	sr.CreateExternalIncentive(
-		cross(cur),
-		poolPath,
-		barPath,
-		depositAmount,
-		startTime2,
-		endTime2,
-	)
-
-	println("[INFO] Create external incentive #3: bar token (period 3)")
-	testing.SetRealm(adminRealm)
-	sr.CreateExternalIncentive(
-		cross(cur),
-		poolPath,
-		barPath,
-		depositAmount,
-		startTime3,
-		endTime3,
-	)
-
-	println("[INFO] Create external incentive #4: baz token")
+	println("[INFO] Create external incentive #2: baz token")
 	testing.SetRealm(adminRealm)
 	sr.CreateExternalIncentive(
 		cross(cur),
@@ -183,10 +153,10 @@ func createMultipleIncentives(cur realm) {
 		endTime1,
 	)
 
-	ufmt.Printf("[SUCCESS] Created 4 external incentives (3 bar, 1 baz)\n")
+	ufmt.Printf("[SUCCESS] Created 2 external incentives (1 bar, 1 baz)\n")
 
 	// Make external incentives start
-	leftHeight := 978 - runtime.ChainHeight()
+	leftHeight := 35538 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5)
 	}
@@ -294,10 +264,10 @@ func drainBarIncentive(cur realm) {
 		}
 	}
 
-	ufmt.Printf("[SUCCESS] Total bar drained: %d (should be close to %d)\n", totalBarDrained, depositAmount*3)
+	ufmt.Printf("[SUCCESS] Total bar drained: %d (should be close to %d)\n", totalBarDrained, depositAmount)
 
-	// Verify bar incentive is nearly empty - we have 3 bar incentives, so check against total
-	if totalBarDrained < depositAmount*3*90/100 {
+	// Verify the bar incentive is nearly empty
+	if totalBarDrained < depositAmount*90/100 {
 		println("[WARNING] May not have sufficiently drained bar incentive")
 	}
 }
@@ -402,11 +372,9 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 //
 // [STEP 2] Create MULTIPLE external incentives (bar with different periods, baz)
 // [INFO] Approve tokens for MULTIPLE external incentives
-// [INFO] Create external incentive #1: bar token (period 1)
-// [INFO] Create external incentive #2: bar token (period 2)
-// [INFO] Create external incentive #3: bar token (period 3)
-// [INFO] Create external incentive #4: baz token
-// [SUCCESS] Created 4 external incentives (3 bar, 1 baz)
+// [INFO] Create external incentive #1: bar token
+// [INFO] Create external incentive #2: baz token
+// [SUCCESS] Created 2 external incentives (1 bar, 1 baz)
 //
 // [STEP 3] Mint and stake position
 // [INFO] Approve tokens for minting position
@@ -430,36 +398,36 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [INFO] Temporary position 21 created and staked
 // [INFO] Skip blocks and collect multiple rounds to drain incentives
 // [INFO] Collection round 1
-// [INFO] Round 1: Collected 5709496 bar from position 2
-// [INFO] Round 1: Collected 5709496 bar from position 3
-// [INFO] Round 1: Collected 5709496 bar from position 21
+// [INFO] Round 1: Collected 2893228 bar from position 2
+// [INFO] Round 1: Collected 2893228 bar from position 3
+// [INFO] Round 1: Collected 2893228 bar from position 21
 // [INFO] Collection round 2
-// [INFO] Round 2: Collected 8679684 bar from position 2
-// [INFO] Round 2: Collected 8679684 bar from position 3
-// [INFO] Round 2: Collected 8679684 bar from position 21
+// [INFO] Round 2: Collected 2893228 bar from position 2
+// [INFO] Round 2: Collected 2893228 bar from position 3
+// [INFO] Round 2: Collected 2893228 bar from position 21
 // [INFO] Collection round 3
-// [INFO] Round 3: Collected 9374055 bar from position 2
-// [INFO] Round 3: Collected 9374055 bar from position 3
-// [INFO] Round 3: Collected 9374055 bar from position 21
-// [SUCCESS] Total bar drained: 475264700 (should be close to 30000000000)
+// [INFO] Round 3: Collected 3124685 bar from position 2
+// [INFO] Round 3: Collected 3124685 bar from position 3
+// [INFO] Round 3: Collected 3124685 bar from position 21
+// [SUCCESS] Total bar drained: 178222820 (should be close to 10000000000)
 // [WARNING] May not have sufficiently drained bar incentive
 //
 // [STEP 6] Collect rewards - partial success expected
 // [INFO] Skip 5,000 more blocks to accumulate new rewards
 // [ACTION] Collect rewards from main position (ID=1)
-// [RESULT] bar reward collected: 19348384
+// [RESULT] bar reward collected: 19312814
 // [RESULT] baz reward collected: 19312814
 // [INFO] baz incentive provided rewards
 //
 // [STEP 7] Verify reward collection behavior after time passes
 // [INFO] Skip 10,000 blocks
 // [ACTION] Collect rewards after time has passed
-// [RESULT] bar reward: 9663
+// [RESULT] bar reward: 3221
 // [RESULT] baz reward: 3221
 // [ACTION] Immediate re-collection
 // [RESULT] Immediate bar reward: 0
 // [RESULT] Immediate baz reward: 0
 // [INFO] Skip 5000 blocks
 // [ACTION] Final collection after additional time
-// [RESULT] bar collected: 4830
+// [RESULT] bar collected: 1610
 // [RESULT] baz collected: 1610

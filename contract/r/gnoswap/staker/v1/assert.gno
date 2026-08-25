@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,8 @@ const (
 	TIMESTAMP_365DAYS = int64(31536000)
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
+
+	maxUnstakingFee = uint64(1000) // 10%
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -127,7 +130,39 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 	))
 }
 
-const maxUnstakingFee = uint64(1000) // 10%
+// assertIsExternalRewardTokenAvailable ensures a pool has no unfinished incentive for the token.
+func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath string, currentTime int64) {
+	pool := s.getPools().GetPoolOrNil(poolPath)
+	if pool == nil || pool.Incentives() == nil {
+		return
+	}
+
+	minimumActiveIncentiveStartTime := currentTime - TIMESTAMP_365DAYS
+	if minimumActiveIncentiveStartTime < 0 {
+		minimumActiveIncentiveStartTime = 0
+	}
+
+	pool.Incentives().IterateIncentiveIdsByTime(minimumActiveIncentiveStartTime, math.MaxInt64, func(incentiveID string) bool {
+		incentive := s.getExternalIncentives().get(incentiveID)
+		if incentive == nil {
+			return false
+		}
+
+		if incentive.RewardToken() != tokenPath || NewExternalIncentiveResolver(incentive).IsEnded(currentTime) {
+			return false
+		}
+
+		panic(makeErrorWithDetails(
+			errIncentiveAlreadyExists,
+			ufmt.Sprintf(
+				"rewardToken(%s) already has unfinished incentive(%s) for poolPath(%s)",
+				tokenPath,
+				incentiveID,
+				poolPath,
+			),
+		))
+	})
+}
 
 // assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
 func assertIsValidFeeRate(fee uint64) {
@@ -139,7 +174,7 @@ func assertIsValidFeeRate(fee uint64) {
 	}
 }
 
-// assertIsValidIncentiveStartTime ensures the incentive starts at midnight of a future date.
+// assertIsValidIncentiveStartTime ensures the incentive starts at midnight at least 24 hours after creation.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -152,12 +187,12 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
+	// must be at least 24 hours from now
+	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
+	if startTimestamp < minimumStartTimestamp {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
+			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later", startTimestamp),
 		))
 	}
 
@@ -169,6 +204,11 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
 		))
 	}
+}
+
+// getMinimumIncentiveStartTimestamp returns after 24 hours from now.
+func getMinimumIncentiveStartTimestamp() int64 {
+	return time.Now().Add(24 * time.Hour).Unix()
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.

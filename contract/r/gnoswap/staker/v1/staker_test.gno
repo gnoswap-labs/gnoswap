@@ -34,7 +34,7 @@ const (
 func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 
 	// Test 1: Normal collection with sufficient rewards
 	t.Run("normal collection works", func(cur realm, t *testing.T) {
@@ -226,7 +226,7 @@ func TestCollectReward_NilIncentiveSkipped(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
 
-	startTimestamp := int64(1234569600)
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t,
 		poolPath,
 		gnsPath,
@@ -302,23 +302,28 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	// Fund caller for incentive creation.
-	TokenFaucet(cur, t, gnsPath, addr01)
-	TokenFaucet(cur, t, barPath, addr01)
-
-	// Create an external incentive that has already started.
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
-	barApprove(cur, t, addr01, stakerAddr, maxApprove)
-
-	startTimestamp := int64(1234569600)
-	CreateExternalIncentiveAsAdmin(cur, t,
+	// Create an already-started incentive directly for the reward calculation
+	// fixture. The public entrypoint intentionally rejects starts before 24 hours.
+	currentTime := time.Now().Unix()
+	createdIncentiveID := getMockInstance().store.NextIncentiveID(addr01, currentTime)
+	createdIncentive := sr.NewExternalIncentive(
+		createdIncentiveID,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
-		startTimestamp,
-		startTimestamp+incentiveDuration,
+		currentTime+1,
+		currentTime+1+incentiveDuration,
+		addr01,
+		0,
+		runtime.ChainHeight(),
+		currentTime,
 	)
+	getMockInstance().getExternalIncentives().tree.Set(createdIncentiveID, createdIncentive)
+	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+	NewPoolResolver(pool).IncentivesResolver().create(createdIncentive)
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), stakerAddr, rewardMinimumAmount)
+	bar.Transfer(cross(cur), stakerV1Addr, rewardMinimumAmount)
 
 	// Allow some rewards to accrue.
 	testing.SkipHeights(3600)
@@ -426,14 +431,28 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	startTimestamp := int64(1234569600)
-	CreateExternalIncentiveAsAdmin(cur, t,
+	// Create an already-started incentive directly for the reward calculation
+	// fixture. The public entrypoint intentionally rejects starts before 24 hours.
+	currentTime := time.Now().Unix()
+	createdIncentiveID := getMockInstance().store.NextIncentiveID(addr01, currentTime)
+	createdIncentive := sr.NewExternalIncentive(
+		createdIncentiveID,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
-		startTimestamp,
-		startTimestamp+incentiveDuration,
+		currentTime+1,
+		currentTime+1+incentiveDuration,
+		addr01,
+		0,
+		runtime.ChainHeight(),
+		currentTime,
 	)
+	getMockInstance().getExternalIncentives().tree.Set(createdIncentiveID, createdIncentive)
+	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+	NewPoolResolver(pool).IncentivesResolver().create(createdIncentive)
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), stakerAddr, rewardMinimumAmount)
+	bar.Transfer(cross(cur), stakerV1Addr, rewardMinimumAmount)
 
 	testing.SkipHeights(3600)
 
@@ -639,9 +658,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000) // Approve GNS deposit
 
-	// Incentive must start at least 1 day in the future (midnight)
-	tomorrow := time.Now().AddDate(0, 0, 1)
-	startTimestamp := tomorrow.Truncate(24 * time.Hour).Unix()
+	// Incentive must start at least 24 hours in the future (midnight)
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t,
 		poolPath,
 		barPath,
@@ -746,7 +764,7 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 
@@ -807,7 +825,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 

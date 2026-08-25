@@ -68,7 +68,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
@@ -327,11 +327,11 @@ func createExternalIncentiveNativePost(cur realm) {
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		10_000_000_000,              // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		1234742400,                  // startTimestamp
+		1234742400+TIMESTAMP_90DAYS, // endTimestamp
 	)
 
-	ufmt.Printf("[INFO] external incentive created - start: %d, end: %d\n", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	ufmt.Printf("[INFO] external incentive created - start: %d, end: %d\n", 1234742400, 1234742400+TIMESTAMP_90DAYS)
 
 	adminNewWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[EXPECTED] admin wugnot balance after external incentive: %d\n", adminNewWugnotBalance)
@@ -375,7 +375,7 @@ func collectReward01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards")
-	testing.SkipHeights(1000)
+	testing.SkipHeights(35560)
 
 	wugnotBalanceBefore := wugnot.BalanceOf(adminUser)
 	ugnotBalanceBefore := ugnotBalanceOf(cur, adminAddr)
@@ -567,7 +567,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] add token and approve gns
 // [INFO] create external incentive with native coin
 // [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234568025:1
-// [INFO] external incentive created - start: 1234569600, end: 1242345600
+// [INFO] external incentive created - start: 1234742400, end: 1242518400
 // [EXPECTED] admin wugnot balance after external incentive: 49999005
 //
 // [SCENARIO] 6. Stake token 01

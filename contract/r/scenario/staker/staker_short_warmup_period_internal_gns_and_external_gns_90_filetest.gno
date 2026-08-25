@@ -172,8 +172,8 @@ func createExternalIncentiveBar(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive BAR created\n")
@@ -191,8 +191,8 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		"gno.land/r/gnoswap/gns.GNS",
 		5_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive GNS created\n")
@@ -210,9 +210,9 @@ func stakeToken_1(cur realm) {
 }
 
 func afterActive(cur realm) {
-	testing.SkipHeights(978 - runtime.ChainHeight() - 1) // in active
-	testing.SkipHeights(1)                               // active // but no block passed since active
-	testing.SkipHeights(50)                              // skip 50 more block
+	testing.SkipHeights(35538 - runtime.ChainHeight() - 1) // in active
+	testing.SkipHeights(1)                                 // active // but no block passed since active
+	testing.SkipHeights(50)                                // skip 50 more block
 
 	testing.SkipHeights(1)
 

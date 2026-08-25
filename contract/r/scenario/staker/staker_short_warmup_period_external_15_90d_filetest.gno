@@ -161,8 +161,8 @@ func createExternalIncentiveQux90(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000",
 		quxPath,
 		50_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive QUX created for 90 days\n")
@@ -195,8 +195,8 @@ func beforeActive(cur realm) {
 }
 
 func rewardFor1Block(cur realm) {
-	testing.SkipHeights(849) // in active
-	testing.SkipHeights(1)   // active // but no block passed since active
+	testing.SkipHeights(35409) // in active
+	testing.SkipHeights(1)     // active // but no block passed since active
 	testing.SetRealm(adminRealm)
 
 	sr.CollectReward(cross(cur), 1)
