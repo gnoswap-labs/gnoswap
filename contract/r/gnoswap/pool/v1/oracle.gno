@@ -12,9 +12,9 @@ import (
 // maxObservationCardinality defines the maximum number of observations to store
 const maxObservationCardinality uint16 = 65535
 
-// GetTWAP calculates the time-weighted average price between two points in time
-// Returns the arithmetic mean tick and harmonic mean liquidity over the time period
-func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
+// oracleConsult calculates the time-weighted average price between two points in time.
+// It returns the arithmetic mean tick and harmonic mean liquidity over the time period.
+func oracleConsult(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if secondsAgo == 0 {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}

@@ -605,8 +605,8 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	res, ok := m.Response.Get("GetTWAP")
+func (m *MockPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	res, ok := m.Response.Get("OracleConsult")
 	if !ok {
 		return 0, nil, errors.New("not found")
 	}

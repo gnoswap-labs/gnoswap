@@ -249,16 +249,16 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetTWAP",
-			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
+			name:  "OracleConsult",
+			setup: func(m *MockPool) { m.Response.Set("OracleConsult", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
 			getter: func() any {
-				_, liquidity, err := GetTWAP("foo:bar:500", 10)
+				_, liquidity, err := OracleConsult("foo:bar:500", 10)
 				uassert.NoError(t, err)
 				return liquidity
 			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
+				value := implementation.(*MockPool).Response.responses["OracleConsult"][1].(*u256.Uint)
 				uassert.Equal(t, "5000", value.ToString())
 			},
 		},

@@ -1079,15 +1079,15 @@ func TestExistsPoolPath(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetTWAP tests the GetTWAP proxy function
-func TestGetTWAP(cur realm, t *testing.T) {
+// TestOracleConsult tests the OracleConsult proxy function.
+func TestOracleConsult(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(cur realm, t *testing.T)
 		poolPath     string
 		secondsAgo   uint32
 		callerRealm  runtime.Realm
-		expectedTWAP int32
+		expectedTick int32
 	}{
 		{
 			name: "api get twap is success",
@@ -1100,7 +1100,7 @@ func TestGetTWAP(cur realm, t *testing.T) {
 			poolPath:     "mock_pool_path",
 			secondsAgo:   3600,
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTWAP: 0,
+			expectedTick: 0,
 		},
 	}
 
@@ -1113,19 +1113,19 @@ func TestGetTWAP(cur realm, t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
+		mockPool.Response.Set("OracleConsult", tt.expectedTick, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap, _, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
+		arithmeticMeanTick, _, _ := OracleConsult(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("GetTWAP") != 1 {
-			t.Error("GetTWAP was not called on the implementation")
+		if mockPool.Response.CallCount("OracleConsult") != 1 {
+			t.Error("OracleConsult was not called on the implementation")
 		}
-		if twap != tt.expectedTWAP {
-			t.Errorf("GetTWAP() = %v, want %v", twap, tt.expectedTWAP)
+		if arithmeticMeanTick != tt.expectedTick {
+			t.Errorf("OracleConsult() = %v, want %v", arithmeticMeanTick, tt.expectedTick)
 		}
 	}
 }

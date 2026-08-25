@@ -148,6 +148,8 @@ type IPoolOracle interface {
 
 	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
 
+	OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+
 	IncreaseObservationCardinalityNext(
 		_ int,
 		rlm realm,
@@ -232,8 +234,6 @@ type IPoolGetter interface {
 	GetToken1Path(poolPath string) (string, error)
 
 	GetWithdrawalFee() uint64
-
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
 	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32

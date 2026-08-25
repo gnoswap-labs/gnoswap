@@ -251,8 +251,8 @@ func main(cur realm) {
 	getWithdrawalFee(cur)
 	println()
 
-	println("[SCENARIO] 2.50. GetTWAP")
-	getTWAP(cur)
+	println("[SCENARIO] 2.50. OracleConsult")
+	oracleConsult(cur)
 	println()
 
 	println("[SCENARIO] 2.51. GetPool")
@@ -750,13 +750,13 @@ func getWithdrawalFee(cur realm) {
 	ufmt.Printf("[EXPECTED] withdrawal fee: %d\n", withdrawalFee)
 }
 
-func getTWAP(cur realm) {
-	println("[INFO] Check GetTWAP method")
+func oracleConsult(cur realm) {
+	println("[INFO] Check OracleConsult method")
 	testing.SetRealm(adminRealm)
 
-	arithmeticMeanTick, harmonicMeanLiquidity, err := pl.GetTWAP(poolPath, 0)
+	arithmeticMeanTick, harmonicMeanLiquidity, err := pl.OracleConsult(poolPath, 0)
 	if err != nil {
-		println("[EXPECTED] GetTWAP error:", err.Error())
+		println("[EXPECTED] OracleConsult error:", err.Error())
 	} else {
 		ufmt.Printf("[EXPECTED] arithmeticMeanTick: %d\n", arithmeticMeanTick)
 		println("[EXPECTED] harmonicMeanLiquidity:", harmonicMeanLiquidity)
@@ -1069,9 +1069,9 @@ func observe(cur realm) {
 // [INFO] Check GetWithdrawalFee method
 // [EXPECTED] withdrawal fee: 100
 //
-// [SCENARIO] 2.50. GetTWAP
-// [INFO] Check GetTWAP method
-// [EXPECTED] GetTWAP error: secondsAgo must be greater than 0
+// [SCENARIO] 2.50. OracleConsult
+// [INFO] Check OracleConsult method
+// [EXPECTED] OracleConsult error: secondsAgo must be greater than 0
 //
 // [SCENARIO] 2.51. GetPool
 // [INFO] Check GetPools entry
