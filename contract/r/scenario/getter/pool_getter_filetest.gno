@@ -926,12 +926,6 @@ func observe(cur realm) {
 // [INFO] Check GetLiquidity method
 // [EXPECTED] liquidity: 100000000
 //
-// [SCENARIO] 2.16. GetLastObservation
-// [INFO] Check GetLastObservation method
-// [EXPECTED] tickCumulative: 0
-// [EXPECTED] secondsPerLiquidityCumulativeX128: 0
-// [EXPECTED] blockTimestamp: 1234567890
-//
 // [SCENARIO] 2.17. GetPoolCreationFee
 // [INFO] Check GetPoolCreationFee method
 // [EXPECTED] poolCreationFee: 100000000
