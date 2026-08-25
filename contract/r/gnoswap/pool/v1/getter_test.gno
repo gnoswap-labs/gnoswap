@@ -485,35 +485,35 @@ func TestTickGetters(cur realm, t *testing.T) {
 		uninitializedTick := int32(-1)
 
 		liquidityGross, err := getMockInstance().GetTickLiquidityGross(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
-		uassert.Equal(t, "0", liquidityGross)
+		uassert.True(t, err != nil)
+		uassert.Equal(t, "", liquidityGross)
 
 		liquidityNet, err := getMockInstance().GetTickLiquidityNet(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
-		uassert.Equal(t, "0", liquidityNet)
+		uassert.True(t, err != nil)
+		uassert.Equal(t, "", liquidityNet)
 
 		feeGrowthOutside0X128, err := getMockInstance().GetTickFeeGrowthOutside0X128(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
-		uassert.Equal(t, "0", feeGrowthOutside0X128)
+		uassert.True(t, err != nil)
+		uassert.Equal(t, "", feeGrowthOutside0X128)
 
 		feeGrowthOutside1X128, err := getMockInstance().GetTickFeeGrowthOutside1X128(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
-		uassert.Equal(t, "0", feeGrowthOutside1X128)
+		uassert.True(t, err != nil)
+		uassert.Equal(t, "", feeGrowthOutside1X128)
 
 		tickCumulativeOutside, err := getMockInstance().GetTickCumulativeOutside(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
+		uassert.True(t, err != nil)
 		uassert.Equal(t, int64(0), tickCumulativeOutside)
 
 		secondsPerLiquidityOutsideX128, err := getMockInstance().GetTickSecondsPerLiquidityOutsideX128(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
-		uassert.Equal(t, "0", secondsPerLiquidityOutsideX128)
+		uassert.True(t, err != nil)
+		uassert.Equal(t, "", secondsPerLiquidityOutsideX128)
 
 		secondsOutside, err := getMockInstance().GetTickSecondsOutside(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
+		uassert.True(t, err != nil)
 		uassert.Equal(t, uint32(0), secondsOutside)
 
 		initialized, err := getMockInstance().GetTickInitialized(validPoolPath, uninitializedTick)
-		uassert.True(t, err == nil)
+		uassert.True(t, err != nil)
 		uassert.False(t, initialized)
 	})
 }

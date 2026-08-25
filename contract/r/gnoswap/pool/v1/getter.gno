@@ -213,7 +213,12 @@ func (i *poolV1) GetTickLiquidityGross(poolPath string, tick int32) (string, err
 	if err != nil {
 		return "", err
 	}
-	return GetTickLiquidityGross(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", err
+	}
+	return tickInfo.LiquidityGross(), nil
 }
 
 func (i *poolV1) GetTickLiquidityNet(poolPath string, tick int32) (string, error) {
@@ -221,7 +226,12 @@ func (i *poolV1) GetTickLiquidityNet(poolPath string, tick int32) (string, error
 	if err != nil {
 		return "", err
 	}
-	return GetTickLiquidityNet(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", err
+	}
+	return tickInfo.LiquidityNet(), nil
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error) {
@@ -229,7 +239,12 @@ func (i *poolV1) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (stri
 	if err != nil {
 		return "", err
 	}
-	return GetTickFeeGrowthOutside0X128(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", err
+	}
+	return tickInfo.FeeGrowthOutside0X128(), nil
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error) {
@@ -237,7 +252,26 @@ func (i *poolV1) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (stri
 	if err != nil {
 		return "", err
 	}
-	return GetTickFeeGrowthOutside1X128(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", err
+	}
+	return tickInfo.FeeGrowthOutside1X128(), nil
+}
+
+func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", "", err
+	}
+
+	return tickInfo.FeeGrowthOutside0X128(), tickInfo.FeeGrowthOutside1X128(), nil
 }
 
 func (i *poolV1) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
@@ -245,7 +279,12 @@ func (i *poolV1) GetTickCumulativeOutside(poolPath string, tick int32) (int64, e
 	if err != nil {
 		return 0, err
 	}
-	return GetTickCumulativeOutside(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return 0, err
+	}
+	return tickInfo.TickCumulativeOutside(), nil
 }
 
 func (i *poolV1) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error) {
@@ -253,7 +292,12 @@ func (i *poolV1) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int
 	if err != nil {
 		return "", err
 	}
-	return GetTickSecondsPerLiquidityOutsideX128(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return "", err
+	}
+	return tickInfo.SecondsPerLiquidityOutsideX128(), nil
 }
 
 func (i *poolV1) GetTickSecondsOutside(poolPath string, tick int32) (uint32, error) {
@@ -261,7 +305,12 @@ func (i *poolV1) GetTickSecondsOutside(poolPath string, tick int32) (uint32, err
 	if err != nil {
 		return 0, err
 	}
-	return GetTickSecondsOutside(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return 0, err
+	}
+	return tickInfo.SecondsOutside(), nil
 }
 
 func (i *poolV1) GetTickInitialized(poolPath string, tick int32) (bool, error) {
@@ -269,7 +318,12 @@ func (i *poolV1) GetTickInitialized(poolPath string, tick int32) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return GetTickInitialized(pool, tick), nil
+
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		return false, err
+	}
+	return tickInfo.Initialized(), nil
 }
 
 func (i *poolV1) GetSlot0Tick(poolPath string) (int32, error) {
@@ -294,15 +348,6 @@ func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint
 		return nil, nil, err
 	}
 	return pool.FeeGrowthGlobal0X128(), pool.FeeGrowthGlobal1X128(), nil
-}
-
-func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return "", "", err
-	}
-	return GetTickFeeGrowthOutside0X128(pool, tick),
-		GetTickFeeGrowthOutside1X128(pool, tick), nil
 }
 
 func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error) {
