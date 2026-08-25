@@ -213,8 +213,8 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
 		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	testing.SkipHeights(1)

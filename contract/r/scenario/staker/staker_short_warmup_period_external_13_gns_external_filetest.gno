@@ -56,7 +56,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
@@ -178,8 +178,8 @@ func createExternalIncentiveBar(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive BAR created successfully\n")
@@ -199,8 +199,8 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive GNS created successfully\n")
@@ -226,9 +226,9 @@ func waitForActiveExternal(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[INFO] skip blocks to make external incentives active")
-	testing.SkipHeights(849) // in active
-	testing.SkipHeights(1)   // active but no block passed since active
-	testing.SkipHeights(50)  // skip 50 more blocks
+	testing.SkipHeights(35409) // in active
+	testing.SkipHeights(1)     // active but no block passed since active
+	testing.SkipHeights(50)    // skip 50 more blocks
 
 	println("[INFO] mint and distribute GNS after active")
 	emission.MintAndDistributeGns(cross(cur))

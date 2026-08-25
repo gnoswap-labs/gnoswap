@@ -67,7 +67,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64  = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64  = 100_000_000_000 // 100_000 GNS
 	incentiveID      string = ""
 )
 
@@ -189,7 +189,7 @@ func createExternalIncentiveWithDust(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	// Use fixed timestamps for test reproducibility
-	startTime := int64(1234569600) // Fixed start time
+	startTime := int64(1234742400) // Fixed start time
 	endTime := startTime + duration
 
 	ufmt.Printf("[INFO] create external incentive with reward amount: %d\n", rewardAmount)
@@ -216,7 +216,7 @@ func createExternalIncentiveWithDust(cur realm) {
 
 func startExternalIncentive(cur realm) {
 	// Skip to incentive start time
-	externalStartTime := int64(1234569600)
+	externalStartTime := int64(1234742400)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 	blocksToSkip := timeLeft / 5
@@ -239,7 +239,7 @@ func stakePosition(cur realm) {
 
 func endExternalIncentiveAndVerifyDustRefund(cur realm) {
 	// Skip to after incentive end time
-	externalEndTime := int64(1234569600 + 90*24*60*60) // start + 90 days
+	externalEndTime := int64(1234742400 + 90*24*60*60) // start + 90 days
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 	blocksToSkip := timeLeft/5 + 1
@@ -377,12 +377,12 @@ func positionIdFrom(cur realm, tokenId uint64) grc721.TokenID {
 //
 // [SCENARIO] 7. Wait until incentive ends and verify dust refund
 // [INFO] bar balance before ending: 10100000007
-// [INFO] gns balance before ending: 1000000000
+// [INFO] gns balance before ending: 100000000000
 // [INFO] end external incentive
 // [INFO] bar balance after ending: 10100006438
-// [INFO] gns balance after ending: 2000000000
+// [INFO] gns balance after ending: 200000000000
 // [RESULT] bar tokens refunded: 6431
-// [RESULT] gns tokens refunded: 1000000000
+// [RESULT] gns tokens refunded: 100000000000
 // [SUCCESS] Q128 scaling reduced dust: legacy bound=64007, actual refund=6431 (9x smaller)
 //
 // [SCENARIO] 8. Collect reward staked position

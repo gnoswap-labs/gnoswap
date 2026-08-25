@@ -174,7 +174,7 @@ func createAndStartIncentive(cur realm) {
 	bar.Approve(cross(cur), stakerAddr, maxInt64)
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
-	startTime := int64(1234569600) // +1 day midnight
+	startTime := int64(1234742400) // +2 day midnight
 	endTime := startTime + INCENTIVE_DURATION
 
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)

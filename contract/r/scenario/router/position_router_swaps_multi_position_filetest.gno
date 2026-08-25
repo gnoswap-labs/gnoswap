@@ -172,7 +172,7 @@ func executeExactOutRouterSwaps(cur realm) {
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
 	dryAmountIn, dryAmountOut, success := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath,
 			barPath,
 			"10983000000",
@@ -181,6 +181,7 @@ func executeExactOutRouterSwaps(cur realm) {
 			"100",
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] Dry swap amountIn should be %s\n", dryAmountIn)

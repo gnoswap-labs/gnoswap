@@ -404,7 +404,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Collected internal reward so far: 133775649
 // [EXPECTED] Pool tier / ratio: 1 100
 // [EXPECTED] Pool staked liquidity: 1066918731
-// [EXPECTED] Unstaking fee / deposit GNS amount: 100 1000000000
+// [EXPECTED] Unstaking fee / deposit GNS amount: 100 100000000000
 // [EXPECTED] Allowed token count: 2
 // [EXPECTED] Total emission sent: 146751888
 //

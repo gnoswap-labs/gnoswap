@@ -33,7 +33,7 @@ func setupPermission(t *testing.T, caller address) {
 const unauthorizedMsg = "unauthorized: caller %s is not admin or governance"
 
 func TestGetDepositGnsAmount(cur realm, t *testing.T) {
-	expected := int64(1_000_000_000)
+	expected := int64(100_000_000_000)
 	actual := getMockInstance().GetDepositGnsAmount()
 	uassert.Equal(t, expected, actual)
 }
@@ -173,7 +173,7 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 			setupFunc: func(s *stakerV1) {
 				// Don't set any specific minimum
 			},
-			expectedAmount: 1_000_000_000, // default from mock
+			expectedAmount: 1_000_000_000, // default minimum reward amount from mock
 			expectsDefault: true,
 		},
 		{

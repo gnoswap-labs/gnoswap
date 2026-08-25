@@ -733,7 +733,7 @@ func stakerSetup(cur realm) {
 	// external incentive funded with GNS
 	gns.Approve(cross(cur), stakerAddr, math.MaxInt64)
 	createTimestamp := time.Now().Unix()
-	startTime := ((createTimestamp / secondsPerDay) + 1) * secondsPerDay
+	startTime := ((createTimestamp / secondsPerDay) + 2) * secondsPerDay
 	endTime := startTime + incentiveDuration
 	externalIncentiveId = ufmt.Sprintf("%s:%d:%d", adminAddr.String(), createTimestamp, 1)
 
@@ -1422,7 +1422,7 @@ func rerunAfterUpgrade(cur realm) {
 
 func windDown(cur realm) {
 	// jump past the 90-day incentive window plus one day of buffer
-	testing.SkipHeights((incentiveDuration + secondsPerDay) / blockTimeSeconds)
+	testing.SkipHeights((incentiveDuration + 2*secondsPerDay) / blockTimeSeconds)
 
 	testing.SetRealm(adminRealm)
 	staker.EndExternalIncentive(cross(cur), barFoo500PoolPath, externalIncentiveId, adminAddr)
@@ -1613,10 +1613,10 @@ func finalInvariants(cur realm) {
 //
 // [SCENARIO] 10. Accumulate 10 days of rewards and collect them
 // [EXPECTED] collectable emission reward: 924663981581
-// [EXPECTED] collectable external reward: 66572819
+// [EXPECTED] collectable external reward: 61572819
 // [EXPECTED] internal reward to user: 915417341766 penalty: 1386992627983
-// [EXPECTED] external reward to user: gno.land/r/gnoswap/gns.GNS 66572819
-// [EXPECTED] external reward penalty: gno.land/r/gnoswap/gns.GNS 99780382
+// [EXPECTED] external reward to user: gno.land/r/gnoswap/gns.GNS 61572819
+// [EXPECTED] external reward penalty: gno.land/r/gnoswap/gns.GNS 88113715
 // [EXPECTED] collected internal reward total: 2311656609564
 // [EXPECTED] total emission sent: 2302423347314
 //
@@ -1626,7 +1626,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] distributed BAR to devops: 14031
 // [EXPECTED] reserved token count: 0
 // [EXPECTED] distributed FOO to gov staker: 21007
-// [EXPECTED] distributed GNS to gov staker: 5608383326
+// [EXPECTED] distributed GNS to gov staker: 5608353326
 //
 // [SCENARIO] 12. Gov staker: delegate, redelegate, undelegate, collect
 // [EXPECTED] alice delegated amount: 2000000000
@@ -1698,7 +1698,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] position unclaimed fee: 0 0
 // [EXPECTED] staker collected internal reward: 2311656609564
 // [EXPECTED] total emission sent: 2302423347314
-// [EXPECTED] external incentive total / distributed: 1500000000 66572819
+// [EXPECTED] external incentive total / distributed: 1500000000 61572819
 // [EXPECTED] proposal ids: 3 delegation ids: 3
 // [EXPECTED] param proposal yea / nay / status: 6500000000 0 executed
 // [EXPECTED] launchpad project active: true
@@ -1738,8 +1738,8 @@ func finalInvariants(cur realm) {
 //
 // [SCENARIO] 19. Wind down: end incentive, unstake, remove tier
 // [EXPECTED] incentive refunded: true
-// [EXPECTED] incentive distributed: 69697761
-// [EXPECTED] collected incentive penalty: 107071913
+// [EXPECTED] incentive distributed: 64697761
+// [EXPECTED] collected incentive penalty: 95405246
 // [EXPECTED] position 1 staked after unstake: false
 // [EXPECTED] position 1 owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] position 1 operator cleared: true
@@ -1754,11 +1754,11 @@ func finalInvariants(cur realm) {
 // [SCENARIO] 20. Final invariants
 // [EXPECTED] pool count: 2
 // [EXPECTED] position count: 3
-// [EXPECTED] total emission sent: 19960224142687
+// [EXPECTED] total emission sent: 20045613123257
 // [EXPECTED] gov staker total delegated: 7800000000
 // [EXPECTED] governance proposal count: 4
 // [EXPECTED] launchpad project count: 1
-// [EXPECTED] incentive total/distributed/remaining/penalty: 1500000000 713594326 500158844 179174917
+// [EXPECTED] incentive total/distributed/remaining/penalty: 1500000000 714844521 510575316 179174917
 // [EXPECTED] pool impl: gno.land/r/gnoswap/pool/v2_valid
 // [EXPECTED] position impl: gno.land/r/gnoswap/position/v2_valid
 // [EXPECTED] router impl: gno.land/r/gnoswap/router/v2_valid
