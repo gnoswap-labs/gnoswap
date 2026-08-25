@@ -110,56 +110,6 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// PositionLiquidity returns the liquidity of a position.
-// Returns "0" if the position does not exist.
-func PositionLiquidity(p *pl.Pool, key string) string {
-	position, exist := GetPositionByPool(p, key)
-	if !exist {
-		return "0"
-	}
-	return position.Liquidity()
-}
-
-// PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
-// Returns "0" if the position does not exist.
-func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) string {
-	position, exist := GetPositionByPool(p, key)
-	if !exist {
-		return "0"
-	}
-	return position.FeeGrowthInside0LastX128()
-}
-
-// PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
-// Returns "0" if the position does not exist.
-func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
-	position, exist := GetPositionByPool(p, key)
-	if !exist {
-		return "0"
-	}
-	return position.FeeGrowthInside1LastX128()
-}
-
-// PositionTokensOwed0 returns the amount of token0 owed by a position.
-// Returns 0 if the position does not exist.
-func PositionTokensOwed0(p *pl.Pool, key string) int64 {
-	position, exist := GetPositionByPool(p, key)
-	if !exist {
-		return 0
-	}
-	return position.TokensOwed0()
-}
-
-// PositionTokensOwed1 returns the amount of token1 owed by a position.
-// Returns 0 if the position does not exist.
-func PositionTokensOwed1(p *pl.Pool, key string) int64 {
-	position, exist := GetPositionByPool(p, key)
-	if !exist {
-		return 0
-	}
-	return position.TokensOwed1()
-}
-
 // GetPosition returns the position info for a given key.
 func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
 	iPositionInfo := p.Positions().Get(key)
