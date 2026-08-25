@@ -179,8 +179,6 @@ type IPoolGetter interface {
 
 	GetLiquidity(poolPath string) (*u256.Uint, error)
 
-	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error)
-
 	GetPendingProtocolFees() map[string]int64
 
 	GetPoolCreationFee() int64

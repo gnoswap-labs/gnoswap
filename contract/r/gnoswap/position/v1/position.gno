@@ -98,10 +98,7 @@ func (p *positionV1) Mint(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
-	if err != nil {
-		panic(err)
-	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := currentPoolObservation(processedInput.poolPath)
 
 	chain.Emit(
 		"Mint",
@@ -211,10 +208,7 @@ func (p *positionV1) IncreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
-	if err != nil {
-		panic(err)
-	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := currentPoolObservation(poolPath)
 	chain.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
@@ -307,10 +301,7 @@ func (p *positionV1) DecreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
-	if err != nil {
-		panic(err)
-	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := currentPoolObservation(poolPath)
 	chain.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),

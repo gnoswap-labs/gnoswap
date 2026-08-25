@@ -89,11 +89,6 @@ func GetLiquidity(poolPath string) (string, error) {
 	return liquidity.ToString(), nil
 }
 
-// GetLastObservation returns the most recent observation data for calculating time-weighted averages.
-func GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error) {
-	return getImplementation().GetLastObservation(poolPath)
-}
-
 // GetPoolCreationFee returns the current pool creation fee.
 func GetPoolCreationFee() int64 {
 	return getImplementation().GetPoolCreationFee()

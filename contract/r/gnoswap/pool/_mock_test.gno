@@ -327,17 +327,6 @@ func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) (*u256.Uint, error) {
 	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error) {
-	res, ok := m.Response.Get("GetLastObservation")
-	if !ok {
-		return 0, "", 0, errors.New("not found")
-	}
-	if len(res) < 4 || res[3] == nil {
-		return res[0].(int64), res[1].(string), res[2].(int64), nil
-	}
-	return res[0].(int64), res[1].(string), res[2].(int64), res[3].(error)
-}
-
 func (m *MockPool) GetPoolCreationFee() int64 {
 	res, ok := m.Response.Get("GetPoolCreationFee")
 	if !ok {

@@ -1030,65 +1030,6 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetLastObservation tests the GetLastObservation proxy function
-func TestGetLastObservation(cur realm, t *testing.T) {
-	tests := []struct {
-		name              string
-		setup             func(cur realm, t *testing.T)
-		poolPath          string
-		callerRealm       runtime.Realm
-		expectedTick      int64
-		expectedSqrt      string
-		expectedTimestamp int64
-	}{
-		{
-			name: "get last observation is success",
-			setup: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
-			},
-			poolPath:          "mock_pool_path",
-			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTick:      0,
-			expectedSqrt:      "0",
-			expectedTimestamp: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(cur, t)
-		}
-
-		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetLastObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedTimestamp)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		tick, sqrt, timestamp, _ := GetLastObservation(tt.poolPath)
-
-		// Assert
-		if mockPool.Response.CallCount("GetLastObservation") != 1 {
-			t.Error("GetLastObservation was not called on the implementation")
-		}
-		if tick != tt.expectedTick {
-			t.Errorf("GetLastObservation() tick = %v, want %v", tick, tt.expectedTick)
-		}
-		if sqrt != tt.expectedSqrt {
-			t.Errorf("GetLastObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
-		}
-		if timestamp != tt.expectedTimestamp {
-			t.Errorf("GetLastObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)
-		}
-	}
-}
-
 // TestExistsPoolPath tests the ExistsPoolPath proxy function
 func TestExistsPoolPath(cur realm, t *testing.T) {
 	tests := []struct {

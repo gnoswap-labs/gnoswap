@@ -118,10 +118,7 @@ func (p *positionV1) Reposition(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolKey)
-	if err != nil {
-		panic(err)
-	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := currentPoolObservation(poolKey)
 
 	chain.Emit(
 		"Reposition",

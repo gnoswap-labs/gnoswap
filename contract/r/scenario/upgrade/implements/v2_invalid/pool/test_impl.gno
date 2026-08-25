@@ -211,13 +211,6 @@ func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetLastObservation(poolPath string) (int64, string, int64, error) {
-	if !t.isActive("GetLastObservation") {
-		panic("test implementation: GetLastObservation not supported")
-	}
-	return t.instance.GetLastObservation(poolPath)
-}
-
 func (t *TestPool) GetPoolCreationFee() int64 {
 	if !t.isActive("GetPoolCreationFee") {
 		panic("test implementation: GetPoolCreationFee not supported")
