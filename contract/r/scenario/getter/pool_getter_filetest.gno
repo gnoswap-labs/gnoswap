@@ -275,6 +275,9 @@ func main(cur realm) {
 	getPosition(cur)
 	println()
 
+	println("[SCENARIO] 2.55. Observe")
+	observe(cur)
+	println()
 }
 
 func initializeSetup(cur realm) {
@@ -836,6 +839,20 @@ func getPosition(cur realm) {
 	}
 }
 
+func observe(cur realm) {
+	println("[INFO] Check Observe method")
+	testing.SetRealm(adminRealm)
+
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := pl.Observe(poolPath, []uint32{0})
+	if err != nil {
+		println("[EXPECTED] Observe error:", err.Error())
+		return
+	}
+
+	ufmt.Printf("[EXPECTED] tick cumulatives: %d\n", len(tickCumulatives))
+	ufmt.Printf("[EXPECTED] seconds per liquidity cumulatives: %d\n", len(secondsPerLiquidityCumulativeX128s))
+}
+
 // Output:
 // [SCENARIO] 1. Initialize
 // [SCENARIO] 1.1. Initialize Setup
@@ -1096,4 +1113,9 @@ func getPosition(cur realm) {
 // [EXPECTED] position feeGrowthInside1LastX128: 0
 // [EXPECTED] position tokensOwed0: 0
 // [EXPECTED] position tokensOwed1: 0
+//
+// [SCENARIO] 2.55. Observe
+// [INFO] Check Observe method
+// [EXPECTED] tick cumulatives: 1
+// [EXPECTED] seconds per liquidity cumulatives: 1
 //

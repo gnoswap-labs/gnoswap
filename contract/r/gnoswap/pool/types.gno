@@ -146,6 +146,8 @@ type IPoolOracle interface {
 
 	GetObservationAt(poolPath string, index uint16) (Observation, error)
 
+	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
+
 	IncreaseObservationCardinalityNext(
 		_ int,
 		rlm realm,

@@ -147,6 +147,45 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
+			name: "Observe",
+			setup: func(m *MockPool) {
+				m.Response.Set("Observe", []int64{10, 20}, []string{"30", "40"}, error(nil))
+			},
+			getter: func() any {
+				tickCumulatives, secondsPerLiquidityCumulativeX128s, err := Observe(
+					"foo:bar:500",
+					[]uint32{60, 0},
+				)
+				uassert.NoError(t, err)
+				return []any{tickCumulatives, secondsPerLiquidityCumulativeX128s}
+			},
+			assertGot: func(t *testing.T, result any) {
+				values := result.([]any)
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, 2, len(tickCumulatives))
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, 2, len(secondsPerLiquidityCumulativeX128s))
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
+			},
+			mutate: func(result any) {
+				values := result.([]any)
+				values[0].([]int64)[0] = 100
+				values[1].([]string)[0] = "300"
+			},
+			assertRaw: func(cur realm, t *testing.T) {
+				values := implementation.(*MockPool).Response.responses["Observe"]
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
+			},
+		},
+		{
 			name:  "GetTickInfo",
 			setup: func(m *MockPool) { m.Response.Set("GetTickInfo", newTickInfoFixture(), nil) },
 			getter: func() any {

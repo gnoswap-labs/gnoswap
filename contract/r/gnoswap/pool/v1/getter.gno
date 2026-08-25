@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -129,6 +130,32 @@ func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation
 	}
 
 	return *observation.Clone(), nil
+}
+
+// Observe returns the tick and seconds-per-liquidity cumulatives for each
+// requested lookback. It reads the current block timestamp once and never
+// writes an observation, matching Uniswap V3's view-only observe call.
+func (i *poolV1) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		return nil, nil, errors.New("observation state not initialized")
+	}
+
+	slot0 := pool.Slot0()
+	return observe(
+		observationState,
+		time.Now().Unix(),
+		secondsAgos,
+		slot0.Tick(),
+		slot0.ObservationIndex(),
+		pool.Liquidity(),
+		slot0.ObservationCardinality(),
+	)
 }
 
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {

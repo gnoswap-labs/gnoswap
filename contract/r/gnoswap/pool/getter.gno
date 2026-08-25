@@ -219,6 +219,20 @@ func GetObservationAt(poolPath string, index uint16) (Observation, error) {
 	return *observation.Clone(), nil
 }
 
+// Observe returns the tick and seconds-per-liquidity cumulatives for each
+// requested lookback, matching Uniswap V3's observe(uint32[] secondsAgos).
+func Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := getImplementation().Observe(
+		poolPath,
+		cloneUint32Slice(secondsAgos),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cloneInt64Slice(tickCumulatives), cloneStringSlice(secondsPerLiquidityCumulativeX128s), nil
+}
+
 // GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 func GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	return getImplementation().GetTickCumulativeOutside(poolPath, tick)
