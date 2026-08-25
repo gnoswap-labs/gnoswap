@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"testing"
 
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -11,6 +12,38 @@ import (
 
 	sr "gno.land/r/gnoswap/staker"
 )
+
+func TestCollectableRewards_PropagateHalvingLookupError(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
+	mockStore := state.instance.store.(*MockStakerStore)
+	mockStore.poolTierGetHalvingBlocksInRange = func(start, end int64) ([]int64, []int64, error) {
+		return nil, nil, errors.New("halving lookup failed")
+	}
+
+	_, err := state.instance.CollectableEmissionReward(state.positionId)
+	uassert.ErrorContains(t, err, "halving lookup failed")
+
+	_, err = state.instance.CollectableExternalIncentiveReward(state.positionId, state.incentiveId)
+	uassert.ErrorContains(t, err, "halving lookup failed")
+}
+
+func TestCollectReward_PanicsOnHalvingLookupErrorBeforeRewardUpdates(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
+	mockStore := state.instance.store.(*MockStakerStore)
+	mockStore.poolTierGetHalvingBlocksInRange = func(start, end int64) ([]int64, []int64, error) {
+		return nil, nil, errors.New("halving lookup failed")
+	}
+	lastCollectTime := state.deposit.InternalRewardLastCollectTime()
+	rewardCacheSize := state.pool.RewardCache().Size()
+
+	testing.SetRealm(testing.NewUserRealm(state.owner))
+	uassert.AbortsWithMessage(t, cur, "halving lookup failed", func() {
+		sr.CollectReward(cross(cur), state.positionId)
+	})
+
+	uassert.Equal(t, lastCollectTime, state.deposit.InternalRewardLastCollectTime())
+	uassert.Equal(t, rewardCacheSize, state.pool.RewardCache().Size())
+}
 
 // testState holds a complete test state setup for getter tests.
 // This allows setting up state once and verifying multiple getters.

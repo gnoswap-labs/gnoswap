@@ -96,7 +96,7 @@ func NewCanonicalRewardState(
 	currentTime := time.Now().Unix()
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	result.global.poolTier = NewPoolTier(pools, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
+	result.global.poolTier = NewPoolTier(pools, currentTime, test_gnousdc, func() (int64, error) { return int64(result.PerSecondEmission), nil }, func(start, end int64) ([]int64, []int64, error) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
@@ -108,7 +108,7 @@ func NewCanonicalRewardState(
 			emissions = append(emissions, int64(v))
 			return false
 		})
-		return heights, emissions
+		return heights, emissions, nil
 	})
 
 	result.NextBlock() // must skip height 0
@@ -281,7 +281,10 @@ func (self *canonicalRewardState) EmulateCalculateCollectablePositionReward(posi
 	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
 	// Emulator materialized the reward cache above, so resolving the schedule reads it in full.
-	internalSegments := poolResolver.resolveInternalRewardSegments(self.global.poolTier, poolPath, lastCollectTimestamp, currentTimestamp)
+	internalSegments, err := poolResolver.resolveInternalRewardSegments(self.global.poolTier, poolPath, lastCollectTimestamp, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
 	internalRewards, internalPenalties := poolResolver.RewardStateOf(deposit).calculateInternalReward(internalSegments)
 
 	externalRewards := make([]map[string]int64, 4)

@@ -423,7 +423,8 @@ func TestCalculateCollectablePositionReward_Prevent_ExternalPenaltyOnly(cur real
 	currentTimestamp := time.Now().Unix() + 1
 	currentHeight := runtime.ChainHeight() + 1
 
-	reward := getMockInstance().calculateCollectablePositionReward(currentHeight, currentTimestamp, positionId)
+	reward, err := getMockInstance().calculateCollectablePositionReward(currentHeight, currentTimestamp, positionId)
+	uassert.NoError(t, err)
 
 	_, hasExternalReward := reward.External[incentiveId]
 	uassert.True(t, hasExternalReward)
@@ -1238,7 +1239,8 @@ func TestCalculateCollectablePositionReward(cur realm, t *testing.T) {
 			positionId, _ := tt.setupFunc(t, s, baseTime)
 
 			// Execute
-			reward := s.calculateCollectablePositionReward(tt.currentHeight, tt.currentTimestamp, positionId)
+			reward, err := s.calculateCollectablePositionReward(tt.currentHeight, tt.currentTimestamp, positionId)
+			uassert.NoError(t, err)
 
 			// Validate internal reward expectations
 			if tt.expectInternalReward {
@@ -1393,7 +1395,8 @@ func TestCalculateCollectablePositionReward_BoundaryConditions(cur realm, t *tes
 			poolResolver.Pool.SetRewardCacheAt(baseTime, int64(1000000))
 
 			// Execute
-			reward := s.calculateCollectablePositionReward(baseHeight+10, baseTime+100, positionId)
+			reward, err := s.calculateCollectablePositionReward(baseHeight+10, baseTime+100, positionId)
+			uassert.NoError(t, err)
 
 			// Verify
 			if tt.expectInRange {
@@ -1455,7 +1458,8 @@ func TestCalculateCollectablePositionReward_RewardAggregation(cur realm, t *test
 
 	var prevReward int64
 	for _, ts := range times {
-		reward := s.calculateCollectablePositionReward(baseHeight+10, ts, positionId)
+		reward, err := s.calculateCollectablePositionReward(baseHeight+10, ts, positionId)
+		uassert.NoError(t, err)
 
 		// Total reward should always be positive and increasing over time
 		totalReward := reward.Internal + reward.InternalPenalty
@@ -1516,14 +1520,16 @@ func TestCalculateCollectablePositionReward_ExternalRewardMapIntegrity(cur realm
 	poolResolver.Pool.SetStakedLiquidityAt(baseTime-100, u256.NewUint(1000000))
 
 	// Get first reward
-	reward1 := s.calculateCollectablePositionReward(baseHeight+10, baseTime+10, positionId)
+	reward1, err := s.calculateCollectablePositionReward(baseHeight+10, baseTime+10, positionId)
+	uassert.NoError(t, err)
 
 	// Modify the returned map (should not affect future calls)
 	reward1.External["modified-key"] = 999999
 	reward1.ExternalPenalty["modified-key"] = 888888
 
 	// Get second reward
-	reward2 := s.calculateCollectablePositionReward(baseHeight+20, baseTime+20, positionId)
+	reward2, err := s.calculateCollectablePositionReward(baseHeight+20, baseTime+20, positionId)
+	uassert.NoError(t, err)
 
 	// Verify the modification didn't affect reward2
 	_, hasModified := reward2.External["modified-key"]

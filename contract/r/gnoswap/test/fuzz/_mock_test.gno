@@ -377,8 +377,8 @@ type MockStakerStore struct {
 	poolTierLastRewardCacheTimestamp int64
 	poolTierLastRewardCacheHeight    int64
 	poolTierCurrentEmission          int64
-	poolTierGetEmission              func() int64
-	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
+	poolTierGetEmission              func() (int64, error)
+	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64, error)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
 }
@@ -668,11 +668,11 @@ func (s *MockStakerStore) HasPoolTierGetEmissionStoreKey() bool {
 	return s.poolTierGetEmission != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetEmission() func() int64 {
+func (s *MockStakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	return s.poolTierGetEmission
 }
 
-func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error {
 	s.poolTierGetEmission = fn
 	return nil
 }
@@ -682,11 +682,11 @@ func (s *MockStakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
 	return s.poolTierGetHalvingBlocksInRange != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64) {
+func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error) {
 	return s.poolTierGetHalvingBlocksInRange
 }
 
-func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error {
 	s.poolTierGetHalvingBlocksInRange = fn
 	return nil
 }
@@ -722,6 +722,11 @@ func (s *MockStakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *sr.SwapBa
 func newMockStakerStore() *MockStakerStore {
 	swapBatch := sr.NewSwapBatchProcessor("", nil, 0)
 	swapBatch.SetIsActive(false)
+	currentEmission, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
+
 	return &MockStakerStore{
 		depositGnsAmount:                 0,
 		minimumRewardAmount:              1_000_000_000,
@@ -739,9 +744,9 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,
 		poolTierLastRewardCacheHeight:    0,
-		poolTierCurrentEmission:          emission.GetStakerEmissionAmountPerSecond(),
-		poolTierGetEmission:              func() int64 { return emission.GetStakerEmissionAmountPerSecond() },
-		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
+		poolTierCurrentEmission:          currentEmission,
+		poolTierGetEmission:              func() (int64, error) { return emission.GetStakerEmissionAmountPerSecond() },
+		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64, error) {
 			return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 		},
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
@@ -812,11 +817,11 @@ func (e *mockEmissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bo
 	return emission.MintAndDistributeGns(cross(rlm))
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() (int64, error) {
 	return emission.GetStakerEmissionAmountPerSecond()
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 

@@ -35,7 +35,7 @@ func TestNewPoolTier(cur realm, t *testing.T) {
 	currentTime := int64(100000) // Arbitrary time for testing
 	mustExistsInTier1 := "testPool"
 
-	poolTier := NewPoolTier(NewPools(), currentTime, mustExistsInTier1, func() int64 { return 0 }, func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier := NewPoolTier(NewPools(), currentTime, mustExistsInTier1, func() (int64, error) { return 0, nil }, func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// Test initial counts
 	if count := poolTier.CurrentCount(1); count != 1 {
@@ -58,15 +58,16 @@ func TestCacheReward(cur realm, t *testing.T) {
 	currentTime := int64(250000)
 	// Simulate emission updates
 	pools := NewPools()
-	poolTier := NewPoolTier(pools, currentTime, "testPool", func() int64 { return 1000 }, func(startHeight int64, endHeight int64) ([]int64, []int64) {
-		return []int64{100, 150, 200}, []int64{1000, 500, 250}
+	poolTier := NewPoolTier(pools, currentTime, "testPool", func() (int64, error) { return 1000, nil }, func(startHeight int64, endHeight int64) ([]int64, []int64, error) {
+		return []int64{100, 150, 200}, []int64{1000, 500, 250}, nil
 	})
 
 	// Cache rewards
 	poolTier.cacheReward(currentTime, pools)
 
 	// Verify rewards
-	reward := poolTier.CurrentReward(1)
+	reward, err := poolTier.CurrentReward(1)
+	uassert.NoError(t, err)
 	if reward == 0 {
 		t.Errorf("Expected reward for tier 1 at height 250, got 0")
 	}
@@ -86,12 +87,12 @@ func TestCacheRewardForPoolUsesLatestHalvingEmission(t *testing.T) {
 			[AllTierCount]uint64{0, 1, 0, 0},
 			1000,
 			1000,
-			func() int64 { return 500 },
-			func(start, end int64) ([]int64, []int64) {
+			func() (int64, error) { return 500, nil },
+			func(start, end int64) ([]int64, []int64, error) {
 				if start < 1010 && end > 1010 {
-					return []int64{1010}, []int64{500}
+					return []int64{1010}, []int64{500}, nil
 				}
-				return nil, nil
+				return nil, nil, nil
 			},
 		)
 		poolTier.membership.Set(poolPath, uint64(1))
@@ -113,8 +114,8 @@ func TestCacheRewardForPoolUsesLatestHalvingEmission(t *testing.T) {
 			[AllTierCount]uint64{0, 1, 0, 0},
 			1000,
 			1000,
-			func() int64 { return 500 },
-			func(start, end int64) ([]int64, []int64) { return nil, nil },
+			func() (int64, error) { return 500, nil },
+			func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil },
 		)
 		poolTier.membership.Set(poolPath, uint64(1))
 
@@ -139,12 +140,12 @@ func TestCacheRewardStopsAtEmissionEndBoundary(t *testing.T) {
 			[AllTierCount]uint64{0, 1, 0, 0},
 			1000,
 			1000,
-			func() int64 { return 0 },
-			func(start, end int64) ([]int64, []int64) {
+			func() (int64, error) { return 0, nil },
+			func(start, end int64) ([]int64, []int64, error) {
 				if start <= 1020 && 1020 < end {
-					return []int64{1021}, []int64{0}
+					return []int64{1021}, []int64{0}, nil
 				}
-				return nil, nil
+				return nil, nil, nil
 			},
 		)
 		poolTier.membership.Set(poolPath, uint64(1))
@@ -174,7 +175,7 @@ var test_gnousdc = pl.GetPoolPath("gno.land/r/gnoland/wugnot.wugnot", "gno.land/
 
 func SetupPoolTier(t *testing.T) *PoolTier {
 	pools := NewPools()
-	poolTier := NewPoolTier(pools, int64(1000), test_gnousdc, func() int64 { return 1000 }, func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier := NewPoolTier(pools, int64(1000), test_gnousdc, func() (int64, error) { return 1000, nil }, func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	poolTier.changeTier(int64(1000), pools, test_gnousdc, 1)
 	return poolTier
@@ -211,8 +212,8 @@ func TestPoolTierChangeTier(cur realm, t *testing.T) {
 	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/qux.QUX", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
-		func() int64 { return 1000000 },
-		func(start, end int64) ([]int64, []int64) { return nil, nil })
+		func() (int64, error) { return 1000000, nil },
+		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// Add second pool to tier 2
 	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
@@ -272,8 +273,8 @@ func TestPoolTierChangeTierRejectsEmptyTier1(cur realm, t *testing.T) {
 			pools := NewPools()
 			currentTime := int64(100000)
 			poolTier := NewPoolTier(pools, currentTime, en.DefaultInitialPoolTierPath,
-				func() int64 { return 1000000 },
-				func(start, end int64) ([]int64, []int64) { return nil, nil })
+				func() (int64, error) { return 1000000, nil },
+				func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 			if tt.panics {
 				uassert.PanicsContains(t, cur, errInvalidPoolTier, func() {
@@ -294,8 +295,8 @@ func TestPoolTierChangeTierAllowsTier1PoolMutationWhenAnotherTier1Remains(cur re
 	secondTier1Pool := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/bar.BAR", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, en.DefaultInitialPoolTierPath,
-		func() int64 { return 1000000 },
-		func(start, end int64) ([]int64, []int64) { return nil, nil })
+		func() (int64, error) { return 1000000, nil },
+		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	pools.set(secondTier1Pool, sr.NewPool(secondTier1Pool, currentTime+1))
 	poolTier.changeTier(currentTime+1, pools, secondTier1Pool, Tier1)
@@ -315,8 +316,8 @@ func TestCurrentAllTierCounts(cur realm, t *testing.T) {
 	testPool3 := pl.GetPoolPath("gno.land/r/gnoland/wugnot.wugnot", "gno.land/r/onbloc/bar.BAR", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
-		func() int64 { return 1000000 },
-		func(start, end int64) ([]int64, []int64) { return nil, nil })
+		func() (int64, error) { return 1000000, nil },
+		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// Add pools to different tiers
 	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
@@ -343,8 +344,8 @@ func TestIsInternallyIncentivizedPool(cur realm, t *testing.T) {
 	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/qux.QUX", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
-		func() int64 { return 1000000 },
-		func(start, end int64) ([]int64, []int64) { return nil, nil })
+		func() (int64, error) { return 1000000, nil },
+		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// testPool1 is in tier 1, should be incentivized
 	if !poolTier.IsInternallyIncentivizedPool(testPool1) {
@@ -365,8 +366,8 @@ func TestCurrentRewardPerPool(cur realm, t *testing.T) {
 	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/qux.QUX", 3000)
 
 	poolTier := NewPoolTier(pools, currentTime, testPool1,
-		func() int64 { return emission },
-		func(start, end int64) ([]int64, []int64) { return nil, nil })
+		func() (int64, error) { return emission, nil },
+		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// With only tier 1 pool, it should get 100% of emission
 	reward1 := poolTier.CurrentRewardPerPool(testPool1)
@@ -450,10 +451,11 @@ func TestCurrentReward(cur realm, t *testing.T) {
 			poolTier := &PoolTier{
 				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				counts:      tt.tierCounts,
-				getEmission: func() int64 { return tt.emission },
+				getEmission: func() (int64, error) { return tt.emission, nil },
 			}
 
-			reward := poolTier.CurrentReward(tt.tier)
+			reward, err := poolTier.CurrentReward(tt.tier)
+			uassert.NoError(t, err)
 
 			if tt.shouldBeZero {
 				uassert.Equal(t, int64(0), reward)
@@ -494,8 +496,8 @@ func TestNewPoolTierBy(cur realm, t *testing.T) {
 				tt.tierCounts,
 				tt.lastRewardCacheTimestamp,
 				tt.currentEmission,
-				func() int64 { return tt.currentEmission },
-				func(start, end int64) ([]int64, []int64) { return nil, nil },
+				func() (int64, error) { return tt.currentEmission, nil },
+				func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil },
 			)
 
 			uassert.NotNil(t, poolTier)
@@ -580,7 +582,7 @@ func TestApplyCacheToAllPools(cur realm, t *testing.T) {
 				membership:  sr.NewBPTreeN(16),
 				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				counts:      tt.tierCounts,
-				getEmission: func() int64 { return tt.emissionInThisInterval },
+				getEmission: func() (int64, error) { return tt.emissionInThisInterval, nil },
 			}
 
 			currentTime := int64(1000)
@@ -791,9 +793,9 @@ func TestCacheRewardForPool(cur realm, t *testing.T) {
 				[AllTierCount]uint64{0, 1, 0, 0},
 				tt.lastCacheTs,
 				tt.initialEmission,
-				func() int64 { return tt.initialEmission },
-				func(start, end int64) ([]int64, []int64) {
-					return tt.halvingTimestamps, tt.halvingEmissions
+				func() (int64, error) { return tt.initialEmission, nil },
+				func(start, end int64) ([]int64, []int64, error) {
+					return tt.halvingTimestamps, tt.halvingEmissions, nil
 				},
 			)
 			if tt.addMembership {
