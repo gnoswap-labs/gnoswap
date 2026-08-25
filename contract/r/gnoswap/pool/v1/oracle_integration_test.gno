@@ -30,7 +30,7 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
 				// Now calculate TWAP from the beginning
-				// We can't use GetTWAP directly because it uses time.Now()
+				// We can't use OracleConsult directly because it uses time.Now()
 				// Instead, we'll test the observation data directly
 				observationState := pool.ObservationState()
 				slot0 := pool.Slot0()

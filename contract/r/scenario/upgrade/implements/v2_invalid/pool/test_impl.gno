@@ -400,11 +400,11 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	if !t.isActive("GetTWAP") {
-		panic("test implementation: GetTWAP not supported")
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	if !t.isActive("OracleConsult") {
+		panic("test implementation: OracleConsult not supported")
 	}
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+	return t.instance.OracleConsult(poolPath, secondsAgo)
 }
 
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {

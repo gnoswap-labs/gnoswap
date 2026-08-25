@@ -234,8 +234,8 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	return t.instance.OracleConsult(poolPath, secondsAgo)
 }
 
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {

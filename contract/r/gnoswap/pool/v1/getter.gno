@@ -261,20 +261,20 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 	return i.store.GetWithdrawalFeeBPS()
 }
 
-// GetTWAP returns the time-weighted average price for a pool over a specified period
+// OracleConsult returns the time-weighted average price for a pool over a specified period.
 //
 // Parameters:
 //   - poolPath: The path of the pool (e.g., "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 //   - secondsAgo: Number of seconds ago to calculate TWAP from
 //
-// Returns TWAP tick and error
-func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+// Returns the arithmetic mean tick and harmonic mean liquidity.
+func (i *poolV1) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	tick, liquidity, err := getTWAP(pool, secondsAgo)
+	tick, liquidity, err := oracleConsult(pool, secondsAgo)
 	if err != nil {
 		return 0, nil, err
 	}

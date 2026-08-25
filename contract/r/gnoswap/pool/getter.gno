@@ -255,10 +255,10 @@ func GetWithdrawalFee() uint64 {
 	return getImplementation().GetWithdrawalFee()
 }
 
-// GetTWAP returns the time-weighted average price for a pool.
-// Returns arithmetic mean tick and harmonic mean liquidity over the time period.
-func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
-	tick, liquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
+// OracleConsult returns the arithmetic mean tick and harmonic mean liquidity
+// over a lookback, following Uniswap V3 OracleLibrary's consult convention.
+func OracleConsult(poolPath string, secondsAgo uint32) (int32, string, error) {
+	tick, liquidity, err := getImplementation().OracleConsult(poolPath, secondsAgo)
 	if err != nil {
 		return 0, "", err
 	}

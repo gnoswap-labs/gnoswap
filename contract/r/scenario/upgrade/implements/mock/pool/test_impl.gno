@@ -518,11 +518,11 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	result := t.ExecuteFn(
-		"GetTWAP",
+		"OracleConsult",
 		func(args ...any) any {
-			r1, r2, r3 := t.instance.GetTWAP(args[0].(string), args[1].(uint32))
+			r1, r2, r3 := t.instance.OracleConsult(args[0].(string), args[1].(uint32))
 			return []any{r1, r2, r3}
 		},
 		poolPath, secondsAgo,
