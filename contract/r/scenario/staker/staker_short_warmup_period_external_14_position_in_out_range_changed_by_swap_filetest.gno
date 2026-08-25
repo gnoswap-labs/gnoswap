@@ -274,7 +274,7 @@ func after50Blocks(cur realm) {
 
 func makePosition1OutRange(cur realm) {
 	testing.SetRealm(adminRealm)
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}
@@ -305,7 +305,7 @@ func makePosition1OutRange(cur realm) {
 	}
 
 	testing.SetRealm(adminRealm)
-	poolTick = pl.GetSlot0Tick(poolPath)
+	poolTick, _ = pl.GetSlot0Tick(poolPath)
 	if poolTick != -195 {
 		panic("expected pool tick to be -195")
 	}

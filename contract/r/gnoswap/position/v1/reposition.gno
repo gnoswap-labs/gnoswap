@@ -113,11 +113,11 @@ func (p *positionV1) Reposition(
 	position.SetBurned(false)
 	p.mustUpdatePosition(0, rlm, positionId, *position)
 
-	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	poolToken0Balance := pl.GetBalanceToken0(poolKey)
-	poolToken1Balance := pl.GetBalanceToken1(poolKey)
-
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolKey)
+	pool := mustGetPool(poolKey)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolKey)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Reposition",
@@ -132,11 +132,11 @@ func (p *positionV1) Reposition(
 		"prevTickLower", utils.FormatInt(oldTickLower),
 		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
-		"sqrtPriceX96", poolSqrtPriceX96,
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolKey),
-		"token0Balance", utils.FormatInt(poolToken0Balance),
-		"token1Balance", utils.FormatInt(poolToken1Balance),
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),

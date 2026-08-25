@@ -24,7 +24,8 @@ func setupInternalIncentivePoolAndPosition(cur realm, ft *fuzz.T) (string, uint6
 func setupInternalIncentivePoolAndPositionByRange(cur realm, ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64, uint64) {
 	poolPath, internalIncentiveTier := setupInternalIncentivePoolByRange(cur, ft, minTier, maxTier)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
-	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 	amountDesired := int64(1_000_000_000_000)
 	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
@@ -47,7 +48,8 @@ func setupInternalIncentivePoolByRange(cur realm, ft *fuzz.T, minTier uint64, ma
 func setupExternalRewardPoolAndPosition(cur realm, ft *fuzz.T) (string, string, uint64) {
 	poolPath, incentiveID := setupExternalRewardPool(cur, ft)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
-	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 	amountDesired := int64(1_000_000)
 	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 

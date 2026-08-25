@@ -12,6 +12,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -235,7 +236,13 @@ func (i *poolV1) Collect(
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
 	positionKey := getPositionKey(tickLower, tickUpper)
-	position := mustGetPositionByPool(pool, positionKey)
+	position, err := pool.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
 
 	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
 	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
@@ -265,7 +272,7 @@ func (i *poolV1) Collect(
 		common.SafeGRC20Approve(cross(rlm), pool.Token1Path(), positionAddr, amount1)
 	}
 
-	setPosition(pool, positionKey, *position)
+	setPosition(pool, positionKey, position)
 
 	if err := i.savePool(0, rlm, pool); err != nil {
 		panic(err)

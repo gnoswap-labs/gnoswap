@@ -133,7 +133,10 @@ func (p *positionMintParams) IsValid() bool {
 		return false
 	}
 
-	currentTick := pool.GetSlot0Tick(poolPath)
+	currentTick, err := pool.GetSlot0Tick(poolPath)
+	if err != nil {
+		return false
+	}
 	token0OnlyRange := currentTick < tickLower
 	token1OnlyRange := currentTick >= tickUpper
 	priceInsideRange := !token0OnlyRange && !token1OnlyRange
@@ -169,7 +172,11 @@ func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string, 
 		}
 	}()
 
-	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))
+	sqrtPriceX96String, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		return false
+	}
+	sqrtPriceX96 := u256.MustFromDecimal(sqrtPriceX96String)
 	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickUpper)
 

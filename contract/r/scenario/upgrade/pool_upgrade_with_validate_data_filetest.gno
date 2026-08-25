@@ -168,24 +168,73 @@ func positionKey() string {
 
 func captureV1Snapshot() {
 	key := positionKey()
+	var err error
 
-	v1PoolLiquidity = pool.GetLiquidity(barFoo500PoolPath)
-	v1PoolSqrtPriceX96 = pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
-	v1PoolTick = pool.GetSlot0Tick(barFoo500PoolPath)
-	v1PoolFeeGrowth0, v1PoolFeeGrowth1 = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	v1PoolTickSpacing = pool.GetTickSpacing(barFoo500PoolPath)
-	v1PoolFee = pool.GetFee(barFoo500PoolPath)
-	v1PoolToken0 = pool.GetToken0Path(barFoo500PoolPath)
-	v1PoolToken1 = pool.GetToken1Path(barFoo500PoolPath)
-	v1PoolBalance0, v1PoolBalance1 = pool.GetBalances(barFoo500PoolPath)
-	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	v1PoolLiquidity, err = pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolSqrtPriceX96, err = pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolTick, err = pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1, err = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolTickSpacing, err = pool.GetTickSpacing(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolFee, err = pool.GetFee(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolToken0, err = pool.GetToken0Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolToken1, err = pool.GetToken1Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolBalance0, v1PoolBalance1, err = pool.GetBalances(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolProtocolFee0, v1PoolProtocolFee1, err = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	v1PoolPositionCount = pool.GetPoolPositions(barFoo500PoolPath).Size()
-	v1TickLowerGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
-	v1TickLowerNet = pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower)
-	v1TickUpperGross = pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper)
-	v1TickUpperNet = pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper)
-	v1TickLowerInit = pool.GetTickInitialized(barFoo500PoolPath, tickLower)
-	v1PoolPosLiquidity = pool.GetPositionLiquidity(barFoo500PoolPath, key)
+	v1TickLowerGross, err = pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	v1TickLowerNet, err = pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	v1TickUpperGross, err = pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+	v1TickUpperNet, err = pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+	v1TickLowerInit, err = pool.GetTickInitialized(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolPosLiquidity, err = pool.GetPositionLiquidity(barFoo500PoolPath, key)
+	if err != nil {
+		panic(err)
+	}
 	v1PoolCreationFee = pool.GetPoolCreationFee()
 	v1WithdrawalFee = pool.GetWithdrawalFee()
 
@@ -217,30 +266,91 @@ func captureV1Snapshot() {
 
 func validateV1Snapshot() {
 	key := positionKey()
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	balance0, balance1 := pool.GetBalances(barFoo500PoolPath)
-	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	balance0, balance1, err := pool.GetBalances(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolSqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	tickSpacing, err := pool.GetTickSpacing(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolFee, err := pool.GetFee(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	token0, err := pool.GetToken0Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	token1, err := pool.GetToken1Path(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	tickLowerGross, err := pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	tickLowerNet, err := pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	tickUpperGross, err := pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+	tickUpperNet, err := pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper)
+	if err != nil {
+		panic(err)
+	}
+	tickLowerInit, err := pool.GetTickInitialized(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
+	poolPositionLiquidity, err := pool.GetPositionLiquidity(barFoo500PoolPath, key)
+	if err != nil {
+		panic(err)
+	}
 
-	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolSqrtPriceX96, pool.GetSlot0SqrtPriceX96(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
+	uassert.Equal(t, v1PoolSqrtPriceX96, poolSqrtPriceX96)
+	uassert.Equal(t, v1PoolTick, poolTick)
 	uassert.Equal(t, v1PoolFeeGrowth0, feeGrowth0)
 	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
-	uassert.Equal(t, v1PoolTickSpacing, pool.GetTickSpacing(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolFee, pool.GetFee(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolToken0, pool.GetToken0Path(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolToken1, pool.GetToken1Path(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolTickSpacing, tickSpacing)
+	uassert.Equal(t, v1PoolFee, poolFee)
+	uassert.Equal(t, v1PoolToken0, token0)
+	uassert.Equal(t, v1PoolToken1, token1)
 	uassert.Equal(t, v1PoolBalance0, balance0)
 	uassert.Equal(t, v1PoolBalance1, balance1)
 	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
 	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
 	uassert.Equal(t, v1PoolPositionCount, pool.GetPoolPositions(barFoo500PoolPath).Size())
-	uassert.Equal(t, v1TickLowerGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
-	uassert.Equal(t, v1TickLowerNet, pool.GetTickLiquidityNet(barFoo500PoolPath, tickLower))
-	uassert.Equal(t, v1TickUpperGross, pool.GetTickLiquidityGross(barFoo500PoolPath, tickUpper))
-	uassert.Equal(t, v1TickUpperNet, pool.GetTickLiquidityNet(barFoo500PoolPath, tickUpper))
-	uassert.Equal(t, v1TickLowerInit, pool.GetTickInitialized(barFoo500PoolPath, tickLower))
-	uassert.Equal(t, v1PoolPosLiquidity, pool.GetPositionLiquidity(barFoo500PoolPath, key))
+	uassert.Equal(t, v1TickLowerGross, tickLowerGross)
+	uassert.Equal(t, v1TickLowerNet, tickLowerNet)
+	uassert.Equal(t, v1TickUpperGross, tickUpperGross)
+	uassert.Equal(t, v1TickUpperNet, tickUpperNet)
+	uassert.Equal(t, v1TickLowerInit, tickLowerInit)
+	uassert.Equal(t, v1PoolPosLiquidity, poolPositionLiquidity)
 	uassert.Equal(t, v1PoolCreationFee, pool.GetPoolCreationFee())
 	uassert.Equal(t, v1WithdrawalFee, pool.GetWithdrawalFee())
 
@@ -260,19 +370,31 @@ func validateV1Snapshot() {
 
 func validateAfterSecondMint(cur realm) {
 	key := positionKey()
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolPositionLiquidity, err := pool.GetPositionLiquidity(barFoo500PoolPath, key)
+	if err != nil {
+		panic(err)
+	}
+	tickLowerGross, err := pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower)
+	if err != nil {
+		panic(err)
+	}
 
-	println("[EXPECTED] pool liquidity after the second mint:", pool.GetLiquidity(barFoo500PoolPath))
-	println("[EXPECTED] pool-side position liquidity:", pool.GetPositionLiquidity(barFoo500PoolPath, key))
+	println("[EXPECTED] pool liquidity after the second mint:", poolLiquidity)
+	println("[EXPECTED] pool-side position liquidity:", poolPositionLiquidity)
 	println("[EXPECTED] pool position count:", pool.GetPoolPositions(barFoo500PoolPath).Size())
 	println("[EXPECTED] position count:", position.GetPositions().Size())
-	println("[EXPECTED] tick liquidity gross (lower):", pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
+	println("[EXPECTED] tick liquidity gross (lower):", tickLowerGross)
 
 	// the two positions share the same tick range, so the pool-side position
 	// entry is the sum of both and the first position is untouched
 	uassert.Equal(t, v1PositionCount+1, position.GetPositions().Size())
 	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetPositionLiquidity(barFoo500PoolPath, key))
-	uassert.Equal(t, pool.GetLiquidity(barFoo500PoolPath), pool.GetTickLiquidityGross(barFoo500PoolPath, tickLower))
+	uassert.Equal(t, poolLiquidity, poolPositionLiquidity)
+	uassert.Equal(t, poolLiquidity, tickLowerGross)
 }
 
 func initialize(cur realm) {

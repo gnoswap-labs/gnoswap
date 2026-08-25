@@ -85,7 +85,7 @@ func main(cur realm) {
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
 	println("[INFO] Setting up additional pools and positions")
@@ -121,7 +121,7 @@ func main(cur realm) {
 	poolLiq = pool.Liquidity()
 	println("[EXPECTED] pool liquidity after swap:", poolLiq.ToString(), "expected: 435768")
 
-	poolTick = pl.GetSlot0Tick(poolPath)
+	poolTick, _ = pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick after swap:", poolTick, "expected: -5569")
 
 	println("[INFO] Scenario completed")

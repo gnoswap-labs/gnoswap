@@ -48,7 +48,10 @@ func (p *positionV1) mint(_ int, rlm realm, params MintParams) (uint64, *u256.Ui
 	p.nftAccessor.Mint(0, rlm, params.mintTo, positionIdFrom(id))
 
 	positionKey := computePositionKey(params.tickLower, params.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128, err := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
+	if err != nil {
+		panic(err)
+	}
 
 	position := position.NewPosition(
 		poolKey,
@@ -129,7 +132,10 @@ func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidit
 	)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	if err != nil {
+		return 0, nil, nil, nil, "", err
+	}
 
 	feeGrowth := FeeGrowthInside{
 		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128Str),
@@ -152,7 +158,7 @@ func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidit
 	position.SetLiquidity(liquidityAmount.ToString())
 	position.SetBurned(false)
 
-	err := p.setPosition(0, rlm, params.positionId, *position)
+	err = p.setPosition(0, rlm, params.positionId, *position)
 	if err != nil {
 		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,

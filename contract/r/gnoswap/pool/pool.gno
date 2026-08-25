@@ -55,6 +55,21 @@ func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
 func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
+// GetPosition returns the position information for key.
+func (p *Pool) GetPosition(key string) (PositionInfo, error) {
+	iPositionInfo := p.positions.Get(key)
+	if iPositionInfo == nil {
+		return PositionInfo{}, ufmt.Errorf("position %s not found", key)
+	}
+
+	positionInfo, ok := iPositionInfo.(PositionInfo)
+	if !ok {
+		return PositionInfo{}, ufmt.Errorf("position %s has invalid type", key)
+	}
+
+	return positionInfo, nil
+}
+
 // Pool Setters methods
 func (p *Pool) SetToken0Path(token0Path string) {
 	p.token0Path = token0Path

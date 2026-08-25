@@ -135,6 +135,7 @@ func main(cur realm) {
 }
 
 func captureV1Snapshot() {
+	var err error
 	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
 	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
 	v1PositionOwner = position.GetPositionOwner(positionId)
@@ -143,10 +144,22 @@ func captureV1Snapshot() {
 	v1PositionFeeGrowth0, v1PositionFeeGrowth1 = position.GetPositionFeeGrowthInsideLastX128(positionId)
 	v1PositionTokensOwed0, v1PositionTokensOwed1 = position.GetPositionTokensOwed(positionId)
 	v1PositionUnclaimed0, v1PositionUnclaimed1 = position.GetUnclaimedFee(positionId)
-	v1PoolFeeGrowth0, v1PoolFeeGrowth1 = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	v1PoolProtocolFee0, v1PoolProtocolFee1 = pool.GetProtocolFeesTokens(barFoo500PoolPath)
-	v1PoolLiquidity = pool.GetLiquidity(barFoo500PoolPath)
-	v1PoolTick = pool.GetSlot0Tick(barFoo500PoolPath)
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1, err = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolProtocolFee0, v1PoolProtocolFee1, err = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolLiquidity, err = pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolTick, err = pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] Position liquidity:", v1PositionLiquidity)
 	println("[EXPECTED] Position fee growth inside last:", v1PositionFeeGrowth0, v1PositionFeeGrowth1)
@@ -168,8 +181,22 @@ func captureV1Snapshot() {
 // snapshot field must match exactly. Checking this only after a new swap would
 // let a wiped-and-rebuilt value pass.
 func validateExactAfterUpgrade() {
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
-	protocolFee0, protocolFee1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	positionFeeGrowth0, positionFeeGrowth1 := position.GetPositionFeeGrowthInsideLastX128(positionId)
 	tokensOwed0, tokensOwed1 := position.GetPositionTokensOwed(positionId)
 	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
@@ -189,8 +216,8 @@ func validateExactAfterUpgrade() {
 	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
 	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
 	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
-	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
-	uassert.Equal(t, v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
+	uassert.Equal(t, v1PoolTick, poolTick)
 	uassert.False(t, position.IsBurned(positionId))
 
 	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
@@ -202,7 +229,22 @@ func validateExactAfterUpgrade() {
 // validateAccrualAfterUpgrade runs after the post-upgrade swap and collect: the
 // identity data still must not move, while the fee ledgers may only grow.
 func validateAccrualAfterUpgrade() {
-	feeGrowth0, feeGrowth1 := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee1, err := pool.GetProtocolFeesToken1(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
 	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
 
 	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
@@ -210,19 +252,19 @@ func validateAccrualAfterUpgrade() {
 	uassert.Equal(t, v1PositionOwner, position.GetPositionOwner(positionId))
 	// no mint / burn happened, so the in-range liquidity is unchanged; the tick
 	// may have moved because of the post-upgrade swap
-	uassert.Equal(t, v1PoolLiquidity, pool.GetLiquidity(barFoo500PoolPath))
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
 	uassert.False(t, position.IsBurned(positionId))
 
 	uassert.True(t, feeGrowth0 >= v1PoolFeeGrowth0)
 	uassert.True(t, feeGrowth1 >= v1PoolFeeGrowth1)
-	uassert.True(t, pool.GetProtocolFeesToken1(barFoo500PoolPath) >= v1PoolProtocolFee1)
+	uassert.True(t, protocolFee1 >= v1PoolProtocolFee1)
 	uassert.Equal(t, "0", unclaimed0)
 	uassert.Equal(t, "0", unclaimed1)
 
 	println("[EXPECTED] Position identity data is unchanged after the upgrades")
 	println("[EXPECTED] Pool fee growth global after the post-upgrade swap:", feeGrowth0, feeGrowth1)
 	println("[EXPECTED] Position unclaimed fee after the second collect:", unclaimed0, unclaimed1)
-	println("[EXPECTED] Pool tick before / after the post-upgrade swap:", v1PoolTick, pool.GetSlot0Tick(barFoo500PoolPath))
+	println("[EXPECTED] Pool tick before / after the post-upgrade swap:", v1PoolTick, poolTick)
 }
 
 func initialize(cur realm) {

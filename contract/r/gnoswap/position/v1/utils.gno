@@ -9,12 +9,23 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 func mustGetStakerAddress() address {
 	return access.MustGetAddress(prabc.ROLE_STAKER.String())
+}
+
+// mustGetPool returns the read-only snapshot for poolPath.
+// It panics when poolPath does not identify a pool.
+func mustGetPool(poolPath string) *pl.Pool {
+	pool, ok := pl.GetPools().Get(poolPath).(*pl.Pool)
+	if !ok || pool == nil {
+		panic(ufmt.Sprintf("expected poolPath(%s) to exist", poolPath))
+	}
+	return pool
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
