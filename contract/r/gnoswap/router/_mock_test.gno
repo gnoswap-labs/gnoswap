@@ -125,13 +125,17 @@ func (m *MockRouter) DrySwapRoute(
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
-) (string, string, bool) {
+) (string, string, error) {
 	res, ok := m.Response.Get("DrySwapRoute")
 	if !ok {
-		return "", "", false
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string), res[2].(bool)
+	if len(res) < 3 || res[2] == nil {
+		return res[0].(string), res[1].(string), nil
+	}
+
+	return res[0].(string), res[1].(string), res[2].(error)
 }
 
 func (m *MockRouter) SwapCallback(

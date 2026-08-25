@@ -456,7 +456,7 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		t.Run(test.name, func(cur realm, t *testing.T) {
 			// When: DrySwap for pre-transaction validation using DSL parameters
 			swapParams := test.swapBuilder()
-			amount0, amount1, success := pl.DrySwap(
+			amount0, amount1, err := pl.DrySwap(
 				swapParams.token0,
 				swapParams.token1,
 				swapParams.fee,
@@ -466,8 +466,11 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			)
 
 			// Then: Verify expected validation result
-			uassert.Equal(t, test.expectSuccess, success,
-				ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			if test.expectSuccess {
+				uassert.NoError(t, err, ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			} else {
+				uassert.Error(t, err, ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			}
 
 			if !test.expectSuccess {
 				uassert.Equal(t, "0", amount0, "In failed swap, token0 movement should be zero")
@@ -477,6 +480,9 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			t.Logf("✓ %s: %s (Risk assessment: %s)", test.description, test.failureReason, test.riskAssessment)
 		})
 	}
+
+	_, _, err := pl.DrySwap(barTokenPath, bazTokenPath, FeeTier100, true, "invalid", MAX_PRICE_IMPACT)
+	uassert.Error(t, err, "DrySwap must return an error instead of panicking on an invalid amount")
 }
 
 func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
@@ -800,7 +806,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			test.setupScenario(cur, t)
 
 			// When: DrySwap for pre-calculation
-			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
+			dryAmount0, dryAmount1, dryErr := getMockInstance().DrySwap(
 				barPath, bazPath, test.fee,
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit,
@@ -822,9 +828,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 				})
 
 			// Then: Verify consistency between prediction and actual result
-			if !drySuccess {
-				t.Error("DrySwap failed but actual Swap succeeded - consistency issue")
-			}
+			uassert.NoError(t, dryErr, "DrySwap failed but actual Swap succeeded - consistency issue")
 
 			uassert.Equal(t, dryAmount0, actualAmount0,
 				"Token0 amount prediction differs from actual")

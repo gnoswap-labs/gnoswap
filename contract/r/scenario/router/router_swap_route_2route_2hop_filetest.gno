@@ -98,7 +98,7 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 
 	println("[INFO] Executing dry swap route with 2 routes (bar → baz → qux)")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath,    // inputToken
 			quxPath,    // outputToken
 			"1000",     // amountSpecified
@@ -107,6 +107,7 @@ func testDrySwapRouteBarQuxExactIn(cur realm) {
 			"50,50", // quoteArr
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7335")
