@@ -123,10 +123,6 @@ func main(cur realm) {
 	getLiquidity(cur)
 	println()
 
-	println("[SCENARIO] 2.16. GetLastObservation")
-	getLastObservation(cur)
-	println()
-
 	println("[SCENARIO] 2.17. GetPoolCreationFee")
 	getPoolCreationFee(cur)
 	println()
@@ -480,16 +476,6 @@ func getLiquidity(cur realm) {
 
 	liquidity := pl.GetLiquidity(poolPath)
 	println("[EXPECTED] liquidity:", liquidity)
-}
-
-func getLastObservation(cur realm) {
-	println("[INFO] Check GetLastObservation method")
-	testing.SetRealm(adminRealm)
-
-	tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp := pl.GetLastObservation(poolPath)
-	ufmt.Printf("[EXPECTED] tickCumulative: %d\n", tickCumulative)
-	println("[EXPECTED] secondsPerLiquidityCumulativeX128:", secondsPerLiquidityCumulativeX128)
-	ufmt.Printf("[EXPECTED] blockTimestamp: %d\n", blockTimestamp)
 }
 
 func getPoolCreationFee(cur realm) {
@@ -939,12 +925,6 @@ func observe(cur realm) {
 // [SCENARIO] 2.14. GetLiquidity
 // [INFO] Check GetLiquidity method
 // [EXPECTED] liquidity: 100000000
-//
-// [SCENARIO] 2.16. GetLastObservation
-// [INFO] Check GetLastObservation method
-// [EXPECTED] tickCumulative: 0
-// [EXPECTED] secondsPerLiquidityCumulativeX128: 0
-// [EXPECTED] blockTimestamp: 1234567890
 //
 // [SCENARIO] 2.17. GetPoolCreationFee
 // [INFO] Check GetPoolCreationFee method

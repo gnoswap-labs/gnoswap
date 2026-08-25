@@ -253,31 +253,6 @@ func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
 
-func (i *poolV1) GetLastObservation(poolPath string) (
-	tickCumulative int64,
-	secondsPerLiquidityCumulativeX128 string,
-	blockTimestamp int64,
-) {
-	pool := i.mustGetPool(poolPath)
-	observationState := pool.ObservationState()
-
-	if observationState == nil {
-		return 0, "0", 0
-	}
-
-	slot0 := pool.Slot0()
-	lastObservation, err := lastObservation(observationState, slot0.ObservationIndex())
-	if err != nil {
-		return 0, "0", 0
-	}
-
-	tickCumulative = lastObservation.TickCumulative()
-	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128()
-	blockTimestamp = lastObservation.BlockTimestamp()
-
-	return
-}
-
 func (i *poolV1) GetPoolCreationFee() int64 {
 	return i.store.GetPoolCreationFee()
 }

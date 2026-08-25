@@ -327,15 +327,6 @@ func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
 	return res[0].(*u256.Uint)
 }
 
-func (m *MockPool) GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
-	res, ok := m.Response.Get("GetLastObservation")
-	if !ok {
-		return 0, "", 0
-	}
-
-	return res[0].(int64), res[1].(string), res[2].(int64)
-}
-
 func (m *MockPool) GetPoolCreationFee() int64 {
 	res, ok := m.Response.Get("GetPoolCreationFee")
 	if !ok {

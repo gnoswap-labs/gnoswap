@@ -9,6 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
@@ -111,4 +112,16 @@ func splitOf(poolKey string) (string, string, uint32) {
 
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
+}
+
+// currentPoolObservation derives the latest stored observation from the
+// Uniswap-V3-aligned Slot0 and observations surfaces.
+func currentPoolObservation(poolPath string) (int64, string, int64) {
+	slot0 := pl.GetSlot0(poolPath)
+	observation, err := pl.GetObservationAt(poolPath, slot0.ObservationIndex())
+	if err != nil {
+		return 0, "0", 0
+	}
+
+	return observation.TickCumulative(), observation.SecondsPerLiquidityCumulativeX128(), observation.BlockTimestamp()
 }

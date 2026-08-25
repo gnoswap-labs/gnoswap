@@ -286,18 +286,6 @@ func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	).(*u256.Uint)
 }
 
-func (t *TestPool) GetLastObservation(poolPath string) (int64, string, int64) {
-	result := t.ExecuteFn(
-		"GetLastObservation",
-		func(args ...any) any {
-			r1, r2, r3 := t.instance.GetLastObservation(args[0].(string))
-			return []any{r1, r2, r3}
-		},
-		poolPath,
-	).([]any)
-	return result[0].(int64), result[1].(string), result[2].(int64)
-}
-
 func (t *TestPool) GetPoolCreationFee() int64 {
 	return t.ExecuteFn(
 		"GetPoolCreationFee",

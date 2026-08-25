@@ -117,7 +117,7 @@ func (p *positionV1) Reposition(
 	poolToken0Balance := pl.GetBalanceToken0(poolKey)
 	poolToken1Balance := pl.GetBalanceToken1(poolKey)
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolKey)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := currentPoolObservation(poolKey)
 
 	chain.Emit(
 		"Reposition",
