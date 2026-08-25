@@ -122,6 +122,21 @@ func (i *poolV1) Observe(poolPath string, secondsAgos []uint32) ([]int64, []stri
 	)
 }
 
+// SnapshotCumulativesInside returns the oracle accumulators that accrued while
+// the pool price was inside [tickLower, tickUpper).
+func (i *poolV1) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return 0, nil, 0, err
+	}
+
+	return snapshotCumulativesInside(pool, tickLower, tickUpper)
+}
+
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	return i.mustGetPool(poolPath).FeeGrowthGlobal0X128()
 }

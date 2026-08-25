@@ -185,6 +185,29 @@ func Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
 	return cloneInt64Slice(tickCumulatives), cloneStringSlice(secondsPerLiquidityCumulativeX128s), nil
 }
 
+// SnapshotCumulativesInside returns the tick, seconds-per-liquidity, and
+// seconds cumulatives accrued while the pool price was inside
+// [tickLower, tickUpper). Both boundary ticks must be initialized.
+//
+// Snapshots are only comparable across an interval during which a position in
+// the range existed, matching Uniswap V3's snapshotCumulativesInside.
+func SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, string, uint32, error) {
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := getImplementation().SnapshotCumulativesInside(
+		poolPath,
+		tickLower,
+		tickUpper,
+	)
+	if err != nil {
+		return 0, "", 0, err
+	}
+
+	return tickCumulativeInside, secondsPerLiquidityInsideX128.ToString(), secondsInside, nil
+}
+
 // GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 func GetTickCumulativeOutside(poolPath string, tick int32) int64 {
 	return getImplementation().GetTickCumulativeOutside(poolPath, tick)

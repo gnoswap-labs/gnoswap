@@ -530,6 +530,26 @@ func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u2
 	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
 }
 
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	result := t.ExecuteFn(
+		"SnapshotCumulativesInside",
+		func(args ...any) any {
+			r1, r2, r3, r4 := t.instance.SnapshotCumulativesInside(args[0].(string), args[1].(int32), args[2].(int32))
+			return []any{r1, r2, r3, r4}
+		},
+		poolPath, tickLower, tickUpper,
+	).([]any)
+	if result[3] == nil {
+		return result[0].(int64), result[1].(*u256.Uint), result[2].(uint32), nil
+	}
+
+	return result[0].(int64), result[1].(*u256.Uint), result[2].(uint32), result[3].(error)
+}
+
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetPools",
