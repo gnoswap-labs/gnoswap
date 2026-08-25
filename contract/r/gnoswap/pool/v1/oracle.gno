@@ -65,6 +65,76 @@ func oracleConsult(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	return arithmeticMeanTick, harmonicMeanLiquidity, nil
 }
 
+// snapshotCumulativesInside returns the accumulators that accrued while the
+// current price was inside [tickLower, tickUpper), following Uniswap V3's
+// snapshotCumulativesInside flow.
+func snapshotCumulativesInside(
+	p *pl.Pool,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	if err := validateTicks(tickLower, tickUpper); err != nil {
+		return 0, nil, 0, err
+	}
+
+	lower := getTick(p, tickLower)
+	if !lower.Initialized() {
+		return 0, nil, 0, makeErrorWithDetails(errDataNotFound, "lower tick is not initialized")
+	}
+
+	upper := getTick(p, tickUpper)
+	if !upper.Initialized() {
+		return 0, nil, 0, makeErrorWithDetails(errDataNotFound, "upper tick is not initialized")
+	}
+
+	lowerSecondsPerLiquidityOutsideX128 := u256.MustFromDecimal(lower.SecondsPerLiquidityOutsideX128())
+	upperSecondsPerLiquidityOutsideX128 := u256.MustFromDecimal(upper.SecondsPerLiquidityOutsideX128())
+	slot0 := p.Slot0()
+
+	if slot0.Tick() < tickLower {
+		return lower.TickCumulativeOutside() - upper.TickCumulativeOutside(),
+			u256.Zero().Sub(lowerSecondsPerLiquidityOutsideX128, upperSecondsPerLiquidityOutsideX128),
+			lower.SecondsOutside() - upper.SecondsOutside(), nil
+	}
+
+	if slot0.Tick() < tickUpper {
+		observationState := p.ObservationState()
+		if observationState == nil {
+			return 0, nil, 0, errors.New("observation state not initialized")
+		}
+
+		currentTime := time.Now().Unix()
+		tickCumulative, secondsPerLiquidityCumulativeX128, err := observeSingle(
+			observationState,
+			currentTime,
+			0,
+			slot0.Tick(),
+			slot0.ObservationIndex(),
+			p.Liquidity(),
+			slot0.ObservationCardinality(),
+		)
+		if err != nil {
+			return 0, nil, 0, err
+		}
+
+		secondsPerLiquidityInsideX128 := u256.Zero().Sub(
+			u256.Zero().Sub(
+				u256.MustFromDecimal(secondsPerLiquidityCumulativeX128),
+				lowerSecondsPerLiquidityOutsideX128,
+			),
+			upperSecondsPerLiquidityOutsideX128,
+		)
+
+		return tickCumulative - lower.TickCumulativeOutside() - upper.TickCumulativeOutside(),
+			secondsPerLiquidityInsideX128,
+			uint32(currentTime) - lower.SecondsOutside() - upper.SecondsOutside(), nil
+	}
+
+	return upper.TickCumulativeOutside() - lower.TickCumulativeOutside(),
+		u256.Zero().Sub(upperSecondsPerLiquidityOutsideX128, lowerSecondsPerLiquidityOutsideX128),
+		upper.SecondsOutside() - lower.SecondsOutside(), nil
+}
+
 func writeObservationByPool(
 	p *pl.Pool,
 	currentTime int64,

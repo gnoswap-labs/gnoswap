@@ -148,6 +148,12 @@ type IPoolOracle interface {
 
 	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
 
+	SnapshotCumulativesInside(
+		poolPath string,
+		tickLower int32,
+		tickUpper int32,
+	) (int64, *u256.Uint, uint32, error)
+
 	OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
 	IncreaseObservationCardinalityNext(

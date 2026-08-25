@@ -1079,6 +1079,46 @@ func TestExistsPoolPath(cur realm, t *testing.T) {
 	}
 }
 
+// TestSnapshotCumulativesInside tests the SnapshotCumulativesInside proxy function.
+func TestSnapshotCumulativesInside(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
+
+	mockPool := implementation.(*MockPool)
+	mockPool.Response.Set(
+		"SnapshotCumulativesInside",
+		int64(7),
+		u256.MustFromDecimal("8000"),
+		uint32(9),
+		nil,
+	)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+
+	// Action
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := SnapshotCumulativesInside("mock_pool_path", -100, 100)
+	// Assert
+	if err != nil {
+		t.Fatalf("SnapshotCumulativesInside() error = %v", err)
+	}
+	if mockPool.Response.CallCount("SnapshotCumulativesInside") != 1 {
+		t.Error("SnapshotCumulativesInside was not called on the implementation")
+	}
+	if tickCumulativeInside != 7 {
+		t.Errorf("SnapshotCumulativesInside() tick = %v, want %v", tickCumulativeInside, int64(7))
+	}
+	if secondsPerLiquidityInsideX128 != "8000" {
+		t.Errorf("SnapshotCumulativesInside() secondsPerLiquidity = %v, want %v", secondsPerLiquidityInsideX128, "8000")
+	}
+	if secondsInside != 9 {
+		t.Errorf("SnapshotCumulativesInside() seconds = %v, want %v", secondsInside, uint32(9))
+	}
+}
+
 // TestOracleConsult tests the OracleConsult proxy function.
 func TestOracleConsult(cur realm, t *testing.T) {
 	tests := []struct {
