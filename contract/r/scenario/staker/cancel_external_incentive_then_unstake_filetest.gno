@@ -133,7 +133,7 @@ func createPendingIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	createTimestamp := time.Now().Unix()
-	startTimestamp = ((createTimestamp / 86400) + 1) * 86400
+	startTimestamp = ((createTimestamp / 86400) + 2) * 86400 // day+2 midnight: >= now+24h to satisfy the start-time policy
 	endTimestamp := startTimestamp + INCENTIVE_DURATION
 
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -241,7 +241,7 @@ func positionIdFrom(cur realm, id int) grc721.TokenID {
 // [SCENARIO] 3. Admin cancels the incentive before the start timestamp
 // [EXPECTED] remaining incentives for pool: 0
 // [EXPECTED] creator BAR (reward) refunded: 1000000000
-// [EXPECTED] creator GNS (deposit) refunded: 1000000000
+// [EXPECTED] creator GNS (deposit) refunded: 100000000000
 //
 // [SCENARIO] 4. User unstakes directly after the cancel
 // [EXPECTED] NFT returned to owner after unstake: true

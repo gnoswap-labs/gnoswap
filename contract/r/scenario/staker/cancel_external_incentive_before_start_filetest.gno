@@ -158,7 +158,7 @@ func createPendingIncentive(cur realm) {
 
 	// Start at the next UTC midnight to satisfy start-time validation, so the
 	// incentive is still pending right after creation.
-	startTime := ((createTimestamp / 86400) + 1) * 86400
+	startTime := ((createTimestamp / 86400) + 2) * 86400 // day+2 midnight: >= now+24h to satisfy the start-time policy
 	endTime := startTime + INCENTIVE_DURATION
 
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -288,14 +288,14 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 3. Admin creates a pending external incentive
 // [INFO] pending incentives for pool: 1
-// [INFO] incentive starts in 1700 seconds
+// [INFO] incentive starts in 88100 seconds
 //
 // [SCENARIO] 4. User stakes while the incentive is pending
 // [INFO] user staked position 1
 //
 // [SCENARIO] 5. Admin cancels the incentive before it starts
 // [EXPECTED] creator BAR delta: 1000000000 (reward amount: 1000000000)
-// [EXPECTED] creator GNS delta: 1000000000 (deposit amount: 1000000000)
+// [EXPECTED] creator GNS delta: 100000000000 (deposit amount: 100000000000)
 //
 // [SCENARIO] 6. Pool is no longer incentivized
 // [EXPECTED] remaining incentives for pool: 0

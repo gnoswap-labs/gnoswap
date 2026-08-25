@@ -131,7 +131,7 @@ func createWrongIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	createTimestamp := time.Now().Unix()
-	startTimestamp = ((createTimestamp / 86400) + 1) * 86400
+	startTimestamp = ((createTimestamp / 86400) + 2) * 86400 // day+2 midnight: >= now+24h to satisfy the start-time policy
 	endTimestamp = startTimestamp + INCENTIVE_DURATION
 
 	wrongIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -230,7 +230,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 3. Admin cancels it before the start timestamp
 // [EXPECTED] creator BAR delta: 1000000000
-// [EXPECTED] creator GNS delta: 1000000000
+// [EXPECTED] creator GNS delta: 100000000000
 // [EXPECTED] incentives for pool: 0
 //
 // [SCENARIO] 4. Admin creates the replacement on the same window

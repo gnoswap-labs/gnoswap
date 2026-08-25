@@ -202,6 +202,6 @@ func verifyCancelled(cur realm) {
 //
 // [SCENARIO] 6. Verify the refund and the removal
 // [EXPECTED] creator BAR refund delta: 1000000000
-// [EXPECTED] creator GNS refund delta: 1000000000
+// [EXPECTED] creator GNS refund delta: 100000000000
 // [EXPECTED] remaining incentives for pool: 0
 //

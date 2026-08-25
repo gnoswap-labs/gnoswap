@@ -110,7 +110,7 @@ func initialize(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	createTimestamp := time.Now().Unix()
-	startTimestamp := ((createTimestamp / 86400) + 1) * 86400
+	startTimestamp := ((createTimestamp / 86400) + 2) * 86400 // day+2 midnight: >= now+24h to satisfy the start-time policy
 	endTimestamp := startTimestamp + INCENTIVE_DURATION
 
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -174,6 +174,6 @@ func cancelInEmergencyMode(cur realm) {
 // [SCENARIO] 4. Emergency Mode allows the cancel
 // [INFO] withdraw halted: false
 // [EXPECTED] creator BAR delta: 1000000000
-// [EXPECTED] creator GNS delta: 1000000000
+// [EXPECTED] creator GNS delta: 100000000000
 // [EXPECTED] remaining incentives for pool: 0
 //
