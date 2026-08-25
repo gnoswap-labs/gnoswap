@@ -61,7 +61,7 @@ Updates distribution percentages (admin or governance only).
 
 ### `GetDistributionBpsPct`
 
-Returns current distribution percentage in basis points for a target.
+Returns current distribution percentage in basis points for a target, or an error if the target is invalid.
 
 ## Technical Details
 
@@ -104,9 +104,15 @@ ChangeDistributionPct(
 )
 
 // Query distribution info
-stakerPct := GetDistributionBpsPct(LIQUIDITY_STAKER)
+stakerPct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+if err != nil {
+    panic(err)
+}
 accumulated := GetAccuDistributedToStaker()
-rate := GetStakerEmissionAmountPerSecond()
+rate, err := GetStakerEmissionAmountPerSecond()
+if err != nil {
+    panic(err)
+}
 ```
 
 ## Security

@@ -280,7 +280,10 @@ func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 	if _, err := s.getDeposit(positionId); err != nil {
 		return 0, err
 	}
-	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
+	reward, err := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
+	if err != nil {
+		return 0, err
+	}
 	return reward.Internal, nil
 }
 
@@ -292,7 +295,10 @@ func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incenti
 	if _, err := s.getDeposit(positionId); err != nil {
 		return 0, err
 	}
-	reward := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
+	reward, err := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
+	if err != nil {
+		return 0, err
+	}
 	amount, ok := reward.External[incentiveId]
 	if !ok {
 		return 0, nil
@@ -460,7 +466,7 @@ func (s *stakerV1) GetPoolReward(tier uint64) (int64, error) {
 			ufmt.Sprintf("tier(%d) must be between 1 and %d", tier, AllTierCount-1),
 		)
 	}
-	return s.getPoolTier().CurrentReward(tier), nil
+	return s.getPoolTier().CurrentReward(tier)
 }
 
 // GetPoolStakedLiquidity returns the current total staked liquidity of a pool.

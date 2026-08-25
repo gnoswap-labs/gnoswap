@@ -79,8 +79,8 @@ type positionRewardUpdate struct {
 //
 // It is the shared, read-only entry point used by both the Collectable* view getters and CollectReward.
 // This keeps the calculation identical for both callers and guarantees views never write.
-func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	rewards, _ := s.calculatePositionReward(&calculatePositionRewardParam{
+func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTimestamp int64, positionId uint64) (Reward, error) {
+	rewards, _, err := s.calculatePositionReward(&calculatePositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
 		Deposits:      s.getDeposits(),
@@ -88,8 +88,11 @@ func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTime
 		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	})
+	if err != nil {
+		return Reward{}, err
+	}
 
-	return aggregateRewards(rewards)
+	return aggregateRewards(rewards), nil
 }
 
 // calculatePositionReward computes a position's per-warmup rewards WITHOUT mutating persisted state.
@@ -98,7 +101,7 @@ func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTime
 // the single internal-reward calculator, so the calculation needs no reward-cache materialization.
 // External incentive discovery is done into a local set rather than by mutating the deposit. All would-be
 // state changes are returned as a positionRewardUpdate for the caller to apply (collect only).
-func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate) {
+func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate, error) {
 	deposit := param.Deposits.get(param.PositionId)
 	depositResolver := NewDepositResolver(deposit)
 	poolPath := deposit.TargetPoolPath()
@@ -122,7 +125,10 @@ func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) 
 	rewardState := poolResolver.RewardStateOf(deposit)
 
 	// Resolve the per-second reward-rate schedule (pure) and calculate internal rewards from it.
-	internalSegments := poolResolver.resolveInternalRewardSegments(param.PoolTier, poolPath, lastCollectTime, param.CurrentTime)
+	internalSegments, err := poolResolver.resolveInternalRewardSegments(param.PoolTier, poolPath, lastCollectTime, param.CurrentTime)
+	if err != nil {
+		return nil, positionRewardUpdate{}, err
+	}
 	calculatedInternalRewards, calculatedInternalPenalties := rewardState.calculateInternalReward(internalSegments)
 
 	warmupLen := len(deposit.Warmups())
@@ -200,7 +206,7 @@ func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) 
 		rewardState.reset()
 	}
 
-	return rewards, updateParams
+	return rewards, updateParams, nil
 }
 
 // updatePositionReward applies the persisted-state changes produced by calculatePositionReward.
@@ -245,10 +251,10 @@ type internalRewardSegment struct {
 // tail rate is recomputed with the same calculatePoolReward arithmetic the cache writer uses, so a
 // schedule resolved from a fully materialized cache and one resolved from the emission halvings are
 // identical.
-func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, poolPath string, startTime, endTime int64) []internalRewardSegment {
+func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, poolPath string, startTime, endTime int64) ([]internalRewardSegment, error) {
 	segments := make([]internalRewardSegment, 0)
 	if startTime >= endTime {
-		return segments
+		return segments, nil
 	}
 
 	currentReward := self.CurrentReward(startTime)
@@ -267,20 +273,24 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 	})
 
 	if cursor < endTime {
-		segments = appendInternalRewardTailSegments(segments, poolTier, poolPath, cursor, endTime, currentReward)
+		var err error
+		segments, err = appendInternalRewardTailSegments(segments, poolTier, poolPath, cursor, endTime, currentReward)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return segments
+	return segments, nil
 }
 
 // appendInternalRewardTailSegments appends the schedule for the tail [startTime, endTime], where no
 // persisted cache entry exists beyond startTime. Over this span tier/count are constant, so the rate
 // changes only at halving boundaries.
-func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64) []internalRewardSegment {
+func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64) ([]internalRewardSegment, error) {
 	tier := poolTier.CurrentTier(poolPath)
 	if tier == 0 || tier >= AllTierCount {
 		// Not currently tiered: the rate cannot increase; the base is 0 after de-tier.
-		return append(segments, internalRewardSegment{start: startTime, end: endTime, rewardPerSecond: baseReward})
+		return append(segments, internalRewardSegment{start: startTime, end: endTime, rewardPerSecond: baseReward}), nil
 	}
 
 	tierRatio, err := poolTier.tierRatio.Get(tier)
@@ -290,7 +300,10 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 	tierRatioInt64 := int64(tierRatio)
 	tierCount := int64(poolTier.counts[tier])
 
-	halvingTimestamps, halvingEmissions := poolTier.getHalvingBlocksInRange(startTime, endTime)
+	halvingTimestamps, halvingEmissions, err := poolTier.getHalvingBlocksInRange(startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
 
 	segStart := startTime
 	rate := baseReward
@@ -309,7 +322,7 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 		segStart = hv
 	}
 
-	return append(segments, internalRewardSegment{start: segStart, end: endTime, rewardPerSecond: rate})
+	return append(segments, internalRewardSegment{start: segStart, end: endTime, rewardPerSecond: rate}), nil
 }
 
 // calculates internal unclaimable reward for the pool

@@ -72,8 +72,8 @@ func newPoolAccessor() PoolAccessor {
 
 type EmissionAccessor interface {
 	MintAndDistributeGns(_ int, rlm realm) (int64, bool)
-	GetStakerEmissionAmountPerSecond() int64
-	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64)
+	GetStakerEmissionAmountPerSecond() (int64, error)
+	GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error)
 	SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64))
 }
 
@@ -85,11 +85,11 @@ func (e *emissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) 
 	return emission.MintAndDistributeGns(cross(rlm))
 }
 
-func (e *emissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
+func (e *emissionAccessor) GetStakerEmissionAmountPerSecond() (int64, error) {
 	return emission.GetStakerEmissionAmountPerSecond()
 }
 
-func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 

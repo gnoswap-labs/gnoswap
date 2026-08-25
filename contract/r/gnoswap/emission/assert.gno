@@ -14,8 +14,8 @@ func assertDefaultInitialPoolExists() {
 	}
 }
 
-// assertValidDistributionTarget panics if the given distribution target is invalid.
-func assertValidDistributionTarget(target int) {
+// validateDistributionTarget returns an error if the given distribution target is invalid.
+func validateDistributionTarget(target int) error {
 	validTargets := map[int]bool{
 		LIQUIDITY_STAKER: false,
 		DEVOPS:           false,
@@ -24,10 +24,20 @@ func assertValidDistributionTarget(target int) {
 	}
 
 	if _, ok := validTargets[target]; !ok {
-		panic(makeErrorWithDetails(
+		return makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
-		))
+		)
+	}
+
+	return nil
+}
+
+// assertValidDistributionTarget panics if the given distribution target is invalid.
+// Kept for internal invariant checks.
+func assertValidDistributionTarget(target int) {
+	if err := validateDistributionTarget(target); err != nil {
+		panic(err)
 	}
 }
 

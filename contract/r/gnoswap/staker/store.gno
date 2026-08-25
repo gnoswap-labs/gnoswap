@@ -552,21 +552,21 @@ func (s *stakerStore) HasPoolTierGetEmissionStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierGetEmission.String())
 }
 
-func (s *stakerStore) GetPoolTierGetEmission() func() int64 {
+func (s *stakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyPoolTierGetEmission.String())
 	if err != nil {
 		panic(err)
 	}
 
-	fn, ok := result.(func() int64)
+	fn, ok := result.(func() (int64, error))
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to func() int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to func() (int64, error): %T", result))
 	}
 
 	return fn
 }
 
-func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
@@ -579,21 +579,21 @@ func (s *stakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierGetHalvingBlocksInRange.String())
 }
 
-func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64) {
+func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error) {
 	result, err := s.kvStore.Get(StoreKeyPoolTierGetHalvingBlocksInRange.String())
 	if err != nil {
 		panic(err)
 	}
 
-	fn, ok := result.(func(start, end int64) ([]int64, []int64))
+	fn, ok := result.(func(start, end int64) ([]int64, []int64, error))
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to func(start, end int64) ([]int64, []int64): %T", result))
+		panic(ufmt.Sprintf("failed to cast result to func(start, end int64) ([]int64, []int64, error): %T", result))
 	}
 
 	return fn
 }
 
-func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}

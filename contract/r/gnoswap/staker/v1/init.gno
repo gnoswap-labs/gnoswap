@@ -179,7 +179,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetEmissionStoreKey() {
-		getEmissionFn := func() int64 {
+		getEmissionFn := func() (int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecond()
 		}
 
@@ -190,7 +190,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetHalvingBlocksInRangeStoreKey() {
-		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64) {
+		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
 		}
 
