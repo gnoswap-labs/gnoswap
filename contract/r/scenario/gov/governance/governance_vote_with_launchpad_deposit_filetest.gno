@@ -51,7 +51,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Check Initial xGNS Supply")
 	checkInitialXgnsSupply(cur)

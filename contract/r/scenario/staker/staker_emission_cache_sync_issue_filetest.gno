@@ -122,7 +122,11 @@ func initSystem(cur realm) {
 	baz.Transfer(cross(cur), user1Addr, 1_000_000)
 
 	println("[EXPECTED] Initial distribution set to 75% for stakers")
-	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", emission.GetStakerEmissionAmountPerSecond())
+	rate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", rate)
 }
 
 func createPoolAndPosition(cur realm) {
@@ -189,7 +193,10 @@ func changeDistribution(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Record emission rate before change
-	beforeRate := emission.GetStakerEmissionAmountPerSecond()
+	beforeRate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
 
 	// Change distribution to 50% for stakers
 	emission.ChangeDistributionPct(
@@ -201,7 +208,10 @@ func changeDistribution(cur realm) {
 	)
 
 	// Check emission rate after change
-	afterRate := emission.GetStakerEmissionAmountPerSecond()
+	afterRate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Emission rate before change: %d\n", beforeRate)
 	ufmt.Printf("[EXPECTED] Emission rate after change: %d\n", afterRate)
