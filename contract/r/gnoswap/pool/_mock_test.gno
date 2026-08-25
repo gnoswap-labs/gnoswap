@@ -674,19 +674,6 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return res[0].(string), res[1].(error)
 }
 
-func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {
-	res, ok := m.Response.Get("GetObservationState")
-	if !ok {
-		return nil, errors.New("not found")
-	}
-
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ObservationState), nil
-	}
-
-	return res[0].(*ObservationState), res[1].(error)
-}
-
 func newMockPool(version string) *MockPool {
 	return &MockPool{
 		Version:  version,

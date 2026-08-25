@@ -348,18 +348,3 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 
 	return tickBitmap, nil
 }
-
-// GetObservationState returns the observation state for a pool.
-func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	observationState := pool.ObservationState()
-	if observationState == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation state not found for pool %s", poolPath))
-	}
-
-	return observationState, nil
-}

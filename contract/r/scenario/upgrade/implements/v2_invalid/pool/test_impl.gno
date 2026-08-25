@@ -458,13 +458,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	if !t.isActive("GetObservationState") {
-		panic("test implementation: GetObservationState not supported")
-	}
-	return t.instance.GetObservationState(poolPath)
-}
-
 func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
 	if !t.isActive("GetObservationAt") {
 		panic("test implementation: GetObservationAt not supported")

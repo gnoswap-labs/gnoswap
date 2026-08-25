@@ -196,9 +196,9 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 // caller reads, so copying the collections would walk the whole tick tree for
 // each entry on a page. Read them through their own lookups instead:
 // GetTickInfo / GetInitializedTicksInRange for ticks, GetTickBitmaps for the
-// bitmaps, GetPoolPositions for positions, and GetObservationState for the
-// oracle state. A caller that needs a working copy of a collection -- DrySwap
-// is the only one -- assembles it from those getters.
+// bitmaps, GetPoolPositions for positions, and GetSlot0 / GetObservationAt for
+// oracle metadata and entries. A caller that needs a working copy of a
+// collection -- DrySwap is the only one -- assembles it from those getters.
 func (p *Pool) Clone() *Pool {
 	if p == nil {
 		return nil

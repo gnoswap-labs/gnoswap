@@ -602,18 +602,6 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return result[0].(string), result[1].(error)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	result := t.ExecuteFn(
-		"GetObservationState",
-		func(args ...any) any {
-			r1, r2 := t.instance.GetObservationState(args[0].(string))
-			return []any{r1, r2}
-		},
-		poolPath,
-	).([]any)
-	return result[0].(*pool.ObservationState), result[1].(error)
-}
-
 func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
 	result := t.ExecuteFn(
 		"GetObservationAt",

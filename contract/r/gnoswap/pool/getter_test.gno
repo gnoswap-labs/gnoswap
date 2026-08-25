@@ -214,39 +214,6 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 				uassert.Equal(t, "5000", value.ToString())
 			},
 		},
-		{
-			name: "GetObservationState",
-			setup: func(m *MockPool) {
-				state := NewObservationState(100)
-				obs := NewObservation(123, 77, "2000", true)
-				state.Observations()[7] = obs
-				m.Response.Set("GetObservationState", state, error(nil))
-			},
-			getter: func() any {
-				state, err := GetObservationState("foo:bar:500")
-				uassert.NoError(t, err)
-				return state
-			},
-			assertGot: func(t *testing.T, result any) {
-				state := result.(*ObservationState)
-				uassert.Equal(t, 2, len(state.Observations()))
-				uassert.Equal(t, int64(100), state.Observations()[0].BlockTimestamp())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-			},
-			mutate: func(result any) {
-				state := result.(*ObservationState)
-				state.Observations()[8] = NewObservation(1, 2, "4", true)
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-				uassert.Equal(t, int64(77), state.Observations()[7].TickCumulative())
-				uassert.Equal(t, "2000", state.Observations()[7].SecondsPerLiquidityCumulativeX128())
-				uassert.Equal(t, true, state.Observations()[7].Initialized())
-				_, ok := state.Observations()[8]
-				uassert.Equal(t, false, ok)
-			},
-		},
 	}
 
 	for _, tt := range tests {
