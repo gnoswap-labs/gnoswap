@@ -614,6 +614,22 @@ func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observa
 	return result[0].(pool.Observation), result[1].(error)
 }
 
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	result := t.ExecuteFn(
+		"Observe",
+		func(args ...any) any {
+			r1, r2, r3 := t.instance.Observe(args[0].(string), args[1].([]uint32))
+			return []any{r1, r2, r3}
+		},
+		poolPath, secondsAgos,
+	).([]any)
+	if result[2] == nil {
+		return result[0].([]int64), result[1].([]string), nil
+	}
+
+	return result[0].([]int64), result[1].([]string), result[2].(error)
+}
+
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
 	return t.ExecuteFn(
 		"GetPendingProtocolFees",

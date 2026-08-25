@@ -484,6 +484,19 @@ func (m *MockPool) GetObservationAt(poolPath string, index uint16) (Observation,
 	return res[0].(Observation), res[1].(error)
 }
 
+func (m *MockPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	res, ok := m.Response.Get("Observe")
+	if !ok {
+		return nil, nil, errors.New("not found")
+	}
+
+	if len(res) < 3 || res[2] == nil {
+		return res[0].([]int64), res[1].([]string), nil
+	}
+
+	return res[0].([]int64), res[1].([]string), res[2].(error)
+}
+
 func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
 	res, ok := m.Response.Get("GetTickCumulativeOutside")
 	if !ok {
