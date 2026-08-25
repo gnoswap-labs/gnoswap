@@ -186,6 +186,24 @@ func (m *MockPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) (s
 	return res[0].(string), nil
 }
 
+func (m *MockPosition) GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
+	res, ok := m.Response.Get("GetPositionFeeGrowthInsideLastX128")
+	if !ok {
+		return "", "", ufmt.Errorf("position %d not found", positionId)
+	}
+
+	return res[0].(string), res[1].(string), nil
+}
+
+func (m *MockPosition) GetPositionTicks(positionId uint64) (int32, int32, error) {
+	res, ok := m.Response.Get("GetPositionTicks")
+	if !ok {
+		return 0, 0, ufmt.Errorf("position %d not found", positionId)
+	}
+
+	return res[0].(int32), res[1].(int32), nil
+}
+
 func (m *MockPosition) GetPositionLiquidity(positionId uint64) (string, error) {
 	res, ok := m.Response.Get("GetPositionLiquidity")
 	if !ok {
@@ -274,6 +292,15 @@ func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) (int64, error) 
 	}
 
 	return res[0].(int64), nil
+}
+
+func (m *MockPosition) GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
+	res, ok := m.Response.Get("GetPositionTokensOwed")
+	if !ok {
+		return 0, 0, ufmt.Errorf("position %d not found", positionId)
+	}
+
+	return res[0].(int64), res[1].(int64), nil
 }
 
 func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {

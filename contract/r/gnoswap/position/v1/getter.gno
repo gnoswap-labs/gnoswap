@@ -164,6 +164,30 @@ func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) (str
 	return position.FeeGrowthInside1LastX128(), nil
 }
 
+func (p *positionV1) GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
+	position, exists := p.store.GetPosition(positionId)
+	if !exists {
+		return "", "", ufmt.Errorf("%s", newErrorWithDetail(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("position with position ID(%d) doesn't exist", positionId),
+		))
+	}
+
+	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128(), nil
+}
+
+func (p *positionV1) GetPositionTicks(positionId uint64) (int32, int32, error) {
+	position, exists := p.store.GetPosition(positionId)
+	if !exists {
+		return 0, 0, ufmt.Errorf("%s", newErrorWithDetail(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("position with position ID(%d) doesn't exist", positionId),
+		))
+	}
+
+	return position.TickLower(), position.TickUpper(), nil
+}
+
 func (p *positionV1) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	position, exists := p.store.GetPosition(positionId)
 	if !exists {
@@ -186,6 +210,18 @@ func (p *positionV1) GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	}
 
 	return position.TokensOwed1(), nil
+}
+
+func (p *positionV1) GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
+	position, exists := p.store.GetPosition(positionId)
+	if !exists {
+		return 0, 0, ufmt.Errorf("%s", newErrorWithDetail(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("position with position ID(%d) doesn't exist", positionId),
+		))
+	}
+
+	return position.TokensOwed0(), position.TokensOwed1(), nil
 }
 
 func (p *positionV1) GetPositionOwner(positionId uint64) (address, error) {

@@ -1,9 +1,7 @@
 package position
 
 import (
-	"gno.land/p/gnoswap/utils"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // GetPositions returns a read-only view of every position, keyed by the decimal
@@ -11,20 +9,6 @@ import (
 // IterateByOffset.
 func GetPositions() *rotree.ReadOnlyTree {
 	return getImplementation().GetPositions()
-}
-
-func getPosition(positionId uint64) (Position, error) {
-	positions := GetPositions()
-	if positions == nil {
-		return Position{}, ufmt.Errorf("position %d not found", positionId)
-	}
-
-	position, ok := positions.Get(utils.Uint64ToString(positionId)).(Position)
-	if !ok {
-		return Position{}, ufmt.Errorf("position %d not found", positionId)
-	}
-
-	return position, nil
 }
 
 // IsBurned returns whether a position has been burned.
@@ -72,12 +56,7 @@ func GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
 func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
-	position, err := getPosition(positionId)
-	if err != nil {
-		return "", "", err
-	}
-
-	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128(), nil
+	return getImplementation().GetPositionFeeGrowthInsideLastX128(positionId)
 }
 
 // GetPositionLiquidity returns the liquidity amount of a position.
@@ -107,12 +86,7 @@ func GetPositionTickUpper(positionId uint64) (int32, error) {
 
 // GetPositionTicks returns the lower and upper ticks of a position.
 func GetPositionTicks(positionId uint64) (int32, int32, error) {
-	position, err := getPosition(positionId)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return position.TickLower(), position.TickUpper(), nil
+	return getImplementation().GetPositionTicks(positionId)
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
@@ -127,12 +101,7 @@ func GetPositionTokensOwed1(positionId uint64) (int64, error) {
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
 func GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
-	position, err := getPosition(positionId)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return position.TokensOwed0(), position.TokensOwed1(), nil
+	return getImplementation().GetPositionTokensOwed(positionId)
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.

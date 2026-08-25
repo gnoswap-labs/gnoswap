@@ -89,8 +89,11 @@ type IPositionGetter interface {
 	GetPositionTokenBalances(positionId uint64) (int64, int64, error)
 	GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error)
 	GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error)
+	GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error)
+	GetPositionTicks(positionId uint64) (int32, int32, error)
 	GetPositionTokensOwed0(positionId uint64) (int64, error)
 	GetPositionTokensOwed1(positionId uint64) (int64, error)
+	GetPositionTokensOwed(positionId uint64) (int64, int64, error)
 	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error)
 	GetPositionOwner(positionId uint64) (address, error)
 }

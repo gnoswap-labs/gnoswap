@@ -136,11 +136,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		{
 			name: "GetPositionFeeGrowthInsideLastX128",
 			setup: func(m *MockPosition) *Position {
-				stored := newStoredPosition()
-				tree := bptree.NewBPTree32()
-				tree.Set("1", *stored)
-				m.Response.Set("GetPositions", rotree.Wrap(tree, nil))
-				return stored
+				m.Response.Set("GetPositionFeeGrowthInsideLastX128", "2000", "3000")
+				return nil
 			},
 			getter: func() any {
 				fee0, fee1, err := GetPositionFeeGrowthInsideLastX128(1)
@@ -159,9 +156,10 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				uassert.Equal(t, "2000", values[0].(string))
 				uassert.Equal(t, "3000", values[1].(string))
 			},
-			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "2000", raw.FeeGrowthInside0LastX128())
-				uassert.Equal(t, "3000", raw.FeeGrowthInside1LastX128())
+			assertRaw: func(t *testing.T, _ *Position) {
+				values := implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInsideLastX128"]
+				uassert.Equal(t, "2000", values[0].(string))
+				uassert.Equal(t, "3000", values[1].(string))
 			},
 		},
 		{
@@ -181,6 +179,35 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "1000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "1000", implementation.(*MockPosition).Response.data["GetPositionLiquidity"][0].(string))
+			},
+		},
+		{
+			name: "GetPositionTicks",
+			setup: func(m *MockPosition) *Position {
+				m.Response.Set("GetPositionTicks", int32(-100), int32(100))
+				return nil
+			},
+			getter: func() any {
+				tickLower, tickUpper, err := GetPositionTicks(1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return []any{tickLower, tickUpper}
+			},
+			mutate: func(result any) {
+				values := result.([]any)
+				_ = values[0].(int32)
+				_ = values[1].(int32)
+			},
+			assertSame: func(t *testing.T, result any) {
+				values := result.([]any)
+				uassert.Equal(t, int32(-100), values[0].(int32))
+				uassert.Equal(t, int32(100), values[1].(int32))
+			},
+			assertRaw: func(t *testing.T, _ *Position) {
+				values := implementation.(*MockPosition).Response.data["GetPositionTicks"]
+				uassert.Equal(t, int32(-100), values[0].(int32))
+				uassert.Equal(t, int32(100), values[1].(int32))
 			},
 		},
 		{
@@ -224,11 +251,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		{
 			name: "GetPositionTokensOwed",
 			setup: func(m *MockPosition) *Position {
-				stored := newStoredPosition()
-				tree := bptree.NewBPTree32()
-				tree.Set("1", *stored)
-				m.Response.Set("GetPositions", rotree.Wrap(tree, nil))
-				return stored
+				m.Response.Set("GetPositionTokensOwed", int64(4000), int64(5000))
+				return nil
 			},
 			getter: func() any {
 				owed0, owed1, err := GetPositionTokensOwed(1)
@@ -247,9 +271,10 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(4000), values[0].(int64))
 				uassert.Equal(t, int64(5000), values[1].(int64))
 			},
-			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, int64(4000), raw.TokensOwed0())
-				uassert.Equal(t, int64(5000), raw.TokensOwed1())
+			assertRaw: func(t *testing.T, _ *Position) {
+				values := implementation.(*MockPosition).Response.data["GetPositionTokensOwed"]
+				uassert.Equal(t, int64(4000), values[0].(int64))
+				uassert.Equal(t, int64(5000), values[1].(int64))
 			},
 		},
 		{
