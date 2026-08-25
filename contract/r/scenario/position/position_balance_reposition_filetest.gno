@@ -236,8 +236,10 @@ func testRepositionAndBalance(cur realm) {
 	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tick range should be [%d, %d]\n", pos.TickLower(), pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Final position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Final position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, _ := position.GetPositionToken0Balance(1)
+	balance1, _ := position.GetPositionToken1Balance(1)
+	ufmt.Printf("[EXPECTED] Final position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Final position token1 balance should be %d\n", balance1)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken0PoolBalance-beforeToken0PoolBalance)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken1PoolBalance-beforeToken1PoolBalance)
 

@@ -143,11 +143,26 @@ func captureV1Snapshot() {
 	if err != nil {
 		panic(err)
 	}
-	v1PositionLiquidity = position.GetPositionLiquidity(positionId)
-	v1PositionPoolKey = position.GetPositionPoolKey(positionId)
-	v1PositionTickLower = position.GetPositionTickLower(positionId)
-	v1PositionTickUpper = position.GetPositionTickUpper(positionId)
-	v1PositionUnclaimed0, v1PositionUnclaimed1 = position.GetUnclaimedFee(positionId)
+	v1PositionLiquidity, err = position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionPoolKey, err = position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickLower, err = position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickUpper, err = position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionUnclaimed0, v1PositionUnclaimed1, err = position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] Router swap fee:", v1SwapFee)
 	println("[EXPECTED] Pool tick after the v1 swap:", v1PoolTick)
@@ -187,7 +202,26 @@ func validateExactAfterUpgrade() {
 	if err != nil {
 		panic(err)
 	}
-	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
 	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
@@ -198,10 +232,10 @@ func validateExactAfterUpgrade() {
 	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
 	uassert.Equal(t, v1PoolBalance0, balance0)
 	uassert.Equal(t, v1PoolBalance1, balance1)
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
-	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
-	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionTickLower, positionTickLower)
+	uassert.Equal(t, v1PositionTickUpper, positionTickUpper)
 	uassert.Equal(t, v1PositionUnclaimed0, unclaimed0)
 	uassert.Equal(t, v1PositionUnclaimed1, unclaimed1)
 
@@ -223,16 +257,39 @@ func validateAccrualAfterUpgrade() {
 	if err != nil {
 		panic(err)
 	}
-	unclaimed0, unclaimed1 := position.GetUnclaimedFee(positionId)
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
 
 	// the router upgrade must not move liquidity or reshape the position
 	uassert.Equal(t, v1SwapFee, router.GetSwapFee())
 	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
-	uassert.Equal(t, v1PositionLiquidity, position.GetPositionLiquidity(positionId))
-	uassert.Equal(t, v1PositionPoolKey, position.GetPositionPoolKey(positionId))
-	uassert.Equal(t, v1PositionTickLower, position.GetPositionTickLower(positionId))
-	uassert.Equal(t, v1PositionTickUpper, position.GetPositionTickUpper(positionId))
-	uassert.False(t, position.IsBurned(positionId))
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionTickLower, positionTickLower)
+	uassert.Equal(t, v1PositionTickUpper, positionTickUpper)
+	uassert.False(t, positionBurned)
 
 	// the swap routed through the upgraded router keeps accruing on top of the
 	// v1 values instead of resetting them

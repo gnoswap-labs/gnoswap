@@ -1,6 +1,8 @@
 package position
 
 import (
+	"errors"
+
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -10,18 +12,29 @@ import (
 	"gno.land/r/gnoswap/position"
 )
 
-// MustGetPosition returns a position for a given position ID.
-// panics if position doesn't exist
-func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
-	pos, exist := p.store.GetPosition(positionId)
-	if !exist {
-		panic(newErrorWithDetail(
+// getPosition returns a position for a given position ID.
+// Returns an error if the position doesn't exist.
+func (p *positionV1) getPosition(positionId uint64) (position.Position, error) {
+	pos, exists := p.store.GetPosition(positionId)
+	if !exists {
+		return pos, errors.New(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("position with position ID(%d) doesn't exist", positionId),
 		))
 	}
 
-	return &pos
+	return pos, nil
+}
+
+// mustGetPosition returns a position for a given position ID.
+// panics if position doesn't exist
+func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return &position
 }
 
 // GetPositions returns a read-only view of every position, keyed by the decimal
@@ -37,76 +50,163 @@ func (p *positionV1) ExistPosition(positionId uint64) bool {
 	return p.store.HasPosition(positionId)
 }
 
-func (p *positionV1) IsBurned(positionId uint64) bool {
-	return p.mustGetPosition(positionId).Burned()
+func (p *positionV1) IsBurned(positionId uint64) (bool, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return false, err
+	}
+
+	return position.Burned(), nil
 }
 
-func (p *positionV1) IsInRange(positionId uint64) bool {
-	position := p.mustGetPosition(positionId)
+func (p *positionV1) IsInRange(positionId uint64) (bool, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return false, err
+	}
+
 	poolPath := position.PoolKey()
 	poolCurrentTick, err := pl.GetSlot0Tick(poolPath)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return position.TickLower() <= poolCurrentTick && poolCurrentTick < position.TickUpper()
+	return position.TickLower() <= poolCurrentTick && poolCurrentTick < position.TickUpper(), nil
 }
 
-func (p *positionV1) GetPositionOperator(positionId uint64) address {
-	return p.mustGetPosition(positionId).Operator()
+func (p *positionV1) GetPositionOperator(positionId uint64) (address, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return address(""), err
+	}
+
+	return position.Operator(), nil
 }
 
-func (p *positionV1) GetPositionPoolKey(positionId uint64) string {
-	return p.mustGetPosition(positionId).PoolKey()
+func (p *positionV1) GetPositionPoolKey(positionId uint64) (string, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return "", err
+	}
+
+	return position.PoolKey(), nil
 }
 
-func (p *positionV1) GetPositionTickLower(positionId uint64) int32 {
-	return p.mustGetPosition(positionId).TickLower()
+func (p *positionV1) GetPositionTickLower(positionId uint64) (int32, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return position.TickLower(), nil
 }
 
-func (p *positionV1) GetPositionTickUpper(positionId uint64) int32 {
-	return p.mustGetPosition(positionId).TickUpper()
+func (p *positionV1) GetPositionTickUpper(positionId uint64) (int32, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return position.TickUpper(), nil
 }
 
-func (p *positionV1) GetPositionLiquidity(positionId uint64) string {
-	return p.mustGetPosition(positionId).Liquidity()
+func (p *positionV1) GetPositionLiquidity(positionId uint64) (string, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return "", err
+	}
+
+	return position.Liquidity(), nil
 }
 
-func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64) {
-	position := p.mustGetPosition(positionId)
+func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, 0, err
+	}
 
-	return calculatePositionBalances(position)
+	balance0, balance1 := calculatePositionBalances(&position)
+	return balance0, balance1, nil
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
-	return p.mustGetPosition(positionId).FeeGrowthInside0LastX128()
+func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return "", err
+	}
+
+	return position.FeeGrowthInside0LastX128(), nil
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
-	return p.mustGetPosition(positionId).FeeGrowthInside1LastX128()
+func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return "", err
+	}
+
+	return position.FeeGrowthInside1LastX128(), nil
 }
 
-func (p *positionV1) GetPositionTokensOwed0(positionId uint64) int64 {
-	return p.mustGetPosition(positionId).TokensOwed0()
+func (p *positionV1) GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return "", "", err
+	}
+
+	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128(), nil
 }
 
-func (p *positionV1) GetPositionTokensOwed1(positionId uint64) int64 {
-	return p.mustGetPosition(positionId).TokensOwed1()
+func (p *positionV1) GetPositionTicks(positionId uint64) (int32, int32, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return position.TickLower(), position.TickUpper(), nil
 }
 
-func (p *positionV1) GetPositionOwner(positionId uint64) address {
+func (p *positionV1) GetPositionTokensOwed0(positionId uint64) (int64, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return position.TokensOwed0(), nil
+}
+
+func (p *positionV1) GetPositionTokensOwed1(positionId uint64) (int64, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return position.TokensOwed1(), nil
+}
+
+func (p *positionV1) GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return position.TokensOwed0(), position.TokensOwed1(), nil
+}
+
+func (p *positionV1) GetPositionOwner(positionId uint64) (address, error) {
 	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
-		panic(newErrorWithDetail(
-			errDataNotFound, err.Error()))
+		return address(""), err
 	}
 
-	return owner
+	return owner, nil
 }
 
-func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
-	position := p.mustGetPosition(positionId)
+	position, err := p.getPosition(positionId)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	liquidity := u256.MustFromDecimal(position.Liquidity())
 	tickLower := position.TickLower()
@@ -116,26 +216,26 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 
 	currentTick, err := pl.GetSlot0Tick(poolKey)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	feeGrowthGlobal0X128Str, feeGrowthGlobal1X128Str, err := pl.GetFeeGrowthGlobalX128(poolKey)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	feeGrowthGlobal0X128 := u256.MustFromDecimal(feeGrowthGlobal0X128Str)
 	feeGrowthGlobal1X128 := u256.MustFromDecimal(feeGrowthGlobal1X128Str)
 
 	tickUpperFeeGrowthOutside0X128Str, tickUpperFeeGrowthOutside1X128Str, err := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	tickUpperFeeGrowthOutside0X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside0X128Str)
 	tickUpperFeeGrowthOutside1X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside1X128Str)
 
 	tickLowerFeeGrowthOutside0X128Str, tickLowerFeeGrowthOutside1X128Str, err := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	tickLowerFeeGrowthOutside0X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside0X128Str)
 	tickLowerFeeGrowthOutside1X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside1X128Str)
@@ -172,5 +272,5 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 
 	diffGrowthInside1X128 := u256.Zero().Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	unclaimedFee1 := u256.MulDiv(diffGrowthInside1X128, liquidity, consts.Q128())
-	return unclaimedFee0, unclaimedFee1
+	return unclaimedFee0, unclaimedFee1, nil
 }

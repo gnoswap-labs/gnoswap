@@ -114,6 +114,10 @@ func (p *positionV1) Reposition(
 	p.mustUpdatePosition(0, rlm, positionId, *position)
 
 	pool := mustGetPool(poolKey)
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolKey)
 	if err != nil {
 		panic(err)
@@ -133,7 +137,7 @@ func (p *positionV1) Reposition(
 		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
+		"positionLiquidity", positionLiquidity,
 		"poolLiquidity", pool.Liquidity().ToString(),
 		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
 		"token1Balance", utils.FormatInt(pool.BalanceToken1()),

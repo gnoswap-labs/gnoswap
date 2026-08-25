@@ -113,7 +113,7 @@ func setup(cur realm) {
 	)
 	positionId = id
 
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Owner after mint is alice:", owner == aliceAddr)
 }
@@ -126,7 +126,7 @@ func transferToBob(cur realm) {
 	println("[INFO] Alice approved staker on positionId")
 
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId))
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after transfer is bob:", owner == bobAddr)
 }
 
@@ -151,7 +151,7 @@ func bobStakes(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId))
 	staker.StakeToken(cross(cur), positionId, "")
 
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after stake is staker:", owner == stakerAddr)
 
 	depositOwner := staker.GetDepositOwner(positionId)
@@ -160,6 +160,14 @@ func bobStakes(cur realm) {
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
