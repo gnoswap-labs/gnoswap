@@ -95,6 +95,13 @@ func (t *TestStaker) EndExternalIncentive(_ int, rlm realm, targetPoolPath, ince
 	t.instance.EndExternalIncentive(0, rlm, targetPoolPath, incentiveId, refundAddress)
 }
 
+func (t *TestStaker) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string) {
+	if !t.isActive("CancelExternalIncentive") {
+		panic("test implementation: CancelExternalIncentive not supported")
+	}
+	t.instance.CancelExternalIncentive(0, rlm, targetPoolPath, incentiveId)
+}
+
 func (t *TestStaker) CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	if !t.isActive("CollectExternalIncentivePenalty") {
 		panic("test implementation: CollectExternalIncentivePenalty not supported")

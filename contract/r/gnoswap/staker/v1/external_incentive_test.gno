@@ -105,12 +105,12 @@ func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 
 func TestAssertIsExternalRewardTokenAvailable(cur realm, t *testing.T) {
 	tests := []struct {
-		name              string
-		existingToken     string
-		existingPoolPath  string
-		startTimeOffset   int64
-		endTimeOffset     int64
-		shouldAbort       bool
+		name             string
+		existingToken    string
+		existingPoolPath string
+		startTimeOffset  int64
+		endTimeOffset    int64
+		shouldAbort      bool
 	}{
 		{
 			name:            "same token with active incentive",
@@ -243,6 +243,65 @@ func TestCreateExternalIncentive_AllowedAfterPreviousIncentiveEnded(cur realm, t
 	})
 }
 
+// TestAssertIsAllowedForExternalReward pins the allowed-reward-token rule at the
+// guard level: a pool's own two tokens are always allowed, any other token is
+// rejected unless it has been added to the allowed-token list.
+func TestAssertIsAllowedForExternalReward(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	instance := getMockInstance()
+
+	// token0 = bar, token1 = foo; neither is in the default allowed list
+	// (which holds only wugnot and gns).
+	poolPath := barPath + ":" + fooPath + ":3000"
+
+	// Pool tokens are always allowed, even without being on the allowed list.
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, barPath)
+	})
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, fooPath)
+	})
+
+	// A non-pool token that is not on the allowed list is rejected. This is a
+	// local (non-crossing) call, so the guard panics in-frame rather than
+	// aborting across a realm boundary.
+	uassert.PanicsContains(t, cur, "[GNOSWAP-STAKER-017]", func() {
+		assertIsAllowedForExternalReward(instance, poolPath, bazPath)
+	})
+
+	// Once whitelisted, the same non-pool token is accepted.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), bazPath)
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, bazPath)
+	})
+}
+
+// TestCreateExternalIncentive_RewardTokenNotAllowedBlocked confirms the
+// allowed-token guard is wired into the public entrypoint: a reward token that
+// is neither a pool token nor whitelisted aborts before any transfer, and the
+// same creation succeeds once the token is whitelisted.
+func TestCreateExternalIncentive_RewardTokenNotAllowedBlocked(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	createDefaultInitialPoolForStakerTest(cur, t)
+
+	// Pool is wugnot:gns; bar is neither a pool token nor on the allowed list.
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+	endTimestamp := startTimestamp + incentiveDuration
+
+	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-017]", func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+
+	// Whitelist bar, then the same creation is accepted by the allowed-token guard.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), barPath)
+	uassert.NotPanics(t, cur, func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+}
+
 // Test ExternalIncentiveRefundAmount through the public entrypoint with full preconditions.
 func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
@@ -340,7 +399,8 @@ func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 				0,
 			)
 
-			t.Logf("refund amount: , legacy: %d, q128: %d",
+			t.Logf(
+				"refund amount: , legacy: %d, q128: %d",
 				calculateLegacyRefundAmount(incentive.TotalRewardAmount(), incentive.StartTimestamp(), incentive.EndTimestamp()),
 				calculateRefundAmount(tt.depositRewardAmount, tt.startTimestamp, tt.endTimestamp),
 			)

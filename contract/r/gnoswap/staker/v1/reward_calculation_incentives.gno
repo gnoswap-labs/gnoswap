@@ -54,6 +54,14 @@ func (self *IncentivesResolver) update(incentive *sr.ExternalIncentive) {
 	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
+// remove drops an incentive from both the incentive tree and the start-time
+// discovery index. It is only valid for an incentive that has not started: no
+// deposit can reference it yet, so nothing is left pointing at a missing record.
+func (self *IncentivesResolver) remove(incentive *sr.ExternalIncentive) {
+	self.Incentives.RemoveIncentive(incentive.IncentiveId())
+	self.Incentives.RemoveIncentiveByStartTime(incentive.StartTimestamp(), incentive.IncentiveId())
+}
+
 // starts incentive unclaimable period for this pool
 func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
 	self.Incentives.SetUnclaimablePeriod(startTimestamp, int64(0))

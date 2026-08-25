@@ -72,11 +72,11 @@ type ParameterHandler interface {
 // `cur`"). Naming it `rlm` keeps the lowering identical without the syntax
 // constraint.
 type ParameterHandlerOptions struct {
-	pkgPath         string                            // Package path of the target contract
-	function        string                            // Function name to be called
-	paramCount      int                               // Expected number of parameters
+	pkgPath         string                                   // Package path of the target contract
+	function        string                                   // Function name to be called
+	paramCount      int                                      // Expected number of parameters
 	handlerFunc     func(_ int, rlm realm, _ []string) error // Function that executes the parameter change
-	paramValidators []paramValidator                  // Optional per-parameter validators for proposal-time checks
+	paramValidators []paramValidator                         // Optional per-parameter validators for proposal-time checks
 }
 
 // paramValidator validates a single parameter value and returns an error on failure.
@@ -718,6 +718,27 @@ func CreateParameterHandlers() *ParameterRegistry {
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Remove token from allowed token list
 				sr.RemoveToken(cross(rlm), params[0]) // tokenPath
+				return nil
+			},
+		},
+
+		// Staker - External incentive recovery
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "CancelExternalIncentive",
+			paramCount: 2,
+			paramValidators: []paramValidator{
+				stringValidator, // targetPoolPath
+				stringValidator, // incentiveId
+			},
+			handlerFunc: func(_ int, rlm realm, params []string) error {
+				// Cancel a not-yet-started external incentive; the reward tokens
+				// and the GNS deposit are refunded to the incentive creator
+				sr.CancelExternalIncentive(
+					cross(rlm),
+					params[0], // targetPoolPath
+					params[1], // incentiveId
+				)
 				return nil
 			},
 		},

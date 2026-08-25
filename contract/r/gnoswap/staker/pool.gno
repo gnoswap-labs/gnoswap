@@ -305,6 +305,15 @@ func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncenti
 	i.incentives.Set(incentiveId, incentive)
 }
 
+// RemoveIncentive deletes an incentive by ID.
+//
+// Only an incentive that never started may be removed: once rewards begin
+// accruing, deposits and the refund accounting reference the record, so an
+// ended incentive is marked refunded instead of removed.
+func (i *Incentives) RemoveIncentive(incentiveId string) {
+	i.incentives.Remove(incentiveId)
+}
+
 func (i *Incentives) SetUnclaimablePeriod(startTimestamp int64, endTimestamp int64) {
 	i.unclaimablePeriods.Set(startTimestamp, endTimestamp)
 }
@@ -335,6 +344,36 @@ func (i *Incentives) AddIncentiveByStartTime(startTimestamp int64, incentiveId s
 	}
 	incentiveIds = append(incentiveIds, incentiveId)
 	i.byStartTime.Set(startTimestamp, incentiveIds)
+}
+
+// RemoveIncentiveByStartTime unregisters an incentive ID from the per-pool
+// start-time index. The bucket itself is dropped once its last ID is removed,
+// so the index never keeps an empty entry that discovery would still visit.
+func (i *Incentives) RemoveIncentiveByStartTime(startTimestamp int64, incentiveId string) {
+	value, ok := i.byStartTime.Get(startTimestamp)
+	if !ok {
+		return
+	}
+
+	ids, ok := value.([]string)
+	if !ok {
+		return
+	}
+
+	remaining := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == incentiveId {
+			continue
+		}
+		remaining = append(remaining, id)
+	}
+
+	if len(remaining) == 0 {
+		i.byStartTime.Remove(startTimestamp)
+		return
+	}
+
+	i.byStartTime.Set(startTimestamp, remaining)
 }
 
 // IterateIncentiveIdsByTime iterates over the incentive IDs that start within

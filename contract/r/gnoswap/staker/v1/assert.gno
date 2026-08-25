@@ -6,7 +6,10 @@ import (
 	"strings"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/access"
 )
 
 const (
@@ -202,6 +205,66 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
 			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
+		))
+	}
+}
+
+// assertIsAdminGovernanceOrCreator ensures the caller may act on an incentive:
+// admin and governance are the protocol-level operators, and the creator is the
+// address that funded the incentive in CreateExternalIncentive.
+func assertIsAdminGovernanceOrCreator(caller, creator address) {
+	if caller == creator {
+		return
+	}
+	if access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) ||
+		access.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
+		return
+	}
+
+	panic(makeErrorWithDetails(
+		errNoPermission,
+		ufmt.Sprintf(
+			"caller(%s) must be admin, governance, or the incentive creator(%s)",
+			caller.String(), creator.String(),
+		),
+	))
+}
+
+// assertIsNotStartedIncentive ensures the incentive can still be cancelled, i.e.
+// it has not started and nothing has been distributed from it. Only such an
+// incentive may be removed outright; anything that already emitted rewards has
+// to be finalized through EndExternalIncentive so the refund accounting and the
+// penalty balance stay reachable.
+func assertIsNotStartedIncentive(incentiveResolver *ExternalIncentiveResolver, currentTime int64) {
+	if incentiveResolver.IsStarted(currentTime) {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf(
+				"incentive(%s) already started at %d, current(%d)",
+				incentiveResolver.IncentiveId(), incentiveResolver.StartTimestamp(), currentTime,
+			),
+		))
+	}
+
+	if incentiveResolver.Refunded() {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveResolver.IncentiveId()),
+		))
+	}
+
+	// Defensive: a not-yet-started incentive can never have distributed a reward
+	// or accrued a warmup penalty. Removing a record that carries either would
+	// strand those tokens in the staker, so refuse instead of dropping it.
+	if incentiveResolver.DistributedRewardAmount() != 0 || incentiveResolver.AccumulatedPenaltyAmount() != 0 {
+		panic(makeErrorWithDetails(
+			errCannotCancelIncentive,
+			ufmt.Sprintf(
+				"incentive(%s) has already accrued rewards: distributed(%d), penalty(%d)",
+				incentiveResolver.IncentiveId(),
+				incentiveResolver.DistributedRewardAmount(),
+				incentiveResolver.AccumulatedPenaltyAmount(),
+			),
 		))
 	}
 }

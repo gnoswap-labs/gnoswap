@@ -80,9 +80,17 @@ func CreateExternalIncentive(
 	)
 }
 
-// EndExternalIncentive terminates an external incentive early.
+// EndExternalIncentive finalizes an external incentive once its end timestamp
+// has passed, refunding unclaimable rewards and the GNS deposit.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundAddress address) {
 	getImplementation().EndExternalIncentive(0, cur, targetPoolPath, incentiveId, refundAddress)
+}
+
+// CancelExternalIncentive cancels an external incentive that has not started yet,
+// removing it and refunding the reward tokens and the GNS deposit to the creator.
+// Callable by admin, governance, or the incentive creator.
+func CancelExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
+	getImplementation().CancelExternalIncentive(0, cur, targetPoolPath, incentiveId)
 }
 
 // CollectExternalIncentivePenalty collects accumulated warmup penalties for an ended incentive.
