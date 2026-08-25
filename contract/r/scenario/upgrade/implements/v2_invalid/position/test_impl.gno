@@ -204,6 +204,20 @@ func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) (s
 	return t.instance.GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
+func (t *TestPosition) GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
+	if !t.isActive("GetPositionFeeGrowthInsideLastX128") {
+		panic("test implementation: GetPositionFeeGrowthInsideLastX128 not supported")
+	}
+	return t.instance.GetPositionFeeGrowthInsideLastX128(positionId)
+}
+
+func (t *TestPosition) GetPositionTicks(positionId uint64) (int32, int32, error) {
+	if !t.isActive("GetPositionTicks") {
+		panic("test implementation: GetPositionTicks not supported")
+	}
+	return t.instance.GetPositionTicks(positionId)
+}
+
 func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	if !t.isActive("GetPositionTokensOwed0") {
 		panic("test implementation: GetPositionTokensOwed0 not supported")
@@ -216,6 +230,13 @@ func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) (int64, error) 
 		panic("test implementation: GetPositionTokensOwed1 not supported")
 	}
 	return t.instance.GetPositionTokensOwed1(positionId)
+}
+
+func (t *TestPosition) GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
+	if !t.isActive("GetPositionTokensOwed") {
+		panic("test implementation: GetPositionTokensOwed not supported")
+	}
+	return t.instance.GetPositionTokensOwed(positionId)
 }
 
 func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
