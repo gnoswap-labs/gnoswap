@@ -1,6 +1,8 @@
 package common
 
 import (
+	"errors"
+
 	"gno.land/p/demo/tokens/grc20"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/demo/defi/grc20reg"
@@ -51,14 +53,30 @@ func IsRegistered(tokenKey string) error {
 //
 // Panics if any of the provided tokens is not registered in grc20reg.
 func MustRegistered(tokenKeys ...string) {
+	if err := ValidateRegistered(tokenKeys...); err != nil {
+		panic(err.Error())
+	}
+}
+
+// ValidateRegistered checks if all provided tokens are registered, returning an
+// error instead of panicking when a token is not registered.
+//
+// Parameters:
+//   - tokenKeys: variable number of GRC20 registry keys to check
+//
+// Returns nil when every token is registered, otherwise the first
+// registration failure as an error carrying the same detail format used by
+// MustRegistered.
+func ValidateRegistered(tokenKeys ...string) error {
 	for _, tokenKey := range tokenKeys {
 		if err := IsRegistered(tokenKey); err != nil {
-			panic(newErrorWithDetail(
+			return errors.New(newErrorWithDetail(
 				errNotRegistered,
 				ufmt.Sprintf("token(%s)", tokenKey),
 			))
 		}
 	}
+	return nil
 }
 
 // TotalSupply returns the total supply of the specified token.

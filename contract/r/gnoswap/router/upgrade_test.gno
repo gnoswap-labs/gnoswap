@@ -486,7 +486,7 @@ func TestDrySwapRoute(cur realm, t *testing.T) {
 		}
 
 		mockRouter := implementation.(*MockRouter)
-		mockRouter.Response.Set("DrySwapRoute", "1000000", "1000000", true)
+		mockRouter.Response.Set("DrySwapRoute", "1000000", "1000000", nil)
 
 		testing.SetRealm(tt.callerRealm)
 

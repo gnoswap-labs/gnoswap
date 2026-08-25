@@ -237,7 +237,7 @@ func Swap(
 // Returns:
 //   - string: amount of token0 delta
 //   - string: amount of token1 delta
-//   - bool: swap success status
+//   - error: nil on success
 func DrySwap(
 	token0Path string,
 	token1Path string,
@@ -245,7 +245,7 @@ func DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (string, string, error) {
 	return getImplementation().DrySwap(token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96)
 }
 

@@ -32,6 +32,7 @@ const (
 	errNotInitializedObservation = "[GNOSWAP-POOL-024] not initialized observation"
 	errObservationTooOld         = "[GNOSWAP-POOL-025] target timestamp before oldest observation"
 	errObservationBeforeEpoch    = "[GNOSWAP-POOL-026] lookback window starts before unix epoch"
+	errInsufficientPoolBalance   = "[GNOSWAP-POOL-027] insufficient pool balance for swap"
 )
 
 // newErrorWithDetail adds detail to an error message.

@@ -141,7 +141,7 @@ func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 u
 }
 
 // IPoolGetter interface
-func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, bool) {
+func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, error) {
 	if !t.isActive("DrySwap") {
 		panic("test implementation: DrySwap not supported")
 	}
