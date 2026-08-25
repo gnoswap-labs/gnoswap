@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"errors"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -18,7 +20,7 @@ func (i *poolV1) GetFeeAmountTickSpacing(fee uint32) (spacing int32, err error) 
 
 	spacing, exist := feeAmountTickSpacing[fee]
 	if !exist {
-		return 0, ufmt.Errorf("%s", newErrorWithDetail(
+		return 0, errors.New(newErrorWithDetail(
 			errUnsupportedFeeTier,
 			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
 		))
