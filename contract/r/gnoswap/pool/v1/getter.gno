@@ -398,7 +398,8 @@ func (i *poolV1) GetLastObservation(poolPath string) (
 		return 0, "0", 0, nil
 	}
 
-	lastObservation, err := lastObservation(observationState)
+	slot0 := pool.Slot0()
+	lastObservation, err := lastObservation(observationState, slot0.ObservationIndex())
 	if err != nil {
 		return 0, "0", 0, nil
 	}

@@ -212,16 +212,16 @@ func newTwapConsistencyPool(tt twapConsistencyCase) *pl.Pool {
 	pool.SetSlot0(slot0)
 	pool.SetLiquidity(u256.MustFromDecimal("1000"))
 	pool.SetObservationState(newTwapConsistencyObservationState(tt.observations))
+	slot0.SetObservationIndex(uint16(len(tt.observations) - 1))
+	slot0.SetObservationCardinality(uint16(len(tt.observations)))
+	slot0.SetObservationCardinalityNext(uint16(len(tt.observations)))
+	pool.SetSlot0(slot0)
 
 	return pool
 }
 
 func newTwapConsistencyObservationState(observations []twapConsistencyObservation) *pl.ObservationState {
-	cardinality := uint16(len(observations))
 	os := pl.NewObservationState(observations[0].timestamp)
-	os.SetCardinality(cardinality)
-	os.SetCardinalityNext(cardinality)
-	os.SetIndex(cardinality - 1)
 
 	seeded := make(map[uint16]*pl.Observation)
 	for i, observation := range observations {
