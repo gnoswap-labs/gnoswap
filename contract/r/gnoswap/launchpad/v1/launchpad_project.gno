@@ -98,7 +98,7 @@ func (lp *launchpadV1) CreateProject(
 
 	// Interactions: transfer tokens
 	common.SafeGRC20TransferFrom(
-		cross(rlm),
+		0, rlm,
 		tokenPath,
 		caller,
 		launchpadAddr,
@@ -374,7 +374,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		}
 		project.SetTiers(updatedTiers)
 
-		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, projectRefundableAmount)
+		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
 	}
 
 	return projectRefundableAmount, nil

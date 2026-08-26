@@ -184,8 +184,8 @@ func generateFeesWithSwap(cur realm, ft *fuzz.T, adminAddr, poolAddr address, po
 	}
 
 	// Approve tokens for swap
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 	// Swap callback function
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
@@ -193,7 +193,7 @@ func generateFeesWithSwap(cur realm, ft *fuzz.T, adminAddr, poolAddr address, po
 		if amount0Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+				common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 			}(cross(cur))
 		}
 
@@ -201,7 +201,7 @@ func generateFeesWithSwap(cur realm, ft *fuzz.T, adminAddr, poolAddr address, po
 		if amount1Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+				common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 			}(cross(cur))
 		}
 

@@ -152,8 +152,8 @@ func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, m
 	ufmt.Println("[INFO] Minting position")
 
 	testing.SetRealm(adminRealm)
-	common.Approve(cross(cur), token0Path, poolAddr, maxInt64)
-	common.Approve(cross(cur), token1Path, poolAddr, maxInt64)
+	common.Approve(0, cur, token0Path, poolAddr, maxInt64)
+	common.Approve(0, cur, token1Path, poolAddr, maxInt64)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -203,9 +203,9 @@ func exactInSwapRouteBy(cur realm,
 	specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
 	if inputToken == wugnotPath {
-		common.SafeGRC20Approve(cross(cur), wugnotPath, routerAddr, specifiedAmountInt64)
+		common.SafeGRC20Approve(0, cur, wugnotPath, routerAddr, specifiedAmountInt64)
 	} else {
-		common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, specifiedAmountInt64)
+		common.SafeGRC20Approve(0, cur, inputToken, routerAddr, specifiedAmountInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
 		cross(cur),

@@ -197,12 +197,12 @@ func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+				common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+				common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 			}
 		}(cross(cur))
 
