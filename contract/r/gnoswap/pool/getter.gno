@@ -2,7 +2,6 @@ package pool
 
 import (
 	rotree "gno.land/p/nt/bptree/v0/rotree"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // GetPools returns a read-only view of every pool, keyed by pool path.
@@ -88,11 +87,6 @@ func GetLiquidity(poolPath string) (string, error) {
 		return "", err
 	}
 	return liquidity.ToString(), nil
-}
-
-// GetLastObservation returns the most recent observation data for calculating time-weighted averages.
-func GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error) {
-	return getImplementation().GetLastObservation(poolPath)
 }
 
 // GetPoolCreationFee returns the current pool creation fee.
@@ -196,6 +190,67 @@ func GetSlot0Unlocked(poolPath string) (bool, error) {
 	return getImplementation().GetSlot0Unlocked(poolPath)
 }
 
+// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick,
+// protocol fee, lock state, and oracle cursor/capacity metadata).
+// The clone happens here, at the proxy boundary, so every implementation
+// version can return its internal Slot0 by value without each one having to
+// remember to defend against callers mutating the shared sqrtPriceX96.
+func GetSlot0(poolPath string) Slot0 {
+	slot0 := getImplementation().GetSlot0(poolPath)
+	return slot0.Clone()
+}
+
+// GetObservationAt returns a safe copy of the observation stored at index.
+// An in-range but uninitialized slot returns the zero observation, matching
+// Uniswap V3's fixed observation-array getter.
+//
+// ref: uniswap v3 IUniswapV3PoolState.observations(uint256 index)
+func GetObservationAt(poolPath string, index uint16) (Observation, error) {
+	observation, err := getImplementation().GetObservationAt(poolPath, index)
+	if err != nil {
+		return Observation{}, err
+	}
+
+	return *observation.Clone(), nil
+}
+
+// Observe returns the tick and seconds-per-liquidity cumulatives for each
+// requested lookback, matching Uniswap V3's observe(uint32[] secondsAgos).
+func Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := getImplementation().Observe(
+		poolPath,
+		cloneUint32Slice(secondsAgos),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cloneInt64Slice(tickCumulatives), cloneStringSlice(secondsPerLiquidityCumulativeX128s), nil
+}
+
+// SnapshotCumulativesInside returns the tick, seconds-per-liquidity, and
+// seconds cumulatives accrued while the pool price was inside
+// [tickLower, tickUpper). Both boundary ticks must be initialized.
+//
+// Snapshots are only comparable across an interval during which a position in
+// the range existed, matching Uniswap V3's snapshotCumulativesInside.
+func SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, string, uint32, error) {
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := getImplementation().SnapshotCumulativesInside(
+		poolPath,
+		tickLower,
+		tickUpper,
+	)
+	if err != nil {
+		return 0, "", 0, err
+	}
+
+	return tickCumulativeInside, secondsPerLiquidityInsideX128.ToString(), secondsInside, nil
+}
+
 // GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 func GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	return getImplementation().GetTickCumulativeOutside(poolPath, tick)
@@ -270,10 +325,10 @@ func GetWithdrawalFee() uint64 {
 	return getImplementation().GetWithdrawalFee()
 }
 
-// GetTWAP returns the time-weighted average price for a pool.
-// Returns arithmetic mean tick and harmonic mean liquidity over the time period.
-func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
-	tick, liquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
+// OracleConsult returns the arithmetic mean tick and harmonic mean liquidity
+// over a lookback, following Uniswap V3 OracleLibrary's consult convention.
+func OracleConsult(poolPath string, secondsAgo uint32) (int32, string, error) {
+	tick, liquidity, err := getImplementation().OracleConsult(poolPath, secondsAgo)
 	if err != nil {
 		return 0, "", err
 	}
@@ -295,21 +350,6 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 // GetTickBitmaps returns the tick bitmap for a given word position.
 func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return getImplementation().GetTickBitmaps(poolPath, wordPos)
-}
-
-// GetObservationState returns the observation state for a given pool path.
-func GetObservationState(poolPath string) (*ObservationState, error) {
-	observationState, err := getImplementation().GetObservationState(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Implementations may return nil without error after an upgrade.
-	if observationState == nil {
-		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
-	}
-
-	return observationState.Clone(), nil
 }
 
 // GetPendingProtocolFees returns the pending protocol fee amount per token path.

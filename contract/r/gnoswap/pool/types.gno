@@ -18,6 +18,7 @@ type IPool interface {
 	IPoolManager
 	IPoolPosition
 	IPoolSwap
+	IPoolOracle
 	IPoolGetter
 }
 
@@ -36,15 +37,6 @@ type IPoolManager interface {
 
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(_ int, rlm realm, fee int64)
-
-	IncreaseObservationCardinalityNext(
-		_ int,
-		rlm realm,
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		cardinalityNext uint16,
-	)
 }
 
 // IPoolPosition interface defines position management operations.
@@ -151,6 +143,32 @@ type IPoolSwap interface {
 	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
 }
 
+// IPoolOracle interface defines the pool's Uniswap-V3-aligned oracle surface.
+type IPoolOracle interface {
+	GetSlot0(poolPath string) Slot0
+
+	GetObservationAt(poolPath string, index uint16) (Observation, error)
+
+	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
+
+	SnapshotCumulativesInside(
+		poolPath string,
+		tickLower int32,
+		tickUpper int32,
+	) (int64, *u256.Uint, uint32, error)
+
+	OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+
+	IncreaseObservationCardinalityNext(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		cardinalityNext uint16,
+	)
+}
+
 // IPoolGetter interface defines data retrieval operations.
 // These methods provide read-only access to pool state and data.
 type IPoolGetter interface {
@@ -171,8 +189,6 @@ type IPoolGetter interface {
 	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error)
 
 	GetLiquidity(poolPath string) (*u256.Uint, error)
-
-	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error)
 
 	GetPendingProtocolFees() map[string]int64
 
@@ -228,8 +244,6 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
-
 	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32
 
@@ -239,7 +253,6 @@ type IPoolGetter interface {
 
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
-	GetObservationState(poolPath string) (*ObservationState, error)
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.

@@ -19,7 +19,8 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 	os.observations = observations
 }
 
-// ObservationAt returns the observation stored at index.
+// ObservationAt returns the observation stored at index, mirroring Uniswap
+// V3's observations(uint256 index) mapping getter.
 func (os *ObservationState) ObservationAt(index uint16) (*Observation, bool) {
 	observation, ok := os.observations[index]
 	return observation, ok

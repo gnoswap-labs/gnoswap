@@ -126,10 +126,6 @@ func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetLastObservation(poolPath string) (int64, string, int64, error) {
-	return t.instance.GetLastObservation(poolPath)
-}
-
 func (t *TestPool) GetPoolCreationFee() int64 {
 	return t.instance.GetPoolCreationFee()
 }
@@ -168,6 +164,10 @@ func (t *TestPool) GetProtocolFeesToken1(poolPath string) (int64, error) {
 
 func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
+}
+
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	return t.instance.GetSlot0(poolPath)
 }
 
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
@@ -234,8 +234,16 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	return t.instance.OracleConsult(poolPath, secondsAgo)
+}
+
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	return t.instance.SnapshotCumulativesInside(poolPath, tickLower, tickUpper)
 }
 
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
@@ -264,8 +272,8 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	return t.instance.GetObservationState(poolPath)
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	return t.instance.Observe(poolPath, secondsAgos)
 }
 
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {

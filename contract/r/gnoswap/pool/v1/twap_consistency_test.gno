@@ -182,7 +182,7 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 			restoreContext := setOracleTestContext(tt.currentTime)
 			defer restoreContext()
 
-			got, _, err := getTWAP(newTwapConsistencyPool(tt), tt.secondsAgo)
+			got, _, err := oracleConsult(newTwapConsistencyPool(tt), tt.secondsAgo)
 			if tt.wantErr != "" {
 				uassert.ErrorContains(t, err, tt.wantErr)
 				return
