@@ -150,33 +150,33 @@ type IPoolSwap interface {
 // operation identifies its pool with poolPath, and uint values cross the public
 // boundary using GnoSwap types or decimal strings rather than the EVM ABI.
 //
-// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/IUniswapV3PoolState.sol#L21-L32
-// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L39
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L39
 type IPoolOracle interface {
 	// GetSlot0 returns a safe copy of a pool's price, tick, protocol-fee, lock,
 	// and oracle cursor/capacity state, corresponding to Uniswap V3 slot0().
 	//
-	// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/IUniswapV3PoolState.sol#L21-L32
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
 	GetSlot0(poolPath string) Slot0
 
 	// GetObservationAt returns the observation stored at index, corresponding to
 	// Uniswap V3 observations(uint256). An in-range uninitialized slot returns a
 	// zero observation; an out-of-range index returns an error.
 	//
-	// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/IUniswapV3PoolState.sol#L99-L115
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L99-L115
 	GetObservationAt(poolPath string, index uint16) (Observation, error)
 
 	// Observe returns tick and seconds-per-liquidity cumulatives for every
 	// requested lookback, corresponding to Uniswap V3 observe(uint32[]).
 	//
-	// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L21
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L21
 	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
 
 	// SnapshotCumulativesInside returns accumulators accrued while the pool price
 	// was inside [tickLower, tickUpper), corresponding to Uniswap V3
 	// snapshotCumulativesInside(int24,int24).
 	//
-	// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L23-L39
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L23-L39
 	SnapshotCumulativesInside(
 		poolPath string,
 		tickLower int32,
@@ -193,7 +193,7 @@ type IPoolOracle interface {
 	// observation buffer, corresponding to Uniswap V3
 	// increaseObservationCardinalityNext(uint16).
 	//
-	// ref: https://github.com/Uniswap/v3-core/blob/d0831dc6b8a318df3872b6d68f6de135c9f3ec29/contracts/interfaces/pool/IUniswapV3PoolActions.sol#L98-L102
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolActions.sol#L98-L102
 	IncreaseObservationCardinalityNext(
 		_ int,
 		rlm realm,
