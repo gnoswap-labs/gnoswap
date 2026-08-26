@@ -1582,7 +1582,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(posRealm)
-						getMockInstance().HandleWithdrawalFee(0, cur, barPath, "1", bazPath, "1", adminAddr)
+						getMockInstance().CollectSwapFee(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
 					})
 
 					// Step 6: Complete original swap payment
@@ -1865,12 +1865,12 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name: "handle withdrawal fee",
+			name: "collect swap fee",
 			setRealm: func() {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceHandleWithdrawalFee(0, cur, barPath, "1", bazPath, "1", adminAddr)
+				mockInstanceCollectSwapFee(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
 			},
 		},
 	}

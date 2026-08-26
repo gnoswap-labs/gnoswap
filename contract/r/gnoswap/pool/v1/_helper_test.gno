@@ -625,6 +625,10 @@ func mockInstanceBurn(_ int, rlm realm, token0Path string, token1Path string, fe
 	return pl.Burn(cross(rlm), token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
+func mockInstanceCollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	return pl.CollectSwapFee(cross(rlm), token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func mockInstanceCollect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	return pl.Collect(cross(rlm), token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
@@ -635,10 +639,6 @@ func mockInstanceCollectProtocol(_ int, rlm realm, token0Path string, token1Path
 
 func mockInstanceSwap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
 	return pl.Swap(cross(rlm), token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback)
-}
-
-func mockInstanceHandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	return pl.HandleWithdrawalFee(cross(rlm), token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
 func mockInstanceSetWithdrawalFee(_ int, rlm realm, fee uint64) {

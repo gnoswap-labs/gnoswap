@@ -4,13 +4,10 @@ import (
 	"errors"
 	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -121,8 +118,6 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 			)
 	}
 
-	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-
 	// Check for underflow when subtracting collected amounts from tokens owed
 	collectAmount0Int64 := gnsmath.SafeConvertToInt64(collectAmount0)
 	collectAmount1Int64 := gnsmath.SafeConvertToInt64(collectAmount1)
@@ -142,9 +137,6 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 	}
 
 	p.mustUpdatePosition(0, rlm, params.positionId, *position)
-
-	common.SafeGRC20TransferFrom(cross(rlm), pToken0, poolAddr, caller, collectAmount0Int64)
-	common.SafeGRC20TransferFrom(cross(rlm), pToken1, poolAddr, caller, collectAmount1Int64)
 
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }

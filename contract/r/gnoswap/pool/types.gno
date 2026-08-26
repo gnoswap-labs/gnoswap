@@ -76,7 +76,20 @@ type IPoolPosition interface {
 		positionCaller address,
 	) (string, string)
 
-	// Collect transfers owed tokens from a position to recipient.
+	// CollectSwapFee and Collect pay owed tokens out to recipient.
+	CollectSwapFee(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		recipient address,
+		tickLower int32,
+		tickUpper int32,
+		amount0Requested string,
+		amount1Requested string,
+	) (amount0, amount1, fee0, fee1 string)
+
 	Collect(
 		_ int,
 		rlm realm,
@@ -88,19 +101,9 @@ type IPoolPosition interface {
 		tickUpper int32,
 		amount0Requested string,
 		amount1Requested string,
-	) (string, string)
+	) (amount0, amount1 string)
 
 	SetWithdrawalFee(_ int, rlm realm, fee uint64)
-
-	HandleWithdrawalFee(
-		_ int,
-		rlm realm,
-		token0Path string,
-		amount0 string,
-		token1Path string,
-		amount1 string,
-		positionCaller address,
-	) (string, string, string, string)
 }
 
 // IPoolSwap interface defines swap and protocol fee operations.
@@ -143,7 +146,7 @@ type IPoolSwap interface {
 		recipient address,
 		amount0Requested string,
 		amount1Requested string,
-	) (string, string)
+	) (amount0, amount1 string)
 
 	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
 }

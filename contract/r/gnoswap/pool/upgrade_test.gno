@@ -406,7 +406,7 @@ func TestBurn(cur realm, t *testing.T) {
 	}
 }
 
-// TestCollect tests the Collect proxy function
+// TestCollect tests the CollectSwapFee and Collect proxy functions
 func TestCollect(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
@@ -456,10 +456,14 @@ func TestCollect(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
+		CollectSwapFee(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.amount0Requested, tt.amount1Requested)
 		Collect(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.amount0Requested, tt.amount1Requested)
 
 		// Assert
 		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("CollectSwapFee") != 1 {
+			t.Error("CollectSwapFee was not called on the implementation")
+		}
 		if mockPool.Response.CallCount("Collect") != 1 {
 			t.Error("Collect was not called on the implementation")
 		}

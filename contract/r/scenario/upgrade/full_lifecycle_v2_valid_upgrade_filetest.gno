@@ -44,7 +44,7 @@
 // Entry points reached indirectly (they are role-gated and unreachable from an
 // EOA, so they are covered through their only legitimate caller):
 //
-//	pool.Mint / Burn / Collect / HandleWithdrawalFee   <- position
+//	pool.Mint / Burn / CollectSwapFee / Collect   <- position
 //	pool.Swap                                          <- router
 //	pool.SetSwapStartHook / SetSwapEndHook /
 //	    SetTickCrossHook                               <- staker initializer

@@ -165,12 +165,12 @@ func main(cur realm) {
 	testPoolBurnAllowed(cur)
 	println()
 
-	println("[SCENARIO] 16. pool.Collect remains allowed")
-	testPoolCollectAllowed(cur)
+	println("[SCENARIO] 16. pool.CollectSwapFee remains allowed")
+	testPoolCollectSwapFeeAllowed(cur)
 	println()
 
-	println("[SCENARIO] 17. pool.HandleWithdrawalFee remains allowed")
-	testPoolHandleWithdrawalFeeAllowed(cur)
+	println("[SCENARIO] 17. pool.Collect remains allowed")
+	testPoolCollectAllowed(cur)
 	println()
 
 	println("[SCENARIO] 18. pool.CollectProtocol remains allowed")
@@ -483,20 +483,22 @@ func testPoolBurnAllowed(cur realm) {
 	ufmt.Println("[EXPECTED] pool.Burn succeeded in emergency mode")
 }
 
-func testPoolCollectAllowed(cur realm) {
+func testPoolCollectSwapFeeAllowed(cur realm) {
 	testing.SetRealm(positionRealm2)
-	amount0, amount1 := pool.Collect(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
-	assertPositiveString(cur, amount0, "pool.Collect amount0")
-	assertPositiveString(cur, amount1, "pool.Collect amount1")
-	ufmt.Printf("[EXPECTED] pool.Collect amount0: %s, amount1: %s\n", amount0, amount1)
-	ufmt.Println("[EXPECTED] pool.Collect succeeded in emergency mode")
+	amount0, amount1, fee0, fee1 := pool.CollectSwapFee(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
+	assertPositiveString(cur, amount0, "pool.CollectSwapFee amount0")
+	assertPositiveString(cur, amount1, "pool.CollectSwapFee amount1")
+	ufmt.Printf("[EXPECTED] pool.CollectSwapFee amount0: %s, amount1: %s, fee0: %s, fee1: %s\n", amount0, amount1, fee0, fee1)
+	ufmt.Println("[EXPECTED] pool.CollectSwapFee succeeded in emergency mode")
 }
 
-func testPoolHandleWithdrawalFeeAllowed(cur realm) {
+func testPoolCollectAllowed(cur realm) {
+	// The position was drained by the CollectSwapFee call above, so this only
+	// proves the withdraw halt still lets the fee-free path through.
 	testing.SetRealm(positionRealm2)
-	fee0, fee1, net0, net1 := pool.HandleWithdrawalFee(cross(cur), barPath2, "1000", fooPath2, "1000", aliceAddr2)
-	ufmt.Printf("[EXPECTED] pool.HandleWithdrawalFee fee0: %s, fee1: %s, net0: %s, net1: %s\n", fee0, fee1, net0, net1)
-	ufmt.Println("[EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode")
+	amount0, amount1 := pool.Collect(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
+	ufmt.Printf("[EXPECTED] pool.Collect amount0: %s, amount1: %s\n", amount0, amount1)
+	ufmt.Println("[EXPECTED] pool.Collect succeeded in emergency mode")
 }
 
 func testPoolCollectProtocolAllowed(cur realm) {
@@ -709,13 +711,13 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] pool.Burn amount0: 5, amount1: 5
 // [EXPECTED] pool.Burn succeeded in emergency mode
 //
-// [SCENARIO] 16. pool.Collect remains allowed
-// [EXPECTED] pool.Collect amount0: 17, amount1: 17
-// [EXPECTED] pool.Collect succeeded in emergency mode
+// [SCENARIO] 16. pool.CollectSwapFee remains allowed
+// [EXPECTED] pool.CollectSwapFee amount0: 17, amount1: 17, fee0: 0, fee1: 0
+// [EXPECTED] pool.CollectSwapFee succeeded in emergency mode
 //
-// [SCENARIO] 17. pool.HandleWithdrawalFee remains allowed
-// [EXPECTED] pool.HandleWithdrawalFee fee0: 10, fee1: 10, net0: 990, net1: 990
-// [EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode
+// [SCENARIO] 17. pool.Collect remains allowed
+// [EXPECTED] pool.Collect amount0: 0, amount1: 0
+// [EXPECTED] pool.Collect succeeded in emergency mode
 //
 // [SCENARIO] 18. pool.CollectProtocol remains allowed
 // [EXPECTED] pool.CollectProtocol amount0: 1000, amount1: 1000

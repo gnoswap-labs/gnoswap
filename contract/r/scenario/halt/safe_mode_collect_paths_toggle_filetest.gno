@@ -202,7 +202,7 @@ func testCollectsBlockedInSafeMode(cur realm) {
 		pool.Collect(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
 	})
 	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
-		pool.HandleWithdrawalFee(cross(cur), barPath3, "1", fooPath3, "1", aliceAddr3)
+		pool.CollectSwapFee(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
 	})
 	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
 		pool.CollectProtocol(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, "1", "1")
