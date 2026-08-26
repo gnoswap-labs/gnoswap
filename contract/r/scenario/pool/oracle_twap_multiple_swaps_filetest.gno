@@ -84,7 +84,7 @@ func main(cur realm) {
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 200)
 
 	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
-	slot0 := pool.GetSlot0(pool.GetPoolPath(barPath, fooPath, fee500))
+	slot0 := thisPool.Slot0()
 	println("[INFO] Observation cardinality limit:", slot0.ObservationCardinalityNext())
 	println()
 

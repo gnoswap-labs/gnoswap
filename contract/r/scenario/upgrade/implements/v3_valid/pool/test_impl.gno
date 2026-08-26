@@ -268,10 +268,6 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 	return t.instance.GetObservationState(poolPath)
 }
 
-func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
-	return t.instance.GetObservationAt(poolPath, index)
-}
-
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
 	return t.instance.GetPendingProtocolFees()
 }
