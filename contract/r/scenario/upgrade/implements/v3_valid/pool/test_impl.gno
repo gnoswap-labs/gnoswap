@@ -170,6 +170,10 @@ func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
 	return t.instance.GetSlot0(poolPath)
 }
 
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	return t.instance.GetObservationAt(poolPath, index)
+}
+
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetSlot0SqrtPriceX96(poolPath)
 }

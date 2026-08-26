@@ -288,6 +288,13 @@ func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
 	return t.instance.GetSlot0(poolPath)
 }
 
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	if !t.isActive("GetObservationAt") {
+		panic("test implementation: GetObservationAt not supported")
+	}
+	return t.instance.GetObservationAt(poolPath, index)
+}
+
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	if !t.isActive("GetSlot0SqrtPriceX96") {
 		panic("test implementation: GetSlot0SqrtPriceX96 not supported")

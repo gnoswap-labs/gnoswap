@@ -440,6 +440,18 @@ func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
 	).(pool.Slot0)
 }
 
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	result := t.ExecuteFn(
+		"GetObservationAt",
+		func(args ...any) any {
+			observation, err := t.instance.GetObservationAt(args[0].(string), args[1].(uint16))
+			return []any{observation, err}
+		},
+		poolPath, index,
+	).([]any)
+	return result[0].(pool.Observation), result[1].(error)
+}
+
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	result := t.ExecuteFn(
 		"GetSlot0SqrtPriceX96",
