@@ -27,11 +27,11 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 
 	// Get observations for current time and secondsAgo
 	secondsAgos := []uint32{secondsAgo, 0}
-	currentTime := time.Now().Unix()
+	blockTimestamp := time.Now().Unix()
 
 	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := observe(
 		observationState,
-		currentTime,
+		blockTimestamp,
 		secondsAgos,
 		slot0.Tick(),
 		slot0.ObservationIndex(),
@@ -65,14 +65,14 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	return arithmeticMeanTick, harmonicMeanLiquidity, nil
 }
 
-func transform(lastObservation *pl.Observation, currentTime int64, tick int32, liquidity *u256.Uint) (*pl.Observation, error) {
-	timeDelta := currentTime - lastObservation.BlockTimestamp()
+func transform(last *pl.Observation, blockTimestamp int64, tick int32, liquidity *u256.Uint) (*pl.Observation, error) {
+	timeDelta := blockTimestamp - last.BlockTimestamp()
 	if timeDelta < 0 {
 		return nil, errors.New("time delta must be greater than 0")
 	}
 
 	// calculate cumulative values
-	tickCumulative := lastObservation.TickCumulative() + int64(tick)*timeDelta
+	tickCumulative := last.TickCumulative() + int64(tick)*timeDelta
 
 	// calculate seconds per liquidity
 	liquidityForCalc := liquidity
@@ -87,56 +87,56 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 		liquidityForCalc,
 	)
 
-	prevSecPerLiq := u256.MustFromDecimal(lastObservation.SecondsPerLiquidityCumulativeX128())
+	prevSecPerLiq := u256.MustFromDecimal(last.SecondsPerLiquidityCumulativeX128())
 	secondsPerLiquidityCumulativeX128 := u256.Zero().Add(
 		prevSecPerLiq,
 		secondsPerLiquidityDelta,
 	)
 
 	return pl.NewObservation(
-		currentTime,
+		blockTimestamp,
 		tickCumulative,
 		secondsPerLiquidityCumulativeX128.ToString(),
 		true,
 	), nil
 }
 
-func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (uint16, error) {
+func grow(os *pl.ObservationState, current, next uint16) (uint16, error) {
 	if os == nil {
-		return currentCardinality, errors.New("observation state not initialized")
+		return current, errors.New("observation state not initialized")
 	}
 
-	if currentCardinality <= 0 {
-		return currentCardinality, errors.New("currentCardinality must be greater than 0")
+	if current <= 0 {
+		return current, errors.New("current must be greater than 0")
 	}
 
-	if nextCardinality <= currentCardinality {
-		return currentCardinality, nil
+	if next <= current {
+		return current, nil
 	}
 
-	if nextCardinality > maxObservationCardinality {
-		return currentCardinality, errors.New("nextCardinality exceeds maximum")
+	if next > maxObservationCardinality {
+		return current, errors.New("next exceeds maximum")
 	}
 
 	// This is more efficient than checking all slots from 0
-	for i := currentCardinality; i < nextCardinality; i++ {
+	for i := current; i < next; i++ {
 		observation := pl.NewDefaultObservation()
 		observation.SetBlockTimestamp(1)
 		os.SetObservation(i, observation)
 	}
 
-	return nextCardinality, nil
+	return next, nil
 }
 
 func writeObservation(
 	os *pl.ObservationState,
 	index uint16,
-	currentTime int64,
+	blockTimestamp int64,
 	tick int32,
 	liquidity *u256.Uint,
 	cardinality uint16,
 	cardinalityNext uint16,
-) (uint16, uint16, error) {
+) (indexUpdated uint16, cardinalityUpdated uint16, err error) {
 	if os == nil {
 		return 0, 0, errors.New("observation state not initialized")
 	}
@@ -144,34 +144,36 @@ func writeObservation(
 		return 0, 0, errors.New("observation cardinality must be greater than 0")
 	}
 
-	lastObservation, err := observationAt(os, index)
+	last, err := observationAt(os, index)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	if lastObservation.BlockTimestamp() == currentTime {
+	if last.BlockTimestamp() == blockTimestamp {
 		return index, cardinality, nil
 	}
 
 	// Check if we need to grow the cardinality
 	if cardinalityNext > cardinality && index == cardinality-1 {
-		cardinality = cardinalityNext
+		cardinalityUpdated = cardinalityNext
+	} else {
+		cardinalityUpdated = cardinality
 	}
 
-	nextIndex := (index + 1) % cardinality
+	indexUpdated = (index + 1) % cardinalityUpdated
 
 	// Ensure the slot exists before writing
-	if _, ok := os.ObservationAt(nextIndex); !ok {
-		os.SetObservation(nextIndex, pl.NewDefaultObservation())
+	if _, ok := os.ObservationAt(indexUpdated); !ok {
+		os.SetObservation(indexUpdated, pl.NewDefaultObservation())
 	}
 
-	observation, err := transform(lastObservation, currentTime, tick, liquidity)
+	observation, err := transform(last, blockTimestamp, tick, liquidity)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	os.SetObservation(nextIndex, observation)
-	return nextIndex, cardinality, nil
+	os.SetObservation(indexUpdated, observation)
+	return indexUpdated, cardinalityUpdated, nil
 }
 
 // observationAt returns the observation at a specific index
@@ -188,7 +190,7 @@ func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, erro
 // observeSingle returns the data for a single observation at a specific time ago
 func observeSingle(
 	os *pl.ObservationState,
-	currentTime int64,
+	time int64,
 	secondsAgo uint32,
 	tick int32,
 	index uint16,
@@ -202,9 +204,9 @@ func observeSingle(
 			return 0, "", err
 		}
 
-		if last.BlockTimestamp() != currentTime {
+		if last.BlockTimestamp() != time {
 			// need to create virtual observation for current time
-			transformed, err := transform(last, currentTime, tick, liquidity)
+			transformed, err := transform(last, time, tick, liquidity)
 			if err != nil {
 				return 0, "", err
 			}
@@ -216,11 +218,11 @@ func observeSingle(
 	}
 
 	// A lookback longer than the chain's own age would place the target before unix epoch.
-	if int64(secondsAgo) > currentTime {
+	if int64(secondsAgo) > time {
 		return 0, "", errors.New(errObservationBeforeEpoch)
 	}
 
-	target := currentTime - int64(secondsAgo)
+	target := time - int64(secondsAgo)
 
 	// find the observations before and after the target
 	beforeOrAt, atOrAfter, err := getSurroundingObservations(
@@ -370,7 +372,7 @@ func binarySearch(
 // observe returns the cumulative tick and liquidity as of each timestamp secondsAgo from the current time.
 func observe(
 	os *pl.ObservationState,
-	currentTime int64,
+	time int64,
 	secondsAgos []uint32,
 	tick int32,
 	index uint16,
@@ -388,7 +390,7 @@ func observe(
 	for i, secondsAgo := range secondsAgos {
 		tickCumulative, secondsPerLiquidity, err := observeSingle(
 			os,
-			currentTime,
+			time,
 			secondsAgo,
 			tick,
 			index,
