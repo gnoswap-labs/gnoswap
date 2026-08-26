@@ -81,11 +81,12 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			os := pl.NewObservationState(tt.initialTime)
+			slot0 := testObservationSlot0(0, 1, 1)
 
 			var err error
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err = writeObservation(os, write.time, write.tick, liquidity)
+				err = writeObservation(os, &slot0, write.time, write.tick, liquidity)
 				if tt.expectError && err != nil {
 					return // Expected error occurred
 				}
@@ -96,12 +97,12 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 				return
 			}
 
-			lastObs, err := lastObservation(os)
+			lastObs, err := observationAt(os, slot0.ObservationIndex())
 			uassert.NoError(t, err, "Last observation should succeed")
 
 			uassert.NoError(t, err, "Unexpected error")
-			uassert.Equal(t, tt.expectedIndex, os.Index(), "Index mismatch")
-			uassert.Equal(t, tt.expectedCardinality, os.Cardinality(), "Cardinality mismatch")
+			uassert.Equal(t, tt.expectedIndex, slot0.ObservationIndex(), "Index mismatch")
+			uassert.Equal(t, tt.expectedCardinality, slot0.ObservationCardinality(), "Cardinality mismatch")
 			uassert.Equal(t, tt.expectedTickCumulative, lastObs.TickCumulative(), "Tick cumulative mismatch")
 		})
 	}
@@ -148,18 +149,17 @@ func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			os := pl.NewObservationState(currentTime)
-			os.SetCardinality(tt.cardinality)
-			os.SetCardinalityNext(tt.cardinalityNext)
+			slot0 := testObservationSlot0(0, tt.cardinality, tt.cardinalityNext)
 
 			liquidity := u256.MustFromDecimal("1000000")
 			for i := 0; i < tt.numWrites; i++ {
 				writeTime := currentTime + int64((i+1)*60)
-				err := writeObservation(os, writeTime, int32(100*(i+1)), liquidity)
+				err := writeObservation(os, &slot0, writeTime, int32(100*(i+1)), liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
-			uassert.Equal(t, tt.expectedFinalIndex, os.Index(), "Final index mismatch")
-			uassert.Equal(t, tt.expectedCardinality, os.Cardinality(), "Final cardinality mismatch")
+			uassert.Equal(t, tt.expectedFinalIndex, slot0.ObservationIndex(), "Final index mismatch")
+			uassert.Equal(t, tt.expectedCardinality, slot0.ObservationCardinality(), "Final cardinality mismatch")
 		})
 	}
 }
@@ -167,50 +167,54 @@ func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
 // TestPool_IncreaseObservationCardinalityNext tests cardinality limit management
 func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 	tests := []struct {
-		name                   string
-		initialCardinality     uint16
-		initialCardinalityNext uint16
-		newCardinalityNext     uint16
-		expectError            bool
-		errorContains          string
+		name                    string
+		initialCardinality      uint16
+		initialCardinalityNext  uint16
+		newCardinalityNext      uint16
+		expectedCardinalityNext uint16
+		expectError             bool
+		errorContains           string
 	}{
 		{
-			name:                   "valid increase",
-			initialCardinality:     1,
-			initialCardinalityNext: 1,
-			newCardinalityNext:     10,
-			expectError:            false,
+			name:                    "valid increase",
+			initialCardinality:      1,
+			initialCardinalityNext:  1,
+			newCardinalityNext:      10,
+			expectedCardinalityNext: 10,
+			expectError:             false,
 		},
 		{
-			name:                   "decrease attempt",
-			initialCardinality:     1,
-			initialCardinalityNext: 10,
-			newCardinalityNext:     5,
-			expectError:            true,
-			errorContains:          "must be greater than current",
+			name:                    "decrease attempt",
+			initialCardinality:      1,
+			initialCardinalityNext:  10,
+			newCardinalityNext:      5,
+			expectedCardinalityNext: 10,
+			expectError:             false,
 		},
 		{
-			name:                   "same value",
-			initialCardinality:     1,
-			initialCardinalityNext: 10,
-			newCardinalityNext:     10,
-			expectError:            true,
-			errorContains:          "must be greater than current",
+			name:                    "same value",
+			initialCardinality:      1,
+			initialCardinalityNext:  10,
+			newCardinalityNext:      10,
+			expectedCardinalityNext: 10,
+			expectError:             false,
 		},
 		{
-			name:                   "maximum cardinality",
-			initialCardinality:     1,
-			initialCardinalityNext: 100,
-			newCardinalityNext:     maxObservationCardinality,
-			expectError:            false,
+			name:                    "maximum cardinality",
+			initialCardinality:      1,
+			initialCardinalityNext:  100,
+			newCardinalityNext:      maxObservationCardinality,
+			expectedCardinalityNext: maxObservationCardinality,
+			expectError:             false,
 		},
 		{
-			name:                   "uninitialized state",
-			initialCardinality:     0,
-			initialCardinalityNext: 0,
-			newCardinalityNext:     10,
-			expectError:            true,
-			errorContains:          "not initialized",
+			name:                    "uninitialized state",
+			initialCardinality:      0,
+			initialCardinalityNext:  0,
+			newCardinalityNext:      10,
+			expectedCardinalityNext: 0,
+			expectError:             true,
+			errorContains:           "not initialized",
 		},
 	}
 
@@ -220,11 +224,14 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 			pool := createTestPool()
 			currentTime := time.Now().Unix()
 			observationState := pool.ObservationState()
+			slot0 := pool.Slot0()
 
 			if tt.initialCardinality > 0 {
-				writeObservation(observationState, currentTime, pool.Slot0Tick(), pool.Liquidity())
-				observationState.SetCardinality(tt.initialCardinality)
-				observationState.SetCardinalityNext(tt.initialCardinalityNext)
+				slot0.SetObservationIndex(0)
+				slot0.SetObservationCardinality(tt.initialCardinality)
+				slot0.SetObservationCardinalityNext(tt.initialCardinalityNext)
+				writeObservation(observationState, &slot0, currentTime, pool.Slot0Tick(), pool.Liquidity())
+				pool.SetSlot0(slot0)
 				pool.SetObservationState(observationState)
 			} else {
 				pool.SetObservationState(nil)
@@ -235,8 +242,8 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
 				increaseObservationCardinalityNextByPool(pool, tt.newCardinalityNext)
-				observationState := pool.ObservationState()
-				uassert.Equal(t, tt.newCardinalityNext, observationState.CardinalityNext(), "Cardinality limit mismatch")
+				slot0 := pool.Slot0()
+				uassert.Equal(t, tt.expectedCardinalityNext, slot0.ObservationCardinalityNext(), "Cardinality limit mismatch")
 			}
 		})
 	}
@@ -287,6 +294,11 @@ func TestGetTWAP_RoundingTable(cur realm, t *testing.T) {
 			pool := createTestPool()
 			observationState := newObservationStateWithDelta(tt.secondsAgo, tt.tickDelta)
 			pool.SetObservationState(observationState)
+			slot0 := pool.Slot0()
+			slot0.SetObservationIndex(1)
+			slot0.SetObservationCardinality(2)
+			slot0.SetObservationCardinalityNext(2)
+			pool.SetSlot0(slot0)
 
 			twapTick, _, err := getTWAP(pool, tt.secondsAgo)
 			uassert.NoError(t, err, "getTWAP should succeed for configured observations")
@@ -350,6 +362,11 @@ func TestGetTWAP_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 
 			observationState := newObservationStateWithLiquidity(tt.secondsAgo, tt.tickCumulatives[1]-tt.tickCumulatives[0], delta)
 			pool.SetObservationState(observationState)
+			slot0 := pool.Slot0()
+			slot0.SetObservationIndex(1)
+			slot0.SetObservationCardinality(2)
+			slot0.SetObservationCardinalityNext(2)
+			pool.SetSlot0(slot0)
 
 			arithmeticMeanTick, harmonicMeanLiquidity, err := getTWAP(pool, tt.secondsAgo)
 			uassert.NoError(t, err, "getTWAP should succeed")
@@ -417,9 +434,6 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 	start := now - int64(secondsAgo)
 
 	os := pl.NewObservationState(start)
-	os.SetCardinality(2)
-	os.SetCardinalityNext(2)
-	os.SetIndex(1)
 	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,
@@ -436,9 +450,6 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 	start := now - int64(secondsAgo)
 
 	os := pl.NewObservationState(start)
-	os.SetCardinality(2)
-	os.SetCardinalityNext(2)
-	os.SetIndex(1)
 	os.SetObservation(1, pl.NewObservation(
 		now,
 		tickDelta,

@@ -196,7 +196,6 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// case 2: Current price is within the position range
 		liquidityBefore := p.Liquidity()
 		currentTime := time.Now().Unix()
-
 		// Update oracle BEFORE liquidity changes
 		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
 		if err != nil {
@@ -268,14 +267,15 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 	if !liquidityDelta.IsZero() {
 		blockTimestamp := time.Now().Unix()
 		observationState := p.ObservationState()
+		slot0 := p.Slot0()
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 			observationState,
 			blockTimestamp,
 			0,
-			tick,
-			observationState.Index(),
+			slot0.Tick(),
+			slot0.ObservationIndex(),
 			p.Liquidity(),
-			observationState.Cardinality(),
+			slot0.ObservationCardinality(),
 		)
 		if err != nil {
 			return pl.NewDefaultPositionInfo(), err

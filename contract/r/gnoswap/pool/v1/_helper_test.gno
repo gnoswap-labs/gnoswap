@@ -572,6 +572,14 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	return pool
 }
 
+func testObservationSlot0(index, cardinality, cardinalityNext uint16) pl.Slot0 {
+	slot0 := pl.NewSlot0(u256.One(), 0, 0, true)
+	slot0.SetObservationIndex(index)
+	slot0.SetObservationCardinality(cardinality)
+	slot0.SetObservationCardinalityNext(cardinalityNext)
+	return slot0
+}
+
 func getMockInstance() *poolV1 {
 	if mockInstance == nil {
 		mockInstance = &poolV1{
