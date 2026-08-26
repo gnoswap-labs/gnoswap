@@ -146,7 +146,7 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 
 	// Update price cumulative
 	observationState := pool.ObservationState()
-	writeObservation(observationState, &slot0, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	writeObservationWithSlot0(observationState, &slot0, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
 	pool.SetSlot0(slot0)
 
 	afterObservation, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
@@ -513,7 +513,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			// When: Execute accumulation calculation
 			observationState2 := pool.ObservationState()
 			slot0 = pool.Slot0()
-			writeObservation(observationState2, &slot0, currentTime, tt.initialTick, pool.Liquidity())
+			writeObservationWithSlot0(observationState2, &slot0, currentTime, tt.initialTick, pool.Liquidity())
 			pool.SetSlot0(slot0)
 			lastObs, _ = observationAt(observationState2, slot0.ObservationIndex())
 			tickCumulative := lastObs.TickCumulative()

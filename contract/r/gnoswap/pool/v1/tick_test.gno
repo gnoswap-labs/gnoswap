@@ -518,7 +518,7 @@ func TestTickUpdateSeedsOracleOutsideForActiveTick(cur realm, t *testing.T) {
 	observationState := pl.NewObservationState(startTime)
 	pool.SetObservationState(observationState)
 	slot0 := pool.Slot0()
-	uassert.NoError(t, writeObservation(observationState, &slot0, initTime, 5, pool.Liquidity()))
+	uassert.NoError(t, writeObservationWithSlot0(observationState, &slot0, initTime, 5, pool.Liquidity()))
 	pool.SetSlot0(slot0)
 
 	tickCumulativeAtInit, secondsPerLiquidityAtInit, err := observeSingle(
