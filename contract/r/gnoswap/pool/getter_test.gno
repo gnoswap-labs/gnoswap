@@ -192,9 +192,6 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			name: "GetObservationState",
 			setup: func(m *MockPool) {
 				state := NewObservationState(100)
-				state.SetIndex(3)
-				state.SetCardinality(4)
-				state.SetCardinalityNext(5)
 				obs := NewObservation(123, 77, "2000", true)
 				state.Observations()[7] = obs
 				m.Response.Set("GetObservationState", state, error(nil))
@@ -212,16 +209,10 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 			mutate: func(result any) {
 				state := result.(*ObservationState)
-				state.SetIndex(8)
-				state.SetCardinality(9)
-				state.SetCardinalityNext(10)
 				state.Observations()[8] = NewObservation(1, 2, "4", true)
 			},
 			assertRaw: func(cur realm, t *testing.T) {
 				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
-				uassert.Equal(t, uint16(3), state.Index())
-				uassert.Equal(t, uint16(4), state.Cardinality())
-				uassert.Equal(t, uint16(5), state.CardinalityNext())
 				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
 				uassert.Equal(t, int64(77), state.Observations()[7].TickCumulative())
 				uassert.Equal(t, "2000", state.Observations()[7].SecondsPerLiquidityCumulativeX128())
