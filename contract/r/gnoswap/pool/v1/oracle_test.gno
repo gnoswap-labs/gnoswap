@@ -97,7 +97,7 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 				return
 			}
 
-			lastObs, err := lastObservation(os, slot0.ObservationIndex())
+			lastObs, err := observationAt(os, slot0.ObservationIndex())
 			uassert.NoError(t, err, "Last observation should succeed")
 
 			uassert.NoError(t, err, "Unexpected error")

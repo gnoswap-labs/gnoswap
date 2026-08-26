@@ -293,7 +293,7 @@ func (i *poolV1) Swap(
 	}
 
 	slot0 := pool.Slot0()
-	lastObservation, err := lastObservation(pool.ObservationState(), slot0.ObservationIndex())
+	lastObservation, err := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 	if err != nil {
 		panic(err)
 	}

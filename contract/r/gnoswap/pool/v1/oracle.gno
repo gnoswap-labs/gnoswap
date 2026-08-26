@@ -144,7 +144,7 @@ func writeObservation(
 		return 0, 0, errors.New("observation cardinality must be greater than 0")
 	}
 
-	lastObservation, err := lastObservation(os, index)
+	lastObservation, err := observationAt(os, index)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -172,15 +172,6 @@ func writeObservation(
 
 	os.SetObservation(nextIndex, observation)
 	return nextIndex, cardinality, nil
-}
-
-func lastObservation(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
-	observation, ok := os.ObservationAt(index)
-	if !ok || observation == nil {
-		return nil, errors.New(errNotInitializedObservation)
-	}
-
-	return observation, nil
 }
 
 // observationAt returns the observation at a specific index

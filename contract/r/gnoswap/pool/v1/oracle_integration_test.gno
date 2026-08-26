@@ -34,7 +34,7 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				// Instead, we'll test the observation data directly
 				observationState := pool.ObservationState()
 				slot0 := pool.Slot0()
-				obs, err := lastObservation(observationState, slot0.ObservationIndex())
+				obs, err := observationAt(observationState, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
 				firstObs := observationState.Observations()[0]
 
@@ -88,7 +88,7 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
 				observationState := pool.ObservationState()
 				slot0 := pool.Slot0()
-				obs, err := lastObservation(observationState, slot0.ObservationIndex())
+				obs, err := observationAt(observationState, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
 
 				expectedTickCumulative := int64(1500 * 300) // 450000
@@ -445,7 +445,7 @@ func TestObservationState_Transform(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
-	lastObs, _ := lastObservation(os, slot0.ObservationIndex())
+	lastObs, _ := observationAt(os, slot0.ObservationIndex())
 
 	t.Run("Transform with same time", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))

@@ -140,7 +140,7 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 	t.Helper()
 
 	slot0 := pool.Slot0()
-	lastObs, _ := lastObservation(pool.ObservationState(), slot0.ObservationIndex())
+	lastObs, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 	beforeCumulative := lastObs.TickCumulative()
 	beforeTime := lastObs.BlockTimestamp()
 
@@ -149,7 +149,7 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 	writeObservationWithSlot0(observationState, &slot0, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
 	pool.SetSlot0(slot0)
 
-	afterObservation, _ := lastObservation(pool.ObservationState(), slot0.ObservationIndex())
+	afterObservation, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 	afterCumulative := afterObservation.TickCumulative()
 	actualIncrease := afterCumulative - beforeCumulative
 	expectedIncrease := int64(expectedTick) * timeElapsed
@@ -501,11 +501,11 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
 			slot0 = pool.Slot0()
-			lastObs, _ := lastObservation(pool.ObservationState(), slot0.ObservationIndex())
+			lastObs, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 			beforeTickCumulative := lastObs.TickCumulative()
 
 			observationState = pool.ObservationState()
-			lastObs, err := lastObservation(observationState, slot0.ObservationIndex())
+			lastObs, err := observationAt(observationState, slot0.ObservationIndex())
 
 			uassert.NoError(t, err, "Last observation should succeed")
 			currentTime := lastObs.BlockTimestamp() + tt.timeElapsed
@@ -515,7 +515,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			slot0 = pool.Slot0()
 			writeObservationWithSlot0(observationState2, &slot0, currentTime, tt.initialTick, pool.Liquidity())
 			pool.SetSlot0(slot0)
-			lastObs, _ = lastObservation(observationState2, slot0.ObservationIndex())
+			lastObs, _ = observationAt(observationState2, slot0.ObservationIndex())
 			tickCumulative := lastObs.TickCumulative()
 			lastUpdateTime := lastObs.BlockTimestamp()
 
