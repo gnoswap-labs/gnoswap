@@ -196,8 +196,7 @@ func (i *poolV1) Swap(
 
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
-	cache.slot0Start = slot0Start.Clone()
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp, slot0Start)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
 
 	comp := SwapComputation{
@@ -359,8 +358,7 @@ func (i *poolV1) DrySwap(
 
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), blockTimestamp)
-	cache.slot0Start = slot0Start.Clone()
+	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), blockTimestamp, slot0Start)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{

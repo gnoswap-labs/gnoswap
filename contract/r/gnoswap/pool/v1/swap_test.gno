@@ -318,7 +318,7 @@ func TestSwapComputation_CoreEngine(cur realm, t *testing.T) {
 					protocolFee:              u256.Zero(),
 					liquidity:                mockPool.Liquidity(),
 				},
-				Cache: newSwapCache(0, mockPool.Liquidity(), time.Now().Unix()),
+				Cache: newSwapCache(0, mockPool.Liquidity(), time.Now().Unix(), mockPool.Slot0()),
 			}
 
 			// When: Execute swap computation
@@ -356,7 +356,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                new(u256.Uint).Sub(maxUint128, u256.One()),
 		}
-		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix())
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix(), pool.Slot0())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -382,7 +382,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                maxUint128.Clone(),
 		}
-		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix())
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix(), pool.Slot0())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -413,7 +413,7 @@ func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) 
 
 	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
 	state.setTick(10) // simulate an earlier uninitialized crossing in this swap
-	cache := newSwapCache(0, u256.NewUint(100), 200)
+	cache := newSwapCache(0, u256.NewUint(100), 200, slot0)
 	step := StepComputations{initialized: true, tickNext: 20}
 
 	_, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
@@ -431,7 +431,7 @@ func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
 	pool.SetTick(20, tickInfo)
 
 	slot0 := pool.Slot0()
-	cache := newSwapCache(0, u256.NewUint(100), time.Now().Unix())
+	cache := newSwapCache(0, u256.NewUint(100), time.Now().Unix(), slot0)
 	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
 	step := StepComputations{initialized: true, tickNext: 20}
 
@@ -1556,7 +1556,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0)
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0, slot0Start)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
