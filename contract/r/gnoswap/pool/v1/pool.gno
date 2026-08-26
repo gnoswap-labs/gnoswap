@@ -428,12 +428,24 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		panic("observation state not initialized")
+	}
+	if cardinalityNext > maxObservationCardinality {
+		panic("observation cardinality next exceeds maximum")
+	}
+	observationCardinalityNextNew, err := grow(
+		observationState,
+		slot0Before.ObservationCardinalityNext(),
+		cardinalityNext,
+	)
 	if err != nil {
 		panic(err)
 	}
 	slot0After := pool.Slot0()
-	observationCardinalityNextNew := slot0After.ObservationCardinalityNext()
+	slot0After.SetObservationCardinalityNext(observationCardinalityNextNew)
+	pool.SetSlot0(slot0After)
 
 	if observationCardinalityNextOld != observationCardinalityNextNew {
 		previousRealm := rlm.Previous()

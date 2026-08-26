@@ -86,7 +86,7 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 			var err error
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err = writeObservation(os, &slot0, write.time, write.tick, liquidity)
+				err = writeObservationWithSlot0(os, &slot0, write.time, write.tick, liquidity)
 				if tt.expectError && err != nil {
 					return // Expected error occurred
 				}
@@ -154,7 +154,7 @@ func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
 			liquidity := u256.MustFromDecimal("1000000")
 			for i := 0; i < tt.numWrites; i++ {
 				writeTime := currentTime + int64((i+1)*60)
-				err := writeObservation(os, &slot0, writeTime, int32(100*(i+1)), liquidity)
+				err := writeObservationWithSlot0(os, &slot0, writeTime, int32(100*(i+1)), liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
@@ -230,7 +230,7 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 				slot0.SetObservationIndex(0)
 				slot0.SetObservationCardinality(tt.initialCardinality)
 				slot0.SetObservationCardinalityNext(tt.initialCardinalityNext)
-				writeObservation(observationState, &slot0, currentTime, pool.Slot0Tick(), pool.Liquidity())
+				writeObservationWithSlot0(observationState, &slot0, currentTime, pool.Slot0Tick(), pool.Liquidity())
 				pool.SetSlot0(slot0)
 				pool.SetObservationState(observationState)
 			} else {
@@ -238,10 +238,10 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 			}
 
 			if tt.expectError {
-				err := increaseObservationCardinalityNextByPool(pool, tt.newCardinalityNext)
+				err := increaseObservationCardinalityNextForTest(pool, tt.newCardinalityNext)
 				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
-				increaseObservationCardinalityNextByPool(pool, tt.newCardinalityNext)
+				increaseObservationCardinalityNextForTest(pool, tt.newCardinalityNext)
 				slot0 := pool.Slot0()
 				uassert.Equal(t, tt.expectedCardinalityNext, slot0.ObservationCardinalityNext(), "Cardinality limit mismatch")
 			}

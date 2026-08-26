@@ -251,10 +251,26 @@ func (i *poolV1) Swap(
 
 	// Update oracle BEFORE applying swap result (using pre-swap state)
 	if result.NewTick != pool.Slot0Tick() {
-		err := writeObservationByPool(pool, cache.blockTimestamp, pool.Slot0Tick(), pool.Liquidity())
+		observationState := pool.ObservationState()
+		if observationState == nil {
+			panic("observation state not initialized")
+		}
+		observationIndex, observationCardinality, err := writeObservation(
+			observationState,
+			 pool.Slot0().ObservationIndex(),
+			cache.blockTimestamp,
+			 pool.Slot0Tick(),
+			cache.liquidityStart,
+			 pool.Slot0().ObservationCardinality(),
+			 pool.Slot0().ObservationCardinalityNext(),
+		)
 		if err != nil {
 			panic(err)
 		}
+		slot0 := pool.Slot0()
+		slot0.SetObservationIndex(observationIndex)
+		slot0.SetObservationCardinality(observationCardinality)
+		pool.SetSlot0(slot0)
 	}
 
 	applySwapResult(pool, result)
@@ -788,10 +804,10 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 				observationState,
 				cache.blockTimestamp,
 				0,
-				slot0.Tick(),
-				slot0.ObservationIndex(),
+				cache.slot0Start.Tick(),
+				cache.slot0Start.ObservationIndex(),
 				cache.liquidityStart,
-				slot0.ObservationCardinality(),
+				cache.slot0Start.ObservationCardinality(),
 			)
 			if err != nil {
 				return newState, err

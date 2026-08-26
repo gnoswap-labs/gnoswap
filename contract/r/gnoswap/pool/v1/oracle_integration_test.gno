@@ -121,7 +121,7 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 
 				// writeObservation will initialize observation state if needed
 				observationState := pool.ObservationState()
-				err := writeObservation(observationState, &slot0, scenario.time, scenario.tick, pool.Liquidity())
+				err := writeObservationWithSlot0(observationState, &slot0, scenario.time, scenario.tick, pool.Liquidity())
 				uassert.NoError(t, err, ufmt.Sprintf("Observation at %s should succeed", scenario.description))
 			}
 			pool.SetSlot0(slot0)
@@ -239,7 +239,7 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 
 		// Write observations at different times
 		for i := int64(1); i <= 4; i++ {
-			err := writeObservation(os, &slot0, currentTime+i*100, 100, liquidity)
+			err := writeObservationWithSlot0(os, &slot0, currentTime+i*100, 100, liquidity)
 			uassert.NoError(t, err, "Should write observation")
 		}
 
@@ -317,7 +317,7 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 
 	// Fill all slots to wrap around
 	for i := int64(1); i <= 7; i++ { // More than cardinality to force wrapping
-		err := writeObservation(os, &slot0, currentTime+i*100, 100, liquidity)
+		err := writeObservationWithSlot0(os, &slot0, currentTime+i*100, 100, liquidity)
 		uassert.NoError(t, err, "Should write observation")
 	}
 
