@@ -65,6 +65,7 @@ type SwapCache struct {
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
+	slot0Start                        pl.Slot0
 
 }
 

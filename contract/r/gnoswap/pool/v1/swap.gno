@@ -218,6 +218,7 @@ func (i *poolV1) Swap(
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
+	cache.slot0Start = slot0Start.Clone()
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
 
 	comp := SwapComputation{
@@ -250,19 +251,19 @@ func (i *poolV1) Swap(
 	}
 
 	// Update oracle BEFORE applying swap result (using pre-swap state)
-	if result.NewTick != pool.Slot0Tick() {
+	if result.NewTick != slot0Start.Tick() {
 		observationState := pool.ObservationState()
 		if observationState == nil {
 			panic("observation state not initialized")
 		}
 		observationIndex, observationCardinality, err := writeObservation(
 			observationState,
-			 pool.Slot0().ObservationIndex(),
+			slot0Start.ObservationIndex(),
 			cache.blockTimestamp,
-			 pool.Slot0Tick(),
+			slot0Start.Tick(),
 			cache.liquidityStart,
-			 pool.Slot0().ObservationCardinality(),
-			 pool.Slot0().ObservationCardinalityNext(),
+			slot0Start.ObservationCardinality(),
+			slot0Start.ObservationCardinalityNext(),
 		)
 		if err != nil {
 			panic(err)
@@ -375,6 +376,7 @@ func (i *poolV1) DrySwap(
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), blockTimestamp)
+	cache.slot0Start = slot0Start.Clone()
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
@@ -799,7 +801,6 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 				return newState, errors.New("observation state not initialized")
 			}
 
-			slot0 := pool.Slot0()
 			tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 				observationState,
 				cache.blockTimestamp,
