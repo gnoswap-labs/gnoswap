@@ -509,11 +509,8 @@ func createTargetPool(cur realm) {
 	println("[EXPECTED] slot0 fee protocol:", feeProtocol)
 
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 10)
-	observation, err := pool.GetObservationState(barFoo500PoolPath)
-	if err != nil {
-		panic(err)
-	}
-	println("[EXPECTED] observation cardinality next:", observation.CardinalityNext())
+	slot0 := pool.GetSlot0(barFoo500PoolPath)
+	println("[EXPECTED] observation cardinality next:", slot0.ObservationCardinalityNext())
 
 	uassert.Equal(t, int64(100_000_000), afterGnsAccu-beforeGnsAccu)
 	uassert.Equal(t, uint8(68), feeProtocol) // 4 + 4<<4

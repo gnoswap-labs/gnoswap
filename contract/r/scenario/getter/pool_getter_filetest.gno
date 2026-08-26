@@ -846,10 +846,13 @@ func getObservationState(cur realm) {
 	observationState, err := pl.GetObservationState(poolPath)
 	if err != nil {
 		println("[EXPECTED] GetObservationState error:", err.Error())
-	} else {
-		ufmt.Printf("[EXPECTED] observationState index: %d\n", observationState.Index())
-		ufmt.Printf("[EXPECTED] observationState cardinality: %d\n", observationState.Cardinality())
+		return
 	}
+
+	slot0 := pl.GetPools().Get(poolPath).(*pl.Pool).Slot0()
+	ufmt.Printf("[EXPECTED] observationState observations: %d\n", len(observationState.Observations()))
+	ufmt.Printf("[EXPECTED] slot0 observationIndex: %d\n", slot0.ObservationIndex())
+	ufmt.Printf("[EXPECTED] slot0 observationCardinality: %d\n", slot0.ObservationCardinality())
 }
 
 // Output:
@@ -1115,5 +1118,6 @@ func getObservationState(cur realm) {
 //
 // [SCENARIO] 2.55. GetObservationState
 // [INFO] Check GetObservationState method
-// [EXPECTED] observationState index: 0
-// [EXPECTED] observationState cardinality: 1
+// [EXPECTED] observationState observations: 1
+// [EXPECTED] slot0 observationIndex: 0
+// [EXPECTED] slot0 observationCardinality: 1
