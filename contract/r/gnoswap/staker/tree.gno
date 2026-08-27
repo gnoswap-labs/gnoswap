@@ -7,6 +7,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/codec"
 	"gno.land/p/gnoswap/gnsmath"
 )
 
@@ -126,16 +127,7 @@ func (self *UintTree) Clone() *UintTree {
 // Big-endian encoding preserves numeric ordering under the B+ tree's
 // lexicographic key ordering.
 func EncodeUint(num uint64) string {
-	var buf [8]byte
-	buf[0] = byte(num >> 56)
-	buf[1] = byte(num >> 48)
-	buf[2] = byte(num >> 40)
-	buf[3] = byte(num >> 32)
-	buf[4] = byte(num >> 24)
-	buf[5] = byte(num >> 16)
-	buf[6] = byte(num >> 8)
-	buf[7] = byte(num)
-	return string(buf[:])
+	return codec.EncodeUint64(num)
 }
 
 func EncodeInt64(num int64) string {
@@ -156,17 +148,7 @@ func EncodeInt64(num int64) string {
 // Panics:
 // - If s is not exactly 8 bytes long.
 func DecodeUint(s string) uint64 {
-	if len(s) != 8 {
-		panic(ufmt.Sprintf("invalid uint64 key length: %d", len(s)))
-	}
-	return uint64(s[0])<<56 |
-		uint64(s[1])<<48 |
-		uint64(s[2])<<40 |
-		uint64(s[3])<<32 |
-		uint64(s[4])<<24 |
-		uint64(s[5])<<16 |
-		uint64(s[6])<<8 |
-		uint64(s[7])
+	return codec.DecodeUint64(s)
 }
 
 func DecodeInt64(s string) int64 {
