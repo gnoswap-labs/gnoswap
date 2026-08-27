@@ -43,7 +43,6 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -67,7 +66,6 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -91,7 +89,6 @@ func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath 
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
