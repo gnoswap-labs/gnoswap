@@ -1,13 +1,13 @@
 package staker
 
 import (
-	"math"
 	"strconv"
 	"strings"
 
 	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/gnsmath"
 )
 
 // UintTree is a wrapper around a B+ tree for storing block timestamps as strings.
@@ -170,11 +170,7 @@ func DecodeUint(s string) uint64 {
 }
 
 func DecodeInt64(s string) int64 {
-	num := DecodeUint(s)
-	if num > uint64(math.MaxInt64) {
-		panic(ufmt.Sprintf("uint64 key overflows int64: %d", num))
-	}
-	return int64(num)
+	return gnsmath.SafeUint64ToInt64(DecodeUint(s))
 }
 
 // EncodeInt takes an int32 and returns a zero-padded decimal string
