@@ -116,43 +116,15 @@ func (self *UintTree) Clone() *UintTree {
 	return cloned
 }
 
-// EncodeUint converts a uint64 number into a fixed-width 8-byte big-endian string.
-//
-// Parameters:
-// - num (uint64): The number to encode.
-//
-// Returns:
-// - string: An 8-byte binary string representation of the number.
-//
-// Big-endian encoding preserves numeric ordering under the B+ tree's
-// lexicographic key ordering.
-func EncodeUint(num uint64) string {
-	return utils.EncodeUint64(num)
-}
-
 func EncodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
 	}
-	return EncodeUint(uint64(num))
-}
-
-// DecodeUint converts an 8-byte big-endian string back into a uint64 number.
-//
-// Parameters:
-// - s (string): The 8-byte binary string to decode.
-//
-// Returns:
-// - uint64: The decoded number.
-//
-// Panics:
-// - If s is not exactly 8 bytes long.
-func DecodeUint(s string) uint64 {
-	return utils.DecodeUint64(s)
+	return utils.EncodeUint64(uint64(num))
 }
 
 func DecodeInt64(s string) int64 {
-	return gnsmath.SafeUint64ToInt64(DecodeUint(s))
+	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
 }
 
 // EncodeInt takes an int32 and returns a zero-padded decimal string
