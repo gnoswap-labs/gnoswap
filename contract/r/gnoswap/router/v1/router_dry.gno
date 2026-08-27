@@ -21,10 +21,9 @@ const (
 
 // ErrorMessages for DrySwapRoute operations
 const (
-	ErrUnknownSwapType        = "unknown swapType(%s)"
-	ErrInvalidPositiveAmount  = "invalid amount(%s), must be positive"
-	ErrInvalidZeroAmountLimit = "invalid amountLimit(%s), should not be zero"
-	ErrInvalidQuoteRange      = "quote(%d) must be %d~%d"
+	ErrUnknownSwapType       = "unknown swapType(%s)"
+	ErrInvalidPositiveAmount = "invalid amount(%s), must be positive"
+	ErrInvalidQuoteRange     = "quote(%d) must be %d~%d"
 )
 
 // SwapProcessor handles the execution of swap operations
@@ -245,11 +244,6 @@ func (r *routerV1) drySwapRoute(
 		return 0, 0, makeErrorWithDetails(errInvalidInput, err.Error())
 	}
 
-	amountLimit, err := validator.amountLimit(tokenAmountLimit)
-	if err != nil {
-		return 0, 0, makeErrorWithDetails(errInvalidInput, err.Error())
-	}
-
 	routes, quotes, err := NewRouteParser().ParseRoutes(strRouteArr, quoteArr)
 	if err != nil {
 		return 0, 0, makeErrorWithDetails(errInvalidRoutesAndQuotes, err.Error())
@@ -329,7 +323,7 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = gnsmath.SafeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, tokenAmountLimit, swapCount)
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.

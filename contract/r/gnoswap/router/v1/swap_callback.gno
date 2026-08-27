@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -45,6 +46,13 @@ func (r *routerV1) SwapCallback(
 		return errors.New(errSpoofedRealm)
 	}
 
+	if amount0Delta <= 0 && amount1Delta <= 0 {
+		return makeErrorWithDetails(
+			errInsufficientLiquidity,
+			"swap entirely within 0-liquidity region",
+		)
+	}
+
 	halt.AssertIsNotHaltedRouter()
 
 	caller := rlm.Previous().Address()
@@ -58,11 +66,9 @@ func (r *routerV1) SwapCallback(
 	if amount0Delta > 0 {
 		amountToPay = amount0Delta
 		tokenToPay = token0Path
-	} else if amount1Delta > 0 {
+	} else {
 		amountToPay = amount1Delta
 		tokenToPay = token1Path
-	} else {
-		return nil
 	}
 
 	// Transfer tokens from router to pool

@@ -180,11 +180,6 @@ func (i *poolV1) Swap(
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	// no liquidity -> no swap, return zero amounts
-	if pool.Liquidity().IsZero() {
-		return "0", "0"
-	}
-
 	blockTimestamp := time.Now().Unix()
 
 	// Call swap start hook if set
@@ -341,11 +336,6 @@ func (i *poolV1) DrySwap(
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	poolSnapshot := newDrySwapSnapshot(pool)
-
-	// no liquidity -> simulation fails
-	if poolSnapshot.Liquidity().IsZero() {
-		return "0", "0", errors.New(errZeroLiquidity)
-	}
 
 	slot0Start := poolSnapshot.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)

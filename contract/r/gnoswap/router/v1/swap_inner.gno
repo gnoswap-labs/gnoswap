@@ -104,13 +104,19 @@ func (r *routerV1) swapDryInner(
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (int64, int64) {
+	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
+
+	if !zeroForOne {
+		token0Path, token1Path = token1Path, token0Path
+	}
+
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// check possible
 	amount0Str, amount1Str, err := pl.DrySwap(
-		data.tokenIn,
-		data.tokenOut,
+		token0Path,
+		token1Path,
 		data.fee,
 		zeroForOne,
 		utils.FormatInt(amountSpecified),
@@ -122,6 +128,12 @@ func (r *routerV1) swapDryInner(
 
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
+	if amount0.Sign() <= 0 && amount1.Sign() <= 0 {
+		panic(makeErrorWithDetails(
+			errInsufficientLiquidity,
+			"swap entirely within 0-liquidity region",
+		))
+	}
 
 	poolOut, poolRecv := i256MinMax(amount0, amount1)
 	if poolRecv.IsOverflow() || poolOut.IsOverflow() {

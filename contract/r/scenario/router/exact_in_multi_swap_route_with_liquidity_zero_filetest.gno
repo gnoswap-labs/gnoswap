@@ -7,6 +7,7 @@ package main
 import (
 	"gno.land/p/gnoswap/gnsmath"
 	"chain"
+	"strings"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
@@ -44,6 +45,8 @@ var (
 	barPath    = "gno.land/r/onbloc/bar.BAR"
 
 	maxInt64 int64 = 9223372036854775807
+
+	insufficientLiquidityError = "[GNOSWAP-ROUTER-020] insufficient liquidity for swap"
 )
 
 func main(cur realm) {
@@ -71,7 +74,7 @@ func main(cur realm) {
 		"10000000",
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:500",
 		"100",
-		"1",
+		"0",
 	)
 	println()
 }
@@ -143,7 +146,7 @@ func exactInSwapRouteByWithPanic(cur realm,
 ) {
 	testing.SetRealm(adminRealm)
 
-	ufmt.Println("[INFO] ExactInSwapRoute")
+	ufmt.Println("[INFO] DrySwapRoute")
 	ufmt.Println("[INFO] inputToken:", inputToken)
 	ufmt.Println("[INFO] outputToken:", outputToken)
 	ufmt.Println("[INFO] specifiedAmount:", specifiedAmount)
@@ -151,9 +154,25 @@ func exactInSwapRouteByWithPanic(cur realm,
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	testing.SetRealm(adminRealm)
+	dryAmountIn, dryAmountOut, dryErr := func(cur realm) (string, string, error) {
+		return router.DrySwapRoute(
+			inputToken,
+			outputToken,
+			specifiedAmount,
+			"EXACT_IN",
+			routeQueryString,
+			queryRatios,
+			minAmountOut,
+		)
+	}(cross(cur))
+	if dryAmountIn != "0" || dryAmountOut != "0" || dryErr == nil || !strings.Contains(dryErr.Error(), insufficientLiquidityError) {
+		panic("DrySwapRoute must return insufficient liquidity for a zero-liquidity hop")
+	}
+	println("[EXPECTED] dry swap returned insufficient liquidity")
 
-	uassert.AbortsContains(t, cur, "[GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:1, got:0)", func() {
+	ufmt.Println("[INFO] ExactInSwapRoute")
+
+	uassert.AbortsContains(t, cur, insufficientLiquidityError, func() {
 		router.ExactInSwapRoute(
 			cross(cur),
 			inputToken,
@@ -187,11 +206,13 @@ func exactInSwapRouteByWithPanic(cur realm,
 // [EXPECTED] created gno.land/r/onbloc/bar.BAR:gno.land/r/gnoswap/gns.GNS:500 pool at tick 0
 //
 // [SCENARIO] 4. ExactInSwapRoute
-// [INFO] ExactInSwapRoute
+// [INFO] DrySwapRoute
 // [INFO] inputToken: gno.land/r/gnoland/wugnot.wugnot
 // [INFO] outputToken: gno.land/r/onbloc/bar.BAR
 // [INFO] specifiedAmount: 10000000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500*POOL*gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:500
 // [INFO] queryRatios: 100
-// [INFO] minAmountOut: 1
+// [INFO] minAmountOut: 0
+// [EXPECTED] dry swap returned insufficient liquidity
+// [INFO] ExactInSwapRoute
 // [EXPECTED] swap aborted: zero liquidity pool causes slippage failure
