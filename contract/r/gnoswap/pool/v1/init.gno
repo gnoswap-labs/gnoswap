@@ -54,6 +54,13 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 		}
 	}
 
+	if !poolStore.HasObservations() {
+		err := poolStore.SetObservations(0, rlm, pool.NewObservationsTree())
+		if err != nil {
+			return err
+		}
+	}
+
 	if !poolStore.HasFeeAmountTickSpacing() {
 		err := poolStore.SetFeeAmountTickSpacing(0, rlm, pool.NewDefaultFeeAmountTickSpacing())
 		if err != nil {

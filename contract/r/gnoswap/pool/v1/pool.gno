@@ -79,7 +79,8 @@ func (i *poolV1) Mint(
 
 	liquidityDelta := gnsmath.SafeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
-	_, amount0, amount1, err := modifyPosition(pool, positionParam)
+	observations := i.mustGetObservations(pool.PoolPath())
+	_, amount0, amount1, err := modifyPosition(pool, observations, positionParam)
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +152,8 @@ func (i *poolV1) Burn(
 
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	position, amount0, amount1, err := modifyPosition(pool, posParams)
+	observations := i.mustGetObservations(pool.PoolPath())
+	position, amount0, amount1, err := modifyPosition(pool, observations, posParams)
 	if err != nil {
 		panic(err)
 	}
@@ -526,15 +528,12 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	observationState := pool.ObservationState()
-	if observationState == nil {
-		panic("observation state not initialized")
-	}
+	observations := i.mustGetObservations(pool.PoolPath())
 	if cardinalityNext > maxObservationCardinality {
 		panic("observation cardinality next exceeds maximum")
 	}
 	observationCardinalityNextNew, err := grow(
-		observationState,
+		observations,
 		slot0Before.ObservationCardinalityNext(),
 		cardinalityNext,
 	)

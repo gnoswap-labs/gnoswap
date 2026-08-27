@@ -175,6 +175,7 @@ func (i *poolV1) Swap(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	observations := i.mustGetObservations(pool.PoolPath())
 
 	slot0Start := pool.Slot0()
 	i.lockPool(0, rlm)
@@ -223,19 +224,15 @@ func (i *poolV1) Swap(
 		}
 	}
 
-	result, err := i.computeSwap(pool, comp, onTickCross)
+	result, err := i.computeSwap(pool, observations, comp, onTickCross)
 	if err != nil {
 		panic(err)
 	}
 
 	// Update oracle BEFORE applying swap result (using pre-swap state)
 	if result.NewTick != slot0Start.Tick() {
-		observationState := pool.ObservationState()
-		if observationState == nil {
-			panic("observation state not initialized")
-		}
 		observationIndex, observationCardinality, err := writeObservation(
-			observationState,
+			observations,
 			slot0Start.ObservationIndex(),
 			cache.blockTimestamp,
 			slot0Start.Tick(),
@@ -282,7 +279,7 @@ func (i *poolV1) Swap(
 	}
 
 	slot0 := pool.Slot0()
-	lastObservation, err := observationAt(pool.ObservationState(), slot0.ObservationIndex())
+	lastObservation, err := observationAt(observations, slot0.ObservationIndex())
 	if err != nil {
 		panic(err)
 	}
@@ -350,7 +347,7 @@ func (i *poolV1) DrySwap(
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	blockTimestamp := time.Now().Unix()
-	poolSnapshot := newDrySwapSnapshot(pool, blockTimestamp)
+	poolSnapshot, observationsSnapshot := newDrySwapSnapshot(pool, blockTimestamp)
 
 	slot0Start := poolSnapshot.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
@@ -370,7 +367,7 @@ func (i *poolV1) DrySwap(
 		Cache:             cache,
 	}
 
-	result, err := i.computeSwap(poolSnapshot, comp, nil)
+	result, err := i.computeSwap(poolSnapshot, observationsSnapshot, comp, nil)
 	if err != nil {
 		return "0", "0", err
 	}
@@ -412,18 +409,17 @@ type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestam
 // assemble the two the loop reads: the tick tree (crossed and rewritten) and
 // the tick bitmaps (scanned for the next initialized tick). The oracle state is
 // a fresh one, because the simulation must not extend the stored observations.
-func newDrySwapSnapshot(pool *pl.Pool, blockTimestamp int64) *pl.Pool {
+func newDrySwapSnapshot(pool *pl.Pool, blockTimestamp int64) (*pl.Pool, *pl.ObservationTree) {
 	snapshot := pool.Clone()
 	snapshot.SetTicks(copyPoolTicks(pool.Ticks()))
 	snapshot.SetTickBitmaps(copyPoolTickBitmaps(pool.TickBitmaps()))
-	snapshot.SetObservationState(pl.NewObservationState(blockTimestamp))
 	slot0 := snapshot.Slot0()
 	slot0.SetObservationIndex(0)
 	slot0.SetObservationCardinality(1)
 	slot0.SetObservationCardinalityNext(1)
 	snapshot.SetSlot0(slot0)
 
-	return snapshot
+	return snapshot, pl.NewPoolObservationsTree(blockTimestamp)
 }
 
 // copyPoolTicks copies a tick tree slot by slot. TickInfo is a value type, so
@@ -451,13 +447,13 @@ func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
 	return copied
 }
 
-func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
+func (i *poolV1) computeSwap(pool *pl.Pool, observations *pl.ObservationTree, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
 
 	// Compute swap steps until completion
 	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-		state, err = i.computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, onTickCross)
+		state, err = i.computeSwapStep(state, pool, observations, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, onTickCross)
 		if err != nil {
 			return nil, err
 		}
@@ -581,6 +577,7 @@ func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
 func (i *poolV1) computeSwapStep(
 	state SwapState,
 	pool *pl.Pool,
+	observations *pl.ObservationTree,
 	zeroForOne bool,
 	sqrtPriceLimitX96 *u256.Uint,
 	exactInput bool,
@@ -622,7 +619,7 @@ func (i *poolV1) computeSwapStep(
 
 	// handling tick transitions
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-		newState, err = i.tickTransition(step, zeroForOne, newState, pool, cache, onTickCross)
+		newState, err = i.tickTransition(step, zeroForOne, newState, pool, observations, cache, onTickCross)
 		if err != nil {
 			return state, err
 		}
@@ -771,20 +768,15 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 }
 
 // tickTransition handles the transition between price ticks during a swap
-func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, cache *SwapCache, onTickCross tickCrossHookFn) (SwapState, error) {
+func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, observations *pl.ObservationTree, cache *SwapCache, onTickCross tickCrossHookFn) (SwapState, error) {
 	// ensure existing state to keep immutability
 	newState := state
 
 	if step.initialized {
 		// Compute oracle values on first initialized tick cross
 		if !cache.computedLatestObservation {
-			observationState := pool.ObservationState()
-			if observationState == nil {
-				return newState, errors.New("observation state not initialized")
-			}
-
 			tickCumulative, secondsPerLiquidityStr, err := observeSingle(
-				observationState,
+				observations,
 				cache.blockTimestamp,
 				0,
 				cache.slot0Start.Tick(),

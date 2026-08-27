@@ -1,42 +1,6 @@
 package pool
 
-// ObservationState manages only the oracle's circular observation buffer.
-// The active index and buffer capacities are part of Pool.Slot0 so there is
-// one authoritative copy of the oracle cursor state.
-type ObservationState struct {
-	observations map[uint16]*Observation // circular buffer of observations
-}
-
-// ObservationState Getters methods
-func (os *ObservationState) Observations() map[uint16]*Observation { return os.observations }
-
-// ObservationState Setters methods
-func (os *ObservationState) SetObservation(index uint16, observation *Observation) {
-	os.observations[index] = observation
-}
-
-func (os *ObservationState) SetObservations(observations map[uint16]*Observation) {
-	os.observations = observations
-}
-
-// ObservationAt returns the observation stored at index, mirroring Uniswap
-// V3's observations(uint256 index) mapping getter.
-func (os *ObservationState) ObservationAt(index uint16) (*Observation, bool) {
-	observation, ok := os.observations[index]
-	return observation, ok
-}
-
-func (os *ObservationState) Clone() *ObservationState {
-	observations := make(map[uint16]*Observation)
-
-	for index, observation := range os.observations {
-		observations[index] = observation.Clone()
-	}
-
-	return &ObservationState{
-		observations: observations,
-	}
-}
+import bptree "gno.land/p/nt/bptree/v0"
 
 type Observation struct {
 	blockTimestamp                    int64  // timestamp of the observation
@@ -79,21 +43,6 @@ func (o *Observation) Clone() *Observation {
 	}
 }
 
-func NewObservationState(currentTime int64) *ObservationState {
-	state := &ObservationState{
-		observations: make(map[uint16]*Observation),
-	}
-
-	state.observations[0] = NewObservation(
-		currentTime,
-		0,
-		"0",
-		true,
-	)
-
-	return state
-}
-
 func NewObservation(
 	blockTimestamp int64,
 	tickCumulative int64,
@@ -115,4 +64,48 @@ func NewDefaultObservation() *Observation {
 		"0",
 		false,
 	)
+}
+
+// ObservationTree is a pool-local, sparse oracle ring buffer keyed by index.
+// It owns the B+tree key encoding so oracle code works with uint16 indices.
+type ObservationTree struct {
+	tree *bptree.BPTree
+}
+
+func NewObservationTree() *ObservationTree {
+	return &ObservationTree{tree: bptree.NewBPTreeN(32)}
+}
+
+func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
+	value := t.tree.Get(EncodeObservationKey(index))
+	if value == nil {
+		return nil, false
+	}
+	observation, ok := value.(*Observation)
+	return observation, ok
+}
+
+func (t *ObservationTree) Set(index uint16, observation *Observation) {
+	t.tree.Set(EncodeObservationKey(index), observation)
+}
+
+func (t *ObservationTree) Has(index uint16) bool {
+	return t.tree.Has(EncodeObservationKey(index))
+}
+
+// NewObservationsTree creates the pool-path index for oracle observation trees.
+func NewObservationsTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(32)
+}
+
+// NewPoolObservationsTree creates a pool's circular observation buffer.
+func NewPoolObservationsTree(currentTime int64) *ObservationTree {
+	observations := NewObservationTree()
+	observations.Set(0, NewObservation(
+		currentTime,
+		0,
+		"0",
+		true,
+	))
+	return observations
 }

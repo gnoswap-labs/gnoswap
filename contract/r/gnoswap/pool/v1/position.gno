@@ -158,7 +158,7 @@ func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 //   - PositionInfo: updated position information
 //   - *u256.Uint: amount of token0 needed/returned
 //   - *u256.Uint: amount of token1 needed/returned
-func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
+func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -166,7 +166,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 	// get current state and price bounds
 	tick := p.Slot0Tick()
 	// update position state
-	position, err := updatePosition(p, params, tick)
+	position, err := updatePosition(p, observations, params, tick)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -198,13 +198,12 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		liquidityBefore := p.Liquidity()
 		currentTime := time.Now().Unix()
 		// Update oracle BEFORE liquidity changes
-		observationState := p.ObservationState()
-		if observationState == nil {
-			return pl.NewDefaultPositionInfo(), zero, zero, errors.New("observation state not initialized")
+		if observations == nil {
+			return pl.NewDefaultPositionInfo(), zero, zero, errors.New("observations not initialized")
 		}
 		slot0 := p.Slot0()
 		observationIndex, observationCardinality, err := writeObservation(
-			observationState,
+			observations,
 			slot0.ObservationIndex(),
 			currentTime,
 			tick,
@@ -275,7 +274,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 //	println("Updated Position Info:", updatedPosition)
 //
 // ```
-func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
+func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
 	liquidityDelta := positionParams.liquidityDelta
@@ -283,10 +282,12 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 	var flippedLower, flippedUpper bool
 	if !liquidityDelta.IsZero() {
 		blockTimestamp := time.Now().Unix()
-		observationState := p.ObservationState()
+		if observations == nil {
+			return pl.NewDefaultPositionInfo(), errors.New("observations not initialized")
+		}
 		slot0 := p.Slot0()
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
-			observationState,
+			observations,
 			blockTimestamp,
 			0,
 			slot0.Tick(),

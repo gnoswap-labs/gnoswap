@@ -18,6 +18,7 @@ func (s StoreKey) String() string {
 const (
 	// Pool data storage keys
 	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
+	StoreKeyObservations         StoreKey = "observations"         // poolPath -> observation B+tree
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
@@ -69,6 +70,31 @@ func (s *poolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPools.String(), pools)
+}
+
+func (s *poolStore) HasObservations() bool {
+	return s.kvStore.Has(StoreKeyObservations.String())
+}
+
+func (s *poolStore) GetObservations() *bptree.BPTree {
+	observations, err := s.kvStore.GetBPTree(StoreKeyObservations.String())
+	if err != nil {
+		panic(err)
+	}
+	if observations == nil {
+		panic("observations is nil")
+	}
+	return observations
+}
+
+func (s *poolStore) SetObservations(_ int, rlm realm, observations *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+	if observations == nil {
+		panic("observations is nil")
+	}
+	return s.kvStore.Set(0, rlm, StoreKeyObservations.String(), observations)
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {

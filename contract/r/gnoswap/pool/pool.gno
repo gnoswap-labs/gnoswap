@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"time"
-
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -26,9 +24,6 @@ type Pool struct {
 	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
-
-	// Oracle observation buffer; its cursor and capacity live in slot0.
-	observationState *ObservationState
 }
 
 // Pool Getters methods
@@ -54,7 +49,6 @@ func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *bptree.BPTree               { return p.ticks }
 func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
 func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
-func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
 // GetPosition returns the position information for key.
 func (p *Pool) GetPosition(key string) (PositionInfo, error) {
@@ -153,10 +147,6 @@ func (p *Pool) SetPosition(posKey string, positionInfo PositionInfo) {
 	p.positions.Set(posKey, positionInfo)
 }
 
-func (p *Pool) SetObservationState(observationState *ObservationState) {
-	p.observationState = observationState
-}
-
 func (p *Pool) HasTick(tick int32) bool {
 	tickKey := EncodeTickKey(tick)
 	return p.ticks.Has(tickKey)
@@ -233,7 +223,6 @@ func (p *Pool) Clone() *Pool {
 		ticks:                nil,
 		tickBitmaps:          nil,
 		positions:            nil,
-		observationState:     nil,
 	}
 }
 
@@ -262,7 +251,6 @@ func NewPool(
 		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTreeN(16),
-		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }
 

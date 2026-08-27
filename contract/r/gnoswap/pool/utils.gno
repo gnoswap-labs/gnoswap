@@ -37,6 +37,14 @@ func EncodePositionKey(tickLower, tickUpper int32) string {
 	return string(buf[:])
 }
 
+// EncodeObservationKey encodes an observation index into a fixed-width key.
+func EncodeObservationKey(index uint16) string {
+	var buf [2]byte
+	buf[0] = byte(index >> 8)
+	buf[1] = byte(index)
+	return string(buf[:])
+}
+
 func encodeTickKeyToBuffer(dst []byte, tick int32) {
 	adjustTick := tick + ENCODED_TICK_OFFSET
 	if adjustTick < 0 {

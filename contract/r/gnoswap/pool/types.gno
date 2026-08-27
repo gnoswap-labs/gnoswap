@@ -301,6 +301,10 @@ type IPoolStore interface {
 	GetPools() *bptree.BPTree
 	SetPools(_ int, rlm realm, pools *bptree.BPTree) error
 
+	HasObservations() bool
+	GetObservations() *bptree.BPTree
+	SetObservations(_ int, rlm realm, observations *bptree.BPTree) error
+
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
 	SetFeeAmountTickSpacing(_ int, rlm realm, feeAmountTickSpacing map[uint32]int32) error

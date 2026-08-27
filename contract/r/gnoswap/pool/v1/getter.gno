@@ -475,7 +475,12 @@ func (i *poolV1) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256
 		return 0, nil, err
 	}
 
-	tick, liquidity, err := oracleConsult(pool, secondsAgo)
+	observations, err := i.getObservations(poolPath)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	tick, liquidity, err := oracleConsult(pool, observations, secondsAgo)
 	if err != nil {
 		return 0, nil, err
 	}
