@@ -1,6 +1,10 @@
 package staker
 
-import ufmt "gno.land/p/nt/ufmt/v0"
+import (
+	"math"
+
+	ufmt "gno.land/p/nt/ufmt/v0"
+)
 
 // EncodeUint converts a uint64 number into a fixed-width 8-byte big-endian string.
 //
@@ -58,7 +62,7 @@ func DecodeUint(s string) uint64 {
 
 func DecodeInt64(s string) int64 {
 	num := DecodeUint(s)
-	if num > 9223372036854775807 {
+	if num > uint64(math.MaxInt64) {
 		panic(ufmt.Sprintf("uint64 key overflows int64: %d", num))
 	}
 	return int64(num)

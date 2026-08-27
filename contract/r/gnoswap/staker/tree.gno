@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"strconv"
 	"strings"
 
@@ -170,7 +171,7 @@ func DecodeUint(s string) uint64 {
 
 func DecodeInt64(s string) int64 {
 	num := DecodeUint(s)
-	if num > 9223372036854775807 {
+	if num > uint64(math.MaxInt64) {
 		panic(ufmt.Sprintf("uint64 key overflows int64: %d", num))
 	}
 	return int64(num)
