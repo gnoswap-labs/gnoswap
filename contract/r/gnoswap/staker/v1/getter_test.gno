@@ -7,6 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -635,14 +636,14 @@ func TestGetterPoolRewardCache(cur realm, t *testing.T) {
 	// Test pagination through the read-only view
 	keys := collectKeys(rewardCaches, 0, 2)
 	uassert.Equal(t, 2, len(keys))
-	uassert.Equal(t, sr.EncodeInt64(state.fixedTimestamp), keys[0])
+	uassert.Equal(t, utils.EncodeUint64(uint64(state.fixedTimestamp)), keys[0])
 
 	// Test get specific cache value
-	uassert.Equal(t, int64(1000), rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp)).(int64))
-	uassert.Equal(t, int64(3000), rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp+200)).(int64))
+	uassert.Equal(t, int64(1000), rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp))).(int64))
+	uassert.Equal(t, int64(3000), rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+200))).(int64))
 
 	// Test non-existent timestamp
-	uassert.Equal(t, nil, rewardCaches.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
+	uassert.Equal(t, nil, rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
 }
 
 func TestGetterPoolIncentive(cur realm, t *testing.T) {
@@ -705,11 +706,11 @@ func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	uassert.Equal(t, 2, len(keys))
 
 	// Test get specific accumulation value
-	uassert.Equal(t, acc1, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+100)).(string))
-	uassert.Equal(t, acc3, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+300)).(string))
+	uassert.Equal(t, acc1, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+100))).(string))
+	uassert.Equal(t, acc3, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+300))).(string))
 
 	// Test non-existent timestamp
-	uassert.Equal(t, nil, accumulations.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
+	uassert.Equal(t, nil, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
 }
 
 func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
@@ -727,11 +728,11 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	uassert.Equal(t, 2, len(collectKeys(historicalTicks, 0, 2)))
 
 	// Test get specific tick value
-	uassert.Equal(t, int32(-100), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp)).(int32))
-	uassert.Equal(t, int32(200), historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp+200)).(int32))
+	uassert.Equal(t, int32(-100), historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp))).(int32))
+	uassert.Equal(t, int32(200), historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+200))).(int32))
 
 	// Test non-existent timestamp
-	uassert.Equal(t, nil, historicalTicks.Get(sr.EncodeInt64(state.fixedTimestamp+9999)))
+	uassert.Equal(t, nil, historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
 }
 
 // collectKeys paginates a read-only tree and returns the visited keys.

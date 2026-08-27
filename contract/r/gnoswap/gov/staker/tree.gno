@@ -29,7 +29,7 @@ func NewUintTree() *UintTree {
 }
 
 func (self *UintTree) Get(key int64) (any, bool) {
-	v := self.tree.Get(EncodeInt64(key))
+	v := self.tree.Get(encodeInt64(key))
 	if v == nil {
 		return nil, false
 	}
@@ -37,26 +37,26 @@ func (self *UintTree) Get(key int64) (any, bool) {
 }
 
 func (self *UintTree) Set(key int64, value any) {
-	self.tree.Set(EncodeInt64(key), value)
+	self.tree.Set(encodeInt64(key), value)
 }
 
 func (self *UintTree) Has(key int64) bool {
-	return self.tree.Has(EncodeInt64(key))
+	return self.tree.Has(encodeInt64(key))
 }
 
 func (self *UintTree) Remove(key int64) {
-	self.tree.Remove(EncodeInt64(key))
+	self.tree.Remove(encodeInt64(key))
 }
 
 func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.Iterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+	self.tree.Iterate(encodeInt64(start), encodeInt64(end), func(key string, value any) bool {
+		return fn(decodeInt64(key), value)
 	})
 }
 
 func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.ReverseIterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+	self.tree.ReverseIterate(encodeInt64(start), encodeInt64(end), func(key string, value any) bool {
+		return fn(decodeInt64(key), value)
 	})
 }
 
@@ -65,13 +65,13 @@ func (self *UintTree) Size() int {
 	return self.tree.Size()
 }
 
-func EncodeInt64(num int64) string {
+func encodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
 	}
 	return utils.EncodeUint64(uint64(num))
 }
 
-func DecodeInt64(s string) int64 {
+func decodeInt64(s string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
 }
