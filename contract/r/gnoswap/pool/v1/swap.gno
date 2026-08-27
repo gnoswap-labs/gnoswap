@@ -771,7 +771,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 					observationState,
 					cache.blockTimestamp,
 					0,
-					state.tick,
+					pool.Slot0Tick(),
 					observationState.Index(),
 					cache.liquidityStart,
 					observationState.Cardinality(),
