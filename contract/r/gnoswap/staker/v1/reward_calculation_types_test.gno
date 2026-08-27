@@ -7,43 +7,42 @@ import (
 )
 
 func TestEncodeUint(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    uint64
-		expected string
-	}{
-		{"minimum value", 0, "00000000000000000000"},
-		{"normal value", 12345, "00000000000000012345"},
-		{"maximum value", 18446744073709551615, "18446744073709551615"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := EncodeUint(tt.input)
-			if result != tt.expected {
-				t.Errorf("EncodeUint(%d) = %s; want %s", tt.input, result, tt.expected)
-			}
-		})
+	values := []uint64{0, 1, 255, 256, 12345, 9223372036854775807, 18446744073709551615}
+	previous := ""
+	for _, value := range values {
+		key := EncodeUint(value)
+		if len(key) != 8 {
+			t.Errorf("EncodeUint(%d) length = %d; want 8", value, len(key))
+		}
+		if decoded := DecodeUint(key); decoded != value {
+			t.Errorf("DecodeUint(EncodeUint(%d)) = %d", value, decoded)
+		}
+		if previous != "" && !(previous < key) {
+			t.Errorf("EncodeUint keys are not ordered: %d", value)
+		}
+		previous = key
 	}
 }
 
 func TestEncodeInt64(t *testing.T) {
 	t.Run("positive values", func(t *testing.T) {
 		tests := []struct {
-			name     string
-			input    int64
-			expected string
+			name  string
+			input int64
 		}{
-			{"zero", 0, "00000000000000000000"},
-			{"normal value", 12345, "00000000000000012345"},
-			{"large value", 9223372036854775807, "09223372036854775807"}, // int64 max
+			{"zero", 0},
+			{"normal value", 12345},
+			{"large value", 9223372036854775807}, // int64 max
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := EncodeInt64(tt.input)
-				if result != tt.expected {
-					t.Errorf("EncodeInt64(%d) = %s; want %s", tt.input, result, tt.expected)
+				key := EncodeInt64(tt.input)
+				if len(key) != 8 {
+					t.Errorf("EncodeInt64(%d) length = %d; want 8", tt.input, len(key))
+				}
+				if decoded := DecodeInt64(key); decoded != tt.input {
+					t.Errorf("DecodeInt64(EncodeInt64(%d)) = %d", tt.input, decoded)
 				}
 			})
 		}
@@ -66,33 +65,11 @@ func TestEncodeInt64(t *testing.T) {
 }
 
 func TestDecodeUint(t *testing.T) {
-	t.Run("valid inputs", func(t *testing.T) {
-		tests := []struct {
-			name     string
-			input    string
-			expected uint64
-		}{
-			{"minimum", "00000000000000000000", 0},
-			{"normal", "00000000000000012345", 12345},
-			{"maximum", "18446744073709551615", 18446744073709551615},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				result := DecodeUint(tt.input)
-				if result != tt.expected {
-					t.Errorf("DecodeUint(%s) = %d; want %d", tt.input, result, tt.expected)
-				}
-			})
-		}
-	})
-
 	t.Run("invalid inputs should panic", func(t *testing.T) {
 		invalidInputs := []string{
-			"invalid",
-			"18446744073709551616", // overflow
-			"",                     // empty
-			"abc123",               // mixed
+			"",          // empty
+			"short",     // too short
+			"too long!", // too long
 		}
 
 		for _, input := range invalidInputs {
