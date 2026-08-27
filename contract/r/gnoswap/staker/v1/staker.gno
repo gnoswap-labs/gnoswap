@@ -321,23 +321,35 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	upperTick := poolResolver.GetOrNewTick(tickUpper)
-	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
-	pool.Ticks().SetTick(tickUpper, upperTick)
+	// A tick this stake creates must be seeded before it is persisted.
+	upperTick := pool.Ticks().Get(tickUpper)
+	if upperTick == nil {
+		upperTick = sr.NewTick(tickUpper)
+		poolResolver.initializeNewTickOutsideAccumulation(currentTime, currentTick, tickUpper, upperTick)
+	}
 
-	lowerTick := poolResolver.GetOrNewTick(tickLower)
-	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
-	pool.Ticks().SetTick(tickLower, lowerTick)
-	s.getPools().set(poolPath, pool)
+	lowerTick := pool.Ticks().Get(tickLower)
+	if lowerTick == nil {
+		lowerTick = sr.NewTick(tickLower)
+		poolResolver.initializeNewTickOutsideAccumulation(currentTime, currentTick, tickLower, lowerTick)
+	}
+
+	upperTickResolver := NewTickResolver(upperTick)
+	lowerTickResolver := NewTickResolver(lowerTick)
+
+	upperTickResolver.modifyDepositUpper(currentTime, signedLiquidity)
+	lowerTickResolver.modifyDepositLower(currentTime, signedLiquidity)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	// Get accumulator values for reward calculation tracking
 	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
-	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
-	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
 	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
+
+	pool.Ticks().SetTick(tickUpper, upperTick)
+	pool.Ticks().SetTick(tickLower, lowerTick)
+	s.getPools().set(poolPath, pool)
 
 	chain.Emit(
 		"StakeToken",
