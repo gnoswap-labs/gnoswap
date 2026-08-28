@@ -99,6 +99,8 @@ func main(cur realm) {
 
 	println("[SCENARIO] 9. Collect reward after returning to in-range")
 	collectRewardAfterReturningInRange(cur)
+	println()
+
 }
 
 func initAndSetup(cur realm) {
@@ -244,8 +246,8 @@ func performSwapToMovePrice(cur realm) {
 	currentTickAfter, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] tick after swap: %d\n", currentTickAfter)
 
-	// Position should now be out of range (tick > 50)
-	if currentTickAfter <= 50 {
+	// Position should now be out of range (tick < -50).
+	if currentTickAfter >= -50 {
 		println("[WARNING] swap might not have moved price far enough")
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
@@ -298,7 +300,7 @@ func performReverseSwap(cur realm) {
 
 	println("[INFO] perform reverse swap to move price back into range")
 	// Swap baz for bar to move tick back down
-	reverseSwapAmount := "50000"
+	reverseSwapAmount := "1000"
 
 	var amountOut string = "0"
 
@@ -422,9 +424,6 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] swap bar for baz to move tick up
 // [INFO] swapped 100000 bar for -9985 baz
 // [EXPECTED] tick after swap: -887271
-// [WARNING] swap might not have moved price far enough
-// [INFO] perform additional swap
-// [EXPECTED] final tick after additional swap: -887271
 //
 // [SCENARIO] 7. Collect reward while out-of-range
 // [INFO] skip blocks to accumulate rewards while out-of-range
@@ -436,16 +435,15 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] tick before reverse swap: -887271
 // [INFO] perform reverse swap to move price back into range
 // [INFO] swap baz for bar to move tick down
-// [INFO] swapped 50000 baz for 0 bar
-// [EXPECTED] tick after reverse swap: -887271
-// [WARNING] position might still be out-of-range
-// [INFO] position range: -50 to 50, current tick: -887271
+// [INFO] swapped 1000 baz for -1002 bar
+// [EXPECTED] tick after reverse swap: -45
+// [INFO] position is back in-range
 //
 // [SCENARIO] 9. Collect reward after returning to in-range
 // [INFO] skip blocks to accumulate rewards after returning to in-range
 // [INFO] collect reward after position returned to in-range
-// [EXPECTED] reward after returning to in-range: 0
-// [INFO] final tick: -887271
-// [INFO] position is still out-of-range, no rewards as expected
+// [EXPECTED] reward after returning to in-range: 44145964
+// [INFO] final tick: -45
+// [INFO] confirmed: rewards resumed when position returned to in-range
 // [INFO] position in-range change by swap scenario completed successfully
 // [INFO] confirmed: rewards are only distributed when positions are in-range
