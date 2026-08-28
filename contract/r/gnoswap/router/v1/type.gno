@@ -10,6 +10,8 @@ const (
 	rawUnknown  = "UNKNOWN"
 	rawExactIn  = "EXACT_IN"
 	rawExactOut = "EXACT_OUT"
+
+	zeroAddress = address("")
 )
 
 type SwapType string
@@ -148,6 +150,18 @@ func newSwapCallbackData(params SwapParamsI, payer address) SwapCallbackData {
 		tokenOut: params.TokenOut(),
 		fee:      params.Fee(),
 		payer:    payer,
+	}
+}
+
+// newDrySwapCallbackData creates callback data for a dry swap. The payer is
+// deliberately the zero address because dry swaps do not execute callbacks or
+// token transfers.
+func newDrySwapCallbackData(params SwapParamsI) SwapCallbackData {
+	return SwapCallbackData{
+		tokenIn:  params.TokenIn(),
+		tokenOut: params.TokenOut(),
+		fee:      params.Fee(),
+		payer:    zeroAddress,
 	}
 }
 

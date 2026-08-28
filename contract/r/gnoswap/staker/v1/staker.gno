@@ -46,25 +46,25 @@ func NewDeposits() *Deposits {
 
 // Has checks if a position ID exists in deposits.
 func (self *Deposits) Has(positionId uint64) bool {
-	return self.tree.Has(EncodeUint(positionId))
+	return self.tree.Has(utils.EncodeUint64(positionId))
 }
 
 // Iterate traverses deposits within the specified range.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
-		return fn(DecodeUint(positionId), dpst)
+		return fn(utils.DecodeUint64(positionId), dpst)
 	})
 }
 
 func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		deposit := retrieveDeposit(depositI)
 		if deposit.TargetPoolPath() != poolPath {
 			return false
 		}
 
-		return fn(DecodeUint(positionId), deposit)
+		return fn(utils.DecodeUint64(positionId), deposit)
 	})
 }
 
@@ -75,7 +75,7 @@ func (self *Deposits) Size() int {
 
 // get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
-	depositI := self.tree.Get(EncodeUint(positionId))
+	depositI := self.tree.Get(utils.EncodeUint64(positionId))
 	if depositI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -96,12 +96,12 @@ func retrieveDeposit(data any) *sr.Deposit {
 
 // set stores a deposit for a position ID.
 func (self *Deposits) set(positionId uint64, deposit *sr.Deposit) {
-	self.tree.Set(EncodeUint(positionId), deposit)
+	self.tree.Set(utils.EncodeUint64(positionId), deposit)
 }
 
 // remove deletes a deposit by position ID.
 func (self *Deposits) remove(positionId uint64) {
-	self.tree.Remove(EncodeUint(positionId))
+	self.tree.Remove(utils.EncodeUint64(positionId))
 }
 
 // ExternalIncentives manages external incentive programs.
