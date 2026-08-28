@@ -835,26 +835,26 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		expectedAmountIn     *u256.Uint
 	}{
 		{
-			name:                 "amount_becomes_zero_after_fee_one_for_zero",
+			name:                 "zero_post_fee_amount_returns_target_input_one_for_zero",
 			zeroForOne:           false,
 			currentX96:           encodePriceSqrtTest(t, "1", "1"),
 			targetX96:            encodePriceSqrtTest(t, "121", "100"),
 			liquidity:            u256.MustFromDecimal("2000000000000000000"),
 			amountRemainingAbs:   u256.One(),                       // 1 unit
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),     // 99.7%: 1 * 997000 / 1000000 = 0
-			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // no price move
-			expectedAmountIn:     u256.Zero(),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"),
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
 		},
 		{
-			name:                 "amount_becomes_zero_after_fee_zero_for_one",
+			name:                 "zero_post_fee_amount_returns_target_input_zero_for_one",
 			zeroForOne:           true,
 			currentX96:           encodePriceSqrtTest(t, "121", "100"),
 			targetX96:            encodePriceSqrtTest(t, "1", "1"),
 			liquidity:            u256.MustFromDecimal("2000000000000000000"),
 			amountRemainingAbs:   u256.One(),
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
-			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"), // no price move
-			expectedAmountIn:     u256.Zero(),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"),
+			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
 		},
 		{
 			name:                 "sufficient_amount_hits_target_one_for_zero",

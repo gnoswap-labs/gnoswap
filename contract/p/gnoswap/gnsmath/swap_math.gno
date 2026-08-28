@@ -168,14 +168,6 @@ func handleExactIn(
 		u256.NewUint(denominator),
 	)
 
-	// Special case:
-	// When the remaining amount to be swapped becomes 1 during a tick swap,
-	// the swap fee becomes less than 0.
-	// At this point, check whether the swap is no longer being executed.
-	if amountRemainingLessFee.IsZero() {
-		return sqrtRatioCurrentX96, u256.Zero()
-	}
-
 	amountIn := u256.Zero()
 
 	if zeroForOne {
