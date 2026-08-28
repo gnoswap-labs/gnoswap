@@ -284,12 +284,12 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 7. Increase position liquidity
 // [INFO] Increasing position liquidity
-// [EXPECTED] Added liquidity should be 318704392
-// [EXPECTED] Amount0 added should be 18394892
-// [EXPECTED] Amount1 added should be 50000000
+// [EXPECTED] Added liquidity should be 411504506
+// [EXPECTED] Amount0 added should be 50000000
+// [EXPECTED] Amount1 added should be 0
 //
 // [SCENARIO] 8. Check final position state
-// [EXPECTED] Final position liquidity should be 318704392
+// [EXPECTED] Final position liquidity should be 411504506
 // [EXPECTED] Position tickLower should be unchanged at 8000
 // [EXPECTED] Position tickUpper should be unchanged at 12000
 // [EXPECTED] Final fee0 should be 0

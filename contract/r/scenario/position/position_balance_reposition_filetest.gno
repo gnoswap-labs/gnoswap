@@ -323,20 +323,20 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [EXPECTED] Swap amount0 should be 0
 // [EXPECTED] Swap amount1 should be 0
 // [INFO] Repositioning to new range (9000~13000)
-// [EXPECTED] New liquidity should be 432601712
+// [EXPECTED] New liquidity should be 144008520
 // [EXPECTED] New tick range should be [9000, 13000]
-// [EXPECTED] User BAR balance after reposition should be 99999949999899
-// [EXPECTED] User FOO balance after reposition should be 99999999999999
-// [EXPECTED] Final position liquidity should be 432601712
+// [EXPECTED] User BAR balance after reposition should be 99999999999899
+// [EXPECTED] User FOO balance after reposition should be 99999949999999
+// [EXPECTED] Final position liquidity should be 144008520
 // [EXPECTED] Final position tick range should be [9000, 13000]
-// [EXPECTED] Final position token0 balance should be 49999999
-// [EXPECTED] Final position token1 balance should be 0
-// [EXPECTED] Final pool balance change should be 50000000
+// [EXPECTED] Final position token0 balance should be 0
+// [EXPECTED] Final position token1 balance should be 49999999
 // [EXPECTED] Final pool balance change should be 0
-// [EXPECTED] Final pool token0 balance should be 50000002
-// [EXPECTED] Final pool token1 balance should be 1
+// [EXPECTED] Final pool balance change should be 50000000
+// [EXPECTED] Final pool token0 balance should be 2
+// [EXPECTED] Final pool token1 balance should be 50000001
 // [EXPECTED] Final pool liquidity should be 0
-// [EXPECTED] Final pool tick should be 8031
-// [EXPECTED] Total BAR change during reposition: 11605209
-// [EXPECTED] Total FOO change during reposition: -756515
+// [EXPECTED] Final pool tick should be 887271
+// [EXPECTED] Total BAR change during reposition: -38394791
+// [EXPECTED] Total FOO change during reposition: 49243485
 // [EXPECTED] Reposition balance validation passed

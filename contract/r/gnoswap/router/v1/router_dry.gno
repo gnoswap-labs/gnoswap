@@ -1,7 +1,6 @@
 package router
 
 import (
-	"chain/runtime/unsafe"
 	"errors"
 	"strings"
 
@@ -21,19 +20,14 @@ const (
 
 // ErrorMessages for DrySwapRoute operations
 const (
-	ErrUnknownSwapType        = "unknown swapType(%s)"
-	ErrInvalidPositiveAmount  = "invalid amount(%s), must be positive"
-	ErrInvalidZeroAmountLimit = "invalid amountLimit(%s), should not be zero"
-	ErrInvalidQuoteRange      = "quote(%d) must be %d~%d"
+	ErrUnknownSwapType       = "unknown swapType(%s)"
+	ErrInvalidPositiveAmount = "invalid amount(%s), must be positive"
+	ErrInvalidQuoteRange     = "quote(%d) must be %d~%d"
 )
 
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
-	// payer identifies the user for dry-run simulations. It is resolved once at
-	// the entry point via unsafe.PreviousRealm since dry-run paths are
-	// read-only and carry no realm value to thread.
-	payer address
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -55,7 +49,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut = p.router.singleDrySwap(p.payer, &singleParams)
+	amountIn, amountOut = p.router.singleDrySwap(&singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -89,7 +83,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(p.payer, singleParams, numHops, route)
+		return p.router.multiDrySwap(singleParams, numHops, route)
 	case ExactOut:
 		return p.router.multiDrySwapNegative(singleParams, numHops, route)
 	default:
@@ -232,7 +226,7 @@ func (r *routerV1) drySwapRoute(
 
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}
+	processor := &SwapProcessor{router: r}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)
@@ -241,11 +235,6 @@ func (r *routerV1) drySwapRoute(
 	}
 
 	amountSpecified, err := validator.amount(specifiedAmount)
-	if err != nil {
-		return 0, 0, makeErrorWithDetails(errInvalidInput, err.Error())
-	}
-
-	amountLimit, err := validator.amountLimit(tokenAmountLimit)
 	if err != nil {
 		return 0, 0, makeErrorWithDetails(errInvalidInput, err.Error())
 	}
@@ -329,7 +318,7 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = gnsmath.SafeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, tokenAmountLimit, swapCount)
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.

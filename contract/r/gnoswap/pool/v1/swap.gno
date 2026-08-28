@@ -43,7 +43,6 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -67,7 +66,6 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -91,7 +89,6 @@ func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath 
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -182,11 +179,6 @@ func (i *poolV1) Swap(
 	slot0Start := pool.Slot0()
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
-
-	// no liquidity -> no swap, return zero amounts
-	if pool.Liquidity().IsZero() {
-		return "0", "0"
-	}
 
 	blockTimestamp := time.Now().Unix()
 
@@ -344,11 +336,6 @@ func (i *poolV1) DrySwap(
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	poolSnapshot := newDrySwapSnapshot(pool)
-
-	// no liquidity -> simulation fails
-	if poolSnapshot.Liquidity().IsZero() {
-		return "0", "0", errors.New(errZeroLiquidity)
-	}
 
 	slot0Start := poolSnapshot.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
@@ -774,7 +761,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 					observationState,
 					cache.blockTimestamp,
 					0,
-					state.tick,
+					pool.Slot0Tick(),
 					observationState.Index(),
 					cache.liquidityStart,
 					observationState.Cardinality(),

@@ -8,7 +8,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func TestHookSetters_RespectHalt(cur realm, t *testing.T) {
+func TestHookSetters_BypassHaltAndRequireStaker(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
 		call func(cur realm)
@@ -16,21 +16,18 @@ func TestHookSetters_RespectHalt(cur realm, t *testing.T) {
 		{
 			name: "SetTickCrossHook",
 			call: func(cur realm) {
-				testing.SetRealm(stakerRealm)
 				pl.SetTickCrossHook(cross(cur), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapStartHook",
 			call: func(cur realm) {
-				testing.SetRealm(stakerRealm)
 				pl.SetSwapStartHook(cross(cur), func(cur realm, poolPath string, timestamp int64) {})
 			},
 		},
 		{
 			name: "SetSwapEndHook",
 			call: func(cur realm) {
-				testing.SetRealm(stakerRealm)
 				pl.SetSwapEndHook(cross(cur), func(cur realm, poolPath string) error { return nil })
 			},
 		},
@@ -41,12 +38,21 @@ func TestHookSetters_RespectHalt(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
 			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 
-			uassert.AbortsWithMessage(t, cur, "halted: pool", func() {
+			testing.SetRealm(stakerRealm)
+			uassert.NotPanics(t, cur, func() {
+				tt.call(cur)
+			})
+
+			testing.SetRealm(adminRealm)
+			uassert.AbortsContains(t, cur, "is not staker", func() {
 				tt.call(cur)
 			})
 
 			testing.SetRealm(adminRealm)
 			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+			uassert.AbortsContains(t, cur, "is not staker", func() {
+				tt.call(cur)
+			})
 		})
 	}
 }

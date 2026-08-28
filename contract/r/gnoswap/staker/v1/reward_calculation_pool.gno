@@ -138,6 +138,18 @@ func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 	return tick
 }
 
+// initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
+// that below(tick) == globalAccumulation holds, keeping the three branches of
+// CalculateRawRewardForPosition consistent.
+func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64, currentTick, tickId int32, tick *sr.Tick) {
+	if tickId > currentTick {
+		return
+	}
+
+	globalAcc, _ := self.globalRewardRatioAccumulationAt(currentTime)
+	tick.SetOutsideAccumulationAt(currentTime, globalAcc)
+}
+
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
@@ -414,12 +426,12 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-			if overflow {
-				panic(errors.New(errOverflow))
-			}
+			// Modular by design: boundary ticks created at different times give a
+			// wrapped base, so the borrow is expected and the wrapped difference
+			// is the true accumulation (Uniswap V3 subtracts unchecked too).
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
 				panic(errors.New(errOverflow))
 			}
@@ -432,12 +444,10 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-		if overflow {
-			panic(errors.New(errOverflow))
-		}
+		// See the note above: the subtraction is intentionally modular.
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
 			panic(errors.New(errOverflow))
 		}
@@ -474,12 +484,12 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-			if overflow {
-				panic(errors.New(errOverflow))
-			}
+			// Modular by design: boundary ticks created at different times give a
+			// wrapped base, so the borrow is expected and the wrapped difference
+			// is the true accumulation (Uniswap V3 subtracts unchecked too).
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
 				panic(errors.New(errOverflow))
 			}
@@ -493,12 +503,10 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-		if overflow {
-			panic(errors.New(errOverflow))
-		}
+		// See the note above: the subtraction is intentionally modular.
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
 			panic(errors.New(errOverflow))
 		}

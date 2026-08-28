@@ -436,8 +436,8 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			riskAssessment: "Protect system resources",
 		},
 		{
-			name:        "insufficient_balance_protection",
-			description: "Protect against insufficient balance",
+			name:        "dry_swap_does_not_require_caller_balance",
+			description: "Allow quote generation without caller balance",
 			swapBuilder: func() SwapParams {
 				return NewSwapBuilder().
 					InPool(barTokenPath, bazTokenPath, FeeTier100).
@@ -446,9 +446,9 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 					WithPriceLimit(MAX_PRICE_IMPACT).
 					Build()
 			},
-			expectSuccess:  false,
-			failureReason:  "Block transactions exceeding user balance",
-			riskAssessment: "Protect user assets and prevent transaction failure",
+			expectSuccess:  true,
+			failureReason:  "DrySwap does not transfer caller tokens",
+			riskAssessment: "Allow quote generation before a user funds a swap",
 		},
 	}
 
@@ -483,6 +483,84 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 
 	_, _, err := pl.DrySwap(barTokenPath, bazTokenPath, FeeTier100, true, "invalid", MAX_PRICE_IMPACT)
 	uassert.Error(t, err, "DrySwap must return an error instead of panicking on an invalid amount")
+}
+
+func TestSwap_ZeroActiveLiquidityCrossesIntoRange(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	burnTokens(cur, t)
+	InitialisePoolTest(cur, t)
+
+	pool := getMockInstance().mustGetPoolBy(barPath, bazPath, fee3000)
+	uassert.True(t, pool.Liquidity().IsZero(), "Test pool must start with no active liquidity")
+
+	callbackCalled := false
+	var receivedAmount0Delta, receivedAmount1Delta int64
+
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		0,
+		cur,
+		barPath,
+		bazPath,
+		fee3000,
+		alice,
+		false,
+		"1000",
+		"1461446703485210103287273052203988822378723970341",
+		func(_ realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+			callbackCalled = true
+			receivedAmount0Delta = amount0Delta
+			receivedAmount1Delta = amount1Delta
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+		},
+	)
+
+	uassert.True(t, callbackCalled, "Swap must invoke the callback after crossing into liquidity")
+	uassert.True(t, receivedAmount1Delta > 0, "Pool must receive token1 after entering the active range")
+	uassert.True(t, receivedAmount0Delta < 0, "Pool must send token0 after entering the active range")
+	uassert.True(t, amount0 != "0", "Swap must produce token0 output after crossing into liquidity")
+	uassert.True(t, amount1 != "0", "Swap must consume token1 after crossing into liquidity")
+}
+
+func TestSwap_NoReachableLiquidityInvokesZeroDeltaCallback(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	burnTokens(cur, t)
+	InitialisePoolTest(cur, t)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
+	mockInstanceCreatePool(0, cur, barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
+
+	pool := getMockInstance().mustGetPoolBy(barTokenPath, fooTokenPath, 500)
+	uassert.True(t, pool.Liquidity().IsZero(), "Test pool must have no active liquidity")
+
+	callbackCalled := false
+	var receivedAmount0Delta, receivedAmount1Delta int64
+
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		0,
+		cur,
+		barTokenPath,
+		fooTokenPath,
+		500,
+		alice,
+		true,
+		"1000",
+		"4295128740",
+		func(_ realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+			callbackCalled = true
+			receivedAmount0Delta = amount0Delta
+			receivedAmount1Delta = amount1Delta
+			return nil
+		},
+	)
+
+	uassert.True(t, callbackCalled, "Swap must invoke the callback when no liquidity is reachable")
+	uassert.Equal(t, int64(0), receivedAmount0Delta)
+	uassert.Equal(t, int64(0), receivedAmount1Delta)
+	uassert.Equal(t, "0", amount0)
+	uassert.Equal(t, "0", amount1)
 }
 
 func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
@@ -945,11 +1023,12 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			tradingContext:  "User wants to acquire exactly 200 token0",
 		},
 		{
-			name:        "zero_liquidity_graceful_handling",
-			description: "Graceful handling of zero liquidity",
+			name:        "zero_active_liquidity_crosses_into_range",
+			description: "Crosses an inactive range into available liquidity",
 			setupLiquidity: func(cur realm, t *testing.T) {
 				InitialisePoolTest(cur, t)
-				// MintPositionAll is not called (zero liquidity)
+				// The initial position starts above the current tick, so active
+				// liquidity is zero until the swap crosses into its range.
 				TokenFaucet(cur, t, barPath, routerAddr)
 				TokenApprove(cur, t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -958,8 +1037,8 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 				amountSpecified: "1000",
 				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
-			expectedAmounts: []string{"0", "0"},
-			tradingContext:  "Swap attempt in zero liquidity situation",
+			expectedAmounts: []string{"-173", "236"},
+			tradingContext:  "Swap crosses an inactive range before trading",
 		},
 		{
 			name:        "sqrt_price_limit_over_tick_range_termination",
