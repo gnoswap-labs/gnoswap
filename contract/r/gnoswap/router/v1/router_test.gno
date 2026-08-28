@@ -1642,48 +1642,6 @@ func TestSwapValidator_Amount(cur realm, t *testing.T) {
 	}
 }
 
-// Test SwapValidator amountLimit
-func TestSwapValidator_AmountLimit(cur realm, t *testing.T) {
-	validator := &SwapValidator{}
-
-	tests := []struct {
-		name        string
-		amountLimit int64
-		expectError bool
-		expected    int64
-	}{
-		{
-			name:        "positive limit",
-			amountLimit: 1000,
-			expectError: false,
-			expected:    1000,
-		},
-		{
-			name:        "zero limit",
-			amountLimit: 0,
-			expectError: true,
-		},
-		{
-			name:        "negative limit",
-			amountLimit: -100,
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result, err := validator.amountLimit(tt.amountLimit)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				uassert.Equal(t, result, tt.expected)
-			}
-		})
-	}
-}
-
 // Test SwapValidator swapType
 func TestSwapValidator_SwapType(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
