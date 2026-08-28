@@ -11,6 +11,7 @@ import (
 	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -35,6 +36,8 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 	previousRealm := rlm.Previous()
 
 	assertIsValidAmount(depositAmount)
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
 	caller := previousRealm.Address()
