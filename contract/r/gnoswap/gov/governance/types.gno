@@ -53,6 +53,9 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
+	// PruneInactiveProposals removes terminal proposals from the active index.
+	PruneInactiveProposals(_ int, rlm realm)
+
 	// Configuration
 	Reconfigure(
 		_ int, rlm realm,
@@ -132,6 +135,11 @@ type IGovernanceStore interface {
 	GetProposal(proposalID int64) (*Proposal, bool)
 	SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error
 	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
+
+	// Active proposal index methods
+	HasActiveProposalsStoreKey() bool
+	GetActiveProposals() *bptree.BPTree
+	SetActiveProposals(_ int, rlm realm, proposals *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool

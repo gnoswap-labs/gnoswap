@@ -2,6 +2,7 @@ package governance
 
 import (
 	"strconv"
+	"time"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -61,6 +62,23 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 
 	if !governanceStore.HasProposalsStoreKey() {
 		err := governanceStore.SetProposals(0, rlm, governance.NewProposalTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !governanceStore.HasActiveProposalsStoreKey() {
+		activeProposals := governance.NewActiveProposalTree()
+		current := time.Now().Unix()
+		for id := int64(1); id <= governanceStore.GetProposalCounter().Get(); id++ {
+			proposal, exists := governanceStore.GetProposal(id)
+			if !exists || !NewProposalResolver(proposal).IsActive(current) {
+				continue
+			}
+			activeProposals.Set(activeProposalKey(proposal), proposal.ID())
+		}
+
+		err := governanceStore.SetActiveProposals(0, rlm, activeProposals)
 		if err != nil {
 			return err
 		}

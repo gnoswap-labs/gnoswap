@@ -84,6 +84,12 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 		return false
 	}
 
+	activeProposals := g.store.GetActiveProposals()
+	activeProposals.Set(activeProposalKey(proposal), proposal.ID())
+	if err := g.store.SetActiveProposals(0, rlm, activeProposals); err != nil {
+		return false
+	}
+
 	// Add to user proposals
 	err = g.store.AddUserProposal(0, rlm, proposal.Proposer().String(), proposal.ID())
 	if err != nil {
@@ -91,6 +97,42 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 	}
 
 	return true
+}
+
+func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal) error {
+	activeProposals := g.store.GetActiveProposals()
+	activeProposals.Remove(activeProposalKey(proposal))
+	return g.store.SetActiveProposals(0, rlm, activeProposals)
+}
+
+// pruneInactiveProposals removes terminal proposals from the active-only index.
+// It deliberately preserves proposal records and voting data as governance history.
+func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) error {
+	activeProposals := g.store.GetActiveProposals()
+	keysToRemove := make([]string, 0)
+
+	activeProposals.Iterate("", "", func(key string, value any) bool {
+		proposalID, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
+		}
+
+		proposal, exists := g.getProposal(proposalID)
+		if !exists || !NewProposalResolver(proposal).IsActive(current) {
+			keysToRemove = append(keysToRemove, key)
+		}
+		return false
+	})
+
+	for _, key := range keysToRemove {
+		activeProposals.Remove(key)
+	}
+
+	return g.store.SetActiveProposals(0, rlm, activeProposals)
+}
+
+func activeProposalKey(proposal *governance.Proposal) string {
+	return ufmt.Sprintf("%020d:%020d", proposal.SnapshotTime(), proposal.ID())
 }
 
 // User proposals methods

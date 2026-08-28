@@ -259,30 +259,26 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 // This is used by gov/staker to prevent cleanup of delegation history that is still needed
 // by active proposals for voting weight calculation.
 func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
-	currentTime := time.Now().Unix()
-	currentProposalID := gv.getCurrentProposalID()
+	activeProposals := gv.store.GetActiveProposals()
+	current := time.Now().Unix()
+	var oldestSnapshotTime int64
+	hasActiveProposal := false
 
-	var (
-		oldestSnapshotTime int64
-		hasActiveProposal  bool
-	)
-
-	for id := int64(1); id <= currentProposalID; id++ {
-		proposal, exists := gv.getProposal(id)
-		if !exists {
-			continue
+	activeProposals.Iterate("", "", func(_ string, value any) bool {
+		proposalID, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
 		}
 
-		proposalResolver := NewProposalResolver(proposal)
-
-		if proposalResolver.IsActive(currentTime) {
-			snapshotTime := proposal.SnapshotTime()
-			if !hasActiveProposal || snapshotTime < oldestSnapshotTime {
-				oldestSnapshotTime = snapshotTime
-				hasActiveProposal = true
-			}
+		proposal, exists := gv.getProposal(proposalID)
+		if !exists || !NewProposalResolver(proposal).IsActive(current) {
+			return false
 		}
-	}
+
+		oldestSnapshotTime = proposal.SnapshotTime()
+		hasActiveProposal = true
+		return true
+	})
 
 	return oldestSnapshotTime, hasActiveProposal
 }

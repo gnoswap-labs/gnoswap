@@ -176,6 +176,11 @@ func NewProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
 
+// NewActiveProposalTree creates the snapshot-time ordered index of active proposals.
+func NewActiveProposalTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
 func NewUserProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }

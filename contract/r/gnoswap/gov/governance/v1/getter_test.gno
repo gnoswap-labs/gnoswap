@@ -48,9 +48,8 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	uassert.True(t, gv.addProposal(0, cur, proposal))
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
