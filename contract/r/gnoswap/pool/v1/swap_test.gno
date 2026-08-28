@@ -436,8 +436,8 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			riskAssessment: "Protect system resources",
 		},
 		{
-			name:        "insufficient_balance_protection",
-			description: "Protect against insufficient balance",
+			name:        "dry_swap_does_not_require_caller_balance",
+			description: "Allow quote generation without caller balance",
 			swapBuilder: func() SwapParams {
 				return NewSwapBuilder().
 					InPool(barTokenPath, bazTokenPath, FeeTier100).
@@ -446,9 +446,9 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 					WithPriceLimit(MAX_PRICE_IMPACT).
 					Build()
 			},
-			expectSuccess:  false,
-			failureReason:  "Block transactions exceeding user balance",
-			riskAssessment: "Protect user assets and prevent transaction failure",
+			expectSuccess:  true,
+			failureReason:  "DrySwap does not transfer caller tokens",
+			riskAssessment: "Allow quote generation before a user funds a swap",
 		},
 	}
 
