@@ -147,7 +147,7 @@ make integration-test-build
 
 ### Math & Precision
 
-- `uint256`/`int256` `Mul` and `lsh` do NOT detect overflow. Add explicit range checks.
+- `uint256`/`int256` `Mul` and `lsh` do NOT detect overflow. Add explicit range checks. For `Add`, use `AddOverflow` (or prove and document bounds) whenever an overflowed value would affect price, accounting, state, or a denominator.
 - Validate `feePips < 1_000_000` - equal causes division by zero.
 - Rounding must favor the pool: `amountIn` rounds up, `amountOut` rounds down.
 - Never mix Q64.96 and Q128.128 formats without explicit conversion.
@@ -195,7 +195,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | `OriginCaller` for access control | Intermediate contract impersonates user |
 | Reentrancy lock on local `Slot0` copy | Lock never persists |
 | Transfer before state update | CEI violated; re-entry with stale state |
-| `Mul`/`lsh` without range check | Silent overflow corrupts AMM math |
+| `Mul`/`lsh` without range check, or unchecked critical `Add` | Silent overflow corrupts AMM math |
 | Finite final warmup tier | Panic when block time passes it |
 | Upgrade without permission re-registration | Dependent modules lose write access |
 | Halted emission not tolerated | Halt cascades to unrelated modules |
