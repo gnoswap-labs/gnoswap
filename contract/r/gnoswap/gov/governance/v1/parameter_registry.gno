@@ -72,15 +72,21 @@ type ParameterHandler interface {
 // `cur`"). Naming it `rlm` keeps the lowering identical without the syntax
 // constraint.
 type ParameterHandlerOptions struct {
-	pkgPath         string                                   // Package path of the target contract
-	function        string                                   // Function name to be called
-	paramCount      int                                      // Expected number of parameters
-	handlerFunc     func(_ int, rlm realm, _ []string) error // Function that executes the parameter change
-	paramValidators []paramValidator                         // Optional per-parameter validators for proposal-time checks
+	pkgPath            string                                   // Package path of the target contract
+	function           string                                   // Function name to be called
+	paramCount         int                                      // Expected number of parameters
+	handlerFunc        func(_ int, rlm realm, _ []string) error // Function that executes the parameter change
+	paramValidators    []paramValidator                         // Optional per-parameter validators for proposal-time checks
+	compositeValidator compositeValidator                       // Optional cross-parameter validator for static business rules
 }
 
 // paramValidator validates a single parameter value and returns an error on failure.
 type paramValidator func(string) error
+
+// compositeValidator validates relationships between a handler's parameters.
+// It must only enforce deterministic, state-independent rules so that a
+// proposal is not rejected merely because on-chain state changes while voting.
+type compositeValidator func([]string) error
 
 // NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
 //
@@ -135,10 +141,10 @@ func (h *ParameterHandlerOptions) HandlerKey() string {
 // Returns:
 //   - error: execution error if parameter count mismatch or handler execution fails
 func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) error {
-	// Validate parameter count matches expected count
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
 	}
+
 	return h.handlerFunc(0, rlm, params)
 }
 
@@ -151,24 +157,28 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 		)
 	}
 
-	if len(h.paramValidators) == 0 {
-		return nil
-	}
-
-	if len(h.paramValidators) != h.paramCount {
-		return ufmt.Errorf(
-			"validator count mismatch for %s: expected %d validator(s), got %d",
-			h.HandlerKey(), h.paramCount, len(h.paramValidators),
-		)
-	}
-
-	for i, validator := range h.paramValidators {
-		if validator == nil {
-			continue
+	if len(h.paramValidators) > 0 {
+		if len(h.paramValidators) != h.paramCount {
+			return ufmt.Errorf(
+				"validator count mismatch for %s: expected %d validator(s), got %d",
+				h.HandlerKey(), h.paramCount, len(h.paramValidators),
+			)
 		}
 
-		if err := validator(params[i]); err != nil {
-			return ufmt.Errorf("param[%d]: %v", i, err)
+		for i, validator := range h.paramValidators {
+			if validator == nil {
+				continue
+			}
+
+			if err := validator(params[i]); err != nil {
+				return ufmt.Errorf("param[%d]: %v", i, err)
+			}
+		}
+	}
+
+	if h.compositeValidator != nil {
+		if err := h.compositeValidator(params); err != nil {
+			return err
 		}
 	}
 
@@ -253,9 +263,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "TransferToken",
 			paramCount: 3,
 			paramValidators: []paramValidator{
-				stringValidator,            // pkgPath
-				addressValidator,           // to
-				numberValidator(kindInt64), // amount
+				stringValidator,  // pkgPath
+				addressValidator, // to
+				positiveInt64Validator("amount"),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Transfer tokens from community pool to specified address
@@ -294,6 +304,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 				numberValidator(kindInt64), // communityPoolPct
 				numberValidator(kindInt64), // govStakerPct
 			},
+			compositeValidator: distributionPctCompositeValidator,
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				liquidityStakerPct := parseNumber(params[0], kindInt64).(int64)
 				devOpsPct := parseNumber(params[1], kindInt64).(int64)
@@ -416,7 +427,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetPoolCreationFee",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // fee
+				nonNegativeInt64Validator("fee"),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set fee required to create new pools
@@ -430,7 +441,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetWithdrawalFee",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				uint64Validator, // fee
+				uint64RangeValidator("fee", 1000),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set fee for withdrawing from pools
@@ -445,7 +456,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetDevOpsPct",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // pct
+				int64RangeValidator("pct", 0, 10000),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set percentage of protocol fees going to development operations
@@ -460,7 +471,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetSwapFee",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				uint64Validator, // fee
+				uint64RangeValidator("fee", 1000),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set fee charged for token swaps
@@ -475,7 +486,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetDepositGnsAmount",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // amount
+				nonNegativeInt64Validator("amount"),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set minimum GNS amount required for staking deposits
@@ -488,7 +499,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetMinimumRewardAmount",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // amount
+				nonNegativeInt64Validator("amount"),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set minimum GNS amount required for staking deposits
@@ -501,7 +512,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetTokenMinimumRewardAmount",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				stringValidator, // tokenPath:amount
+				tokenMinimumRewardAmountValidator,
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set minimum GNS amount required for staking deposits
@@ -516,7 +527,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			paramValidators: []paramValidator{
 				stringValidator, // pool
-				uint64Validator, // tier
+				uint64RangeValidator("tier", sr.AllTierCount-1),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Assign tier level to a specific pool
@@ -534,7 +545,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			paramValidators: []paramValidator{
 				stringValidator, // pool
-				uint64Validator, // tier
+				uint64RangeValidator("tier", sr.AllTierCount-1),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Change existing pool's tier level
@@ -564,7 +575,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetUnStakingFee",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindUint64), // fee
+				uint64RangeValidator("fee", 1000),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set fee charged for unstaking operations
@@ -597,7 +608,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				stringValidator, // halt level string
+				haltLevelValidator,
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set system-wide halt status
@@ -611,8 +622,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetOperationStatus",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator, // opType
-				boolValidator,   // allowed
+				haltOperationTypeValidator,
+				boolValidator, // allowed
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Enable or disable specific operation types
@@ -685,7 +696,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetGovStakerPct",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // pct
+				int64RangeValidator("pct", 0, 10000),
 			},
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Set percentage of protocol fees going to governance stakers
@@ -1007,6 +1018,84 @@ func nonNegativeInt64Validator(name string) paramValidator {
 			}
 		})
 	}
+}
+
+func positiveInt64Validator(name string) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseInt64(s)
+			if value <= 0 {
+				panic(ufmt.Sprintf("%s must be positive: %d", name, value))
+			}
+		})
+	}
+}
+
+func int64RangeValidator(name string, min, max int64) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseInt64(s)
+			if value < min || value > max {
+				panic(ufmt.Sprintf("%s must be in range %d to %d: %d", name, min, max, value))
+			}
+		})
+	}
+}
+
+func uint64RangeValidator(name string, max uint64) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseUint64(s)
+			if value > max {
+				panic(ufmt.Sprintf("%s must be in range 0 to %d: %d", name, max, value))
+			}
+		})
+	}
+}
+
+func haltLevelValidator(s string) error {
+	return runValidator(func() {
+		if !halt.HaltLevel(s).IsValid() {
+			panic(ufmt.Sprintf("invalid halt level: %s", s))
+		}
+	})
+}
+
+func haltOperationTypeValidator(s string) error {
+	return runValidator(func() {
+		if !halt.OpType(s).IsValid() {
+			panic(ufmt.Sprintf("invalid operation type: %s", s))
+		}
+	})
+}
+
+func tokenMinimumRewardAmountValidator(s string) error {
+	return runValidator(func() {
+		parts := strings.SplitN(s, ":", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			panic("token minimum reward amount must be tokenPath:amount")
+		}
+		amount := parseInt64(parts[1])
+		if amount < 0 {
+			panic(ufmt.Sprintf("minimum reward amount must be non-negative: %d", amount))
+		}
+	})
+}
+
+func distributionPctCompositeValidator(params []string) error {
+	return runValidator(func() {
+		sum := int64(0)
+		for i, param := range params {
+			pct := parseInt64(param)
+			if pct < 0 || pct > 10000 {
+				panic(ufmt.Sprintf("percentage %d must be in range 0 to 10000: %d", i+1, pct))
+			}
+			sum += pct
+		}
+		if sum != 10000 {
+			panic(ufmt.Sprintf("sum of percentages must be 10000, got %d", sum))
+		}
+	})
 }
 
 func splitExecutionsRaw(executions string) []string {
