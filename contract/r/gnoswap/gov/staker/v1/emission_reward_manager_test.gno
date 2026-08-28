@@ -487,7 +487,9 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(cur realm, t 
 			shouldUpdate:             false,
 		},
 		{
-			name: "Should not update when no staked amount",
+			// The window had no stake, so its delta is discarded but the cursor still
+			// moves past it instead of carrying the delta over to the next staker.
+			name: "Should advance the cursor when no staked amount",
 			setupManager: func(m *EmissionRewardManagerResolver) {
 				m.SetAccumulatedTimestamp(50)
 				m.SetTotalStakedAmount(0)
@@ -495,7 +497,7 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(cur realm, t 
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
-			shouldUpdate:             false,
+			shouldUpdate:             true,
 		},
 		{
 			name: "Should update normally",
