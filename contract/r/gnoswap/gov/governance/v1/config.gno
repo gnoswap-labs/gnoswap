@@ -105,6 +105,12 @@ func (gv *governanceV1) Reconfigure(
 		"prevConfigVersion", utils.FormatInt(previousVersion),
 	)
 
+	chain.Emit(
+		"Reconfigure",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return nextVersion
 }
 

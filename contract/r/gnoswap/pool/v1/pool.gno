@@ -101,6 +101,12 @@ func (i *poolV1) Mint(
 		panic(err)
 	}
 
+	chain.Emit(
+		"Mint",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return amount0.ToString(), amount1.ToString()
 }
 
@@ -177,6 +183,13 @@ func (i *poolV1) Burn(
 	}
 
 	// actual token transfer happens in Collect()
+
+	chain.Emit(
+		"Burn",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return amount0.ToString(), amount1.ToString()
 }
 
@@ -277,6 +290,12 @@ func (i *poolV1) Collect(
 		panic(err)
 	}
 
+	chain.Emit(
+		"Collect",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
 
@@ -330,6 +349,12 @@ func (i *poolV1) CollectProtocol(
 		"recipient", recipient.String(),
 		"internal_amount0", amount0,
 		"internal_amount1", amount1,
+	)
+
+	chain.Emit(
+		"CollectProtocol",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return amount0, amount1
@@ -441,5 +466,11 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
 		"cardinalityNext", utils.FormatUint(cardinalityNext),
+	)
+
+	chain.Emit(
+		"IncreaseObservationCardinalityNext",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }

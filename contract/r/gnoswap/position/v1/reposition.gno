@@ -143,5 +143,11 @@ func (p *positionV1) Reposition(
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
+	chain.Emit(
+		"Reposition",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 }

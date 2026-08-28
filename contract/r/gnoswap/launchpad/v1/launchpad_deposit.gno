@@ -102,6 +102,12 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 		panic(err.Error())
 	}
 
+	chain.Emit(
+		"DepositGns",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return deposit.ID()
 }
 

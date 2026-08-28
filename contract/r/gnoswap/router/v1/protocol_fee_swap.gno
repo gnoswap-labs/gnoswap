@@ -75,6 +75,12 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 		"newFee", utils.FormatUint(fee),
 		"prevFee", utils.FormatUint(prevSwapFee),
 	)
+
+	chain.Emit(
+		"SetSwapFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.

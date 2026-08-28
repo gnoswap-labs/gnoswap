@@ -80,6 +80,12 @@ func (r *routerV1) ExactInSwapRoute(
 
 	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
 
+	chain.Emit(
+		"ExactInSwapRoute",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }
 
@@ -147,6 +153,12 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	}
 
 	inputAmount, outputAmount := r.exactInSwapRoute(0, rlm, params, referrer)
+
+	chain.Emit(
+		"ExactInSingleSwapRoute",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }

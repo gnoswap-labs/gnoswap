@@ -149,6 +149,12 @@ func (lp *launchpadV1) CreateProject(
 		eventAttrs...,
 	)
 
+	chain.Emit(
+		"CreateProject",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return project.ID()
 }
 
@@ -300,6 +306,12 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectI
 		"tier180Left", utils.FormatInt(getCalculatedLeftReward(tier180)),
 		"currentHeight", utils.FormatInt(currentHeight),
 		"currentTime", utils.FormatInt(currentTime),
+	)
+
+	chain.Emit(
+		"TransferLeftFromProjectByAdmin",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return projectLeftReward

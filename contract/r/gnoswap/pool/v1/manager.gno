@@ -143,6 +143,12 @@ func (i *poolV1) CreatePool(
 		"tick", utils.FormatInt(pool.Slot0Tick()),
 		"tickSpacing", utils.FormatInt(poolInfo.TickSpacing()),
 	)
+
+	chain.Emit(
+		"CreatePool",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetFeeProtocol sets the protocol fee percentage for all pools.
@@ -169,6 +175,12 @@ func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uin
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"SetFeeProtocol",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.

@@ -124,6 +124,12 @@ func (p *positionV1) Mint(
 		"referrer", actualReferrer,
 	)
 
+	chain.Emit(
+		"Mint",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
@@ -229,6 +235,12 @@ func (p *positionV1) IncreaseLiquidity(
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
+	chain.Emit(
+		"IncreaseLiquidity",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
@@ -321,6 +333,12 @@ func (p *positionV1) DecreaseLiquidity(
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)
 
+	chain.Emit(
+		"DecreaseLiquidity",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return positionId, liquidity, fee0, fee1, amount0, amount1, poolPath
 }
 
@@ -355,6 +373,12 @@ func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, st
 	assertIsOwnerOrOperatorForToken(p, positionId, caller)
 
 	emission.MintAndDistributeGns(cross(rlm))
+
+	chain.Emit(
+		"CollectFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 
 	return p.collectFee(0, rlm, positionId, caller)
 }
@@ -475,6 +499,12 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 		"lpPositionId", utils.FormatUint(id),
 		"prevOperator", prevOperator.String(),
 		"newOperator", operator.String(),
+	)
+
+	chain.Emit(
+		"SetPositionOperator",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

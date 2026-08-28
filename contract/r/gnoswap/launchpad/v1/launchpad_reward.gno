@@ -57,6 +57,12 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"amount", utils.FormatInt(rewardAmount),
 	)
 
+	chain.Emit(
+		"CollectRewardByDepositId",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return rewardAmount
 }
 

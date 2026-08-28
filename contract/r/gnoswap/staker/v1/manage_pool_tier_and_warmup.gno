@@ -53,6 +53,12 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 		poolTier.counts,
 		currentTime,
 	)
+
+	chain.Emit(
+		"SetPoolTier",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // ChangePoolTier modifies the tier level of an existing pool.
@@ -99,6 +105,12 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
+
+	chain.Emit(
+		"ChangePoolTier",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // RemovePoolTier removes a pool from internal GNS emission rewards.
@@ -142,6 +154,12 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 		"currentTime", utils.FormatInt(currentTime),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
+
+	chain.Emit(
+		"RemovePoolTier",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetWarmUp configures the warm-up percentage and duration for rewards.
@@ -165,6 +183,12 @@ func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"pct", utils.FormatInt(pct),
 		"timeDuration", utils.FormatInt(timeDuration),
+	)
+
+	chain.Emit(
+		"SetWarmUp",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

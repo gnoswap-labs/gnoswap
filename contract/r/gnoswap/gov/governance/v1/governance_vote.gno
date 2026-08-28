@@ -85,6 +85,12 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 		"voteNo", utils.FormatInt(totalNoVoteWeight),
 	)
 
+	chain.Emit(
+		"Vote",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return userVoteWeight
 }
 
@@ -133,7 +139,8 @@ func (gv *governanceV1) vote(
 	votingWeight := gnsmath.SafeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(
-			errNotEnoughVotingWeight, "no voting weight at snapshot time")
+			errNotEnoughVotingWeight, "no voting weight at snapshot time",
+		)
 	}
 
 	// Create or update voting info for this user
@@ -152,7 +159,8 @@ func (gv *governanceV1) vote(
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
 		return nil, 0, 0, makeErrorWithDetails(
-			errDataNotFound, "voting infos tree not found for proposal")
+			errDataNotFound, "voting infos tree not found for proposal",
+		)
 	}
 
 	votingInfosTree.Set(voterAddress.String(), userVote)

@@ -67,6 +67,12 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 		"prevAmount", utils.FormatInt(prevDepositGnsAmount),
 		"newAmount", utils.FormatInt(amount),
 	)
+
+	chain.Emit(
+		"SetDepositGnsAmount",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
@@ -93,6 +99,12 @@ func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", utils.FormatInt(prevMinimumRewardAmount),
 		"newAmount", utils.FormatInt(amount),
+	)
+
+	chain.Emit(
+		"SetMinimumRewardAmount",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 
@@ -147,6 +159,12 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 		"prevAmountFound", utils.FormatBool(found),
 		"prevAmount", utils.FormatInt(prevAmount), // Will be 0 if !found
 		"newAmount", utils.FormatInt(amount64),
+	)
+
+	chain.Emit(
+		"SetTokenMinimumRewardAmount",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

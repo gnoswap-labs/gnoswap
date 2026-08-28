@@ -56,6 +56,12 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"SetTickCrossHook",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetSwapStartHook sets the hook function called at the beginning of a swap.
@@ -82,6 +88,12 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"SetSwapStartHook",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetSwapEndHook sets the hook function called at the end of a swap.
@@ -108,6 +120,12 @@ func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath 
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"SetSwapEndHook",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SwapResult encapsulates all state changes from a swap.
@@ -317,6 +335,12 @@ func (i *poolV1) Swap(
 		"tickCumulative", utils.FormatInt(lastObservation.TickCumulative()),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
 		"observationTimestamp", utils.FormatInt(lastObservation.BlockTimestamp()),
+	)
+
+	chain.Emit(
+		"Swap",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return token0Amount, token1Amount

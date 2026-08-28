@@ -354,6 +354,12 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 	)
 
+	chain.Emit(
+		"StakeToken",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return poolPath
 }
 
@@ -689,6 +695,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		)
 	}
 
+	chain.Emit(
+		"CollectReward",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
 
@@ -770,6 +782,12 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 		"currentTick", utils.FormatInt(currentTick),
 		"stakedLiquidity", stakedLiquidity.ToString(),
 		"globalRewardRatioAccX128", globalAccX128.ToString(),
+	)
+
+	chain.Emit(
+		"UnStakeToken",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return poolPath

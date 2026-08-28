@@ -73,6 +73,12 @@ func (i *poolV1) HandleWithdrawalFee(
 	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
+	chain.Emit(
+		"HandleWithdrawalFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
 
@@ -151,6 +157,12 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 		"prevFee", utils.FormatInt(prevPoolCreationFee),
 		"newFee", utils.FormatInt(fee),
 	)
+
+	chain.Emit(
+		"SetPoolCreationFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetWithdrawalFee sets the withdrawal fee.
@@ -183,6 +195,12 @@ func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", utils.FormatUint(prevWithdrawalFee),
 		"newFee", utils.FormatUint(fee),
+	)
+
+	chain.Emit(
+		"SetWithdrawalFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

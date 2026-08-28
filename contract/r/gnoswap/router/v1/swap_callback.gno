@@ -1,7 +1,9 @@
 package router
 
 import (
+	"chain"
 	"errors"
+
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -68,6 +70,12 @@ func (r *routerV1) SwapCallback(
 	// Transfer tokens from router to pool
 	// The router should already have the tokens from the user
 	r.transferToPool(0, rlm, tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
+
+	chain.Emit(
+		"SwapCallback",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 
 	return nil
 }

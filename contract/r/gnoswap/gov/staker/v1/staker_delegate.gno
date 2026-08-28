@@ -111,6 +111,12 @@ func (gs *govStakerV1) Delegate(
 		"referrer", registeredReferrer,
 	)
 
+	chain.Emit(
+		"Delegate",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return amount
 }
 
@@ -183,6 +189,12 @@ func (gs *govStakerV1) Undelegate(
 		"to", from.String(),
 		"amount", utils.FormatInt(unDelegationAmount),
 		"totalDelegatedAmount", utils.FormatInt(gs.store.GetTotalDelegatedAmount()),
+	)
+
+	chain.Emit(
+		"Undelegate",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return unDelegationAmount
@@ -277,6 +289,12 @@ func (gs *govStakerV1) Redelegate(
 		"amount", utils.FormatInt(resolver.DelegatedAmount()),
 	)
 
+	chain.Emit(
+		"Redelegate",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return amount
 }
 
@@ -319,6 +337,12 @@ func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 		"from", prev.Address().String(),
 		"to", caller.String(),
 		"collectedAmount", utils.FormatInt(collectedAmount),
+	)
+
+	chain.Emit(
+		"CollectUndelegatedGns",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return collectedAmount

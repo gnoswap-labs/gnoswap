@@ -43,6 +43,12 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", tokenPath,
 	)
+
+	chain.Emit(
+		"AddToken",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
@@ -79,6 +85,12 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", tokenPath,
+	)
+
+	chain.Emit(
+		"RemoveToken",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

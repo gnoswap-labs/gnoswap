@@ -119,6 +119,12 @@ func (gv *governanceV1) ProposeText(
 		"createdAt", utils.FormatInt(proposal.CreatedAt()),
 	)
 
+	chain.Emit(
+		"ProposeText",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return proposal.ID()
 }
 
@@ -237,6 +243,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		"createdAt", utils.FormatInt(proposal.CreatedAt()),
 	)
 
+	chain.Emit(
+		"ProposeCommunityPoolSpend",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return proposal.ID()
 }
 
@@ -348,6 +360,12 @@ func (gv *governanceV1) ProposeParameterChange(
 		"maxVotingWeight", utils.FormatInt(proposal.VotingMaxWeight()),
 		"configVersion", utils.FormatInt(proposal.ConfigVersion()),
 		"createdAt", utils.FormatInt(proposal.CreatedAt()),
+	)
+
+	chain.Emit(
+		"ProposeParameterChange",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return proposal.ID()

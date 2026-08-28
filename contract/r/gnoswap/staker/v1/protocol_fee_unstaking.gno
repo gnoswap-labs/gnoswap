@@ -126,6 +126,12 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 		"prevFee", utils.FormatUint(prevUnStakingFee),
 		"newFee", utils.FormatUint(fee),
 	)
+
+	chain.Emit(
+		"SetUnStakingFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // setUnStakingFee internally updates the unstaking fee.

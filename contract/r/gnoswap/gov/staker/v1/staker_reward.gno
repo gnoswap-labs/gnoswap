@@ -91,6 +91,12 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 			)
 		}
 	}
+
+	chain.Emit(
+		"CollectReward",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CollectEmissionReward collects accumulated GNS emission rewards only.
@@ -123,6 +129,12 @@ func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
+
+	chain.Emit(
+		"CollectEmissionReward",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CollectProtocolFeeReward collects accumulated protocol fee rewards for the provided token path.
@@ -159,6 +171,12 @@ func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath stri
 			"collectedAmount", utils.FormatInt(amount),
 		)
 	}
+
+	chain.Emit(
+		"CollectProtocolFeeReward",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
@@ -228,6 +246,12 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 			)
 		}
 	}
+
+	chain.Emit(
+		"CollectRewardFromLaunchPad",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CollectEmissionRewardFromLaunchPad collects emission rewards only for launchpad project wallets.
@@ -271,6 +295,12 @@ func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to a
 			"emissionRewardAmount", utils.FormatInt(emissionReward),
 		)
 	}
+
+	chain.Emit(
+		"CollectEmissionRewardFromLaunchPad",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CollectProtocolFeeRewardFromLaunchPad collects one token path of protocol fee rewards for launchpad project wallets.
@@ -318,6 +348,12 @@ func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, t
 			"collectedAmount", utils.FormatInt(amount),
 		)
 	}
+
+	chain.Emit(
+		"CollectProtocolFeeRewardFromLaunchPad",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetAmountByProjectWallet sets the amount of reward for the project wallet.
@@ -368,6 +404,12 @@ func (gs *govStakerV1) SetAmountByProjectWallet(_ int, rlm realm, addr address, 
 
 		xgns.Burn(cross(rlm), launchpadAddr, amount)
 	}
+
+	chain.Emit(
+		"SetAmountByProjectWallet",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // claimRewards claims both emission and protocol fee rewards.

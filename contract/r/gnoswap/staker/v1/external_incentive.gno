@@ -1,9 +1,9 @@
 package staker
 
 import (
-	"errors"
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -119,6 +119,12 @@ func (s *stakerV1) CreateExternalIncentive(
 		"currentHeight", utils.FormatInt(currentHeight),
 		"currentTime", utils.FormatInt(currentTime),
 	)
+
+	chain.Emit(
+		"CreateExternalIncentive",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // EndExternalIncentive ends an external incentive and refunds remaining rewards.
@@ -233,6 +239,12 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 		"refundGnsAmount", utils.FormatInt(incentiveResolver.DepositGnsAmount()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 		"creator", incentiveResolver.Creator().String(),
+	)
+
+	chain.Emit(
+		"EndExternalIncentive",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 
@@ -391,6 +403,12 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 		"incentiveId", incentiveId,
 		"refundAddress", refundAddress.String(),
 		"penaltyAmount", utils.FormatInt(penaltyAmount),
+	)
+
+	chain.Emit(
+		"CollectExternalIncentivePenalty",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return penaltyAmount

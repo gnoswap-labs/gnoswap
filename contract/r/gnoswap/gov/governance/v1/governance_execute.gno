@@ -76,6 +76,12 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 		"proposalId", utils.FormatInt(proposalID),
 	)
 
+	chain.Emit(
+		"Execute",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return proposal.ID()
 }
 
@@ -183,6 +189,12 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
 		"proposalId", utils.FormatInt(proposalID),
+	)
+
+	chain.Emit(
+		"Cancel",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return proposal.ID()

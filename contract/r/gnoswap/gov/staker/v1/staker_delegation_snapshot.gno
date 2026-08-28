@@ -49,6 +49,12 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 		"prevRealm", prev.PkgPath(),
 		"period", utils.FormatInt(period),
 	)
+
+	chain.Emit(
+		"SetUnDelegationLockupPeriodByAdmin",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
@@ -95,6 +101,12 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, sn
 		"prevRealm", prev.PkgPath(),
 		"snapshotTime", utils.FormatInt(snapshotTime),
 		"target", target.String(),
+	)
+
+	chain.Emit(
+		"CleanStakerDelegationSnapshotByAdmin",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 

@@ -47,6 +47,12 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 			token,
 		)
 	}
+
+	chain.Emit(
+		"DistributeProtocolFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
@@ -75,6 +81,12 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 		pfs,
 		protocolFeeAddr,
 		tokenPath,
+	)
+
+	chain.Emit(
+		"DistributeProtocolFeeByTokenPath",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 
@@ -175,6 +187,12 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
 		"prevGovStakerPct", strconv.FormatInt(prevGovStakerPct, 10),
 	)
+
+	chain.Emit(
+		"SetDevOpsPct",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
 }
 
 // SetGovStakerPct sets the stakerPct.
@@ -213,6 +231,12 @@ func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
 		"prevDevOpsPct", strconv.FormatInt(prevDevOpsPct, 10),
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
 		"prevGovStakerPct", strconv.FormatInt(prevGovStakerPct, 10),
+	)
+
+	chain.Emit(
+		"SetGovStakerPct",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 }
 
@@ -259,6 +283,12 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 		"prevRealm", prev.PkgPath(),
 		"tokenPath", tokenPath,
 		"amount", strconv.FormatInt(amount, 10),
+	)
+
+	chain.Emit(
+		"AddToProtocolFee",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
 	)
 
 	return nil

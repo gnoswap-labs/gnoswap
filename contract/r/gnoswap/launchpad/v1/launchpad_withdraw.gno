@@ -93,6 +93,12 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 		"recipient", recipient.String(),
 	)
 
+	chain.Emit(
+		"CollectDepositGns",
+		"packagePath", rlm.PkgPath(),
+		"version", "sapphire-2026-08-10",
+	)
+
 	return withdrawalAmount, nil
 }
 
