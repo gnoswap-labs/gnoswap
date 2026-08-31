@@ -21,7 +21,7 @@ import (
 	gns "gno.land/r/gnoswap/gns"
 )
 
-const archivedProposalCount = 128
+const archivedProposalCount = 1000
 
 var (
 	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
@@ -58,7 +58,7 @@ func delegateGnsToAdmin(cur realm) {
 
 // Output:
 // [SCENARIO] create and cancel archived proposals
-// [INFO] archived proposals: 128
-// [INFO] active proposal id: 129
-// [EXPECTED] proposal history: 129
+// [INFO] archived proposals: 1000
+// [INFO] active proposal id: 1001
+// [EXPECTED] proposal history: 1001
 // [EXPECTED] oldest active snapshot exists: true

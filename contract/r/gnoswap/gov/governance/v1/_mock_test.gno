@@ -17,7 +17,6 @@ type mockGovernanceStore struct {
 	proposalUserVotingInfos   *bptree.BPTree
 	userProposals             *bptree.BPTree
 	setProposalVotingInfosErr error
-	getProposalCalls          int
 
 }
 
@@ -87,7 +86,6 @@ func (m *mockGovernanceStore) GetProposals() *bptree.BPTree {
 }
 
 func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposal, bool) {
-	m.getProposalCalls++
 	if m.proposals == nil {
 		return nil, false
 	}
