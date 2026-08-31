@@ -494,6 +494,32 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 	}
 }
 
+func TestStakerDelegate_RedelegateSkipsPendingUndelegation(cur realm, t *testing.T) {
+	setupStakerDelegateTestGNSBalance(cur, t)
+
+	user := testutils.TestAddress("alice")
+	previousValidator := testutils.TestAddress("zero_re_val1")
+	newValidator := testutils.TestAddress("zero_re_val2")
+	testing.SetRealm(testing.NewUserRealm(user))
+
+	callStakerDelegate(cur, previousValidator, minimumAmount, "")
+	firstDelegationID := staker.GetUserDelegationIDs(user, previousValidator)[0]
+	callStakerUndelegate(cur, previousValidator, minimumAmount)
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+
+	callStakerDelegate(cur, previousValidator, minimumAmount, "")
+	result := callStakerRedelegate(cur, previousValidator, newValidator, minimumAmount)
+
+	uassert.Equal(t, result, int64(minimumAmount))
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+
+	previousDelegationIDs := staker.GetUserDelegationIDs(user, previousValidator)
+	newDelegationIDs := staker.GetUserDelegationIDs(user, newValidator)
+	uassert.Equal(t, len(previousDelegationIDs), 1)
+	uassert.Equal(t, previousDelegationIDs[0], firstDelegationID)
+	uassert.Equal(t, len(newDelegationIDs), 1)
+}
+
 func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testing.T) {
 	setupStakerDelegateTestGNSBalance(cur, t)
 
