@@ -43,23 +43,23 @@ func main(cur realm) {
 	fundAndApprove(cur)
 	println()
 
-	println("[SCENARIO] 2. Fully undelegate the first delegation")
+	println("[SCENARIO] 2. Create delegation A, then fully undelegate it")
 	fullyUndelegateFirstDelegation(cur)
 	println()
 
-	println("[SCENARIO] 3. Delegate and undelegate again before the first lockup expires")
+	println("[SCENARIO] 3. Create delegation B while A is lockup-pending, then undelegate B")
 	undelegateSecondDelegation(cur)
 	println()
 
-	println("[SCENARIO] 4. Verify no zero withdrawal was added to the first delegation")
+	println("[SCENARIO] 4. Inspect the Undelegate path")
 	verifyWithdrawalCounts(cur)
 	println()
 
-	println("[SCENARIO] 5. Redelegate past a lockup-pending delegation")
+	println("[SCENARIO] 5. Create pending delegation C, then redelegate active delegation D")
 	redelegatePastPendingUndelegation(cur)
 	println()
 
-	println("[SCENARIO] 6. Verify redelegation preserved the pending withdrawal")
+	println("[SCENARIO] 6. Inspect the Redelegate path")
 	verifyRedelegation(cur)
 	println()
 }
@@ -82,7 +82,7 @@ func fullyUndelegateFirstDelegation(cur realm) {
 
 	testing.SetRealm(delegatorRealm)
 	staker.Undelegate(cross(cur), validatorAddr, delegateAmount)
-	ufmt.Printf("[INFO] first delegation ID: %d, withdrawal count: %d\n", firstDelegationID, staker.GetDelegationWithdrawCount(firstDelegationID))
+	ufmt.Printf("[INFO] delegation A is lockup-pending: id=%d, active=0, withdrawals=%d\n", firstDelegationID, staker.GetDelegationWithdrawCount(firstDelegationID))
 }
 
 func undelegateSecondDelegation(cur realm) {
@@ -104,8 +104,9 @@ func verifyWithdrawalCounts(cur realm) {
 		panic("zero amount withdrawal was recorded")
 	}
 
-	ufmt.Printf("[EXPECTED] first delegation withdrawal count remains 1: %t\n", firstCount == 1)
-	ufmt.Printf("[EXPECTED] second delegation withdrawal count is 1: %t\n", secondCount == 1)
+	ufmt.Printf("[STATE] A (lockup-pending): active=0, withdrawals=%d\n", firstCount)
+	ufmt.Printf("[STATE] B (fully undelegated): active=0, withdrawals=%d\n", secondCount)
+	ufmt.Printf("[EXPECTED] Undelegate skips A instead of appending a zero withdrawal: %t\n", firstCount == 1)
 }
 
 func redelegatePastPendingUndelegation(cur realm) {
@@ -120,7 +121,6 @@ func redelegatePastPendingUndelegation(cur realm) {
 	staker.Delegate(cross(cur), redelegateFrom, delegateAmount, "")
 	staker.Redelegate(cross(cur), redelegateFrom, redelegateTo, delegateAmount)
 
-	testing.SetRealm(govStakerRealm)
 	if staker.GetDelegationWithdrawCount(firstRedelegationID) != 1 {
 		panic("zero amount withdrawal was recorded during redelegation")
 	}
@@ -134,25 +134,34 @@ func verifyRedelegation(cur realm) {
 		panic("redelegation records are inconsistent")
 	}
 
-	ufmt.Printf("[EXPECTED] pending delegation remains at previous validator: %t\n", len(previousDelegationIDs) == 1)
-	ufmt.Printf("[EXPECTED] redelegated delegation exists at new validator: %t\n", len(newDelegationIDs) == 1)
+	pendingWithdrawalCount := staker.GetDelegationWithdrawCount(previousDelegationIDs[0])
+	redelegatedWithdrawalCount := staker.GetDelegationWithdrawCount(newDelegationIDs[0])
+	if pendingWithdrawalCount != 1 || redelegatedWithdrawalCount != 0 {
+		panic("redelegation withdrawal records are inconsistent")
+	}
+
+	ufmt.Printf("[STATE] C (lockup-pending): delegation records=%d, withdrawals=%d\n", len(previousDelegationIDs), pendingWithdrawalCount)
+	ufmt.Printf("[STATE] D (redelegated target): delegation records=%d, withdrawals=%d\n", len(newDelegationIDs), redelegatedWithdrawalCount)
+	ufmt.Printf("[EXPECTED] Redelegate skips C instead of appending a zero withdrawal: %t\n", pendingWithdrawalCount == 1)
 }
 
 // Output:
 // [SCENARIO] 1. Fund and approve the delegator
 // [INFO] approved 4000000 GNS for delegation
 //
-// [SCENARIO] 2. Fully undelegate the first delegation
-// [INFO] first delegation ID: 1, withdrawal count: 1
+// [SCENARIO] 2. Create delegation A, then fully undelegate it
+// [INFO] delegation A is lockup-pending: id=1, active=0, withdrawals=1
 //
-// [SCENARIO] 3. Delegate and undelegate again before the first lockup expires
+// [SCENARIO] 3. Create delegation B while A is lockup-pending, then undelegate B
 //
-// [SCENARIO] 4. Verify no zero withdrawal was added to the first delegation
-// [EXPECTED] first delegation withdrawal count remains 1: true
-// [EXPECTED] second delegation withdrawal count is 1: true
+// [SCENARIO] 4. Inspect the Undelegate path
+// [STATE] A (lockup-pending): active=0, withdrawals=1
+// [STATE] B (fully undelegated): active=0, withdrawals=1
+// [EXPECTED] Undelegate skips A instead of appending a zero withdrawal: true
 //
-// [SCENARIO] 5. Redelegate past a lockup-pending delegation
+// [SCENARIO] 5. Create pending delegation C, then redelegate active delegation D
 //
-// [SCENARIO] 6. Verify redelegation preserved the pending withdrawal
-// [EXPECTED] pending delegation remains at previous validator: true
-// [EXPECTED] redelegated delegation exists at new validator: true
+// [SCENARIO] 6. Inspect the Redelegate path
+// [STATE] C (lockup-pending): delegation records=1, withdrawals=1
+// [STATE] D (redelegated target): delegation records=1, withdrawals=0
+// [EXPECTED] Redelegate skips C instead of appending a zero withdrawal: true
