@@ -122,12 +122,6 @@ func GetHalvingYearMaxAmount(year int64) int64 {
 	return halvingData.getMaxAmount(year)
 }
 
-// GetHalvingYearMintAmount returns the amount of tokens minted for the specified halving year.
-func GetHalvingYearMintAmount(year int64) int64 {
-	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getMintedAmount(year)
-}
-
 // GetHalvingYearLeftAmount returns the remaining token issuance for the specified halving year.
 func GetHalvingYearLeftAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()

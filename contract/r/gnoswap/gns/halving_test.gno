@@ -96,8 +96,7 @@ func TestHalvingYearGetters(cur realm, t *testing.T) {
 			// MaxAmount should match GetHalvingAmountsPerYear
 			uassert.Equal(t, GetHalvingAmountsPerYear(year), GetHalvingYearMaxAmount(year))
 
-			// MintAmount and AccuAmount should be 0 initially
-			uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year))
+			// AccuAmount should be 0 initially.
 			uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year))
 		}
 	})
@@ -106,7 +105,6 @@ func TestHalvingYearGetters(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
-		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(0))
 		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
 	})
 
@@ -114,7 +112,6 @@ func TestHalvingYearGetters(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
-		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(13))
 		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(13))
 	})
 }
@@ -224,7 +221,6 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		startTimestamps: make([]int64, HALVING_END_YEAR),
 		endTimestamps:   make([]int64, HALVING_END_YEAR),
 		maxAmount:       make([]int64, HALVING_END_YEAR),
-		mintedAmount:    make([]int64, HALVING_END_YEAR),
 		leftAmount:      make([]int64, HALVING_END_YEAR),
 		accumAmount:     make([]int64, HALVING_END_YEAR),
 		amountPerSecond: make([]int64, HALVING_END_YEAR),
@@ -235,7 +231,6 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		hd.startTimestamps[i] = 1000 + i*100
 		hd.endTimestamps[i] = 2000 + i*100
 		hd.maxAmount[i] = 4000 + i*100
-		hd.mintedAmount[i] = 5000 + i*100
 		hd.leftAmount[i] = 6000 + i*100
 		hd.accumAmount[i] = 7000 + i*100
 		hd.amountPerSecond[i] = 8000 + i*100
@@ -251,7 +246,6 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		{"StartTimestamp with year 0", 0, hd.getStartTimestamp, 0},
 		{"EndTimestamp with year 0", 0, hd.getEndTimestamp, 0},
 		{"MaxAmount with year 0", 0, hd.getMaxAmount, 0},
-		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
 		{"LeftAmount with year 0", 0, hd.getLeftAmount, 0},
 		{"AccumAmount with year 0", 0, hd.getAccumAmount, 0},
 		{"AmountPerSeconds with year 0", 0, hd.getAmountPerSecond, 0},
@@ -273,7 +267,6 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		{"StartTimestamp with year 1", 1, hd.getStartTimestamp, 1000},
 		{"EndTimestamp with year 1", 1, hd.getEndTimestamp, 2000},
 		{"MaxAmount with year 1", 1, hd.getMaxAmount, 4000},
-		{"MintedAmount with year 1", 1, hd.getMintedAmount, 5000},
 		{"LeftAmount with year 1", 1, hd.getLeftAmount, 6000},
 		{"AccumAmount with year 1", 1, hd.getAccumAmount, 7000},
 		{"AmountPerSeconds with year 1", 1, hd.getAmountPerSecond, 8000},
@@ -282,7 +275,6 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		{"StartTimestamp with year 12", 12, hd.getStartTimestamp, 2100},
 		{"EndTimestamp with year 12", 12, hd.getEndTimestamp, 3100},
 		{"MaxAmount with year 12", 12, hd.getMaxAmount, 5100},
-		{"MintedAmount with year 12", 12, hd.getMintedAmount, 6100},
 		{"LeftAmount with year 12", 12, hd.getLeftAmount, 7100},
 		{"AccumAmount with year 12", 12, hd.getAccumAmount, 8100},
 		{"AmountPerSeconds with year 12", 12, hd.getAmountPerSecond, 9100},
@@ -311,7 +303,6 @@ func TestHalvingDataSettersWithInvalidYear(cur realm, t *testing.T) {
 		{"setStartTimestamp with year 0", 0, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, true},
 		{"setEndTimestamp with year 0", 0, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, true},
 		{"setMaxAmount with year 0", 0, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
-		{"setMintedAmount with year 0", 0, func(y int64) error { return hd.setMintedAmount(y, 1000) }, true},
 		{"setAccumAmount with year 0", 0, func(y int64) error { return hd.setAccumAmount(y, 1000) }, true},
 		{"setLeftAmount with year 0", 0, func(y int64) error { return hd.setLeftAmount(y, 1000) }, true},
 		{"setAmountPerSecond with year 0", 0, func(y int64) error { return hd.setAmountPerSecond(y, 1000) }, true},

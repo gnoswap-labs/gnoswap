@@ -10,7 +10,6 @@ type HalvingData struct {
 	startTimestamps []int64
 	endTimestamps   []int64
 	maxAmount       []int64
-	mintedAmount    []int64
 	leftAmount      []int64
 	accumAmount     []int64
 	amountPerSecond []int64
@@ -44,14 +43,6 @@ func (h *HalvingData) getMaxAmount(year int64) int64 {
 	}
 
 	return h.maxAmount[year-1]
-}
-
-// getMintedAmount returns the amount already minted for the specified halving year.
-func (h *HalvingData) getMintedAmount(year int64) int64 {
-	if validYear(year) != nil {
-		return 0
-	}
-	return h.mintedAmount[year-1]
 }
 
 // getAccumAmount returns the accumulated emission amount for the specified halving year.
@@ -118,19 +109,6 @@ func (h *HalvingData) setMaxAmount(year, amount int64) error {
 	return nil
 }
 
-// setMintedAmount sets the minted amount for the specified halving year.
-// Returns error if year is invalid.
-func (h *HalvingData) setMintedAmount(year, amount int64) error {
-	err := validYear(year)
-	if err != nil {
-		return err
-	}
-
-	h.mintedAmount[year-1] = amount
-
-	return nil
-}
-
 // setAccumAmount sets the accumulated amount for the specified halving year.
 // Returns error if year is invalid.
 func (h *HalvingData) setAccumAmount(year, amount int64) error {
@@ -187,7 +165,6 @@ func (h *HalvingData) Clone() *HalvingData {
 	startTimestamps := make([]int64, len(h.startTimestamps))
 	endTimestamps := make([]int64, len(h.endTimestamps))
 	maxAmount := make([]int64, len(h.maxAmount))
-	mintedAmount := make([]int64, len(h.mintedAmount))
 	leftAmount := make([]int64, len(h.leftAmount))
 	accumAmount := make([]int64, len(h.accumAmount))
 	amountPerSecond := make([]int64, len(h.amountPerSecond))
@@ -195,7 +172,6 @@ func (h *HalvingData) Clone() *HalvingData {
 	copy(startTimestamps, h.startTimestamps)
 	copy(endTimestamps, h.endTimestamps)
 	copy(maxAmount, h.maxAmount)
-	copy(mintedAmount, h.mintedAmount)
 	copy(leftAmount, h.leftAmount)
 	copy(accumAmount, h.accumAmount)
 	copy(amountPerSecond, h.amountPerSecond)
@@ -204,7 +180,6 @@ func (h *HalvingData) Clone() *HalvingData {
 		startTimestamps: startTimestamps,
 		endTimestamps:   endTimestamps,
 		maxAmount:       maxAmount,
-		mintedAmount:    mintedAmount,
 		leftAmount:      leftAmount,
 		accumAmount:     accumAmount,
 		amountPerSecond: amountPerSecond,
@@ -218,7 +193,6 @@ func NewHalvingData(startTimestamp int64) *HalvingData {
 		startTimestamps: make([]int64, HALVING_END_YEAR),
 		endTimestamps:   make([]int64, HALVING_END_YEAR),
 		maxAmount:       make([]int64, HALVING_END_YEAR),
-		mintedAmount:    make([]int64, HALVING_END_YEAR),
 		leftAmount:      make([]int64, HALVING_END_YEAR),
 		accumAmount:     make([]int64, HALVING_END_YEAR),
 		amountPerSecond: make([]int64, HALVING_END_YEAR),
@@ -233,7 +207,6 @@ func NewHalvingData(startTimestamp int64) *HalvingData {
 		halvingData.setStartTimestamp(year, yearStartTimestamp)
 		halvingData.setEndTimestamp(year, yearEndTimestamp)
 		halvingData.setMaxAmount(year, yearDistributionAmount)
-		halvingData.setMintedAmount(year, 0)
 		halvingData.setAccumAmount(year, 0)
 		halvingData.setAmountPerSecond(year, yearAmountPerSecond)
 		halvingData.setLeftAmount(year, yearDistributionAmount)

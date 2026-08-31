@@ -161,9 +161,9 @@ func TestEmissionStateConsistency(cur realm, t *testing.T) {
 					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
 						"Year 1 left amount should equal max amount")
 
-					// Verify initial minted/left amounts
-					uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year),
-						"Initial minted amount should be 0")
+					// Verify initial accumulated/left amounts.
+					uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year),
+						"Initial accumulated amount should be 0")
 					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
 						"Initial left amount should equal max amount")
 				}
