@@ -270,16 +270,16 @@ func TestProtocolFeeRewardManager_removeStake(cur realm, t *testing.T) {
 			initialAmount:    0,
 			removeAmount:     100,
 			currentTimestamp: 500,
-			expectedAmount:   0, // Clamps to zero
-			expectedHasError: false,
+			expectedAmount:   0, // Rejected; state remains unchanged
+			expectedHasError: true,
 		},
 		{
 			name:             "Remove stake with amount exceeding staked",
 			initialAmount:    100,
 			removeAmount:     200,
 			currentTimestamp: 600,
-			expectedAmount:   0, // Clamps to zero
-			expectedHasError: false,
+			expectedAmount:   100, // Rejected; state remains unchanged
+			expectedHasError: true,
 		},
 	}
 
@@ -307,6 +307,26 @@ func TestProtocolFeeRewardManager_removeStake(cur realm, t *testing.T) {
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
 		})
 	}
+}
+
+func TestProtocolFeeRewardManager_removeStake_preservesAggregateInvariantOnOverRemoval(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	uassert.NoError(t, resolver.addStake("alice", 200, 10))
+	uassert.NoError(t, resolver.addStake("bob", 300, 10))
+	uassert.Error(t, resolver.removeStake("alice", 300, 20))
+
+	alice, aliceExists, err := resolver.GetRewardState("alice")
+	uassert.NoError(t, err)
+	uassert.True(t, aliceExists)
+	bob, bobExists, err := resolver.GetRewardState("bob")
+	uassert.NoError(t, err)
+	uassert.True(t, bobExists)
+
+	uassert.Equal(t, int64(200), alice.GetStakedAmount())
+	uassert.Equal(t, int64(300), bob.GetStakedAmount())
+	uassert.Equal(t, int64(500), resolver.GetTotalStakedAmount())
 }
 
 // Test claimRewards

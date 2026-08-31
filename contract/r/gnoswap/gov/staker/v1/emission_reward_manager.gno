@@ -160,6 +160,10 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
+
+	if amount > resolvedState.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
 	if err != nil {
 		return err

@@ -499,7 +499,7 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 		currentHeight int64
 	}{
 		{
-			name:          "Add stake from launchpad",
+			name:          "Reject launchpad removal without matching stake",
 			address:       "g1projectowner1234567890abcdefghijklm",
 			amount:        2000,
 			currentHeight: 100,
@@ -523,14 +523,15 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.amount)
 
-			// When: Clear deposit via production launchpad path
+			// Removing an orphaned deposit must not silently corrupt reward accounting.
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
-			staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
+			uassert.AbortsWithMessage(t, cur, "remove amount exceeds staked amount", func() {
+				staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
+			})
 
-			// Then:
-			launchpadDepositAmount, _ := staker.GetLaunchpadProjectDeposit(tt.address)
-			uassert.Equal(t, launchpadDepositAmount, int64(0))
+			launchpadDepositAmount, _ := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+			uassert.Equal(t, launchpadDepositAmount, tt.amount)
 		})
 	}
 }

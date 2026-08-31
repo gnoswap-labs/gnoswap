@@ -300,6 +300,10 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+
+	if amount > resolvedState.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
 	if err != nil {
 		return err

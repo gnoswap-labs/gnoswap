@@ -257,12 +257,12 @@ func TestEmissionRewardManager_removeStake(cur realm, t *testing.T) {
 			expectedHasError: true,
 		},
 		{
-			name:             "Remove excessive stake (clamps to zero)",
+			name:             "Remove excessive stake",
 			initialAmount:    200,
 			removeAmount:     300,
 			currentHeight:    500,
-			expectedAmount:   0, // Clamped to zero
-			expectedHasError: false,
+			expectedAmount:   200, // Rejected; state remains unchanged
+			expectedHasError: true,
 		},
 	}
 
@@ -346,7 +346,6 @@ func TestEmissionRewardManager_claimRewards(cur realm, t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestEmissionRewardManager_claimRewards_MultipleTimes(cur realm, t *testing.T) {
@@ -548,36 +547,21 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(cur realm, t 
 	}
 }
 
-// removeStake bug reproduction 1:
-// When removeStake is called for a new address (not present in the tree),
-// internally a NewEmissionRewardState(...) is created. If rewardStates.Set(...) is missing,
-// the new state is not persisted in the tree, and this was a bug.
-// With the fixed code, the state should be saved correctly.
-func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(cur realm, t *testing.T) {
+// removeStake rejects removal from an unknown address before changing state.
+func TestEmissionRewardManager_removeStake_rejectsOverRemovalForNewAddress(cur realm, t *testing.T) {
 	manager := staker.NewEmissionRewardManager()
 	resolver := NewEmissionRewardManagerResolver(manager)
 
-	// Prepare: advance global accumulator once for safety
-	resolver.SetAccumulatedRewardX128PerStake(u256.NewUint(0))
-	resolver.updateAccumulatedRewardX128PerStake(0, 10)
-
-	// When: calling removeStake on an address that does not exist yet
 	addr := "user-new"
 	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 
 	err := resolver.removeStake(addr, 100, 20)
-	uassert.NoError(t, err)
+	uassert.Error(t, err)
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 
-	// Then: state should be persisted in the tree
-	// (this fails in the buggy version where Set was missing)
-	rs, ok, err := resolver.GetRewardState(addr)
+	_, ok, err := resolver.GetRewardState(addr)
 	uassert.NoError(t, err)
-	uassert.True(t, ok)
-
-	uassert.NotEqual(t, rs, nil)
-	uassert.Equal(t, rs.GetStakedAmount(), int64(0)) // clamped to 0, no negative values
-	// rewardDebtX128 should be a cloned snapshot
-	uassert.NotEqual(t, rs.GetRewardDebtX128(), nil)
+	uassert.False(t, ok)
 }
 
 // removeStake bug reproduction 2 (defensive check):
@@ -745,4 +729,24 @@ func TestEmissionRewardManager_ZeroStakeEdgeCases(cur realm, t *testing.T) {
 		// User should have earned rewards before removal
 		uassert.True(t, claimed >= 0)
 	})
+}
+
+func TestEmissionRewardManager_removeStake_preservesAggregateInvariantOnOverRemoval(cur realm, t *testing.T) {
+	manager := staker.NewEmissionRewardManager()
+	resolver := NewEmissionRewardManagerResolver(manager)
+
+	uassert.NoError(t, resolver.addStake("alice", 200, 10))
+	uassert.NoError(t, resolver.addStake("bob", 300, 10))
+	uassert.Error(t, resolver.removeStake("alice", 300, 20))
+
+	alice, aliceExists, err := resolver.GetRewardState("alice")
+	uassert.NoError(t, err)
+	uassert.True(t, aliceExists)
+	bob, bobExists, err := resolver.GetRewardState("bob")
+	uassert.NoError(t, err)
+	uassert.True(t, bobExists)
+
+	uassert.Equal(t, int64(200), alice.GetStakedAmount())
+	uassert.Equal(t, int64(300), bob.GetStakedAmount())
+	uassert.Equal(t, int64(500), resolver.GetTotalStakedAmount())
 }
