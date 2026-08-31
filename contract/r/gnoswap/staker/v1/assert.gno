@@ -17,6 +17,8 @@ const (
 	TIMESTAMP_180DAYS = int64(15552000)
 	TIMESTAMP_365DAYS = int64(31536000)
 
+	maxIncentiveStartDelay = 7 * 24 * time.Hour
+
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
 	maxUnstakingFee = uint64(1000) // 10%
@@ -177,7 +179,8 @@ func assertIsValidFeeRate(fee uint64) {
 	}
 }
 
-// assertIsValidIncentiveStartTime ensures the incentive starts at midnight at least 24 hours after creation.
+// assertIsValidIncentiveStartTime ensures the incentive starts at midnight no earlier than 24 hours after creation
+// and no later than 7 days after the first eligible midnight.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -196,6 +199,14 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
 			ufmt.Sprintf("startTimestamp(%d) must be at least 24 hours later", startTimestamp),
+		))
+	}
+
+	maximumStartTimestamp := getMaximumIncentiveStartTimestamp()
+	if startTimestamp > maximumStartTimestamp {
+		panic(makeErrorWithDetails(
+			errInvalidIncentiveStartTime,
+			ufmt.Sprintf("startTimestamp(%d) exceeds the maximum start time policy", startTimestamp),
 		))
 	}
 
@@ -272,6 +283,18 @@ func assertIsNotStartedIncentive(incentiveResolver *ExternalIncentiveResolver, c
 // getMinimumIncentiveStartTimestamp returns after 24 hours from now.
 func getMinimumIncentiveStartTimestamp() int64 {
 	return time.Now().Add(24 * time.Hour).Unix()
+}
+
+// getMaximumIncentiveStartTimestamp returns 7 days after the first midnight that satisfies
+// the minimum 24-hour delay.
+func getMaximumIncentiveStartTimestamp() int64 {
+	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
+	firstEligibleMidnight := time.Unix(minimumStartTimestamp, 0).Truncate(24 * time.Hour)
+	if firstEligibleMidnight.Unix() < minimumStartTimestamp {
+		firstEligibleMidnight = firstEligibleMidnight.Add(24 * time.Hour)
+	}
+
+	return firstEligibleMidnight.Add(maxIncentiveStartDelay).Unix()
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
