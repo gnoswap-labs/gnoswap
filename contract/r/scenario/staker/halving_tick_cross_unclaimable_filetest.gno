@@ -9,6 +9,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/gnoswap/gnsmath"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -110,21 +111,47 @@ func crossIntoRangeBySwap(cur realm) {
 func collectAfterCross(cur realm) {
 	testing.SetRealm(halvingTickAdminRealm)
 	testing.SkipHeights(1)
+
 	beforeUser := gns.BalanceOf(halvingTickAdmin)
-	beforeCommunity, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-	communityBefore := gns.BalanceOf(beforeCommunity)
+	communityAddr, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	communityBefore := gns.BalanceOf(communityAddr)
+	protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeBefore := gns.BalanceOf(protocolFeeAddr)
+	emissionBefore := sr.GetTotalEmissionSent()
+
 	sr.CollectReward(cross(cur), 2)
-	if gns.BalanceOf(halvingTickAdmin) <= beforeUser {
+
+	userReward := gns.BalanceOf(halvingTickAdmin) - beforeUser
+	communityReward := gns.BalanceOf(communityAddr) - communityBefore
+	protocolFee := gns.BalanceOf(protocolFeeAddr) - protocolFeeBefore
+	emissionDelta := sr.GetTotalEmissionSent() - emissionBefore
+
+	if userReward <= 0 {
 		panic("in-range staker must receive a reward")
 	}
-	if gns.BalanceOf(beforeCommunity) <= communityBefore {
+	if communityReward <= 0 {
 		panic("zero-liquidity interval must be sent to community pool")
 	}
-	println("[EXPECTED] reward and unclaimable distribution completed")
+	if userReward+communityReward+protocolFee != emissionDelta {
+		panic("internal GNS distribution must match total emission accounting")
+	}
+
+	ufmt.Printf("[RESULT] internal GNS distribution:\n")
+	ufmt.Printf("  - Staker reward: %d\n", userReward)
+	ufmt.Printf("  - Community unclaimable/penalty: %d\n", communityReward)
+	ufmt.Printf("  - Protocol fee: %d\n", protocolFee)
+	ufmt.Printf("  - Total emission delta: %d\n", emissionDelta)
+	ufmt.Printf("[EXPECTED] recipients match emission accounting: %t\n",
+		userReward+communityReward+protocolFee == emissionDelta)
 }
 
 // Output:
 // [SCENARIO] halving tick-cross unclaimable
 // [EXPECTED] first halving crossed
 // [EXPECTED] swap crossed into staked range
-// [EXPECTED] reward and unclaimable distribution completed
+// [RESULT] internal GNS distribution:
+//   - Staker reward: 6688779
+//   - Community unclaimable/penalty: 168749957273752
+//   - Protocol fee: 0
+//   - Total emission delta: 168749963962531
+// [EXPECTED] recipients match emission accounting: true
