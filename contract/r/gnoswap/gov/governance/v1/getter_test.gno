@@ -922,6 +922,85 @@ func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 	}
 }
 
+func TestGetOldestActiveProposalSnapshotTime_UsesActiveIndex(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	expired := governance.NewProposal(
+		1,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000, 1000),
+		governance.NewProposalMetadata("expired", "expired"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1archived"),
+		1,
+		now-1000,
+		runtime.ChainHeight(),
+	)
+	for id := int64(1); id <= 1000; id++ {
+		uassert.True(t, store.SetProposal(0, cur, id, expired) == nil)
+	}
+
+	active := governance.NewProposal(
+		1001,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now, 1000),
+		governance.NewProposalMetadata("active", "active"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1active"),
+		1,
+		now,
+		runtime.ChainHeight(),
+	)
+	uassert.True(t, gv.addProposal(0, cur, active))
+	store.getProposalCalls = 0
+
+	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.True(t, hasActive)
+	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
+	uassert.Equal(t, 1, store.getProposalCalls)
+	uassert.Equal(t, 1001, store.GetProposals().Size())
+	uassert.Equal(t, 1, store.GetActiveProposals().Size())
+}
+
+func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	expired := governance.NewProposal(
+		1,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000, 1000),
+		governance.NewProposalMetadata("expired", "expired"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1expired"),
+		1,
+		now-1000,
+		runtime.ChainHeight(),
+	)
+	active := governance.NewProposal(
+		2,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now, 1000),
+		governance.NewProposalMetadata("active", "active"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1active"),
+		1,
+		now,
+		runtime.ChainHeight(),
+	)
+	uassert.True(t, gv.addProposal(0, cur, expired))
+	uassert.True(t, gv.addProposal(0, cur, active))
+
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now) == nil)
+
+	uassert.Equal(t, 1, store.GetActiveProposals().Size())
+	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.True(t, hasActive)
+	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
+}
+
 // ==================================
 // Voting Weight Snapshot Getter Tests
 // ==================================
