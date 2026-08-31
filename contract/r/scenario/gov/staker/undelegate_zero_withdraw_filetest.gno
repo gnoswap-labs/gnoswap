@@ -31,6 +31,8 @@ var (
 	delegatorAddr  = testutils.TestAddress("zero_withdraw")
 	delegatorRealm = testing.NewUserRealm(delegatorAddr)
 	validatorAddr  = testutils.TestAddress("zero_validator")
+	redelegateFrom = testutils.TestAddress("zero_re_val1")
+	redelegateTo   = testutils.TestAddress("zero_re_val2")
 
 	delegateAmount    = int64(1_000_000)
 	firstDelegationID int64
@@ -52,15 +54,23 @@ func main(cur realm) {
 	println("[SCENARIO] 4. Verify no zero withdrawal was added to the first delegation")
 	verifyWithdrawalCounts(cur)
 	println()
+
+	println("[SCENARIO] 5. Redelegate past a lockup-pending delegation")
+	redelegatePastPendingUndelegation(cur)
+	println()
+
+	println("[SCENARIO] 6. Verify redelegation preserved the pending withdrawal")
+	verifyRedelegation(cur)
+	println()
 }
 
 func fundAndApprove(cur realm) {
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross(cur), delegatorAddr, delegateAmount*2)
+	gns.Transfer(cross(cur), delegatorAddr, delegateAmount*4)
 
 	testing.SetRealm(delegatorRealm)
-	gns.Approve(cross(cur), govStakerAddr, delegateAmount*2)
-	ufmt.Printf("[INFO] approved %d GNS for delegation\n", delegateAmount*2)
+	gns.Approve(cross(cur), govStakerAddr, delegateAmount*4)
+	ufmt.Printf("[INFO] approved %d GNS for delegation\n", delegateAmount*4)
 }
 
 func fullyUndelegateFirstDelegation(cur realm) {
@@ -98,9 +108,39 @@ func verifyWithdrawalCounts(cur realm) {
 	ufmt.Printf("[EXPECTED] second delegation withdrawal count is 1: %t\n", secondCount == 1)
 }
 
+func redelegatePastPendingUndelegation(cur realm) {
+	testing.SetRealm(delegatorRealm)
+	staker.Delegate(cross(cur), redelegateFrom, delegateAmount, "")
+
+	testing.SetRealm(govStakerRealm)
+	firstRedelegationID := staker.GetUserDelegationIDs(delegatorAddr, redelegateFrom)[0]
+
+	testing.SetRealm(delegatorRealm)
+	staker.Undelegate(cross(cur), redelegateFrom, delegateAmount)
+	staker.Delegate(cross(cur), redelegateFrom, delegateAmount, "")
+	staker.Redelegate(cross(cur), redelegateFrom, redelegateTo, delegateAmount)
+
+	testing.SetRealm(govStakerRealm)
+	if staker.GetDelegationWithdrawCount(firstRedelegationID) != 1 {
+		panic("zero amount withdrawal was recorded during redelegation")
+	}
+}
+
+func verifyRedelegation(cur realm) {
+	testing.SetRealm(govStakerRealm)
+	previousDelegationIDs := staker.GetUserDelegationIDs(delegatorAddr, redelegateFrom)
+	newDelegationIDs := staker.GetUserDelegationIDs(delegatorAddr, redelegateTo)
+	if len(previousDelegationIDs) != 1 || len(newDelegationIDs) != 1 {
+		panic("redelegation records are inconsistent")
+	}
+
+	ufmt.Printf("[EXPECTED] pending delegation remains at previous validator: %t\n", len(previousDelegationIDs) == 1)
+	ufmt.Printf("[EXPECTED] redelegated delegation exists at new validator: %t\n", len(newDelegationIDs) == 1)
+}
+
 // Output:
 // [SCENARIO] 1. Fund and approve the delegator
-// [INFO] approved 2000000 GNS for delegation
+// [INFO] approved 4000000 GNS for delegation
 //
 // [SCENARIO] 2. Fully undelegate the first delegation
 // [INFO] first delegation ID: 1, withdrawal count: 1
@@ -110,3 +150,9 @@ func verifyWithdrawalCounts(cur realm) {
 // [SCENARIO] 4. Verify no zero withdrawal was added to the first delegation
 // [EXPECTED] first delegation withdrawal count remains 1: true
 // [EXPECTED] second delegation withdrawal count is 1: true
+//
+// [SCENARIO] 5. Redelegate past a lockup-pending delegation
+//
+// [SCENARIO] 6. Verify redelegation preserved the pending withdrawal
+// [EXPECTED] pending delegation remains at previous validator: true
+// [EXPECTED] redelegated delegation exists at new validator: true
