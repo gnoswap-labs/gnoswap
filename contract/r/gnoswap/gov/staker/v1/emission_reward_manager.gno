@@ -149,6 +149,11 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 		return errors.New("amount must be non-negative")
 	}
 
+	currentTotalStakedAmount := self.GetTotalStakedAmount()
+	if amount > currentTotalStakedAmount {
+		return errors.New("remove amount exceeds total staked amount")
+	}
+
 	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
 
 	rewardState, ok, err := self.GetRewardState(address)
@@ -169,11 +174,7 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 	// persist updated state
 	self.setRewardStates(address, rewardState)
 
-	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
-	if updatedTotalStakedAmount < 0 {
-		updatedTotalStakedAmount = 0
-	}
-	self.SetTotalStakedAmount(updatedTotalStakedAmount)
+	self.SetTotalStakedAmount(gnsmath.SafeSubInt64(currentTotalStakedAmount, amount))
 
 	return nil
 }

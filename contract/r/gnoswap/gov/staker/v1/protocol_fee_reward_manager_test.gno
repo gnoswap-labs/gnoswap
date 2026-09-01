@@ -329,6 +329,22 @@ func TestProtocolFeeRewardManager_removeStake_preservesAggregateInvariantOnOverR
 	uassert.Equal(t, int64(500), resolver.GetTotalStakedAmount())
 }
 
+func TestProtocolFeeRewardManager_removeStake_rejectsTotalUnderflow(cur realm, t *testing.T) {
+	manager := staker.NewProtocolFeeRewardManager()
+	resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+	uassert.NoError(t, resolver.addStake("alice", 200, 10))
+	resolver.SetTotalStakedAmount(100)
+
+	uassert.Error(t, resolver.removeStake("alice", 200, 20))
+
+	alice, exists, err := resolver.GetRewardState("alice")
+	uassert.NoError(t, err)
+	uassert.True(t, exists)
+	uassert.Equal(t, int64(200), alice.GetStakedAmount())
+	uassert.Equal(t, int64(100), resolver.GetTotalStakedAmount())
+}
+
 // Test claimRewards
 func TestProtocolFeeRewardManager_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
