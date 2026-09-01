@@ -100,9 +100,9 @@ func (e *EmissionState) getHalvingYearAmountPerSecond(year int64) int64 {
 	return e.halvingData.getAmountPerSecond(year)
 }
 
-// getHalvingYearAccumulatedAmount returns the accumulated emission amount for the specified halving year.
-func (e *EmissionState) getHalvingYearAccumulatedAmount(year int64) int64 {
-	return e.halvingData.getAccumAmount(year)
+// getHalvingYearMintedAmount returns the minted emission amount for the specified halving year.
+func (e *EmissionState) getHalvingYearMintedAmount(year int64) int64 {
+	return e.halvingData.getMintedAmount(year)
 }
 
 // getHalvingYearLeftAmount returns the remaining emission amount for the specified halving year.
@@ -110,17 +110,17 @@ func (e *EmissionState) getHalvingYearLeftAmount(year int64) int64 {
 	return e.halvingData.getLeftAmount(year)
 }
 
-// addHalvingYearAccumulatedAmount adds to the accumulated emission amount for the specified halving year.
+// addHalvingYearMintedAmount adds to the minted emission amount for the specified halving year.
 // Returns error if year is invalid (0 or outside 1-12 range).
-func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64) error {
+func (e *EmissionState) addHalvingYearMintedAmount(year int64, amount int64) error {
 	if year == 0 {
 		return makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d", year))
 	}
 
-	accumulatedAmount := e.halvingData.getAccumAmount(year)
-	accumulatedAmount = gnsmath.SafeAddInt64(accumulatedAmount, amount)
+	mintedAmount := e.halvingData.getMintedAmount(year)
+	mintedAmount = gnsmath.SafeAddInt64(mintedAmount, amount)
 
-	return e.halvingData.setAccumAmount(year, accumulatedAmount)
+	return e.halvingData.setMintedAmount(year, mintedAmount)
 }
 
 // subHalvingYearLeftAmount subtracts from the remaining emission amount for the specified halving year.
