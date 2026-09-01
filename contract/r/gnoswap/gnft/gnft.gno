@@ -5,39 +5,47 @@ import (
 	"errors"
 
 	"gno.land/p/demo/tokens/grc721"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/demo/tokens/grc721/metadata"
+	"gno.land/p/nt/seqid/v0"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-var nft *grc721.BasicNFT
+var (
+	token      *grc721.Token
+	ledger     *grc721.PrivateLedger
+	meta       *metadata.Metadata
+	metaLedger *metadata.Ledger
+)
 
 func init(cur realm) {
-	nft = grc721.NewBasicNFT(0, cur, "GNOSWAP NFT", "GNFT")
+	token, ledger = grc721.NewToken("GNOSWAP NFT", "GNFT", seqid.ID(0), cur)
+	meta, metaLedger = metadata.NewMetadata(ledger)
 }
 
 // Name returns the NFT collection name.
 func Name() string {
-	return nft.Name()
+	return token.GetName()
 }
 
 // Symbol returns the NFT symbol.
 func Symbol() string {
-	return nft.Symbol()
+	return token.GetSymbol()
 }
 
 // TotalSupply returns the total number of NFTs minted.
 func TotalSupply() int64 {
-	return nft.TokenCount()
+	return token.TotalSupply()
 }
 
 // TokenURI returns the metadata URI for the specified token ID.
 // If stored value is in parameter format (x1,y1,x2,y2,color1,color2),
 // it converts to full base64-encoded SVG image URI on read.
 func TokenURI(tid grc721.TokenID) (string, error) {
-	stored, err := nft.TokenURI(tid)
+	stored, err := meta.TokenURI(tid)
 	if err != nil {
 		return "", err
 	}
@@ -53,18 +61,18 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 // BalanceOf returns the number of NFTs owned by the specified address.
 func BalanceOf(owner address) (int64, error) {
 	assertIsValidAddress(owner)
-	return nft.BalanceOf(owner)
+	return token.BalanceOf(owner)
 }
 
 // OwnerOf returns the owner address for the specified token ID.
 func OwnerOf(tid grc721.TokenID) (address, error) {
-	return nft.OwnerOf(tid)
+	return token.OwnerOf(tid)
 }
 
 // MustOwnerOf returns the owner address for the specified token ID.
 // It panics if the token ID is invalid.
 func MustOwnerOf(tid grc721.TokenID) address {
-	ownerAddr, err := nft.OwnerOf(tid)
+	ownerAddr, err := token.OwnerOf(tid)
 	checkErr(err)
 	return ownerAddr
 }
@@ -76,7 +84,7 @@ func MustOwnerOf(tid grc721.TokenID) address {
 //   - tURI: token URI
 //
 // Only callable by position contract.
-func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
+func SetTokenURI(cur realm, tid grc721.TokenID, tURI string) (bool, error) {
 	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
@@ -88,7 +96,8 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 	return true, nil
 }
 
-// SafeTransferFrom transfers token ownership with receiver validation.
+// SafeTransferFrom transfers token ownership.
+// The current GRC721 API has no receiver-validation hook.
 //
 // Parameters:
 //   - from: current owner address
@@ -109,7 +118,7 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	caller := cur.Previous().Address()
 	assertIsAllowedTransfer(caller, tid)
 
-	err := nft.SafeTransferFrom(caller, from, to, tid)
+	err := ledger.TransferFrom(caller, from, to, tid)
 	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
@@ -135,7 +144,7 @@ func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	caller := cur.Previous().Address()
 	assertIsAllowedTransfer(caller, tid)
 
-	err := nft.TransferFrom(caller, from, to, tid)
+	err := ledger.TransferFrom(caller, from, to, tid)
 	checkTransferErr(err, caller, from, to, tid)
 	return nil
 }
@@ -151,7 +160,7 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 	assertIsValidAddress(approved)
 
 	caller := cur.Previous().Address()
-	err := nft.Approve(caller, approved, tid)
+	err := ledger.Approve(caller, approved, tid)
 	checkApproveErr(err, caller, approved, tid)
 	return nil
 }
@@ -166,7 +175,7 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 func SetApprovalForAll(cur realm, operator address, approved bool) error {
 	assertIsValidAddress(operator)
 
-	checkErr(nft.SetApprovalForAll(cur.Previous().Address(), operator, approved))
+	checkErr(ledger.SetApprovalForAll(cur.Previous().Address(), operator, approved))
 	return nil
 }
 
@@ -177,7 +186,7 @@ func SetApprovalForAll(cur realm, operator address, approved bool) error {
 //
 // Returns approved address and error if token doesn't exist.
 func GetApproved(tid grc721.TokenID) (address, error) {
-	return nft.GetApproved(tid)
+	return token.GetApproved(tid)
 }
 
 // IsApprovedForAll checks if operator can manage all owner's tokens.
@@ -188,7 +197,7 @@ func GetApproved(tid grc721.TokenID) (address, error) {
 //
 // Returns true if operator is approved for all owner's tokens.
 func IsApprovedForAll(owner, operator address) bool {
-	return nft.IsApprovedForAll(owner, operator)
+	return token.IsApprovedForAll(owner, operator)
 }
 
 // Mint creates new NFT and transfers to address.
@@ -204,21 +213,21 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	access.AssertIsPosition(caller)
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
-	checkErr(nft.Mint(positionAddr, tid))
+	checkErr(ledger.Mint(positionAddr, tid))
 
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
 	// Parameters are converted to full SVG on read via TokenURI().
 	imageParams := genImageParamsString(generateRandInstance())
-	checkErr(setTokenURI(0, cur, tid, grc721.TokenURI(imageParams)))
+	checkErr(setTokenURI(0, cur, tid, imageParams))
 
-	checkErr(nft.TransferFrom(positionAddr, positionAddr, to, tid))
+	checkErr(ledger.TransferFrom(positionAddr, positionAddr, to, tid))
 
 	return tid
 }
 
 // Exists checks if token ID exists.
 func Exists(tid grc721.TokenID) bool {
-	_, err := nft.OwnerOf(tid)
+	_, err := token.OwnerOf(tid)
 	return err == nil
 }
 
@@ -232,19 +241,19 @@ func Burn(cur realm, tid grc721.TokenID) {
 	caller := cur.Previous().Address()
 	access.AssertIsPosition(caller)
 
-	checkErr(nft.Burn(tid))
+	checkErr(ledger.Burn(tid))
 }
 
 // Render returns the HTML representation of the NFT.
 func Render(path string) string {
 	if path == "" {
-		return nft.RenderHome()
+		return token.RenderHome()
 	}
 	return "404\n"
 }
 
 // setTokenURI sets the metadata URI for a specific token ID.
-func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
+func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)
 	}
@@ -252,7 +261,7 @@ func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI grc721.TokenURI) err
 	previousRealm := rlm.Previous()
 	previousAddr := previousRealm.Address()
 
-	_, err := nft.SetTokenURI(previousAddr, tid, tURI)
+	err := metaLedger.SetTokenURI(tid, tURI)
 	if err != nil {
 		return makeErrorWithDetails(err.Error(), ufmt.Sprintf("token id (%s)", tid))
 	}

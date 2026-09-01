@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/demo/tokens/grc721/metadata"
+	"gno.land/p/nt/seqid/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
@@ -358,8 +360,8 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm, tokenId uint64) {
 				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
-				// Mint token without URI by directly calling nft.Mint
-				checkErr(nft.Mint(positionAddr, tid(tokenId)))
+				// Mint token without URI by directly calling ledger.Mint
+				checkErr(ledger.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          1,
@@ -370,7 +372,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm, tokenId uint64) {
 				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
-				checkErr(nft.Mint(positionAddr, tid(tokenId)))
+				checkErr(ledger.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          2,
@@ -381,7 +383,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm, tokenId uint64) {
 				resetObject(cur, t)
 				testing.SetRealm(positionRealm)
-				checkErr(nft.Mint(positionAddr, tid(tokenId)))
+				checkErr(ledger.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          100,
@@ -449,7 +451,7 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 					SetTokenURI(cross(cur), tid(tt.tokenId), testURI)
 				})
 			} else {
-				result, err := SetTokenURI(cross(cur), tid(tt.tokenId), grc721.TokenURI(testURI))
+				result, err := SetTokenURI(cross(cur), tid(tt.tokenId), testURI)
 				uassert.NoError(t, err)
 				uassert.True(t, result)
 
@@ -464,10 +466,10 @@ func TestSetTokenURI(cur realm, t *testing.T) {
 func TestSetTokenURIRejectsEmptyURI(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	testing.SetRealm(positionRealm)
-	checkErr(nft.Mint(positionAddr, tid(1)))
+	checkErr(ledger.Mint(positionAddr, tid(1)))
 
 	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-GNFT-001] cannot set URI || empty token URI", func() {
-		SetTokenURI(cross(cur), tid(1), grc721.TokenURI(""))
+		SetTokenURI(cross(cur), tid(1), "")
 	})
 }
 
@@ -503,7 +505,7 @@ func TestGetApproved(cur realm, t *testing.T) {
 			name:        "GetApproved for non-existent token",
 			tokenId:     999,
 			shouldError: true,
-			errorMsg:    "token id not approved for anyone",
+			errorMsg:    errInvalidTokenId,
 		},
 		{
 			name: "GetApproved for token with different approval",
@@ -887,7 +889,7 @@ func TestTokenURI(cur realm, t *testing.T) {
 			name:        "non-existent token",
 			tokenId:     999,
 			shouldError: true,
-			errorMsg:    errInvalidTokenId,
+			errorMsg:    "token has no uri",
 		},
 	}
 
@@ -1131,7 +1133,7 @@ func TestRender(cur realm, t *testing.T) {
 		{
 			name:     "empty path",
 			path:     "",
-			expected: nft.RenderHome(),
+			expected: token.RenderHome(),
 		},
 		{
 			name:     "invalid path",
@@ -1269,7 +1271,7 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm) {
 				// Mint token to position owner
 				ownerAddr := positionAddr
-				nft.Mint(ownerAddr, tid(100))
+				ledger.Mint(ownerAddr, tid(100))
 			},
 			ownerAddr:     positionAddr,
 			tokenId:       100,
@@ -1285,15 +1287,15 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			tokenId:       999,
 			tokenURI:      "custom-uri",
 			expectedError: true,
-			errorContains: "invalid token id",
+			errorContains: "token is not minted",
 		},
 		{
 			name: "overwrites URI when already set (private function allows this)",
 			setup: func(cur realm) {
 				// Mint and set URI
-				nft.Mint(positionAddr, tid(200))
+				ledger.Mint(positionAddr, tid(200))
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				callSetTokenURI(cross(cur), tid(200), grc721.TokenURI("first-uri"))
+				callSetTokenURI(cross(cur), tid(200), "first-uri")
 			},
 			ownerAddr:     positionAddr,
 			tokenId:       200,
@@ -1301,23 +1303,22 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			expectedError: false, // private setTokenURI allows overwriting
 		},
 		{
-			name: "fails when caller is not token owner",
+			name: "issuer ledger sets URI independently of token owner",
 			setup: func(cur realm) {
 				// Mint token to addr01
-				nft.Mint(addr01, tid(300))
+				ledger.Mint(addr01, tid(300))
 			},
 			ownerAddr:     addr02, // Different owner trying to set URI
 			tokenId:       300,
 			tokenURI:      "unauthorized-uri",
-			expectedError: true,
-			errorContains: "caller is not token owner",
+			expectedError: false,
 		},
 		{
 			name: "sets image params URI and verifies conversion to base64 SVG",
 			setup: func(cur realm) {
 				// Mint token to position owner
 				ownerAddr := positionAddr
-				nft.Mint(ownerAddr, tid(400))
+				ledger.Mint(ownerAddr, tid(400))
 			},
 			ownerAddr:     positionAddr,
 			tokenId:       400,
@@ -1336,7 +1337,7 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm) {
 				// Mint token to position owner
 				ownerAddr := positionAddr
-				nft.Mint(ownerAddr, tid(500))
+				ledger.Mint(ownerAddr, tid(500))
 			},
 			ownerAddr:     positionAddr,
 			tokenId:       500,
@@ -1354,7 +1355,7 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 			setup: func(cur realm) {
 				// Mint token to position owner
 				ownerAddr := positionAddr
-				nft.Mint(ownerAddr, tid(500))
+				ledger.Mint(ownerAddr, tid(500))
 			},
 			ownerAddr:     positionAddr,
 			tokenId:       500,
@@ -1380,7 +1381,7 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 
 			// when
 			testing.SetRealm(testing.NewUserRealm(tc.ownerAddr))
-			err := callSetTokenURI(cross(cur), tid(tc.tokenId), grc721.TokenURI(tc.tokenURI))
+			err := callSetTokenURI(cross(cur), tid(tc.tokenId), tc.tokenURI)
 
 			// then
 			if tc.expectedError {
@@ -1405,12 +1406,13 @@ func Test_setTokenURI(cur realm, t *testing.T) {
 	}
 }
 
-func callSetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) error {
+func callSetTokenURI(cur realm, tid grc721.TokenID, tURI string) error {
 	return setTokenURI(0, cur, tid, tURI)
 }
 
 func resetObject(cur realm, t *testing.T) {
 	t.Helper()
 
-	nft = grc721.NewBasicNFT(0, cur, "GNOSWAP NFT", "GNFT")
+	token, ledger = grc721.NewToken("GNOSWAP NFT", "GNFT", seqid.ID(0), cur)
+	meta, metaLedger = metadata.NewMetadata(ledger)
 }
