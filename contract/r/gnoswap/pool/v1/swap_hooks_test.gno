@@ -110,3 +110,40 @@ func TestHookSetters_NormalOperation(cur realm, t *testing.T) {
 		})
 	})
 }
+
+func TestSwapEndHookFinalizesBeforeSwapCallback(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	burnTokens(cur, t)
+	InitialisePoolTest(cur, t)
+	MintPositionAll(cur, t, adminAddr)
+
+	TokenFaucet(cur, t, bazPath, routerAddr)
+	testing.SetRealm(rouRealm)
+	TokenApprove(cur, t, bazPath, routerAddr, poolAddr, maxApprove)
+
+	finalized := false
+	testing.SetRealm(stakerRealm)
+	mockInstanceSetSwapEndHook(0, cur, func(cur realm, poolPath string) error {
+		finalized = true
+		return nil
+	})
+
+	testing.SetRealm(rouRealm)
+	mockInstanceSwap(
+		0,
+		cur,
+		barPath,
+		bazPath,
+		STANDARD_FEE_TIER,
+		routerAddr,
+		false,
+		"100",
+		maxSqrtPriceLimitX96,
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+			uassert.True(t, finalized, "swap end hook must finish before the swap callback")
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+		},
+	)
+
+	uassert.True(t, finalized, "swap end hook must run")
+}
