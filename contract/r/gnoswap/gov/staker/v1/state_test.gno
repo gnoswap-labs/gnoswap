@@ -31,13 +31,13 @@ func countDelegationIDs(tree *bptree.BPTree) int {
 	return total
 }
 
-func mustAddDelegation(gs *govStakerV1, rlm realm, delegationID int64, delegation *staker.Delegation) {
+func mustAddDelegation(_ int, rlm realm, gs *govStakerV1, delegationID int64, delegation *staker.Delegation) {
 	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
 		panic(err)
 	}
 }
 
-func mustSetLaunchpadProjectDeposit(gs *govStakerV1, rlm realm, ownerAddress string, deposit int64) {
+func mustSetLaunchpadProjectDeposit(_ int, rlm realm, gs *govStakerV1, ownerAddress string, deposit int64) {
 	if err := gs.setLaunchpadProjectDeposit(0, rlm, ownerAddress, deposit); err != nil {
 		panic(err)
 	}
@@ -535,7 +535,7 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
-				mustSetLaunchpadProjectDeposit(gs, cur, launchpadRewardID, tt.amount)
+				mustSetLaunchpadProjectDeposit(0, cur, gs, launchpadRewardID, tt.amount)
 			}(cross(cur))
 
 			// Then: Should create deposit record
@@ -569,7 +569,7 @@ func TestRemoveLaunchpadProjectDeposit(cur realm, t *testing.T) {
 				ownerAddress := "g1projectowner9876543210abcdefghijklm"
 				testing.SetRealm(adminRealm)
 				func(cur realm) {
-					mustSetLaunchpadProjectDeposit(gs, cur, ownerAddress, 3000)
+					mustSetLaunchpadProjectDeposit(0, cur, gs, ownerAddress, 3000)
 				}(cross(cur))
 				return ownerAddress
 			},
@@ -666,7 +666,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					mustAddDelegation(gs, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -693,7 +693,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					mustAddDelegation(gs, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 
@@ -708,7 +708,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					mustAddDelegation(gs, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 				}
 
 				delegationID := gs.nextDelegationID()
@@ -720,7 +720,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				mustAddDelegation(gs, cur, delegationID, delegation)
+				mustAddDelegation(0, cur, gs, delegationID, delegation)
 
 				return user, targetDelegatee, delegationIDs
 			},
@@ -743,7 +743,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				mustAddDelegation(gs, cur, delegationID, delegation)
+				mustAddDelegation(0, cur, gs, delegationID, delegation)
 
 				return user, targetDelegatee, []int64{}
 			},
@@ -776,7 +776,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					mustAddDelegation(gs, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -800,7 +800,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				mustAddDelegation(gs, cur, delegationID1, delegation1)
+				mustAddDelegation(0, cur, gs, delegationID1, delegation1)
 				delegationIDs = append(delegationIDs, delegationID1)
 
 				// Add delegation with small amount
@@ -813,7 +813,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				mustAddDelegation(gs, cur, delegationID2, delegation2)
+				mustAddDelegation(0, cur, gs, delegationID2, delegation2)
 				delegationIDs = append(delegationIDs, delegationID2)
 
 				// Add delegation with large amount
@@ -826,7 +826,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				mustAddDelegation(gs, cur, delegationID3, delegation3)
+				mustAddDelegation(0, cur, gs, delegationID3, delegation3)
 				delegationIDs = append(delegationIDs, delegationID3)
 
 				return user, delegatee, delegationIDs
