@@ -39,7 +39,7 @@ func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.SafeGRC20Transfer(cross(cur), tokenPath, to, amount)
+	common.SafeGRC20Transfer(0, cur, tokenPath, to, amount)
 
 	chain.Emit(
 		"TransferToken",

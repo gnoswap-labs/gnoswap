@@ -977,8 +977,8 @@ func approveTokensForPool(cur realm, t *testing.T, pool *pl.Pool) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), pool.Token0Path(), poolAddr, maxApprove)
-	common.SafeGRC20Approve(cross(cur), pool.Token1Path(), poolAddr, maxApprove)
+	common.SafeGRC20Approve(0, cur, pool.Token0Path(), poolAddr, maxApprove)
+	common.SafeGRC20Approve(0, cur, pool.Token1Path(), poolAddr, maxApprove)
 }
 
 func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {

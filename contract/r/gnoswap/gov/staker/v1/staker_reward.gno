@@ -419,7 +419,7 @@ func transferToken(
 		)
 	}
 
-	common.SafeGRC20Transfer(cross(rlm), tokenPath, to, amount)
+	common.SafeGRC20Transfer(0, rlm, tokenPath, to, amount)
 
 	return nil
 }
