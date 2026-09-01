@@ -330,9 +330,6 @@ func (p *ProtocolFeeRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) error {
-	if amount > p.GetStakedAmount() {
-		return errors.New("remove amount exceeds staked amount")
-	}
 	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 	if err != nil {
 		return err

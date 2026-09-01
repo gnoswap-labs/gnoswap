@@ -202,9 +202,6 @@ func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) error {
-	if amount > self.GetStakedAmount() {
-		return errors.New("remove amount exceeds staked amount")
-	}
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
