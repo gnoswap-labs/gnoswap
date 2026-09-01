@@ -67,7 +67,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
 
 		chain.Emit(
 			"CollectRewardByDepositId",
@@ -80,7 +80,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	}
 
 	// Transfer the original GNS deposit back to the depositor
-	common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
+	common.SafeGRC20Transfer(0, rlm, GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
 
 	chain.Emit(
 		"CollectDepositGns",

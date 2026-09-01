@@ -88,8 +88,8 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			// (cur.Previous()) resolves to user1 and the pool can pull the
 			// input token. Mirrors TestSingleSwap.
 			testing.SetRealm(testing.NewUserRealm(user1Addr))
-			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
 			firstAmountIn, lastAmountOut := multiSwapFn(cross(cur))
 

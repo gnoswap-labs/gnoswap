@@ -511,8 +511,8 @@ func mockInstanceMint(
 	amount1Int, _ := strconv.ParseInt(amount1Desired, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), token0, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), token1, poolAddr, amount1Int)
+	common.SafeGRC20Approve(0, cur, token0, poolAddr, amount0Int)
+	common.SafeGRC20Approve(0, cur, token1, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.Mint(cross(cur),
@@ -545,8 +545,8 @@ func mockInstanceIncreaseLiquidity(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(0, cur, barPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(0, cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.IncreaseLiquidity(cross(cur),
@@ -592,8 +592,8 @@ func mockInstanceReposition(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(cross(cur), barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, amount1Int)
+	common.SafeGRC20Approve(0, cur, barPath, poolAddr, amount0Int)
+	common.SafeGRC20Approve(0, cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	return position.Reposition(cross(cur),

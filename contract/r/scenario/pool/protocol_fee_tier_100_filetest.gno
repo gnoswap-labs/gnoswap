@@ -167,11 +167,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 	}
 
 	return nil

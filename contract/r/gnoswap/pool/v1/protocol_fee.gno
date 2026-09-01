@@ -67,8 +67,8 @@ func (i *poolV1) HandleWithdrawalFee(
 
 	i.settleProtocolFee(0, rlm, token0Path, fee0Int64)
 	i.settleProtocolFee(0, rlm, token1Path, fee1Int64)
-	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
-	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
+	common.SafeGRC20Transfer(0, rlm, token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
+	common.SafeGRC20Transfer(0, rlm, token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
@@ -116,7 +116,7 @@ func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount in
 
 	if totalAmount > 0 {
 		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, totalAmount)
+		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
 
 		// AddToProtocolFee only reports an error for a halted realm, which is handled
 		// above. The branch keeps the amount pending should that ever change.

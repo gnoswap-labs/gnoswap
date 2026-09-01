@@ -91,7 +91,7 @@ func (lp *launchpadV1) CreateProject(
 	}
 
 	common.SafeGRC20TransferFrom(
-		cross(rlm),
+		0, rlm,
 		tokenPath,
 		caller,
 		launchpadAddr,
@@ -306,7 +306,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, projectID strin
 	projectLeftReward := getProjectRemainingAmount(project)
 
 	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, projectLeftReward)
+		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil

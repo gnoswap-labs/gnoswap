@@ -169,9 +169,9 @@ func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint
 	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 		testing.SetRealm(adminRealm)
 		if params.zeroForOne {
-			common.SafeGRC20Transfer(cross(cur), params.token0, e.currentAddress, math.MaxInt64)
+			common.SafeGRC20Transfer(0, cur, params.token0, e.currentAddress, math.MaxInt64)
 		} else {
-			common.SafeGRC20Transfer(cross(cur), params.token1, e.currentAddress, math.MaxInt64)
+			common.SafeGRC20Transfer(0, cur, params.token1, e.currentAddress, math.MaxInt64)
 		}
 
 		return nil

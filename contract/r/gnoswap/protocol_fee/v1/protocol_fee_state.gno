@@ -59,7 +59,7 @@ func (pfs *protocolFeeState) distributeToDevOps(_ int, rlm realm, token string, 
 	if err := pfs.addActualDistributedToDevOps(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross(rlm), token, devOpsAddr, amount)
+	common.SafeGRC20Transfer(0, rlm, token, devOpsAddr, amount)
 
 	return nil
 }
@@ -72,7 +72,7 @@ func (pfs *protocolFeeState) distributeToGovStaker(_ int, rlm realm, token strin
 	if err := pfs.addActualDistributedToGovStaker(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross(rlm), token, govStakerAddr, amount)
+	common.SafeGRC20Transfer(0, rlm, token, govStakerAddr, amount)
 
 	return nil
 }

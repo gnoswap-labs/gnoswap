@@ -729,8 +729,8 @@ func TestMintInternal_TickBoundaries(cur realm, t *testing.T) {
 			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
 
 			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
-			common.SafeGRC20Approve(cross(cur), tt.params.token0, poolAddr, amount0Int)
-			common.SafeGRC20Approve(cross(cur), tt.params.token1, poolAddr, amount1Int)
+			common.SafeGRC20Approve(0, cur, tt.params.token0, poolAddr, amount0Int)
+			common.SafeGRC20Approve(0, cur, tt.params.token1, poolAddr, amount1Int)
 
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedMsg, func() {
