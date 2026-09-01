@@ -1051,7 +1051,9 @@ func setupStakerDelegateTestDelegation(cur realm, t *testing.T, gs *govStakerV1,
 
 	testing.SetRealm(testing.NewUserRealm(from))
 	func(cur realm) {
-		gs.addDelegation(0, cur, delegationID, delegation)
+		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+			panic(err)
+		}
 	}(cross(cur))
 
 	testing.SetRealm(testing.NewUserRealm(from))
@@ -1076,7 +1078,9 @@ func setupStakerDelegateTestCollectableAmount(cur realm, t *testing.T, gs *govSt
 
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
-		gs.addDelegation(0, cur, delegationID, delegation)
+		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+			panic(err)
+		}
 	}(cross(cur))
 
 	testing.SetRealm(testing.NewUserRealm(user))
@@ -1187,7 +1191,9 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				mintXgnsForTest(cur, user, totalAmount)
@@ -1237,7 +1243,9 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				mintXgnsForTest(cur, user, minimumAmount)
@@ -1257,7 +1265,9 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				return user

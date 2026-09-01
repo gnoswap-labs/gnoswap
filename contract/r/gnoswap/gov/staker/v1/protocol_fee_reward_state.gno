@@ -352,7 +352,9 @@ func (p *ProtocolFeeRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) (map[string]int64, error) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp); err != nil {
+		return nil, err
+	}
 
 	return p.claimRewards(currentTimestamp)
 }

@@ -870,7 +870,7 @@ func setupStakerRewardTestLaunchpadDeposit(cur realm, t *testing.T, gs *govStake
 	launchpadRewardID := gs.makeLaunchpadRewardID(addr.String())
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount)
+		uassert.NoError(t, gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount))
 	}(cross(cur))
 }
 
