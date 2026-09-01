@@ -185,7 +185,7 @@ func transferPositions(cur realm, name string, from address, to address, id int6
 	gnft.Approve(cross(cur), to, positionID)
 
 	ufmt.Printf("[INFO] Transferring position to %s (positionID: %s)\n", name, positionID)
-	gnft.SafeTransferFrom(cross(cur), from, to, positionID)
+	gnft.TransferFrom(cross(cur), from, to, positionID)
 }
 
 func executeSwap(cur realm) {

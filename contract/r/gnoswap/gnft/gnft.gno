@@ -96,33 +96,6 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI string) (bool, error) {
 	return true, nil
 }
 
-// SafeTransferFrom transfers token ownership.
-// The current GRC721 API has no receiver-validation hook.
-//
-// Parameters:
-//   - from: current owner address
-//   - to: recipient address
-//   - tid: token ID to transfer
-//
-// Returns error if transfer fails.
-//
-// Permission model:
-//   - Tokens held by the staker contract (i.e. currently staked) can only be
-//     moved by the staker itself; the underlying staked LP position is
-//     non-transferable.
-//   - Otherwise, ownership and approval are enforced by the GRC721 layer
-//     (owner / approved-for-token / approved-for-all).
-func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
-	assertFromIsValidAddress(from)
-	assertToIsValidAddress(to)
-	caller := cur.Previous().Address()
-	assertIsAllowedTransfer(caller, tid)
-
-	err := ledger.TransferFrom(caller, from, to, tid)
-	checkTransferErr(err, caller, from, to, tid)
-	return nil
-}
-
 // TransferFrom transfers a token from one address to another.
 //
 // Parameters:
