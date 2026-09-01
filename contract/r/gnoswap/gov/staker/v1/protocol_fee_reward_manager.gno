@@ -291,8 +291,8 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 		return errors.New("amount must be non-negative")
 	}
 
-	currentTotalStakedAmount := self.GetTotalStakedAmount()
-	if amount > currentTotalStakedAmount {
+	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
+	if updatedTotalStakedAmount < 0 {
 		return errors.New("remove amount exceeds total staked amount")
 	}
 
@@ -313,7 +313,7 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 
 	self.setRewardState(address, rewardState)
 
-	self.SetTotalStakedAmount(gnsmath.SafeSubInt64(currentTotalStakedAmount, amount))
+	self.SetTotalStakedAmount(updatedTotalStakedAmount)
 
 	return nil
 }
