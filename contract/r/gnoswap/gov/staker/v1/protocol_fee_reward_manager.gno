@@ -110,7 +110,9 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		protocolFeeDeltaX128PerStake := u256.Zero()
 
-		// Calculate fee per stake if there are staked tokens
+		// Calculate fee per stake if there are staked tokens. With no stake the delta is
+		// dropped while the cursor below still advances past it, the same policy the
+		// emission accumulator applies.
 		if self.GetTotalStakedAmount() > 0 {
 			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
 			protocolFeeDeltaX128PerStake = feePerStake

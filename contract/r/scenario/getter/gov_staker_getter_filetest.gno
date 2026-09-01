@@ -314,7 +314,7 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 //
 // [EXPECTED] Emission Accumulated X128 Per Stake: 0
 // [EXPECTED] Emission Distributed Amount: 0
-// [EXPECTED] Emission Accumulated Timestamp: 0
+// [EXPECTED] Emission Accumulated Timestamp: 1234567890
 //
 // [EXPECTED] Claimable Reward By Address:
 // [EXPECTED] - Emission Reward: 0
