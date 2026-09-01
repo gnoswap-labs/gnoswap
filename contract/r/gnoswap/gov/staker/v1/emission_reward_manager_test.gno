@@ -595,6 +595,11 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(cur realm, t *t
 	uassert.NoError(t, err)
 	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(1000))
 
+	createdState, exists, err := resolver.GetRewardState(addr)
+	uassert.NoError(t, err)
+	uassert.True(t, exists)
+	uassert.Equal(t, int64(1000), createdState.GetStakedAmount())
+
 	// When: remove part of the stake
 	err = resolver.removeStake(addr, 300, 100)
 	uassert.NoError(t, err)
