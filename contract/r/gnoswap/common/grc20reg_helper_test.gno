@@ -110,7 +110,7 @@ func TestGrc20regHelper_TokenMethod(t *testing.T) {
 	})
 }
 
-func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
+func TestGrc20regHelper_GetTokenTeller(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -135,14 +135,15 @@ func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			testing.SetRealm(testing.NewUserRealm(defaultHolder))
 			if tt.shouldPanic {
 				uassert.AbortsContains(t, cur, "unknown token", func() {
-					GetTokenTeller(tt.path)
+					GetTokenTeller(0, cur, tt.path)
 				})
 				return
 			}
 
-			teller := GetTokenTeller(tt.path)
+			teller := GetTokenTeller(0, cur, tt.path)
 			if teller == nil {
 				t.Error("Expected non-nil teller")
 			}
@@ -241,10 +242,10 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					Transfer(cross(cur), tt.path, tt.to, tt.amount)
+					Transfer(0, cur, tt.path, tt.to, tt.amount)
 				})
 			} else {
-				err := Transfer(cross(cur), tt.path, tt.to, tt.amount)
+				err := Transfer(0, cur, tt.path, tt.to, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -348,7 +349,7 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 			// Setup approval if needed - as the token owner (from address)
 			if tt.setupApproval {
 				testing.SetRealm(testing.NewUserRealm(tt.from))
-				err := Approve(cross(cur), tt.path, tt.caller, tt.approvalAmt)
+				err := Approve(0, cur, tt.path, tt.caller, tt.approvalAmt)
 				uassert.NoError(t, err)
 			}
 
@@ -364,10 +365,10 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					TransferFrom(cross(cur), tt.path, tt.from, tt.to, tt.amount)
+					TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				})
 			} else {
-				err := TransferFrom(cross(cur), tt.path, tt.from, tt.to, tt.amount)
+				err := TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -449,10 +450,10 @@ func TestGrc20regHelper_Approve(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					Approve(cross(cur), tt.path, tt.spender, tt.amount)
+					Approve(0, cur, tt.path, tt.spender, tt.amount)
 				})
 			} else {
-				err := Approve(cross(cur), tt.path, tt.spender, tt.amount)
+				err := Approve(0, cur, tt.path, tt.spender, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -472,6 +473,7 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 		to            address
 		amount        int64
 		shouldAbort   bool
+		shouldPanic   bool
 		abortContains string
 	}{
 		{
@@ -488,7 +490,7 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 			path:          tokenPath,
 			to:            bob,
 			amount:        99999999999999,
-			shouldAbort:   true,
+			shouldPanic:   true,
 			abortContains: "insufficient balance",
 		},
 		{
@@ -497,7 +499,7 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 			path:          tokenPath,
 			to:            bob,
 			amount:        -100,
-			shouldAbort:   true,
+			shouldPanic:   true,
 			abortContains: "invalid amount",
 		},
 		{
@@ -517,15 +519,30 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					SafeGRC20Transfer(cross(cur), tt.path, tt.to, tt.amount)
+					SafeGRC20Transfer(0, cur, tt.path, tt.to, tt.amount)
+				})
+			} else if tt.shouldPanic {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
+					SafeGRC20Transfer(0, cur, tt.path, tt.to, tt.amount)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					SafeGRC20Transfer(cross(cur), tt.path, tt.to, tt.amount)
+					SafeGRC20Transfer(0, cur, tt.path, tt.to, tt.amount)
 				})
 			}
 		})
 	}
+}
+
+func TestGrc20regHelper_SafeGRC20TransferBindsCurrentRealm(cur realm, t *testing.T) {
+	testing.SetRealm(testing.NewUserRealm(defaultHolder))
+	beforeHolder := BalanceOf(tokenPath, defaultHolder)
+	beforeBob := BalanceOf(tokenPath, bob)
+
+	SafeGRC20Transfer(0, cur, tokenPath, bob, 100)
+
+	uassert.Equal(t, beforeHolder-100, BalanceOf(tokenPath, defaultHolder))
+	uassert.Equal(t, beforeBob+100, BalanceOf(tokenPath, bob))
 }
 
 func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
@@ -539,6 +556,7 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 		setupApproval bool
 		approvalAmt   int64
 		shouldAbort   bool
+		shouldPanic   bool
 		abortContains string
 	}{
 		{
@@ -549,7 +567,7 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 			to:            alice,
 			amount:        100,
 			setupApproval: false,
-			shouldAbort:   true,
+			shouldPanic:   true,
 			abortContains: "insufficient allowance",
 		},
 		{
@@ -561,7 +579,7 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 			amount:        99999999999999,
 			setupApproval: true,
 			approvalAmt:   99999999999999,
-			shouldAbort:   true,
+			shouldPanic:   true,
 			abortContains: "insufficient balance",
 		},
 		{
@@ -592,7 +610,7 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 			// Setup approval if needed
 			if tt.setupApproval {
 				testing.SetRealm(testing.NewUserRealm(tt.from))
-				Approve(cross(cur), tt.path, tt.caller, tt.approvalAmt)
+				Approve(0, cur, tt.path, tt.caller, tt.approvalAmt)
 			}
 
 			// Now perform SafeGRC20TransferFrom as the caller
@@ -600,11 +618,15 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					SafeGRC20TransferFrom(cross(cur), tt.path, tt.from, tt.to, tt.amount)
+					SafeGRC20TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
+				})
+			} else if tt.shouldPanic {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
+					SafeGRC20TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					SafeGRC20TransferFrom(cross(cur), tt.path, tt.from, tt.to, tt.amount)
+					SafeGRC20TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				})
 			}
 		})
@@ -619,6 +641,7 @@ func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
 		spender       address
 		amount        int64
 		shouldAbort   bool
+		shouldPanic   bool
 		abortContains string
 	}{
 		{
@@ -635,7 +658,7 @@ func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
 			path:          tokenPath,
 			spender:       alice,
 			amount:        -100,
-			shouldAbort:   true,
+			shouldPanic:   true,
 			abortContains: "invalid amount",
 		},
 		{
@@ -663,11 +686,15 @@ func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, cur, tt.abortContains, func() {
-					SafeGRC20Approve(cross(cur), tt.path, tt.spender, tt.amount)
+					SafeGRC20Approve(0, cur, tt.path, tt.spender, tt.amount)
+				})
+			} else if tt.shouldPanic {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
+					SafeGRC20Approve(0, cur, tt.path, tt.spender, tt.amount)
 				})
 			} else {
 				uassert.NotPanics(t, cur, func() {
-					SafeGRC20Approve(cross(cur), tt.path, tt.spender, tt.amount)
+					SafeGRC20Approve(0, cur, tt.path, tt.spender, tt.amount)
 				})
 			}
 		})

@@ -14,6 +14,7 @@ loadpkg gno.land/p/onbloc/json
 loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/demo/tokens/grc20
 loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/p/demo/tokens/grc721/metadata
 loadpkg gno.land/r/demo/defi/foo20
 
 loadpkg gno.land/r/sys/users
@@ -143,9 +144,9 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gns -pkgpath g
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
-### deploy gnft (expected gas fee: 26419ugnot, gas wanted: 26419000)
+### deploy gnft (expected gas fee: 45292ugnot, gas wanted: 45292000)
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/gnft -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
-# stdout 'GAS USED:   24[0-9]{6}'
+# stdout 'GAS USED:   45[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
 
