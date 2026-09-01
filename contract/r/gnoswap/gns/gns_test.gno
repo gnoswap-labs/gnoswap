@@ -692,7 +692,7 @@ func TestMintGns_StateUpdates(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetHalvingYearAccuAmountTracksMintedEmission(cur realm, t *testing.T) {
+func TestGetHalvingYearMintedAmountTracksMintedEmission(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	InitGnsTest(cur, t)
 
@@ -700,7 +700,7 @@ func TestGetHalvingYearAccuAmountTracksMintedEmission(cur realm, t *testing.T) {
 	testing.SetRealm(emissionRealm)
 	mintedAmount := MintGns(cross(cur), adminAddr)
 
-	uassert.Equal(t, mintedAmount, GetHalvingYearAccuAmount(currentYear))
+	uassert.Equal(t, mintedAmount, GetHalvingYearMintedAmount(currentYear))
 }
 
 func TestInitEmissionState(cur realm, t *testing.T) {

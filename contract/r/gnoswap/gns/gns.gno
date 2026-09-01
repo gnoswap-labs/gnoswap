@@ -233,7 +233,7 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 
 		totalAmountToMint = gnsmath.SafeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		err := state.addHalvingYearMintedAmount(year, yearAmountToMint)
 		if err != nil {
 			return 0, err
 		}

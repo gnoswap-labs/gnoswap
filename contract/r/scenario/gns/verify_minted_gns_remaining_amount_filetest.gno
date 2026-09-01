@@ -65,7 +65,7 @@ func mintGNS(cur realm) {
 
 func verifyMintedGNSRemainingAmount(cur realm) {
 	currentYear := gns.GetHalvingYear(time.Now().Unix())
-	remainingAmount := gns.GetHalvingYearMaxAmount(currentYear) - gns.GetHalvingYearAccuAmount(currentYear)
+	remainingAmount := gns.GetHalvingYearMaxAmount(currentYear) - gns.GetHalvingYearMintedAmount(currentYear)
 	endBlockTime := gns.GetHalvingYearEndTimestamp(currentYear)
 	remainingBlockTime := endBlockTime - time.Now().Unix()
 

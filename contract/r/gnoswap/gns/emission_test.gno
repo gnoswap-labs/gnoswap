@@ -161,9 +161,9 @@ func TestEmissionStateConsistency(cur realm, t *testing.T) {
 					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
 						"Year 1 left amount should equal max amount")
 
-					// Verify initial accumulated/left amounts.
-					uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year),
-						"Initial accumulated amount should be 0")
+					// Verify initial minted/left amounts.
+					uassert.Equal(t, int64(0), GetHalvingYearMintedAmount(year),
+						"Initial minted amount should be 0")
 					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
 						"Initial left amount should equal max amount")
 				}
@@ -432,7 +432,7 @@ func TestEmissionStateAddSubHalvingYearAmounts(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			var err error
 			if tt.operation == "add" {
-				err = es.addHalvingYearAccumulatedAmount(tt.year, tt.amount)
+				err = es.addHalvingYearMintedAmount(tt.year, tt.amount)
 			} else {
 				err = es.subHalvingYearLeftAmount(tt.year, tt.amount)
 			}
@@ -446,7 +446,7 @@ func TestEmissionStateAddSubHalvingYearAmounts(cur realm, t *testing.T) {
 	}
 }
 
-// TestEmissionStateAmountConsistency tests that accumulated and left amounts stay consistent
+// TestEmissionStateAmountConsistency tests that minted and left amounts stay consistent
 func TestEmissionStateAmountConsistency(cur realm, t *testing.T) {
 	resetEmissionState(t)
 	InitGnsTest(cur, t)
@@ -455,16 +455,16 @@ func TestEmissionStateAmountConsistency(cur realm, t *testing.T) {
 
 	for year := int64(1); year <= 12; year++ {
 		t.Run("Year consistency for year "+utils.FormatInt(year), func(cur realm, t *testing.T) {
-			initialAccum := es.getHalvingYearAccumulatedAmount(year)
+			initialMinted := es.getHalvingYearMintedAmount(year)
 			initialLeft := es.getHalvingYearLeftAmount(year)
 			maxAmount := GetHalvingYearMaxAmount(year)
 
-			uassert.Equal(t, int64(0), initialAccum, "Initial accumulated should be 0")
+			uassert.Equal(t, int64(0), initialMinted, "Initial minted should be 0")
 			uassert.Equal(t, maxAmount, initialLeft, "Initial left should equal max")
 
-			// Add some accumulated amount
+			// Add some minted amount
 			addAmount := int64(1000000)
-			err := es.addHalvingYearAccumulatedAmount(year, addAmount)
+			err := es.addHalvingYearMintedAmount(year, addAmount)
 			uassert.NoError(t, err)
 
 			// Subtract same amount from left
@@ -472,12 +472,12 @@ func TestEmissionStateAmountConsistency(cur realm, t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Verify consistency
-			newAccum := es.getHalvingYearAccumulatedAmount(year)
+			newMinted := es.getHalvingYearMintedAmount(year)
 			newLeft := es.getHalvingYearLeftAmount(year)
 
-			uassert.Equal(t, initialAccum+addAmount, newAccum, "Accumulated should increase")
+			uassert.Equal(t, initialMinted+addAmount, newMinted, "Minted amount should increase")
 			uassert.Equal(t, initialLeft-addAmount, newLeft, "Left should decrease")
-			uassert.Equal(t, maxAmount, newAccum+newLeft, "Sum should still equal max amount")
+			uassert.Equal(t, maxAmount, newMinted+newLeft, "Sum should still equal max amount")
 		})
 	}
 }
@@ -523,8 +523,8 @@ func TestEmissionStateTimestampEdgeCases(cur realm, t *testing.T) {
 	}
 }
 
-// TestAddHalvingYearAccumulatedAmountOverflow tests overflow protection in addHalvingYearAccumulatedAmount
-func TestAddHalvingYearAccumulatedAmountOverflow(cur realm, t *testing.T) {
+// TestEmissionStateAddHalvingYearMintedAmountOverflow tests overflow protection in addHalvingYearMintedAmount.
+func TestEmissionStateAddHalvingYearMintedAmountOverflow(cur realm, t *testing.T) {
 	resetObject(cur, t)
 	InitGnsTest(cur, t)
 
@@ -580,20 +580,20 @@ func TestAddHalvingYearAccumulatedAmountOverflow(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Set initial accumulated amount
-			es.halvingData.setAccumAmount(tt.year, tt.initialValue)
+			// Set initial minted amount
+			es.halvingData.setMintedAmount(tt.year, tt.initialValue)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
-					es.addHalvingYearAccumulatedAmount(tt.year, tt.addAmount)
+					es.addHalvingYearMintedAmount(tt.year, tt.addAmount)
 				})
 			} else {
-				err := es.addHalvingYearAccumulatedAmount(tt.year, tt.addAmount)
+				err := es.addHalvingYearMintedAmount(tt.year, tt.addAmount)
 				uassert.NoError(t, err)
 
 				// Verify the result
 				expected := tt.initialValue + tt.addAmount
-				actual := es.getHalvingYearAccumulatedAmount(tt.year)
+				actual := es.getHalvingYearMintedAmount(tt.year)
 				uassert.Equal(t, expected, actual)
 			}
 		})
