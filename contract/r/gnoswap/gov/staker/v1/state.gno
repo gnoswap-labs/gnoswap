@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"math"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
@@ -55,28 +56,24 @@ func (g *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
 //   - delegation: delegation instance to store
 //
 // Returns:
-//   - bool: true if successfully stored
-func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
-	if err := g.store.SetDelegation(0, rlm, delegationID, delegation); err != nil {
-		return false
-	}
-	return true
+//   - error: nil on success, otherwise the storage write error
+func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+	return g.store.SetDelegation(0, rlm, delegationID, delegation)
 }
 
 // addDelegation adds a new delegation to storage and updates the delegation manager.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation
+//   - delegationID: unique identifier of the delegation to add
 //   - delegation: delegation instance to add
 //
 // Returns:
-//   - bool: true if successfully added
-func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
-	if ok := g.setDelegation(0, rlm, delegationID, delegation); !ok {
-		return false
+//   - error: nil on success, otherwise the delegation or manager storage error
+func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+	if err := g.setDelegation(0, rlm, delegationID, delegation); err != nil {
+		return err
 	}
 
-	// Update delegation manager
 	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.addDelegation(
@@ -84,11 +81,8 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
-		return false
-	}
 
-	return true
+	return g.store.SetDelegationManager(0, rlm, delegationManager)
 }
 
 // removeDelegation removes a delegation from storage and updates the delegation manager.
@@ -97,19 +91,17 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 //   - delegationID: unique identifier of the delegation to remove
 //
 // Returns:
-//   - bool: true if successfully removed
-func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) bool {
+//   - error: nil on success, otherwise an error when the delegation is absent or storage fails
+func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) error {
 	delegation := g.getDelegation(delegationID)
 	if delegation == nil {
-		return false
+		return errors.New(errDelegationNotFound)
 	}
 
-	// Remove from store
 	if err := g.store.RemoveDelegation(0, rlm, delegationID); err != nil {
-		return false
+		return err
 	}
 
-	// Update delegation manager
 	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.removeDelegation(
@@ -117,11 +109,8 @@ func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) boo
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
-		return false
-	}
 
-	return true
+	return g.store.SetDelegationManager(0, rlm, delegationManager)
 }
 
 // getUserDelegations retrieves all delegations for a specific user.
@@ -569,15 +558,13 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 //   - deposit: deposit amount to set
 //
 // Returns:
-//   - bool: true if successfully set
-func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) bool {
+//   - error: nil on success, otherwise the storage write error
+func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) error {
 	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	resolvedDeposits.setLaunchpadProjectDeposit(ownerAddress, deposit)
-	if err := g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits); err != nil {
-		return false
-	}
-	return true
+
+	return g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits)
 }
 
 // addStakeFromLaunchpad adds stake for a launchpad project and updates reward tracking.
@@ -605,7 +592,9 @@ func (g *govStakerV1) addStakeFromLaunchpad(_ int, rlm realm, address string, am
 	}
 
 	deposit = gnsmath.SafeAddInt64(deposit, amount)
-	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
+	if err := g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -639,7 +628,9 @@ func (g *govStakerV1) removeStakeFromLaunchpad(_ int, rlm realm, address string,
 		deposit = 0
 	}
 
-	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
+	if err := g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit); err != nil {
+		return err
+	}
 
 	return nil
 }
