@@ -225,7 +225,7 @@ func testExactIn_Small(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
 
-	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 100000)
+	common.SafeGRC20Approve(0, cur, barPath, routerAddr, 100000)
 	actualIn, actualOut := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -250,7 +250,7 @@ func testExactIn_Medium(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
 
-	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 10000000)
+	common.SafeGRC20Approve(0, cur, barPath, routerAddr, 10000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -275,7 +275,7 @@ func testExactIn_Large(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
 
-	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000000)
+	common.SafeGRC20Approve(0, cur, barPath, routerAddr, 1000000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -300,7 +300,7 @@ func testExactIn_AlmostAll(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
 
-	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 100000000000)
+	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 100000000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
 		cross(cur), fooPath, barPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -332,7 +332,7 @@ func testExactOut_Small(cur realm) {
 		return
 	}
 
-	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 999999999999)
+	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 999999999999)
 	actualIn, actualOut := router.ExactOutSwapRoute(
 		cross(cur), fooPath, barPath, amount, route, "100", "999999999999",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -362,7 +362,7 @@ func testExactOut_Medium(cur realm) {
 		return
 	}
 
-	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 999999999999)
+	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 999999999999)
 	actualIn, actualOut := router.ExactOutSwapRoute(
 		cross(cur), fooPath, barPath, amount, route, "100", "999999999999",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -392,7 +392,7 @@ func testExactOut_Large(cur realm) {
 		return
 	}
 
-	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 999999999999)
+	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 999999999999)
 	actualIn, actualOut := router.ExactOutSwapRoute(
 		cross(cur), fooPath, barPath, amount, route, "100", "999999999999",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -419,7 +419,7 @@ func testExactOut_BugScenario(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 999999999999999)
+		common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 999999999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), fooPath, barPath, amount, route, "100", "999999999999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -466,7 +466,7 @@ func testExactOut_JustAtOverflow(cur realm) {
 
 	if drySuccess {
 		ufmt.Println("[ERROR] DrySwap should have failed but succeeded!")
-		common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 999999999999999)
+		common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 999999999999999)
 		uassert.AbortsWithMessage(t, cur, "[GNOSWAP-POOL-020] overflow", func() {
 			router.ExactOutSwapRoute(
 				cross(cur), fooPath, barPath, amount, route, "100", "999999999999999",
@@ -516,7 +516,7 @@ func testReverseDirection(cur realm) {
 		)
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
-	common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000)
+	common.SafeGRC20Approve(0, cur, barPath, routerAddr, 1000000)
 	actualInFwd, actualOutFwd := router.ExactInSwapRoute(
 		cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -532,7 +532,7 @@ func testReverseDirection(cur realm) {
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
-	common.SafeGRC20Approve(cross(cur), fooPath, routerAddr, 1000000)
+	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 1000000)
 	actualInRev, actualOutRev := router.ExactInSwapRoute(
 		cross(cur), fooPath, barPath, amount, "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -559,7 +559,7 @@ func testMaxSlippage(cur realm) {
 
 	if drySuccess {
 		// This means the swap would succeed, verify with actual swap
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 1000000)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 1000000)
 		actualIn, actualOut := router.ExactInSwapRoute(
 			cross(cur), barPath, fooPath, amount, "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500", "100", "999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -599,6 +599,12 @@ func printExactOutTolerance(cur realm, requested string, dryOut string, toleranc
 	withinTolerance := diff <= tolerance
 
 	ufmt.Printf("[EXPECTED] ExactOut tolerance check: requested=%s dryOut=%s diff=%d tolerance=%d withinTolerance=%t\n", requested, dryOut, diff, tolerance, withinTolerance)
+}
+
+func assertExactOutOutputMatches(cur realm, dryOut, actualOut string) {
+	actualOutAmount, okActualOut := parseInt64(cur, actualOut)
+	uassert.Equal(t, true, okActualOut)
+	uassert.Equal(t, dryOut, strconv.FormatInt(absInt64(cur, actualOutAmount), 10))
 }
 
 func drySwapExactOutForAmount(cur realm, inputToken, outputToken string, amount int64, route, quote, amountLimit string) (string, bool, int64, bool) {
@@ -670,7 +676,7 @@ func testMultiHop_TwoHop_ExactIn_Success(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 100000)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 100000)
 		actualIn, actualOut := router.ExactInSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, quote, "1",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -701,7 +707,7 @@ func testMultiHop_TwoHop_ExactOut_Success(cur realm) {
 	printExactOutTolerance(cur, amount, dryOut, 2)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, quote, "999999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -724,7 +730,7 @@ func testMultiHop_TwoHop_ExactOut_Fail(cur realm) {
 	)
 	amount := strconv.FormatInt(requestedAmount, 10)
 
-	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Fail")
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
 		rIn, rOut, rErr := router.DrySwapRoute(
@@ -732,16 +738,18 @@ func testMultiHop_TwoHop_ExactOut_Fail(cur realm) {
 		)
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
-	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	uassert.Equal(t, true, drySuccess)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 2)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, "100", amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
-		ufmt.Printf("[EXPECTED] Actual swap 2-hop ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
+		assertExactOutOutputMatches(cur, dryOut, actualOut)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop ExactOut success - in=%s out=%s\n", actualIn, actualOut)
 	} else {
 		ufmt.Println("[INFO] DrySwap fail case returned success=false, skipping actual swap")
 	}
@@ -765,7 +773,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactIn(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactIn - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 100000)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 100000)
 		actualIn, actualOut := router.ExactInSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, quote, "1",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -795,7 +803,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Success(cur realm) {
 	printExactOutTolerance(cur, amount, dryOut, 4)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, quote, "999999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -819,7 +827,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail(cur realm) {
 	)
 	amount := strconv.FormatInt(requestedAmount, 10)
 
-	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail")
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
 		rIn, rOut, rErr := router.DrySwapRoute(
@@ -827,16 +835,18 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail(cur realm) {
 		)
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
-	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	uassert.Equal(t, true, drySuccess)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 4)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, quote, amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
-		ufmt.Printf("[EXPECTED] Actual swap 2-hop two-route ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
+		assertExactOutOutputMatches(cur, dryOut, actualOut)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop two-route ExactOut success - in=%s out=%s\n", actualIn, actualOut)
 	} else {
 		ufmt.Println("[INFO] DrySwap 2-hop two-route fail case returned success=false")
 	}
@@ -859,7 +869,7 @@ func testMultiHop_ThreeHop_ExactIn_Success(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 10000)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 10000)
 		actualIn, actualOut := router.ExactInSwapRoute(
 			cross(cur), barPath, fooPath, amount, route, "100", "1",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -888,7 +898,7 @@ func testMultiHop_ThreeHop_ExactOut_Success(cur realm) {
 	printExactOutTolerance(cur, amount, dryOut, 3)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, quxPath, amount, route, "100", "999999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -905,7 +915,7 @@ func testMultiHop_ThreeHop_ExactOut_Fail(cur realm) {
 	amount := "10"
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:500*POOL*gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500"
 
-	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Fail")
+	ufmt.Println("[INFO] Testing Multi-Hop (3-hop) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
 		rIn, rOut, rErr := router.DrySwapRoute(
@@ -913,16 +923,18 @@ func testMultiHop_ThreeHop_ExactOut_Fail(cur realm) {
 		)
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
-	ufmt.Printf("[EXPECTED] DrySwap 3-hop ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	uassert.Equal(t, true, drySuccess)
+	ufmt.Printf("[EXPECTED] DrySwap 3-hop ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 3)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, quxPath, amount, route, "100", "999999999",
 			time.Now().Add(time.Hour).Unix(), "",
 		)
-		ufmt.Printf("[EXPECTED] Actual swap 3-hop ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
+		assertExactOutOutputMatches(cur, dryOut, actualOut)
+		ufmt.Printf("[EXPECTED] Actual swap 3-hop ExactOut success - in=%s out=%s\n", actualIn, actualOut)
 	} else {
 		ufmt.Println("[INFO] DrySwap fail case returned success=false, skipping actual swap")
 	}
@@ -946,7 +958,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactIn(cur realm) {
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactIn - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 10000)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 10000)
 		actualIn, actualOut := router.ExactInSwapRoute(
 			cross(cur), barPath, quxPath, amount, route, quote, "1",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -976,7 +988,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Success(cur realm) {
 	printExactOutTolerance(cur, amount, dryOut, 4)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, quxPath, amount, route, quote, "999999999",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -1000,7 +1012,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 	)
 	amount := strconv.FormatInt(requestedAmount, 10)
 
-	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail")
+	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Success")
 
 	dryIn, dryOut, drySuccess := func(cur realm) (string, string, bool) {
 		rIn, rOut, rErr := router.DrySwapRoute(
@@ -1008,16 +1020,18 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 		)
 		return rIn, rOut, rErr == nil
 	}(cross(cur))
-	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	uassert.Equal(t, true, drySuccess)
+	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactOut success - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(cur, amount, dryOut, 4)
 
 	if drySuccess {
-		common.SafeGRC20Approve(cross(cur), barPath, routerAddr, 999999999)
+		common.SafeGRC20Approve(0, cur, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
 			cross(cur), barPath, quxPath, amount, route, quote, amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
-		ufmt.Printf("[EXPECTED] Actual swap 3-hop two-route ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
+		assertExactOutOutputMatches(cur, dryOut, actualOut)
+		ufmt.Printf("[EXPECTED] Actual swap 3-hop two-route ExactOut success - in=%s out=%s\n", actualIn, actualOut)
 	} else {
 		ufmt.Println("[INFO] DrySwap 3-hop two-route fail case returned success=false")
 	}
@@ -1116,29 +1130,29 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 // [EXPECTED] Results should match: DryIn=100000 ActualIn=100000, DryOut=271134 ActualOut=-271134
 //
 // [INFO] Testing Multi-Hop (2-hop) Exact Out - Success
-// [EXPECTED] DrySwap 2-hop ExactOut success - in=246 out=665 success=true
-// [EXPECTED] ExactOut tolerance check: requested=663 dryOut=665 diff=2 tolerance=2 withinTolerance=true
+// [EXPECTED] DrySwap 2-hop ExactOut success - in=246 out=663 success=true
+// [EXPECTED] ExactOut tolerance check: requested=663 dryOut=663 diff=0 tolerance=2 withinTolerance=true
 // [EXPECTED] Actual swap 2-hop ExactOut success - in=246 out=-663
 //
-// [INFO] Testing Multi-Hop (2-hop) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop ExactOut fail - in=738 out=2000 success=false
-// [EXPECTED] ExactOut tolerance check: requested=1997 dryOut=2000 diff=3 tolerance=2 withinTolerance=false
-// [INFO] DrySwap fail case returned success=false, skipping actual swap
+// [INFO] Testing Multi-Hop (2-hop) Exact Out - Success
+// [EXPECTED] DrySwap 2-hop ExactOut success - in=368826450 out=1000000000 success=true
+// [EXPECTED] ExactOut tolerance check: requested=1000000000 dryOut=1000000000 diff=0 tolerance=2 withinTolerance=true
+// [EXPECTED] Actual swap 2-hop ExactOut success - in=368826450 out=-1000000000
 //
 // [INFO] 2-hop two-route matrix
 // [INFO] Testing Multi-Hop (2-hop, two-route) Exact In
-// [EXPECTED] DrySwap 2-hop two-route ExactIn - in=100000 out=271133 success=true
-// [EXPECTED] Actual swap 2-hop two-route ExactIn - in=100000 out=-271133
+// [EXPECTED] DrySwap 2-hop two-route ExactIn - in=100000 out=271123 success=true
+// [EXPECTED] Actual swap 2-hop two-route ExactIn - in=100000 out=-271123
 //
 // [INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Success
-// [EXPECTED] DrySwap 2-hop two-route ExactOut success - in=372 out=1004 success=true
-// [EXPECTED] ExactOut tolerance check: requested=1000 dryOut=1004 diff=4 tolerance=4 withinTolerance=true
+// [EXPECTED] DrySwap 2-hop two-route ExactOut success - in=372 out=1000 success=true
+// [EXPECTED] ExactOut tolerance check: requested=1000 dryOut=1000 diff=0 tolerance=4 withinTolerance=true
 // [EXPECTED] Actual swap 2-hop two-route ExactOut success - in=372 out=-1000
 //
-// [INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=1476 out=3998 success=false
-// [EXPECTED] ExactOut tolerance check: requested=3993 dryOut=3998 diff=5 tolerance=4 withinTolerance=false
-// [INFO] DrySwap 2-hop two-route fail case returned success=false
+// [INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Success
+// [EXPECTED] DrySwap 2-hop two-route ExactOut success - in=368837267 out=1000000000 success=true
+// [EXPECTED] ExactOut tolerance check: requested=1000000000 dryOut=1000000000 diff=0 tolerance=4 withinTolerance=true
+// [EXPECTED] Actual swap 2-hop two-route ExactOut success - in=368840871 out=-1000000000
 //
 // [INFO] 3-hop single-route matrix
 // [INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3
@@ -1146,26 +1160,26 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail(cur realm) {
 // [EXPECTED] Actual swap 3-hop - in=10000 out=-9298785
 //
 // [INFO] Testing Multi-Hop (3-hop) Exact Out - Success
-// [EXPECTED] DrySwap 3-hop ExactOut success - in=247 out=666 success=true
-// [EXPECTED] ExactOut tolerance check: requested=663 dryOut=666 diff=3 tolerance=3 withinTolerance=true
+// [EXPECTED] DrySwap 3-hop ExactOut success - in=247 out=663 success=true
+// [EXPECTED] ExactOut tolerance check: requested=663 dryOut=663 diff=0 tolerance=3 withinTolerance=true
 // [EXPECTED] Actual swap 3-hop ExactOut success - in=247 out=-663
 //
-// [INFO] Testing Multi-Hop (3-hop) Exact Out - Fail
-// [EXPECTED] DrySwap 3-hop ExactOut fail - in=7 out=14 success=false
-// [EXPECTED] ExactOut tolerance check: requested=10 dryOut=14 diff=4 tolerance=3 withinTolerance=false
-// [INFO] DrySwap fail case returned success=false, skipping actual swap
+// [INFO] Testing Multi-Hop (3-hop) Exact Out - Success
+// [EXPECTED] DrySwap 3-hop ExactOut success - in=7 out=10 success=true
+// [EXPECTED] ExactOut tolerance check: requested=10 dryOut=10 diff=0 tolerance=3 withinTolerance=true
+// [EXPECTED] Actual swap 3-hop ExactOut success - in=7 out=-10
 //
 // [INFO] 3-hop two-route matrix
 // [INFO] Testing Multi-Hop (3-hop, two-route) Exact In
-// [EXPECTED] DrySwap 3-hop two-route ExactIn - in=10000 out=25381 success=true
-// [EXPECTED] Actual swap 3-hop two-route ExactIn - in=10000 out=-25381
+// [EXPECTED] DrySwap 3-hop two-route ExactIn - in=10000 out=25380 success=true
+// [EXPECTED] Actual swap 3-hop two-route ExactIn - in=10000 out=-25380
 //
 // [INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Success
-// [EXPECTED] DrySwap 3-hop two-route ExactOut success - in=6 out=6 success=true
-// [EXPECTED] ExactOut tolerance check: requested=2 dryOut=6 diff=4 tolerance=4 withinTolerance=true
+// [EXPECTED] DrySwap 3-hop two-route ExactOut success - in=6 out=2 success=true
+// [EXPECTED] ExactOut tolerance check: requested=2 dryOut=2 diff=0 tolerance=4 withinTolerance=true
 // [EXPECTED] Actual swap 3-hop two-route ExactOut success - in=6 out=-2
 //
-// [INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=962 out=2221 success=false
-// [EXPECTED] ExactOut tolerance check: requested=2216 dryOut=2221 diff=5 tolerance=4 withinTolerance=false
-// [INFO] DrySwap 3-hop two-route fail case returned success=false
+// [INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Success
+// [EXPECTED] DrySwap 3-hop two-route ExactOut success - in=432334 out=1000000 success=true
+// [EXPECTED] ExactOut tolerance check: requested=1000000 dryOut=1000000 diff=0 tolerance=4 withinTolerance=true
+// [EXPECTED] Actual swap 3-hop two-route ExactOut success - in=432334 out=-1000000

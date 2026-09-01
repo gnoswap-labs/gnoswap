@@ -249,9 +249,9 @@ func handleSwapCallback(
 
 func transferToPool(cur realm, tokenPath string, amount int64, payer address) {
 	if payer == wrapperAddr {
-		common.SafeGRC20Transfer(cross(cur), tokenPath, poolAddr, amount)
+		common.SafeGRC20Transfer(0, cur, tokenPath, poolAddr, amount)
 		return
 	}
 
-	common.SafeGRC20TransferFrom(cross(cur), tokenPath, payer, poolAddr, amount)
+	common.SafeGRC20TransferFrom(0, cur, tokenPath, payer, poolAddr, amount)
 }

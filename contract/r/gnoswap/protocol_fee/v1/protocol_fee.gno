@@ -243,7 +243,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	pf.reserveCollectedProtocolFee(0, rlm, tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, caller, protocolFeeAddr, amount)
+	common.SafeGRC20TransferFrom(0, rlm, tokenPath, caller, protocolFeeAddr, amount)
 
 	chain.Emit(
 		"AddToProtocolFee",

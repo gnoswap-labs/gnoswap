@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/nt/ufmt/v0"
 )
 
 // generateRandInstance generates a new random instance.
@@ -32,7 +32,7 @@ func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 	}
 
 	// Check if token exists
-	owner, ownerErr := nft.OwnerOf(tid)
+	owner, ownerErr := token.OwnerOf(tid)
 	if ownerErr != nil {
 		panic(ownerErr)
 	}
@@ -45,10 +45,10 @@ func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 		}
 
 		// Check if caller is approved for this specific token
-		approved, _ := nft.GetApproved(tid)
+		approved, _ := token.GetApproved(tid)
 		if approved != caller {
 			// Check if caller is approved for all tokens
-			if !nft.IsApprovedForAll(owner, caller) {
+			if !token.IsApprovedForAll(owner, caller) {
 				panic(makeErrorWithDetails(grc721.ErrCallerIsNotOwnerOrApproved.Error(), ufmt.Sprintf("caller %s is not owner %s or approved for token %s", caller, owner, string(tid))))
 			}
 		}
@@ -78,7 +78,7 @@ func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 		panic(makeErrorWithDetails(errTokenNotExists, ufmt.Sprintf("token %s", string(tid))))
 
 	case errors.Is(err, grc721.ErrCallerIsNotOwnerOrApproved):
-		owner, ownerErr := nft.OwnerOf(tid)
+		owner, ownerErr := token.OwnerOf(tid)
 		checkErr(ownerErr)
 		panic(makeErrorWithDetails(errNotOwnerOrApproved, ufmt.Sprintf("caller %s cannot approve for token %s owned by %s", caller, string(tid), owner)))
 

@@ -116,11 +116,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 
     if amount0Delta > 0 {
         // Transfer token0 to pool
-        common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+        common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
     }
     if amount1Delta > 0 {
         // Transfer token1 to pool
-        common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+        common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
     }
     return nil
 }

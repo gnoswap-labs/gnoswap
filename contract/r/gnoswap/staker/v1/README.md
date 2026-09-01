@@ -14,6 +14,7 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 - **Pool Tiers**: 1, 2, or 3 (assigned per pool)
 - **Warmup Schedule**: 30/50/70/100% over 30/60/90 days
 - **External Token Whitelist**: Approved reward tokens
+- **External Incentive Start**: UTC midnight, from the first eligible start (at least 24 hours after creation) through 7 days later
 
 ## Core Features
 

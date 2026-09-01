@@ -46,8 +46,8 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(cur realm, t *testi
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
@@ -100,8 +100,8 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(cur realm, t *
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		position.IncreaseLiquidity(
@@ -142,8 +142,8 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(cur realm, t *testin
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// Get current total liquidity before increase
 		prevTotalLiquidity := u256.MustFromDecimal(mustGetPositionLiquidity(tokenId))
@@ -204,8 +204,8 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(cur realm, t *t
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		//
@@ -265,8 +265,8 @@ func createTestPosition(cur realm, t *testing.T, adminAddr, poolAddr address) ui
 	}
 
 	// Approve tokens
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 	amount0Int64, _ := strconv.ParseInt("10000000", 10, 64)
 	amount1Int64, _ := strconv.ParseInt("10000000", 10, 64)

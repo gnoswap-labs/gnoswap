@@ -105,6 +105,12 @@ func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
 	}
 }
 
+func TestSqrtPriceMath_getNextPriceAmount0Add_FallbackDenominatorOverflow(cur realm, t *testing.T) {
+	uassert.PanicsWithMessage(t, cur, errSafeMathOverflow, func() {
+		getNextPriceAmount0Add(u256.One(), u256.One(), MAX_UINT256)
+	})
+}
+
 // TestGetNextPriceAmount0Remove tests the internal helper for removing token0
 func TestSqrtPriceMath_getNextPriceAmount0Remove(cur realm, t *testing.T) {
 	tiny := u256.One()
