@@ -8,9 +8,9 @@
 // to cancel it passes, and executing the proposal refunds the reward tokens plus
 // the GNS deposit to the refund address and removes the incentive.
 //
-// The governance flow skips roughly three weeks of chain time between creation
-// and execution, so the incentive starts a year out to stay pending until the
-// proposal executes.
+// The default governance schedule takes longer than the maximum permitted
+// incentive lead time. This scenario first adopts a short schedule, then
+// exercises cancellation while the incentive remains pending.
 
 package main
 
@@ -85,24 +85,30 @@ func main(cur realm) {
 	delegateGnsToAdmin(cur)
 	println()
 
-	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
+	println("[SCENARIO] 2. Skip voting smoothing duration")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
 	ufmt.Printf("[INFO] current height: %d\n", runtime.ChainHeight())
 	println()
 
-	println("[SCENARIO] 3. Create pool and a pending external incentive")
+	println("[SCENARIO] 3. Adopt a short governance schedule")
+	proposalID := proposeShortVotingSchedule(cur)
+	voteAndExecuteShortSchedule(cur, proposalID, config)
+	config = governance.GetLatestConfig()
+	println()
+
+	println("[SCENARIO] 4. Create pool and a pending external incentive")
 	createPoolAndIncentive(cur)
 	println()
 
-	println("[SCENARIO] 4. Propose CancelExternalIncentive")
-	proposalID := proposeCancelExternalIncentive(cur)
+	println("[SCENARIO] 5. Propose CancelExternalIncentive")
+	proposalID = proposeCancelExternalIncentive(cur)
 	println()
 
-	println("[SCENARIO] 5. Vote and execute the proposal")
+	println("[SCENARIO] 6. Vote and execute the proposal")
 	voteAndExecute(cur, proposalID, config)
 	println()
 
-	println("[SCENARIO] 6. Verify the refund and the removal")
+	println("[SCENARIO] 7. Verify the refund and the removal")
 	verifyCancelled(cur)
 	println()
 }
@@ -134,14 +140,34 @@ func createPoolAndIncentive(cur realm) {
 
 	createTimestamp := time.Now().Unix()
 
-	// A year out, so the incentive is still pending when the proposal executes.
-	startTimestamp := ((createTimestamp / 86400) + 365) * 86400
+	// The first eligible midnight is at least one day after creation; this
+	// latest allowed start leaves the short governance proposal time to cancel.
+	startTimestamp := ((createTimestamp / 86400) + 8) * 86400
 	endTimestamp := startTimestamp + INCENTIVE_DURATION
 
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
 	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+}
+
+func proposeShortVotingSchedule(cur realm) int64 {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	return governance.ProposeParameterChange(
+		cross(cur),
+		"governance",
+		"Adopt a short governance schedule",
+		1,
+		"gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*8640,60480,86400,50,1000000000,0,2592000",
+	)
+}
+
+func voteAndExecuteShortSchedule(cur realm, proposalID int64, config governance.Config) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SkipHeights(int64(config.VotingStartDelay)/currentBlockTime + 1)
+	governance.Vote(cross(cur), proposalID, true)
+	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
+	governance.Execute(cross(cur), proposalID)
 }
 
 func proposeCancelExternalIncentive(cur realm) int64 {
@@ -163,7 +189,7 @@ func proposeCancelExternalIncentive(cur realm) int64 {
 func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
+	testing.SkipHeights(int64(config.VotingStartDelay)/currentBlockTime + 1)
 	governance.Vote(cross(cur), proposalID, true)
 	ufmt.Printf("[INFO] Voted YES for proposal %d\n", proposalID)
 
@@ -187,20 +213,22 @@ func verifyCancelled(cur realm) {
 // [SCENARIO] 1. Delegate gns to admin
 // [INFO] gns delegated to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
 //
-// [SCENARIO] 2. Skip voting smoothing duration for create proposal
+// [SCENARIO] 2. Skip voting smoothing duration
 // [INFO] current height: 43323
 //
-// [SCENARIO] 3. Create pool and a pending external incentive
+// [SCENARIO] 3. Adopt a short governance schedule
+//
+// [SCENARIO] 4. Create pool and a pending external incentive
 // [INFO] pending incentives for pool: 1
 //
-// [SCENARIO] 4. Propose CancelExternalIncentive
-// [INFO] CancelExternalIncentive Proposal ID: 1
+// [SCENARIO] 5. Propose CancelExternalIncentive
+// [INFO] CancelExternalIncentive Proposal ID: 2
 //
-// [SCENARIO] 5. Vote and execute the proposal
-// [INFO] Voted YES for proposal 1
-// [EXPECTED] Proposal 1 executed successfully
+// [SCENARIO] 6. Vote and execute the proposal
+// [INFO] Voted YES for proposal 2
+// [EXPECTED] Proposal 2 executed successfully
 //
-// [SCENARIO] 6. Verify the refund and the removal
+// [SCENARIO] 7. Verify the refund and the removal
 // [EXPECTED] creator BAR refund delta: 1000000000
 // [EXPECTED] creator GNS refund delta: 100000000000
 // [EXPECTED] remaining incentives for pool: 0
