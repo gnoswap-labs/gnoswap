@@ -411,6 +411,10 @@ func (gs *govStakerV1) unDelegate(
 			return 0, errors.New("undelegation amount cannot be negative")
 		}
 
+		if currentUnDelegationAmount == 0 {
+			continue
+		}
+
 		resolver.UnDelegate(
 			currentUnDelegationAmount,
 			currentHeight,
@@ -486,6 +490,10 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 
 		if currentUnDelegationAmount > resolver.DelegatedAmount() {
 			currentUnDelegationAmount = resolver.DelegatedAmount()
+		}
+
+		if currentUnDelegationAmount == 0 {
+			continue
 		}
 
 		resolver.UnDelegateWithoutLockup(
