@@ -93,8 +93,8 @@ func (r *routerV1) transferToPool(_ int, rlm realm, token string, amount *u256.U
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	if payer == routerAddr {
-		common.SafeGRC20Transfer(cross(rlm), token, poolAddr, amount.Int64())
+		common.SafeGRC20Transfer(0, rlm, token, poolAddr, amount.Int64())
 	} else {
-		common.SafeGRC20TransferFrom(cross(rlm), token, payer, poolAddr, amount.Int64())
+		common.SafeGRC20TransferFrom(0, rlm, token, payer, poolAddr, amount.Int64())
 	}
 }

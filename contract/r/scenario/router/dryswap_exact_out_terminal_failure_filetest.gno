@@ -80,8 +80,8 @@ func setupTerminalFailurePools(cur realm) {
 	pl.SetPoolCreationFee(cross(cur), 0)
 
 	for _, token := range []string{barPath, bazPath, fooPath, quxPath} {
-		common.SafeGRC20Transfer(cross(cur), token, aliceAddr, 1_000_000)
-		common.SafeGRC20Approve(cross(cur), token, poolAddr, maxApproval)
+		common.SafeGRC20Transfer(0, cur, token, aliceAddr, 1_000_000)
+		common.SafeGRC20Approve(0, cur, token, poolAddr, maxApproval)
 	}
 
 	createPool(cur, barPath, bazPath)
@@ -92,7 +92,7 @@ func setupTerminalFailurePools(cur realm) {
 
 	testing.SetRealm(aliceRealm)
 	for _, token := range []string{barPath, bazPath, fooPath, quxPath} {
-		common.SafeGRC20Approve(cross(cur), token, poolAddr, maxApproval)
+		common.SafeGRC20Approve(0, cur, token, poolAddr, maxApproval)
 	}
 
 	// These ranges are active at the initial price and make every non-BAZ/QUX
@@ -130,7 +130,7 @@ func assertExactOutFailure(cur realm, name string, failureHop int, inputToken, o
 	uassert.Error(t, dryErr)
 	ufmt.Printf("[EXPECTED] DrySwapRoute rejected: in=%s out=%s err=%s\n", dryIn, dryOut, dryErr.Error())
 
-	common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, maxApproval)
+	common.SafeGRC20Approve(0, cur, inputToken, routerAddr, maxApproval)
 	actualErr := revive(func() {
 		router.ExactOutSwapRoute(
 			cross(cur), inputToken, outputToken, "1000", route, "100", "999999999",

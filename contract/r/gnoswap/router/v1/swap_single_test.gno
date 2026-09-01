@@ -84,8 +84,8 @@ func TestSingleSwap(cur realm, t *testing.T) {
 
 			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
 			amountIn, amountOut := singleSwapFn(cross(cur))
 

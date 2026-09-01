@@ -50,7 +50,9 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 		return self.GetAccumulatedRewardX128PerStake(), nil
 	}
 
-	// If no tokens are staked, no rewards to distribute
+	// With no stake there is nobody to credit, so the delta accrued over that window is
+	// dropped and the caller advances the cursor past it. The protocol fee accumulator
+	// applies the same policy, see ProtocolFeeRewardManagerResolver.
 	totalStakedAmount := self.GetTotalStakedAmount()
 	if totalStakedAmount == 0 {
 		return self.GetAccumulatedRewardX128PerStake(), nil
@@ -83,11 +85,6 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 ) error {
 	// DO NOT apply out-of-order timestamps
 	if currentTimestamp < self.GetAccumulatedTimestamp() {
-		return nil
-	}
-
-	// to avoid accumulating a large delta later.
-	if self.GetTotalStakedAmount() == 0 {
 		return nil
 	}
 

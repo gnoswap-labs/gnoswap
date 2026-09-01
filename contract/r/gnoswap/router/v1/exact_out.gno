@@ -178,7 +178,7 @@ func (r *routerV1) exactOutSwapRoute(
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 
-	common.SafeGRC20Transfer(cross(rlm), params.outputToken, caller, outputAmount)
+	common.SafeGRC20Transfer(0, rlm, params.outputToken, caller, outputAmount)
 
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)

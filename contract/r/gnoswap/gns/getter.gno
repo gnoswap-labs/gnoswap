@@ -101,7 +101,7 @@ func GetEmissionLeftAmountByTimestamp(timestamp int64) int64 {
 func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
 	state := getEmissionState()
 	year := state.getCurrentYear(timestamp)
-	return state.getHalvingYearAccumulatedAmount(year)
+	return state.getHalvingYearMintedAmount(year)
 }
 
 // GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
@@ -122,22 +122,16 @@ func GetHalvingYearMaxAmount(year int64) int64 {
 	return halvingData.getMaxAmount(year)
 }
 
-// GetHalvingYearMintAmount returns the amount of tokens minted for the specified halving year.
-func GetHalvingYearMintAmount(year int64) int64 {
-	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getMintedAmount(year)
-}
-
 // GetHalvingYearLeftAmount returns the remaining token issuance for the specified halving year.
 func GetHalvingYearLeftAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getLeftAmount(year)
 }
 
-// GetHalvingYearAccuAmount returns the accumulated token issuance for the specified halving year.
-func GetHalvingYearAccuAmount(year int64) int64 {
+// GetHalvingYearMintedAmount returns the minted token issuance for the specified halving year.
+func GetHalvingYearMintedAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getAccumAmount(year)
+	return halvingData.getMintedAmount(year)
 }
 
 // GetAmountPerSecondPerHalvingYear returns the emission rate per second for the specified halving year.

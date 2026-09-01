@@ -10,6 +10,7 @@ const (
 	MAX_UINT64  string = "18446744073709551615"
 	MAX_INT64   string = "9223372036854775807"
 	MAX_INT128  string = "170141183460469231731687303715884105727"
+	MIN_INT128  string = "-170141183460469231731687303715884105728"
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
 	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
@@ -26,6 +27,7 @@ const (
 
 var (
 	maxInt128FromDecimal  = i256.MustFromDecimal(MAX_INT128)
+	minInt128FromDecimal  = i256.MustFromDecimal(MIN_INT128)
 	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
 	q128FromDecimal       = u256.MustFromDecimal(Q128)
 )
@@ -93,10 +95,11 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
-	if value.Gt(maxInt128FromDecimal) {
+	if value.Gt(maxInt128FromDecimal) || value.Lt(minInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
-			errOverflow, value.ToString()))
+			errOverflow, value.ToString(),
+		))
 	}
 }
 

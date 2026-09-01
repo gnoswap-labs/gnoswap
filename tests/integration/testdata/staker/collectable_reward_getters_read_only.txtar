@@ -94,7 +94,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -
 # Create an incentive after staking. In the base implementation, the next
 # collectable getter lazily adds this ID to the deposit and advances its cursor.
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000" -args "gno.land/r/onbloc/bar.BAR" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx run test1 $WORK/run/create_external_incentive.gno -gas-fee 100000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
 
 # Advance the chain beyond the creation timestamp so lazy discovery is reached.
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -105,6 +105,27 @@ gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_adm
 # a regression assertion for the vulnerability fixed by this PR.
 gnokey maketx run test1 $WORK/run/collectable_reward_getters.gno -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
 stdout 'collectable getters are read only'
+
+-- run/create_external_incentive.gno --
+package main
+
+import (
+	"time"
+
+	staker "gno.land/r/gnoswap/staker"
+)
+
+func main(cur realm) {
+	start := ((time.Now().Unix() / 86400) + 8) * 86400
+	staker.CreateExternalIncentive(
+		cross(cur),
+		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000",
+		"gno.land/r/onbloc/bar.BAR",
+		1000000000,
+		start,
+		start+90*24*60*60,
+	)
+}
 
 -- run/collectable_reward_getters.gno --
 package main

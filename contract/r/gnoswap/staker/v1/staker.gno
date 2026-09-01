@@ -558,7 +558,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		}
 
 		if toUser > 0 {
-			common.SafeGRC20Transfer(cross(rlm), rewardToken, deposit.Owner(), toUser)
+			common.SafeGRC20Transfer(0, rlm, rewardToken, deposit.Owner(), toUser)
 		}
 
 		chain.Emit(

@@ -469,7 +469,7 @@ func createPoolExternalOnly(cur realm) {
 	baz.Approve(cross(cur), stakerAddr, 2_000_000_000)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
-	startTime := int64(1244332800)
+	startTime := ((time.Now().Unix() / 86400) + 2) * 86400
 	endTime := startTime + TIMESTAMP_90DAYS
 
 	testing.SetRealm(adminRealm)
