@@ -546,7 +546,7 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			// Removing an orphaned deposit must not silently corrupt reward accounting.
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
-			uassert.AbortsWithMessage(t, cur, "remove amount exceeds staked amount", func() {
+			uassert.AbortsWithMessage(t, cur, errRemoveAmountExceedsStaked, func() {
 				staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
 			})
 

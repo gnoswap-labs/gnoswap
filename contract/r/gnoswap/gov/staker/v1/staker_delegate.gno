@@ -339,7 +339,7 @@ func (gs *govStakerV1) delegate(
 	delegationResolver := NewDelegationResolver(delegation)
 	delegatedAmount := delegationResolver.DelegatedAmount()
 	if delegatedAmount < 0 {
-		return nil, errors.New("delegated amount cannot be negative")
+		return nil, errors.New(errDelegatedAmountNegative)
 	}
 
 	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
@@ -408,7 +408,7 @@ func (gs *govStakerV1) unDelegate(
 		}
 
 		if currentUnDelegationAmount < 0 {
-			return 0, errors.New("undelegation amount cannot be negative")
+			return 0, errors.New(errUndelegationAmountNegative)
 		}
 
 		if currentUnDelegationAmount == 0 {

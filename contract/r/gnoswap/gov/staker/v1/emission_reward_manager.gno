@@ -109,7 +109,7 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 // Adds stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 
 	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
@@ -132,7 +132,7 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 
 	currentTotal := self.GetTotalStakedAmount()
 	if amount > 0 && currentTotal > math.MaxInt64-amount {
-		return errors.New("total staked amount would overflow")
+		return errors.New(errTotalStakedAmountOverflow)
 	}
 	self.SetTotalStakedAmount(gnsmath.SafeAddInt64(currentTotal, amount))
 	return nil
@@ -143,12 +143,12 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 // Removes stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 
 	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
 	if updatedTotalStakedAmount < 0 {
-		return errors.New("remove amount exceeds total staked amount")
+		return errors.New(errRemoveAmountExceedsTotalStaked)
 	}
 
 	accumulatedReward := self.GetAccumulatedRewardX128PerStake()

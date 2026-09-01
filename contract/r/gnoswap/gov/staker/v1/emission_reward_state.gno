@@ -100,7 +100,7 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 //   - amount: amount of stake to add
 func (self *EmissionRewardStateResolver) addStake(amount int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 	self.SetStakedAmount(gnsmath.SafeAddInt64(self.GetStakedAmount(), amount))
 	return nil
@@ -113,10 +113,10 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) error {
 //   - amount: amount of stake to remove
 func (self *EmissionRewardStateResolver) removeStake(amount int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 	if amount > self.GetStakedAmount() {
-		return errors.New("remove amount exceeds staked amount")
+		return errors.New(errRemoveAmountExceedsStaked)
 	}
 	self.SetStakedAmount(gnsmath.SafeSubInt64(self.GetStakedAmount(), amount))
 	return nil

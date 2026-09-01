@@ -156,7 +156,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewardForToken(
 //   - amount: amount of stake to add
 func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 	p.SetStakedAmount(gnsmath.SafeAddInt64(p.GetStakedAmount(), amount))
 	return nil
@@ -169,10 +169,10 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) error {
 //   - amount: amount of stake to remove
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 	if amount > p.GetStakedAmount() {
-		return errors.New("remove amount exceeds staked amount")
+		return errors.New(errRemoveAmountExceedsStaked)
 	}
 	p.SetStakedAmount(gnsmath.SafeSubInt64(p.GetStakedAmount(), amount))
 	return nil
@@ -193,7 +193,7 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 	}
 
 	if p.GetAccumulatedTimestamp() < currentTimestamp {
-		return nil, errors.New("must update reward debt before claiming rewards")
+		return nil, errors.New(errRewardDebtUpdateRequired)
 	}
 
 	currentClaimedRewards := make(map[string]int64)

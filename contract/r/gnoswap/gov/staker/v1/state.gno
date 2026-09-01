@@ -95,7 +95,7 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) error {
 	delegation := g.getDelegation(delegationID)
 	if delegation == nil {
-		return errors.New("delegation not found")
+		return errors.New(errDelegationNotFound)
 	}
 
 	if err := g.store.RemoveDelegation(0, rlm, delegationID); err != nil {

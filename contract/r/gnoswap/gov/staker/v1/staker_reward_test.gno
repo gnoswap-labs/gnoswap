@@ -313,7 +313,7 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			amount:        0,
 			add:           true,
 			expectPanic:   true,
-			expectedError: "amount must be positive",
+			expectedError: errAmountMustBePositive,
 			setupMocks: func(cur realm, _ *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},

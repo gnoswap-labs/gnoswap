@@ -251,7 +251,7 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount <= 0 {
-		return errors.New("amount must be positive")
+		return errors.New(errAmountMustBePositive)
 	}
 
 	rewardState, ok, err := self.GetRewardState(address)
@@ -266,7 +266,7 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 
 	currentTotal := self.GetTotalStakedAmount()
 	if currentTotal > math.MaxInt64-amount {
-		return errors.New("total staked amount would overflow")
+		return errors.New(errTotalStakedAmountOverflow)
 	}
 	updatedTotalStakedAmount := gnsmath.SafeAddInt64(currentTotal, amount)
 
@@ -290,12 +290,12 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
 	}
 
 	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
 	if updatedTotalStakedAmount < 0 {
-		return errors.New("remove amount exceeds total staked amount")
+		return errors.New(errRemoveAmountExceedsTotalStaked)
 	}
 
 	rewardState, ok, err := self.GetRewardState(address)
