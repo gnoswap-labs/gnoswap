@@ -154,8 +154,12 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewardForToken(
 //
 // Parameters:
 //   - amount: amount of stake to add
-func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
+func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
 	p.SetStakedAmount(gnsmath.SafeAddInt64(p.GetStakedAmount(), amount))
+	return nil
 }
 
 // removeStake decreases the staked amount for this address.
@@ -163,8 +167,15 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
 //
 // Parameters:
 //   - amount: amount of stake to remove
-func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
+func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
+	if amount > p.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	p.SetStakedAmount(gnsmath.SafeSubInt64(p.GetStakedAmount(), amount))
+	return nil
 }
 
 // claimRewards processes reward claiming for all tokens and updates the claim state.
@@ -304,9 +315,7 @@ func (p *ProtocolFeeRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 		return err
 	}
 
-	p.addStake(amount)
-
-	return nil
+	return p.addStake(amount)
 }
 
 // removeStakeWithUpdateRewardDebtX128 removes stake and updates reward debt in one operation.
@@ -329,9 +338,7 @@ func (p *ProtocolFeeRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 		return err
 	}
 
-	p.removeStake(amount)
-
-	return nil
+	return p.removeStake(amount)
 }
 
 // claimRewardsWithUpdateRewardDebtX128 claims rewards and updates reward debt in one operation.

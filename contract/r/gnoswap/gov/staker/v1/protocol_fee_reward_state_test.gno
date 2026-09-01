@@ -257,12 +257,22 @@ func TestProtocolFeeRewardState_addStake(cur realm, t *testing.T) {
 			resolver.SetStakedAmount(tt.initialStake)
 
 			// When: Add stake
-			resolver.addStake(tt.addAmount)
+			uassert.NoError(t, resolver.addStake(tt.addAmount))
 
 			// Then: Staked amount should be updated
 			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)
 		})
 	}
+}
+
+func TestProtocolFeeRewardState_rejectsNegativeStakeChanges(cur realm, t *testing.T) {
+	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+	resolver := NewProtocolFeeRewardStateResolver(state)
+	resolver.SetStakedAmount(100)
+
+	uassert.Error(t, resolver.addStake(-1))
+	uassert.Error(t, resolver.removeStake(-1))
+	uassert.Equal(t, int64(100), resolver.GetStakedAmount())
 }
 
 // Test removeStake
@@ -301,7 +311,7 @@ func TestProtocolFeeRewardState_removeStake(cur realm, t *testing.T) {
 			resolver.SetStakedAmount(tt.initialStake)
 
 			// When: Remove stake
-			resolver.removeStake(tt.removeAmount)
+			uassert.NoError(t, resolver.removeStake(tt.removeAmount))
 
 			// Then: Staked amount should be updated
 			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)

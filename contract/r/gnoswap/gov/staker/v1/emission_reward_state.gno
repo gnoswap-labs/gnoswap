@@ -98,8 +98,12 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 //
 // Parameters:
 //   - amount: amount of stake to add
-func (self *EmissionRewardStateResolver) addStake(amount int64) {
+func (self *EmissionRewardStateResolver) addStake(amount int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
 	self.SetStakedAmount(gnsmath.SafeAddInt64(self.GetStakedAmount(), amount))
+	return nil
 }
 
 // removeStake decreases the staked amount for this address.
@@ -107,8 +111,15 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) {
 //
 // Parameters:
 //   - amount: amount of stake to remove
-func (self *EmissionRewardStateResolver) removeStake(amount int64) {
+func (self *EmissionRewardStateResolver) removeStake(amount int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
+	if amount > self.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	self.SetStakedAmount(gnsmath.SafeSubInt64(self.GetStakedAmount(), amount))
+	return nil
 }
 
 // claimRewards processes reward claiming and updates the claim state.
@@ -176,8 +187,7 @@ func (self *EmissionRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-	self.addStake(amount)
-	return nil
+	return self.addStake(amount)
 }
 
 // removeStakeWithUpdateRewardDebtX128 removes stake and updates reward debt in one operation.
@@ -198,8 +208,7 @@ func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-	self.removeStake(amount)
-	return nil
+	return self.removeStake(amount)
 }
 
 // claimRewardsWithUpdateRewardDebtX128 claims rewards and updates reward debt in one operation.
