@@ -97,7 +97,7 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 // Parameters:
 //   - amount: amount of stake to add
 func (self *EmissionRewardStateResolver) addStake(amount int64) {
-	self.adjustStake(amount)
+	self.SetStakedAmount(gnsmath.SafeAddInt64(self.GetStakedAmount(), amount))
 }
 
 // removeStake decreases the staked amount for this address.
@@ -106,20 +106,10 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (self *EmissionRewardStateResolver) removeStake(amount int64) {
-	self.adjustStake(-amount)
-}
-
-// adjustStake is a small internal helper to centralize bound checks and math.
-func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
-	if delta == 0 {
-		return
+	if amount > self.GetStakedAmount() {
+		panic("remove amount exceeds staked amount")
 	}
-	// clamp at zero on underflow
-	newAmt := gnsmath.SafeAddInt64(self.GetStakedAmount(), delta)
-	if newAmt < 0 {
-		newAmt = 0
-	}
-	self.SetStakedAmount(newAmt)
+	self.SetStakedAmount(gnsmath.SafeSubInt64(self.GetStakedAmount(), amount))
 }
 
 // claimRewards processes reward claiming and updates the claim state.

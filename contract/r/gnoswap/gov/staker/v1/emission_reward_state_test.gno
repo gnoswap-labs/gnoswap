@@ -334,6 +334,17 @@ func TestEmissionRewardState_removeStake(cur realm, t *testing.T) {
 	}
 }
 
+func TestEmissionRewardState_removeStake_rejectsOverRemoval(cur realm, t *testing.T) {
+	state := staker.NewEmissionRewardState(u256.NewUint(0))
+	resolver := NewEmissionRewardStateResolver(state)
+	resolver.SetStakedAmount(100)
+
+	uassert.PanicsWithMessage(t, cur, "remove amount exceeds staked amount", func() {
+		resolver.removeStake(101)
+	})
+	uassert.Equal(t, resolver.GetStakedAmount(), int64(100))
+}
+
 // Test claimRewards including idempotent no-op cases.
 func TestEmissionRewardState_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
