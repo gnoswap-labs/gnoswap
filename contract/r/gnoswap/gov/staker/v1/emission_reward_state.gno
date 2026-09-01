@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"errors"
+
 	"gno.land/p/gnoswap/consts"
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -106,9 +108,6 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (self *EmissionRewardStateResolver) removeStake(amount int64) {
-	if amount > self.GetStakedAmount() {
-		panic("remove amount exceeds staked amount")
-	}
 	self.SetStakedAmount(gnsmath.SafeSubInt64(self.GetStakedAmount(), amount))
 }
 
@@ -193,6 +192,9 @@ func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) error {
+	if amount > self.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}

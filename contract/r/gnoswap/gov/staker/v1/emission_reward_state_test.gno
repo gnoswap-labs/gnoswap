@@ -339,9 +339,8 @@ func TestEmissionRewardState_removeStake_rejectsOverRemoval(cur realm, t *testin
 	resolver := NewEmissionRewardStateResolver(state)
 	resolver.SetStakedAmount(100)
 
-	uassert.PanicsWithMessage(t, cur, "remove amount exceeds staked amount", func() {
-		resolver.removeStake(101)
-	})
+	err := resolver.removeStakeWithUpdateRewardDebtX128(101, u256.Zero(), 0)
+	uassert.Error(t, err)
 	uassert.Equal(t, resolver.GetStakedAmount(), int64(100))
 }
 
