@@ -309,6 +309,16 @@ func TestProtocolFeeRewardState_removeStake(cur realm, t *testing.T) {
 	}
 }
 
+func TestProtocolFeeRewardState_removeStake_rejectsOverRemoval(cur realm, t *testing.T) {
+	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+	resolver := NewProtocolFeeRewardStateResolver(state)
+	resolver.SetStakedAmount(100)
+
+	err := resolver.removeStakeWithUpdateRewardDebtX128(101, make(map[string]*u256.Uint), 0)
+	uassert.Error(t, err)
+	uassert.Equal(t, resolver.GetStakedAmount(), int64(100))
+}
+
 // Test claimRewards including idempotent no-op cases.
 func TestProtocolFeeRewardState_claimRewards(cur realm, t *testing.T) {
 	tests := []struct {
@@ -794,20 +804,15 @@ func TestProtocolFeeRewardState_BoundaryConditions(cur realm, t *testing.T) {
 		uassert.True(t, didPanic)
 	})
 
-	t.Run("RemoveStake boundary - clamping to zero", func(cur realm, t *testing.T) {
-		// given: protocol fee reward state with some staked amount
+	t.Run("RemoveStake boundary - reject over-removal", func(cur realm, t *testing.T) {
 		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 		resolver := NewProtocolFeeRewardStateResolver(state)
-
 		state.SetStakedAmount(1000)
 
-		// when: remove more than available (uses safeSubInt64 with clamping)
-		accumulatedFees := make(map[string]*u256.Uint)
-		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
+		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, make(map[string]*u256.Uint), 1000)
 
-		// then: should clamp to zero
-		uassert.NoError(t, err)
-		uassert.Equal(t, state.GetStakedAmount(), int64(0))
+		uassert.Error(t, err)
+		uassert.Equal(t, state.GetStakedAmount(), int64(1000))
 	})
 
 	t.Run("ClaimRewards boundary - exact subtraction", func(cur realm, t *testing.T) {

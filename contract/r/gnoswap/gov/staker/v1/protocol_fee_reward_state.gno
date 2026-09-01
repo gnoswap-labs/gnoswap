@@ -164,11 +164,7 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
-	newAmount := gnsmath.SafeSubInt64(p.GetStakedAmount(), amount)
-	if newAmount < 0 {
-		newAmount = 0
-	}
-	p.SetStakedAmount(newAmount)
+	p.SetStakedAmount(gnsmath.SafeSubInt64(p.GetStakedAmount(), amount))
 }
 
 // claimRewards processes reward claiming for all tokens and updates the claim state.
@@ -325,6 +321,9 @@ func (p *ProtocolFeeRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) error {
+	if amount > p.GetStakedAmount() {
+		return errors.New("remove amount exceeds staked amount")
+	}
 	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 	if err != nil {
 		return err
