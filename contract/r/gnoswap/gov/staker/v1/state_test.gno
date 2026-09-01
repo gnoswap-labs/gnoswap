@@ -31,14 +31,14 @@ func countDelegationIDs(tree *bptree.BPTree) int {
 	return total
 }
 
-func mustAddDelegation(gs *govStakerV1, cur realm, delegationID int64, delegation *staker.Delegation) {
-	if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+func mustAddDelegation(gs *govStakerV1, rlm realm, delegationID int64, delegation *staker.Delegation) {
+	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
 		panic(err)
 	}
 }
 
-func mustSetLaunchpadProjectDeposit(gs *govStakerV1, cur realm, ownerAddress string, deposit int64) {
-	if err := gs.setLaunchpadProjectDeposit(0, cur, ownerAddress, deposit); err != nil {
+func mustSetLaunchpadProjectDeposit(gs *govStakerV1, rlm realm, ownerAddress string, deposit int64) {
+	if err := gs.setLaunchpadProjectDeposit(0, rlm, ownerAddress, deposit); err != nil {
 		panic(err)
 	}
 }
