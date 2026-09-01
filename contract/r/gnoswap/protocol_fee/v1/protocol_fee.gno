@@ -9,6 +9,7 @@ import (
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -243,7 +244,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	pf.reserveCollectedProtocolFee(0, rlm, tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(0, rlm, tokenPath, caller, protocolFeeAddr, amount)
+	grc20reg.TransferFrom(0, rlm, tokenPath, caller, protocolFeeAddr, amount)
 
 	chain.Emit(
 		"AddToProtocolFee",

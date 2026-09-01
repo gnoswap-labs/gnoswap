@@ -243,7 +243,7 @@ func operateWithV3Valid(cur realm) {
 
 // fundAndApprove funds the calling protocol realm and approves both the
 // protocol_fee proxy and the live implementation realm, which is the address
-// SafeGRC20TransferFrom actually spends from.
+// grc20reg.TransferFrom actually spends from.
 func fundAndApprove(cur realm, implRealmAddr address) {
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross(cur), stakerRealm.Address(), barFeeAmount)

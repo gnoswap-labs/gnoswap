@@ -22,8 +22,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	communitypool "gno.land/r/gnoswap/community_pool"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -311,10 +311,10 @@ func executeEmergencyCollectFeeSwaps(cur realm) {
 func emergencyCollectSwapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 	testing.SetRealm(adminRealm2)
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, barPath2, poolAddr2, amount0Delta)
+		grc20reg.Transfer(0, cur, barPath2, poolAddr2, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, fooPath2, poolAddr2, amount1Delta)
+		grc20reg.Transfer(0, cur, fooPath2, poolAddr2, amount1Delta)
 	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -39,7 +40,7 @@ func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.SafeGRC20Transfer(0, cur, tokenPath, to, amount)
+	grc20reg.Transfer(0, cur, tokenPath, to, amount)
 
 	chain.Emit(
 		"TransferToken",

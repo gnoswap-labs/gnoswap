@@ -7,6 +7,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -372,10 +373,10 @@ func swapPaidSwapCallback(
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
+		grc20reg.Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
+		grc20reg.Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -412,11 +413,11 @@ func initSwapPaidSetFeeMintPosition(
 	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
-		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, amount0Requested)
+		grc20reg.Approve(0, cur, token0Path, poolAddr, amount0Requested)
 	}
 
 	if amount1Requested > 0 {
-		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, amount1Requested)
+		grc20reg.Approve(0, cur, token1Path, poolAddr, amount1Requested)
 	}
 
 	sqrtPriceX96, _ := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))

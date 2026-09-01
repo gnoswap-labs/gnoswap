@@ -29,6 +29,7 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -129,8 +130,8 @@ func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(0, cur, token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(0, cur, token1, poolAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, token0, poolAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross(cur),

@@ -11,8 +11,8 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -169,9 +169,9 @@ func (e *PoolTestEnv) WhenSwapExecuted(cur realm, params SwapParams) (*u256.Uint
 	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 		testing.SetRealm(adminRealm)
 		if params.zeroForOne {
-			common.SafeGRC20Transfer(0, cur, params.token0, e.currentAddress, math.MaxInt64)
+			grc20reg.Transfer(0, cur, params.token0, e.currentAddress, math.MaxInt64)
 		} else {
-			common.SafeGRC20Transfer(0, cur, params.token1, e.currentAddress, math.MaxInt64)
+			grc20reg.Transfer(0, cur, params.token1, e.currentAddress, math.MaxInt64)
 		}
 
 		return nil

@@ -7,7 +7,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
@@ -47,7 +47,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	unStakeGovernance(0, rlm, recipient, withdrawalAmount)
 
 	// Transfer the original GNS deposit back to the depositor
-	common.SafeGRC20Transfer(0, rlm, GNS_PATH, deposit.Depositor(), withdrawalAmount)
+	grc20reg.Transfer(0, rlm, GNS_PATH, deposit.Depositor(), withdrawalAmount)
 
 	chain.Emit(
 		"CollectDepositGns",

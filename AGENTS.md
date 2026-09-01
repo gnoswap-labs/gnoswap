@@ -137,10 +137,10 @@ make integration-test-build
 
 ### Token Handling
 
-- Use `SafeGRC20Transfer` / `SafeGRC20TransferFrom` only. Panic on failure.
+- Use `grc20reg.Transfer` / `grc20reg.TransferFrom` / `grc20reg.Approve`; they panic on failure.
 - Pools are GRC-20 only.
 - **WUGNOT `Deposit`/`Withdraw` cannot be called cross-realm** (`runtime.AssertOriginCall()` enforced).
-  - Deposit: user calls `wugnot.Deposit()` directly -> `Approve()` -> contract uses `TransferFrom(cross(cur), ...)`.
+  - Deposit: user calls `wugnot.Deposit()` directly -> `Approve()` -> contract uses `grc20reg.TransferFrom(0, cur, ...)`.
   - Withdraw: contract sends via `wugnot.Transfer(cross(cur), user, amt)` -> user calls `Withdraw()` in separate tx.
 - Unexpected GNOT in non-native path: revert.
 - Transfer cap: `int64` max (`2^63 - 1`). Use `safeConvertToInt64` at all boundaries.
@@ -226,7 +226,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 - **Staker Hook Reentrancy** (C-02): Hooks execute inside swap loop. Lock prevents re-entering `Swap` but not inconsistent reads.
 - **TWAP Oracle** (H-01, L-08): Pre-swap tick used. Negative rounding fixed. Oracle internals remain unaudited.
 - **String Numbers** (N-05): `strconv.ParseInt` sites are potential panics/truncations. Verify `safeConvertToInt64`.
-- **Protocol Fee Tracking** (M-06): Every `SafeGRC20Transfer` to protocol_fee must pair with `AddToProtocolFee`.
+- **Protocol Fee Tracking** (M-06): Every `grc20reg.Transfer` to protocol_fee must pair with `AddToProtocolFee`.
 - **Router Fee Exact-Out** (C-07): User receives `amount - routerFee`. Not V3-compatible for exact-out.
 
 ## Navigation

@@ -2,6 +2,7 @@ package position
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
@@ -9,8 +10,8 @@ import (
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -112,7 +113,8 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 			position.PoolKey(),
 			makeErrorWithDetails(
 				errSlippage,
-				ufmt.Sprintf("collectAmount0(%s) >= amount0Min(%s) && collectAmount1(%s) >= amount1Min(%s)",
+				ufmt.Sprintf(
+					"collectAmount0(%s) >= amount0Min(%s) && collectAmount1(%s) >= amount1Min(%s)",
 					collectAmount0.ToString(),
 					params.amount0Min.ToString(),
 					collectAmount1.ToString(),
@@ -143,8 +145,8 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 
 	p.mustUpdatePosition(0, rlm, params.positionId, *position)
 
-	common.SafeGRC20TransferFrom(0, rlm, pToken0, poolAddr, caller, collectAmount0Int64)
-	common.SafeGRC20TransferFrom(0, rlm, pToken1, poolAddr, caller, collectAmount1Int64)
+	grc20reg.TransferFrom(0, rlm, pToken0, poolAddr, caller, collectAmount0Int64)
+	grc20reg.TransferFrom(0, rlm, pToken1, poolAddr, caller, collectAmount1Int64)
 
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }

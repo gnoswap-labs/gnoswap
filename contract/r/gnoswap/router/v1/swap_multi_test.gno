@@ -7,8 +7,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
 
 func TestMultiSwap(cur realm, t *testing.T) {
@@ -88,8 +88,8 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			// (cur.Previous()) resolves to user1 and the pool can pull the
 			// input token. Mirrors TestSingleSwap.
 			testing.SetRealm(testing.NewUserRealm(user1Addr))
-			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
+			grc20reg.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
+			grc20reg.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
 			firstAmountIn, lastAmountOut := multiSwapFn(cross(cur))
 

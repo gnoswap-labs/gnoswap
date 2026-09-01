@@ -13,8 +13,8 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -167,11 +167,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
+		grc20reg.Transfer(0, cur, barPath, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
+		grc20reg.Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 	}
 
 	return nil

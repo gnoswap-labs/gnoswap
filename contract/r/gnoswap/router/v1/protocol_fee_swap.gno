@@ -10,8 +10,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
@@ -146,7 +146,7 @@ func (r *routerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 
 	if totalAmount > 0 {
 		protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
+		grc20reg.Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
 
 		// AddToProtocolFee only reports an error for a halted realm, which is handled
 		// above. The branch keeps the amount pending should that ever change.

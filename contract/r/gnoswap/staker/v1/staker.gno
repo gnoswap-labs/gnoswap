@@ -15,7 +15,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 
@@ -558,7 +558,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		}
 
 		if toUser > 0 {
-			common.SafeGRC20Transfer(0, rlm, rewardToken, deposit.Owner(), toUser)
+			grc20reg.Transfer(0, rlm, rewardToken, deposit.Owner(), toUser)
 		}
 
 		chain.Emit(

@@ -10,6 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -178,7 +179,7 @@ func (r *routerV1) exactInSwapRoute(
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 
-	common.SafeGRC20Transfer(0, rlm, params.outputToken, caller, outputAmount)
+	grc20reg.Transfer(0, rlm, params.outputToken, caller, outputAmount)
 
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)

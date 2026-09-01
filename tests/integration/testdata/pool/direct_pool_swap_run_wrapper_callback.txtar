@@ -107,7 +107,7 @@ import (
 	"chain/runtime/unsafe"
 	"errors"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -138,9 +138,9 @@ func HandleSwapCallbackWithContext(
 
 	switch {
 	case amount0Delta > 0:
-		common.SafeGRC20TransferFrom(0, cur, token0Path, payer, poolAddr, amount0Delta)
+		grc20reg.TransferFrom(0, cur, token0Path, payer, poolAddr, amount0Delta)
 	case amount1Delta > 0:
-		common.SafeGRC20TransferFrom(0, cur, token1Path, payer, poolAddr, amount1Delta)
+		grc20reg.TransferFrom(0, cur, token1Path, payer, poolAddr, amount1Delta)
 	}
 
 	return nil

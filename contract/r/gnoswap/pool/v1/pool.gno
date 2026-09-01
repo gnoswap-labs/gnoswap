@@ -4,6 +4,7 @@ import (
 	"chain"
 	"errors"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
@@ -258,7 +259,7 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token0Path(), positionAddr, amount0)
+		grc20reg.Approve(0, rlm, pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
@@ -269,7 +270,7 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token1Path(), positionAddr, amount1)
+		grc20reg.Approve(0, rlm, pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, position)
@@ -378,8 +379,8 @@ func (i *poolV1) collectProtocol(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(0, rlm, pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(0, rlm, pool.Token1Path(), recipient, amount1)
+	grc20reg.Transfer(0, rlm, pool.Token0Path(), recipient, amount0)
+	grc20reg.Transfer(0, rlm, pool.Token1Path(), recipient, amount1)
 
 	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }

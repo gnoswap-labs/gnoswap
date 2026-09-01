@@ -12,8 +12,8 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
@@ -256,7 +256,7 @@ func collectTestReward(cur realm, t *testing.T, lp *launchpadV1, userAddr addres
 	// Transfer reward to the depositor, mirroring CollectRewardByDepositId.
 	if rewardAmount > 0 {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		common.SafeGRC20Transfer(0, cur, rewardTokenPath, deposit.Depositor(), rewardAmount)
+		grc20reg.Transfer(0, cur, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	return rewardAmount
@@ -526,7 +526,8 @@ func depositGnsTest(cur realm, t *testing.T, depositID string, depositAmount int
 	return func(cur realm) string {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 
-		return testImpl.DepositGns(0, cur, depositID,
+		return testImpl.DepositGns(
+			0, cur, depositID,
 			depositAmount,
 			"",
 		)

@@ -9,8 +9,8 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"
 
@@ -511,11 +511,12 @@ func mockInstanceMint(
 	amount1Int, _ := strconv.ParseInt(amount1Desired, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(0, cur, token0, poolAddr, amount0Int)
-	common.SafeGRC20Approve(0, cur, token1, poolAddr, amount1Int)
+	grc20reg.Approve(0, cur, token0, poolAddr, amount0Int)
+	grc20reg.Approve(0, cur, token1, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	return position.Mint(cross(cur),
+	return position.Mint(
+		cross(cur),
 		token0,
 		token1,
 		fee,
@@ -545,11 +546,12 @@ func mockInstanceIncreaseLiquidity(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(0, cur, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(0, cur, fooPath, poolAddr, amount1Int)
+	grc20reg.Approve(0, cur, barPath, poolAddr, amount0Int)
+	grc20reg.Approve(0, cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	return position.IncreaseLiquidity(cross(cur),
+	return position.IncreaseLiquidity(
+		cross(cur),
 		positionId,
 		amount0DesiredStr,
 		amount1DesiredStr,
@@ -567,7 +569,8 @@ func mockInstanceDecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	return position.DecreaseLiquidity(cross(cur),
+	return position.DecreaseLiquidity(
+		cross(cur),
 		positionId,
 		liquidityStr,
 		amount0MinStr,
@@ -592,11 +595,12 @@ func mockInstanceReposition(
 	amount1Int, _ := strconv.ParseInt(amount1DesiredStr, 10, 64)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	common.SafeGRC20Approve(0, cur, barPath, poolAddr, amount0Int)
-	common.SafeGRC20Approve(0, cur, fooPath, poolAddr, amount1Int)
+	grc20reg.Approve(0, cur, barPath, poolAddr, amount0Int)
+	grc20reg.Approve(0, cur, fooPath, poolAddr, amount1Int)
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	return position.Reposition(cross(cur),
+	return position.Reposition(
+		cross(cur),
 		positionId,
 		tickLower,
 		tickUpper,

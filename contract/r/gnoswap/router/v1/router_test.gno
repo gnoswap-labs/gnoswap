@@ -12,7 +12,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -139,7 +139,8 @@ func TestFinalizeSwap(cur realm, t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsContains(t, cur, tt.errorMessage, func() {
-					router.finalizeSwap(0, cur,
+					router.finalizeSwap(
+						0, cur,
 						tt.inputToken,
 						tt.outputToken,
 						tt.resultAmountIn,
@@ -152,7 +153,8 @@ func TestFinalizeSwap(cur realm, t *testing.T) {
 					)
 				})
 			} else {
-				amountIn, amountOut := router.finalizeSwap(0, cur,
+				amountIn, amountOut := router.finalizeSwap(
+					0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.resultAmountIn,
@@ -319,7 +321,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 
 			swapFn := func(cur realm) {
 				testing.SetRealm(routerRealm)
-				router.ExactInSwapRoute(0, cur,
+				router.ExactInSwapRoute(
+					0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -340,7 +343,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
+				amountIn, amountOut := router.ExactInSwapRoute(
+					0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -534,7 +538,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 				uassert.PanicsContains(t, cur, "GNOSWAP", func() {
 					func(cur realm) {
 						testing.SetRealm(routerRealm)
-						router.ExactInSwapRoute(0, cur,
+						router.ExactInSwapRoute(
+							0, cur,
 							tt.inputToken,
 							tt.outputToken,
 							tt.amountIn,
@@ -551,7 +556,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				_, amountOut := router.ExactInSwapRoute(0, cur,
+				_, amountOut := router.ExactInSwapRoute(
+					0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -712,7 +718,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 				uassert.PanicsContains(t, cur, "GNOSWAP", func() {
 					func(cur realm) {
 						testing.SetRealm(routerRealm)
-						router.ExactInSwapRoute(0, cur,
+						router.ExactInSwapRoute(
+							0, cur,
 							tt.inputToken,
 							tt.outputToken,
 							tt.amountIn,
@@ -729,7 +736,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
-				amountIn, amountOut := router.ExactInSwapRoute(0, cur,
+				amountIn, amountOut := router.ExactInSwapRoute(
+					0, cur,
 					tt.inputToken,
 					tt.outputToken,
 					tt.amountIn,
@@ -901,14 +909,15 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(0, cur, tt.inputToken, routerAddr, math.MaxInt64)
+			grc20reg.Approve(0, cur, tt.inputToken, routerAddr, math.MaxInt64)
 
 			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
 			router := mockRouter()
 
 			handleMultiSwapFn := func(cur realm) (int64, int64) {
-				return router.handleMultiSwap(0, cur,
+				return router.handleMultiSwap(
+					0, cur,
 					tt.swapType,
 					tt.route,
 					tt.numHops,
@@ -1016,7 +1025,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 			toSwapAmount := utils.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(0, cur, barPath, routerAddr, math.MaxInt64)
+			grc20reg.Approve(0, cur, barPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {

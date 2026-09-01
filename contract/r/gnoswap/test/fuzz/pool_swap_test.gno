@@ -9,8 +9,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -130,8 +130,8 @@ func callPoolSwap(
 
 	// Approve tokens for swap
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 	// Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
@@ -140,12 +140,12 @@ func callPoolSwap(
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
+				grc20reg.Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
+				grc20reg.Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 			}
 		}(cross(cur))
 

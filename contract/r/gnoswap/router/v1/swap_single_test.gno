@@ -9,8 +9,8 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
 
 func defaultAdminSetup(cur realm, env *TestEnv) {
@@ -84,8 +84,8 @@ func TestSingleSwap(cur realm, t *testing.T) {
 
 			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
+			grc20reg.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
+			grc20reg.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
 			amountIn, amountOut := singleSwapFn(cross(cur))
 
@@ -308,7 +308,8 @@ func TestSingleSwapRoute_PriceLimitValidation(cur realm, t *testing.T) {
 				// Should panic or abort on invalid price limit
 				uassert.AbortsContains(t, cur, tt.errorMsg, func() {
 					func(cur realm) {
-						router.ExactInSingleSwapRoute(0, cur,
+						router.ExactInSingleSwapRoute(
+							0, cur,
 							barPath,
 							bazPath,
 							"100000",
@@ -348,7 +349,8 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(cur realm, t *testing.T) {
 	// Test with invalid price limit should fail
 	uassert.AbortsContains(t, cur, "", func() {
 		func(cur realm) {
-			router.ExactOutSingleSwapRoute(0, cur,
+			router.ExactOutSingleSwapRoute(
+				0, cur,
 				barPath,
 				bazPath,
 				"50000",

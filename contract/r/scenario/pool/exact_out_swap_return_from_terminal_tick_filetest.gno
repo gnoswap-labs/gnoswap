@@ -9,8 +9,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	fee       uint32 = 100
+	fee        uint32 = 100
 	maxApprove int64  = 9223372036854775807
 	minPrice          = "4295128740"
 	maxPrice          = "1461446703485210103287273052203988822378723970341"
@@ -101,10 +101,10 @@ func setup(cur realm) {
 func settleSwap(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 	testing.SetRealm(adminRealm)
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+		grc20reg.Transfer(0, cur, barPath, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), bazPath, poolAddr, amount1Delta)
+		grc20reg.Transfer(0, cur, bazPath, poolAddr, amount1Delta)
 	}
 	return nil
 }

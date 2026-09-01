@@ -10,7 +10,7 @@ import (
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -44,7 +44,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
+		grc20reg.Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(

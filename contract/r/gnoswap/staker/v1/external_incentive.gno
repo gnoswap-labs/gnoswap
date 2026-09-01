@@ -11,6 +11,7 @@ import (
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	en "gno.land/r/gnoswap/emission"
@@ -60,12 +61,12 @@ func (s *stakerV1) CreateExternalIncentive(
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 	// transfer reward token from user to staker
-	common.SafeGRC20TransferFrom(0, rlm, rewardToken, caller, stakerAddr, rewardAmount)
+	grc20reg.TransferFrom(0, rlm, rewardToken, caller, stakerAddr, rewardAmount)
 
 	depositGnsAmount := s.store.GetDepositGnsAmount()
 
 	// deposit gns amount
-	common.SafeGRC20TransferFrom(0, rlm, GNS_TOKEN_KEY, caller, stakerAddr, depositGnsAmount)
+	grc20reg.TransferFrom(0, rlm, GNS_TOKEN_KEY, caller, stakerAddr, depositGnsAmount)
 
 	currentHeight := runtime.ChainHeight()
 	incentiveId := s.store.NextIncentiveID(caller, currentTime)
@@ -209,10 +210,10 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	incentivesResolver.update(incentive)
 
 	// refund reward token to refundee
-	common.SafeGRC20Transfer(0, rlm, incentiveResolver.RewardToken(), refundAddress, refund)
+	grc20reg.Transfer(0, rlm, incentiveResolver.RewardToken(), refundAddress, refund)
 
 	// Transfer GNS deposit back to refundee
-	common.SafeGRC20Transfer(0, rlm, GNS_TOKEN_KEY, refundAddress, incentiveResolver.DepositGnsAmount())
+	grc20reg.Transfer(0, rlm, GNS_TOKEN_KEY, refundAddress, incentiveResolver.DepositGnsAmount())
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -383,12 +384,12 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 
 	if refundAmount > 0 {
 		// transfer reward token back to creator
-		common.SafeGRC20Transfer(0, rlm, rewardToken, creator, refundAmount)
+		grc20reg.Transfer(0, rlm, rewardToken, creator, refundAmount)
 	}
 
 	if depositGnsAmount > 0 {
 		// transfer GNS deposit back to creator
-		common.SafeGRC20Transfer(0, rlm, GNS_TOKEN_KEY, creator, depositGnsAmount)
+		grc20reg.Transfer(0, rlm, GNS_TOKEN_KEY, creator, depositGnsAmount)
 	}
 
 	chain.Emit(
@@ -494,7 +495,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	incentivesResolver.update(incentiveResolver.ExternalIncentive)
 
 	// Transfer penalty to refund address
-	common.SafeGRC20Transfer(0, rlm, incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
+	grc20reg.Transfer(0, rlm, incentiveResolver.RewardToken(), refundAddress, penaltyAmount)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(

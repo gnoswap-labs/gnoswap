@@ -5,6 +5,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
@@ -53,7 +54,7 @@ func (i *poolV1) safeTransfer(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(0, rlm, tokenPath, to, amountInt64)
+	grc20reg.Transfer(0, rlm, tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, amountInt64, isToken0)
 	if err != nil {
@@ -111,7 +112,7 @@ func (i *poolV1) safeTransferFrom(
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
-	common.SafeGRC20TransferFrom(0, rlm, tokenPath, from, to, amountInt64)
+	grc20reg.TransferFrom(0, rlm, tokenPath, from, to, amountInt64)
 
 	afterBalance := token.BalanceOf(to)
 	if gnsmath.SafeAddInt64(beforeBalance, amountInt64) != afterBalance {

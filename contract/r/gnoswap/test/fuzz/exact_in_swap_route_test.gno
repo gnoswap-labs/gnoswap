@@ -12,7 +12,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/router"
 )
 
@@ -99,7 +99,7 @@ func runTestExactInSwapRoute(cur realm, ft *fuzz.T, params *exactInSwapRoutePara
 
 	// exact in swap route
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(0, cur, params.inputToken, routerAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, params.inputToken, routerAddr, math.MaxInt64)
 
 	router.ExactInSwapRoute(
 		cross(cur),

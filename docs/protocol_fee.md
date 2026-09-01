@@ -11,7 +11,7 @@ Collects and distributes protocol fees from swaps, staking rewards, and withdraw
 
 ## Audit Finding (M-06)
 
-`CollectFee` withdrawal fees were not tracked (resolved). Any future code path that transfers tokens to the protocol_fee realm without calling `AddToProtocolFee` creates a permanent balance discrepancy. Grep for every `SafeGRC20Transfer` targeting the protocol_fee realm address and verify `AddToProtocolFee` is called atomically.
+`CollectFee` withdrawal fees were not tracked (resolved). Any future code path that transfers tokens to the protocol_fee realm without calling `AddToProtocolFee` creates a permanent balance discrepancy. Grep for every `grc20reg.Transfer` targeting the protocol_fee realm address and verify `AddToProtocolFee` is called atomically.
 
 ## Pitfalls
 

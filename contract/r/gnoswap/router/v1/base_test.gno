@@ -10,7 +10,7 @@ import (
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -132,7 +132,7 @@ func TestProcessRoute(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	CreatePoolWithoutFee(cur, t)
 	MakeThirdMintPositionWithoutFee(cur, t)
-	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, 1000000)
+	grc20reg.Approve(0, cur, fooPath, routerAddr, 1000000)
 	route := foobar500
 	toSwap := int64(1000)
 	swapType := ExactIn
@@ -159,8 +159,8 @@ func TestProcessRoutesWithRemainder(cur realm, t *testing.T) {
 	}
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Approve(0, cur, fooPath, routerAddr, math.MaxInt64)
-	common.SafeGRC20Approve(0, cur, barPath, routerAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, fooPath, routerAddr, math.MaxInt64)
+	grc20reg.Approve(0, cur, barPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(cur, t)
 	MakeThirdMintPositionWithoutFee(cur, t)
 	MakeForthMintPositionWithoutFee(cur, t)

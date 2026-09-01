@@ -10,8 +10,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -49,8 +49,8 @@ func TestFuzzPositionMint_ValidParams_Stateless(cur realm, t *testing.T) {
 		mintTestToken(cur, mintParams.token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position
 		tokenId, liquidity, amount0, amount1 := position.Mint(
@@ -116,8 +116,8 @@ func TestFuzzPositionMint_RandomizedParams_Stateless(cur realm, t *testing.T) {
 		}
 
 		// Approve tokens
-		common.SafeGRC20Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position (may panic with invalid params)
 		position.Mint(
@@ -174,8 +174,8 @@ func TestFuzzPositionMint_ValidParams_Stateful(cur realm, t *testing.T) {
 		mintTestToken(cur, mintParams.token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position
 		tokenId, liquidity, amount0, amount1 := position.Mint(
@@ -255,8 +255,8 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(cur realm, t *testing.T) {
 		mintTestToken(cur, mintParams.token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token0Path, poolAddr, math.MaxInt64)
+		grc20reg.Approve(0, cur, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position (may panic with invalid params)
 		tokenId, _, _, _ := position.Mint(

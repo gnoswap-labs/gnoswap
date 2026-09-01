@@ -8,7 +8,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -729,8 +729,8 @@ func TestMintInternal_TickBoundaries(cur realm, t *testing.T) {
 			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
 
 			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
-			common.SafeGRC20Approve(0, cur, tt.params.token0, poolAddr, amount0Int)
-			common.SafeGRC20Approve(0, cur, tt.params.token1, poolAddr, amount1Int)
+			grc20reg.Approve(0, cur, tt.params.token0, poolAddr, amount0Int)
+			grc20reg.Approve(0, cur, tt.params.token1, poolAddr, amount1Int)
 
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedMsg, func() {

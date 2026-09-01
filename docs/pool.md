@@ -10,7 +10,7 @@ Core AMM. All pools live in a single singleton realm.
 | `pool.gno`     | Pool data structures, Slot0                  |
 | `position.gno` | Per-pool position tracking                   |
 | `manager.gno`  | Pool creation                                |
-| `transfer.gno` | Token transfer helpers (`SafeGRC20Transfer`) |
+| `transfer.gno` | Token transfer helpers (`grc20reg.Transfer`) |
 
 ## Rules
 
@@ -18,7 +18,7 @@ Core AMM. All pools live in a single singleton realm.
 - **Oracle**: write with **pre-swap** tick and liquidity. Post-swap values produce wrong TWAP.
 - **feeGrowthOutside** on ticks: invert correctly at every `tickCross`.
 - **Protocol fee**: capped at 25% of swap fees per token. Validate upper bound on any change.
-- **Transfer**: use `SafeGRC20Transfer` in `transfer.gno`. Never add direct `tokenTeller` calls without panic-on-failure.
+- **Transfer**: use `grc20reg.Transfer` in `transfer.gno`. Never add direct `tokenTeller` calls without panic-on-failure.
 - **Tick range**: `[-887272, 887272]`. `MIN_SQRT_RATIO` / `MAX_SQRT_RATIO` are hard bounds.
 
 ## Swap Loop

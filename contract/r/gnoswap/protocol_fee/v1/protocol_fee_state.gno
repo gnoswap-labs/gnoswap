@@ -6,8 +6,8 @@ import (
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/protocol_fee"
 )
 
@@ -59,7 +59,7 @@ func (pfs *protocolFeeState) distributeToDevOps(_ int, rlm realm, token string, 
 	if err := pfs.addActualDistributedToDevOps(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(0, rlm, token, devOpsAddr, amount)
+	grc20reg.Transfer(0, rlm, token, devOpsAddr, amount)
 
 	return nil
 }
@@ -72,7 +72,7 @@ func (pfs *protocolFeeState) distributeToGovStaker(_ int, rlm realm, token strin
 	if err := pfs.addActualDistributedToGovStaker(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(0, rlm, token, govStakerAddr, amount)
+	grc20reg.Transfer(0, rlm, token, govStakerAddr, amount)
 
 	return nil
 }

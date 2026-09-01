@@ -18,9 +18,9 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -265,9 +265,9 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
+		grc20reg.Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
+		grc20reg.Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

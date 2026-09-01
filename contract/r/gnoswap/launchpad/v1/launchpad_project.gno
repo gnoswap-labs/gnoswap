@@ -12,6 +12,7 @@ import (
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -97,7 +98,7 @@ func (lp *launchpadV1) CreateProject(
 	}
 
 	// Interactions: transfer tokens
-	common.SafeGRC20TransferFrom(
+	grc20reg.TransferFrom(
 		0, rlm,
 		tokenPath,
 		caller,
@@ -374,7 +375,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		}
 		project.SetTiers(updatedTiers)
 
-		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
+		grc20reg.Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
 	}
 
 	return projectRefundableAmount, nil

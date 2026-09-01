@@ -10,6 +10,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -90,7 +91,7 @@ func (lp *launchpadV1) CreateProject(
 		)
 	}
 
-	common.SafeGRC20TransferFrom(
+	grc20reg.TransferFrom(
 		0, rlm,
 		tokenPath,
 		caller,
@@ -306,7 +307,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, projectID strin
 	projectLeftReward := getProjectRemainingAmount(project)
 
 	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectLeftReward)
+		grc20reg.Transfer(0, rlm, project.TokenPath(), recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil

@@ -14,6 +14,7 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
@@ -205,9 +206,9 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
+		grc20reg.Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
+		grc20reg.Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

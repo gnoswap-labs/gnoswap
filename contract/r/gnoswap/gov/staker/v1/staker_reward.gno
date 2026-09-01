@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -419,7 +420,7 @@ func transferToken(
 		)
 	}
 
-	common.SafeGRC20Transfer(0, rlm, tokenPath, to, amount)
+	grc20reg.Transfer(0, rlm, tokenPath, to, amount)
 
 	return nil
 }

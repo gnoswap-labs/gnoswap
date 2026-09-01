@@ -183,7 +183,7 @@ package swap_wrapper
 import (
 	"chain"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -249,9 +249,9 @@ func handleSwapCallback(
 
 func transferToPool(cur realm, tokenPath string, amount int64, payer address) {
 	if payer == wrapperAddr {
-		common.SafeGRC20Transfer(0, cur, tokenPath, poolAddr, amount)
+		grc20reg.Transfer(0, cur, tokenPath, poolAddr, amount)
 		return
 	}
 
-	common.SafeGRC20TransferFrom(0, cur, tokenPath, payer, poolAddr, amount)
+	grc20reg.TransferFrom(0, cur, tokenPath, payer, poolAddr, amount)
 }

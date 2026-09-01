@@ -5,15 +5,16 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
@@ -72,7 +73,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 5. ExactOutSwapRoute BAR -> GNS -> WUGNOT")
-	exactOutSwapRouteBy(cur,
+	exactOutSwapRouteBy(
+		cur,
 		barPath,
 		wugnotPath,
 		"1000000",
@@ -83,7 +85,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 6. ExactOutSwapRoute BAR -> GNS -> GNOT")
-	exactOutSwapRouteBy(cur,
+	exactOutSwapRouteBy(
+		cur,
 		barPath,
 		wugnotPath,
 		"1000000",
@@ -94,7 +97,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 7. ExactOutSwapRoute BAR -> WUGNOT -> GNS")
-	exactOutSwapRouteBy(cur,
+	exactOutSwapRouteBy(
+		cur,
 		barPath,
 		gnsPath,
 		"1000000",
@@ -105,7 +109,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 8. ExactOutSwapRoute GNOT -> GNS -> BAR")
-	exactOutSwapRouteBy(cur,
+	exactOutSwapRouteBy(
+		cur,
 		wugnotPath,
 		barPath,
 		"1000000",
@@ -151,8 +156,8 @@ func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, m
 	ufmt.Println("[INFO] Minting position")
 
 	testing.SetRealm(adminRealm)
-	common.Approve(0, cur, token0Path, poolAddr, maxInt64)
-	common.Approve(0, cur, token1Path, poolAddr, maxInt64)
+	grc20reg.Approve(0, cur, token0Path, poolAddr, maxInt64)
+	grc20reg.Approve(0, cur, token1Path, poolAddr, maxInt64)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -200,10 +205,10 @@ func exactOutSwapRouteBy(cur realm,
 
 	if inputToken == wugnotPath {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
-		common.SafeGRC20Approve(0, cur, wugnotPath, routerAddr, maxAmountInInt64)
+		grc20reg.Approve(0, cur, wugnotPath, routerAddr, maxAmountInInt64)
 	} else {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
-		common.SafeGRC20Approve(0, cur, inputToken, routerAddr, maxAmountInInt64)
+		grc20reg.Approve(0, cur, inputToken, routerAddr, maxAmountInInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross(cur),
