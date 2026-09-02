@@ -128,12 +128,14 @@ func setupSplitCollectDeposit(cur realm, t *testing.T) (uint64, string, string) 
 func TestCollectEmissionReward_LeavesExternalRewardCollectable(cur realm, t *testing.T) {
 	positionId, barIncentiveId, _ := setupSplitCollectDeposit(cur, t)
 
-	collectableExternal := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	collectableExternal, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
 	if collectableExternal == 0 {
 		t.Fatal("expected an external reward to be collectable before collecting the emission reward")
 	}
 
-	resolver := getMockInstance().getDepositResolver(positionId)
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	externalLastCollectBefore := resolver.ExternalRewardLastCollectTime(barIncentiveId)
 	collectedExternalBefore := resolver.CollectedExternalReward(barIncentiveId)
 
@@ -142,11 +144,15 @@ func TestCollectEmissionReward_LeavesExternalRewardCollectable(cur realm, t *tes
 
 	sr.CollectEmissionReward(cross(cur), positionId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, barBefore, TokenBalance(t, barPath, addr01))
 	uassert.Equal(t, externalLastCollectBefore, resolver.ExternalRewardLastCollectTime(barIncentiveId))
 	uassert.Equal(t, collectedExternalBefore, resolver.CollectedExternalReward(barIncentiveId))
-	uassert.Equal(t, collectableExternal, sr.CollectableExternalIncentiveReward(positionId, barIncentiveId))
+
+	collectableExternalAfter, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, collectableExternal, collectableExternalAfter)
 
 	// The external reward is still deliverable afterwards.
 	toUser, _ := sr.CollectExternalIncentiveReward(cross(cur), positionId, barIncentiveId)
@@ -162,7 +168,8 @@ func TestCollectEmissionReward_LeavesExternalRewardCollectable(cur realm, t *tes
 func TestCollectExternalIncentiveReward_LeavesEmissionRewardCollectable(cur realm, t *testing.T) {
 	positionId, barIncentiveId, _ := setupSplitCollectDeposit(cur, t)
 
-	resolver := getMockInstance().getDepositResolver(positionId)
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	internalLastCollectBefore := resolver.InternalRewardLastCollectTime()
 	collectedInternalBefore := resolver.CollectedInternalReward()
 
@@ -175,24 +182,30 @@ func TestCollectExternalIncentiveReward_LeavesEmissionRewardCollectable(cur real
 		t.Fatal("expected the external reward to be paid out")
 	}
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, barBefore+toUser, TokenBalance(t, barPath, addr01))
 	uassert.Equal(t, gnsBefore, gns.BalanceOf(addr01))
 	uassert.Equal(t, internalLastCollectBefore, resolver.InternalRewardLastCollectTime())
 	uassert.Equal(t, collectedInternalBefore, resolver.CollectedInternalReward())
-	uassert.Equal(t, int64(0), sr.CollectableExternalIncentiveReward(positionId, barIncentiveId))
+
+	collectableBar, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), collectableBar)
 }
 
 // Collecting one external incentive must leave every other incentive of the same deposit untouched.
 func TestCollectExternalIncentiveReward_LeavesOtherIncentivesCollectable(cur realm, t *testing.T) {
 	positionId, barIncentiveId, bazIncentiveId := setupSplitCollectDeposit(cur, t)
 
-	collectableBaz := sr.CollectableExternalIncentiveReward(positionId, bazIncentiveId)
+	collectableBaz, err := sr.CollectableExternalIncentiveReward(positionId, bazIncentiveId)
+	uassert.NoError(t, err)
 	if collectableBaz == 0 {
 		t.Fatal("expected the other incentive to be collectable before the single collect")
 	}
 
-	resolver := getMockInstance().getDepositResolver(positionId)
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	bazLastCollectBefore := resolver.ExternalRewardLastCollectTime(bazIncentiveId)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
@@ -200,10 +213,14 @@ func TestCollectExternalIncentiveReward_LeavesOtherIncentivesCollectable(cur rea
 
 	sr.CollectExternalIncentiveReward(cross(cur), positionId, barIncentiveId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, bazBefore, TokenBalance(t, bazPath, addr01))
 	uassert.Equal(t, bazLastCollectBefore, resolver.ExternalRewardLastCollectTime(bazIncentiveId))
-	uassert.Equal(t, collectableBaz, sr.CollectableExternalIncentiveReward(positionId, bazIncentiveId))
+
+	collectableBazAfter, err := sr.CollectableExternalIncentiveReward(positionId, bazIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, collectableBaz, collectableBazAfter)
 
 	// The other incentive is still deliverable afterwards.
 	toUser, _ := sr.CollectExternalIncentiveReward(cross(cur), positionId, bazIncentiveId)
