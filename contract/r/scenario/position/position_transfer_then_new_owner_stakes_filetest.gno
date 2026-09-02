@@ -154,7 +154,7 @@ func bobStakes(cur realm) {
 	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after stake is staker:", owner == stakerAddr)
 
-	depositOwner := staker.GetDepositOwner(positionId)
+	depositOwner, _ := staker.GetDepositOwner(positionId)
 	println("[EXPECTED] Deposit owner is bob:", depositOwner == bobAddr)
 }
 

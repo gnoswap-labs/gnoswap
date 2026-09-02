@@ -8,12 +8,12 @@ import (
 	"chain"
 	"chain/banker"
 	"fmt"
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -243,7 +243,7 @@ func mintNativePosition01Post(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, lpTokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, lpTokenId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -293,7 +293,7 @@ func mintNativePosition02Post(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, lpTokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, lpTokenId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -350,7 +350,7 @@ func stakeToken01(cur realm) {
 
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] NFT owner after staking: %s\n", owner)
 }
 
@@ -366,7 +366,7 @@ func stakeToken02(cur realm) {
 
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] NFT owner after staking: %s\n", owner)
 }
 
@@ -415,7 +415,7 @@ func unstakeToken(cur realm, tokenId uint64) {
 	sr.UnStakeToken(cross(cur), tokenId)
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, tokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, tokenId))
 	ufmt.Printf("[EXPECTED] NFT owner after unstaking: %s\n", owner)
 
 	wugnotBalanceAfter := wugnot.BalanceOf(adminUser)
@@ -490,6 +490,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
