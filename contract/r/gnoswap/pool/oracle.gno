@@ -1,6 +1,9 @@
 package pool
 
-import bptree "gno.land/p/nt/bptree/v0"
+import (
+	utils "gno.land/p/gnoswap/utils"
+	bptree "gno.land/p/nt/bptree/v0"
+)
 
 type Observation struct {
 	blockTimestamp                    int64  // timestamp of the observation
@@ -77,7 +80,7 @@ func NewObservationTree() *ObservationTree {
 }
 
 func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
-	value := t.tree.Get(EncodeObservationKey(index))
+	value := t.tree.Get(utils.EncodeUint16(index))
 	if value == nil {
 		return nil, false
 	}
@@ -86,11 +89,11 @@ func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
 }
 
 func (t *ObservationTree) Set(index uint16, observation *Observation) {
-	t.tree.Set(EncodeObservationKey(index), observation)
+	t.tree.Set(utils.EncodeUint16(index), observation)
 }
 
 func (t *ObservationTree) Has(index uint16) bool {
-	return t.tree.Has(EncodeObservationKey(index))
+	return t.tree.Has(utils.EncodeUint16(index))
 }
 
 // NewObservationsTree creates the pool-path index for oracle observation trees.
