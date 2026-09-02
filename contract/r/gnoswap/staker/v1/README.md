@@ -170,8 +170,11 @@ CreateExternalIncentive(
 // Collect rewards without unstaking
 CollectReward(123)
 
-// Unstake and collect all rewards
+// Unstake; rewards are settled, not paid
 UnStakeToken(123)
+
+// Withdraw everything settled so far
+ClaimRewards()
 ```
 
 ## Security

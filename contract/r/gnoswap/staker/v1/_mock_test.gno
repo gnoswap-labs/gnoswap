@@ -24,6 +24,7 @@ type MockStakerStore struct {
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
 	pendingProtocolFees              map[string]int64
+	claimableRewards                 *bptree.BPTree
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
@@ -213,6 +214,20 @@ func (s *MockStakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[stri
 	return nil
 }
 
+// ClaimableRewards
+func (s *MockStakerStore) HasClaimableRewardsStoreKey() bool {
+	return s.claimableRewards != nil
+}
+
+func (s *MockStakerStore) GetClaimableRewards() *bptree.BPTree {
+	return s.claimableRewards
+}
+
+func (s *MockStakerStore) SetClaimableRewards(_ int, rlm realm, rewards *bptree.BPTree) error {
+	s.claimableRewards = rewards
+	return nil
+}
+
 // Pools
 func (s *MockStakerStore) HasPoolsStoreKey() bool {
 	return s.pools != nil
@@ -367,6 +382,7 @@ func newMockStakerStore() *MockStakerStore {
 		tokenSpecificMinimumRewards:      make(map[string]int64),
 		unstakingFee:                     0,
 		pendingProtocolFees:              make(map[string]int64),
+		claimableRewards:                 sr.NewBPTreeN(16),
 		pools:                            sr.NewBPTreeN(16),
 		poolTierMemberships:              sr.NewBPTreeN(16),
 		poolTierRatio:                    sr.NewTierRatio(0, 0, 0),

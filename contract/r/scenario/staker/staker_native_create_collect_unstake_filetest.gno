@@ -414,6 +414,8 @@ func unstakeToken02(cur realm) {
 
 	println("[INFO] unstake token 02 (no unwrap)")
 	sr.UnStakeToken(cross(cur), 2)
+	// Unstaking only settles the reward; ClaimRewards is what pays it out.
+	sr.ClaimRewards(cross(cur))
 	testing.SkipHeights(1)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
@@ -482,6 +484,8 @@ func unstakeToken01(cur realm) {
 
 	println("[INFO] unstake token 01 (no unwrap)")
 	sr.UnStakeToken(cross(cur), 1)
+	// Unstaking only settles the reward; ClaimRewards is what pays it out.
+	sr.ClaimRewards(cross(cur))
 	testing.SkipHeights(1)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))

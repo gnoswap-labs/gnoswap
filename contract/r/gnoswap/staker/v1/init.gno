@@ -115,6 +115,13 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
+	if !stakerStore.HasClaimableRewardsStoreKey() {
+		err := stakerStore.SetClaimableRewards(0, rlm, sr.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !stakerStore.HasWarmupTemplateStoreKey() {
 		err := stakerStore.SetWarmupTemplate(0, rlm, sr.DefaultWarmupTemplate())
 		if err != nil {

@@ -300,3 +300,14 @@ func GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 func GetPendingProtocolFees() map[string]int64 {
 	return cloneStringInt64Map(getImplementation().GetPendingProtocolFees())
 }
+
+// GetClaimableRewardsOf returns receiver's settled-but-unpaid reward amounts, keyed by
+// token path.
+func GetClaimableRewardsOf(receiver address) map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetClaimableRewardsOf(receiver))
+}
+
+// GetClaimableReward returns receiver's settled-but-unpaid amount for a single token.
+func GetClaimableReward(receiver address, tokenPath string) int64 {
+	return getImplementation().GetClaimableReward(receiver, tokenPath)
+}

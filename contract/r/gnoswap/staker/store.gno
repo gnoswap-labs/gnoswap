@@ -24,6 +24,7 @@ const (
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
 	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
+	StoreKeyClaimableRewards                 StoreKey = "claimableRewards"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -383,6 +384,33 @@ func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
+}
+
+// ClaimableRewards
+func (s *stakerStore) HasClaimableRewardsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyClaimableRewards.String())
+}
+
+func (s *stakerStore) GetClaimableRewards() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyClaimableRewards.String())
+	if err != nil {
+		panic(err)
+	}
+
+	rewards, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return rewards
+}
+
+func (s *stakerStore) SetClaimableRewards(_ int, rlm realm, rewards *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyClaimableRewards.String(), rewards)
 }
 
 // Pools

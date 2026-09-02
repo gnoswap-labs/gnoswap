@@ -132,6 +132,42 @@ func (m *MockStaker) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetUnStakingFee")
 }
 
+func (m *MockStaker) ClaimRewards(_ int, rlm realm) map[string]int64 {
+	res, ok := m.Response.Get("ClaimRewards")
+	if !ok {
+		return make(map[string]int64)
+	}
+
+	return res[0].(map[string]int64)
+}
+
+func (m *MockStaker) ClaimRewardsFor(_ int, rlm realm, receiver address) map[string]int64 {
+	res, ok := m.Response.Get("ClaimRewardsFor")
+	if !ok {
+		return make(map[string]int64)
+	}
+
+	return res[0].(map[string]int64)
+}
+
+func (m *MockStaker) GetClaimableRewardsOf(receiver address) map[string]int64 {
+	res, ok := m.Response.Get("GetClaimableRewardsOf")
+	if !ok {
+		return make(map[string]int64)
+	}
+
+	return res[0].(map[string]int64)
+}
+
+func (m *MockStaker) GetClaimableReward(receiver address, tokenPath string) int64 {
+	res, ok := m.Response.Get("GetClaimableReward")
+	if !ok {
+		return 0
+	}
+
+	return res[0].(int64)
+}
+
 func (m *MockStaker) GetPendingProtocolFees() map[string]int64 {
 	res, ok := m.Response.Get("GetPendingProtocolFees")
 	if !ok {

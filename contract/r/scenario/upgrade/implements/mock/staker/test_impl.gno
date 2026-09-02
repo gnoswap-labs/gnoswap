@@ -65,6 +65,21 @@ func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return result[0].(string), result[1].(string), result[2].(map[string]int64), result[3].(map[string]int64)
 }
 
+func (t *TestStaker) ClaimRewards(_ int, rlm realm) map[string]int64 {
+	return t.ExecuteFn(
+		"ClaimRewards",
+		func(args ...any) any { return t.instance.ClaimRewards(0, rlm) },
+	).(map[string]int64)
+}
+
+func (t *TestStaker) ClaimRewardsFor(_ int, rlm realm, receiver address) map[string]int64 {
+	return t.ExecuteFn(
+		"ClaimRewardsFor",
+		func(args ...any) any { return t.instance.ClaimRewardsFor(0, rlm, args[0].(address)) },
+		receiver,
+	).(map[string]int64)
+}
+
 func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.ExecuteFn(
 		"SetPoolTier",
@@ -662,6 +677,22 @@ func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTre
 		},
 		poolPath,
 	).(*rotree.ReadOnlyTree)
+}
+
+func (t *TestStaker) GetClaimableRewardsOf(receiver address) map[string]int64 {
+	return t.ExecuteFn(
+		"GetClaimableRewardsOf",
+		func(args ...any) any { return t.instance.GetClaimableRewardsOf(args[0].(address)) },
+		receiver,
+	).(map[string]int64)
+}
+
+func (t *TestStaker) GetClaimableReward(receiver address, tokenPath string) int64 {
+	return t.ExecuteFn(
+		"GetClaimableReward",
+		func(args ...any) any { return t.instance.GetClaimableReward(args[0].(address), args[1].(string)) },
+		receiver, tokenPath,
+	).(int64)
 }
 
 func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {

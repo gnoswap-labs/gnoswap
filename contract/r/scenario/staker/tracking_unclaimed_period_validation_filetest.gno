@@ -197,6 +197,11 @@ func testUnclaimablePeriodRewardDistribution(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross(cur), positionId, "")
 
+	// Unstaking settles the community pool's share into the claimable ledger instead of
+	// transferring it. Flush it first so the balance delta below measures only what this
+	// collection produces.
+	sr.ClaimRewardsFor(cross(cur), communityPoolAddr)
+
 	communityBalanceBefore1 := gns.BalanceOf(communityPoolAddr)
 	sr.CollectReward(cross(cur), positionId)
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
@@ -212,6 +217,8 @@ func testUnclaimablePeriodRewardDistribution(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross(cur), positionId, "")
 	endTime := time.Now().Unix()
+
+	sr.ClaimRewardsFor(cross(cur), communityPoolAddr)
 
 	communityBalanceBefore2 := gns.BalanceOf(communityPoolAddr)
 	sr.CollectReward(cross(cur), positionId)

@@ -15,11 +15,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
-
-	"gno.land/r/gnoswap/gns"
 
 	en "gno.land/r/gnoswap/emission"
 	pn "gno.land/r/gnoswap/position"
@@ -416,14 +413,29 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 	return s.nftAccessor.TransferFrom(0, rlm, owner, to, positionIdFrom(positionId))
 }
 
+// rewardSettlement is the outcome of settling one position's rewards.
+//
+// It records what settlement credited to the claimable reward ledger so the caller can
+// report the amounts without re-deriving them.
+type rewardSettlement struct {
+	owner                 address
+	internalRewardToUser  int64
+	internalRewardPenalty int64
+	externalRewards       map[string]int64 // reward token -> gross amount collected for the owner
+	externalPenalties     map[string]int64 // reward token -> warmup penalty retained by the incentive
+}
+
 // CollectReward harvests accumulated rewards for a staked position. This includes both
 // internal GNS emission and external incentive rewards.
 //
 // State Transition:
-//  1. Warm-up amounts are clears for both internal and external rewards
-//  2. Reward tokens are transferred to the owner
-//  3. Penalty fees are transferred to protocol/community addresses
-//  4. GNS balance is recalculated
+//  1. Warm-up amounts are cleared for both internal and external rewards
+//  2. Reward amounts are settled into the claimable reward ledger
+//  3. The ledger is paid out to the owner and to the community pool
+//
+// Settlement and payout are separate steps on purpose: settlement never moves a token, and
+// payout treats each token independently, so a reward that cannot be paid right now stays
+// claimable instead of aborting the collect. UnStakeToken performs settlement only.
 //
 // Requirements:
 //   - Contract must not be halted
@@ -431,12 +443,10 @@ func (s *stakerV1) transferDeposit(_ int, rlm realm, positionId uint64, owner, c
 //   - Position must be staked (have a deposit record)
 //
 // Parameters:
-// CollectReward claims accumulated rewards without unstaking.
-//
-// Parameters:
 //   - positionId: LP position NFT token ID
 //
-// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
+// Returns internal reward paid to the user, internal penalty, external rewards map and
+// external penalties map.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -445,10 +455,34 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	caller := rlm.Previous().Address()
 	assertIsDepositor(s, caller, positionId)
 
+	en.MintAndDistributeGns(cross(rlm))
+
+	settlement := s.settlePositionReward(0, rlm, positionId)
+
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	s.payoutClaimableRewards(0, rlm, settlement.owner)
+	s.payoutClaimableRewards(0, rlm, communityPoolAddr)
+
+	return utils.FormatInt(settlement.internalRewardToUser),
+		utils.FormatInt(settlement.internalRewardPenalty),
+		settlement.externalRewards,
+		settlement.externalPenalties
+}
+
+// settlePositionReward performs the reward accounting for a staked position: it stops
+// accrual at the current time, advances every last-collect cursor, draws the amounts down
+// from the incentives, and credits what is owed to the claimable reward ledger.
+//
+// It deliberately performs no token transfer and no reward-token cross-call, so nothing a
+// token realm (or a short staker reserve) does can make settlement revert. That is what
+// lets UnStakeToken settle a position and hand the NFT back without depending on the
+// payout succeeding.
+//
+// The caller is responsible for the access checks, for bringing emission up to date when
+// that matters, and for paying the ledger out.
+func (s *stakerV1) settlePositionReward(_ int, rlm realm, positionId uint64) *rewardSettlement {
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
-
-	en.MintAndDistributeGns(cross(rlm))
 
 	currentTime := time.Now().Unix()
 	blockHeight := runtime.ChainHeight()
@@ -484,7 +518,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
 	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
 
-	// transfer external rewards to user
+	// credit external rewards to the owner
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
@@ -537,7 +571,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
-		// This happens only if the reward was successfully transferred.
+		// This happens only if the reward was successfully settled.
 		err := depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
 		if err != nil {
 			panic(err)
@@ -552,14 +586,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		// update
 		s.getExternalIncentives().set(incentiveId, incentive)
 
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
+		toUser, feeAmount, err := s.accrueStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		if toUser > 0 {
-			common.SafeGRC20Transfer(0, rlm, rewardToken, deposit.Owner(), toUser)
-		}
+		s.creditClaimableReward(deposit.Owner(), rewardToken, toUser)
 
 		chain.Emit(
 			"ProtocolFeeExternalReward",
@@ -607,7 +639,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	// internal reward to user
 	if !skipInternalUpdate {
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true)
+		toUser, feeAmount, err := s.accrueStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -667,20 +699,9 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
-	if internalRewardToUser > 0 {
-		gns.Transfer(cross(rlm), deposit.Owner(), internalRewardToUser)
-	}
-
-	if internalRewardPenalty > 0 {
-		gns.Transfer(cross(rlm), communityPoolAddr, internalRewardPenalty)
-	}
-
-	if unClaimableInternal > 0 {
-		gns.Transfer(cross(rlm), communityPoolAddr, unClaimableInternal)
-	}
-
-	rewardToUser := utils.FormatInt(internalRewardToUser)
-	rewardPenalty := utils.FormatInt(internalRewardPenalty)
+	s.creditClaimableReward(deposit.Owner(), GNS_TOKEN_KEY, internalRewardToUser)
+	s.creditClaimableReward(communityPoolAddr, GNS_TOKEN_KEY, internalRewardPenalty)
+	s.creditClaimableReward(communityPoolAddr, GNS_TOKEN_KEY, unClaimableInternal)
 
 	if !skipInternalUpdate {
 		chain.Emit(
@@ -692,9 +713,9 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			"recipient", depositResolver.Owner().String(),
 			"rewardToken", GNS_TOKEN_KEY,
 			"rewardAmount", utils.FormatInt(internalReward),
-			"rewardToUser", rewardToUser,
+			"rewardToUser", utils.FormatInt(internalRewardToUser),
 			"rewardToFee", utils.FormatInt(internalRewardToFee),
-			"rewardPenalty", rewardPenalty,
+			"rewardPenalty", utils.FormatInt(internalRewardPenalty),
 			"rewardUnClaimableAmount", utils.FormatInt(unClaimableInternal),
 			"currentTime", utils.FormatInt(currentTime),
 			"currentHeight", utils.FormatInt(blockHeight),
@@ -705,22 +726,33 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		)
 	}
 
-	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
+	return &rewardSettlement{
+		owner:                 deposit.Owner(),
+		internalRewardToUser:  internalRewardToUser,
+		internalRewardPenalty: internalRewardPenalty,
+		externalRewards:       toUserExternalReward,
+		externalPenalties:     toUserExternalPenalty,
+	}
 }
 
-// UnStakeToken withdraws an LP token from staking, collecting all pending rewards
-// and returning the token to its original owner.
+// UnStakeToken withdraws an LP token from staking and returns it to its original owner.
 //
 // Parameters:
 //   - positionId: LP position NFT token ID to unstake
-//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Process:
-//  1. Collects all pending rewards (GNS + external)
+//  1. Settles all pending rewards (GNS + external) into the claimable reward ledger
 //  2. Transfers NFT ownership back to original owner
 //  3. Clears position operator rights
 //  4. Removes from reward tracking systems
 //  5. Cleans up all staking metadata
+//
+// Rewards are settled but NOT paid out here. Paying them out would make withdrawing a
+// position depend on a reward transfer succeeding, so a drained staker reserve or a single
+// misbehaving reward token could lock the NFT in the staker forever. The settled amounts
+// are withdrawn separately with ClaimRewards, which can fail and be retried without ever
+// putting the position at risk. Emission is deliberately not touched either, for the same
+// reason.
 //
 // Returns:
 //   - poolPath: Pool identifier where position was staked
@@ -740,8 +772,8 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	// unStaked status
 	poolPath := deposit.TargetPoolPath()
 
-	// claim All Rewards
-	s.CollectReward(0, rlm, positionId)
+	// settle all rewards into the claimable ledger; payout is left to ClaimRewards
+	s.settlePositionReward(0, rlm, positionId)
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)

@@ -60,6 +60,20 @@ func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return t.instance.CollectReward(0, rlm, positionId)
 }
 
+func (t *TestStaker) ClaimRewards(_ int, rlm realm) map[string]int64 {
+	if !t.isActive("ClaimRewards") {
+		panic("test implementation: ClaimRewards not supported")
+	}
+	return t.instance.ClaimRewards(0, rlm)
+}
+
+func (t *TestStaker) ClaimRewardsFor(_ int, rlm realm, receiver address) map[string]int64 {
+	if !t.isActive("ClaimRewardsFor") {
+		panic("test implementation: ClaimRewardsFor not supported")
+	}
+	return t.instance.ClaimRewardsFor(0, rlm, receiver)
+}
+
 func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	if !t.isActive("SetPoolTier") {
 		panic("test implementation: SetPoolTier not supported")
@@ -535,6 +549,20 @@ func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTre
 		panic("test implementation: GetPoolHistoricalTicks not supported")
 	}
 	return t.instance.GetPoolHistoricalTicks(poolPath)
+}
+
+func (t *TestStaker) GetClaimableRewardsOf(receiver address) map[string]int64 {
+	if !t.isActive("GetClaimableRewardsOf") {
+		panic("test implementation: GetClaimableRewardsOf not supported")
+	}
+	return t.instance.GetClaimableRewardsOf(receiver)
+}
+
+func (t *TestStaker) GetClaimableReward(receiver address, tokenPath string) int64 {
+	if !t.isActive("GetClaimableReward") {
+		panic("test implementation: GetClaimableReward not supported")
+	}
+	return t.instance.GetClaimableReward(receiver, tokenPath)
 }
 
 func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {

@@ -48,11 +48,24 @@ Stakes LP position NFT to earn rewards.
 
 ### `UnStakeToken`
 
-Unstakes position and collects all rewards.
+Unstakes a position and settles its rewards into the claimable ledger. The rewards are not
+transferred here: withdrawing a position must never depend on a reward transfer succeeding,
+so payout is left to `ClaimRewards`.
 
 ### `CollectReward`
 
-Collects accumulated rewards without unstaking.
+Collects accumulated rewards without unstaking: settles them, then pays out the ledger.
+
+### `ClaimRewards`
+
+Pays out the caller's settled-but-unpaid rewards. Each token is paid independently, and a
+token the staker reserve cannot currently cover stays claimable instead of aborting.
+
+### `ClaimRewardsFor`
+
+Same payout for another receiver. Permissionless, since the funds only ever reach the
+ledger owner; it exists so the community pool's share can be flushed after unstake-only
+flows.
 
 ### `CreateExternalIncentive`
 
@@ -185,8 +198,11 @@ CreateExternalIncentive(
 // Collect rewards without unstaking
 CollectReward(123)
 
-// Unstake and collect all rewards
+// Unstake; rewards are settled, not paid
 UnStakeToken(123)
+
+// Withdraw everything settled so far
+ClaimRewards()
 ```
 
 ## Security

@@ -7,7 +7,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/onbloc/foo"
 
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -15,82 +14,53 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
-func TestHandleStakingRewardFee(cur realm, t *testing.T) {
+func TestAccrueStakingRewardFee(cur realm, t *testing.T) {
 	tests := []struct {
-		name             string
-		tokenPath        string
-		amount           int64
-		stakerBalance    int64
-		internal         bool
-		expectedFee      int64
-		expectedNet      int64
-		expectedHasPanic bool
-		expectedPanicMsg string
+		name        string
+		tokenPath   string
+		amount      int64
+		internal    bool
+		expectedFee int64
+		expectedNet int64
 	}{
 		{
-			name:          "No fee configured",
-			tokenPath:     gnsPath,
-			amount:        10000,
-			stakerBalance: 0,
-			internal:      true,
-			expectedFee:   0,
-			expectedNet:   10000,
+			name:        "No fee configured",
+			tokenPath:   gnsPath,
+			amount:      10000,
+			internal:    true,
+			expectedFee: 0,
+			expectedNet: 10000,
 		},
 		{
-			name:          "Standard fee",
-			tokenPath:     fooPath,
-			amount:        10000,
-			stakerBalance: 100,
-			internal:      false,
-			expectedFee:   100,
-			expectedNet:   9900,
+			name:        "Standard fee",
+			tokenPath:   fooPath,
+			amount:      10000,
+			internal:    false,
+			expectedFee: 100,
+			expectedNet: 9900,
 		},
 		{
-			name:             "Standard fee but staker balance is insufficient",
-			tokenPath:        fooPath,
-			amount:           10000,
-			stakerBalance:    0,
-			internal:         false,
-			expectedFee:      100,
-			expectedNet:      9900,
-			expectedHasPanic: true,
-			expectedPanicMsg: "insufficient balance",
+			// Accrual never transfers, so an empty staker reserve changes nothing:
+			// the fee is only recorded as pending here.
+			name:        "Standard fee without any staker balance",
+			tokenPath:   fooPath,
+			amount:      10000,
+			internal:    false,
+			expectedFee: 100,
+			expectedNet: 9900,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			initStakerTest(cur, t)
+			instance := getMockInstance()
 
-			getMockInstance().store.SetUnstakingFee(0, cur, uint64(tc.expectedFee)) // Set the fee globally for the test
+			instance.store.SetUnstakingFee(0, cur, uint64(tc.expectedFee)) // Set the fee globally for the test
 
-			if tc.stakerBalance > 0 {
-				testing.SetRealm(adminRealm)
-				foo.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
-				// The local mock instance pays the protocol fee from the
-				// staker/v1 realm (the cross(rlm) transfer actor), so fund it too.
-				foo.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
-			}
-
-			// Set the caller identity on the test frame's own cur so the
-			// protocol_fee crossing inside handleStakingRewardFee sees the staker
-			// role as cur.Previous(). Setting it inside a nested closure would
-			// only mutate that closure's frame, not the cur passed below.
 			testing.SetRealm(stakerRealm)
 
-			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
-			}
-
-			if tc.expectedHasPanic {
-				uassert.AbortsWithMessage(t, cur, tc.expectedPanicMsg, func() {
-					handleStakingRewardFeeFn()
-				})
-
-				return
-			}
-
-			netAmount, _, err := handleStakingRewardFeeFn()
+			netAmount, feeAmount, err := instance.accrueStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
 			if err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}
@@ -98,8 +68,34 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 			if netAmount != tc.expectedNet {
 				t.Errorf("Expected netAmount %d, got %d", tc.expectedNet, netAmount)
 			}
+
+			expectedFeeTokenPath := tc.tokenPath
+			if tc.internal {
+				expectedFeeTokenPath = GNS_TOKEN_KEY
+			}
+
+			uassert.Equal(t, tc.expectedFee, feeAmount)
+			uassert.Equal(t, feeAmount, instance.store.GetPendingProtocolFees()[expectedFeeTokenPath])
 		})
 	}
+}
+
+// Forwarding an accrued fee still needs the reserve to cover it. The failure is confined
+// to the payout path, which is why accrual records the fee instead of forwarding it.
+func TestSettleProtocolFeeWithInsufficientBalance(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	instance := getMockInstance()
+
+	instance.store.SetUnstakingFee(0, cur, 100)
+
+	testing.SetRealm(stakerRealm)
+	_, feeAmount, err := instance.accrueStakingRewardFee(0, cur, fooPath, 10000, false)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(100), feeAmount)
+
+	uassert.AbortsWithMessage(t, cur, "insufficient balance", func() {
+		instance.settleProtocolFee(0, cur, fooPath, 0)
+	})
 }
 
 func TestAddPendingProtocolFee(cur realm, t *testing.T) {
@@ -308,8 +304,8 @@ func TestSetUnStakingFeeInternal(cur realm, t *testing.T) {
 	}
 }
 
-// Test handleStakingRewardFee with various scenarios
-func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
+// Test accrueStakingRewardFee with various scenarios
+func TestAccrueStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -394,7 +390,7 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 			}
 
 			testing.SetRealm(stakerRealm)
-			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
+			netAmount, feeAmount, err := instance.accrueStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -407,8 +403,8 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 	}
 }
 
-// Test handleStakingRewardFee calculation precision
-func TestHandleStakingRewardFeeCalculationPrecision(cur realm, t *testing.T) {
+// Test accrueStakingRewardFee calculation precision
+func TestAccrueStakingRewardFeeCalculationPrecision(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64

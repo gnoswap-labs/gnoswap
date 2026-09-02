@@ -38,6 +38,14 @@ func (t *TestStaker) CollectReward(_ int, rlm realm, positionId uint64) (string,
 	return t.instance.CollectReward(0, rlm, positionId)
 }
 
+func (t *TestStaker) ClaimRewards(_ int, rlm realm) map[string]int64 {
+	return t.instance.ClaimRewards(0, rlm)
+}
+
+func (t *TestStaker) ClaimRewardsFor(_ int, rlm realm, receiver address) map[string]int64 {
+	return t.instance.ClaimRewardsFor(0, rlm, receiver)
+}
+
 func (t *TestStaker) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	t.instance.SetPoolTier(0, rlm, poolPath, tier)
 }
@@ -309,6 +317,14 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulations(poolPath string) *rot
 
 func (t *TestStaker) GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree {
 	return t.instance.GetPoolHistoricalTicks(poolPath)
+}
+
+func (t *TestStaker) GetClaimableRewardsOf(receiver address) map[string]int64 {
+	return t.instance.GetClaimableRewardsOf(receiver)
+}
+
+func (t *TestStaker) GetClaimableReward(receiver address, tokenPath string) int64 {
+	return t.instance.GetClaimableReward(receiver, tokenPath)
 }
 
 func (t *TestStaker) GetPendingProtocolFees() map[string]int64 {

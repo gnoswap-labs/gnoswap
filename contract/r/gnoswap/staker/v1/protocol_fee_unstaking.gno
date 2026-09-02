@@ -17,8 +17,14 @@ import (
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
-// handleStakingRewardFee calculates and applies the unstaking fee.
-func (s *stakerV1) handleStakingRewardFee(
+// accrueStakingRewardFee splits amount into the receiver portion and the protocol fee
+// portion, recording the fee as pending instead of forwarding it.
+//
+// It performs no cross-realm call at all, so reward settlement (and therefore unstaking)
+// cannot be blocked by a halted protocol fee realm or by a reward token whose
+// approve/transfer reverts. The recorded fee is forwarded by settleProtocolFee on the next
+// payout for the same token.
+func (s *stakerV1) accrueStakingRewardFee(
 	_ int,
 	rlm realm,
 	tokenPath string,
@@ -31,7 +37,6 @@ func (s *stakerV1) handleStakingRewardFee(
 
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
-		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
@@ -42,11 +47,10 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
-		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
 	}
 
-	s.settleProtocolFee(0, rlm, tokenPath, feeAmount)
+	s.addPendingProtocolFee(0, rlm, tokenPath, feeAmount)
 
 	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }

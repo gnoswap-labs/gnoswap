@@ -15,6 +15,8 @@ type IStakerManager interface {
 	StakeToken(_ int, rlm realm, positionId uint64, referrer string) string
 	UnStakeToken(_ int, rlm realm, positionId uint64) string
 	CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64)
+	ClaimRewards(_ int, rlm realm) map[string]int64
+	ClaimRewardsFor(_ int, rlm realm, receiver address) map[string]int64
 
 	SetPoolTier(_ int, rlm realm, poolPath string, tier uint64)
 	ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64)
@@ -94,6 +96,8 @@ type IStakerGetter interface {
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() uint64
 	GetPendingProtocolFees() map[string]int64
+	GetClaimableRewardsOf(receiver address) map[string]int64
+	GetClaimableReward(receiver address, tokenPath string) int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
@@ -154,6 +158,11 @@ type IStakerStore interface {
 	HasPendingProtocolFeesStoreKey() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
+
+	// ClaimableRewards
+	HasClaimableRewardsStoreKey() bool
+	GetClaimableRewards() *bptree.BPTree
+	SetClaimableRewards(_ int, rlm realm, rewards *bptree.BPTree) error
 
 	// Pools
 	HasPoolsStoreKey() bool

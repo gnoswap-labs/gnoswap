@@ -12,13 +12,17 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	return getImplementation().StakeToken(0, cur, positionId, referrer)
 }
 
-// UnStakeToken unstakes a position NFT and collects rewards.
+// UnStakeToken unstakes a position NFT and settles its rewards into the claimable ledger.
+//
+// The settled rewards are NOT transferred here; withdraw them with ClaimRewards. Keeping
+// payout out of this path is what guarantees a position can always be withdrawn, even when
+// a reward transfer would fail.
 //
 // Parameters:
 //   - positionId: ID of the position to unstake
 //
 // Returns:
-//   - string: collected reward details
+//   - string: pool path the position was staked in
 func UnStakeToken(cur realm, positionId uint64) string {
 	return getImplementation().UnStakeToken(0, cur, positionId)
 }
@@ -36,6 +40,28 @@ func UnStakeToken(cur realm, positionId uint64) string {
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	poolPath, stakingDetails, internalRewards, externalRewards := getImplementation().CollectReward(0, cur, positionId)
 	return poolPath, stakingDetails, cloneStringInt64Map(internalRewards), cloneStringInt64Map(externalRewards)
+}
+
+// ClaimRewards pays out every reward that has already been settled for the caller.
+//
+// Rewards are settled into the claimable ledger by CollectReward and by UnStakeToken. This
+// is the withdrawal half, and it needs no staked position: a position can be unstaked
+// first and its rewards claimed afterwards.
+//
+// Returns the amount paid per token path.
+func ClaimRewards(cur realm) map[string]int64 {
+	return cloneStringInt64Map(getImplementation().ClaimRewards(0, cur))
+}
+
+// ClaimRewardsFor pays out receiver's settled rewards to receiver.
+//
+// Permissionless: the funds only ever reach the ledger owner. It exists so anyone can flush
+// the community pool's share (internal penalties and unclaimable rewards) after positions
+// are unstaked without collecting.
+//
+// Returns the amount paid per token path.
+func ClaimRewardsFor(cur realm, receiver address) map[string]int64 {
+	return cloneStringInt64Map(getImplementation().ClaimRewardsFor(0, cur, receiver))
 }
 
 // SetPoolTier sets the reward tier for a pool.

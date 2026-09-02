@@ -351,6 +351,10 @@ func verifyRefundTransfer(cur realm, creatorGnsBefore int64) {
 func collectExternalIncentive(cur realm) {
 	testing.SetRealm(userRealm)
 
+	// The unstakes above settled their rewards into the claimable ledger without paying
+	// them out. Flush that first so the delta below measures only this collection.
+	sr.ClaimRewards(cross(cur))
+
 	gnsBefore := gns.BalanceOf(userUser)
 	sr.CollectReward(cross(cur), 1)
 	gnsAfter := gns.BalanceOf(userUser)

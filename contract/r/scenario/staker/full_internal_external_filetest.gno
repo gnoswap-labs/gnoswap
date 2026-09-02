@@ -445,6 +445,8 @@ func unstakeToken01(cur realm) {
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.UnStakeToken(cross(cur), 1)
+	// Unstaking only settles the reward; ClaimRewards is what pays it out.
+	sr.ClaimRewards(cross(cur))
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns

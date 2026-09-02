@@ -1,0 +1,1 @@
+../../../../../gnoswap/staker/v1/claimable_reward.gno
