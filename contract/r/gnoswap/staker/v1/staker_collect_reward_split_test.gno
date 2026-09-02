@@ -78,7 +78,7 @@ func setupSplitCollectDeposit(cur realm, t *testing.T) (uint64, string, string) 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
 
-	startTimestamp := int64(1234569600)
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(
 		cur, t,
 		poolPath,
@@ -95,6 +95,10 @@ func setupSplitCollectDeposit(cur realm, t *testing.T) (uint64, string, string) 
 		startTimestamp,
 		startTimestamp+incentiveDuration,
 	)
+
+	// The start time policy puts the incentives a day or more out, so move the chain to their
+	// start before anything can accrue. A test block is 5 seconds.
+	testing.SkipHeights((startTimestamp - time.Now().Unix()) / 5)
 
 	// Let the emission and both external rewards accrue.
 	testing.SkipHeights(3600)
@@ -220,7 +224,7 @@ func TestCollectExternalIncentiveReward_RejectsIncentiveOfAnotherPool(cur realm,
 	CreatePool(cur, barPath, quxPath, fee3000, "79228162514264337593543950336", adminAddr)
 
 	// The deposit setup already advanced the chain, so the new incentive needs a fresh start time.
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(
 		cur, t,
 		otherPoolPath,

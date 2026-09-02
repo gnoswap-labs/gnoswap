@@ -426,28 +426,6 @@ type collectContext struct {
 	positionId      uint64
 	deposit         *sr.Deposit
 	depositResolver *DepositResolver
-}
-
-// State Transition:
-//  1. Warm-up amounts are clears for both internal and external rewards
-//  2. Reward tokens are transferred to the owner
-//  3. Penalty fees are transferred to protocol/community addresses
-//  4. GNS balance is recalculated
-//
-// Requirements:
-//   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
-//
-// Parameters:
-// CollectReward claims accumulated rewards without unstaking.
-//
-// Parameters:
-//   - positionId: LP position NFT token ID
-//
-// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
-func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	access.AssertIsRlmCurrent(0, rlm)
 
 	currentTime int64
 	blockHeight int64
@@ -528,9 +506,7 @@ func (s *stakerV1) newRewardCollectParam(positionId uint64, currentTime, blockHe
 //
 // Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
 func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, rlm.Previous().Address(), positionId)
@@ -578,9 +554,7 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 // Returns the collected reward amount, before the staking reward fee is taken, and the penalty amount
 // kept by the incentive.
 func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, rlm.Previous().Address(), positionId)
@@ -627,9 +601,7 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 // Returns the GNS amount sent to the user, the GNS penalty amount, and the per-token external
 // reward and penalty amounts.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, rlm.Previous().Address(), positionId)
@@ -750,7 +722,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	}
 
 	if toUser > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardToken, ctx.deposit.Owner(), toUser)
+		common.SafeGRC20Transfer(0, rlm, rewardToken, ctx.deposit.Owner(), toUser)
 	}
 
 	chain.Emit(
