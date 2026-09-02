@@ -172,7 +172,10 @@ func createPendingIncentive(cur realm) {
 		endTime,
 	)
 
-	incentives := sr.GetExternalIncentiveByPoolPath(poolPath)
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 	ufmt.Printf("[INFO] incentive starts in %d seconds\n", startTime-time.Now().Unix())
 }
@@ -221,14 +224,16 @@ func cancelIncentive(cur realm) {
 }
 
 func checkPoolNotIncentivized(cur realm) {
-	incentives := sr.GetExternalIncentiveByPoolPath(poolPath)
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
 
 	// Getters resolve the incentive by id, so a cancelled incentive reads as if
 	// it had never been created.
-	uassert.AbortsContains(t, cur, "does not exist", func() {
-		sr.GetIncentiveEndTimestamp(poolPath, incentiveID)
-	})
+	_, err = sr.GetIncentiveEndTimestamp(poolPath, incentiveID)
+	uassert.ErrorContains(t, err, "does not exist")
 	println("[EXPECTED] incentive getters no longer resolve the cancelled id")
 
 	testing.SetRealm(userRealm)

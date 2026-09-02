@@ -172,7 +172,7 @@ func stakeBothInSameBlock(cur realm) {
 	// Stake position 1 as Alice (no transfer).
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId1))
 	staker.StakeToken(cross(cur), positionId1, "")
-	owner1 := staker.GetDepositOwner(positionId1)
+	owner1, _ := staker.GetDepositOwner(positionId1)
 	println("[EXPECTED] Deposit 1 owner is alice:", owner1 == aliceAddr)
 
 	// Transfer position 2 to Bob.
@@ -184,7 +184,7 @@ func stakeBothInSameBlock(cur realm) {
 	testing.SetRealm(bobRealm)
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId2))
 	staker.StakeToken(cross(cur), positionId2, "")
-	owner2 := staker.GetDepositOwner(positionId2)
+	owner2, _ := staker.GetDepositOwner(positionId2)
 	println("[EXPECTED] Deposit 2 owner is bob:", owner2 == bobAddr)
 }
 

@@ -54,7 +54,7 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 
 	assertIsValidAmount(amount)
 
-	prevDepositGnsAmount := s.GetDepositGnsAmount()
+	prevDepositGnsAmount := s.store.GetDepositGnsAmount()
 	s.setDepositGnsAmount(0, rlm, amount)
 
 	chain.Emit(
@@ -116,7 +116,7 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 		))
 	}
 
-	prevAmount, found := s.GetSpecificTokenMinimumRewardAmount(tokenPath)
+	prevAmount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 
 	// If amount is 0, remove the entry; otherwise, set it.
 	if amount64 == 0 {

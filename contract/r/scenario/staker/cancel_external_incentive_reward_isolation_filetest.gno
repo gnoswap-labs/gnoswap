@@ -145,7 +145,11 @@ func createPendingIncentives(cur realm) {
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 	sr.CreateExternalIncentive(cross(cur), poolPath, quxPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 }
 
 func userMintThenStake(cur realm) {
@@ -182,8 +186,16 @@ func cancelBarIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CancelExternalIncentive(cross(cur), poolPath, cancelledIncentiveID)
 
-	ufmt.Printf("[INFO] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
-	ufmt.Printf("[INFO] surviving incentive reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, activeIncentiveID))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	rewardToken, err := sr.GetIncentiveRewardToken(poolPath, activeIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] remaining incentives for pool: %d\n", len(incentives))
+	ufmt.Printf("[INFO] surviving incentive reward token: %s\n", rewardToken)
 }
 
 func skipPastStart(cur realm) {
@@ -195,8 +207,14 @@ func skipPastStart(cur realm) {
 func collectAndVerify(cur realm) {
 	// Collectable is read at the same block as the collect, so with the
 	// unstaking fee set to 0 the user receives exactly this amount.
-	collectableQux := sr.CollectableExternalIncentiveReward(positionId, activeIncentiveID)
-	collectableBar := sr.CollectableExternalIncentiveReward(positionId, cancelledIncentiveID)
+	collectableQux, err := sr.CollectableExternalIncentiveReward(positionId, activeIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	collectableBar, err := sr.CollectableExternalIncentiveReward(positionId, cancelledIncentiveID)
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] collectable from active (QUX) incentive > 0: %t\n", collectableQux > 0)
 	ufmt.Printf("[EXPECTED] collectable from cancelled (BAR) incentive: %d\n", collectableBar)
@@ -222,7 +240,10 @@ func collectAndVerify(cur realm) {
 	// The surviving incentive is what got drained: its distributed amount tracks
 	// exactly the reward handed to the user (the remaining amount also drops by
 	// the warmup penalty, so distributed is the clean invariant here).
-	distributed := sr.GetIncentiveDistributedRewardAmount(poolPath, activeIncentiveID)
+	distributed, err := sr.GetIncentiveDistributedRewardAmount(poolPath, activeIncentiveID)
+	if err != nil {
+		panic(err)
+	}
 	uassert.Equal(t, quxDelta, distributed)
 	ufmt.Printf("[EXPECTED] active incentive distributed == QUX received: %t\n", distributed == quxDelta)
 }

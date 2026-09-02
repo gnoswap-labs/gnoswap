@@ -236,14 +236,14 @@ func endExternalIncentive(cur realm) {
 func checkCollectableExternalIncentive(cur realm, positionId uint64) {
 	testing.SetRealm(userRealm)
 
-	endTime := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	endTime, _ := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 	currentTime := time.Now().Unix()
 	isEnded := currentTime > endTime
 	if !isEnded {
 		panic("incentive is not ended")
 	}
 
-	collectableExternalIncentive := sr.CollectableExternalIncentiveReward(positionId, actualIncentiveID)
+	collectableExternalIncentive, _ := sr.CollectableExternalIncentiveReward(positionId, actualIncentiveID)
 	ufmt.Printf("[INFO] position %d collectable external incentive: %d GNS\n", positionId, collectableExternalIncentive)
 }
 

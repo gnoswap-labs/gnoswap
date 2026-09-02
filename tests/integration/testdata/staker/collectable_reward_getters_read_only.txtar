@@ -133,7 +133,11 @@ package main
 import staker "gno.land/r/gnoswap/staker"
 
 func main() {
-	if staker.CollectableEmissionReward(1) != 0 {
+	emissionReward, err := staker.CollectableEmissionReward(1)
+	if err != nil {
+		panic(err)
+	}
+	if emissionReward != 0 {
 		panic("unexpected emission reward")
 	}
 	incentives := staker.GetPoolIncentives("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000")
@@ -147,10 +151,18 @@ func main() {
 		return true
 	})
 
-	if staker.CollectableExternalIncentiveReward(1, incentiveId) != 0 {
+	externalReward, err := staker.CollectableExternalIncentiveReward(1, incentiveId)
+	if err != nil {
+		panic(err)
+	}
+	if externalReward != 0 {
 		panic("unexpected external incentive reward")
 	}
-	if len(staker.GetDepositExternalIncentiveIdList(1)) != 0 {
+	depositIncentiveIds, err := staker.GetDepositExternalIncentiveIdList(1)
+	if err != nil {
+		panic(err)
+	}
+	if len(depositIncentiveIds) != 0 {
 		panic("getter persisted external incentive ID")
 	}
 	println("collectable getters are read only")

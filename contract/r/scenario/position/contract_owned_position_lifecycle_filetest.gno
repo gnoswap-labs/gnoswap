@@ -348,7 +348,7 @@ func vaultStakePosition(cur realm) {
 	ufmt.Printf("[EXPECTED] staked pool path: %s\n", poolPath)
 	ufmt.Printf("[EXPECTED] position owner after stake: %s\n", owner.String())
 	ufmt.Printf("[EXPECTED] staker contract address: %s\n", stakerAddr.String())
-	depositOwner := staker.GetDepositOwner(positionID)
+	depositOwner, _ := staker.GetDepositOwner(positionID)
 	ufmt.Printf("[EXPECTED] deposit owner after stake: %s\n", depositOwner.String())
 }
 

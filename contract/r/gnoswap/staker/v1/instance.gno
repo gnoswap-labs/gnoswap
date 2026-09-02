@@ -76,8 +76,12 @@ func (s *stakerV1) getExternalIncentives() *ExternalIncentives {
 	}
 }
 
-func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
-	return NewDepositResolver(s.getDeposit(lpTokenId))
+func (s *stakerV1) getDepositResolver(lpTokenId uint64) (*DepositResolver, error) {
+	deposit, err := s.getDeposit(lpTokenId)
+	if err != nil {
+		return nil, err
+	}
+	return NewDepositResolver(deposit), nil
 }
 
 func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {

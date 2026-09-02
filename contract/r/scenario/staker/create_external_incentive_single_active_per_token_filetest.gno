@@ -122,7 +122,11 @@ func createFirstBar(cur realm) {
 	firstBarEnd = firstBarStart + INCENTIVE_DURATION
 
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, firstBarStart, firstBarEnd)
-	ufmt.Printf("[EXPECTED] bar incentive created; incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] bar incentive created; incentives for pool: %d\n", len(incentives))
 }
 
 func rejectSecondBarWhilePending(cur realm) {
@@ -134,7 +138,11 @@ func rejectSecondBarWhilePending(cur realm) {
 		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, start, start+INCENTIVE_DURATION)
 	})
 	println("[EXPECTED] second bar rejected while first is pending")
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 func acceptDifferentToken(cur realm) {
@@ -142,7 +150,11 @@ func acceptDifferentToken(cur realm) {
 
 	start := nextValidStart()
 	sr.CreateExternalIncentive(cross(cur), poolPath, quxPath, REWARD_AMOUNT, start, start+INCENTIVE_DURATION)
-	ufmt.Printf("[EXPECTED] qux (different token) accepted; incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] qux (different token) accepted; incentives for pool: %d\n", len(incentives))
 }
 
 func rejectSecondBarWhileActive(cur realm) {
