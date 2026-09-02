@@ -856,6 +856,30 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"),
 			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
 		},
+		// With no active liquidity, moving to an initialized tick costs zero input.
+		// This is the regression boundary: amountRemainingLessFee == amountIn == 0.
+		{
+			name:                 "zero_liquidity_crosses_target_one_for_zero",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.Zero(),
+			amountRemainingAbs:   u256.One(),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"),
+			expectedAmountIn:     u256.Zero(),
+		},
+		{
+			name:                 "zero_liquidity_crosses_target_zero_for_one",
+			zeroForOne:           true,
+			currentX96:           encodePriceSqrtTest(t, "121", "100"),
+			targetX96:            encodePriceSqrtTest(t, "1", "1"),
+			liquidity:            u256.Zero(),
+			amountRemainingAbs:   u256.One(),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"),
+			expectedAmountIn:     u256.Zero(),
+		},
 		{
 			name:                 "sufficient_amount_hits_target_one_for_zero",
 			zeroForOne:           false, // price increasing
