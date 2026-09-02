@@ -231,9 +231,9 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 	}
 
 	// Phase 3: Apply the batch's cumulative change to pool state once.
-	// cacheRewardForPool also runs once per normal swap batch, before the net
-	// liquidity change. It sees the pre-cross liquidity and splits unclaimable
-	// intervals at every elapsed halving boundary.
+	// cacheRewardForPool runs once for each non-empty normal swap batch, before
+	// the net liquidity change. It sees the pre-cross liquidity and splits
+	// unclaimable intervals at every elapsed halving boundary.
 	poolResolver := NewPoolResolver(batch.Pool())
 	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), batch.PoolPath())
 	newAcc := poolResolver.modifyDeposit(cumulativeDelta, timestamp, lastTick)
