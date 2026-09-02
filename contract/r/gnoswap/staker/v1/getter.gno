@@ -2,6 +2,7 @@ package staker
 
 import (
 	"chain/runtime"
+	"errors"
 	"time"
 
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -487,7 +488,7 @@ func (s *stakerV1) GetPoolsByTier(tier uint64) ([]string, error) {
 	s.getPoolTier().membership.Iterate("", "", func(poolPath string, value any) bool {
 		currentTier, ok := value.(uint64)
 		if !ok {
-			iterErr = ufmt.Errorf("failed to cast tier to uint64")
+			iterErr = errors.New("failed to cast tier to uint64")
 			return true
 		}
 		if currentTier == tier {
@@ -530,7 +531,7 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) ([]sr.Externa
 	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
-			iterErr = ufmt.Errorf("failed to cast value to *ExternalIncentive")
+			iterErr = errors.New("failed to cast value to *ExternalIncentive")
 			return true
 		}
 		if incentive.TargetPoolPath() == poolPath {
