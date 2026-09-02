@@ -119,11 +119,10 @@ func (s *stakerV1) swapEndHook(_ int, rlm realm, poolPath string) error {
 	return nil
 }
 
-// tickCrossHook is called when a tick is crossed
-// This hook implements intelligent routing between batch processing and immediate processing:
-// - During swaps: accumulates tick crosses for batch processing at swap end
-// - Outside swaps: processes tick crosses immediately for real-time updates
-// The hybrid approach optimizes for both swap performance and non-swap responsiveness
+// tickCrossHook is called when a tick is crossed.
+// Active swaps accumulate crosses and process their net liquidity change once at
+// swap end. Calls without an active batch use the immediate fallback, which
+// materializes the reward cache for each individual tick cross.
 func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
@@ -156,18 +155,16 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 		return
 	}
 
-	// Immediate processing path: handle tick crosses outside of swap context
-	// This ensures real-time updates for non-swap operations (e.g., position modifications)
+	// Immediate fallback for tick-cross callers without an active swap batch.
+	// Current production tick crosses originate from Swap and use batching; this
+	// path preserves correct accounting for future non-swap callers.
 	s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
 }
 
-// processTickCrossImmediate processes a single tick cross immediately
-// This function handles individual tick crosses for non-swap operations
-// where batch processing is not applicable (e.g., position modifications, liquidations)
+// processTickCrossImmediate processes one unbatched tick cross.
+// It materializes elapsed halving boundaries while the pre-cross liquidity is
+// still effective, before modifying the deposit for that individual cross.
 func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickId int32, zeroForOne bool, timestamp int64) {
-	// Materialize every elapsed halving boundary while the pre-cross liquidity
-	// is still in effect. modifyDeposit may close an unclaimable window, whose
-	// reward rate must therefore already be split at those boundaries.
 	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), pool.PoolPath())
 
 	// Calculate the effective tick position after crossing
@@ -233,12 +230,11 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 		lastTick-- // Adjust for zeroForOne direction
 	}
 
-	// Phase 3: Apply cumulative changes to pool state in a single operation
-	// This is the key optimization - one pool update instead of many
+	// Phase 3: Apply the batch's cumulative change to pool state once.
+	// cacheRewardForPool also runs once per normal swap batch, before the net
+	// liquidity change. It sees the pre-cross liquidity and splits unclaimable
+	// intervals at every elapsed halving boundary.
 	poolResolver := NewPoolResolver(batch.Pool())
-	// Cache once for the whole batch before its net liquidity change is applied.
-	// At this point CurrentStakedLiquidity(timestamp) still represents the
-	// pre-cross state, so unclaimable periods are closed at the right boundary.
 	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), batch.PoolPath())
 	newAcc := poolResolver.modifyDeposit(cumulativeDelta, timestamp, lastTick)
 
